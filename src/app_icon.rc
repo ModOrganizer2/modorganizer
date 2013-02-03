@@ -1,0 +1,3 @@
+#include "version.rc"
+
+ IDI_ICON1               ICON    DISCARDABLE     "mo_icon.ico"

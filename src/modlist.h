@@ -1,0 +1,230 @@
+/*
+Copyright (C) 2012 Sebastian Herbord. All rights reserved.
+
+This file is part of Mod Organizer.
+
+Mod Organizer is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Mod Organizer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef MODLIST_H
+#define MODLIST_H
+
+
+#include "categories.h"
+#include "nexusinterface.h"
+#include "modinfo.h"
+#include "profile.h"
+
+#include <QFile>
+#include <QListWidget>
+#include <QNetworkReply>
+#include <QNetworkAccessManager>
+
+#include <set>
+#include <vector>
+#include <QVector>
+
+
+/**
+ * Model presenting an overview of the installed mod
+ * This is used in a view in the main window of MO. It combines general information about
+ * the mods from ModInfo with status information from the Profile
+ **/
+class ModList : public QAbstractItemModel
+{
+  Q_OBJECT
+
+public:
+
+  enum EColumn {
+    COL_NAME,
+    COL_FLAGS,
+    COL_CATEGORY,
+    COL_MODID,
+    COL_VERSION,
+    COL_PRIORITY,
+
+    COL_LASTCOLUMN = COL_PRIORITY
+  };
+
+public:
+
+  /**
+   * @brief constructor
+   * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
+   **/
+  ModList(QObject *parent = NULL);
+
+  /**
+   * @brief set the profile used for status information
+   *
+   * @param profile the profile to use
+   **/
+  void setProfile(Profile *profile);
+
+  /**
+   * @brief retrieve the current sorting mode
+   * @note this is used to store the sorting mode between sessions
+   * @return current sorting mode, encoded to be compatible to previous versions
+   **/
+  int getCurrentSortingMode() const;
+
+  /**
+   * @brief force a refresh of the mod list
+   **/
+  void refresh();
+
+  /**
+   * @brief remove the specified mod without asking for confirmation
+   * @param row the row to remove
+   */
+  void removeRowForce(int row);
+
+  void notifyChange(int row);
+
+  static QString getColumnName(int column);
+
+  void changeModPriority(int sourceIndex, int newPriority);
+
+public: // implementation of virtual functions of QAbstractItemModel
+
+  virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+  virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+  virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+  virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+  virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
+  virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
+  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+  virtual void removeRow(int row, const QModelIndex &parent);
+
+
+  virtual QModelIndex index(int row, int column,
+                            const QModelIndex &parent = QModelIndex()) const;
+  virtual QModelIndex parent(const QModelIndex &child) const;
+
+public slots:
+
+signals:
+
+  /**
+   * @brief emitted whenever the sorting in the list was changed by the user
+   *
+   * the sorting of the list can only be manually changed if the list is sorted by priority
+   * in which case the move is intended to change the priority of a mod
+   **/
+  void modorder_changed();
+
+  /**
+   * @brief emitted when the model wants a text to be displayed by the UI
+   *
+   * @param message the message to display
+   **/
+  void showMessage(const QString &message);
+
+  /**
+   * @brief signals change to the count of headers
+   */
+  void resizeHeaders();
+
+  /**
+   * @brief requestColumnSelect is emitted whenever the user requested a menu to select visible columns
+   * @param pos the position to display the menu at
+   */
+  void requestColumnSelect(QPoint pos);
+
+  /**
+   * @brief emitted to remove a file origin
+   * @param name name of the orign to remove
+   */
+  void removeOrigin(const QString &name);
+
+  /**
+   * @brief emitted after a mod has been renamed
+   * This signal MUST be used to fix the mod names in profiles (except the active one) and to invalidate/refresh other
+   * structures that may have become invalid with the rename
+   *
+   * @param oldName the old name of the mod
+   * @param newName new name of the mod
+   */
+  void modRenamed(const QString &oldName, const QString &newName);
+
+  /**
+   * @brief emitted whenever a row in the list has changed
+   *
+   * @param row the row that changed
+   * @note this signal must only be emitted if the row really did change.
+   *       Slots handling this signal therefore do not have to verify that a change has happened
+   * @note this signal is currently only used in tutorials
+   **/
+  void modlist_changed(int row);
+
+  /**
+   * @brief emitted to have all selected mods deleted
+   */
+  void removeSelectedMods();
+
+protected:
+
+  // event filter, handles event from the header and the tree view itself
+  bool eventFilter(QObject *obj, QEvent *event);
+
+private:
+
+  bool testValid(const QString &modDir);
+
+  void changeModPriority(std::vector<int> sourceIndices, int newPriority);
+
+  QVariant getOverwriteData(int column, int role) const;
+
+  QString getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const;
+
+  static QString getColumnToolTip(int column);
+
+  ModList::EColumn getEnabledColumn(int index) const;
+
+  QVariant categoryData(int categoryID, int column, int role) const;
+  QVariant modData(int modID, int modelColumn, int role) const;
+
+  bool renameMod(int index, const QString &newName);
+
+private slots:
+
+private:
+
+  struct TModInfo {
+    TModInfo(unsigned int index, ModInfo::Ptr modInfo)
+        : modInfo(modInfo), nameOrder(index) {}
+    ModInfo::Ptr modInfo;
+    unsigned int nameOrder;
+    unsigned int priorityOrder;
+    unsigned int modIDOrder;
+    unsigned int categoryOrder;
+  };
+
+private:
+
+  Profile *m_Profile;
+
+  NexusInterface *m_NexusInterface;
+  std::set<int> m_RequestIDs;
+
+  mutable bool m_Modified;
+
+  QFontMetrics m_FontMetrics;
+
+};
+
+#endif // MODLIST_H
+

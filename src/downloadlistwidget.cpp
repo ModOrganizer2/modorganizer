@@ -1,0 +1,242 @@
+/*
+Copyright (C) 2012 Sebastian Herbord. All rights reserved.
+
+This file is part of Mod Organizer.
+
+Mod Organizer is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Mod Organizer is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "downloadlistwidget.h"
+#include "ui_downloadlistwidget.h"
+#include "downloadmanager.h"
+#include <QPainter>
+#include <QMouseEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QSortFilterProxyModel>
+
+
+DownloadListWidget::DownloadListWidget(QWidget *parent)
+  : QWidget(parent), ui(new Ui::DownloadListWidget)
+{
+    ui->setupUi(this);
+}
+
+
+DownloadListWidget::~DownloadListWidget()
+{
+    delete ui;
+}
+
+
+DownloadListWidgetDelegate::DownloadListWidgetDelegate(DownloadManager *manager, QTreeView *view, QObject *parent)
+  : QItemDelegate(parent), m_Manager(manager), m_ItemWidget(new DownloadListWidget), m_ContextRow(0), m_View(view)
+{
+  m_NameLabel = m_ItemWidget->findChild<QLabel*>("nameLabel");
+  m_Progress = m_ItemWidget->findChild<QProgressBar*>("downloadProgress");
+  m_InstallLabel = m_ItemWidget->findChild<QLabel*>("installLabel");
+
+  m_InstallLabel->setVisible(false);
+}
+
+
+DownloadListWidgetDelegate::~DownloadListWidgetDelegate()
+{
+  delete m_ItemWidget;
+}
+
+
+void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+  try {
+    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
+
+    int downloadIndex = index.data().toInt();
+
+    QString name = m_Manager->getFileName(downloadIndex);
+    if (name.length() > 53) {
+      name.truncate(50);
+      name.append("...");
+    }
+    m_NameLabel->setText(name);
+    DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
+    if (state >= DownloadManager::STATE_READY) {
+      QPalette labelPalette;
+      m_InstallLabel->setVisible(true);
+      m_Progress->setVisible(false);
+      if (state == DownloadManager::STATE_INSTALLED) {
+        // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
+        // of DownloadListWidgetDelegate?
+#if QT_VERSION >= 0x050000
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0));
+#else
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0, QApplication::UnicodeUTF8));
+#endif
+        labelPalette.setColor(QPalette::WindowText, Qt::darkGray);
+      } else {
+        // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
+        // of DownloadListWidgetDelegate?
+#if QT_VERSION >= 0x050000
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0));
+#else
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0, QApplication::UnicodeUTF8));
+#endif
+        labelPalette.setColor(QPalette::WindowText, Qt::darkGreen);
+      }
+      m_InstallLabel->setPalette(labelPalette);
+      if (m_Manager->isInfoIncomplete(downloadIndex)) {
+        m_NameLabel->setText("<img src=\":/MO/gui/resources/dialog-warning_16.png\" /> " + m_NameLabel->text());
+      }
+    } else {
+      m_InstallLabel->setVisible(false);
+      m_Progress->setVisible(true);
+      m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+    }
+
+    painter->save();
+    painter->translate(QPoint(0, option.rect.topLeft().y()));
+    m_ItemWidget->render(painter);
+    painter->restore();
+  } catch (const std::exception &e) {
+    qCritical("failed to paint download list: %s", e.what());
+  }
+}
+
+QSize DownloadListWidgetDelegate::sizeHint(const QStyleOptionViewItem&, const QModelIndex&) const
+{
+  const int width = m_ItemWidget->minimumWidth();
+  const int height = m_ItemWidget->height();
+  return QSize(width, height);
+}
+
+
+void DownloadListWidgetDelegate::issueInstall()
+{
+  emit installDownload(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueQueryInfo()
+{
+  emit queryInfo(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueDelete()
+{
+  emit removeDownload(m_ContextRow, true);
+}
+
+void DownloadListWidgetDelegate::issueRemoveFromView()
+{
+  emit removeDownload(m_ContextRow, false);
+}
+
+void DownloadListWidgetDelegate::issueCancel()
+{
+  emit cancelDownload(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issuePause()
+{
+  emit pauseDownload(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueResume()
+{
+  emit resumeDownload(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueDeleteAll()
+{
+  if (QMessageBox::question(NULL, tr("Are you sure?"),
+                            tr("This will remove all finished downloads from this list and from disk."),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-1, true);
+  }
+}
+
+void DownloadListWidgetDelegate::issueDeleteCompleted()
+{
+  if (QMessageBox::question(NULL, tr("Are you sure?"),
+                            tr("This will remove all installed downloads from this list and from disk."),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-2, true);
+  }
+}
+
+void DownloadListWidgetDelegate::issueRemoveFromViewAll()
+{
+  if (QMessageBox::question(NULL, tr("Are you sure?"),
+                            tr("This will remove all finished downloads from this list (but NOT from disk)."),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-1, false);
+  }
+}
+
+void DownloadListWidgetDelegate::issueRemoveFromViewCompleted()
+{
+  if (QMessageBox::question(NULL, tr("Are you sure?"),
+                            tr("This will remove all installed downloads from this list (but NOT from disk)."),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-2, false);
+  }
+}
+
+bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
+                                   const QStyleOptionViewItem &option, const QModelIndex &index)
+{
+  try {
+    if (event->type() == QEvent::MouseButtonDblClick) {
+      QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
+      if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY) {
+        emit installDownload(sourceIndex.row());
+      }
+      return true;
+    } else if (event->type() == QEvent::MouseButtonRelease) {
+      QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+      if (mouseEvent->button() == Qt::RightButton) {
+        QMenu menu(m_View);
+        m_ContextRow = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index).row();
+        DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
+        if (state >= DownloadManager::STATE_READY) {
+          menu.addAction(tr("Install"), this, SLOT(issueInstall()));
+          if (m_Manager->isInfoIncomplete(m_ContextRow)) {
+            menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+          }
+          menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+          menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+        } else if (state == DownloadManager::STATE_DOWNLOADING){
+          menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
+          menu.addAction(tr("Pause"), this, SLOT(issuePause()));
+        } else if (state == DownloadManager::STATE_PAUSED) {
+          menu.addAction(tr("Remove"), this, SLOT(issueRemove()));
+          menu.addAction(tr("Resume"), this, SLOT(issueResume()));
+        }
+
+        menu.addSeparator();
+        menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
+        menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
+        menu.addSeparator();
+        menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+        menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+        menu.exec(mouseEvent->globalPos());
+
+        event->accept();
+        return true;
+      }
+    }
+  } catch (const std::exception &e) {
+    qCritical("failed to handle editor event: %s", e.what());
+  }
+  return QItemDelegate::editorEvent(event, model, option, index);
+}

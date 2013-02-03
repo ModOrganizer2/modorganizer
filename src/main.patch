@@ -1,0 +1,41 @@
+Index: ./main.cpp
+===================================================================
+--- ./main.cpp	(revision 77)
++++ ./main.cpp	(revision 94)
+@@ -36,6 +36,7 @@
+ #include <QMessageBox>
+ #include <QSharedMemory>
+ #include <QBuffer>
++#include <QSplashScreen>
+ #include <eh.h>
+ 
+ //#pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='*' version='1.0.0.0' type='win32' \"")
+@@ -114,6 +115,7 @@
+ 
+ 
+ class MyApplication : public QApplication {
++
+ public:
+ 
+   MyApplication(int argc, char **argv)
+@@ -202,8 +204,10 @@
+ {
+   MyApplication application(argc, argv);
+   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+-
+   LogBuffer::init(20, QtDebugMsg, application.applicationDirPath().append("/mo_interface.log"));
++  QPixmap pixmap(":/new/guiresources/splash.png");
++  QSplashScreen splash(pixmap);
++  splash.show();
+ 
+   QStringList arguments = application.arguments();
+ 
+@@ -390,7 +394,7 @@
+         (isNxmLink(arguments.at(1)))) {
+       mainWindow.externalMessage(arguments.at(1));
+     }
+-
++    splash.finish(&mainWindow);
+     return application.exec();
+   } catch (const std::exception &e) {
+     reportError(e.what());

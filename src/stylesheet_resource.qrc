@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/stylesheet">
+        <file alias="combobox-down.png">resources/combobox-down.png</file>
+        <file alias="branch-closed.png">resources/branch-closed.png</file>
+        <file alias="branch-open.png">resources/branch-open.png</file>
+    </qresource>
+</RCC>

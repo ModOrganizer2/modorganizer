@@ -1,0 +1,54 @@
+<RCC>
+    <qresource prefix="/MO/gui">
+        <file>resources/help-browser.png</file>
+        <file alias="add">resources/list-add.png</file>
+        <file>resources/document-save.png</file>
+        <file>resources/edit-find-replace.png</file>
+        <file>resources/go-jump.png</file>
+        <file>resources/media-playback-start.png</file>
+        <file alias="remove">resources/process-stop.png</file>
+        <file>resources/system-search.png</file>
+        <file>resources/view-refresh.png</file>
+        <file alias="installer">resources/system-installer.png</file>
+        <file>resources/start-here.png</file>
+        <file>resources/list-remove.png</file>
+        <file>resources/document-properties.png</file>
+        <file>resources/go-up.png</file>
+        <file>resources/go-down.png</file>
+        <file alias="profiles">resources/contact-new.png</file>
+        <file alias="settings">resources/preferences-system.png</file>
+        <file alias="executable">resources/application-x-executable.png</file>
+        <file>resources/dialog-information.png</file>
+        <file alias="locked">resources/emblem-readonly.png</file>
+        <file alias="next">resources/go-next_16.png</file>
+        <file alias="previous">resources/go-previous_16.png</file>
+        <file alias="refresh">resources/view-refresh_16.png</file>
+        <file alias="update_available">resources/software-update-available.png</file>
+        <file>resources/emblem-important.png</file>
+        <file>resources/check.png</file>
+        <file>mo_icon.ico</file>
+        <file>resources/dialog-warning.png</file>
+        <file>resources/dialog-warning_16.png</file>
+        <file alias="emblem_backup">resources/symbol-backup.png</file>
+        <file alias="icon_tools">resources/applications-accessories.png</file>
+        <file alias="emblem_problem">resources/emblem-unreadable.png</file>
+        <file>resources/internet-web-browser.png</file>
+        <file alias="update">resources/system-software-update.png</file>
+        <file alias="help">resources/help-browser_32.png</file>
+        <file>resources/system-installer.png</file>
+        <file alias="icon_executable">resources/function.png</file>
+        <file alias="plugins">resources/plugins.png</file>
+        <file alias="edit_clear">resources/edit-clear.png</file>
+        <file alias="link">resources/dynamic-blue-right.png</file>
+        <file alias="icon_favorite">resources/icon-favorite.png</file>
+        <file alias="emblem_notendorsed">resources/emblem-favorite.png</file>
+        <file alias="emblem_conflict">resources/error.png</file>
+        <file alias="run">resources/show.png</file>
+        <file alias="splash">splash.png</file>
+        <file alias="emblem_conflict_mixed">resources/conflict-mixed.png</file>
+        <file alias="emblem_conflict_overwrite">resources/conflict-overwrite.png</file>
+        <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
+        <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
+        <file alias="emblem_notes">resources/accessories-text-editor.png</file>
+    </qresource>
+</RCC>
