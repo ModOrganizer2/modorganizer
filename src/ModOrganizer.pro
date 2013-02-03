@@ -2,14 +2,15 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 
-SUBDIRS = shared \
+SUBDIRS = bsatk \
+					shared \
 					uibase \
 					organizer \
 					hookdll \
 					archive \
 					helper \
           plugins \
-          proxydll
+					proxydll
 
 hookdll.depends = shared
 organizer.depends = shared, uibase

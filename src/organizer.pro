@@ -175,7 +175,7 @@ FORMS    += \
     activatemodsdialog.ui \
     profileinputdialog.ui
 
-INCLUDEPATH += ../shared ../archive ../uibase ../../../bsatk "$(BOOSTPATH)"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
@@ -183,12 +183,12 @@ LIBS += -L"$(BOOSTPATH)/stage/lib"
 CONFIG(debug, debug|release) {
 	OUTDIR = $$OUT_PWD/debug
 	DSTDIR = $$PWD/../../outputd
-	LIBS += -L$$OUT_PWD/../shared/debug -L../../../bsatk-build/debug
+	LIBS += -L$$OUT_PWD/../shared/debug -L$$OUT_PWD/../bsatk/debug
 	LIBS += -L$$OUT_PWD/../uibase/debug
 } else {
 	OUTDIR = $$OUT_PWD/release
 	DSTDIR = $$PWD/../../output
-	LIBS += -L$$OUT_PWD/../shared/release -L../../../bsatk-build/release
+	LIBS += -L$$OUT_PWD/../shared/release -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
 	QMAKE_CXXFLAGS += /Zi
 	QMAKE_LFLAGS += /DEBUG

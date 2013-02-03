@@ -11,13 +11,13 @@ TARGET = mo_shared
 TEMPLATE = lib
 CONFIG += staticlib
 
-INCLUDEPATH += ../../../bsatk "$(BOOSTPATH)"
+INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
 CONFIG(debug, debug|release) {
-    LIBS += -L../../../bsatk-build/debug
+		LIBS += -L$$OUT_PWD/../bsatk/debug
 
 } else {
-    LIBS += -L../../../bsatk-build/release
+		LIBS += -L$$OUT_PWD/../bsatk/release
 }
 
 LIBS += -lbsatk
