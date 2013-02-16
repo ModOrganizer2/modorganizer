@@ -654,16 +654,13 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
       }
       return true;
     } else if (keyEvent->key() == Qt::Key_Delete) {
-      emit removeSelectedMods();
-/*      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
+      QItemSelectionModel *selectionModel = itemView->selectionModel();
       QModelIndexList rows = selectionModel->selectedRows();
-      foreach (QModelIndex idx, rows) {
-        if (proxyModel != NULL) {
-          idx = proxyModel->mapToSource(idx);
-        }
-        removeRow(idx.row(), QModelIndex());
-      }*/
+      if (rows.count() > 1) {
+        emit removeSelectedMods();
+      } else if (rows.count() == 1) {
+        removeRow(rows[0].row(), QModelIndex());
+      }
       return true;
     }
   }

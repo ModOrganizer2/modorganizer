@@ -75,7 +75,7 @@ class FomodInstallerDialog : public QDialog
   Q_OBJECT
   
 public:
-  explicit FomodInstallerDialog(const QString &modName, const QString &fomodPath, QWidget *parent = 0);
+  explicit FomodInstallerDialog(const QString &modName, bool nameWasGuessed, const QString &fomodPath, QWidget *parent = 0);
   ~FomodInstallerDialog();
 
   void initData();
@@ -160,6 +160,8 @@ private:
 
 private:
 
+  static int bomOffset(const QByteArray &buffer);
+
   QString readContent(QXmlStreamReader &reader);
   void parseInfo(const QByteArray &data);
 
@@ -196,6 +198,8 @@ private:
 private:
 
   Ui::FomodInstallerDialog *ui;
+
+  bool m_NameWasGuessed;
 
   QString m_FomodPath;
   bool m_Manual;

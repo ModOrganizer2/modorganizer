@@ -78,7 +78,9 @@ SOURCES += \
     moapplication.cpp \
     profileinputdialog.cpp \
     icondelegate.cpp \
-    gameinfoimpl.cpp
+    gameinfoimpl.cpp \
+    csvbuilder.cpp \
+    savetextasdialog.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -144,7 +146,9 @@ HEADERS  += \
     moapplication.h \
     profileinputdialog.h \
     icondelegate.h \
-    gameinfoimpl.h
+    gameinfoimpl.h \
+    csvbuilder.h \
+    savetextasdialog.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -173,7 +177,8 @@ FORMS    += \
     categoriesdialog.ui \
     baincomplexinstallerdialog.ui \
     activatemodsdialog.ui \
-    profileinputdialog.ui
+    profileinputdialog.ui \
+    savetextasdialog.ui
 
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk "$(BOOSTPATH)"
 
@@ -233,24 +238,23 @@ DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
 DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 #DEFINES += QMLJSDEBUGGER
 
-
 SRCDIR = $$PWD
 SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
 OUTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 
-QMAKE_POST_LINK += mkdir -p $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += mkdir -p $$quote($$DSTDIR\\dlls) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /i $$quote($$OUTDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /i $$quote($$OUTDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /i $$quote($$SRCDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /i $$quote($$SRCDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /i $$quote($$SRCDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
 
 CONFIG(debug, debug|release) {
-	QMAKE_POST_LINK += copy $$quote($$SRCDIR\\..\\dlls.manifest.debug) $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
+  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
+  QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
 } else {
-	QMAKE_POST_LINK += copy $$quote($$SRCDIR\\..\\dlls.manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
 }
 
 RESOURCES += \

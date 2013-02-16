@@ -161,6 +161,8 @@ void NexusInterface::setNMMVersion(const QString &nmmVersion)
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
   static std::tr1::regex exp("^([a-zA-Z0-9_\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
+  static std::tr1::regex simpleexp("^([a-zA-Z0-9_]+)");
+
 //  std::tr1::match_results<std::string::const_iterator> result;
   QByteArray fileNameUTF8 = fileName.toUtf8();
   std::tr1::cmatch result;
@@ -194,7 +196,14 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
       modID = strtol(candidate.c_str(), NULL, 10);
     }
     qDebug("mod id guessed: %s -> %d", qPrintable(fileName), modID);
+  } else if (std::tr1::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
+    qDebug("simple expression matched, using name only");
+    modName = QString::fromUtf8(result[1].str().c_str());
+    modName = modName.replace('_', ' ').trimmed();
+
+    modID = -1;
   } else {
+    qDebug("no expression matched!");
     modName.clear();
     modID = -1;
   }

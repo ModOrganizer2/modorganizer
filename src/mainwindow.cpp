@@ -39,7 +39,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlistwidgetcompact.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
-#include "textviewer.h"
 #include "lockeddialog.h"
 #include "syncoverwritedialog.h"
 #include "logbuffer.h"
@@ -51,7 +50,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "icondelegate.h"
 #include "credentialsdialog.h"
+#include "selectiondialog.h"
+#include "csvbuilder.h"
 #include "gameinfoimpl.h"
+#include "savetextasdialog.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -83,14 +85,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRadioButton>
 #include <QDesktopWidget>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 #include <Psapi.h>
 #include <shlobj.h>
 #include <TlHelp32.h>
 
-//TODO factor out functionality and structure the rest!
-//TODO name slots more consistently
-//TODO turn operations on various trees/lists into actions for easier support in QMenus?
-//TODO verify slots don't throw exceptions
+
 
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
@@ -171,6 +171,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 #endif
 
   QMenu *linkMenu = new QMenu(this);
+  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
@@ -267,6 +268,10 @@ void MainWindow::actionToToolButton(QAction *&sourceAction)
   button->setMenu(buttonMenu);
   QAction *newAction = ui->toolBar->insertWidget(sourceAction, button);
   newAction->setObjectName(sourceAction->objectName());
+  newAction->setIcon(sourceAction->icon());
+  newAction->setText(sourceAction->text());
+  newAction->setToolTip(sourceAction->toolTip());
+  newAction->setShortcut(sourceAction->shortcut());
   ui->toolBar->removeAction(sourceAction);
   sourceAction->deleteLater();
   sourceAction = newAction;
@@ -275,16 +280,46 @@ void MainWindow::actionToToolButton(QAction *&sourceAction)
 
 void MainWindow::updateToolBar()
 {
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+  foreach (QAction *action, ui->toolBar->actions()) {
+    if (action->objectName().startsWith("custom__")) {
+      ui->toolBar->removeAction(action);
+    }
+  }
 
-  actionToToolButton(ui->actionTool);
+  QWidget *spacer = new QWidget(ui->toolBar);
+  spacer->setObjectName("custom__spacer");
+  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
+
+  if (toolBtn->menu() == NULL) {
+    actionToToolButton(ui->actionTool);
+  }
+
   actionToToolButton(ui->actionHelp);
 
   foreach (QAction *action, ui->toolBar->actions()) {
-    if (action->objectName().length() == 0) {
+    if (action->isSeparator()) {
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
+
+      std::vector<Executable>::iterator begin, end;
+      m_ExecutablesList.getExecutables(begin, end);
+      for (auto iter = begin; iter != end; ++iter) {
+        if (iter->m_Toolbar) {
+          QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
+                                           iter->m_Title,
+                                           ui->toolBar);
+          QVariant temp;
+          temp.setValue(*iter);
+          exeAction->setData(temp);
+          exeAction->setObjectName(QString("custom__") + iter->m_Title);
+          if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
+            qDebug("failed to connect trigger?");
+          }
+          ui->toolBar->insertAction(action, exeAction);
+        }
+      }
     }
   }
 }
@@ -1000,6 +1035,23 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
 }
 
 
+void MainWindow::startExeAction()
+{
+  QAction *action = qobject_cast<QAction*>(sender());
+  if (action != NULL) {
+    Executable selectedExecutable = action->data().value<Executable>();
+    spawnBinary(selectedExecutable.m_BinaryInfo,
+                selectedExecutable.m_Arguments,
+                selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
+                                                                    : selectedExecutable.m_BinaryInfo.absolutePath(),
+                selectedExecutable.m_CloseMO == DEFAULT_CLOSE,
+                selectedExecutable.m_SteamAppID);
+  } else {
+    qCritical("not an action?");
+  }
+}
+
+
 void MainWindow::refreshModList()
 {
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
@@ -1015,6 +1067,7 @@ void MainWindow::setExecutablesList(const ExecutablesList &executablesList)
 {
   m_ExecutablesList = executablesList;
   refreshExecutablesList();
+  updateToolBar();
 }
 
 void MainWindow::setExecutableIndex(int index)
@@ -1035,8 +1088,9 @@ void MainWindow::setExecutableIndex(int index)
   QFileInfo linkDesktopFile(QDir::fromNativeSeparators(getDesktopDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
   QFileInfo linkMenuFile(QDir::fromNativeSeparators(getStartMenuDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
 
-  ui->linkButton->menu()->actions().at(0)->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(1)->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(0)->setIcon(selectedExecutable.m_Toolbar ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(1)->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(2)->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }
 
 
@@ -1227,6 +1281,20 @@ void MainWindow::refreshDirectoryStructure()
 }
 
 
+QIcon MainWindow::iconForExecutable(const QString &filePath)
+{
+  HICON winIcon;
+  UINT res = ::ExtractIconExW(ToWString(filePath).c_str(), 0, &winIcon, NULL, 1);
+  if (res == 1) {
+    QIcon result = QIcon(QPixmap::fromWinHICON(winIcon));
+    ::DestroyIcon(winIcon);
+    return result;
+  } else {
+    return QIcon(":/MO/gui/executable");
+  }
+}
+
+
 void MainWindow::refreshExecutablesList()
 {
   QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
@@ -1239,17 +1307,9 @@ void MainWindow::refreshExecutablesList()
   std::vector<Executable>::const_iterator current, end;
   m_ExecutablesList.getExecutables(current, end);
   for(int i = 0; current != end; ++current, ++i) {
-    QIcon icon(":/MO/gui/executable");
-    HICON winIcon;
     QVariant temp;
     temp.setValue(*current);
-    UINT res = ::ExtractIconExW(ToWString(current->m_BinaryInfo.filePath()).c_str(),
-                                0, &winIcon, NULL, 1);
-    if (res == 1) {
-//      icon = pixmapFromHICON(winIcon);
-      icon = QIcon(QPixmap::fromWinHICON(winIcon));
-      ::DestroyIcon(winIcon);
-    }
+    QIcon icon = iconForExecutable(current->m_BinaryInfo.filePath());
     executablesList->addItem(icon, current->m_Title, temp);
     model->setData(model->index(i, 0), QSize(0, executablesList->iconSize().height() + 4), Qt::SizeHintRole);
   }
@@ -1539,7 +1599,7 @@ void MainWindow::storeSettings()
   int count = 0;
   for (; current != end; ++current) {
     const Executable &item = *current;
-    if (item.m_Custom) {
+    if (item.m_Custom || item.m_Toolbar) {
       settings.setArrayIndex(count++);
       settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
       settings.setValue("title", item.m_Title);
@@ -1547,6 +1607,8 @@ void MainWindow::storeSettings()
       settings.setValue("workingDirectory", item.m_WorkingDirectory);
       settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
       settings.setValue("steamAppID", item.m_SteamAppID);
+      settings.setValue("custom", item.m_Custom);
+      settings.setValue("toolbar", item.m_Toolbar);
     }
   }
   settings.endArray();
@@ -2113,11 +2175,32 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 }
 
 
-void MainWindow::addFilterItem(const QString &name, int categoryID)
+QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID)
 {
-  QListWidgetItem *item = new QListWidgetItem(name);
-  item->setData(Qt::UserRole, categoryID);
-  ui->categoriesList->addItem(item);
+  QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
+  item->setData(0, Qt::UserRole, categoryID);
+  if (root != NULL) {
+    root->addChild(item);
+  } else {
+    ui->categoriesList->addTopLevelItem(item);
+  }
+  return item;
+}
+
+
+void MainWindow::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
+{
+  for (unsigned i = 1; i < m_CategoryFactory.numCategories(); ++i) {
+    if ((m_CategoryFactory.getParentID(i) == targetID)) {
+      int categoryID = m_CategoryFactory.getCategoryID(i);
+      if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
+        QTreeWidgetItem *item = addFilterItem(root, m_CategoryFactory.getCategoryName(i), categoryID);
+        if (m_CategoryFactory.hasChildren(i)) {
+          addCategoryFilters(item, categoriesUsed, categoryID);
+        }
+      }
+    }
+  }
 }
 
 
@@ -2126,36 +2209,39 @@ void MainWindow::refreshFilters()
   ui->modList->setCurrentIndex(QModelIndex());
 
   // save previous filter text so we can restore it later, in case the filter still exists then
-  QListWidgetItem *currentItem = ui->categoriesList->currentItem();
-  QString previousFilter = currentItem != NULL ? currentItem->text() : tr("<All>");
+  QTreeWidgetItem *currentItem = ui->categoriesList->currentItem();
+  QString previousFilter = currentItem != NULL ? currentItem->text(0) : tr("<All>");
 
   ui->categoriesList->clear();
-  addFilterItem(tr("<All>"), CategoryFactory::CATEGORY_NONE);
-  addFilterItem(tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
-  addFilterItem(tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED);
-  addFilterItem(tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-  addFilterItem(tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY);
-  addFilterItem(tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT);
+  addFilterItem(NULL, tr("<All>"), CategoryFactory::CATEGORY_NONE);
+  addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
+  addFilterItem(NULL, tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED);
+  addFilterItem(NULL, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
+  addFilterItem(NULL, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY);
+  addFilterItem(NULL, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT);
 
-  for (unsigned int i = 1; i < m_CategoryFactory.numCategories(); ++i) {
-    bool categoryUsed = false;
-    int categoryId = m_CategoryFactory.getCategoryID(i);
-    for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIdx);
-      if (modInfo->categorySet(categoryId)) {
-        categoryUsed = true;
+  std::set<int> categoriesUsed;
+  for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIdx);
+    BOOST_FOREACH (int categoryID, modInfo->getCategories()) {
+      int currentID = categoryID;
+      // also add parents so they show up in the tree
+      while (currentID != 0) {
+        categoriesUsed.insert(currentID);
+        currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
       }
-    }
-
-    if (categoryUsed) {
-      addFilterItem(m_CategoryFactory.getCategoryName(i), categoryId);
     }
   }
 
-  for (int i = 0; i < ui->categoriesList->count(); ++i) {
-    if (ui->categoriesList->item(i)->text() == previousFilter) {
-      ui->categoriesList->setCurrentRow(i);
-      break;
+  addCategoryFilters(NULL, categoriesUsed, 0);
+
+  QList<QTreeWidgetItem*> matches = ui->categoriesList->findItems(previousFilter, Qt::MatchFixedString | Qt::MatchRecursive);
+  if (matches.size() > 0) {
+    QTreeWidgetItem *currentItem = matches.at(0);
+    ui->categoriesList->setCurrentItem(currentItem);
+    while (currentItem != NULL) {
+      currentItem->setExpanded(true);
+      currentItem = currentItem->parent();
     }
   }
 }
@@ -2647,6 +2733,60 @@ void MainWindow::disableVisibleMods()
 }
 
 
+void MainWindow::exportModListCSV()
+{
+  SelectionDialog selection(tr("Choose what to export"));
+
+  selection.addChoice(tr("Everything"), tr("All installed mods are included in the list"), 0);
+  selection.addChoice(tr("Active Mods"), tr("Only active (checked) mods from your current profile are included"), 1);
+  selection.addChoice(tr("Visible"), tr("All mods visible in the mod list are included"), 2);
+
+  if (selection.exec() == QDialog::Accepted) {
+    unsigned int numMods = ModInfo::getNumMods();
+
+    try {
+      QBuffer buffer;
+      buffer.open(QIODevice::ReadWrite);
+      CSVBuilder builder(&buffer);
+      builder.setEscapeMode(CSVBuilder::TYPE_STRING, CSVBuilder::QUOTE_ALWAYS);
+      std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
+      fields.push_back(std::make_pair(QString("mod_id"), CSVBuilder::TYPE_INTEGER));
+      fields.push_back(std::make_pair(QString("mod_installed_name"), CSVBuilder::TYPE_STRING));
+      fields.push_back(std::make_pair(QString("mod_version"), CSVBuilder::TYPE_STRING));
+      fields.push_back(std::make_pair(QString("file_installed_name"), CSVBuilder::TYPE_STRING));
+      builder.setFields(fields);
+
+      builder.writeHeader();
+
+      for (unsigned int i = 0; i < numMods; ++i) {
+        ModInfo::Ptr info = ModInfo::getByIndex(i);
+        bool enabled = m_CurrentProfile->modEnabled(i);
+        if ((selection.getChoiceData().toInt() == 1) && !enabled) {
+          continue;
+        } else if ((selection.getChoiceData().toInt() == 2) && !m_ModListSortProxy->filterMatches(info, enabled)) {
+          continue;
+        }
+        std::vector<ModInfo::EFlag> flags = info->getFlags();
+        if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
+            (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
+          builder.setRowField("mod_id", info->getNexusID());
+          builder.setRowField("mod_installed_name", info->name());
+          builder.setRowField("mod_version", info->getVersion().canonicalString());
+          builder.setRowField("file_installed_name", info->getInstallationFile());
+          builder.writeRow();
+        }
+      }
+
+      SaveTextAsDialog saveDialog(this);
+      saveDialog.setText(buffer.data());
+      saveDialog.exec();
+    } catch (const std::exception &e) {
+      reportError(tr("export failed: %1").arg(e.what()));
+    }
+  }
+}
+
+
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
@@ -2663,6 +2803,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Check all for update"), this, SLOT(checkModsForUpdates()));
 
     menu.addAction(tr("Refresh"), this, SLOT(on_profileRefreshBtn_clicked()));
+
+    menu.addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
 
     if (m_ContextRow != -1) {
       menu.addSeparator();
@@ -2716,11 +2858,11 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 }
 
 
-void MainWindow::on_categoriesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *)
+void MainWindow::on_categoriesList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *)
 {
   if (current != NULL) {
-    m_ModListSortProxy->setCategoryFilter(current->data(Qt::UserRole).toInt());
-    ui->currentCategoryLabel->setText(QString("(%1)").arg(current->text()));
+    m_ModListSortProxy->setCategoryFilter(current->data(0, Qt::UserRole).toInt());
+    ui->currentCategoryLabel->setText(QString("(%1)").arg(current->text(0)));
   }
 }
 
@@ -2817,6 +2959,14 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
 
   menu.exec(ui->savegameList->mapToGlobal(pos));
+}
+
+void MainWindow::linkToolbar()
+{
+  const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
+  Executable &exe = m_ExecutablesList.find(selectedExecutable.m_Title);
+  exe.m_Toolbar = !exe.m_Toolbar;
+  updateToolBar();
 }
 
 void MainWindow::linkDesktop()
@@ -3022,6 +3172,7 @@ void MainWindow::installDownload(int index)
     QString fileName = m_DownloadManager.getFilePath(index);
     int modID = m_DownloadManager.getModID(index);
     QString modName;
+
     // see if there already are mods with the specified mod id
     if (modID != 0) {
       ModInfo::Ptr modInfo = ModInfo::getByModID(modID, true);
@@ -3194,7 +3345,8 @@ void MainWindow::addAsExecutable()
         if (!name.isEmpty()) {
           m_ExecutablesList.addExecutable(name, binaryInfo.absoluteFilePath(),
                                           arguments, targetInfo.absolutePath(),
-                                          DEFAULT_STAY, QString());
+                                          DEFAULT_STAY, QString(),
+                                          true, false);
           refreshExecutablesList();
         }
       } break;
@@ -3419,9 +3571,9 @@ void MainWindow::modDetailsUpdated(bool)
   if (m_ModsToUpdate == 0) {
     statusBar()->hide();
     m_ModListSortProxy->setCategoryFilter(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-    for (int i = 0; i < ui->categoriesList->count(); ++i) {
-      if (ui->categoriesList->item(i)->data(Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-        ui->categoriesList->setCurrentRow(i);
+    for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
+      if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+        ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
         break;
       }
     }
@@ -3458,9 +3610,9 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   if (m_ModsToUpdate <= 0) {
     statusBar()->hide();
     m_ModListSortProxy->setCategoryFilter(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-    for (int i = 0; i < ui->categoriesList->count(); ++i) {
-      if (ui->categoriesList->item(i)->data(Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-        ui->categoriesList->setCurrentRow(i);
+    for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
+      if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+        ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
         break;
       }
     }

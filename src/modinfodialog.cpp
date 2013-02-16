@@ -67,6 +67,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 {
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
+  this->setWindowModality(Qt::WindowModal);
 
   m_UTF8Codec = QTextCodec::codecForName("utf-8");
 
@@ -179,8 +180,8 @@ void ModInfoDialog::refreshLists()
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
       QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
-      bool ignore;
-      if ((*iter)->getOrigin(ignore) == m_Origin->getID()) {
+      bool archive;
+      if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
         std::vector<int> alternatives = (*iter)->getAlternatives();
         if (!alternatives.empty()) {
           std::wostringstream altString;
@@ -197,13 +198,14 @@ void ModInfoDialog::refreshLists()
           item->setData(0, Qt::UserRole, fileName);
           item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives[0]).getName()));
           item->setData(1, Qt::UserRole + 1, alternatives[0]);
+          item->setData(1, Qt::UserRole + 2, archive);
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
         } else {// otherwise don't display the file
           ++numNonConflicting;
         }
       } else {
-        FilesOrigin &realOrigin = m_Directory->getOriginByID((*iter)->getOrigin(ignore));
+        FilesOrigin &realOrigin = m_Directory->getOriginByID((*iter)->getOrigin(archive));
         QStringList fields(relativeName);
         fields.append(ToQString(realOrigin.getName()));
         QTreeWidgetItem *item = new QTreeWidgetItem(fields);
@@ -1161,8 +1163,7 @@ bool ModInfoDialog::unhideFile(const QString &oldName)
 void ModInfoDialog::hideConflictFile()
 {
   if (hideFile(m_ConflictsContextItem->data(0, Qt::UserRole).toString())) {
-    int originID = m_ConflictsContextItem->data(1, Qt::UserRole + 1).toInt();
-    emit originModified(originID);
+    emit originModified(m_Origin->getID());
     refreshLists();
   }
 }
@@ -1171,8 +1172,7 @@ void ModInfoDialog::hideConflictFile()
 void ModInfoDialog::unhideConflictFile()
 {
   if (unhideFile(m_ConflictsContextItem->data(0, Qt::UserRole).toString())) {
-    int originID = m_ConflictsContextItem->data(1, Qt::UserRole + 1).toInt();
-    emit originModified(originID);
+    emit originModified(m_Origin->getID());
     refreshLists();
   }
 }
@@ -1186,16 +1186,15 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
   if (m_ConflictsContextItem != NULL) {
     // offer to hide/unhide file, but not for files from archives
 //    if (!m_ConflictsContextItem->data(0, Qt::UserRole + 1).toBool()) {
-    if (true) {
+    if (!m_ConflictsContextItem->data(0, Qt::UserRole + 2).toBool()) {
       if (m_ConflictsContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
         menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFile()));
       } else {
         menu.addAction(tr("Hide"), this, SLOT(hideConflictFile()));
       }
     }
+    menu.exec(ui->overwriteTree->mapToGlobal(pos));
   }
-
-  menu.exec(ui->overwriteTree->mapToGlobal(pos));
 }
 
 

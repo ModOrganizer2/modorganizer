@@ -55,7 +55,7 @@
           <number>1</number>
          </property>
          <item>
-          <widget class="QListWidget" name="categoriesList">
+          <widget class="QTreeWidget" name="categoriesList">
            <property name="minimumSize">
             <size>
              <width>100</width>
@@ -71,6 +71,14 @@
            <property name="contextMenuPolicy">
             <enum>Qt::CustomContextMenu</enum>
            </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>

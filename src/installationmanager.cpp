@@ -679,7 +679,7 @@ bool EndsWith(LPCWSTR string, LPCWSTR subString)
 
 bool InstallationManager::installFomodInternal(DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
                                                int modID, const QString &version, const QString &newestVersion, int categoryID,
-                                               QString &modName, bool &manualRequest)
+                                               QString &modName, bool nameGuessed, bool &manualRequest)
 {
   qDebug("treating as fomod archive");
 
@@ -740,7 +740,7 @@ bool InstallationManager::installFomodInternal(DirectoryTree *&baseNode, const Q
 
   bool success = false;
   try {
-    FomodInstallerDialog dialog(modName, fomodPath);
+    FomodInstallerDialog dialog(modName, nameGuessed, fomodPath);
 
     FileData* const *data;
     size_t size;
@@ -924,6 +924,7 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
+  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
@@ -955,6 +956,7 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
 
     if (modName.isEmpty()) {
       modName = guessedModName;
+      nameGuessed = true;
     }
   }
   fixModName(modName);
@@ -1120,7 +1122,7 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
         } else {
           if (installFomodInternal(baseNode, fomodPath, modsDirectory,
                                    modID, version, newestVersion, categoryID,
-                                   modName, manualRequest)) {
+                                   modName, nameGuessed, manualRequest)) {
             success = true;
           }
         }

@@ -113,7 +113,7 @@ void BainComplexInstallerDialog::on_manualBtn_clicked()
 
 void BainComplexInstallerDialog::on_packageBtn_clicked()
 {
-  TextViewer viewer(this);
+  TextViewer viewer("package.txt", this);
   viewer.setDescription("");
   viewer.addFile(QDir::tempPath().append("/package.txt"), false);
   viewer.exec();

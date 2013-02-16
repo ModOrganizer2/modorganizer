@@ -100,7 +100,8 @@ void EditExecutablesDialog::on_addButton_clicked()
   m_ExecutablesList.addExecutable(titleEdit->text(), QDir::fromNativeSeparators(binaryEdit->text()),
         argumentsEdit->text(), QDir::fromNativeSeparators(workingDirEdit->text()),
         (closeCheckBox->checkState() == Qt::Checked) ? DEFAULT_CLOSE : DEFAULT_STAY,
-        ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "");
+        ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
+        true, false);
 
   resetInput();
   refreshExecutablesWidget();

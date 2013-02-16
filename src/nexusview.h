@@ -74,15 +74,21 @@ protected:
 
   virtual bool eventFilter(QObject *obj, QEvent *event);
 
+  virtual void contextMenuEvent(QContextMenuEvent *event);
+
 private slots:
 
   void urlChanged(const QUrl &url);
+
+  void openPageExternal();
+  void openLinkExternal();
 
 private:
 
   QString m_FindPattern;
   bool m_MiddleClick;
   int m_LastSeenModID;
+  QUrl m_ContextURL;
 
 };
 

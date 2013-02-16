@@ -510,7 +510,6 @@ int DownloadManager::getModID(int index) const
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     throw MyException(tr("invalid index"));
   }
-
   return m_ActiveDownloads.at(index)->m_ModID;
 }
 

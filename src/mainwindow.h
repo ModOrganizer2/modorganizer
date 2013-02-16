@@ -202,7 +202,8 @@ private:
   bool checkForProblems(QString &problemDescription);
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
-  void addFilterItem(const QString &name, int categoryID);
+  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);
+  void addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
 
   void setCategoryListVisible(bool visible);
 
@@ -216,6 +217,8 @@ private:
   HANDLE nextChildProcess();
 
   bool errorReported(QString &logFile);
+
+  QIcon iconForExecutable(const QString &filePath);
 
 private:
 
@@ -314,6 +317,7 @@ private slots:
   void hideFile();
   void unhideFile();
 
+  void linkToolbar();
   void linkDesktop();
   void linkMenu();
 
@@ -386,6 +390,9 @@ private slots:
 
   void enableVisibleMods();
   void disableVisibleMods();
+  void exportModListCSV();
+
+  void startExeAction();
 
 private slots: // ui slots
   // actions
@@ -402,7 +409,7 @@ private slots: // ui slots
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_btnRefreshData_clicked();
   void on_btnSave_clicked();
-  void on_categoriesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_categoriesList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_compactBox_toggled(bool checked);
   void on_conflictsCheckBox_toggled(bool checked);

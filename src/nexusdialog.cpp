@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 NexusDialog::NexusDialog(NXMAccessManager *accessManager, QWidget *parent)
   : QDialog(parent), ui(new Ui::NexusDialog),
+    m_ModUrlExp(QString("http://([a-zA-Z0-9]*).nexusmods.com/mods/(\\d+)"), Qt::CaseInsensitive),
     m_AccessManager(accessManager),
     m_Tutorial(this, "NexusDialog")
 {
@@ -54,7 +55,6 @@ NexusDialog::NexusDialog(NXMAccessManager *accessManager, QWidget *parent)
   m_LoadProgress = this->findChild<QProgressBar*>("loadProgress");
 
   connect(m_Tabs, SIGNAL(tabCloseRequested(int)), this, SLOT(tabCloseRequested(int)));
-
   m_Tutorial.registerControl();
 }
 
@@ -111,9 +111,15 @@ NexusView *NexusDialog::getCurrentView()
 }
 
 
-void NexusDialog::urlChanged(const QUrl&)
+void NexusDialog::urlChanged(const QUrl &url)
 {
+  NexusView *sendingView = qobject_cast<NexusView*>(sender());
   NexusView *currentView = getCurrentView();
+  if ((m_ModUrlExp.indexIn(url.toString()) != -1) &&
+      (sendingView == currentView)) {
+    ui->modIDEdit->setText(m_ModUrlExp.cap(2));
+  }
+
   if (currentView != NULL) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
@@ -314,6 +320,10 @@ void NexusDialog::on_browserTabWidget_currentChanged(QWidget *current)
   if (currentView != NULL) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
+  }
+
+  if (m_ModUrlExp.indexIn(currentView->url().toString()) != -1) {
+    ui->modIDEdit->setText(m_ModUrlExp.cap(2));
   }
 }
 

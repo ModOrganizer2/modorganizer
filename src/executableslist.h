@@ -39,6 +39,7 @@ struct Executable {
   QString m_WorkingDirectory;
 
   bool m_Custom;
+  bool m_Toolbar;
 };
 Q_DECLARE_METATYPE(Executable)
 
@@ -84,6 +85,15 @@ public:
   const Executable &find(const QString &tilte) const;
 
   /**
+   * @brief find an executable by its name
+   *
+   * @param title the title of the executable to look up
+   * @return the executable
+   * @exception runtime_error will throw an exception if the name is not correct
+   **/
+  Executable &find(const QString &tilte);
+
+  /**
    * @brief determine if an executable exists
    * @param title the title of the executable to look up
    * @return true if the executable exists, false otherwise
@@ -104,7 +114,7 @@ public:
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID);
+  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID, bool custom, bool toolbar);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path

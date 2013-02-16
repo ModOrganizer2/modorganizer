@@ -183,23 +183,28 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 }
 
 
-bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
+bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
 {
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-
   if (!m_CurrentFilter.isEmpty() &&
-      !modInfo->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+      !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
     return false;
   }
 
-  bool modEnabled = m_Profile != NULL ? m_Profile->modEnabled(row) : false;
   return ((m_CategoryFilter == CategoryFactory::CATEGORY_NONE) ||
-      ((m_CategoryFilter < CategoryFactory::CATEGORY_SPECIAL_FIRST) && (modInfo->categorySet(m_CategoryFilter))) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CHECKED) && modEnabled) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UNCHECKED) && !modEnabled) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) && modInfo->updateAvailable()) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY) && (modInfo->getCategories().size() == 0)) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CONFLICT) && (hasConflictFlag(modInfo->getFlags()))));
+      ((m_CategoryFilter < CategoryFactory::CATEGORY_SPECIAL_FIRST) && (info->categorySet(m_CategoryFilter))) ||
+      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CHECKED) && enabled) ||
+      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UNCHECKED) && !enabled) ||
+      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) && info->updateAvailable()) ||
+      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY) && (info->getCategories().size() == 0)) ||
+      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CONFLICT) && (hasConflictFlag(info->getFlags()))));
+}
+
+
+bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
+{
+  bool modEnabled = m_Profile != NULL ? m_Profile->modEnabled(row) : false;
+
+  return filterMatches(ModInfo::getByIndex(row), modEnabled);
 }
 
 

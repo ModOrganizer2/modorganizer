@@ -28,7 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 QDataStream &operator<<(QDataStream &out, const Executable &obj)
 {
   out << obj.m_Title << obj.m_BinaryInfo.absoluteFilePath() << obj.m_Arguments << obj.m_CloseMO
-      << obj.m_SteamAppID << obj.m_WorkingDirectory << obj.m_Custom;
+      << obj.m_SteamAppID << obj.m_WorkingDirectory << obj.m_Custom << obj.m_Toolbar;
   return out;
 }
 
@@ -37,7 +37,8 @@ QDataStream &operator>>(QDataStream &in, Executable &obj)
   QString binaryTemp;
   int closeStyleTemp;
   in >> obj.m_Title >> binaryTemp >> obj.m_Arguments >> closeStyleTemp
-     >> obj.m_SteamAppID >> obj.m_WorkingDirectory >> obj.m_Custom;
+     >> obj.m_SteamAppID >> obj.m_WorkingDirectory >> obj.m_Custom >> obj.m_Toolbar;
+
   obj.m_CloseMO = (CloseMOStyle)closeStyleTemp;
   obj.m_BinaryInfo.setFile(binaryTemp);
   return in;
@@ -98,6 +99,17 @@ const Executable &ExecutablesList::find(const QString &title) const
 }
 
 
+Executable &ExecutablesList::find(const QString &title)
+{
+  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
+    if (iter->m_Title == title) {
+      return *iter;
+    }
+  }
+  throw std::runtime_error("invalid name");
+}
+
+
 Executable *ExecutablesList::findExe(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
@@ -128,7 +140,8 @@ void ExecutablesList::addExecutable(const Executable &executable)
 
 
 void ExecutablesList::addExecutable(const QString &title, const QString &executableName, const QString &arguments,
-                                    const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID)
+                                    const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID,
+                                    bool custom, bool toolbar)
 {
   QFileInfo file(executableName);
   Executable *existingExe = findExe(title);
@@ -139,7 +152,8 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     existingExe->m_Arguments = arguments;
     existingExe->m_WorkingDirectory = workingDirectory;
     existingExe->m_SteamAppID = steamAppID;
-    existingExe->m_Custom = true;
+    existingExe->m_Custom = custom;
+    existingExe->m_Toolbar = toolbar;
   } else {
     Executable newExe;
     newExe.m_Title = title;
@@ -149,6 +163,7 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = true;
+    newExe.m_Toolbar = toolbar;
     m_Executables.push_back(newExe);
   }
 }
@@ -189,6 +204,7 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = false;
+    newExe.m_Toolbar = false;
     m_Executables.push_back(newExe);
   }
 }

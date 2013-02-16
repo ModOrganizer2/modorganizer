@@ -149,6 +149,7 @@ private:
   TutorialControl m_Tutorial;
 
   QString m_Url;
+  QRegExp m_ModUrlExp;
 
   QTabWidget *m_Tabs;
   NexusView *m_View;

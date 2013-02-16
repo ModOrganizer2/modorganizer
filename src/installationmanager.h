@@ -162,7 +162,7 @@ private:
   bool installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory);
   bool installFomodInternal(DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
                             int modID, const QString &version, const QString &newestVersion,
-                            int categoryID, QString &modName, bool &manualRequest);
+                            int categoryID, QString &modName, bool nameGuessed, bool &manualRequest);
   QString generateBackupName(const QString &directoryName);
 
   bool ensureValidModName(QString &name);

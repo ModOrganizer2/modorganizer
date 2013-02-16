@@ -373,7 +373,9 @@ int main(int argc, char *argv[])
                                     settings.value("arguments").toString(),
                                     settings.value("workingDirectory", "").toString(),
                                     closeMO,
-                                    settings.value("steamAppID", "").toString());
+                                    settings.value("steamAppID", "").toString(),
+                                    settings.value("custom", true).toBool(),
+                                    settings.value("toolbar", false).toBool());
     }
 
     settings.endArray();

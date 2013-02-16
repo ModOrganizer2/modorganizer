@@ -176,6 +176,8 @@ public:
    */
   static ModInfo::Ptr createFrom(const QDir &dir, DirectoryEntry **directoryStructure);
 
+  virtual bool isRegular() const { return false; }
+
   /**
    * @brief test if there is a newer version of the mod
    *

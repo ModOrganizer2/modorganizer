@@ -55,8 +55,8 @@ bool PagesDescending(QGroupBox *LHS, QGroupBox *RHS)
 }
 
 
-FomodInstallerDialog::FomodInstallerDialog(const QString &modName, const QString &fomodPath, QWidget *parent)
-  : QDialog(parent), ui(new Ui::FomodInstallerDialog), m_FomodPath(fomodPath), m_Manual(false)
+FomodInstallerDialog::FomodInstallerDialog(const QString &modName, bool nameWasGuessed, const QString &fomodPath, QWidget *parent)
+  : QDialog(parent), ui(new Ui::FomodInstallerDialog), m_NameWasGuessed(nameWasGuessed), m_FomodPath(fomodPath), m_Manual(false)
 {
   ui->setupUi(this);
   ui->nameEdit->setText(modName);
@@ -65,6 +65,20 @@ FomodInstallerDialog::FomodInstallerDialog(const QString &modName, const QString
 FomodInstallerDialog::~FomodInstallerDialog()
 {
   delete ui;
+}
+
+
+int FomodInstallerDialog::bomOffset(const QByteArray &buffer)
+{
+  static const unsigned char BOM_UTF8[] = { 0xEF, 0xBB, 0xBF };
+  static const unsigned char BOM_UTF16BE[] = { 0xFE, 0xFF };
+  static const unsigned char BOM_UTF16LE[] = { 0xFF, 0xFE };
+
+  if (buffer.startsWith(reinterpret_cast<const char*>(BOM_UTF8))) return 3;
+  if (buffer.startsWith(reinterpret_cast<const char*>(BOM_UTF16BE)) ||
+      buffer.startsWith(reinterpret_cast<const char*>(BOM_UTF16LE))) return 2;
+
+  return 0;
 }
 
 #pragma message("implement module dependencies->file dependencies")
@@ -77,7 +91,7 @@ void FomodInstallerDialog::initData()
       // nmm allows files with wrong encoding and of course there are now files with broken
       // so, let's do as nmm does and ignore the standard. yay
       QByteArray header = file.readLine();
-      if (strncmp(header.constData(), "<?", 2) != 0) {
+      if (strncmp(header.constData() + bomOffset(header), "<?", 2) != 0) {
         // not a header, rewind
         file.seek(0);
       }
@@ -99,7 +113,8 @@ void FomodInstallerDialog::initData()
     }
     // nmm allows files with wrong encoding and of course there are now files that are broken
     QByteArray header = file.readLine();
-    if (strncmp(header.constData(), "<?", 2) != 0) {
+
+    if (strncmp(header.constData() + bomOffset(header), "<?", 2) != 0) {
       // not a header, rewind
       if (!file.seek(0)) {
         qCritical("failed to rewind file");
@@ -350,7 +365,9 @@ void FomodInstallerDialog::parseInfo(const QByteArray &data)
     switch (reader.readNext()) {
       case QXmlStreamReader::StartElement: {
         if (reader.name() == "Name") {
-          ui->nameEdit->setText(readContent(reader));
+          if (ui->nameEdit->text().isEmpty() || m_NameWasGuessed) {
+            ui->nameEdit->setText(readContent(reader));
+          }
         } else if (reader.name() == "Author") {
           ui->authorLabel->setText(readContent(reader));
         } else if (reader.name() == "Version") {

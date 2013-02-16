@@ -47,6 +47,16 @@ void NexusView::urlChanged(const QUrl &url)
   }
 }
 
+void NexusView::openPageExternal()
+{
+  ::ShellExecuteW(NULL, L"open", ToWString(url().toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+}
+
+void NexusView::openLinkExternal()
+{
+  ::ShellExecuteW(NULL, L"open", ToWString(m_ContextURL.toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+}
+
 
 QWebView *NexusView::createWindow(QWebPage::WebWindowType)
 {
@@ -84,4 +94,25 @@ bool NexusView::eventFilter(QObject *obj, QEvent *event)
     }
   }
   return QWebView::eventFilter(obj, event);
+}
+
+
+void NexusView::contextMenuEvent(QContextMenuEvent *event)
+{
+  if (!page()->swallowContextMenuEvent(event)) {
+    QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
+
+    QMenu *menu = page()->createStandardContextMenu();
+    QAction *openExternalAction = new QAction("Open in external browser", menu);
+    if (r.linkUrl().isEmpty()) {
+      connect(openExternalAction, SIGNAL(triggered()), this, SLOT(openPageExternal()));
+    } else {
+      m_ContextURL = r.linkUrl();
+      connect(openExternalAction, SIGNAL(triggered()), this, SLOT(openLinkExternal()));
+    }
+
+    menu->addSeparator();
+    menu->addAction(openExternalAction);
+    menu->exec(mapToGlobal(event->pos()));
+  }
 }

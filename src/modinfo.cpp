@@ -713,10 +713,11 @@ ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
     for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
       const std::vector<int> &alternatives = (*iter)->getAlternatives();
       if (alternatives.size() == 0) {
+        // no alternatives -> no conflict
         regular = true;
       } else {
         for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-          // don't treat files overwritten in data as "conflict"+
+          // don't treat files overwritten in data as "conflict"
           if (*altIter != dataID) {
             bool ignore = false;
             if ((*iter)->getOrigin(ignore) == origin.getID()) {

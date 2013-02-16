@@ -52,6 +52,8 @@ public:
    **/
   void disableAllVisible();
 
+  bool filterMatches(ModInfo::Ptr info, bool enabled) const;
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
