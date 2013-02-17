@@ -59,7 +59,7 @@ public:
    * @param baseDirectory the root directory structure representing the virtual data directory
    * @todo the profile is not used? If it was, we should pass the Profile-object instead
    **/
-  void refresh(const QString &profileName, const DirectoryEntry &baseDirectory, const QString &pluginsFile, const QString &loadOrderFile, const QString &lockedOrderFile);
+  void refresh(const QString &profileName, const MOShared::DirectoryEntry &baseDirectory, const QString &pluginsFile, const QString &loadOrderFile, const QString &lockedOrderFile);
 
   /**
    * @brief enable a plugin based on its name
@@ -117,7 +117,7 @@ public:
    *       in different mods can also have different load orders which makes this very intransparent
    * @note also stores to disk the list of locked esps
    **/
-  bool saveLoadOrder(DirectoryEntry &directoryStructure);
+  bool saveLoadOrder(MOShared::DirectoryEntry &directoryStructure);
 
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }

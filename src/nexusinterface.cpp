@@ -27,6 +27,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using QtJson::Json;
 
+using namespace MOBase;
+using namespace MOShared;
+
 
 NexusBridge::NexusBridge()
 {

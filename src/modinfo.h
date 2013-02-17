@@ -43,7 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * to manage the mod collection
  *
  **/
-class ModInfo : public QObject, public IModInterface
+class ModInfo : public QObject, public MOBase::IModInterface
 {
 
   Q_OBJECT
@@ -101,7 +101,7 @@ public:
   /**
    * @brief read the mod directory and Mod ModInfo objects for all subdirectories
    **/
-  static void updateFromDisc(const QString &modDirectory, DirectoryEntry **directoryStructure);
+  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 
@@ -174,7 +174,7 @@ public:
    * @param dir directory to create from
    * @return pointer to the info-structure of the newly created/added mod
    */
-  static ModInfo::Ptr createFrom(const QDir &dir, DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFrom(const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
 
   virtual bool isRegular() const { return false; }
 
@@ -240,7 +240,7 @@ public:
    * @brief set/change the version of this mod
    * @param version new version of the mod
    */
-  virtual void setVersion(const VersionInfo &version);
+  virtual void setVersion(const MOBase::VersionInfo &version);
 
   /**
    * @brief set the newest version of this mod on the nexus
@@ -252,7 +252,7 @@ public:
    * @todo this function should be made obsolete. All queries for mod information should go through
    *       this class so no public function for this change is required
    **/
-  virtual void setNewestVersion(const VersionInfo &version) = 0;
+  virtual void setNewestVersion(const MOBase::VersionInfo &version) = 0;
 
   /**
    * @brief changes/updates the nexus description text
@@ -304,14 +304,14 @@ public:
   /**
    * @return version object for machine based comparisons
    **/
-  virtual VersionInfo getVersion() const { return m_Version; }
+  virtual MOBase::VersionInfo getVersion() const { return m_Version; }
 
   /**
    * @brief getter for the newest version number of this mod
    *
    * @return newest version of the mod
    **/
-  virtual VersionInfo getNewestVersion() const = 0;
+  virtual MOBase::VersionInfo getNewestVersion() const = 0;
 
   /**
    * @brief getter for the nexus mod id
@@ -454,7 +454,7 @@ protected:
   int m_PrimaryCategory;
   std::set<int> m_Categories;
 
-  VersionInfo m_Version;
+  MOBase::VersionInfo m_Version;
 
 private:
 
@@ -553,7 +553,7 @@ public:
    *
    * @param version the new version to use
    **/
-  void setVersion(const VersionInfo &version);
+  void setVersion(const MOBase::VersionInfo &version);
 
   /**
    * @brief set the newest version of this mod on the nexus
@@ -565,7 +565,7 @@ public:
    * @todo this function should be made obsolete. All queries for mod information should go through
    *       this class so no public function for this change is required
    **/
-  void setNewestVersion(const VersionInfo &version) { m_NewestVersion = version; }
+  void setNewestVersion(const MOBase::VersionInfo &version) { m_NewestVersion = version; }
 
   /**
    * @brief changes/updates the nexus description text
@@ -612,7 +612,7 @@ public:
    *
    * @return newest version of the mod
    **/
-  VersionInfo getNewestVersion() const { return m_NewestVersion; }
+  MOBase::VersionInfo getNewestVersion() const { return m_NewestVersion; }
 
   /**
    * @brief getter for the installation file
@@ -727,7 +727,7 @@ private:
 
 protected:
 
-  ModInfoRegular(const QDir &path, DirectoryEntry **directoryStructure);
+  ModInfoRegular(const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 private:
 
@@ -743,13 +743,13 @@ private:
   int m_NexusID;
 
   bool m_MetaInfoChanged;
-  VersionInfo m_NewestVersion;
+  MOBase::VersionInfo m_NewestVersion;
 
   EEndorsedState m_EndorsedState;
 
   NexusBridge m_NexusBridge;
 
-  DirectoryEntry **m_DirectoryStructure;
+  MOShared::DirectoryEntry **m_DirectoryStructure;
 
 };
 
@@ -777,7 +777,7 @@ public:
 
 private:
 
-  ModInfoBackup(const QDir &path, DirectoryEntry **directoryStructure);
+  ModInfoBackup(const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 };
 
@@ -797,7 +797,7 @@ public:
   virtual bool setName(const QString&) { return false; }
   virtual void setNotes(const QString&) {}
   virtual void setNexusID(int) {}
-  virtual void setNewestVersion(const VersionInfo&) {}
+  virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void setNexusDescription(const QString&) {}
   virtual void setIsEndorsed(bool) {}
   virtual bool remove() { return false; }
@@ -805,7 +805,7 @@ public:
   virtual QString name() const { return tr("Overwrite"); }
   virtual QString notes() const { return ""; }
   virtual QString absolutePath() const;
-  virtual VersionInfo getNewestVersion() const { return ""; }
+  virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
   virtual QString getInstallationFile() const { return ""; }
   virtual int getFixedPriority() const { return INT_MAX; }
   virtual int getNexusID() const { return -1; }

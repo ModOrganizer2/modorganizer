@@ -378,9 +378,9 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <widget class="LineEditClear" name="modFilterEdit">
+           <widget class="MOBase::LineEditClear" name="modFilterEdit">
             <property name="placeholderText">
-             <string>Name filter</string>
+             <string>Namefilter</string>
             </property>
            </widget>
           </item>
@@ -908,7 +908,7 @@ p, li { white-space: pre-wrap; }
             <item>
              <layout class="QVBoxLayout" name="downloadLayout">
               <item>
-               <widget class="LineEditClear" name="downloadFilterEdit">
+               <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
                 <property name="placeholderText">
                  <string>Filter</string>
                 </property>
@@ -1205,7 +1205,7 @@ Right now this has very limited functionality</string>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>LineEditClear</class>
+   <class>MOBase::LineEditClear</class>
    <extends>QLineEdit</extends>
    <header>lineeditclear.h</header>
   </customwidget>

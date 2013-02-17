@@ -47,7 +47,7 @@ SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
     }
     if ((m_SharedMem.error() != QSharedMemory::NoError) &&
         (m_SharedMem.error() != QSharedMemory::AlreadyExists)) {
-      throw MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
+      throw MOBase::MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
     }
   } else {
     m_PrimaryInstance = true;

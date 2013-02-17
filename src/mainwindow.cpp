@@ -91,6 +91,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <TlHelp32.h>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
 
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
@@ -2883,7 +2886,7 @@ void MainWindow::fixMods_clicked()
     selectedItem->setData(Qt::UserRole, temp);
   }
 
-  const SaveGameGamebryo *save = qvariant_cast<SaveGameGamebryo*>(selectedItem->data(Qt::UserRole));
+  const SaveGameGamebryo *save = getSaveGame(selectedItem);
 
   // collect the list of missing plugins
   std::map<QString, std::vector<QString> > missingPlugins;

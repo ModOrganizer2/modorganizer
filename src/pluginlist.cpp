@@ -44,6 +44,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
 
 bool ByName(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   return LHS.m_Name.toUpper() < RHS.m_Name.toUpper();

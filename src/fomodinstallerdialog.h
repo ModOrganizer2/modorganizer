@@ -98,7 +98,7 @@ public:
    * @param tree input tree. (TODO isn't this the same as the tree passed in the constructor?)
    * @return DataTree* a new tree with only the selected options and directories arranged correctly. The caller takes custody of this pointer!
    **/
-  DirectoryTree *updateTree(DirectoryTree *tree);
+  MOBase::DirectoryTree *updateTree(MOBase::DirectoryTree *tree);
 
 protected:
 
@@ -170,7 +170,7 @@ private:
   static PluginType getPluginType(const QString &typeString);
   static bool byPriority(const FileDescriptor *LHS, const FileDescriptor *RHS);
 
-  bool copyFileIterator(DirectoryTree *sourceTree, DirectoryTree *destinationTree, FileDescriptor *descriptor);
+  bool copyFileIterator(MOBase::DirectoryTree *sourceTree, MOBase::DirectoryTree *destinationTree, FileDescriptor *descriptor);
   void readFileList(QXmlStreamReader &reader, std::vector<FileDescriptor*> &fileList);
   void readPluginType(QXmlStreamReader &reader, Plugin &plugin);
   void readConditionFlags(QXmlStreamReader &reader, Plugin &plugin);
@@ -190,10 +190,10 @@ private:
   bool testVisible(int pageIndex);
   bool nextPage();
   void activateCurrentPage();
-  void moveTree(DirectoryTree::Node *target, DirectoryTree::Node *source);
-  DirectoryTree::Node *findNode(DirectoryTree::Node *node, const QString &path, bool create);
-  void copyLeaf(DirectoryTree::Node *sourceTree, const QString &sourcePath,
-                DirectoryTree::Node *destinationTree, const QString &destinationPath);
+  void moveTree(MOBase::DirectoryTree::Node *target, MOBase::DirectoryTree::Node *source);
+  MOBase::DirectoryTree::Node *findNode(MOBase::DirectoryTree::Node *node, const QString &path, bool create);
+  void copyLeaf(MOBase::DirectoryTree::Node *sourceTree, const QString &sourcePath,
+                MOBase::DirectoryTree::Node *destinationTree, const QString &destinationPath);
 
 private:
 

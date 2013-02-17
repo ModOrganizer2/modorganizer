@@ -28,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include <boost/bind.hpp>
 
+namespace MOShared {
+
 
 
 class OriginConnection {
@@ -797,3 +799,4 @@ void FileRegister::sortOrigins()
     iter->second.sortOrigins();
   }
 }
+} // namespace MOShared

@@ -28,7 +28,7 @@ namespace Ui {
 class TransferSavesDialog;
 }
 
-class TransferSavesDialog : public TutorableDialog
+class TransferSavesDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
   

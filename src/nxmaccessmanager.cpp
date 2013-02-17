@@ -30,6 +30,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 NXMAccessManager::NXMAccessManager(QObject *parent)
   : QNetworkAccessManager(parent), m_LoginReply(NULL)
 {

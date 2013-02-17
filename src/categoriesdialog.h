@@ -30,7 +30,7 @@ class CategoriesDialog;
 /**
  * @brief Dialog that allows users to configure mod categories
  **/
-class CategoriesDialog : public TutorableDialog
+class CategoriesDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
   

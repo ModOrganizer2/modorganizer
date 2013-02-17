@@ -32,10 +32,12 @@ typedef string tstring;
 #endif
 }
 
+extern void log(const char* format, ...);
+
+namespace MOShared {
+
 void reportError(LPCSTR format, ...);
 void reportError(LPCWSTR format, ...);
-
-extern void log(const char* format, ...);
 
 std::string getCurrentErrorStringA();
 std::wstring getCurrentErrorStringW();
@@ -45,3 +47,5 @@ std::wstring getCurrentErrorStringW();
 #else
 #define getCurrentErrorString getCurrentErrorStringA
 #endif
+
+} // namespace MOShared

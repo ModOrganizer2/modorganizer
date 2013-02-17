@@ -41,7 +41,7 @@ void MOApplication::setStyleFile(const QString &styleName)
   }
   // set new stylesheet or clear it
   if (styleName.length() != 0) {
-    QString styleSheetName = applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
+    QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
     m_StyleWatcher.addPath(styleSheetName);
     updateStyle(styleSheetName);
   } else {

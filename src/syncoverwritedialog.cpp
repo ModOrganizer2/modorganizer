@@ -28,6 +28,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 SyncOverwriteDialog::SyncOverwriteDialog(const QString &path, DirectoryEntry *directoryStructure, QWidget *parent)
   : TutorableDialog("SyncOverwrite", parent),
     ui(new Ui::SyncOverwriteDialog), m_SourcePath(path), m_DirectoryStructure(directoryStructure)

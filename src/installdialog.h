@@ -42,7 +42,7 @@ namespace Ui {
  * a dialog presented to manually define how a mod is to be installed. It provides
  * a tree view of the file contents that can modified directly
  **/
-class InstallDialog : public TutorableDialog
+class InstallDialog : public MOBase::TutorableDialog
 {
     Q_OBJECT
 
@@ -54,7 +54,7 @@ public:
    * @param modName name of the mod. The name can be modified through the dialog
    * @param parent parent widget
    **/
-  explicit InstallDialog(DirectoryTree *tree, const QString &modName, QWidget *parent = 0);
+  explicit InstallDialog(MOBase::DirectoryTree *tree, const QString &modName, QWidget *parent = 0);
   ~InstallDialog();
 
   /**
@@ -69,7 +69,7 @@ public:
    *
    * @return modified data structure. This is a NEW datatree object for which the caller takes custody
    **/
-  DirectoryTree *getDataTree() const;
+  MOBase::DirectoryTree *getDataTree() const;
 
 signals:
 
@@ -89,11 +89,11 @@ private:
 //  void recursiveCheck(QTreeWidgetItem *item);
 //  void recursiveUncheck(QTreeWidgetItem *item);
 
-  void addDataToTree(DirectoryTree::Node *node, QTreeWidgetItem *treeItem);
+  void addDataToTree(MOBase::DirectoryTree::Node *node, QTreeWidgetItem *treeItem);
 
-  void mapDataNode(DirectoryTree::Node *node, QTreeWidgetItem *baseItem) const;
+  void mapDataNode(MOBase::DirectoryTree::Node *node, QTreeWidgetItem *baseItem) const;
 
-  static QString getFullPath(const DirectoryTree::Node *node);
+  static QString getFullPath(const MOBase::DirectoryTree::Node *node);
 
 private slots:
 
@@ -113,7 +113,7 @@ private slots:
 private:
   Ui::InstallDialog *ui;
 
-  DirectoryTree *m_DataTree;
+  MOBase::DirectoryTree *m_DataTree;
 
   ArchiveTree *m_Tree;
   QLabel *m_ProblemLabel;

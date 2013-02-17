@@ -30,6 +30,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCryptographicHash>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 LoadMechanism::LoadMechanism()
   : m_SelectedMechanism(LOAD_MODORGANIZER)
 {

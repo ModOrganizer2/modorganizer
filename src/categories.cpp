@@ -27,6 +27,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QList>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 CategoryFactory* CategoryFactory::s_Instance = NULL;
 
 

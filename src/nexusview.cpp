@@ -28,6 +28,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shlwapi.h>
 #include "utility.h"
 
+
+using namespace MOBase;
+
+
 NexusView::NexusView(QWidget *parent)
   : QWebView(parent), m_LastSeenModID(0)
 {

@@ -38,6 +38,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
 std::map<int, unsigned int> ModInfo::s_ModsByModID;

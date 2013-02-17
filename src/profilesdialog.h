@@ -33,7 +33,7 @@ namespace Ui {
 /**
  * @brief Dialog that can be used to create/delete/modify profiles
  **/
-class ProfilesDialog : public TutorableDialog
+class ProfilesDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
 

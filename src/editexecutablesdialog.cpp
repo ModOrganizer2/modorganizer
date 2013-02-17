@@ -23,6 +23,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
 EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
   : TutorableDialog("EditExecutables", parent),
   ui(new Ui::EditExecutablesDialog), m_ExecutablesList(executablesList)

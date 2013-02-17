@@ -156,7 +156,7 @@ static unsigned long long genHash(const char* fileName)
 
 
 DummyBSA::DummyBSA()
-  : m_Version(GameInfo::instance().getBSAVersion()), m_FolderName(""), m_FileName("dummy.dds"),
+  : m_Version(MOShared::GameInfo::instance().getBSAVersion()), m_FolderName(""), m_FileName("dummy.dds"),
     m_TotalFileNameLength(0)
 {
 }
@@ -176,7 +176,7 @@ void DummyBSA::writeHeader(QFile& file)
                     0xDE, 0xAD, 0xBE, 0xEF  // file flags - insert later
                   };
 
-  writeUlong(header, 4, GameInfo::instance().getBSAVersion());
+  writeUlong(header, 4, MOShared::GameInfo::instance().getBSAVersion());
   writeUlong(header, 12, 0x01 | 0x02); // has directories and has files.
   writeUlong(header, 24, m_FolderName.length() + 1); // empty folder name
   writeUlong(header, 28, m_TotalFileNameLength);   // single character file name

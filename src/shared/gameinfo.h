@@ -27,6 +27,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+namespace MOShared {
+
 enum CloseMOStyle {
   DEFAULT_CLOSE,
   DEFAULT_STAY,
@@ -183,5 +185,7 @@ private:
 
 };
 
+
+} // namespace MOShared
 
 #endif // GAMEINFO_H

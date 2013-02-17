@@ -24,4 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <string>
 
+namespace MOShared {
+
 void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dllname, const std::wstring &profileName, int logLevel);
+
+}

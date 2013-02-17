@@ -34,6 +34,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 ProfilesDialog::ProfilesDialog(const QString &gamePath, QWidget *parent)
   : TutorableDialog("Profiles", parent), ui(new Ui::ProfilesDialog), m_GamePath(gamePath), m_FailState(false)
 {

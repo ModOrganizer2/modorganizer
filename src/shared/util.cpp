@@ -22,6 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <algorithm>
 
+namespace MOShared {
+
 
 bool FileExists(const std::wstring &filename)
 {
@@ -117,3 +119,4 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
   }
 }
 
+} // namespace MOShared

@@ -27,6 +27,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended, HANDLE& processHandle, HANDLE& threadHandle)
 {
   STARTUPINFO si;

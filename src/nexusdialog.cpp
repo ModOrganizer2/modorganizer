@@ -33,6 +33,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWebHistory>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
 NexusDialog::NexusDialog(NXMAccessManager *accessManager, QWidget *parent)
   : QDialog(parent), ui(new Ui::NexusDialog),
     m_ModUrlExp(QString("http://([a-zA-Z0-9]*).nexusmods.com/mods/(\\d+)"), Qt::CaseInsensitive),

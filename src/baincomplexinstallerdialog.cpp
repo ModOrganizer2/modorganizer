@@ -23,6 +23,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDir>
 
+
+using namespace MOBase;
+
+
 BainComplexInstallerDialog::BainComplexInstallerDialog(DirectoryTree *tree, const QString &modName, bool hasPackageTXT, QWidget *parent)
   : TutorableDialog("BainInstaller", parent), ui(new Ui::BainComplexInstallerDialog), m_Manual(false)
 {

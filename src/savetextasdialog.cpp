@@ -37,7 +37,7 @@ void SaveTextAsDialog::on_saveAsBtn_clicked()
   if (!fileName.isEmpty()) {
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
-      reportError(tr("failed to open \"%1\" for writing").arg(fileName));
+      MOBase::reportError(tr("failed to open \"%1\" for writing").arg(fileName));
       return;
     }
 

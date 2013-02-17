@@ -66,6 +66,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 void removeOldLogfiles()
 {
   QFileInfoList files = QDir(ToQString(GameInfo::instance().getLogDir())).entryInfoList(QStringList("ModOrganizer*.log"),

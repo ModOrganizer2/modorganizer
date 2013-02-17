@@ -146,7 +146,7 @@ private:
 
   Ui::NexusDialog *ui;
 
-  TutorialControl m_Tutorial;
+  MOBase::TutorialControl m_Tutorial;
 
   QString m_Url;
   QRegExp m_ModUrlExp;

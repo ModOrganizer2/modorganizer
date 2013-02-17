@@ -27,6 +27,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <shlobj.h>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 TransferSavesDialog::TransferSavesDialog(const Profile &profile, QWidget *parent)
   : TutorableDialog("TransferSaves", parent), ui(new Ui::TransferSavesDialog), m_Profile(profile)
 {

@@ -63,7 +63,7 @@ public:
    * @param url the url to request from
    **/
   void requestDescription(int modID, QVariant userData,
-                          const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request a list of the files belonging to a mod
@@ -73,7 +73,7 @@ public:
    * @param url the url to request from
    **/
   void requestFiles(int modID, QVariant userData,
-                    const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                    const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request info about a single file of a mod
@@ -84,7 +84,7 @@ public:
    * @param url the url to request from
    **/
   void requestFileInfo(int modID, int fileID, QVariant userData,
-                       const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                       const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request the download url of a file
@@ -95,7 +95,7 @@ public:
    * @param url the url to request from
    **/
   void requestDownloadURL(int modID, int fileID, QVariant userData,
-                          const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief requestToggleEndorsement
@@ -104,7 +104,7 @@ public:
    * @param url
    */
   void requestToggleEndorsement(int modID, bool endorse, QVariant userData,
-                                const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                                const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
 signals:
 
@@ -162,7 +162,7 @@ public:
    * @return int an id to identify the request
    **/
   int requestDescription(int modID, QObject *receiver, QVariant userData,
-                         const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request nexus descriptions for multiple mods at once
@@ -173,7 +173,7 @@ public:
    * @return int an id to identify the request
    */
   int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData,
-                     const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                     const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request a list of the files belonging to a mod
@@ -185,7 +185,7 @@ public:
    * @return int an id to identify the request
    **/
   int requestFiles(int modID, QObject *receiver, QVariant userData,
-                   const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                   const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request info about a single file of a mod
@@ -198,7 +198,7 @@ public:
    * @return int an id to identify the request
    **/
   int requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData,
-                      const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                      const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief request the download url of a file
@@ -211,7 +211,7 @@ public:
    * @return int an id to identify the request
    **/
   int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData,
-                         const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @brief toggle endorsement state of the mod
@@ -223,7 +223,7 @@ public:
    * @return int an id to identify the request
    */
   int requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData,
-                               const QString &url = ToQString(GameInfo::instance().getNexusInfoUrl()));
+                               const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
    * @param directory the directory to store cache files

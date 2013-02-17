@@ -28,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <boost/assign.hpp>
 
+namespace MOShared {
+
 
 OblivionInfo::OblivionInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
   : GameInfo(omoDirectory, gameDirectory)
@@ -137,7 +139,7 @@ void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults
       source << getGameDirectory() << L"\\oblivion_default.ini";
     } else {
       source << getMyGamesDirectory() << L"Oblivion";
-      if (::FileExists(source.str(), L"oblivion.ini")) {
+      if (FileExists(source.str(), L"oblivion.ini")) {
         source << L"\\oblivion.ini";
       } else {
         source.str(L"");
@@ -250,3 +252,4 @@ std::vector<ExecutableInfo> OblivionInfo::getExecutables()
 
   return result;
 }
+} // namespace MOShared

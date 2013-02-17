@@ -24,6 +24,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 DirectoryRefresher::DirectoryRefresher()
   : m_DirectoryStructure(NULL)
 {

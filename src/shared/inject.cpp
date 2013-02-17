@@ -31,6 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include "error_report.h"
 
+namespace MOShared {
+
 
 struct TParameters {
   char dllname[MAX_PATH];
@@ -140,3 +142,5 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
     throw windows_error("failed to overwrite thread context");
   }
 }
+
+} // namespace MOShared

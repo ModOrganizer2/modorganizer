@@ -57,7 +57,7 @@ namespace Ui {
 
 class QToolButton;
 
-class MainWindow : public QMainWindow, public IOrganizer
+class MainWindow : public QMainWindow, public MOBase::IOrganizer
 {
   Q_OBJECT
 
@@ -91,14 +91,14 @@ public:
 
   void loadPlugins();
 
-  virtual IGameInfo &gameInfo() const;
+  virtual MOBase::IGameInfo &gameInfo() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;
-  virtual VersionInfo appVersion() const;
-  virtual IModInterface *getMod(const QString &name);
-  virtual IModInterface *createMod(const QString &name);
-  virtual bool removeMod(IModInterface *mod);
-  virtual void modDataChanged(IModInterface *mod);
+  virtual MOBase::VersionInfo appVersion() const;
+  virtual MOBase::IModInterface *getMod(const QString &name);
+  virtual MOBase::IModInterface *createMod(const QString &name);
+  virtual bool removeMod(MOBase::IModInterface *mod);
+  virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
@@ -143,8 +143,8 @@ protected:
 private:
 
   void actionToToolButton(QAction *&sourceAction);
-  bool verifyPlugin(IPlugin *plugin);
-  void registerPluginTool(IPluginTool *tool);
+  bool verifyPlugin(MOBase::IPlugin *plugin);
+  void registerPluginTool(MOBase::IPluginTool *tool);
   bool registerPlugin(QObject *pluginObj);
 
   void updateToolBar();
@@ -163,7 +163,7 @@ private:
   HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
 
-  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly);
+  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
   void refreshDirectoryStructure();
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
@@ -174,7 +174,7 @@ private:
   void displayModInformation(int row, int tab = 0);
   void testExtractBSA(int modIndex);
 
-  void writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry);
+  void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
 
   void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
@@ -224,7 +224,7 @@ private:
 
   Ui::MainWindow *ui;
 
-  TutorialControl m_Tutorial;
+  MOBase::TutorialControl m_Tutorial;
 
   QString m_ExeName;
 
@@ -232,7 +232,7 @@ private:
 
   QThread m_RefresherThread;
   DirectoryRefresher m_DirectoryRefresher;
-  DirectoryEntry *m_DirectoryStructure;
+  MOShared::DirectoryEntry *m_DirectoryStructure;
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
   QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
@@ -281,9 +281,9 @@ private:
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
 
-  IGameInfo *m_GameInfo;
+  MOBase::IGameInfo *m_GameInfo;
 
-  std::vector<IPluginDiagnose*> m_DiagnosisPlugins;
+  std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
 
 private slots:
 

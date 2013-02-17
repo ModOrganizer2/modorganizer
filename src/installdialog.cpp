@@ -29,6 +29,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 
 
+using namespace MOBase;
+
+
 InstallDialog::InstallDialog(DirectoryTree *tree, const QString &modName, QWidget *parent)
   : TutorableDialog("InstallDialog", parent), ui(new Ui::InstallDialog),
     m_DataTree(tree), m_TreeRoot(NULL), m_DataRoot(NULL), m_TreeSelection(NULL),

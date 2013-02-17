@@ -23,6 +23,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <Windows.h>
 
+
+using namespace MOBase;
+
+
 void reportError(QString message)
 {
   if (QApplication::topLevelWidgets().count() != 0) {

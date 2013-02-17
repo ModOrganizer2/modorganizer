@@ -31,7 +31,7 @@ namespace Ui {
 /**
  * @brief Dialog to manage the list of executables
  **/
-class EditExecutablesDialog : public TutorableDialog
+class EditExecutablesDialog : public MOBase::TutorableDialog
 {
     Q_OBJECT
 

@@ -31,6 +31,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shellapi.h>
 
 
+using namespace MOBase;
+
+
 bool ControlsAscending(QAbstractButton *LHS, QAbstractButton *RHS)
 {
   return LHS->text() < RHS->text();

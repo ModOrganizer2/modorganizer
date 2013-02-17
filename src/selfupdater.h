@@ -76,7 +76,7 @@ public:
   /**
    * @return current version of Mod Organizer
    **/
-  VersionInfo getVersion() const { return m_MOVersion; }
+  MOBase::VersionInfo getVersion() const { return m_MOVersion; }
 
 public slots:
 
@@ -127,7 +127,7 @@ private slots:
 private:
 
   QWidget *m_Parent;
-  VersionInfo m_MOVersion;
+  MOBase::VersionInfo m_MOVersion;
   NexusInterface *m_Interface;
   int m_UpdateRequestID;
   QString m_NewestVersion;

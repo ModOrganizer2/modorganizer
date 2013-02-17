@@ -31,7 +31,7 @@ namespace Ui {
 /**
  * @brief Dialog that is used to batch activate/deactivate mods and plugins
  **/
-class ActivateModsDialog : public TutorableDialog
+class ActivateModsDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
 

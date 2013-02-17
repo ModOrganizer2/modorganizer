@@ -29,6 +29,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 SettingsDialog::SettingsDialog(QWidget *parent)
   : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog)
 {

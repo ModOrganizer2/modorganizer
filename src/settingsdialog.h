@@ -34,7 +34,7 @@ namespace Ui {
  * settings managed by the "Settings" class, this offers a button to open the
  * CategoriesDialog
  **/
-class SettingsDialog : public TutorableDialog
+class SettingsDialog : public MOBase::TutorableDialog
 {
     Q_OBJECT
 
@@ -42,7 +42,7 @@ public:
   explicit SettingsDialog(QWidget *parent = 0);
   ~SettingsDialog();
 
-  void addPlugins(const std::vector<IPlugin*> &plugins);
+  void addPlugins(const std::vector<MOBase::IPlugin*> &plugins);
 
 public slots:
 

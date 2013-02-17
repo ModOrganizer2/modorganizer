@@ -21,6 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <stdio.h>
 
+namespace MOShared {
+
 
 void reportError(LPCSTR format, ...)
 {
@@ -97,3 +99,4 @@ std::wstring getCurrentErrorStringW()
     return result;
   }
 }
+} // namespace MOShared

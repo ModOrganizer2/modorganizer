@@ -34,7 +34,7 @@ struct Executable {
   QString m_Title;
   QFileInfo m_BinaryInfo;
   QString m_Arguments;
-  CloseMOStyle m_CloseMO;
+  MOShared::CloseMOStyle m_CloseMO;
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
@@ -114,7 +114,7 @@ public:
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID, bool custom, bool toolbar);
+  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID, bool custom, bool toolbar);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -144,7 +144,7 @@ private:
 
   Executable *findExe(const QString &title);
 
-  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID);
+  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID);
 
 private:
 

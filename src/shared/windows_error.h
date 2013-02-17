@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+namespace MOShared {
+
 class windows_error : public std::runtime_error {
 public:
   windows_error(const std::string& message, int errorcode = -1)
@@ -36,5 +38,7 @@ private:
 private:
   int m_ErrorCode;
 };
+
+} // namespace MOShared
 
 #endif // WINDOWS_ERROR_H

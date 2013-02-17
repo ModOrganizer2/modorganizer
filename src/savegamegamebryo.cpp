@@ -27,6 +27,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <limits>
 
 
+using namespace MOShared;
+
+
 template <typename T>
 void FileRead(QFile &file, T &value)
 {

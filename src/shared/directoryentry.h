@@ -31,6 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include "util.h"
 
+namespace MOShared {
+
 
 class DirectoryEntry;
 class OriginConnection;
@@ -309,5 +311,7 @@ private:
 
 };
 
+
+} // namespace MOShared
 
 #endif // DIRECTORYENTRY_H

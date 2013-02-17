@@ -199,7 +199,7 @@ void CategoriesDialog::fillTable()
     idItem->setData(Qt::DisplayRole, category.m_ID);
 
     QScopedPointer<QTableWidgetItem> nameItem(new QTableWidgetItem(category.m_Name));
-    QScopedPointer<QTableWidgetItem> nexusIDItem(new QTableWidgetItem(VectorJoin(category.m_NexusIDs, ",")));
+    QScopedPointer<QTableWidgetItem> nexusIDItem(new QTableWidgetItem(MOBase::VectorJoin(category.m_NexusIDs, ",")));
     QScopedPointer<QTableWidgetItem> parentIDItem(new QTableWidgetItem());
     parentIDItem->setData(Qt::DisplayRole, category.m_ParentID);
 

@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gameinfo.h"
 
+namespace MOShared {
+
 
 class Fallout3Info : public GameInfo
 {
@@ -90,5 +92,7 @@ private:
   static bool identifyGame(const std::wstring &searchPath);
 
 };
+
+} // namespace MOShared
 
 #endif // FALLOUT3INFO_H

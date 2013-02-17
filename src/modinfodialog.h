@@ -51,7 +51,7 @@ class QTreeView;
  * this is a larger dialog used to visualise information abount the mod.
  * @todo this would probably a good place for a plugin-system
  **/
-class ModInfoDialog : public TutorableDialog
+class ModInfoDialog : public MOBase::TutorableDialog
 {
     Q_OBJECT
 
@@ -76,7 +76,7 @@ public:
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
- explicit ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, QWidget *parent = 0);
+ explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, QWidget *parent = 0);
   ~ModInfoDialog();
 
   /**
@@ -209,8 +209,8 @@ private:
 
   QTreeWidgetItem *m_ConflictsContextItem;
 
-  const DirectoryEntry *m_Directory;
-  FilesOrigin *m_Origin;
+  const MOShared::DirectoryEntry *m_Directory;
+  MOShared::FilesOrigin *m_Origin;
   QTextCodec *m_UTF8Codec;
 
 };

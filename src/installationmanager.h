@@ -42,7 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * All other archives are managed through the manual "InstallDialog"
  * @todo this may be a good place to support plugins
  **/
-class InstallationManager : public QObject, public IInstallationManager
+class InstallationManager : public QObject, public MOBase::IInstallationManager
 {
   Q_OBJECT
 
@@ -82,13 +82,13 @@ public:
    **/
   static QString getErrorString(Archive::Error errorCode);
 
-  void installManual(DirectoryTree::Node *baseNode, DirectoryTree *filesTree, bool &hasIniTweaks, QString &modName, int categoryID, const QString &modsDirectory, QString newestVersion, QString version, int modID, bool success, bool manualRequest);
+  void installManual(MOBase::DirectoryTree::Node *baseNode, MOBase::DirectoryTree *filesTree, bool &hasIniTweaks, QString &modName, int categoryID, const QString &modsDirectory, QString newestVersion, QString version, int modID, bool success, bool manualRequest);
 
   /**
    * @brief register an installer-plugin
    * @param the installer to register
    */
-  void registerInstaller(IPluginInstaller *installer);
+  void registerInstaller(MOBase::IPluginInstaller *installer);
 
   /**
    * @return list of file extensions we can install
@@ -123,7 +123,7 @@ public:
    * @param archiveFile path to the archive to install
    * @return the installation result
    */
-  virtual IPluginInstaller::EInstallResult installArchive(const QString &modName, const QString &archiveName);
+  virtual MOBase::IPluginInstaller::EInstallResult installArchive(const QString &modName, const QString &archiveName);
 
 private:
 
@@ -134,22 +134,22 @@ private:
 
   void dummyProgressFile(LPCWSTR) {}
 
-  DirectoryTree *createFilesTree();
+  MOBase::DirectoryTree *createFilesTree();
 
   // remap all files in the archive to the directory structure represented by baseNode
   // files not present in baseNode are disabled
-  void mapToArchive(const DirectoryTree::Node *baseNode);
+  void mapToArchive(const MOBase::DirectoryTree::Node *baseNode);
 
   // recursive worker function for mapToArchive
-  void mapToArchive(const DirectoryTree::Node *node, std::wstring path, FileData * const *data);
+  void mapToArchive(const MOBase::DirectoryTree::Node *node, std::wstring path, FileData * const *data);
   bool unpackPackageTXT();
   bool unpackSingleFile(const QString &fileName);
 
 
-  bool isSimpleArchiveTopLayer(const DirectoryTree::Node *node, bool bainStyle);
-  DirectoryTree::Node *getSimpleArchiveBase(DirectoryTree *dataTree);
-  bool checkBainPackage(DirectoryTree *dataTree);
-  bool checkFomodPackage(DirectoryTree *dataTree, QString &offset, bool &xmlInstaller);
+  bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
+  MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
+  bool checkBainPackage(MOBase::DirectoryTree *dataTree);
+  bool checkFomodPackage(MOBase::DirectoryTree *dataTree, QString &offset, bool &xmlInstaller);
   bool checkNMMInstaller();
 
   void fixModName(QString &name);
@@ -160,7 +160,7 @@ private:
                  int modID, const QString &version, const QString &newestVersion, int categoryID);
 
   bool installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory);
-  bool installFomodInternal(DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
+  bool installFomodInternal(MOBase::DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
                             int modID, const QString &version, const QString &newestVersion,
                             int categoryID, QString &modName, bool nameGuessed, bool &manualRequest);
   QString generateBackupName(const QString &directoryName);
@@ -174,7 +174,7 @@ private slots:
 private:
 
   struct ByPriority {
-    bool operator()(IPluginInstaller *LHS, IPluginInstaller *RHS) const
+    bool operator()(MOBase::IPluginInstaller *LHS, MOBase::IPluginInstaller *RHS) const
     {
       return LHS->priority() > RHS->priority();
     }
@@ -191,7 +191,7 @@ private:
 
   QWidget *m_ParentWidget;
 
-  std::vector<IPluginInstaller*> m_Installers;
+  std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
   QString m_NCCPath;

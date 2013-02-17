@@ -30,25 +30,25 @@ namespace Ui {
 class SyncOverwriteDialog;
 }
 
-class SyncOverwriteDialog : public TutorableDialog
+class SyncOverwriteDialog : public MOBase::TutorableDialog
 {
   Q_OBJECT
   
 public:
-  explicit SyncOverwriteDialog(const QString &path, DirectoryEntry *directoryStructure, QWidget *parent = 0);
+  explicit SyncOverwriteDialog(const QString &path, MOShared::DirectoryEntry *directoryStructure, QWidget *parent = 0);
   ~SyncOverwriteDialog();
 
   void apply(const QString &modDirectory);
 private:
-  void refresh(const QString &path, DirectoryEntry *directoryStructure);
-  void readTree(const QString &path, DirectoryEntry *directoryStructure, QTreeWidgetItem *subTree);
+  void refresh(const QString &path, MOShared::DirectoryEntry *directoryStructure);
+  void readTree(const QString &path, MOShared::DirectoryEntry *directoryStructure, QTreeWidgetItem *subTree);
   void applyTo(QTreeWidgetItem *item, const QString &path, const QString &modDirectory);
 
 private:
 
   Ui::SyncOverwriteDialog *ui;
   QString m_SourcePath;
-  DirectoryEntry *m_DirectoryStructure;
+  MOShared::DirectoryEntry *m_DirectoryStructure;
 
 };
 

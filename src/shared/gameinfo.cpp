@@ -31,6 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <cassert>
 
+namespace MOShared {
+
 
 GameInfo* GameInfo::s_Instance = NULL;
 
@@ -202,3 +204,4 @@ std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
   return temp;
 }
 
+} // namespace MOShared

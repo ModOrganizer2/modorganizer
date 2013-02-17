@@ -51,7 +51,7 @@ public:
    * 
    * @return updated directory structure
    **/
-  DirectoryEntry *getDirectoryStructure();
+  MOShared::DirectoryEntry *getDirectoryStructure();
 
   /**
    * @brief sets up the mods to be included in the directory structure
@@ -71,7 +71,7 @@ public:
    * @brief remove files from the directory structure that are known to be irrelevant to the game
    * @param the structure to clean
    */
-  static void cleanStructure(DirectoryEntry *structure);
+  static void cleanStructure(MOShared::DirectoryEntry *structure);
 
   /**
    * @brief add files for a mod to the directory structure, including bsas
@@ -80,7 +80,7 @@ public:
    * @param directory
    * @param priorityDir
    */
-  static void addModToStructure(DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory);
+  static void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory);
 
 public slots:
 
@@ -98,7 +98,7 @@ signals:
 private:
 
   std::vector<std::tuple<QString, QString, int> > m_Mods;
-  DirectoryEntry *m_DirectoryStructure;
+  MOShared::DirectoryEntry *m_DirectoryStructure;
   QMutex m_RefreshLock;
 
 };

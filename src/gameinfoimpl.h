@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 
 
-class GameInfoImpl : public IGameInfo
+class GameInfoImpl : public MOBase::IGameInfo
 {
 public:
   GameInfoImpl();

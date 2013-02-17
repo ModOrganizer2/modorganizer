@@ -28,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <boost/assign.hpp>
 
+namespace MOShared {
+
 
 FalloutNVInfo::FalloutNVInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
   : GameInfo(omoDirectory, gameDirectory)
@@ -156,7 +158,7 @@ void FalloutNVInfo::createProfile(const std::wstring &directory, bool useDefault
       source << getGameDirectory() << L"\\fallout_default.ini";
     } else {
       source << getMyGamesDirectory() << L"\\FalloutNV";
-      if (::FileExists(source.str(), L"fallout.ini")) {
+      if (FileExists(source.str(), L"fallout.ini")) {
         source << L"\\fallout.ini";
       } else {
         source.str(L"");
@@ -244,3 +246,4 @@ std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
 
   return result;
 }
+} // namespace MOShared

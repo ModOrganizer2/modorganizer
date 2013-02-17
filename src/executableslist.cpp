@@ -25,6 +25,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 QDataStream &operator<<(QDataStream &out, const Executable &obj)
 {
   out << obj.m_Title << obj.m_BinaryInfo.absoluteFilePath() << obj.m_Arguments << obj.m_CloseMO

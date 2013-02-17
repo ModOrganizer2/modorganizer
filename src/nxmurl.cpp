@@ -27,7 +27,7 @@ NXMUrl::NXMUrl(const QString &url)
   QRegExp exp("nxm://([a-z]+)/mods/(\\d+)/files/(\\d+)", Qt::CaseInsensitive);
   exp.indexIn(url);
   if (exp.captureCount() != 3) {
-    throw MyException(tr("invalid nxm-link: %1").arg(url));
+    throw MOBase::MyException(tr("invalid nxm-link: %1").arg(url));
   }
   m_ModId = exp.cap(2).toInt();
   m_FileId = exp.cap(3).toInt();

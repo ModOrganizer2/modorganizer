@@ -58,7 +58,7 @@ public:
    * @brief register plugin to be configurable
    * @param plugin the plugin to register
    */
-  void registerPlugin(IPlugin *plugin);
+  void registerPlugin(MOBase::IPlugin *plugin);
 
   /**
    * displays a SettingsDialog that allows the user to change settings. If the
@@ -69,7 +69,7 @@ public:
   /**
    * set up the settings for the specified plugins
    **/
-  void addPluginSettings(const std::vector<IPlugin*> &plugins);
+  void addPluginSettings(const std::vector<MOBase::IPlugin*> &plugins);
 
   /**
    * @return true if the user wants unchecked plugins (esp, esm) should be hidden from
@@ -214,7 +214,7 @@ private:
 
   LoadMechanism m_LoadMechanism;
 
-  std::vector<IPlugin*> m_Plugins;
+  std::vector<MOBase::IPlugin*> m_Plugins;
 
   QMap<QString, QMap<QString, QVariant> > m_PluginSettings;
 

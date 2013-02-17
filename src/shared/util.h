@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+namespace MOShared {
+
 
 static const int MAXPATH_UNICODE = 32767;
 
@@ -42,5 +44,7 @@ std::wstring &ToLower(std::wstring &text);
 std::wstring ToLower(const std::wstring &text);
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
+
+} // namespace MOShared
 
 #endif // UTIL_H

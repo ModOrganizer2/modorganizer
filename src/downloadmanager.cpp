@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using QtJson::Json;
+using namespace MOBase;
 
 
 // TODO limit number of downloads, also display download during nxm requests, store modid/fileid with downloads

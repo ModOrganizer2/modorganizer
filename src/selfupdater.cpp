@@ -37,6 +37,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <util.h>
 
 
+using namespace MOBase;
+using namespace MOShared;
+
+
 typedef Archive* (*CreateArchiveType)();
 
 

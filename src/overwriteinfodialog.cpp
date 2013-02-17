@@ -26,6 +26,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shlwapi.h>
 
 
+using namespace MOBase;
+
+
 class MyFileSystemModel : public QFileSystemModel {
 
 public:

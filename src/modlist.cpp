@@ -44,6 +44,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 
 
+using namespace MOBase;
+
+
 ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent), m_Profile(NULL), m_Modified(false),
     m_FontMetrics(QFont())

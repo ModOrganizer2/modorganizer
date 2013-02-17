@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include <sstream>
 
+namespace MOShared {
+
 std::string windows_error::constructMessage(const std::string& input, int inErrorCode)
 {
   std::ostringstream finalMessage;
@@ -43,3 +45,5 @@ std::string windows_error::constructMessage(const std::string& input, int inErro
   ::SetLastError(errorCode); // restore error code because FormatMessage might have modified it
   return finalMessage.str();
 }
+
+} // namespace MOShared

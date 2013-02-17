@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <boost/assign.hpp>
 
+namespace MOShared {
+
 
 SkyrimInfo::SkyrimInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
   : GameInfo(omoDirectory, gameDirectory)
@@ -206,7 +208,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
         source << getGameDirectory() << L"\\skyrim_default.ini";
       } else {
         source << getMyGamesDirectory() << L"\\Skyrim";
-        if (::FileExists(source.str(), L"skyrim.ini")) {
+        if (FileExists(source.str(), L"skyrim.ini")) {
           source << L"\\skyrim.ini";
         } else {
           source.str(L"");
@@ -276,3 +278,4 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
 
   return result;
 }
+} // namespace MOShared
