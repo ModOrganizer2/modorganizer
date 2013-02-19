@@ -187,6 +187,11 @@ public:
    */
   QVariant pluginSetting(const QString &pluginName, const QString &key) const;
 
+  /**
+   * @return short code of the configured language (corresponding to the translation files)
+   */
+  QString language();
+
 private:
 
   QString obfuscate(const QString &password) const;

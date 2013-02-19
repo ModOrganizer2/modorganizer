@@ -77,7 +77,12 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
     }
     m_NameLabel->setText(name);
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-    if (state >= DownloadManager::STATE_READY) {
+    if (state == DownloadManager::STATE_PAUSED) {
+      m_DoneLabel->setVisible(true);
+      m_Progress->setVisible(false);
+      m_DoneLabel->setText(tr("Paused"));
+      m_DoneLabel->setForegroundRole(QPalette::Link);
+    } else if (state >= DownloadManager::STATE_READY) {
       m_DoneLabel->setVisible(true);
       m_Progress->setVisible(false);
       if (state == DownloadManager::STATE_INSTALLED) {
@@ -193,6 +198,8 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
       QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
       if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY) {
         emit installDownload(sourceIndex.row());
+      } else if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) {
+        emit resumeDownload(sourceIndex.row());
       }
       return true;
     } else if (event->type() == QEvent::MouseButtonRelease) {

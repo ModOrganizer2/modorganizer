@@ -1560,9 +1560,7 @@ void MainWindow::readSettings()
   setCategoryListVisible(filtersVisible);
   ui->displayCategoriesBtn->setChecked(filtersVisible);
 
-
-  QString language = settings.value("Settings/language", QLocale::system().name()).toString();
-  languageChange(language);
+  languageChange(m_Settings.language());
   int selectedExecutable = settings.value("selected_executable").toInt();
   setExecutableIndex(selectedExecutable);
 }

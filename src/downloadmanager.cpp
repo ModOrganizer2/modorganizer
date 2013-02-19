@@ -200,6 +200,7 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QString &fileName,
   newDownload->m_ModID = modID;
   newDownload->m_FileID = fileID;
   newDownload->m_NexusInfo = nexusInfo;
+  newDownload->m_State = STATE_STARTED;
 
   QString baseName = fileName;
 
@@ -286,7 +287,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   }
 
   if (download->m_State == STATE_PAUSED) {
-    filePath.append(UNFINISHED);
+    filePath = download->m_Output.fileName();
   }
 
   if (deleteFile) {
@@ -317,6 +318,7 @@ public:
 private:
   DownloadManager *m_Manager;
 };
+
 
 bool DownloadManager::ByName(int LHS, int RHS)
 {

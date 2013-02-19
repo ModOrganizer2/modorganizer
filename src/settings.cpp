@@ -238,6 +238,22 @@ QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) 
   return *iterSetting;
 }
 
+QString Settings::language()
+{
+  QString result = m_Settings.value("Settings/language", "").toString();
+  if (result.isEmpty()) {
+    QStringList languagePreferences = QLocale::system().uiLanguages();
+    if (languagePreferences.length() > 0) {
+      // the users most favoritest language
+      result = languagePreferences.at(0);
+    } else {
+      // fallback system locale
+      result = QLocale::system().name();
+    }
+  }
+  return result;
+}
+
 
 void Settings::addLanguages(QComboBox *languageBox)
 {
@@ -260,7 +276,6 @@ void Settings::addLanguages(QComboBox *languageBox)
           languageString = "Chinese (simplified)";
         }
       }
-
       languageBox->addItem(QString("%1").arg(languageString), exp.cap(1));
     }
   }
@@ -387,7 +402,13 @@ void Settings::query(QWidget *parent)
 
   {
     addLanguages(languageBox);
-    int currentID = languageBox->findData(m_Settings.value("Settings/language", QLocale::system().name()).toString());
+    QString languageCode = language();
+    int currentID = languageBox->findData(languageCode);
+    // I made a mess. :( Most languages are stored with only the iso country code (2 characters like "de") but chinese
+    // with the exact language variant (zh_TW) so I have to search for both variants
+    if (currentID == -1) {
+      currentID = languageBox->findData(languageCode.mid(0, 2));
+    }
     if (currentID != -1) {
       languageBox->setCurrentIndex(currentID);
     }
