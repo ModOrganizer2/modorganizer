@@ -144,6 +144,7 @@ void DownloadManager::refreshList()
     DownloadInfo *info = new DownloadInfo;
     info->m_State = STATE_READY;
     if (file.endsWith(UNFINISHED)) {
+#pragma message("files not correctly named _unfinished")
       info->m_FileName = file.mid(0, file.length() - strlen(UNFINISHED));
       info->m_State = STATE_PAUSED;
     } else {
@@ -587,7 +588,6 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
     return;
   }
   int index = 0;
-
   DownloadInfo *info = findDownload(this->sender(), &index);
   if (info != NULL) {
     if (info->m_State == STATE_CANCELING) {
@@ -855,7 +855,7 @@ void DownloadManager::downloadFinished()
           (reply->error() != QNetworkReply::NoError) ||
           reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("text", Qt::CaseInsensitive)) {
         emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
-        info->m_State = STATE_CANCELING;
+        info->m_State = STATE_PAUSING;
       }
     }
 

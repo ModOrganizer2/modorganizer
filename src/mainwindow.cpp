@@ -125,8 +125,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   updateProblemsButton();
 
   updateToolBar();
-  ui->toolBar->blockSignals(true);
-  createHelpWidget();
+//  ui->toolBar->blockSignals(true);
 
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
 
@@ -300,6 +299,7 @@ void MainWindow::updateToolBar()
   }
 
   actionToToolButton(ui->actionHelp);
+  createHelpWidget();
 
   foreach (QAction *action, ui->toolBar->actions()) {
     if (action->isSeparator()) {

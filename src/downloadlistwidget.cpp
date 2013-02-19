@@ -71,7 +71,18 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
     }
     m_NameLabel->setText(name);
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-    if (state >= DownloadManager::STATE_READY) {
+    if (state == DownloadManager::STATE_PAUSED) {
+      QPalette labelPalette;
+      m_InstallLabel->setVisible(true);
+      m_Progress->setVisible(false);
+#if QT_VERSION >= 0x050000
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0));
+#else
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0, QApplication::UnicodeUTF8));
+#endif
+      labelPalette.setColor(QPalette::WindowText, Qt::darkRed);
+      m_InstallLabel->setPalette(labelPalette);
+    } else if (state >= DownloadManager::STATE_READY) {
       QPalette labelPalette;
       m_InstallLabel->setVisible(true);
       m_Progress->setVisible(false);
@@ -200,6 +211,8 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
       QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
       if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY) {
         emit installDownload(sourceIndex.row());
+      } else if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) {
+        emit resumeDownload(sourceIndex.row());
       }
       return true;
     } else if (event->type() == QEvent::MouseButtonRelease) {
@@ -219,7 +232,7 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
           menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
           menu.addAction(tr("Pause"), this, SLOT(issuePause()));
         } else if (state == DownloadManager::STATE_PAUSED) {
-          menu.addAction(tr("Remove"), this, SLOT(issueRemove()));
+          menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
           menu.addAction(tr("Resume"), this, SLOT(issueResume()));
         }
 
