@@ -1,0 +1,4 @@
+syntax: glob
+ModOrganizer-build-desktop*
+outputd/*
+output/*
