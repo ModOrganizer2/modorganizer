@@ -133,7 +133,7 @@ void Profile::cancelWriteModlist() const
 void Profile::writeModlistNow() const
 {
   m_SaveTimer->stop();
-#pragma message("right now, we're doing unnecessary saves. We need a flag that says that mod priority, enabled-state or name of a mod has changed")
+#pragma message("right now, this is doing unnecessary saves. Need a flag that says that mod priority, enabled-state or name of a mod has changed")
 
   QString fileName = getModlistFileName();
   QFile file(fileName);

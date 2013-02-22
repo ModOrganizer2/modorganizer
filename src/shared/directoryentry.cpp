@@ -155,7 +155,7 @@ void FilesOrigin::setPriority(int priority)
 {
   m_OriginConnection->changePriorityLookup(m_Priority, priority);
 
-    m_Priority = priority;
+  m_Priority = priority;
 }
 
 

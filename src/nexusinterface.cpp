@@ -365,7 +365,8 @@ void NexusInterface::nextRequest()
 
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-  request.setRawHeader("User-Agent", QString("Mod Organizer v0.12.0 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
+#pragma message("automatically insert the correct version number")
+  request.setRawHeader("User-Agent", QString("Mod Organizer v0.12.8 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 

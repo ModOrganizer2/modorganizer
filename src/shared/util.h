@@ -45,6 +45,9 @@ std::wstring ToLower(const std::wstring &text);
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
 
+/// Get a stack trace as a line-break separated list of function names. This only works in debug builds
+std::string GetStack();
+
 } // namespace MOShared
 
 #endif // UTIL_H

@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/shared_ptr.hpp>
 #include "util.h"
 
+
 namespace MOShared {
 
 

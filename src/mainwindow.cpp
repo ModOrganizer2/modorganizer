@@ -1616,6 +1616,8 @@ void MainWindow::storeSettings()
 
   QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
   settings.setValue("selected_executable", executableBox->currentIndex());
+
+  FileDialogMemory::save(m_Settings.directInterface());
 }
 
 
@@ -1693,9 +1695,8 @@ void MainWindow::installMod()
       *iter = "*." + *iter;
     }
 
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Choose Mod"), QString(),
-                                                    tr("Mod Archive").append(QString(" (%1)").arg(extensions.join(" "))));
+    QString fileName = FileDialogMemory::getOpenFileName("installMod", this, tr("Choose Mod"), QString(),
+                                                         tr("Mod Archive").append(QString(" (%1)").arg(extensions.join(" "))));
 
     if (fileName.length() == 0) {
       return;

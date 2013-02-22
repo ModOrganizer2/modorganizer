@@ -26,7 +26,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "fomodinstallerdialog.h"
 #include "report.h"
 #include "categories.h"
-#include <scopeguard.h>
 #include "questionboxmemory.h"
 #include "settings.h"
 #include "queryoverwritedialog.h"
@@ -35,8 +34,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugininstallercustom.h"
 #include "nexusinterface.h"
 #include "selectiondialog.h"
+#include <scopeguard.h>
 #include <installationtester.h>
 #include <gameinfo.h>
+#include <utility.h>
 #include <QFileInfo>
 #include <QLibrary>
 #include <QInputDialog>
@@ -625,7 +626,9 @@ bool InstallationManager::doInstall(const QString &modsDirectory, QString &modNa
   if ((modID != 0) || !settingsFile.contains("modid")) {
     settingsFile.setValue("modid", modID);
   }
-  if (!version.isEmpty() || !settingsFile.contains("version")) {
+  if (!settingsFile.contains("version") ||
+      (!version.isEmpty() &&
+       (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString())))) {
     settingsFile.setValue("version", version);
   }
   if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
@@ -800,7 +803,7 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
   QFile::copy(QDir::fromNativeSeparators(ToQString(gameInfo.getGameDirectory().append(L"\\").append(gameInfo.getBinaryName()))),
               binaryDestination);
 
-  ON_BLOCK_EXIT([&binaryDestination] { QFile::remove(binaryDestination); } );
+  ON_BLOCK_EXIT([&binaryDestination] { if (!QFile::remove(binaryDestination)) qCritical("failed to remove %s", qPrintable(binaryDestination)); } );
 
   SHELLEXECUTEINFOW execInfo = {0};
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
@@ -851,28 +854,31 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
 
   ::CloseHandle(execInfo.hProcess);
 
-
   if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
     bool errorOccured = false;
     { // move all installed files from the data directory one directory up
-      QDirIterator dirIter(QDir(modDirectory).absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+      QDir targetDir(modDirectory);
+
+      QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
       bool hasFiles = false;
+
       while (dirIter.hasNext()) {
         dirIter.next();
         QFileInfo fileInfo = dirIter.fileInfo();
-
-        QDir dir(fileInfo.absolutePath());
-        dir.cdUp();
-        QString newName = dir.absoluteFilePath(fileInfo.fileName());
-        if (QFile::exists(newName)) {
+        QString newName = targetDir.absoluteFilePath(fileInfo.fileName());
+        if (fileInfo.isFile() && QFile::exists(newName)) {
           if (!QFile::remove(newName)) {
             qCritical("failed to overwrite %s", qPrintable(newName));
             errorOccured = true;
           }
-        }
+        } // if it's a directory and the target exists that isn't really a problem
+
         if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
-          qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
-          errorOccured = true;
+          // moving doesn't work when merging
+          if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
+            qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
+            errorOccured = true;
+          }
         }
         hasFiles = true;
       }
@@ -1110,7 +1116,9 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
             if ((modID != 0) || !settingsFile.contains("modid")) {
               settingsFile.setValue("modid", modID);
             }
-            if (!version.isEmpty() || !settingsFile.contains("version")) {
+            if (!settingsFile.contains("version") ||
+                (!version.isEmpty() &&
+                 (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString())))) {
               settingsFile.setValue("version", version);
             }
             if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {

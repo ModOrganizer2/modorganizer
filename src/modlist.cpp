@@ -294,6 +294,7 @@ bool ModList::renameMod(int index, const QString &newName)
   emit modRenamed(oldName, newName);
 
   // invalidate the currently displayed state of this list
+#pragma message("why is this necessary? It unselects the current selection")
   notifyChange(-1);
   return true;
 }

@@ -144,7 +144,6 @@ void DownloadManager::refreshList()
     DownloadInfo *info = new DownloadInfo;
     info->m_State = STATE_READY;
     if (file.endsWith(UNFINISHED)) {
-#pragma message("files not correctly named _unfinished")
       info->m_FileName = file.mid(0, file.length() - strlen(UNFINISHED));
       info->m_State = STATE_PAUSED;
     } else {
@@ -624,6 +623,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
   metaFile.setValue("name", info->m_NexusInfo.m_Name);
   metaFile.setValue("modName", info->m_NexusInfo.m_ModName);
   metaFile.setValue("version", info->m_NexusInfo.m_Version);
+  metaFile.setValue("fileCategory", info->m_NexusInfo.m_FileCategory);
   metaFile.setValue("newestVersion", info->m_NexusInfo.m_NewestVersion);
   metaFile.setValue("category", info->m_NexusInfo.m_Category);
   metaFile.setValue("installed", info->m_State == DownloadManager::STATE_INSTALLED);

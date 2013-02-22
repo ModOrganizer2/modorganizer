@@ -19,8 +19,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "util.h"
 #include "windows_error.h"
+#include "error_report.h"
+
 #include <sstream>
 #include <algorithm>
+#include <DbgHelp.h>
 
 namespace MOShared {
 
@@ -118,5 +121,36 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
     throw;
   }
 }
+
+
+
+
+std::string GetStack()
+{
+#ifdef DEBUG
+  HANDLE process = ::GetCurrentProcess();
+  static bool firstCall = true;
+  if (firstCall) {
+    ::SymInitialize(process, NULL, TRUE);
+    firstCall = false;
+  }
+
+  LPVOID stack[32];
+  WORD frames = ::CaptureStackBackTrace(0, 100, stack, NULL);
+  SYMBOL_INFO_PACKAGE symbol;
+  symbol.si.SizeOfStruct = sizeof(SYMBOL_INFO);
+  symbol.si.MaxNameLen = MAX_SYM_NAME;
+
+  std::ostringstream stackStream;
+  for(unsigned int i = 0; i < frames; ++i) {
+    ::SymFromAddr(process, (DWORD64)(stack[i]), 0, &symbol.si);
+    stackStream << frames - i - 1 << ": " << symbol.si.Name << "\n";
+  }
+  return stackStream.str();
+#else
+  return "";
+#endif
+}
+
 
 } // namespace MOShared
