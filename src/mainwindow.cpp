@@ -441,10 +441,12 @@ void MainWindow::createHelpWidget()
   typedef std::vector<std::pair<int, QAction*> > ActionList;
 
   ActionList tutorials;
-  QDirIterator dirIter("tutorials", QStringList("*.js"), QDir::Files);
+
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
+
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
       qCritical() << "Failed to open " << fileName;
@@ -547,7 +549,7 @@ bool MainWindow::addProfile()
 
 void MainWindow::hookUpWindowTutorials()
 {
-  QDirIterator dirIter("tutorials", QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -2666,9 +2668,9 @@ void MainWindow::savePrimaryCategory()
 
 void MainWindow::checkModsForUpdates()
 {
+  statusBar()->show();
   if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
     m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
-    statusBar()->show();
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString username, password;
@@ -3298,7 +3300,7 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
 
     { // try to find java automatically
       WCHAR buffer[MAX_PATH];
-      if (FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
+      if (::FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
           qDebug("failed to determine binary type: %lu", ::GetLastError());
@@ -3682,8 +3684,12 @@ void MainWindow::loginFailed(const QString &message)
     foreach (QString url, m_PendingDownloads) {
       downloadRequestedNXM(url);
     }
+    m_PendingDownloads.clear();
+  } else {
+    MessageDialog::showMessage(tr("login failed: %1").arg(message), this);
+    m_PostLoginTasks.clear();
+    statusBar()->hide();
   }
-  m_PendingDownloads.clear();
 }
 
 
