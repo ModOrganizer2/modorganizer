@@ -79,6 +79,13 @@ std::string &ToLower(std::string &text)
   return text;
 }
 
+std::string ToLower(const std::string &text)
+{
+  std::string temp = text;
+
+  std::transform(temp.begin(), temp.end(), temp.begin(), tolower);
+  return temp;
+}
 
 std::wstring &ToLower(std::wstring &text)
 {

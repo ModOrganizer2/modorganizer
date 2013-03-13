@@ -169,7 +169,8 @@ void LoadMechanism::deactivateProxyDLL()
       }
     }
 
-    removeHintFile(QDir(gameDirectory));
+    QDir dir(gameDirectory);
+    removeHintFile(dir);
   } catch (const std::exception &e) {
     QMessageBox::critical(NULL, QObject::tr("Failed to deactivate proxy-dll loading"), e.what());
   }

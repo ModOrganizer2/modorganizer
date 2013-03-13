@@ -261,7 +261,7 @@ void ProfilesDialog::on_profilesList_currentItemChanged(QListWidgetItem *current
 
 void ProfilesDialog::on_localSavesBox_stateChanged(int state)
 {
-  Profile &currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile>();
+  Profile currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile>();
   if (currentProfile.enableLocalSaves(state == Qt::Checked)) {
     ui->transferButton->setEnabled(state == Qt::Checked);
   } else {

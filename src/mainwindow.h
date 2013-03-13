@@ -103,6 +103,7 @@ public:
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
+  void saveArchiveList();
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -197,8 +198,6 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  void checkBSAList();
-
   bool checkForProblems(QString &problemDescription);
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
@@ -277,6 +276,7 @@ private:
   QStringList m_ActiveArchives;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
+  QTimer m_CheckBSATimer;
 
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
@@ -394,6 +394,8 @@ private slots:
 
   void startExeAction();
 
+  void checkBSAList();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
@@ -425,6 +427,7 @@ private slots: // ui slots
 
   void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
+
 };
 
 #endif // MAINWINDOW_H

@@ -97,6 +97,10 @@ private:
 
   static bool identifyGame(const std::wstring &searchPath);
 
+private:
+
+  std::wstring m_AppData;
+
 };
 
 } // namespace MOShared

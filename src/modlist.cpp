@@ -145,7 +145,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else {
         if ((m_Profile->getModPriority(modIndex) == 0) && (role == Qt::DisplayRole)) {
           return tr("min");
-        } else if ((m_Profile->getModPriority(modIndex) == m_Profile->numRegularMods() - 1) &&
+        } else if ((m_Profile->getModPriority(modIndex) == static_cast<int>(m_Profile->numRegularMods()) - 1) &&
                    (role == Qt::DisplayRole)) {
           return tr("max");
         } else {

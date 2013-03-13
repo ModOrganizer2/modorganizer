@@ -98,6 +98,20 @@ void PluginListSortProxy::displayColumnSelection(const QPoint &pos)
 }
 
 
+void PluginListSortProxy::updateFilter(const QString &filter)
+{
+  m_CurrentFilter = filter;
+  invalidateFilter();
+}
+
+
+bool PluginListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
+{
+  return m_CurrentFilter.isEmpty() ||
+      sourceModel()->data(sourceModel()->index(row, 0)).toString().contains(m_CurrentFilter, Qt::CaseInsensitive);
+}
+
+
 bool PluginListSortProxy::lessThan(const QModelIndex &left,
                                    const QModelIndex &right) const
 {

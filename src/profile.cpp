@@ -130,8 +130,10 @@ void Profile::cancelWriteModlist() const
 }
 
 
-void Profile::writeModlistNow() const
+void Profile::writeModlistNow(bool onlyOnTimer) const
 {
+  if (onlyOnTimer && !m_SaveTimer->isActive()) return;
+
   m_SaveTimer->stop();
 #pragma message("right now, this is doing unnecessary saves. Need a flag that says that mod priority, enabled-state or name of a mod has changed")
 
@@ -194,11 +196,6 @@ void Profile::createTweakedIniFile()
 
 void Profile::refreshModStatus()
 {
-  // don't lose changes!
-  if (m_SaveTimer->isActive()) {
-    writeModlistNow();
-  }
-
   QFile file(getModlistFileName());
   if (!file.exists()) {
     throw MyException(QObject::tr("failed to find \"%1\"").arg(getModlistFileName()));
@@ -571,11 +568,15 @@ void Profile::deactivateInvalidation() const
       }
     }
 
+    // just to be safe...
+    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
+
     if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                       ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
         !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"0", iniFileName.c_str()) ||
         !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"ArchiveInvalidation.txt", iniFileName.c_str())) {
-      throw windows_error("failed to modify ini file");
+      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
+      throw windows_error(errorMessage.toUtf8().constData());
     }
   }
 }
@@ -598,11 +599,15 @@ void Profile::activateInvalidation(const QString& dataDirectory) const
       archives.insert(0, invalidationBSA);
     }
 
+    // just to be safe...
+    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
+
     if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                       ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
         !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", iniFileName.c_str()) ||
         !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"", iniFileName.c_str())) {
-      throw windows_error("failed to modify ini file");
+      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
+      throw windows_error(errorMessage.toUtf8().constData());
     }
 
     QString bsaFile = dataDirectory + "/" + invalidationBSA;

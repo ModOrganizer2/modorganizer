@@ -265,7 +265,7 @@ signals:
 
 public slots:
 
-  void writeModlistNow() const;
+  void writeModlistNow(bool onlyOnTimer = false) const;
 
 private:
 

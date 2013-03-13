@@ -202,6 +202,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
+  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(&m_ModList, SIGNAL(modlist_changed(int)), m_ModListSortProxy, SLOT(invalidate()));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
 
@@ -220,6 +221,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
+
+  m_CheckBSATimer.setSingleShot(true);
+  connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
   m_RefresherThread.start();
@@ -478,6 +482,27 @@ void MainWindow::createHelpWidget()
 }
 
 
+void MainWindow::saveArchiveList()
+{
+  if (m_ArchivesInit) {
+    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+    if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+      for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
+        if ((item != NULL) && (item->checkState(0) == Qt::Checked)) {
+          archiveFile.write(item->text(0).toUtf8().append("\r\n"));
+        }
+      }
+    } else {
+      reportError(tr("failed to save archives order, do you have write access "
+                     "to \"%1\"?").arg(m_CurrentProfile->getArchivesFileName()));
+    }
+    archiveFile.close();
+  } else {
+    qWarning("archive list not initialised");
+  }
+}
+
 bool MainWindow::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
@@ -503,23 +528,6 @@ bool MainWindow::saveCurrentLists()
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }
 
-  if (m_ArchivesInit) {
-    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-    if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-      for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
-        if ((item != NULL) && (item->checkState(0) == Qt::Checked)) {
-          archiveFile.write(item->text(0).toUtf8().append("\r\n"));
-        }
-      }
-    } else {
-      reportError(tr("failed to save archives order, do you have write access "
-                     "to \"%1\"?").arg(m_CurrentProfile->getArchivesFileName()));
-    }
-    archiveFile.close();
-  } else {
-    qWarning("archive list not initialised");
-  }
   return true;
 }
 
@@ -1059,6 +1067,9 @@ void MainWindow::startExeAction()
 
 void MainWindow::refreshModList()
 {
+  // don't lose changes!
+  m_CurrentProfile->writeModlistNow(true);
+
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
   m_CurrentProfile->refreshModStatus();
 
@@ -1102,7 +1113,7 @@ void MainWindow::setExecutableIndex(int index)
 void MainWindow::activateSelectedProfile()
 {
   QString profileName = ui->profileBox->currentText();
-  qDebug() << "activate profile " << profileName;
+  qDebug("activate profile \"%s\"", qPrintable(profileName));
   QString profileDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()))
                           .append("/").append(profileName);
   delete m_CurrentProfile;
@@ -1647,12 +1658,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (index == 4) {
     ui->downloadView->scrollToBottom();
   }
-}
-
-
-static QString guessModName(const QString &fileName)
-{
-  return QFileInfo(fileName).baseName();
 }
 
 
@@ -3831,7 +3836,8 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 {
-  checkBSAList();
+  saveArchiveList();
+  m_CheckBSATimer.start(500);
 }
 
 void MainWindow::on_actionProblems_triggered()

@@ -596,8 +596,17 @@ p, li { white-space: pre-wrap; }
             <string notr="true">ESPs</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
-            <property name="margin">
+            <property name="leftMargin">
              <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
             </property>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -718,6 +727,16 @@ p, li { white-space: pre-wrap; }
               <attribute name="headerStretchLastSection">
                <bool>false</bool>
               </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="MOBase::LineEditClear" name="espFilterEdit">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="placeholderText">
+               <string>Namefilter</string>
+              </property>
              </widget>
             </item>
            </layout>
