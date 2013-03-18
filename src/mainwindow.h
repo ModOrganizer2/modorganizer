@@ -171,6 +171,7 @@ private:
   void installMod(const QString &fileName);
   void installMod();
   bool modifyExecutablesDialog();
+  void modOpenNext();
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
   void displayModInformation(int row, int tab = 0);
   void testExtractBSA(int modIndex);

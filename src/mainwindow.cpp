@@ -528,6 +528,11 @@ bool MainWindow::saveCurrentLists()
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }
 
+  // ensure the archive list exists
+  if (!QFile::exists(m_CurrentProfile->getArchivesFileName())) {
+    saveArchiveList();
+  }
+
   return true;
 }
 

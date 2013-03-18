@@ -264,10 +264,6 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
     }
   }
 
-if (_wcsicmp(fileName, L"plugins.txt") == 0) {
-  log("plugins.txt expected in \"%ls\", got \"%ls\"", m_AppData.c_str(), fullPath);
-}
-
   if ((_wcsicmp(fileName, L"plugins.txt") == 0) &&
       (m_AppData.empty() || (StrStrIW(fullPath, m_AppData.c_str()) != NULL))) {
     return true;
