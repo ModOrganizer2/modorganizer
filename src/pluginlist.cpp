@@ -340,7 +340,6 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
       }
     }
   }
-
   file.close();
 }
 
@@ -530,7 +529,6 @@ void PluginList::syncLoadOrder()
 void PluginList::refreshLoadOrder()
 {
   syncLoadOrder();
-
   // set priorities according to locked load order
   std::map<int, QString> lockedLoadOrder;
   std::for_each(m_LockedOrder.begin(), m_LockedOrder.end(),
@@ -550,10 +548,16 @@ void PluginList::refreshLoadOrder()
           ++targetPrio;
         }
       }
+
+      if (static_cast<size_t>(targetPrio) >= m_ESPs.size()) {
+        continue;
+      }
+
       int temp = targetPrio;
-      if (m_ESPs[nameIter->second].m_Priority != temp) {
-        setPluginPriority(nameIter->second, temp);
-        m_ESPs[nameIter->second].m_LoadOrder = iter->first;
+      int index = nameIter->second;
+      if (m_ESPs[index].m_Priority != temp) {
+        setPluginPriority(index, temp);
+        m_ESPs[index].m_LoadOrder = iter->first;
         syncLoadOrder();
         m_Modified = true;
       }

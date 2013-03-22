@@ -48,7 +48,11 @@ QIcon IconDelegate::getFlagIcon(ModInfo::EFlag flag) const
 void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   QStyledItemDelegate::paint(painter, option, index);
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ProxyModel->mapToSource(index).row());
+  QModelIndex sourceIndex = m_ProxyModel->mapToSource(index);
+  if (!sourceIndex.isValid()) {
+    return;
+  }
+  ModInfo::Ptr info = ModInfo::getByIndex(sourceIndex.row());
   std::vector<ModInfo::EFlag> flags = info->getFlags();
 
   int x = 4;

@@ -13,7 +13,7 @@ SUBDIRS = bsatk \
 					proxydll
 
 hookdll.depends = shared
-organizer.depends = shared, uibase
+organizer.depends = shared, uibase, plugins
 
 CONFIG(debug, debug|release) {
     DESTDIR = outputd

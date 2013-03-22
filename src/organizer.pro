@@ -18,7 +18,6 @@ SOURCES += \
     syncoverwritedialog.cpp \
     spawn.cpp \
     singleinstance.cpp \
-    simpleinstalldialog.cpp \
     settingsdialog.cpp \
     settings.cpp \
     selfupdater.cpp \
@@ -53,10 +52,8 @@ SOURCES += \
     lockeddialog.cpp \
     loadmechanism.cpp \
     json.cpp \
-    installdialog.cpp \
     installationmanager.cpp \
     helper.cpp \
-    fomodinstallerdialog.cpp \
     finddialog.cpp \
     filedialogmemory.cpp \
     executableslist.cpp \
@@ -72,7 +69,6 @@ SOURCES += \
     categoriesdialog.cpp \
     categories.cpp \
     bbcode.cpp \
-    baincomplexinstallerdialog.cpp \
     archivetree.cpp \
     activatemodsdialog.cpp \
     moapplication.cpp \
@@ -80,14 +76,15 @@ SOURCES += \
     icondelegate.cpp \
     gameinfoimpl.cpp \
     csvbuilder.cpp \
-    savetextasdialog.cpp
+    savetextasdialog.cpp \
+    modlistgroupcategoriesproxy.cpp \
+    modlistgroupnexusidproxy.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
     syncoverwritedialog.h \
     spawn.h \
     singleinstance.h \
-    simpleinstalldialog.h \
     settingsdialog.h \
     settings.h \
     selfupdater.h \
@@ -121,10 +118,8 @@ HEADERS  += \
     lockeddialog.h \
     loadmechanism.h \
     json.h \
-    installdialog.h \
     installationmanager.h \
     helper.h \
-    fomodinstallerdialog.h \
     finddialog.h \
     filedialogmemory.h \
     executableslist.h \
@@ -140,7 +135,6 @@ HEADERS  += \
     categoriesdialog.h \
     categories.h \
     bbcode.h \
-    baincomplexinstallerdialog.h \
     archivetree.h \
     activatemodsdialog.h \
     moapplication.h \
@@ -148,7 +142,9 @@ HEADERS  += \
     icondelegate.h \
     gameinfoimpl.h \
     csvbuilder.h \
-    savetextasdialog.h
+    savetextasdialog.h \
+    modlistgroupcategoriesproxy.h \
+    modlistgroupnexusidproxy.h
 
 FORMS    += \
     transfersavesdialog.ui \

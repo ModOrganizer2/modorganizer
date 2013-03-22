@@ -23,9 +23,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "spawn.h"
 #include "report.h"
 #include "modlist.h"
+#include "modlistsortproxy.h"
+#include "modlistgroupcategoriesproxy.h"
+#include "modlistgroupnexusidproxy.h"
 #include "profile.h"
 #include "pluginlist.h"
-#include "installdialog.h"
 #include "profilesdialog.h"
 #include "editexecutablesdialog.h"
 #include "categories.h"
@@ -43,7 +45,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "syncoverwritedialog.h"
 #include "logbuffer.h"
 #include "downloadlistsortproxy.h"
-#include "modlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
 #include "questionboxmemory.h"
@@ -99,7 +100,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
     m_ExeName(exeName), m_OldProfileIndex(-1),
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
-    m_ModList(NexusInterface::instance()),
+    m_ModList(NexusInterface::instance()), m_ModListSortProxy(NULL), m_ModListGroupProxy(NULL),
     m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
     m_NexusDialog(NexusInterface::instance()->getAccessManager(), NULL),
     m_DownloadManager(NexusInterface::instance(), this),
@@ -129,13 +130,19 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
 
+
   // set up mod list
   m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
   m_ModListSortProxy->setSourceModel(&m_ModList);
-  ui->modList->setModel(m_ModListSortProxy);
+
+//  m_ModListGroupProxy = new ModListGroupProxy(this);
+  m_ModListGroupProxy = new QIdentityProxyModel(this);
+  m_ModListGroupProxy->setSourceModel(m_ModListSortProxy);
+
+  ui->modList->setModel(m_ModListGroupProxy);
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(m_ModListSortProxy));
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(m_ModListGroupProxy, ui->modList));
   ui->modList->header()->installEventFilter(&m_ModList);
   ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
   ui->modList->installEventFilter(&m_ModList);
@@ -1129,11 +1136,11 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     }
 
     if (ui->profileBox->currentIndex() == 0) {
-      ui->profileBox->setCurrentIndex(previousIndex);
       ProfilesDialog(m_GamePath).exec();
       while (!refreshProfiles()) {
         ProfilesDialog(m_GamePath).exec();
       }
+      ui->profileBox->setCurrentIndex(previousIndex);
     } else {
       activateSelectedProfile();
     }
@@ -1657,14 +1664,13 @@ static QString guessModName(const QString &fileName)
 void MainWindow::installMod(const QString &fileName)
 {
   bool hasIniTweaks = false;
-  QString modName;
+  GuessedValue<QString> modName;
   m_CurrentProfile->writeModlistNow();
-  if (m_InstallationManager.install(fileName, m_CurrentProfile->getPluginsFileName(), m_Settings.getModDirectory(), m_Settings.preferIntegratedInstallers(),
-                                    m_Settings.enableQuickInstaller(), modName, hasIniTweaks)) {
+  if (m_InstallationManager.install(fileName, m_Settings.getModDirectory(), modName, hasIniTweaks)) {
     MessageDialog::showMessage(tr("Installation successful"), this);
     refreshModList();
 
-    QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, modName);
+    QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
     if (posList.count() == 1) {
       ui->modList->scrollTo(posList.at(0));
     }
@@ -2252,7 +2258,7 @@ void MainWindow::refreshFilters()
 void MainWindow::renameMod_clicked()
 {
   try {
-    QModelIndex treeIdx = m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0));
+    QModelIndex treeIdx = m_ModListGroupProxy->mapFromSource(m_ModList.index(m_ContextRow, 0));
     ui->modList->setCurrentIndex(treeIdx);
     ui->modList->edit(treeIdx);
   } catch (const std::exception &e) {
@@ -2294,7 +2300,7 @@ void MainWindow::removeMod_clicked()
       QString mods;
       QStringList modNames;
       foreach (QModelIndex idx, selection->selectedRows()) {
-        QString name = ModInfo::getByIndex(m_ModListSortProxy->mapToSource(idx).row())->name();
+        QString name = ModInfo::getByIndex(m_ModListGroupProxy->mapToSource(idx).row())->name();
         mods += "<li>" + name + "</li>";
         modNames.append(name);
       }
@@ -2559,8 +2565,16 @@ void MainWindow::cancelModListEditor()
 
 void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
 {
+  if (!index.isValid()) {
+    return;
+  }
+  QModelIndex sourceIdx = m_ModListGroupProxy->mapToSource(index);
+  if (!sourceIdx.isValid()) {
+    return;
+  }
+
   try {
-    displayModInformation(m_ModListSortProxy->mapToSource(index).row());
+    displayModInformation(sourceIdx.row());
     // workaround to cancel the editor that might have opened because of
     // selection-click
     ui->modList->closePersistentEditor(index);
@@ -2794,7 +2808,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
   try {
     QTreeView *modList = findChild<QTreeView*>("modList");
 
-    m_ContextRow = m_ModListSortProxy->mapToSource(modList->indexAt(pos)).row();
+    m_ContextRow = m_ModListGroupProxy->mapToSource(modList->indexAt(pos)).row();
 
     QMenu menu;
     menu.addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
@@ -2865,6 +2879,7 @@ void MainWindow::on_categoriesList_currentItemChanged(QTreeWidgetItem *current, 
   if (current != NULL) {
     m_ModListSortProxy->setCategoryFilter(current->data(0, Qt::UserRole).toInt());
     ui->currentCategoryLabel->setText(QString("(%1)").arg(current->text(0)));
+    ui->modList->reset();
   }
 }
 
@@ -3173,32 +3188,29 @@ void MainWindow::installDownload(int index)
   try {
     QString fileName = m_DownloadManager.getFilePath(index);
     int modID = m_DownloadManager.getModID(index);
-    QString modName;
+    GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
     if (modID != 0) {
-      ModInfo::Ptr modInfo = ModInfo::getByModID(modID, true);
-      if (!modInfo.isNull()) {
-        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(modID);
+      for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
+        std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
-          modName = modInfo->name();
-          modInfo->saveMeta();
+          modName.update((*iter)->name(), GUESS_PRESET);
+          (*iter)->saveMeta();
         }
       }
-      // TODO there may be multiple mods with the same id!
-//      modName = m_ModList.getModByModID(modID);
     }
 
     m_CurrentProfile->writeModlistNow();
 
     bool hasIniTweaks = false;
-    if (m_InstallationManager.install(fileName, m_CurrentProfile->getPluginsFileName(), m_Settings.getModDirectory(), m_Settings.preferIntegratedInstallers(),
-                                      m_Settings.enableQuickInstaller(), modName, hasIniTweaks)) {
+    if (m_InstallationManager.install(fileName, m_Settings.getModDirectory(), modName, hasIniTweaks)) {
       MessageDialog::showMessage(tr("Installation successful"), this);
 
       refreshModList();
 
-      QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, modName);
+      QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
       if (posList.count() == 1) {
         ui->modList->scrollTo(posList.at(0));
       }
@@ -3597,13 +3609,13 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
-      ModInfo::Ptr info = ModInfo::getByModID(result["id"].toInt(), true);
-      if (!info.isNull()) {
-        info->setNewestVersion(VersionInfo(result["version"].toString()));
-        info->setNexusDescription(result["description"].toString());
+      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(result["id"].toInt());
+      for (auto iter = info.begin(); iter != info.end(); ++iter) {
+        (*iter)->setNewestVersion(VersionInfo(result["version"].toString()));
+        (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
           // don't use endorsement info if we're not logged in
-          info->setIsEndorsed(result["voted_by_user"].toBool());
+          (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
       }
     }
@@ -3902,4 +3914,33 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   } catch (...) {
     reportError(tr("Unknown exception"));
   }
+}
+
+void MainWindow::on_groupCombo_currentIndexChanged(int index)
+{
+  if (m_ModListGroupProxy == NULL) return;
+
+  QAbstractProxyModel *newModel = NULL;
+  switch (index) {
+    case 0: {
+        newModel = new QIdentityProxyModel(this);
+      } break;
+    case 1: {
+        newModel = new ModListGroupCategoriesProxy(this);
+      } break;
+    case 2: {
+        newModel = new ModListGroupNexusIDProxy(m_CurrentProfile, this);
+      } break;
+    default: {
+        qDebug("invalid modlist grouping %d", index);
+        return;
+      } break;
+  }
+
+  newModel->setSourceModel(m_ModListSortProxy);
+  ui->modList->setModel(newModel);
+  delete ui->modList->itemDelegateForColumn(ModList::COL_FLAGS);
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(newModel, ui->modList));
+  delete m_ModListGroupProxy;
+  m_ModListGroupProxy = newModel;
 }

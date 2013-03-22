@@ -144,6 +144,18 @@ void CategoryFactory::saveCategories()
 }
 
 
+unsigned int CategoryFactory::countCategories(std::tr1::function<bool (const Category &category)> filter)
+{
+  unsigned int result = 0;
+  for (auto iter = m_Categories.begin(); iter != m_Categories.end(); ++iter) {
+    if (filter(*iter)) {
+      ++result;
+    }
+  }
+  return result;
+}
+
+
 void CategoryFactory::addCategory(int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
 {
   int index = m_Categories.size();

@@ -302,12 +302,18 @@ p, li { white-space: pre-wrap; }
               <enum>QAbstractItemView::SelectRows</enum>
              </property>
              <property name="indentation">
-              <number>0</number>
+              <number>20</number>
+             </property>
+             <property name="uniformRowHeights">
+              <bool>true</bool>
              </property>
              <property name="itemsExpandable">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="sortingEnabled">
+              <bool>true</bool>
+             </property>
+             <property name="animated">
               <bool>true</bool>
              </property>
              <property name="expandsOnDoubleClick">
@@ -328,7 +334,7 @@ p, li { white-space: pre-wrap; }
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1">
+         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1">
           <item>
            <widget class="QPushButton" name="displayCategoriesBtn">
             <property name="maximumSize">
@@ -375,6 +381,25 @@ p, li { white-space: pre-wrap; }
             <property name="text">
              <string/>
             </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="groupCombo">
+            <item>
+             <property name="text">
+              <string>No groups</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Categories</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Nexus IDs</string>
+             </property>
+            </item>
            </widget>
           </item>
           <item>
@@ -708,6 +733,9 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="indentation">
                <number>0</number>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>true</bool>
               </property>
               <property name="itemsExpandable">
                <bool>false</bool>

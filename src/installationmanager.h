@@ -20,10 +20,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef INSTALLATIONMANAGER_H
 #define INSTALLATIONMANAGER_H
 
-#include "installdialog.h"
 
 #include <iinstallationmanager.h>
 #include <iplugininstaller.h>
+#include <guessedvalue.h>
 
 #include <QObject>
 #define WIN32_LEAN_AND_MEAN
@@ -61,12 +61,12 @@ public:
    * @brief install a mod from an archive
    *
    * @param fileName absolute file name of the archive to install
+   * @param modsDirectory directory to install mods to
    * @param modName suggested name of the mod. If this is empty (the default), a name will be guessed based on the filename. The user will always have a chance to rename the mod
-   * @param preferIntegrated if true, integrated installers are chosen over external installers
    * @return true if the archive was installed, false if installation failed or was refused
    * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
    **/
-  bool install(const QString &fileName, const QString &pluginsFileName, const QString &modsDirectory, bool preferIntegrated, bool enableQuickInstall, QString &modName, bool &hasIniTweaks);
+  bool install(const QString &fileName, const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks);
 
   /**
    * @return true if the installation was canceled
@@ -123,7 +123,7 @@ public:
    * @param archiveFile path to the archive to install
    * @return the installation result
    */
-  virtual MOBase::IPluginInstaller::EInstallResult installArchive(const QString &modName, const QString &archiveName);
+  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
 
 private:
 
@@ -152,11 +152,11 @@ private:
   bool checkFomodPackage(MOBase::DirectoryTree *dataTree, QString &offset, bool &xmlInstaller);
   bool checkNMMInstaller();
 
-  void fixModName(QString &name);
+//  static bool fixModName(QString &name);
 
-  bool testOverwrite(const QString &modsDirectory, QString &modName);
+  bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName);
 
-  bool doInstall(const QString &modsDirectory, QString &modName,
+  bool doInstall(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID);
 
   bool installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory);
@@ -165,7 +165,7 @@ private:
                             int categoryID, QString &modName, bool nameGuessed, bool &manualRequest);
   QString generateBackupName(const QString &directoryName);
 
-  bool ensureValidModName(QString &name);
+  bool ensureValidModName(MOBase::GuessedValue<QString> &name);
 
 private slots:
 

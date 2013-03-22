@@ -122,6 +122,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
   if (m_Profile == NULL) return QVariant();
+  if (!modelIndex.isValid()) return QVariant();
   unsigned int modIndex = modelIndex.row();
   int column = modelIndex.column();
 
@@ -197,6 +198,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
   } else if (role == Qt::UserRole) {
     return modInfo->getNexusID();
+  } else if (role == Qt::UserRole + 1) {
+    return modIndex;
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -578,7 +581,7 @@ void ModList::notifyChange(int row)
 
 QModelIndex ModList::index(int row, int column, const QModelIndex&) const
 {
-  return createIndex(row, column, row);
+  return createIndex(row, column, -1);
 }
 
 
@@ -634,6 +637,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
         (keyEvent->modifiers() == Qt::ControlModifier) &&
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
+#pragma message("no longer a sortfilter model")
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
       int diff = -1;
       if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||

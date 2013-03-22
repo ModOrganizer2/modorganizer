@@ -20,10 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationmanager.h"
 
 #include "utility.h"
-#include "installdialog.h"
-#include "simpleinstalldialog.h"
-#include "baincomplexinstallerdialog.h"
-#include "fomodinstallerdialog.h"
+
 #include "report.h"
 #include "categories.h"
 #include "questionboxmemory.h"
@@ -268,11 +265,11 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig)
   return result;
 }
 
-IPluginInstaller::EInstallResult InstallationManager::installArchive(const QString &modName, const QString &archiveName)
+IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValue<QString> &modName, const QString &archiveName)
 {
-  QString temp = modName;
+  GuessedValue<QString> temp(modName);
   bool iniTweaks;
-  if (install(archiveName, "", "modsdir", false, true, temp, iniTweaks)) {
+  if (install(archiveName, "modsdir", temp, iniTweaks)) {
     return IPluginInstaller::RESULT_SUCCESS;
   } else {
     return IPluginInstaller::RESULT_FAILED;
@@ -484,7 +481,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName)
 }
 
 
-bool InstallationManager::testOverwrite(const QString &modsDirectory, QString &modName)
+bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedValue<QString> &modName)
 {
   QString targetDirectory = QDir::fromNativeSeparators(modsDirectory.mid(0).append("\\").append(modName));
 
@@ -503,7 +500,7 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, QString &m
         QString name = QInputDialog::getText(m_ParentWidget, tr("Mod Name"), tr("Name"),
                                              QLineEdit::Normal, modName, &ok);
         if (ok && !name.isEmpty()) {
-          modName = name;
+          modName.update(name, GUESS_USER);
           if (!ensureValidModName(modName)) {
             return false;
           }
@@ -547,45 +544,48 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, QString &m
   return true;
 }
 
-
-void InstallationManager::fixModName(QString &name)
+/*
+bool InstallationManager::fixModName(QString &name)
 {
-//  name = name.remove("^[ ]*").trimmed();
-  name = name.simplified();
-  while (name.endsWith('.')) name.chop(1);
+  QString temp = name.simplified();
+  while (temp.endsWith('.')) temp.chop(1);
 
-  name.replace(QRegExp("[<>:\"/\\|?*]"), "");
-
+  temp.replace(QRegExp("[<>:\"/\\|?*]"), "");
   static QString invalidNames[] = { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
                                     "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9" };
   for (int i = 0; i < sizeof(invalidNames) / sizeof(QString); ++i) {
-    if (name == invalidNames[i]) {
-      name = "";
+    if (temp == invalidNames[i]) {
+      temp = "";
       break;
     }
   }
+
+  if (temp.length() > 1) {
+    name = temp;
+    return true;
+  } else {
+    return false;
+  }
 }
+*/
 
-
-bool InstallationManager::ensureValidModName(QString &name)
+bool InstallationManager::ensureValidModName(GuessedValue<QString> &name)
 {
-  fixModName(name);
-
-  while (name.isEmpty()) {
+  while (name->isEmpty()) {
     bool ok;
-    name = QInputDialog::getText(m_ParentWidget, tr("Invalid name"),
-                                         tr("The name you entered is invalid, please enter a different one."),
-                                         QLineEdit::Normal, "", &ok);
+    name.update(QInputDialog::getText(m_ParentWidget, tr("Invalid name"),
+                                      tr("The name you entered is invalid, please enter a different one."),
+                                      QLineEdit::Normal, "", &ok),
+                GUESS_USER);
     if (!ok) {
       return false;
     }
-    fixModName(name);
   }
   return true;
 }
 
 
-bool InstallationManager::doInstall(const QString &modsDirectory, QString &modName, int modID,
+bool InstallationManager::doInstall(const QString &modsDirectory, GuessedValue<QString> &modName, int modID,
                                     const QString &version, const QString &newestVersion, int categoryID)
 {
   if (!ensureValidModName(modName)) {
@@ -684,270 +684,36 @@ bool EndsWith(LPCWSTR string, LPCWSTR subString)
 }
 
 
-bool InstallationManager::installFomodInternal(DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
-                                               int modID, const QString &version, const QString &newestVersion, int categoryID,
-                                               QString &modName, bool nameGuessed, bool &manualRequest)
-{
-  qDebug("treating as fomod archive");
-
-  FileData* const *data;
-  size_t size;
-  m_CurrentArchive->getFileList(data, size);
-  wchar_t *installerFiles[] = { L"fomod\\info.xml", L"fomod\\ModuleConfig.xml",
-                                L"fomod\\script.cs", L"fomod\\screenshot.png", NULL };
-  for (size_t i = 0; i < size; ++i) {
-    data[i]->setSkip(true);
-    if (data[i]->getFileName() == NULL) {
-      qCritical("invalid archive file name");
-    }
-    for (int fileIdx = 0; installerFiles[fileIdx] != NULL; ++fileIdx) {
-      if (EndsWith(data[i]->getFileName(), installerFiles[fileIdx])) {
-        wchar_t *baseName = wcsrchr(installerFiles[fileIdx], '\\');
-        if (baseName != NULL) {
-          data[i]->setSkip(false);
-          data[i]->setOutputFileName(baseName);
-          m_TempFilesToDelete.insert(ToQString(baseName));
-        } else {
-          qCritical("failed to find backslash in %ls", installerFiles[fileIdx]);
-        }
-        break;
-      }
-    }
-    if (EndsWith(data[i]->getFileName(), L".png") ||
-        EndsWith(data[i]->getFileName(), L".jpg") ||
-        EndsWith(data[i]->getFileName(), L".gif") ||
-        EndsWith(data[i]->getFileName(), L".bmp")) {
-      const wchar_t *baseName = wcsrchr(data[i]->getFileName(), '\\');
-      if (baseName == NULL) {
-        baseName = data[i]->getFileName();
-      } else {
-        ++baseName;
-      }
-      data[i]->setSkip(false);
-      data[i]->setOutputFileName(baseName);
-      m_TempFilesToDelete.insert(ToQString(baseName));
-    }
-  }
-
-  m_InstallationProgress.setWindowTitle(tr("Preparing installer"));
-  m_InstallationProgress.setLabelText(QString());
-  m_InstallationProgress.setValue(0);
-  m_InstallationProgress.setWindowModality(Qt::WindowModal);
-  m_InstallationProgress.show();
-
-  // unpack only the files we need for the installer
-  if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
-         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
-    throw std::runtime_error("extracting failed");
-  }
-
-  m_InstallationProgress.hide();
-
-  bool success = false;
-  try {
-    FomodInstallerDialog dialog(modName, nameGuessed, fomodPath);
-
-    FileData* const *data;
-    size_t size;
-    m_CurrentArchive->getFileList(data, size);
-
-    // the installer will want to unpack screenshots...
-    for (size_t i = 0; i < size; ++i) {
-      data[i]->setSkip(true);
-    }
-
-    dialog.initData();
-    if (dialog.exec() == QDialog::Accepted) {
-      modName = dialog.getName();
-      baseNode = dialog.updateTree(baseNode);
-      mapToArchive(baseNode);
-
-      if (doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
-        success = true;
-      }
-    } else {
-      if (dialog.manualRequested()) {
-        manualRequest = true;
-        modName = dialog.getName();
-      }
-    }
-  } catch (const std::exception &e) {
-    reportError(tr("Installation as fomod failed: %1").arg(e.what()));
-    manualRequest = true;
-  }
-  return success;
-}
-
-
-bool InstallationManager::installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory)
-{
-  wchar_t binary[MAX_PATH];
-  wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
-  wchar_t currentDirectory[MAX_PATH];
-
-  _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(m_NCCPath)).c_str());
-  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -i \"%ls\" \"%ls\"",
-             GameInfo::instance().getGameShortName().c_str(),
-             ToWString(QDir::toNativeSeparators(pluginsFileName)).c_str(),
-             ToWString(QDir::toNativeSeparators(fileName)).c_str(),
-             ToWString(QDir::toNativeSeparators(modDirectory)).c_str());
-  _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(m_NCCPath).absolutePath()).c_str());
-
-  GameInfo &gameInfo = GameInfo::instance();
-
-  QString binaryDestination = modDirectory.mid(0).append("/").append(ToQString(gameInfo.getBinaryName()));
-
-  // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
-  QFile::copy(QDir::fromNativeSeparators(ToQString(gameInfo.getGameDirectory().append(L"\\").append(gameInfo.getBinaryName()))),
-              binaryDestination);
-
-  ON_BLOCK_EXIT([&binaryDestination] { if (!QFile::remove(binaryDestination)) qCritical("failed to remove %s", qPrintable(binaryDestination)); } );
-
-  SHELLEXECUTEINFOW execInfo = {0};
-  execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-  execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.hwnd = NULL;
-  execInfo.lpVerb = L"open";
-  execInfo.lpFile = binary;
-  execInfo.lpParameters = parameters;
-  execInfo.lpDirectory = currentDirectory;
-  execInfo.nShow = SW_SHOW;
-
-  if (!::ShellExecuteExW(&execInfo)) {
-    reportError(tr("failed to start %1").arg(m_NCCPath));
-    return false;
-  }
-
-  QProgressDialog busyDialog(tr("Running external installer.\nNote: This installer will not be aware of other installed mods!"), tr("Force Close"), 0, 0, m_ParentWidget);
-  busyDialog.setWindowModality(Qt::WindowModal);
-  bool confirmCancel = false;
-  busyDialog.show();
-  bool finished = false;
-  while (true) {
-    QCoreApplication::processEvents();
-    DWORD res = ::WaitForSingleObject(execInfo.hProcess, 100);
-    if (res == WAIT_OBJECT_0) {
-      finished = true;
-      break;
-    } else if ((busyDialog.wasCanceled()) || (res != WAIT_TIMEOUT)) {
-      if (!confirmCancel) {
-        confirmCancel = true;
-        busyDialog.hide();
-        busyDialog.reset();
-        busyDialog.show();
-        busyDialog.setCancelButtonText(tr("Confirm"));
-      } else {
-        break;
-      }
-    }
-  }
-
-  if (!finished) {
-    ::TerminateProcess(execInfo.hProcess, 1);
-    return false;
-  }
-
-  DWORD exitCode = 128;
-  ::GetExitCodeProcess(execInfo.hProcess, &exitCode);
-
-  ::CloseHandle(execInfo.hProcess);
-
-  if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
-    bool errorOccured = false;
-    { // move all installed files from the data directory one directory up
-      QDir targetDir(modDirectory);
-
-      QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-      bool hasFiles = false;
-
-      while (dirIter.hasNext()) {
-        dirIter.next();
-        QFileInfo fileInfo = dirIter.fileInfo();
-        QString newName = targetDir.absoluteFilePath(fileInfo.fileName());
-        if (fileInfo.isFile() && QFile::exists(newName)) {
-          if (!QFile::remove(newName)) {
-            qCritical("failed to overwrite %s", qPrintable(newName));
-            errorOccured = true;
-          }
-        } // if it's a directory and the target exists that isn't really a problem
-
-        if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
-          // moving doesn't work when merging
-          if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
-            qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
-            errorOccured = true;
-          }
-        }
-        hasFiles = true;
-      }
-      // recognition of canceled installation in the external installer is broken so we assume the installation was
-      // canceled if no files were installed
-      if (!hasFiles) {
-        exitCode = 11;
-      }
-    }
-
-    QString dataDir = modDirectory.mid(0).append("/Data");
-    if (!removeDir(dataDir)) {
-      qCritical("failed to remove data directory from %s", dataDir.toUtf8().constData());
-      errorOccured = true;
-    }
-    if (errorOccured) {
-      reportError(tr("Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details"));
-    }
-  } else if (exitCode != 11) { // 11 = manually canceled
-    reportError(tr("installation failed (errorcode %1)").arg(exitCode));
-  }
-
-  if ((exitCode == 0) || (exitCode == 10)) {
-    return true;
-  } else {
-    // after cancelation or error the installer may leave the empty mod directory
-    if (!removeDir(modDirectory)) {
-      qCritical ("failed to remove empty mod directory %s", modDirectory.toUtf8().constData());
-    }
-    return false;
-  }
-}
-
-
 bool InstallationManager::wasCancelled()
 {
   return m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
 }
 
 
-bool InstallationManager::install(const QString &fileName, const QString &pluginsFileName, const QString &modsDirectory,
-                                  bool preferIntegrated, bool enableQuickInstall, QString &modName, bool &hasIniTweaks)
+bool InstallationManager::install(const QString &fileName, const QString &modsDirectory,
+                                  GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
-  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
   }
+
+  modName.setFilter(&fixDirectoryName);
 
   // read out meta information from the download if available
   int modID = 0;
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
-  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
     modID = metaFile.value("modID", 0).toInt();
-    if (modName.isEmpty()) {
-      modName = metaFile.value("modName", "").toString();
-      // it is possible we have a file-name but not the correct mod name. in this case,
-      // the stored mod name may be "\0"
-      if (modName.isEmpty() || (modName.length() < 2)) {
-        modName = metaFile.value("name", "").toString();
-      }
-    }
+    modName.update(metaFile.value("name", "").toString(), GUESS_FALLBACK);
+    modName.update(metaFile.value("modName", "").toString(), GUESS_META);
+
     version = metaFile.value("version", "").toString();
     newestVersion = metaFile.value("newestVersion", "").toString();
     unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(metaFile.value("category", 0).toInt());
@@ -963,15 +729,10 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
     } else if (modID != guessedModID) {
       qDebug("passed mod id: %d, guessed id: %d", modID, guessedModID);
     }
-
-    if (modName.isEmpty()) {
-      modName = guessedModName;
-      nameGuessed = true;
-    }
+    modName.update(guessedModName, GUESS_GOOD);
   }
-  fixModName(modName);
 
-  qDebug("using mod name \"%s\" (id %d)", modName.toUtf8().constData(), modID);
+  qDebug("using mod name \"%s\" (id %d)", modName->toUtf8().constData(), modID);
   m_CurrentFile = fileInfo.fileName();
 
   // open the archive and construct the directory tree the installers work on
@@ -980,7 +741,7 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
 
   DirectoryTree *filesTree = archiveOpen ? createFilesTree() : NULL;
 
-/*  IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
+  IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
             return LHS->priority() > RHS->priority();
@@ -1046,216 +807,7 @@ bool InstallationManager::install(const QString &fileName, const QString &plugin
   }
 
   reportError(tr("None of the available installer plugins were able to handle that archive"));
-  return false;*/
-
-
-
-  hasIniTweaks = false;
-
-
-  DirectoryTree::Node *baseNode = NULL;
-  bool manualRequest = false;
-
-  if (!archiveOpen) {
-    reportError(tr("Failed to open \"%1\": %2").arg(QDir::toNativeSeparators(fileName)).arg(getErrorString(m_CurrentArchive->getLastError())));
-    return false;
-  }
-
-  // bundled fomod?
-  if ((baseNode == NULL) && !manualRequest) {
-    QStringList bundledFomods;
-    for (DirectoryTree::const_leaf_iterator fileIter = filesTree->leafsBegin(); fileIter != filesTree->leafsEnd(); ++fileIter) {
-      if (fileIter->getName().endsWith(".fomod", Qt::CaseInsensitive)) {
-        bundledFomods.append(fileIter->getName());
-      }
-    }
-    QString bundledFomodInst;
-    if (bundledFomods.count() > 1) {
-      SelectionDialog selection(tr("This seems like a bundle of fomods, which one do you want to install?"), m_ParentWidget);
-      foreach (const QString &fomod, bundledFomods) {
-        selection.addChoice(fomod, fomod, QVariant());
-      }
-      if (selection.exec() == QDialog::Accepted) {
-        bundledFomodInst = selection.getChoiceString();
-      } else {
-        return false;
-      }
-    } else if (bundledFomods.count() == 1) {
-      bundledFomodInst = bundledFomods.at(0);
-      qDebug("archive contains fomod: %s", qPrintable(bundledFomodInst));
-    }
-    if (!bundledFomodInst.isEmpty()) {
-      unpackSingleFile(bundledFomodInst);
-      m_CurrentArchive->close();
-      return install(QDir::tempPath().append("/").append(bundledFomodInst), pluginsFileName, modsDirectory, preferIntegrated,
-                     enableQuickInstall, modName, hasIniTweaks);
-    }
-  }
-
-  // fomod installer?
-  if ((baseNode == NULL) && !manualRequest) {
-    QString fomodPath;
-    bool xmlInstaller = false;
-    if (checkFomodPackage(filesTree, fomodPath, xmlInstaller)) {
-      baseNode = filesTree;
-      bool nmmInstaller = checkNMMInstaller();
-
-      if (xmlInstaller || nmmInstaller) {
-        if (!xmlInstaller || (nmmInstaller && !preferIntegrated)) {
-          if (!ensureValidModName(modName) ||
-              !testOverwrite(modsDirectory, modName)) {
-            return false;
-          }
-
-          QString targetDirectory = QDir::fromNativeSeparators(modsDirectory.mid(0).append("\\").append(modName));
-
-          if (installFomodExternal(fileName, pluginsFileName, targetDirectory)) {
-            QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
-
-            // overwrite settings only if they are actually are available or haven't been set before
-            if ((modID != 0) || !settingsFile.contains("modid")) {
-              settingsFile.setValue("modid", modID);
-            }
-            if (!settingsFile.contains("version") ||
-                (!version.isEmpty() &&
-                 (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString())))) {
-              settingsFile.setValue("version", version);
-            }
-            if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
-              settingsFile.setValue("newestVersion", newestVersion);
-            }
-            if (!settingsFile.contains("category")) {
-              settingsFile.setValue("category", QString::number(categoryID));
-            }
-            settingsFile.setValue("installationFile", m_CurrentFile);
-
-            success = true;
-          }
-        } else {
-          if (installFomodInternal(baseNode, fomodPath, modsDirectory,
-                                   modID, version, newestVersion, categoryID,
-                                   modName, nameGuessed, manualRequest)) {
-            success = true;
-          }
-        }
-        if (success) {
-          DirectoryTree::node_iterator iniTweakNode = baseNode->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-          hasIniTweaks = (iniTweakNode != baseNode->nodesEnd()) &&
-                         ((*iniTweakNode)->numLeafs() != 0);
-        }
-        if (baseNode != filesTree) {
-          delete baseNode;
-        }
-      } else {
-        if (QuestionBoxMemory::query(m_ParentWidget, Settings::instance().directInterface(), "missingNCC",
-                        tr("Installer missing"),
-                        tr("This package contains a scripted installer. To use this installer "
-                           "you need the optional \"NCC\"-package and the .net runtime. "
-                           "Do you want to continue, treating this as a manual installer?"),
-                        QDialogButtonBox::Yes | QDialogButtonBox::Cancel) == QMessageBox::Yes) {
-          manualRequest = true;
-        } else {
-          MessageDialog::showMessage(tr("Please install NCC"), m_ParentWidget);
-        }
-      }
-    }
-  }
-
-  // simple installer?
-  if ((baseNode == NULL) && enableQuickInstall && !manualRequest) {
-    baseNode = getSimpleArchiveBase(filesTree);
-    if (baseNode != NULL) {
-      qDebug("treating as simple archive (%d)", baseNode->numLeafs());
-      SimpleInstallDialog dialog(modName, m_ParentWidget);
-      if (dialog.exec() == QDialog::Accepted) {
-        mapToArchive(baseNode);
-        modName = dialog.getName();
-        if (doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
-          success = true;
-
-          DirectoryTree::node_iterator iniTweakNode = baseNode->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-          hasIniTweaks = (iniTweakNode != baseNode->nodesEnd()) &&
-                         ((*iniTweakNode)->numLeafs() != 0);
-        }
-      } else {
-        if (dialog.manualRequested()) {
-          manualRequest = true;
-          modName = dialog.getName();
-        }
-      }
-    }
-  }
-
-  // bain complex package?
-  if ((baseNode == NULL) && !manualRequest) {
-    if (checkBainPackage(filesTree)) {
-      bool hasPackageTXT = unpackPackageTXT();
-
-      baseNode = filesTree;
-      qDebug("treating as complex archive (%d)", filesTree->numNodes());
-      BainComplexInstallerDialog dialog(filesTree, modName, hasPackageTXT, m_ParentWidget);
-      if (dialog.exec() == QDialog::Accepted) {
-        modName = dialog.getName();
-        // create a new tree with the selected directories mapped to the
-        // base directory. This is destructive on the original tree
-        baseNode = dialog.updateTree(baseNode);
-        mapToArchive(baseNode);
-
-        if (doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
-          success = true;
-
-          DirectoryTree::node_iterator iniTweakNode = baseNode->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-          hasIniTweaks = (iniTweakNode != baseNode->nodesEnd()) &&
-                         ((*iniTweakNode)->numLeafs() != 0);
-        }
-        delete baseNode;
-      } else {
-        if (dialog.manualRequested()) {
-          manualRequest = true;
-          modName = dialog.getName();
-        }
-      }
-      QFile::remove(QDir::tempPath().append("/package.txt"));
-    }
-  }
-
-  // final option: manual installer
-  if ((baseNode == NULL) || manualRequest) {
-    qDebug("offering installation dialog");
-    InstallDialog dialog(filesTree, modName, m_ParentWidget);
-    connect(&dialog, SIGNAL(openFile(QString)), this, SLOT(openFile(QString)));
-    if (dialog.exec() == QDialog::Accepted) {
-      modName = dialog.getModName();
-      baseNode = dialog.getDataTree();
-      mapToArchive(baseNode);
-      if (doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
-        success = true;
-
-        DirectoryTree::node_iterator iniTweakNode = baseNode->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-        hasIniTweaks = (iniTweakNode != baseNode->nodesEnd()) &&
-                       ((*iniTweakNode)->numLeafs() != 0);
-      }
-      delete baseNode; // baseNode is a new tree, independent of filesTree
-    }
-  }
-
-  delete filesTree;
-  m_CurrentArchive->close();
-
-  for (std::set<QString>::iterator iter = m_FilesToDelete.begin();
-       iter != m_FilesToDelete.end(); ++iter) {
-    QFile(*iter).remove();
-  }
-  m_FilesToDelete.clear();
-
-  for (std::set<QString>::iterator iter = m_TempFilesToDelete.begin();
-       iter != m_TempFilesToDelete.end(); ++iter) {
-    QFile(QDir::tempPath().append("/").append(*iter)).remove();
-  }
-
-  m_TempFilesToDelete.clear();
-
-  return success;
+  return false;
 }
 
 

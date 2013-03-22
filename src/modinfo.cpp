@@ -44,7 +44,7 @@ using namespace MOShared;
 
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
-std::map<int, unsigned int> ModInfo::s_ModsByModID;
+std::map<int, std::vector<unsigned int> > ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
 QMutex ModInfo::s_Mutex(QMutex::Recursive);
 
@@ -128,20 +128,21 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
 }
 
 
-ModInfo::Ptr ModInfo::getByModID(int modID, bool missingAcceptable)
+std::vector<ModInfo::Ptr> ModInfo::getByModID(int modID)
 {
   QMutexLocker locker(&s_Mutex);
 
-  std::map<int, unsigned int>::iterator iter = s_ModsByModID.find(modID);
+  auto iter = s_ModsByModID.find(modID);
   if (iter == s_ModsByModID.end()) {
-    if (missingAcceptable) {
-      return ModInfo::Ptr();
-    } else {
-      throw MyException(tr("invalid mod id %1").arg(modID));
-    }
+    return std::vector<ModInfo::Ptr>();
   }
 
-  return getByIndex(iter->second);
+  std::vector<ModInfo::Ptr> result;
+  for (auto idxIter = iter->second.begin(); idxIter != iter->second.end(); ++idxIter) {
+    result.push_back(getByIndex(*idxIter));
+  }
+
+  return result;
 }
 
 
@@ -157,12 +158,11 @@ bool ModInfo::removeMod(unsigned int index)
   ModInfo::Ptr modInfo = s_Collection[index];
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));
 
-  //TODO this is a bit more complicated since multiple mods may have the
-  // same mod id but only one appears in the index
-  std::map<int, unsigned int>::iterator iter = s_ModsByModID.find(modInfo->getNexusID())  ;
-  if ((iter != s_ModsByModID.end()) &&
-      (iter->second == index)) {
-    s_ModsByModID.erase(iter);
+  auto iter = s_ModsByModID.find(modInfo->getNexusID());
+  if (iter != s_ModsByModID.end()) {
+    std::vector<unsigned int> indices = iter->second;
+    std::remove(indices.begin(), indices.end(), index);
+    s_ModsByModID[modInfo->getNexusID()] = indices;
   }
 
   // physically remove the mod directory
@@ -234,12 +234,7 @@ void ModInfo::updateIndices()
     QString modName = s_Collection[i]->name();
     int modID = s_Collection[i]->getNexusID();
     s_ModsByName[modName] = i;
-
-    // don't overwrite a modid-entry with a backup entry. This is a bit of a workaround
-    if ((s_ModsByModID.find(modID) == s_ModsByModID.end()) ||
-        !backupRegEx.exactMatch(modName)) {
-      s_ModsByModID[modID] = i;
-    }
+    s_ModsByModID[modID].push_back(i);
   }
 }
 

@@ -125,12 +125,11 @@ public:
    * @brief retrieve a ModInfo object based on its nexus mod id
    *
    * @param modID the nexus mod id to look up
-   * @param missingAcceptable if true, this function will return a null-pointer if no mod has the specified mod id, otherwise an exception is thrown
    * @return a reference counting pointer to the mod info
    * @todo in its current form, this function is broken! There may be multiple mods with the same nexus id,
    *       this function will return only one of them
    **/
-  static ModInfo::Ptr getByModID(int modID, bool missingAcceptable);
+  static std::vector<ModInfo::Ptr> getByModID(int modID);
 
   /**
    * @brief remove a mod by index
@@ -390,14 +389,14 @@ public:
   bool categorySet(int categoryID) const;
 
   /**
-   * @brief retrive the whole list of categories this mod belongs to
+   * @brief retrive the whole list of categories (as ids) this mod belongs to
    *
    * @return list of categories
    **/
   const std::set<int> &getCategories() const { return m_Categories; }
 
   /**
-   * @return the primary category of this mod
+   * @return id of the primary category of this mod
    */
   int getPrimaryCategory() const { return m_PrimaryCategory; }
 
@@ -459,7 +458,7 @@ protected:
 private:
 
   static QMutex s_Mutex;
-  static std::map<int, unsigned int> s_ModsByModID;
+  static std::map<int, std::vector<unsigned int> > s_ModsByModID;
   static int s_NextID;
 
   bool m_Valid;

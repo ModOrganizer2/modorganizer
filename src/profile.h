@@ -41,6 +41,10 @@ class Profile : public QObject
 
 public:
 
+  typedef boost::shared_ptr<Profile> Ptr;
+
+public:
+
   /**
    * @brief default constructor
    * @todo This constructor initialised nothing, the resulting object is not usable
@@ -76,12 +80,16 @@ public:
   bool exists() const;
 
   /**
-   * @brief copy constructor
-   *
    * @param name of the new profile
    * @param reference profile to copy from
    **/
   static Profile createFrom(const QString &name, const Profile &reference);
+
+  /**
+   * @param name of the new profile
+   * @param reference profile to copy from
+   **/
+  static Profile *createPtrFrom(const QString &name, const Profile &reference);
 
   /**
    * @brief write out the modlist.txt
@@ -173,6 +181,8 @@ public:
    * @return path to this profile
    **/
   QString getPath() const;
+
+  void rename(const QString &newName);
 
   /**
    * @brief create the ini file to be used by the game
@@ -302,7 +312,6 @@ private:
   unsigned int m_NumRegularMods;
 
   QTimer *m_SaveTimer;
-
 };
 
 Q_DECLARE_METATYPE(Profile)

@@ -83,6 +83,8 @@ private slots:
 
   void on_transferButton_clicked();
 
+  void on_renameButton_clicked();
+
 private:
   Ui::ProfilesDialog *ui;
   QString m_GamePath;

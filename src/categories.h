@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 #include <vector>
 #include <map>
+#include <functional>
 
 
 /**
@@ -48,6 +49,24 @@ public:
 
 public:
 
+  struct Category {
+    Category(int sortValue, int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
+      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
+        m_NexusIDs(nexusIDs), m_ParentID(parentID) {}
+    int m_SortValue;
+    int m_ID;
+    int m_ParentID;
+    bool m_HasChildren;
+    QString m_Name;
+    std::vector<int> m_NexusIDs;
+
+    friend bool operator<(const Category &LHS, const Category &RHS) {
+      return LHS.m_SortValue < RHS.m_SortValue;
+    }
+  };
+
+public:
+
   /**
    * @brief reset the list of categories
    **/
@@ -64,6 +83,13 @@ public:
    * @return unsigned int number of categories
    **/
   unsigned numCategories() const { return m_Categories.size(); }
+
+  /**
+   * @brief count all categories that match a specified filter
+   * @param filter the filter to test
+   * @return number of matching categories
+   */
+  unsigned int countCategories(std::tr1::function<bool (const Category &category)> filter);
 
   /**
    * @brief get the id of the parent category
@@ -137,24 +163,6 @@ public:
   * @return the reference to the singleton
   **/
  static CategoryFactory &instance();
-
-private:
-
-  struct Category {
-    Category(int sortValue, int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
-      : m_SortValue(sortValue), m_ID(id), m_Name(name), m_HasChildren(false),
-        m_NexusIDs(nexusIDs), m_ParentID(parentID) {}
-    int m_SortValue;
-    int m_ID;
-    int m_ParentID;
-    bool m_HasChildren;
-    QString m_Name;
-    std::vector<int> m_NexusIDs;
-
-    friend bool operator<(const Category &LHS, const Category &RHS) {
-      return LHS.m_SortValue < RHS.m_SortValue;
-    }
-  };
 
 private:
 
