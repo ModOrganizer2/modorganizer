@@ -51,9 +51,11 @@ public:
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
+  void updateFilter(const QString &filter);
 
 protected:
 
+  virtual bool filterAcceptsRow(int row, const QModelIndex &parent) const;
   virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
 
 private:
@@ -62,6 +64,7 @@ private:
   Qt::SortOrder m_SortOrder;
 
   std::bitset<PluginList::COL_LASTCOLUMN + 1> m_EnabledColumns;
+  QString m_CurrentFilter;
 
 };
 

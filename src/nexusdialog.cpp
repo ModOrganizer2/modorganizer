@@ -142,8 +142,8 @@ void NexusDialog::login(const QString &username, const QString &password)
 {
   m_AccessManager->login(username, password);
 
-  connect(m_AccessManager, SIGNAL(loginSuccessful(bool)), this, SLOT(loginFinished(bool)));
-  connect(m_AccessManager, SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(m_AccessManager, SIGNAL(loginSuccessful(bool)), this, SLOT(loginFinished(bool)), Qt::UniqueConnection);
+  connect(m_AccessManager, SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)), Qt::UniqueConnection);
 }
 
 
@@ -160,6 +160,7 @@ void NexusDialog::loginFinished(bool necessary)
   if (necessary && this->isVisible()) {
     MessageDialog::showMessage(tr("login successful"), this);
   }
+
   loadNexus();
   emit loginSuccessful(necessary);
 }

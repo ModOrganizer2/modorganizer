@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "error_report.h"
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <Shlwapi.h>
 #include <boost/assign.hpp>
 
 namespace MOShared {
@@ -36,6 +37,11 @@ SkyrimInfo::SkyrimInfo(const std::wstring &omoDirectory, const std::wstring &gam
   : GameInfo(omoDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"skyrim");
+
+  wchar_t appDataPath[MAX_PATH];
+  if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataPath))) {
+    m_AppData = appDataPath;
+  }
 }
 
 bool SkyrimInfo::identifyGame(const std::wstring &searchPath)
@@ -259,7 +265,7 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
   }
 
   if ((_wcsicmp(fileName, L"plugins.txt") == 0) &&
-      (wcsstr(fullPath, L"AppData") != NULL)){
+      (m_AppData.empty() || (StrStrIW(fullPath, m_AppData.c_str()) != NULL))) {
     return true;
   }
 

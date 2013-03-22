@@ -195,6 +195,11 @@ CONFIG(debug, debug|release) {
 	QMAKE_LFLAGS += /DEBUG
 }
 
+QMAKE_CXXFLAGS_WARN_ON -= -W3
+QMAKE_CXXFLAGS_WARN_ON += -W4
+QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
+
+
 CONFIG += embed_manifest_exe
 
 # QMAKE_CXXFLAGS += /analyze
@@ -227,7 +232,7 @@ TRANSLATIONS = organizer_de.ts \
   PRE_TARGETDEPS += compiler_TSQM_make_all
 } else:message(No translation files in project)
 
-LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk
+LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
 
 DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
 

@@ -209,6 +209,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
+  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(&m_ModList, SIGNAL(modlist_changed(int)), m_ModListSortProxy, SLOT(invalidate()));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
 
@@ -227,6 +228,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
+
+  m_CheckBSATimer.setSingleShot(true);
+  connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
   m_RefresherThread.start();
@@ -448,10 +452,12 @@ void MainWindow::createHelpWidget()
   typedef std::vector<std::pair<int, QAction*> > ActionList;
 
   ActionList tutorials;
-  QDirIterator dirIter("tutorials", QStringList("*.js"), QDir::Files);
+
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
+
     QFile file(dirIter.filePath());
     if (!file.open(QIODevice::ReadOnly)) {
       qCritical() << "Failed to open " << fileName;
@@ -483,6 +489,27 @@ void MainWindow::createHelpWidget()
 }
 
 
+void MainWindow::saveArchiveList()
+{
+  if (m_ArchivesInit) {
+    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+    if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+      for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+        QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
+        if ((item != NULL) && (item->checkState(0) == Qt::Checked)) {
+          archiveFile.write(item->text(0).toUtf8().append("\r\n"));
+        }
+      }
+    } else {
+      reportError(tr("failed to save archives order, do you have write access "
+                     "to \"%1\"?").arg(m_CurrentProfile->getArchivesFileName()));
+    }
+    archiveFile.close();
+  } else {
+    qWarning("archive list not initialised");
+  }
+}
+
 bool MainWindow::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
@@ -508,23 +535,11 @@ bool MainWindow::saveCurrentLists()
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }
 
-  if (m_ArchivesInit) {
-    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-    if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-      for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
-        if ((item != NULL) && (item->checkState(0) == Qt::Checked)) {
-          archiveFile.write(item->text(0).toUtf8().append("\r\n"));
-        }
-      }
-    } else {
-      reportError(tr("failed to save archives order, do you have write access "
-                     "to \"%1\"?").arg(m_CurrentProfile->getArchivesFileName()));
-    }
-    archiveFile.close();
-  } else {
-    qWarning("archive list not initialised");
+  // ensure the archive list exists
+  if (!QFile::exists(m_CurrentProfile->getArchivesFileName())) {
+    saveArchiveList();
   }
+
   return true;
 }
 
@@ -554,7 +569,7 @@ bool MainWindow::addProfile()
 
 void MainWindow::hookUpWindowTutorials()
 {
-  QDirIterator dirIter("tutorials", QStringList("*.js"), QDir::Files);
+  QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
   while (dirIter.hasNext()) {
     dirIter.next();
     QString fileName = dirIter.fileName();
@@ -1064,6 +1079,9 @@ void MainWindow::startExeAction()
 
 void MainWindow::refreshModList()
 {
+  // don't lose changes!
+  m_CurrentProfile->writeModlistNow(true);
+
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
   m_CurrentProfile->refreshModStatus();
 
@@ -1107,7 +1125,7 @@ void MainWindow::setExecutableIndex(int index)
 void MainWindow::activateSelectedProfile()
 {
   QString profileName = ui->profileBox->currentText();
-  qDebug() << "activate profile " << profileName;
+  qDebug("activate profile \"%s\"", qPrintable(profileName));
   QString profileDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()))
                           .append("/").append(profileName);
   delete m_CurrentProfile;
@@ -1652,12 +1670,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (index == 4) {
     ui->downloadView->scrollToBottom();
   }
-}
-
-
-static QString guessModName(const QString &fileName)
-{
-  return QFileInfo(fileName).baseName();
 }
 
 
@@ -2680,9 +2692,9 @@ void MainWindow::savePrimaryCategory()
 
 void MainWindow::checkModsForUpdates()
 {
+  statusBar()->show();
   if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
     m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
-    statusBar()->show();
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString username, password;
@@ -3310,7 +3322,7 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
 
     { // try to find java automatically
       WCHAR buffer[MAX_PATH];
-      if (FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
+      if (::FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
           qDebug("failed to determine binary type: %lu", ::GetLastError());
@@ -3694,8 +3706,12 @@ void MainWindow::loginFailed(const QString &message)
     foreach (QString url, m_PendingDownloads) {
       downloadRequestedNXM(url);
     }
+    m_PendingDownloads.clear();
+  } else {
+    MessageDialog::showMessage(tr("login failed: %1").arg(message), this);
+    m_PostLoginTasks.clear();
+    statusBar()->hide();
   }
-  m_PendingDownloads.clear();
 }
 
 
@@ -3837,7 +3853,8 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 {
-  checkBSAList();
+  saveArchiveList();
+  m_CheckBSATimer.start(500);
 }
 
 void MainWindow::on_actionProblems_triggered()

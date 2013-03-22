@@ -39,8 +39,9 @@ std::string ToString(const std::wstring &source, bool utf8);
 std::wstring ToWString(const std::string &source, bool utf8);
 
 std::string &ToLower(std::string &text);
-std::wstring &ToLower(std::wstring &text);
+std::string ToLower(const std::string &text);
 
+std::wstring &ToLower(std::wstring &text);
 std::wstring ToLower(const std::wstring &text);
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);

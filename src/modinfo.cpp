@@ -726,6 +726,9 @@ ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
               overwritten = true;
               break;
             }
+          } else if (alternatives.size() == 1) {
+            // only alternative is data -> no conflict
+            regular = true;
           }
         }
       }

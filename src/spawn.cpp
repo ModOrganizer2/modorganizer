@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "spawn.h"
 #include "report.h"
 #include "utility.h"
+#include <boost/scoped_array.hpp>
 #include <gameinfo.h>
 #include <inject.h>
 #include <appconfig.h>
@@ -30,6 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+
+static const int BUFSIZE = 4096;
 
 bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended, HANDLE& processHandle, HANDLE& threadHandle)
 {
@@ -44,7 +47,25 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
   } else {
     commandLine = new wchar_t[length];
     _snwprintf(commandLine, length, L"\"%ls\"", binary);
+  }
 
+  QString moPath = QCoreApplication::applicationDirPath();
+
+  boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
+  DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
+  if (offset > BUFSIZE) {
+    oldPath.reset(new TCHAR[offset]);
+    ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
+  }
+
+  {
+    boost::scoped_array<TCHAR> newPath(new TCHAR[offset + moPath.length() + 2]);
+    _tcsncpy(newPath.get(), oldPath.get(), offset - 1);
+    newPath.get()[offset - 1] = L'\0';
+    _tcsncat(newPath.get(), TEXT(";"), 1);
+    _tcsncat(newPath.get(), ToWString(QDir::toNativeSeparators(moPath)).c_str(), moPath.length());
+
+    ::SetEnvironmentVariable(TEXT("PATH"), newPath.get());
   }
 
   PROCESS_INFORMATION pi;
@@ -57,6 +78,8 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
                                  currentDirectory, // current directory
                                  &si, &pi          // startup and process information
                                  );
+
+  ::SetEnvironmentVariable(TEXT("PATH"), oldPath.get());
 
   delete [] commandLine;
 

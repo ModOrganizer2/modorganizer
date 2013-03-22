@@ -21,6 +21,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_editexecutablesdialog.h"
 #include "filedialogmemory.h"
 #include <QMessageBox>
+#include <Shellapi.h>
+#include <utility.h>
 
 
 using namespace MOBase;
@@ -87,6 +89,7 @@ void EditExecutablesDialog::resetInput()
 {
   ui->binaryEdit->setText("");
   ui->titleEdit->setText("");
+  ui->workingDirEdit->clear();
   ui->argumentsEdit->setText("");
   ui->closeCheckBox->setChecked(false);
 }
@@ -113,11 +116,42 @@ void EditExecutablesDialog::on_addButton_clicked()
 void EditExecutablesDialog::on_browseButton_clicked()
 {
   QString binaryName = FileDialogMemory::getOpenFileName("editExecutableBinary", this,
-            tr("Select a binary"), QString(), tr("Executable (%1)").arg("*.exe *.bat"));
+            tr("Select a binary"), QString(), tr("Executable (%1)").arg("*.exe *.bat *.jar"));
 
-  QLineEdit *binaryEdit = findChild<QLineEdit*>("binaryEdit");
+  if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
+    QString binaryPath;
+    { // try to find java automatically
+      std::wstring binaryNameW = ToWString(binaryName);
+      WCHAR buffer[MAX_PATH];
+      if (::FindExecutableW(binaryNameW.c_str(), NULL, buffer) > (HINSTANCE)32) {
+        DWORD binaryType = 0UL;
+        if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
+          qDebug("failed to determine binary type: %lu", ::GetLastError());
+        } else if (binaryType == SCS_32BIT_BINARY) {
+          binaryPath = ToQString(buffer);
+        }
+      }
+    }
+    if (binaryPath.isEmpty()) {
+      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+      if (javaReg.contains("CurrentVersion")) {
+        QString currentVersion = javaReg.value("CurrentVersion").toString();
+        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+      }
+    }
+    if (binaryPath.isEmpty()) {
+      QMessageBox::information(this, tr("Java (32-bit) required"),
+                               tr("MO requires 32-bit java to run this application. If you already have it installed, select javaw.exe "
+                                  "from that installation as the binary."));
+    } else {
+      ui->binaryEdit->setText(binaryPath);
+    }
 
-  binaryEdit->setText(QDir::toNativeSeparators(binaryName));
+    ui->workingDirEdit->setText(QDir::toNativeSeparators(QFileInfo(binaryName).absolutePath()));
+    ui->argumentsEdit->setText("-jar \"" + QDir::toNativeSeparators(binaryName) + "\"");
+  } else {
+    ui->binaryEdit->setText(QDir::toNativeSeparators(binaryName));
+  }
 }
 
 void EditExecutablesDialog::on_browseDirButton_clicked()

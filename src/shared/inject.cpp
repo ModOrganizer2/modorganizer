@@ -136,6 +136,7 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
       (written != sizeof(stubLocal))) {
     throw windows_error("failed to write stub to target process");
   }
+
   // finally, make the stub the new next thing for the thread to execute
   threadContext.Eip = (ULONG)stubRemote;
   if (::SetThreadContext(threadHandle, &threadContext) == 0) {

@@ -86,7 +86,8 @@ public:
   {
     QLineEdit *edit = qobject_cast<QLineEdit*>(editor);
     int pos = 0;
-    if (m_Validator->validate(edit->text(), pos) == QValidator::Acceptable) {
+    QString editText = edit->text();
+    if (m_Validator->validate(editText, pos) == QValidator::Acceptable) {
       QItemDelegate::setModelData(editor, model, index);
     }
   }

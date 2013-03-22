@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationmanager.h"
 #include "selfupdater.h"
 #include "savegamegamebyro.h"
+#include "modlistsortproxy.h"
 #include "pluginlistsortproxy.h"
 #include "tutorialcontrol.h"
 #include "savegameinfowidgetgamebryo.h"
@@ -104,6 +105,7 @@ public:
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
+  void saveArchiveList();
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -171,6 +173,7 @@ private:
   void installMod(const QString &fileName);
   void installMod();
   bool modifyExecutablesDialog();
+  void modOpenNext();
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
   void displayModInformation(int row, int tab = 0);
   void testExtractBSA(int modIndex);
@@ -280,6 +283,7 @@ private:
   QStringList m_ActiveArchives;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
+  QTimer m_CheckBSATimer;
 
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
@@ -396,6 +400,8 @@ private slots:
   void exportModListCSV();
 
   void startExeAction();
+
+  void checkBSAList();
 
 private slots: // ui slots
   // actions

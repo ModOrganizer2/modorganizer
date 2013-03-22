@@ -134,7 +134,6 @@ void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults
 
   if (!FileExists(target.str())) {
     std::wostringstream source;
-    source << getMyGamesDirectory() << L"\\Oblivion\\oblivion.ini";
     if (useDefaults) {
       source << getGameDirectory() << L"\\oblivion_default.ini";
     } else {
