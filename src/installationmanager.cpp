@@ -517,7 +517,7 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedVal
         }
 
         // remove the directory with all content, then recreate it empty
-        removeDir(targetDirectory);
+        shellDelete(QStringList(targetDirectory), NULL);
         if (!QDir().mkdir(targetDirectory)) {
           // windows may keep the directory around for a moment, preventing its re-creation
           Sleep(100);
@@ -684,6 +684,269 @@ bool EndsWith(LPCWSTR string, LPCWSTR subString)
 }
 
 
+bool InstallationManager::installFomodInternal(DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
+                                               int modID, const QString &version, const QString &newestVersion, int categoryID,
+                                               QString &modName, bool nameGuessed, bool &manualRequest)
+{
+  qDebug("treating as fomod archive");
+
+  FileData* const *data;
+  size_t size;
+  m_CurrentArchive->getFileList(data, size);
+  wchar_t *installerFiles[] = { L"fomod\\info.xml", L"fomod\\ModuleConfig.xml",
+                                L"fomod\\script.cs", L"fomod\\screenshot.png", NULL };
+  for (size_t i = 0; i < size; ++i) {
+    data[i]->setSkip(true);
+    if (data[i]->getFileName() == NULL) {
+      qCritical("invalid archive file name");
+    }
+    for (int fileIdx = 0; installerFiles[fileIdx] != NULL; ++fileIdx) {
+      if (EndsWith(data[i]->getFileName(), installerFiles[fileIdx])) {
+        wchar_t *baseName = wcsrchr(installerFiles[fileIdx], '\\');
+        if (baseName != NULL) {
+          data[i]->setSkip(false);
+          data[i]->setOutputFileName(baseName);
+          m_TempFilesToDelete.insert(ToQString(baseName));
+        } else {
+          qCritical("failed to find backslash in %ls", installerFiles[fileIdx]);
+        }
+        break;
+      }
+    }
+    if (EndsWith(data[i]->getFileName(), L".png") ||
+        EndsWith(data[i]->getFileName(), L".jpg") ||
+        EndsWith(data[i]->getFileName(), L".gif") ||
+        EndsWith(data[i]->getFileName(), L".bmp")) {
+      const wchar_t *baseName = wcsrchr(data[i]->getFileName(), '\\');
+      if (baseName == NULL) {
+        baseName = data[i]->getFileName();
+      } else {
+        ++baseName;
+      }
+      data[i]->setSkip(false);
+      data[i]->setOutputFileName(baseName);
+      m_TempFilesToDelete.insert(ToQString(baseName));
+    }
+  }
+
+  m_InstallationProgress.setWindowTitle(tr("Preparing installer"));
+  m_InstallationProgress.setLabelText(QString());
+  m_InstallationProgress.setValue(0);
+  m_InstallationProgress.setWindowModality(Qt::WindowModal);
+  m_InstallationProgress.show();
+
+  // unpack only the files we need for the installer
+  if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
+         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
+         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
+    throw std::runtime_error("extracting failed");
+  }
+
+  m_InstallationProgress.hide();
+
+  bool success = false;
+  try {
+    FomodInstallerDialog dialog(modName, nameGuessed, fomodPath);
+
+    FileData* const *data;
+    size_t size;
+    m_CurrentArchive->getFileList(data, size);
+
+    // the installer will want to unpack screenshots...
+    for (size_t i = 0; i < size; ++i) {
+      data[i]->setSkip(true);
+    }
+
+    dialog.initData();
+    if (dialog.exec() == QDialog::Accepted) {
+      modName = dialog.getName();
+      baseNode = dialog.updateTree(baseNode);
+      mapToArchive(baseNode);
+
+      if (doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
+        success = true;
+      }
+    } else {
+      if (dialog.manualRequested()) {
+        manualRequest = true;
+        modName = dialog.getName();
+      }
+    }
+  } catch (const std::exception &e) {
+    reportError(tr("Installation as fomod failed: %1").arg(e.what()));
+    manualRequest = true;
+  }
+  return success;
+}
+
+
+static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
+{
+  DWORD procid;
+
+  GetWindowThreadProcessId(hwnd, &procid);
+
+  if (procid == static_cast<DWORD>(lParam)) {
+    ::SetForegroundWindow(hwnd);
+    ::SetLastError(NOERROR);
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+
+bool InstallationManager::installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory)
+{
+  wchar_t binary[MAX_PATH];
+  wchar_t parameters[1024]; // maximum: 2xMAX_PATH + approx 20 characters
+  wchar_t currentDirectory[MAX_PATH];
+
+  _snwprintf(binary, MAX_PATH, L"%ls", ToWString(QDir::toNativeSeparators(m_NCCPath)).c_str());
+  _snwprintf(parameters, 1024, L"-g %ls -p \"%ls\" -i \"%ls\" \"%ls\"",
+             GameInfo::instance().getGameShortName().c_str(),
+             ToWString(QDir::toNativeSeparators(pluginsFileName)).c_str(),
+             ToWString(QDir::toNativeSeparators(fileName)).c_str(),
+             ToWString(QDir::toNativeSeparators(modDirectory)).c_str());
+  _snwprintf(currentDirectory, MAX_PATH, L"%ls", ToWString(QFileInfo(m_NCCPath).absolutePath()).c_str());
+
+  GameInfo &gameInfo = GameInfo::instance();
+
+  QStringList copiedFiles;
+  QStringList patterns;
+  patterns.append(QDir::fromNativeSeparators(ToQString(gameInfo.getBinaryName())));
+  patterns.append("*se_loader.exe");
+  QDirIterator iter(QDir::fromNativeSeparators(ToQString(gameInfo.getGameDirectory())), patterns);
+  QDir modDir(modDirectory);
+  while (iter.hasNext()) {
+    iter.next();
+    QString destination = modDir.absoluteFilePath(iter.fileInfo().fileName());
+    if (QFile::copy(iter.fileInfo().absoluteFilePath(), destination)) {
+      copiedFiles.append(destination);
+    }
+  }
+  ON_BLOCK_EXIT([&copiedFiles] {
+    foreach (const QString &fileName, copiedFiles) {
+      if (!QFile::remove(fileName)) qCritical("failed to remove %s", qPrintable(fileName));
+    }
+  });
+
+  SHELLEXECUTEINFOW execInfo = {0};
+  execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+  execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+  execInfo.hwnd = NULL;
+  execInfo.lpVerb = L"open";
+  execInfo.lpFile = binary;
+  execInfo.lpParameters = parameters;
+  execInfo.lpDirectory = currentDirectory;
+  execInfo.nShow = SW_SHOW;
+
+  if (!::ShellExecuteExW(&execInfo)) {
+    reportError(tr("failed to start %1").arg(m_NCCPath));
+    return false;
+  }
+
+  QProgressDialog busyDialog(tr("Preparing external installer, this can take a few minutes.\nNote: This installer will not be aware of other installed mods (including skse)!"), tr("Force Close"), 0, 0, m_ParentWidget);
+  busyDialog.setWindowModality(Qt::WindowModal);
+  bool confirmCancel = false;
+  busyDialog.show();
+  bool finished = false;
+  DWORD procid = ::GetProcessId(execInfo.hProcess);
+  bool inFront = false;
+  while (true) {
+    QCoreApplication::processEvents();
+    if (!inFront) {
+      if (!::EnumWindows(BringToFront, procid) && (::GetLastError() == NOERROR)) {
+        inFront = true;
+      }
+    }
+    DWORD res = ::WaitForSingleObject(execInfo.hProcess, 100);
+    if (res == WAIT_OBJECT_0) {
+      finished = true;
+      break;
+    } else if ((busyDialog.wasCanceled()) || (res != WAIT_TIMEOUT)) {
+      if (!confirmCancel) {
+        confirmCancel = true;
+        busyDialog.hide();
+        busyDialog.reset();
+        busyDialog.show();
+        busyDialog.setCancelButtonText(tr("Confirm"));
+      } else {
+        break;
+      }
+    }
+  }
+
+  if (!finished) {
+    ::TerminateProcess(execInfo.hProcess, 1);
+    return false;
+  }
+
+  DWORD exitCode = 128;
+  ::GetExitCodeProcess(execInfo.hProcess, &exitCode);
+
+  ::CloseHandle(execInfo.hProcess);
+
+  if ((exitCode == 0) || (exitCode == 10)) { // 0 = success, 10 = incomplete installation
+    bool errorOccured = false;
+    { // move all installed files from the data directory one directory up
+      QDir targetDir(modDirectory);
+
+      QDirIterator dirIter(targetDir.absoluteFilePath("Data"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+      bool hasFiles = false;
+
+      while (dirIter.hasNext()) {
+        dirIter.next();
+        QFileInfo fileInfo = dirIter.fileInfo();
+        QString newName = targetDir.absoluteFilePath(fileInfo.fileName());
+        if (fileInfo.isFile() && QFile::exists(newName)) {
+          if (!QFile::remove(newName)) {
+            qCritical("failed to overwrite %s", qPrintable(newName));
+            errorOccured = true;
+          }
+        } // if it's a directory and the target exists that isn't really a problem
+
+        if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
+          // moving doesn't work when merging
+          if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
+            qCritical("failed to move %s to %s", qPrintable(fileInfo.absoluteFilePath()), qPrintable(newName));
+            errorOccured = true;
+          }
+        }
+        hasFiles = true;
+      }
+      // recognition of canceled installation in the external installer is broken so we assume the installation was
+      // canceled if no files were installed
+      if (!hasFiles) {
+        exitCode = 11;
+      }
+    }
+
+    QString dataDir = modDirectory.mid(0).append("/Data");
+    if (!removeDir(dataDir)) {
+      qCritical("failed to remove data directory from %s", dataDir.toUtf8().constData());
+      errorOccured = true;
+    }
+    if (errorOccured) {
+      reportError(tr("Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details"));
+    }
+  } else if (exitCode != 11) { // 11 = manually canceled
+    reportError(tr("installation failed (errorcode %1)").arg(exitCode));
+  }
+
+  if ((exitCode == 0) || (exitCode == 10)) {
+    return true;
+  } else {
+    // after cancelation or error the installer may leave the empty mod directory
+    if (!shellDelete(QStringList(modDirectory), NULL)) {
+      qCritical ("failed to remove empty mod directory %s", modDirectory.toUtf8().constData());
+    }
+    return false;
+  }
+}
+
+
 bool InstallationManager::wasCancelled()
 {
   return m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
@@ -694,6 +957,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
                                   GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
+  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
@@ -706,6 +970,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
+  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {

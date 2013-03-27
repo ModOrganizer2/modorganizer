@@ -131,6 +131,22 @@ std::vector<std::wstring> SkyrimInfo::getPrimaryPlugins()
   return boost::assign::list_of(L"skyrim.esm")(L"update.esm");
 }
 
+std::vector<std::wstring> SkyrimInfo::getVanillaBSAs()
+{
+  return boost::assign::list_of(L"Skyrim - Misc.bsa")
+                               (L"Skyrim - Shaders.bsa")
+                               (L"Skyrim - Textures.bsa")
+                               (L"HighResTexturePack01.bsa")
+                               (L"HighResTexturePack02.bsa")
+                               (L"HighResTexturePack03.bsa")
+                               (L"Skyrim - Interface.bsa")
+                               (L"Skyrim - Animations.bsa")
+                               (L"Skyrim - Meshes.bsa")
+                               (L"Skyrim - Sounds.bsa")
+                               (L"Skyrim - Voices.bsa")
+                               (L"Skyrim - VoicesExtra.bsa");
+}
+
 std::vector<std::wstring> SkyrimInfo::getIniFileNames()
 {
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");

@@ -2,7 +2,7 @@ QToolTip
 {
      border: 1px solid black;
      color: #D9E6EA;
-     background-color: #484F53;
+     background-color: #2F3031;
      padding: 1px;
      border-radius: 3px;
      opacity: 100;
@@ -28,7 +28,7 @@ QAbstractItemView
 
 QLineEdit
 {
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #484F53, stop: 0.9 #757676, stop: 1 #484F53);
+    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2D3330, stop: 0.9 #484F53, stop: 1 #2D3330);
     padding: 1px;
     border-style: solid;
     border: 1px solid #1e1e1e;
@@ -201,6 +201,11 @@ QTextEdit
 }
 
 QPlainTextEdit
+{
+    background-color: #484F53;
+}
+
+QWebView
 {
     background-color: #484F53;
 }
