@@ -581,7 +581,7 @@ void ModList::notifyChange(int row)
 
 QModelIndex ModList::index(int row, int column, const QModelIndex&) const
 {
-  return createIndex(row, column, -1);
+  return createIndex(row, column, row);
 }
 
 
@@ -637,11 +637,20 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
         (keyEvent->modifiers() == Qt::ControlModifier) &&
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
-#pragma message("no longer a sortfilter model")
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
+      const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
+      const QSortFilterProxyModel *filterModel = NULL;
+      while ((filterModel == NULL) && (proxyModel != NULL)) {
+        filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
+        if (filterModel == NULL) {
+          proxyModel = qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel());
+        }
+      }
+      if (filterModel == NULL) {
+        return true;
+      }
       int diff = -1;
-      if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
-          ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
+      if (((keyEvent->key() == Qt::Key_Up) && (filterModel->sortOrder() == Qt::DescendingOrder)) ||
+          ((keyEvent->key() == Qt::Key_Down) && (filterModel->sortOrder() == Qt::AscendingOrder))) {
         diff = 1;
       }
       QModelIndexList rows = selectionModel->selectedRows();
@@ -651,8 +660,8 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
         }
       }
       foreach (QModelIndex idx, rows) {
-        if (proxyModel != NULL) {
-          idx = proxyModel->mapToSource(idx);
+        if (filterModel != NULL) {
+          idx = filterModel->mapToSource(idx);
         }
         int newPriority = m_Profile->getModPriority(idx.row()) + diff;
         if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {

@@ -23,8 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPainter>
 
 
-IconDelegate::IconDelegate(QAbstractProxyModel *proxyModel, QObject *parent)
-  : QStyledItemDelegate(parent), m_ProxyModel(proxyModel)
+IconDelegate::IconDelegate(QObject *parent)
+  : QStyledItemDelegate(parent)
 {
 }
 
@@ -48,11 +48,11 @@ QIcon IconDelegate::getFlagIcon(ModInfo::EFlag flag) const
 void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   QStyledItemDelegate::paint(painter, option, index);
-  QModelIndex sourceIndex = m_ProxyModel->mapToSource(index);
-  if (!sourceIndex.isValid()) {
+  QVariant modid = index.data(Qt::UserRole + 1);
+  if (!modid.isValid()) {
     return;
   }
-  ModInfo::Ptr info = ModInfo::getByIndex(sourceIndex.row());
+  ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
   std::vector<ModInfo::EFlag> flags = info->getFlags();
 
   int x = 4;
@@ -70,7 +70,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 
 QSize IconDelegate::sizeHint(const QStyleOptionViewItem&, const QModelIndex &modelIndex) const
 {
-  unsigned int index = m_ProxyModel->mapToSource(modelIndex).row();
+  unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
   if (index < ModInfo::getNumMods()) {
     ModInfo::Ptr info = ModInfo::getByIndex(index);
     return QSize(info->getFlags().size() * 20, 20);

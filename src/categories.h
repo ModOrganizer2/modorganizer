@@ -157,12 +157,17 @@ public:
 
 public:
 
- /**
-  * @brief retrieve a reference to the singleton instance
-  *
-  * @return the reference to the singleton
-  **/
- static CategoryFactory &instance();
+  /**
+   * @brief retrieve a reference to the singleton instance
+   *
+   * @return the reference to the singleton
+   **/
+  static CategoryFactory &instance();
+
+  /**
+   * @return path to the file that contains the categories list
+   */
+  static QString categoriesFilePath();
 
 private:
 

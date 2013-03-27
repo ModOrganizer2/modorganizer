@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QDir>
 #include <QList>
+#include <QCoreApplication>
 
 
 using namespace MOBase;
@@ -34,11 +35,17 @@ using namespace MOShared;
 CategoryFactory* CategoryFactory::s_Instance = NULL;
 
 
+QString CategoryFactory::categoriesFilePath()
+{
+  return QCoreApplication::applicationDirPath() + "/categories.dat";
+}
+
+
 CategoryFactory::CategoryFactory()
 {
   reset();
 
-  QFile categoryFile(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())).append("/categories.dat"));
+  QFile categoryFile(categoriesFilePath());
 
   if (!categoryFile.open(QIODevice::ReadOnly)) {
     loadDefaultCategories();
@@ -120,7 +127,7 @@ void CategoryFactory::setParents()
 
 void CategoryFactory::saveCategories()
 {
-  QFile categoryFile(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())).append("/categories.dat"));
+  QFile categoryFile(categoriesFilePath());
 
   if (!categoryFile.open(QIODevice::WriteOnly)) {
     reportError(QObject::tr("Failed to save custom categories"));

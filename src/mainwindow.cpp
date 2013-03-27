@@ -24,8 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "modlist.h"
 #include "modlistsortproxy.h"
-#include "modlistgroupcategoriesproxy.h"
-#include "modlistgroupnexusidproxy.h"
+#include "qtgroupingproxy.h"
 #include "profile.h"
 #include "pluginlist.h"
 #include "profilesdialog.h"
@@ -85,6 +84,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPluginLoader>
 #include <QRadioButton>
 #include <QDesktopWidget>
+#include <QIdentityProxyModel>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <Psapi.h>
@@ -100,7 +100,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
     m_ExeName(exeName), m_OldProfileIndex(-1),
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
-    m_ModList(NexusInterface::instance()), m_ModListSortProxy(NULL), m_ModListGroupProxy(NULL),
+    m_ModList(NexusInterface::instance()), m_ModListSortProxy(NULL),
     m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
     m_NexusDialog(NexusInterface::instance()->getAccessManager(), NULL),
     m_DownloadManager(NexusInterface::instance(), this),
@@ -130,22 +130,20 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
 
-
   // set up mod list
   m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
   m_ModListSortProxy->setSourceModel(&m_ModList);
 
-//  m_ModListGroupProxy = new ModListGroupProxy(this);
-  m_ModListGroupProxy = new QIdentityProxyModel(this);
-  m_ModListGroupProxy->setSourceModel(m_ModListSortProxy);
-
-  ui->modList->setModel(m_ModListGroupProxy);
+  QAbstractProxyModel *proxyModel = new QIdentityProxyModel(this);
+  proxyModel->setSourceModel(m_ModListSortProxy);
+  ui->modList->setModel(proxyModel);
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(m_ModListGroupProxy, ui->modList));
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(ui->modList));
   ui->modList->header()->installEventFilter(&m_ModList);
   ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
   ui->modList->installEventFilter(&m_ModList);
+
   // restoreState also seems to restores the resize mode from previous session,
   // I don't really like that
 #if QT_VERSION >= 0x50000
@@ -210,7 +208,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
-  connect(&m_ModList, SIGNAL(modlist_changed(int)), m_ModListSortProxy, SLOT(invalidate()));
+  connect(&m_ModList, SIGNAL(modlist_changed(int)), this, SLOT(modlistChanged(int)));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
 
   connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
@@ -264,6 +262,25 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
   m_Tutorial.resize(event->size());
   QMainWindow::resizeEvent(event);
+}
+
+
+static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex idx)
+{
+  QModelIndex result = idx;
+  const QAbstractItemModel *model = idx.model();
+  while (model != targetModel) {
+    if (model == NULL) {
+      return QModelIndex();
+    }
+    const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(model);
+    if (proxyModel == NULL) {
+      return QModelIndex();
+    }
+    result = proxyModel->mapToSource(result);
+    model = proxyModel->sourceModel();
+  }
+  return result;
 }
 
 
@@ -1588,6 +1605,9 @@ void MainWindow::readSettings()
   languageChange(m_Settings.language());
   int selectedExecutable = settings.value("selected_executable").toInt();
   setExecutableIndex(selectedExecutable);
+
+  int grouping = settings.value("group_state").toInt();
+  ui->groupCombo->setCurrentIndex(grouping);
 }
 
 
@@ -1608,8 +1628,10 @@ void MainWindow::storeSettings()
   }
 
   settings.setValue("mod_list_state", ui->modList->header()->saveState());
-
   settings.setValue("plugin_list_state", ui->espList->header()->saveState());
+
+  settings.setValue("group_state", ui->groupCombo->currentIndex());
+
   settings.setValue("compact_downloads", ui->compactBox->isChecked());
   settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
 
@@ -2195,6 +2217,12 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 }
 
 
+void MainWindow::modlistChanged(int)
+{
+  m_ModListSortProxy->invalidate();
+}
+
+
 QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
@@ -2270,9 +2298,11 @@ void MainWindow::refreshFilters()
 void MainWindow::renameMod_clicked()
 {
   try {
-    QModelIndex treeIdx = m_ModListGroupProxy->mapFromSource(m_ModList.index(m_ContextRow, 0));
+/*    QModelIndex treeIdx = m_ModListGroupProxy->mapFromSource(m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0)));
     ui->modList->setCurrentIndex(treeIdx);
-    ui->modList->edit(treeIdx);
+    ui->modList->edit(treeIdx);*/
+
+    ui->modList->edit(ui->modList->currentIndex());
   } catch (const std::exception &e) {
     reportError(tr("failed to rename mod: %1").arg(e.what()));
   }
@@ -2312,7 +2342,8 @@ void MainWindow::removeMod_clicked()
       QString mods;
       QStringList modNames;
       foreach (QModelIndex idx, selection->selectedRows()) {
-        QString name = ModInfo::getByIndex(m_ModListGroupProxy->mapToSource(idx).row())->name();
+//        QString name = ModInfo::getByIndex(m_ModListGroupProxy->mapToSource(idx).row())->name();
+        QString name = idx.data().toString();
         mods += "<li>" + name + "</li>";
         modNames.append(name);
       }
@@ -2580,7 +2611,8 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (!index.isValid()) {
     return;
   }
-  QModelIndex sourceIdx = m_ModListGroupProxy->mapToSource(index);
+//  QModelIndex sourceIdx = m_ModListGroupProxy->mapToSource(index);
+  QModelIndex sourceIdx = mapToModel(&m_ModList, index);
   if (!sourceIdx.isValid()) {
     return;
   }
@@ -2814,13 +2846,12 @@ void MainWindow::exportModListCSV()
   }
 }
 
-
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
     QTreeView *modList = findChild<QTreeView*>("modList");
 
-    m_ContextRow = m_ModListGroupProxy->mapToSource(modList->indexAt(pos)).row();
+    m_ContextRow = mapToModel(&m_ModList, modList->indexAt(pos)).row();
 
     QMenu menu;
     menu.addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
@@ -3935,29 +3966,28 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_groupCombo_currentIndexChanged(int index)
 {
-  if (m_ModListGroupProxy == NULL) return;
-
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
-    case 0: {
-        newModel = new QIdentityProxyModel(this);
-      } break;
     case 1: {
-        newModel = new ModListGroupCategoriesProxy(this);
+        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_CATEGORY);
       } break;
     case 2: {
-        newModel = new ModListGroupNexusIDProxy(m_CurrentProfile, this);
+        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_MODID);
       } break;
     default: {
-        qDebug("invalid modlist grouping %d", index);
-        return;
+        newModel = NULL;
       } break;
   }
 
-  newModel->setSourceModel(m_ModListSortProxy);
-  ui->modList->setModel(newModel);
-  delete ui->modList->itemDelegateForColumn(ModList::COL_FLAGS);
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(newModel, ui->modList));
-  delete m_ModListGroupProxy;
-  m_ModListGroupProxy = newModel;
+  if (newModel != NULL) {
+    newModel->setSourceModel(m_ModListSortProxy);
+    connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
+    connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
+    connect(newModel, SIGNAL(expandItem(QModelIndex)), ui->modList, SLOT(expand(QModelIndex)));
+
+    ui->modList->setModel(newModel);
+  } else {
+    ui->modList->setModel(m_ModListSortProxy);
+  }
+  // ui->modList->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }

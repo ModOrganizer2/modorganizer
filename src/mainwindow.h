@@ -201,8 +201,6 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  void checkBSAList();
-
   bool checkForProblems(QString &problemDescription);
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
@@ -243,7 +241,6 @@ private:
 
   ModList m_ModList;
   ModListSortProxy *m_ModListSortProxy;
-  QAbstractProxyModel *m_ModListGroupProxy;
 
   PluginList m_PluginList;
   PluginListSortProxy *m_PluginListSortProxy;
@@ -374,6 +371,7 @@ private slots:
   void addPrimaryCategoryCandidates();
 
   void modDetailsUpdated(bool success);
+  void modlistChanged(int row);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);

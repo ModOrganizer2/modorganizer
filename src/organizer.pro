@@ -77,8 +77,7 @@ SOURCES += \
     gameinfoimpl.cpp \
     csvbuilder.cpp \
     savetextasdialog.cpp \
-    modlistgroupcategoriesproxy.cpp \
-    modlistgroupnexusidproxy.cpp
+    qtgroupingproxy.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -143,8 +142,7 @@ HEADERS  += \
     gameinfoimpl.h \
     csvbuilder.h \
     savetextasdialog.h \
-    modlistgroupcategoriesproxy.h \
-    modlistgroupnexusidproxy.h
+    qtgroupingproxy.h
 
 FORMS    += \
     transfersavesdialog.ui \

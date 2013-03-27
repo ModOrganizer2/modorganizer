@@ -103,6 +103,7 @@ void ModListSortProxy::enableAllVisible()
     int modID = mapToSource(index(i, 0)).row();
     m_Profile->setModEnabled(modID, true);
   }
+  invalidate();
 }
 
 
@@ -198,14 +199,6 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
       ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY) && (info->getCategories().size() == 0)) ||
           ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CONFLICT) && (hasConflictFlag(info->getFlags()))));
 }
-
-/*QModelIndex ModListSortProxy::mapToSource(const QModelIndex &proxyIndex) const
-{
-if (proxyIndex.model() && (proxyIndex.model() != this)) {
- qDebug("%p - %p - %p - %d - %d - %d", proxyIndex.model(), this, this->sourceModel(), proxyIndex.row(), proxyIndex.column(), proxyIndex.parent().isValid());
-}
-  return QSortFilterProxyModel::mapToSource(proxyIndex);
-}*/
 
 
 bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
