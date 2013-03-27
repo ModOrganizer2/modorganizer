@@ -59,15 +59,19 @@ public slots:
   void displayColumnSelection(const QPoint &pos);
   void updateFilter(const QString &filter);
 
+signals:
+
+  void filterActive(bool active);
+
 protected:
 
   virtual bool lessThan(const QModelIndex &left, const QModelIndex &right) const;
   virtual bool filterAcceptsRow(int row, const QModelIndex &parent) const;
-//  virtual bool filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const;
 
 private:
 
   bool hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const;
+  void updateFilterActive();
 
 private:
 

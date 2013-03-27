@@ -94,6 +94,7 @@ public:
   virtual MOBase::IGameInfo &gameInfo() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;
+  virtual QString downloadsPath() const;
   virtual MOBase::VersionInfo appVersion() const;
   virtual MOBase::IModInterface *getMod(const QString &name);
   virtual MOBase::IModInterface *createMod(const QString &name);
@@ -104,13 +105,13 @@ public:
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
   void saveArchiveList();
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
 
   void externalMessage(const QString &message);
   void modorder_changed();
-  void esplist_changed();
   void refresher_progress(int percent);
   void directory_refreshed();
 
@@ -171,7 +172,6 @@ private:
   void installMod(const QString &fileName);
   void installMod();
   bool modifyExecutablesDialog();
-  void modOpenNext();
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
   void displayModInformation(int row, int tab = 0);
   void testExtractBSA(int modIndex);
@@ -305,6 +305,7 @@ private slots:
   void removeMod_clicked();
   void reinstallMod_clicked();
   void endorse_clicked();
+  void dontendorse_clicked();
   void unendorse_clicked();
   void visitOnNexus_clicked();
   void openExplorer_clicked();
@@ -335,10 +336,6 @@ private slots:
   void syncOverwrite();
 
   void removeOrigin(const QString &name);
-
-  void setPriorityMax();
-  void setPriorityManually();
-  void setPriorityMin();
 
   void procError(QProcess::ProcessError error);
   void procFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -376,6 +373,8 @@ private slots:
   void editCategories();
 
   void displayModInformation(const QString &modName, int tab);
+  void modOpenNext();
+  void modOpenPrev();
 
   void modRenamed(const QString &oldName, const QString &newName);
 
@@ -396,6 +395,15 @@ private slots:
   void startExeAction();
 
   void checkBSAList();
+  void updateStyle(const QString &style);
+
+  void modlistChanged(const QModelIndex &index, int role);
+
+  void savePluginList();
+
+  void modFilterActive(bool active);
+  void espFilterChanged(const QString &filter);
+  void downloadFilterChanged(const QString &filter);
 
 private slots: // ui slots
   // actions
@@ -411,7 +419,6 @@ private slots: // ui slots
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_btnRefreshData_clicked();
-  void on_btnSave_clicked();
   void on_categoriesList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_compactBox_toggled(bool checked);

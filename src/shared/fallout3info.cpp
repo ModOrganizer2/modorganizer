@@ -102,6 +102,16 @@ std::vector<std::wstring> Fallout3Info::getPrimaryPlugins()
   return boost::assign::list_of(L"fallout3.esm");
 }
 
+std::vector<std::wstring> Fallout3Info::getVanillaBSAs()
+{
+  return boost::assign::list_of (L"Fallout - Textures.bsa")
+                                (L"Fallout - Meshes.bsa")
+                                (L"Fallout - Voices.bsa")
+                                (L"Fallout - Sound.bsa")
+                                (L"Fallout - MenuVoices.bsa")
+                                (L"Fallout - Misc.bsa");
+}
+
 std::vector<std::wstring> Fallout3Info::getIniFileNames()
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");

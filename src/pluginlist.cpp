@@ -73,9 +73,11 @@ bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
 }
 
 PluginList::PluginList(QObject *parent)
-  : QAbstractTableModel(parent), m_Modified(false),
-    m_FontMetrics(QFont())
+  : QAbstractTableModel(parent),
+    m_FontMetrics(QFont()), m_SaveTimer(this)
 {
+  m_SaveTimer.setSingleShot(true);
+  connect(&m_SaveTimer, SIGNAL(timeout()), this, SIGNAL(saveTimer()));
 }
 
 
@@ -192,7 +194,7 @@ void PluginList::enableESP(const QString &name)
 
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].m_Enabled = true;
-    m_Modified = true;
+    startSaveTime();
   } else {
     reportError(tr("esp not found: %1").arg(name));
   }
@@ -204,8 +206,7 @@ void PluginList::enableAll()
   for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     iter->m_Enabled = true;
   }
-  m_Modified = true;
-  emit esplist_changed();
+  startSaveTime();
 }
 
 
@@ -216,8 +217,7 @@ void PluginList::disableAll()
       iter->m_Enabled = false;
     }
   }
-  m_Modified = true;
-  emit esplist_changed();
+  startSaveTime();
 }
 
 
@@ -308,7 +308,7 @@ void PluginList::readEnabledFrom(const QString &fileName)
         m_ESPs[iter->second].m_Enabled = true;
       } else {
         qWarning("plugin %s not found", modName.toUtf8().constData());
-        m_Modified = true;
+        startSaveTime();
       }
     }
   }
@@ -417,10 +417,6 @@ void PluginList::writeLockedOrder(const QString &fileName) const
 
 void PluginList::saveTo(const QString &pluginFileName, const QString &loadOrderFileName, const QString &lockedOrderFileName, const QString& deleterFileName, bool hideUnchecked) const
 {
-  if (!m_Modified) {
-    return;
-  }
-
   writePlugins(pluginFileName, false);
   writePlugins(loadOrderFileName, true);
   writeLockedOrder(lockedOrderFileName);
@@ -442,7 +438,7 @@ void PluginList::saveTo(const QString &pluginFileName, const QString &loadOrderF
     qDebug("%s saved", QDir::toNativeSeparators(deleterFileName).toUtf8().constData());
   }
 
-  m_Modified = false;
+  m_SaveTimer.stop();
 }
 
 
@@ -508,8 +504,7 @@ void PluginList::lockESPIndex(int index, bool lock)
       m_LockedOrder.erase(iter);
     }
   }
-  m_Modified = true;
-  emit esplist_changed();
+  startSaveTime();
 }
 
 
@@ -544,7 +539,7 @@ void PluginList::refreshLoadOrder()
       // locked esp exists
 
       // find the location to insert at
-      while ((targetPrio < static_cast<int>(m_ESPs.size())) &&
+      while ((targetPrio < static_cast<int>(m_ESPs.size() - 1)) &&
              (m_ESPs[m_ESPsByPriority[targetPrio]].m_LoadOrder < iter->first)) {
         if (QString::compare(m_ESPs[m_ESPsByPriority[targetPrio]].m_Name, iter->second) != 0) {
           ++targetPrio;
@@ -555,7 +550,7 @@ void PluginList::refreshLoadOrder()
         setPluginPriority(nameIter->second, temp);
         m_ESPs[nameIter->second].m_LoadOrder = iter->first;
         syncLoadOrder();
-        m_Modified = true;
+        startSaveTime();
       }
     }
   }
@@ -653,8 +648,7 @@ bool PluginList::setData(const QModelIndex &index, const QVariant &value, int ro
     emit layoutAboutToBeChanged();
 
     refreshLoadOrder();
-    m_Modified = true;
-    emit esplist_changed();
+    startSaveTime();
 
     emit layoutChanged();
     return true;
@@ -768,11 +762,17 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
   }
   refreshLoadOrder();
 
-  emit esplist_changed();
-
-  m_Modified = true;
+  startSaveTime();
 
   emit layoutChanged();
+}
+
+
+void PluginList::startSaveTime()
+{
+  if (!m_SaveTimer.isActive()) {
+    m_SaveTimer.start(2000);
+  }
 }
 
 

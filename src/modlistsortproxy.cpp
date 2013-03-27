@@ -45,10 +45,15 @@ void ModListSortProxy::setProfile(Profile *profile)
   m_Profile = profile;
 }
 
+void ModListSortProxy::updateFilterActive()
+{
+  emit filterActive((m_CategoryFilter != CategoryFactory::CATEGORY_NONE) || !m_CurrentFilter.isEmpty());
+}
 
 void ModListSortProxy::setCategoryFilter(int category)
 {
   m_CategoryFilter = category;
+  updateFilterActive();
   this->invalidate();
 }
 
@@ -164,6 +169,7 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
 void ModListSortProxy::updateFilter(const QString &filter)
 {
   m_CurrentFilter = filter;
+  updateFilterActive();
   invalidateFilter();
 }
 

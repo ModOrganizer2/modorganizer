@@ -41,9 +41,9 @@ LogBuffer::~LogBuffer()
 #else
   qInstallMsgHandler(0);
 #endif
-  if (!m_ShutDown) {
+//  if (!m_ShutDown) {
     write();
-  }
+//  }
 }
 
 

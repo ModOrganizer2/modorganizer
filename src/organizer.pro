@@ -203,7 +203,6 @@ QMAKE_CXXFLAGS_WARN_ON -= -W3
 QMAKE_CXXFLAGS_WARN_ON += -W4
 QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
 
-
 CONFIG += embed_manifest_exe
 
 # QMAKE_CXXFLAGS += /analyze

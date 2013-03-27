@@ -520,7 +520,7 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, QString &m
         }
 
         // remove the directory with all content, then recreate it empty
-        removeDir(targetDirectory);
+        shellDelete(QStringList(targetDirectory), NULL);
         if (!QDir().mkdir(targetDirectory)) {
           // windows may keep the directory around for a moment, preventing its re-creation
           Sleep(100);
@@ -781,6 +781,22 @@ bool InstallationManager::installFomodInternal(DirectoryTree *&baseNode, const Q
 }
 
 
+static BOOL CALLBACK BringToFront(HWND hwnd, LPARAM lParam)
+{
+  DWORD procid;
+
+  GetWindowThreadProcessId(hwnd, &procid);
+
+  if (procid == static_cast<DWORD>(lParam)) {
+    ::SetForegroundWindow(hwnd);
+    ::SetLastError(NOERROR);
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+
 bool InstallationManager::installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory)
 {
   wchar_t binary[MAX_PATH];
@@ -797,13 +813,24 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
 
   GameInfo &gameInfo = GameInfo::instance();
 
-  QString binaryDestination = modDirectory.mid(0).append("/").append(ToQString(gameInfo.getBinaryName()));
-
-  // NCC assumes the installation directory is the game directory and may try to access the binary to determine version information
-  QFile::copy(QDir::fromNativeSeparators(ToQString(gameInfo.getGameDirectory().append(L"\\").append(gameInfo.getBinaryName()))),
-              binaryDestination);
-
-  ON_BLOCK_EXIT([&binaryDestination] { if (!QFile::remove(binaryDestination)) qCritical("failed to remove %s", qPrintable(binaryDestination)); } );
+  QStringList copiedFiles;
+  QStringList patterns;
+  patterns.append(QDir::fromNativeSeparators(ToQString(gameInfo.getBinaryName())));
+  patterns.append("*se_loader.exe");
+  QDirIterator iter(QDir::fromNativeSeparators(ToQString(gameInfo.getGameDirectory())), patterns);
+  QDir modDir(modDirectory);
+  while (iter.hasNext()) {
+    iter.next();
+    QString destination = modDir.absoluteFilePath(iter.fileInfo().fileName());
+    if (QFile::copy(iter.fileInfo().absoluteFilePath(), destination)) {
+      copiedFiles.append(destination);
+    }
+  }
+  ON_BLOCK_EXIT([&copiedFiles] {
+    foreach (const QString &fileName, copiedFiles) {
+      if (!QFile::remove(fileName)) qCritical("failed to remove %s", qPrintable(fileName));
+    }
+  });
 
   SHELLEXECUTEINFOW execInfo = {0};
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
@@ -820,13 +847,20 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
     return false;
   }
 
-  QProgressDialog busyDialog(tr("Running external installer.\nNote: This installer will not be aware of other installed mods!"), tr("Force Close"), 0, 0, m_ParentWidget);
+  QProgressDialog busyDialog(tr("Preparing external installer, this can take a few minutes.\nNote: This installer will not be aware of other installed mods (including skse)!"), tr("Force Close"), 0, 0, m_ParentWidget);
   busyDialog.setWindowModality(Qt::WindowModal);
   bool confirmCancel = false;
   busyDialog.show();
   bool finished = false;
+  DWORD procid = ::GetProcessId(execInfo.hProcess);
+  bool inFront = false;
   while (true) {
     QCoreApplication::processEvents();
+    if (!inFront) {
+      if (!::EnumWindows(BringToFront, procid) && (::GetLastError() == NOERROR)) {
+        inFront = true;
+      }
+    }
     DWORD res = ::WaitForSingleObject(execInfo.hProcess, 100);
     if (res == WAIT_OBJECT_0) {
       finished = true;
@@ -872,7 +906,7 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
             errorOccured = true;
           }
         } // if it's a directory and the target exists that isn't really a problem
-
+        // TODO: use shellRename?
         if (!QFile::rename(fileInfo.absoluteFilePath(), newName)) {
           // moving doesn't work when merging
           if (!copyDir(fileInfo.absoluteFilePath(), newName, true)) {
@@ -890,7 +924,7 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
     }
 
     QString dataDir = modDirectory.mid(0).append("/Data");
-    if (!removeDir(dataDir)) {
+    if (!shellDelete(QStringList(dataDir), NULL)) {
       qCritical("failed to remove data directory from %s", dataDir.toUtf8().constData());
       errorOccured = true;
     }
@@ -905,7 +939,7 @@ bool InstallationManager::installFomodExternal(const QString &fileName, const QS
     return true;
   } else {
     // after cancelation or error the installer may leave the empty mod directory
-    if (!removeDir(modDirectory)) {
+    if (!shellDelete(QStringList(modDirectory), NULL)) {
       qCritical ("failed to remove empty mod directory %s", modDirectory.toUtf8().constData());
     }
     return false;

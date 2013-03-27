@@ -51,7 +51,6 @@ ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent), m_Profile(NULL), m_Modified(false),
     m_FontMetrics(QFont())
 {
-//  setSupportedDragActions(Qt::MoveAction);
 }
 
 
@@ -294,8 +293,7 @@ bool ModList::renameMod(int index, const QString &newName)
   emit modRenamed(oldName, newName);
 
   // invalidate the currently displayed state of this list
-#pragma message("why is this necessary? It unselects the current selection")
-  notifyChange(-1);
+//  notifyChange(-1);
   return true;
 }
 
@@ -314,7 +312,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Profile->setModEnabled(index.row(), enabled);
       m_Modified = true;
 
-      emit modlist_changed(index.row());
+      emit modlist_changed(index, role);
     }
     return true;
   } else if (role == Qt::EditRole) {
@@ -328,7 +326,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         if (ok) {
           m_Profile->setModPriority(index.row(), newPriority);
 
-          emit modlist_changed(index.row());
+          emit modlist_changed(index, role);
           return true;
         } else {
           return false;
@@ -340,7 +338,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         int newID = value.toInt(&ok);
         if (ok) {
           info->setNexusID(newID);
-          emit modlist_changed(index.row());
+          emit modlist_changed(index, role);
           return true;
         } else {
           return false;
@@ -592,7 +590,7 @@ QString ModList::getColumnName(int column)
 {
   switch (column) {
     case COL_FLAGS:    return tr("Flags");
-    case COL_NAME:     return tr("Name");
+    case COL_NAME:     return tr("Mod Name");
     case COL_VERSION:  return tr("Version");
     case COL_PRIORITY: return tr("Priority");
     case COL_CATEGORY: return tr("Category");
