@@ -127,6 +127,8 @@ public:
 
   virtual std::vector<std::wstring> getPrimaryPlugins() = 0;
 
+  virtual std::vector<std::wstring> getVanillaBSAs() = 0;
+
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;
 

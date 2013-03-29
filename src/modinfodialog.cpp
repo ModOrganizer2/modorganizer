@@ -154,7 +154,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     activateNexusTab();
   }
 
-  ui->endorseBtn->setEnabled(m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE);
+  ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
+                             (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 }
 
 
@@ -704,15 +705,17 @@ QString ModInfoDialog::getFileCategory(int categoryID)
 
 void ModInfoDialog::updateVersionColor()
 {
-  QPalette versionColor;
+//  QPalette versionColor;
   if (m_ModInfo->getVersion() < m_ModInfo->getNewestVersion()) {
-    versionColor.setColor(QPalette::Text, Qt::red);
+    ui->versionEdit->setStyleSheet("color: red");
+//    versionColor.setColor(QPalette::Text, Qt::red);
     ui->versionEdit->setToolTip(tr("Current Version: %1").arg(m_ModInfo->getNewestVersion().canonicalString()));
   } else {
-    versionColor.setColor(QPalette::Text, Qt::green);
+    ui->versionEdit->setStyleSheet("color: green");
+//    versionColor.setColor(QPalette::Text, Qt::green);
     ui->versionEdit->setToolTip(tr("No update available"));
   }
-  ui->versionEdit->setPalette(versionColor);
+//  ui->versionEdit->setPalette(versionColor);
 }
 
 
@@ -1203,8 +1206,8 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
-  this->close();
   emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
+  this->accept();
 }
 
 void ModInfoDialog::on_refreshButton_clicked()
@@ -1217,4 +1220,16 @@ void ModInfoDialog::on_refreshButton_clicked()
 void ModInfoDialog::on_endorseBtn_clicked()
 {
   emit endorseMod(m_ModInfo);
+}
+
+void ModInfoDialog::on_nextButton_clicked()
+{
+  emit modOpenNext();
+  this->accept();
+}
+
+void ModInfoDialog::on_prevButton_clicked()
+{
+  emit modOpenPrev();
+  this->accept();
 }

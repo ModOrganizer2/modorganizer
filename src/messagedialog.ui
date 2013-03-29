@@ -179,6 +179,9 @@
      <property name="text">
       <string>Placeholder</string>
      </property>
+     <property name="textFormat">
+      <enum>Qt::RichText</enum>
+     </property>
      <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
@@ -186,7 +189,10 @@
       <bool>true</bool>
      </property>
      <property name="margin">
-      <number>0</number>
+      <number>2</number>
+     </property>
+     <property name="textInteractionFlags">
+      <set>Qt::NoTextInteraction</set>
      </property>
     </widget>
    </item>

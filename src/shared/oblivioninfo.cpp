@@ -106,6 +106,17 @@ std::vector<std::wstring> OblivionInfo::getPrimaryPlugins()
 }
 
 
+std::vector<std::wstring> OblivionInfo::getVanillaBSAs()
+{
+  return boost::assign::list_of(L"Oblivion - Meshes.bsa")
+                               (L"Oblivion - Textures - Compressed.bsa")
+                               (L"Oblivion - Sounds.bsa")
+                               (L"Oblivion - Voices1.bsa")
+                               (L"Oblivion - Voices2.bsa")
+                               (L"Oblivion - Misc.bsa");
+}
+
+
 std::vector<std::wstring> OblivionInfo::getIniFileNames()
 {
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");

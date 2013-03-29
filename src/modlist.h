@@ -163,12 +163,13 @@ signals:
   /**
    * @brief emitted whenever a row in the list has changed
    *
-   * @param row the row that changed
+   * @param index the index of the changed field
+   * @param role role of the field that changed
    * @note this signal must only be emitted if the row really did change.
    *       Slots handling this signal therefore do not have to verify that a change has happened
    * @note this signal is currently only used in tutorials
    **/
-  void modlist_changed(int row);
+  void modlist_changed(const QModelIndex &index, int role);
 
   /**
    * @brief emitted to have all selected mods deleted

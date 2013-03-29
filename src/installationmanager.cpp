@@ -517,7 +517,7 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedVal
         }
 
         // remove the directory with all content, then recreate it empty
-        removeDir(targetDirectory);
+        shellDelete(QStringList(targetDirectory), NULL);
         if (!QDir().mkdir(targetDirectory)) {
           // windows may keep the directory around for a moment, preventing its re-creation
           Sleep(100);
@@ -694,6 +694,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
                                   GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
+  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
@@ -706,6 +707,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
+  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
