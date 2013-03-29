@@ -76,7 +76,8 @@ public:
   enum EEndorsedState {
     ENDORSED_FALSE,
     ENDORSED_TRUE,
-    ENDORSED_UNKNOWN
+    ENDORSED_UNKNOWN,
+    ENDORSED_NEVER
   };
 
   struct NexusFileInfo {
@@ -267,6 +268,11 @@ public:
   virtual void setIsEndorsed(bool endorsed) = 0;
 
   /**
+   * set the mod to "i don't intend to endorse". The mod will not show as unendorsed but can still be endorsed
+   */
+  virtual void setNeverEndorse() = 0;
+
+  /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
@@ -414,7 +420,7 @@ public:
   /**
    * @return true if the file has been endorsed on nexus
    */
-  virtual EEndorsedState endorsedState() const { return ENDORSED_UNKNOWN; }
+  virtual EEndorsedState endorsedState() const { return ENDORSED_NEVER; }
 
   /**
    * @brief updates the valid-flag for this mod
@@ -578,6 +584,11 @@ public:
    * @param endorsed the new endorsement state
    */
   virtual void setIsEndorsed(bool endorsed);
+
+  /**
+   * set the mod to "i don't intend to endorse". The mod will not show as unendorsed but can still be endorsed
+   */
+  virtual void setNeverEndorse();
 
   /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
@@ -799,6 +810,7 @@ public:
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void setNexusDescription(const QString&) {}
   virtual void setIsEndorsed(bool) {}
+  virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
   virtual QString name() const { return tr("Overwrite"); }

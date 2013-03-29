@@ -77,11 +77,15 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
     }
     m_NameLabel->setText(name);
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-    if (state == DownloadManager::STATE_PAUSED) {
+    if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
       m_DoneLabel->setVisible(true);
       m_Progress->setVisible(false);
       m_DoneLabel->setText(tr("Paused"));
       m_DoneLabel->setForegroundRole(QPalette::Link);
+    } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
+      m_DoneLabel->setText(tr("Fetching Info 1"));
+    } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
+      m_DoneLabel->setText(tr("Fetching Info 2"));
     } else if (state >= DownloadManager::STATE_READY) {
       m_DoneLabel->setVisible(true);
       m_Progress->setVisible(false);
@@ -218,7 +222,7 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
         } else if (state == DownloadManager::STATE_DOWNLOADING){
           menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
           menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-        } else if (state == DownloadManager::STATE_PAUSED) {
+        } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
           menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
           menu.addAction(tr("Resume"), this, SLOT(issueResume()));
         }

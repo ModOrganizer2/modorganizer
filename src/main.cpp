@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdarg>
 #include <inject.h>
 #include <appconfig.h>
+#include <utility.h>
 #include <stdexcept>
 #include "mainwindow.h"
 #include "report.h"
@@ -60,6 +61,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QBuffer>
 #include <QSplashScreen>
 #include <QDirIterator>
+#include <QDesktopServices>
 #include <eh.h>
 #include <windows_error.h>
 
@@ -76,8 +78,13 @@ void removeOldLogfiles()
                             QDir::Files, QDir::Name);
 
   if (files.count() > 5) {
+    QStringList deleteFiles;
     for (int i = 0; i < files.count() - 5; ++i) {
-      QFile::remove(files.at(i).absoluteFilePath());
+      deleteFiles.append(files.at(i).absoluteFilePath());
+    }
+
+    if (!shellDelete(deleteFiles, NULL)) {
+      qWarning("failed to remove log files: %s", qPrintable(windowsErrorString(::GetLastError())));
     }
   }
 }
@@ -86,13 +93,15 @@ void removeOldLogfiles()
 // set up required folders (for a first install or after an update or to fix a broken installation)
 bool bootstrap()
 {
+  qDebug("bootstapping");
+
   GameInfo &gameInfo = GameInfo::instance();
 
   // remove the temporary backup directory in case we're restarting after an update
   QString moDirectory = QDir::fromNativeSeparators(ToQString(gameInfo.getOrganizerDirectory()));
   QString backupDirectory = moDirectory.mid(0).append("/update_backup");
   if (QDir(backupDirectory).exists()) {
-    removeDir(backupDirectory);
+    shellDelete(QStringList(backupDirectory), NULL);
   }
 
   // cycle logfile
@@ -140,6 +149,7 @@ bool bootstrap()
   }
 
   // verify the hook-dll exists
+  qDebug("checking dll");
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
   if (dllMod == NULL) {
@@ -176,6 +186,8 @@ void cleanupDir()
 
   static const int NUM_FILES = sizeof(fileNames) / sizeof(QString);
 
+  qDebug("cleaning up unused files");
+
   for (int i = 0; i < NUM_FILES; ++i) {
     if (QFile::remove(QApplication::applicationDirPath().append("/").append(fileNames[i]))) {
       qDebug("%s removed in cleanup",
@@ -211,8 +223,8 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
 
       if (QMessageBox::question(NULL, QObject::tr("Woops"),
                             QObject::tr("ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file "
-                               "by email (sherb@gmx.net), the bug is a lot more likely to be fixed. "
-                               "Please include a short description of what you were doing when the crash happened"),
+                               "(%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. "
+                               "Please include a short description of what you were doing when the crash happened").arg(qApp->applicationFilePath().append(".dmp")),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 
         std::wstring dumpName = ToWString(qApp->applicationFilePath().append(".dmp"));
@@ -258,13 +270,16 @@ void registerMetaTypes()
   registerExecutable();
 }
 
-
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
   LogBuffer::init(20, QtDebugMsg, application.applicationDirPath().append("/logs/mo_interface.log"));
+
+  qDebug("Working directory: %s", qPrintable(QDir::currentPath()));
+  qDebug("MO at: %s", qPrintable(application.applicationDirPath()));
+  qDebug("user name: %s", getenv("USERNAME"));
   QPixmap pixmap(":/MO/gui/splash");
   QSplashScreen splash(pixmap);
   splash.show();
@@ -282,8 +297,8 @@ int main(int argc, char *argv[])
   try {
     SingleInstance instance(update);
     if (!instance.primaryInstance()) {
-      if ((arguments.size() == 2) &&
-          isNxmLink(arguments.at(1))) {
+      if ((arguments.size() == 2) && isNxmLink(arguments.at(1))) {
+        qDebug("not primary instance, sending download message");
         instance.sendMessage(arguments.at(1));
         return 0;
       } else if (arguments.size() == 1) {
@@ -294,20 +309,20 @@ int main(int argc, char *argv[])
 
 
     // TODO: this should be MAX_PATH_UNICODE!
-    wchar_t omoPath[MAX_PATH];
-    memset(omoPath, 0, sizeof(TCHAR) * MAX_PATH);
-    ::GetModuleFileNameW(NULL, omoPath, MAX_PATH);
-    wchar_t *lastBSlash = wcsrchr(omoPath, TEXT('\\'));
+    wchar_t moPath[MAX_PATH];
+    memset(moPath, 0, sizeof(TCHAR) * MAX_PATH);
+    ::GetModuleFileNameW(NULL, moPath, MAX_PATH);
+    wchar_t *lastBSlash = wcsrchr(moPath, TEXT('\\'));
     if (lastBSlash != NULL) {
       *lastBSlash = TEXT('\0');
     }
-    QSettings settings(ToQString(std::wstring(omoPath).append(L"\\ModOrganizer.ini")), QSettings::IniFormat);
+    QSettings settings(ToQString(std::wstring(moPath).append(L"\\ModOrganizer.ini")), QSettings::IniFormat);
 
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
 
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(omoPath, ToWString(gamePath))) {
+      if (!GameInfo::init(moPath, ToWString(gamePath))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));
@@ -358,6 +373,9 @@ int main(int argc, char *argv[])
       // user selected a folder and game was initialised with it
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
+
+    qDebug("managing game at %s", qPrintable(gamePath));
+
     ExecutablesList executablesList;
 
     executablesList.init();
@@ -367,6 +385,8 @@ int main(int argc, char *argv[])
     }
 
     cleanupDir();
+
+    qDebug("setting up configured executables");
 
     int numCustomExecutables = settings.beginReadArray("customExecutables");
     for (int i = 0; i < numCustomExecutables; ++i) {
@@ -384,14 +404,15 @@ int main(int argc, char *argv[])
 
     settings.endArray();
 
+    qDebug("initializing tutorials");
     TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
 
     application.setStyleFile(settings.value("Settings/style", "").toString());
 
+    qDebug("setting up main window");
     // set up main window and its data structures
     MainWindow mainWindow(argv[0], settings);
     QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-
     QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
 
     mainWindow.setExecutablesList(executablesList);
@@ -402,16 +423,19 @@ int main(int argc, char *argv[])
     { // see if there is a profile on the command line
       int profileIndex = arguments.indexOf("-p", 1);
       if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
+        qDebug("profile overwritten on command line");
         selectedProfileName = arguments.at(profileIndex + 1);
       }
       arguments.removeAt(profileIndex);
       arguments.removeAt(profileIndex);
     }
+    qDebug("configured profile: %s", qPrintable(selectedProfileName));
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
     if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
       QString exeName = arguments.at(1);
+      qDebug("starting %s from command line", qPrintable(exeName));
       arguments.removeFirst(); // remove application name (ModOrganizer.exe)
       arguments.removeFirst(); // remove binary name
       // pass the remaining parameters to the binary
@@ -431,10 +455,12 @@ int main(int argc, char *argv[])
       mainWindow.setCurrentProfile(1);
     }
 
+    qDebug("displaying main window");
     mainWindow.show();
 
     if ((arguments.size() > 1) &&
         (isNxmLink(arguments.at(1)))) {
+      qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
       mainWindow.externalMessage(arguments.at(1));
     }
     splash.finish(&mainWindow);

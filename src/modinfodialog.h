@@ -106,6 +106,8 @@ signals:
   void nexusLinkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
+  void modOpenNext();
+  void modOpenPrev();
   void originModified(int originID);
   void endorseMod(ModInfo::Ptr nexusID);
 
@@ -180,6 +182,10 @@ private slots:
   void on_refreshButton_clicked();
 
   void on_endorseBtn_clicked();
+
+  void on_nextButton_clicked();
+
+  void on_prevButton_clicked();
 
 private:
 

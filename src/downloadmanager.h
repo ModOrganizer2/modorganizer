@@ -30,7 +30,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTime>
 #include <QVector>
 #include <QMap>
+#include <QStringList>
 #include <QFileSystemWatcher>
+#include <QSettings>
 
 
 struct NexusInfo {
@@ -63,6 +65,7 @@ public:
     STATE_PAUSING,
     STATE_CANCELED,
     STATE_PAUSED,
+    STATE_ERROR,
     STATE_FETCHINGMODINFO,
     STATE_FETCHINGFILEINFO,
     STATE_READY,
@@ -79,10 +82,18 @@ private:
     int m_Progress;
     int m_ModID;
     int m_FileID;
-    NexusInfo m_NexusInfo;
     DownloadState m_State;
-    QString m_Url;
+    int m_CurrentUrl;
+    QStringList m_Urls;
     qint64 m_ResumePos;
+    qint64 m_TotalSize;
+    int m_Tries;
+    bool m_ReQueried;
+
+    NexusInfo m_NexusInfo;
+
+    static DownloadInfo *createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs);
+    static DownloadInfo *createFromMeta(const QString &filePath);
 
     /**
      * @brief rename the file
@@ -93,6 +104,13 @@ private:
      *                   yet exist, set this to false
      **/
     void setName(QString newName, bool renameFile);
+
+    bool isPausedState();
+
+    QString currentURL();
+
+  private:
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false) {}
   };
 
 public:
@@ -135,7 +153,7 @@ public:
    * @param nexusInfo information previously retrieved from the nexus network
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QUrl &url, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+  bool addDownload(const QStringList &URLs, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
 
   /**
    * @brief download from an already open network connection
@@ -147,7 +165,7 @@ public:
    * @param nexusInfo information previously retrieved from the nexus network
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QString &fileName, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
 
   /**
    * @brief start a download using a nxm-link
@@ -310,7 +328,7 @@ private:
 //  QString getOutputPath(const QUrl &url, const QString &fileName) const;
   QString getDownloadFileName(const QString &baseName) const;
 
-  void addDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
+  void startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = NULL) const;
@@ -323,6 +341,12 @@ private:
 
   QString getFileNameFromNetworkReply(QNetworkReply *reply);
 
+  void setState(DownloadInfo *info, DownloadManager::DownloadState state);
+
+private:
+
+  static const int AUTOMATIC_RETRIES = 3;
+
 private:
 
   NexusInterface *m_NexusInterface;
@@ -333,6 +357,8 @@ private:
   QVector<int> m_AlphabeticalTranslation;
 
   QFileSystemWatcher m_DirWatcher;
+
+  std::map<QString, int> m_DownloadFails;
 
 };
 

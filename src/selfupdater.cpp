@@ -90,10 +90,10 @@ SelfUpdater::~SelfUpdater()
 
 void SelfUpdater::testForUpdate()
 {
-/*  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
+  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
     emit updateAvailable();
     return;
-  }*/
+  }
 
   if (m_UpdateRequestID == -1) {
     m_UpdateRequestID = m_Interface->requestDescription(
@@ -104,11 +104,11 @@ void SelfUpdater::testForUpdate()
 
 void SelfUpdater::startUpdate()
 {
-/*  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
+  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
     m_UpdateFile.setFileName(QCoreApplication::applicationDirPath() + "/mo_test_update.7z");
     installUpdate();
     return;
-  }*/
+  }
 
   if ((m_UpdateRequestID == -1) &&
       (!m_NewestVersion.isEmpty())) {
@@ -243,9 +243,13 @@ void SelfUpdater::installUpdate()
     } else if (outputName == "ModOrganizer") {
       data[i]->setSkip(true);
     }
-    QFile file(mopath.mid(0).append("/").append(outputName));
-    if (file.exists()) {
-      file.rename(backupPath.mid(0).append("/").append(outputName));
+    QFileInfo file(mopath.mid(0).append("/").append(outputName));
+    if (file.exists() && file.isFile()) {
+      if (!shellMove(QStringList(mopath.mid(0).append("/").append(outputName)),
+                     QStringList(backupPath.mid(0).append("/").append(outputName)))) {
+        reportError(tr("failed to move outdated files: %1. Please update manually.").arg(windowsErrorString(::GetLastError())));
+        return;
+      }
     }
   }
 

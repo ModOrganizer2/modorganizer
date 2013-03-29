@@ -595,15 +595,13 @@ p, li { white-space: pre-wrap; }
             <string>Select loading mechanism. See help for details.</string>
            </property>
            <property name="whatsThis">
-            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Mod Organizer needs a dll to be injected into the game so all mods are visible to it.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;There are several means to do this:&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Mod Organizer&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it. This does not work for the Steam version of Oblivion!&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Script Extender&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin. (recommended if you have a script extender installed)&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Proxy DLL&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; In this mode, MO replaces one of the game's dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don't work.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>Mod Organizer needs a dll to be injected into the game so all mods are visible to it.
+There are several means to do this:
+*Mod Organizer* (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it.
+*Script Extender* In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin.
+*Proxy DLL* In this mode, MO replaces one of the game's dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don't work.
+
+If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</string>
            </property>
           </widget>
          </item>
@@ -701,7 +699,7 @@ For the other games this is not a sufficient replacement for AI!</string>
           <string>Back-date BSAs</string>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/MO/gui/resources/emblem-readonly.png</normaloff>:/MO/gui/resources/emblem-readonly.png</iconset>
          </property>
         </widget>
@@ -745,9 +743,7 @@ For the other games this is not a sufficient replacement for AI!</string>
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>

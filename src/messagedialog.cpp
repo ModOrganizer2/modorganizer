@@ -28,7 +28,26 @@ MessageDialog::MessageDialog(const QString &text, QWidget *reference) :
     ui(new Ui::MessageDialog)
 {
   ui->setupUi(this);
-  findChild<QLabel*>("message")->setText(text);
+
+  // very crude way to ensure no single word in the test is wider than the message window. ellide in the center if necessary
+  QFontMetrics metrics(ui->message->font());
+  QString restrictedText;
+  QStringList lines = text.split("\n");
+  foreach (const QString &line, lines) {
+    QString newLine;
+    QStringList words = line.split(" ");
+    foreach (const QString &word, words) {
+      if (word.length() > 10) {
+        newLine += "<span style=\"nobreak\">" + metrics.elidedText(word, Qt::ElideMiddle, ui->message->maximumWidth()) + "</span>";
+      } else {
+        newLine += word;
+      }
+      newLine += " ";
+    }
+    restrictedText += newLine + "\n";
+  }
+
+  ui->message->setText(restrictedText);
   this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
   this->setFocusPolicy(Qt::NoFocus);
   this->setAttribute(Qt::WA_ShowWithoutActivating);

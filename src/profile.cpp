@@ -39,12 +39,15 @@ using namespace MOBase;
 using namespace MOShared;
 
 Profile::Profile()
+  : m_SaveTimer(NULL)
 {
   initTimer();
 }
 
 Profile::Profile(const QString &name, bool useDefaultSettings)
+  : m_SaveTimer(NULL)
 {
+  initTimer();
   QString profilesDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()));
   QDir profileBase(profilesDir);
 
@@ -69,17 +72,17 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
-    removeDir(profileBase.absoluteFilePath(fixedName));
+    shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)), NULL);
     throw;
   }
-  initTimer();
   refreshModStatus();
 }
 
 
 Profile::Profile(const QDir& directory)
-  : m_Directory(directory)
+  : m_Directory(directory), m_SaveTimer(NULL)
 {
+  initTimer();
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     throw std::runtime_error(QObject::tr("modlist.txt missing").toUtf8().constData());
   }
@@ -89,13 +92,12 @@ Profile::Profile(const QDir& directory)
   if (!QFile::exists(getIniFileName())) {
     reportError(QObject::tr("\"%1\" is missing").arg(getIniFileName()));
   }
-  initTimer();
   refreshModStatus();
 }
 
 
 Profile::Profile(const Profile& reference)
-  : m_Directory(reference.m_Directory)
+  : m_Directory(reference.m_Directory), m_SaveTimer(NULL)
 {
   initTimer();
   refreshModStatus();
@@ -182,17 +184,11 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
 void Profile::createTweakedIniFile()
 {
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
-//  QFile iniFile(tweakedIni);
 
-  // workaround: the fallout nv launcher seems to mark the file read-only. crazy...
-/* ::SetFileAttributesW(ToWString(tweakedIni).c_str(), FILE_ATTRIBUTE_NORMAL);
-  QFile(tweakedIni).remove();
-  if (!iniFile.copy(tweakedIni)) {
-    reportError(tr("failed to apply ini tweaks").append(": ").append(iniFile.errorString()));
+  if (!shellDelete(QStringList(tweakedIni), NULL)) {
+    reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
     return;
-  }*/
-
-  QFile::remove(tweakedIni); // remove the old ini tweaks
+  }
 
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
     if (m_ModStatus[i].m_Enabled) {
@@ -422,11 +418,18 @@ int Profile::getModPriority(unsigned int index) const
 
 void Profile::setModPriority(unsigned int index, int &newPriority)
 {
-  int newPriorityTemp = (std::max)(0, (std::min<int>)(m_ModStatus.size() - 1, newPriority));
   if (m_ModStatus[index].m_Overwrite) {
     // can't change priority of the overwrite
     return;
   }
+
+  int newPriorityTemp = (std::max)(0, (std::min<int>)(m_ModStatus.size() - 1, newPriority));
+
+  // don't try to place below overwrite
+  while (m_ModStatus[m_ModIndexByPriority[newPriorityTemp]].m_Overwrite) {
+    --newPriorityTemp;
+  }
+
   int oldPriority = m_ModStatus[index].m_Priority;
   if (newPriorityTemp > oldPriority) {
     // priority is higher than the old, so the gap we left is in lower priorities
@@ -670,7 +673,7 @@ bool Profile::enableLocalSaves(bool enable)
                                                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                                             QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
-      removeDir(m_Directory.absoluteFilePath("_saves"));
+      shellDelete(QStringList(m_Directory.absoluteFilePath("_saves")), NULL);
     } else if (res == QMessageBox::No) {
       m_Directory.rename("saves", "_saves");
     } else {

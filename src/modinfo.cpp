@@ -340,7 +340,16 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   if (metaFile.contains("endorsed")) {
-    m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+    if (metaFile.value("endorsed").canConvert<int>()) {
+      switch (metaFile.value("endorsed").toInt()) {
+        case ENDORSED_FALSE: m_EndorsedState = ENDORSED_FALSE; break;
+        case ENDORSED_TRUE:  m_EndorsedState = ENDORSED_TRUE;  break;
+        case ENDORSED_NEVER: m_EndorsedState = ENDORSED_NEVER; break;
+        default: m_EndorsedState = ENDORSED_UNKNOWN; break;
+      }
+    } else {
+      m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+    }
   }
 
   int numNexusFiles = metaFile.beginReadArray("nexusFiles");
@@ -406,8 +415,9 @@ void ModInfoRegular::saveMeta()
         metaFile.setValue("nexusDescription", m_NexusDescription);
         metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
         if (m_EndorsedState != ENDORSED_UNKNOWN) {
-          metaFile.setValue("endorsed", m_EndorsedState == ENDORSED_TRUE ? true : false);
+          metaFile.setValue("endorsed", m_EndorsedState);
         }
+
 
         metaFile.beginWriteArray("nexusFiles");
         for (int i = 0; i < m_NexusFileInfos.size(); ++i) {
@@ -437,7 +447,9 @@ void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
   QVariantMap result = resultData.toMap();
   m_NewestVersion.parse(result["version"].toString());
   m_NexusDescription = result["description"].toString();
-  m_EndorsedState = result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+  if (m_EndorsedState != ENDORSED_NEVER) {
+    m_EndorsedState = result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+  }
   m_NexusBridge.requestFiles(m_NexusID, QVariant());
 }
 
@@ -588,7 +600,16 @@ void ModInfoRegular::setNexusDescription(const QString &description)
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {
-  m_EndorsedState = endorsed ? ENDORSED_TRUE : ENDORSED_FALSE;
+  if (m_EndorsedState != ENDORSED_NEVER) {
+    m_EndorsedState = endorsed ? ENDORSED_TRUE : ENDORSED_FALSE;
+    m_MetaInfoChanged = true;
+  }
+}
+
+
+void ModInfoRegular::setNeverEndorse()
+{
+  m_EndorsedState = ENDORSED_NEVER;
   m_MetaInfoChanged = true;
 }
 
@@ -596,7 +617,7 @@ void ModInfoRegular::setIsEndorsed(bool endorsed)
 bool ModInfoRegular::remove()
 {
   m_MetaInfoChanged = false;
-  return removeDir(absolutePath());
+  return shellDelete(QStringList(absolutePath()), NULL);
 }
 
 void ModInfoRegular::endorse(bool doEndorse)

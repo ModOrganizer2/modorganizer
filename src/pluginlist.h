@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QString>
 #include <QListWidget>
+#include <QTimer>
 #include <vector>
 #include <directoryentry.h>
 
@@ -162,6 +163,11 @@ signals:
   **/
  void esplist_changed();
 
+ /**
+  * @brief emitted when the plugin list should be saved
+  */
+ void saveTimer();
+
 private:
 
   void refreshLoadOrder();
@@ -174,6 +180,8 @@ private:
   void readLockedOrderFrom(const QString &fileName);
   void setPluginPriority(int row, int &newPriority);
   void changePluginPriority(std::vector<int> rows, int newPriority);
+
+  void startSaveTime();
 
 private:
 
@@ -212,8 +220,9 @@ private:
   std::map<QString, int> m_LockedOrder;
 
   QString m_CurrentProfile;
-  mutable bool m_Modified;
   QFontMetrics m_FontMetrics;
+
+  mutable QTimer m_SaveTimer;
 
 };
 
