@@ -3969,7 +3969,7 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
     case 1: {
-        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_CATEGORY);
+        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_CATEGORY, Qt::UserRole);
       } break;
     case 2: {
         newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_MODID);

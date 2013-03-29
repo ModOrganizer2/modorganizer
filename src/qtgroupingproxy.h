@@ -14,6 +14,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
+// Modifications 2013-03-27 to 2013-03-28 by Sebastian Herbord
+
 #ifndef GROUPINGPROXY_H
 #define GROUPINGPROXY_H
 
@@ -30,9 +32,16 @@ typedef QMap<int, ItemData> RowData;
 class QtGroupingProxy : public QAbstractProxyModel
 {
   Q_OBJECT
+
+public:
+
+  static const unsigned int FLAG_NOSINGLE = 1;
+  static const unsigned int FLAG_NAMETOPITEM = 2;
+
 public:
   explicit QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode = QModelIndex(),
-                            int groupedColumn = -1 );
+                            int groupedColumn = -1, Qt::ItemDataRole groupedRole = Qt::DisplayRole,
+                            unsigned int flags = 0);
   ~QtGroupingProxy();
 
   void setGroupedColumn( int groupedColumn );
@@ -139,6 +148,8 @@ protected:
 
 private:
   QSet<QString> m_expandedItems;
+  unsigned int m_flags;
+  int m_groupedRole;
 };
 
 #endif //GROUPINGPROXY_H

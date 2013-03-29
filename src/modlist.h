@@ -114,6 +114,8 @@ public: // implementation of virtual functions of QAbstractItemModel
                             const QModelIndex &parent = QModelIndex()) const;
   virtual QModelIndex parent(const QModelIndex &child) const;
 
+  virtual QMap<int, QVariant> itemData(const QModelIndex &index) const;
+
 public slots:
 
 signals:

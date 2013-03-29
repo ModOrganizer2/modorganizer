@@ -197,7 +197,21 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
     }
   } else if (role == Qt::UserRole) {
-    return modInfo->getNexusID();
+    if (column == COL_CATEGORY) {
+      QVariantList categoryNames;
+      std::set<int> categories = modInfo->getCategories();
+      CategoryFactory &categoryFactory = CategoryFactory::instance();
+      for (auto iter = categories.begin(); iter != categories.end(); ++iter) {
+        categoryNames.append(categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(*iter)));
+      }
+      if (categoryNames.count() != 0) {
+        return categoryNames;
+      } else {
+        return QVariant();
+      }
+    } else {
+      return modInfo->getNexusID();
+    }
   } else if (role == Qt::UserRole + 1) {
     return modIndex;
   } else if (role == Qt::FontRole) {
@@ -588,6 +602,13 @@ QModelIndex ModList::index(int row, int column, const QModelIndex&) const
 QModelIndex ModList::parent(const QModelIndex&) const
 {
   return QModelIndex();
+}
+
+QMap<int, QVariant> ModList::itemData(const QModelIndex &index) const
+{
+  QMap<int, QVariant> result = QAbstractItemModel::itemData(index);
+  result[Qt::UserRole] = data(index, Qt::UserRole);
+  return result;
 }
 
 

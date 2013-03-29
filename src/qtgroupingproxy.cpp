@@ -14,6 +14,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
+// Modifications 2013-03-27 to 2013-03-28 by Sebastian Herbord
+
+
 #include "QtGroupingProxy.h"
 
 #include <QDebug>
@@ -28,10 +31,12 @@
     \ingroup model-view
 */
 
-QtGroupingProxy::QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode, int groupedColumn )
+QtGroupingProxy::QtGroupingProxy(QAbstractItemModel *model, QModelIndex rootNode, int groupedColumn, Qt::ItemDataRole groupedRole, unsigned int flags )
   : QAbstractProxyModel()
   , m_rootNode( rootNode )
   , m_groupedColumn( 0 )
+  , m_groupedRole( groupedRole )
+  , m_flags( flags )
 {
   setSourceModel( model );
 
@@ -84,14 +89,23 @@ QtGroupingProxy::belongsTo( const QModelIndex &idx )
 
   //get all the data for this index from the model
   ItemData itemData = sourceModel()->itemData( idx );
+  if (m_groupedRole != Qt::DisplayRole) {
+    itemData[Qt::DisplayRole] = itemData[m_groupedRole];
+  }
+
+  // invalid value in grouped role -> ungrouped
+  if (!itemData[Qt::DisplayRole].isValid()) {
+    return rowDataList;
+  }
+
   QMapIterator<int, QVariant> i( itemData );
   while( i.hasNext() )
   {
     i.next();
     int role = i.key();
     QVariant variant = i.value();
-    // qDebug() << "role " << role << " : (" << variant.typeName() << ") : "<< variant;
-    if( variant.type() == QVariant::List )
+    qDebug() << "role " << role << " : (" << variant.typeName() << ") : "<< variant;
+    if ( variant.type() == QVariant::List )
     {
       //a list of variants get's expanded to multiple rows
       QVariantList list = variant.toList();
@@ -111,6 +125,7 @@ QtGroupingProxy::belongsTo( const QModelIndex &idx )
         rowData.insert( m_groupedColumn, indexData );
         rowDataList.insert( i, rowData );
       }
+      break;
     }
     else if( !variant.isNull() )
     {
@@ -155,8 +170,13 @@ QtGroupingProxy::buildTree()
   }
   //dumpGroups();
 
+  if (m_flags & FLAG_NOSINGLE) {
+
+  }
+
   endResetModel();
 
+  // restore expand-state
   for( int row = 0; row < rowCount(); row++ ) {
     QModelIndex idx = index( row, 0, QModelIndex() );
     if (m_expandedItems.contains(idx.data(Qt::UserRole).toString())) {
@@ -326,6 +346,7 @@ QtGroupingProxy::rowCount( const QModelIndex &index ) const
   if( !index.isValid() )
   {
     //the number of top level groups + the number of non-grouped items
+    qDebug("groups: %d - ungrouped: %d", m_groupMaps.count(), m_groupHash.value(std::numeric_limits<quint32>::max()).count());
     int rows = m_groupMaps.count() + m_groupHash.value( std::numeric_limits<quint32>::max() ).count();
     //qDebug() << rows << " in root group";
     return rows;
