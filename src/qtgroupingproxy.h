@@ -36,12 +36,21 @@ class QtGroupingProxy : public QAbstractProxyModel
 public:
 
   static const unsigned int FLAG_NOSINGLE = 1;
-  static const unsigned int FLAG_NAMETOPITEM = 2;
+  static const unsigned int FLAG_NOGROUPNAME = 2;
+
+  enum EAggregateFunction {
+    AGGR_NONE,   // no aggregation, return child elements as list
+    AGGR_EMPTY,  // display nothing
+    AGGR_FIRST,  // return value of the topmost item
+    AGGR_MAX,    // return maximum value
+    AGGR_MIN     // return minimum value
+  };
 
 public:
   explicit QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode = QModelIndex(),
-                            int groupedColumn = -1, Qt::ItemDataRole groupedRole = Qt::DisplayRole,
-                            unsigned int flags = 0);
+                            int groupedColumn = -1, int groupedRole = Qt::DisplayRole,
+                            unsigned int flags = 0,
+                            int aggregateRole = Qt::DisplayRole);
   ~QtGroupingProxy();
 
   void setGroupedColumn( int groupedColumn );
@@ -150,6 +159,8 @@ private:
   QSet<QString> m_expandedItems;
   unsigned int m_flags;
   int m_groupedRole;
+
+  int m_aggregateRole;
 };
 
 #endif //GROUPINGPROXY_H

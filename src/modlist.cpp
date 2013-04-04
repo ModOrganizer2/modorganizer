@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "messagedialog.h"
 #include "installationtester.h"
+#include "qtgroupingproxy.h"
 #include <gameinfo.h>
 
 #include <QFileInfo>
@@ -49,7 +50,7 @@ using namespace MOBase;
 
 ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent), m_Profile(NULL), m_Modified(false),
-    m_FontMetrics(QFont())
+    m_FontMetrics(QFont()), m_DropOnItems(false)
 {
 }
 
@@ -143,15 +144,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       if (priority != INT_MIN) {
         return QVariant(); // hide priority for mods where it's fixed
       } else {
-        if ((m_Profile->getModPriority(modIndex) == 0) && (role == Qt::DisplayRole)) {
-          return tr("min");
-        } else if ((m_Profile->getModPriority(modIndex) == static_cast<int>(m_Profile->numRegularMods()) - 1) &&
-                   (role == Qt::DisplayRole)) {
-          return tr("max");
-        } else {
-          //return QString::number(m_Profile->getModPriority(modIndex));
-          return m_Profile->getModPriority(modIndex);
-        }
+        return m_Profile->getModPriority(modIndex);
       }
     } else if (column == COL_MODID) {
       int modID = modInfo->getNexusID();
@@ -208,11 +201,21 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else {
         return QVariant();
       }
+    } else if (column == COL_PRIORITY) {
+      return m_Profile->getModPriority(modIndex);
     } else {
       return modInfo->getNexusID();
     }
   } else if (role == Qt::UserRole + 1) {
     return modIndex;
+  } else if (role == Qt::UserRole + 2) {
+    switch (column) {
+      case COL_MODID:    return QtGroupingProxy::AGGR_FIRST;
+      case COL_VERSION:  return QtGroupingProxy::AGGR_MAX;
+      case COL_CATEGORY: return QtGroupingProxy::AGGR_FIRST;
+      case COL_PRIORITY: return QtGroupingProxy::AGGR_MIN;
+      default: return QtGroupingProxy::AGGR_NONE;
+    }
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -323,10 +326,12 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     return false;
   }
 
+  int modID = index.row();
+
   if (role == Qt::CheckStateRole) {
     bool enabled = value.toInt() == Qt::Checked;
-    if (m_Profile->modEnabled(index.row()) != enabled) {
-      m_Profile->setModEnabled(index.row(), enabled);
+    if (m_Profile->modEnabled(modID) != enabled) {
+      m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
 
       emit modlist_changed(index, role);
@@ -335,13 +340,13 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   } else if (role == Qt::EditRole) {
     switch (index.column()) {
       case COL_NAME: {
-        return renameMod(index.row(), value.toString());
+        return renameMod(modID, value.toString());
       } break;
       case COL_PRIORITY: {
         bool ok = false;
         int newPriority = value.toInt(&ok);
         if (ok) {
-          m_Profile->setModPriority(index.row(), newPriority);
+          m_Profile->setModPriority(modID, newPriority);
 
           emit modlist_changed(index, role);
           return true;
@@ -350,7 +355,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         }
       } break;
       case COL_MODID: {
-        ModInfo::Ptr info = ModInfo::getByIndex(index.row());
+        ModInfo::Ptr info = ModInfo::getByIndex(modID);
         bool ok = false;
         int newID = value.toInt(&ok);
         if (ok) {
@@ -362,7 +367,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         }
       } break;
       case COL_VERSION: {
-        ModInfo::Ptr info = ModInfo::getByIndex(index.row());
+        ModInfo::Ptr info = ModInfo::getByIndex(modID);
         VersionInfo version(value.toString());
         if (version.isValid()) {
           info->setVersion(version);
@@ -435,9 +440,20 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
         result |= Qt::ItemIsEditable;
       }
     }
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+    if ((m_DropOnItems)  && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
+      result |= Qt::ItemIsDropEnabled;
+    }
   } else {
-    result |= Qt::ItemIsDropEnabled;
+    if (!m_DropOnItems) result |= Qt::ItemIsDropEnabled;
   }
+  return result;
+}
+
+QStringList ModList::mimeTypes() const
+{
+  QStringList result = QAbstractItemModel::mimeTypes();
+  result.append("text/uri-list");
   return result;
 }
 
@@ -488,13 +504,39 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
 }
 
 
-bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
+bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
-  if (action == Qt::IgnoreAction) {
-    return true;
+  QStringList source;
+  QStringList target;
+
+  if (row == -1) {
+    row = parent.row();
   }
 
-  if (m_Profile == NULL) return false;
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+  QDir modDirectory(modInfo->absolutePath());
+  QDir gameDirectory(QDir::fromNativeSeparators(ToQString(MOShared::GameInfo::instance().getOverwriteDir())));
+
+  foreach (const QUrl &url, mimeData->urls()) {
+    QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
+    if (relativePath.startsWith("..")) {
+      qDebug("%s drop ignored", qPrintable(url.toLocalFile()));
+      continue;
+    }
+    source.append(url.toLocalFile());
+    target.append(modDirectory.absoluteFilePath(relativePath));
+  }
+
+  if (source.count() != 0) {
+    shellCopy(source, target, NULL);
+  }
+
+  return true;
+}
+
+
+bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent)
+{
 
   try {
     QByteArray encoded = mimeData->data("application/x-qabstractitemmodeldatalist");
@@ -535,6 +577,22 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
   }
 
   return false;
+}
+
+
+bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
+{
+  if (action == Qt::IgnoreAction) {
+    return true;
+  }
+
+  if (m_Profile == NULL) return false;
+  if (mimeData->hasUrls()) {
+    return dropURLs(mimeData, row, parent);
+  } else {
+    return dropMod(mimeData, row, parent);
+  }
+
 }
 
 
@@ -607,6 +665,14 @@ QMap<int, QVariant> ModList::itemData(const QModelIndex &index) const
   QMap<int, QVariant> result = QAbstractItemModel::itemData(index);
   result[Qt::UserRole] = data(index, Qt::UserRole);
   return result;
+}
+
+
+void ModList::dropModeUpdate(bool dropOnItems)
+{
+  if (m_DropOnItems != dropOnItems) {
+    m_DropOnItems = dropOnItems;
+  }
 }
 
 

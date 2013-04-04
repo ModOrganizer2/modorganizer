@@ -125,6 +125,11 @@ public:
   bool getNexusLogin(QString &username, QString &password) const;
 
   /**
+   * @return true if the user disabled internet features
+   */
+  bool offlineMode() const;
+
+  /**
    * @return the configured log level
    */
   int logLevel() const;

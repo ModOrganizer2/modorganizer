@@ -137,6 +137,10 @@ signals:
    */
   void styleChanged(const QString &styleFile);
 
+
+
+  void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
+
 protected:
 
   virtual void showEvent(QShowEvent *event);
@@ -310,6 +314,7 @@ private slots:
   void endorse_clicked();
   void dontendorse_clicked();
   void unendorse_clicked();
+  void ignoreMissingData_clicked();
   void visitOnNexus_clicked();
   void openExplorer_clicked();
   void information_clicked();
@@ -337,6 +342,8 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void syncOverwrite();
+
+  void createModFromOverwrite();
 
   void removeOrigin(const QString &name);
 

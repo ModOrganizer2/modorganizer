@@ -161,7 +161,7 @@ p, li { white-space: pre-wrap; }
          </layout>
         </item>
         <item>
-         <widget class="QTreeView" name="modList">
+         <widget class="ModListView" name="modList">
           <property name="minimumSize">
            <size>
             <width>330</width>
@@ -280,11 +280,8 @@ p, li { white-space: pre-wrap; }
           <property name="dragEnabled">
            <bool>true</bool>
           </property>
-          <property name="dragDropOverwriteMode">
-           <bool>false</bool>
-          </property>
           <property name="dragDropMode">
-           <enum>QAbstractItemView::InternalMove</enum>
+           <enum>QAbstractItemView::DragDrop</enum>
           </property>
           <property name="defaultDropAction">
            <enum>Qt::MoveAction</enum>
@@ -1200,6 +1197,11 @@ Right now this has very limited functionality</string>
    <class>MOBase::LineEditClear</class>
    <extends>QLineEdit</extends>
    <header>lineeditclear.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ModListView</class>
+   <extends>QTreeView</extends>
+   <header>modlistview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

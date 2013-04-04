@@ -165,6 +165,11 @@ bool Settings::getNexusLogin(QString &username, QString &password) const
   }
 }
 
+bool Settings::offlineMode() const
+{
+  return m_Settings.value("Settings/offline_mode", false).toBool();
+}
+
 int Settings::logLevel() const
 {
   return m_Settings.value("Settings/log_level", 0).toInt();
@@ -367,6 +372,7 @@ void Settings::query(QWidget *parent)
   QCheckBox *preferIntegratedCheckBox = dialog.findChild<QCheckBox*>("preferIntegratedBox");
   QCheckBox *preferExternalBox = dialog.findChild<QCheckBox*>("preferExternalBox");
   QCheckBox *quickInstallerBox = dialog.findChild<QCheckBox*>("quickInstallerBox");
+  QCheckBox *offlineBox = dialog.findChild<QCheckBox*>("offlineBox");
   QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
 
   QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
@@ -447,6 +453,7 @@ void Settings::query(QWidget *parent)
   preferIntegratedCheckBox->setChecked(m_Settings.value("Settings/prefer_integrated_installer", false).toBool());
   preferExternalBox->setChecked(m_Settings.value("Settings/prefer_external_browser", false).toBool());
   quickInstallerBox->setChecked(m_Settings.value("Settings/enable_quick_installer", true).toBool());
+  offlineBox->setChecked(m_Settings.value("Settings/offline_mode", false).toBool());
   nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
   logLevelBox->setCurrentIndex(logLevel());
 
@@ -516,6 +523,7 @@ void Settings::query(QWidget *parent)
     }
     m_Settings.setValue("Settings/prefer_integrated_installer", preferIntegratedCheckBox->isChecked());
     m_Settings.setValue("Settings/prefer_external_browser", preferExternalBox->isChecked());
+    m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
     m_Settings.setValue("Settings/enable_quick_installer", quickInstallerBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());

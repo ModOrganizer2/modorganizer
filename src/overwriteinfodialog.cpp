@@ -77,6 +77,8 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
 {
   ui->setupUi(this);
 
+  this->setWindowModality(Qt::NonModal);
+
   QString path = modInfo->absolutePath();
   m_FileSystemModel = new MyFileSystemModel(this);
   m_FileSystemModel->setReadOnly(false);
@@ -84,7 +86,6 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   ui->filesView->setModel(m_FileSystemModel);
   ui->filesView->setRootIndex(m_FileSystemModel->index(path));
   ui->filesView->setColumnWidth(0, 250);
-//  ui->filesView->header()->hideSection(3);
 
   m_DeleteAction = new QAction(tr("&Delete"), ui->filesView);
   m_RenameAction = new QAction(tr("&Rename"), ui->filesView);
@@ -225,7 +226,6 @@ void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &
   QItemSelectionModel *selectionModel = ui->filesView->selectionModel();
   m_FileSelection = selectionModel->selectedRows(0);
 
-//  m_FileSelection = m_FileTree->indexAt(pos);
   QMenu menu(ui->filesView);
 
   menu.addAction(m_NewFolderAction);

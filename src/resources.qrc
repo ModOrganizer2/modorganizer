@@ -50,5 +50,8 @@
         <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
         <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
         <file alias="emblem_notes">resources/accessories-text-editor.png</file>
+        <file alias="network_idle">resources/network-idle.png</file>
+        <file alias="network_offline">resources/network-offline.png</file>
+        <file alias="network_error">resources/network-error.png</file>
     </qresource>
 </RCC>

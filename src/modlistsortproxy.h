@@ -54,8 +54,6 @@ public:
 
   bool filterMatches(ModInfo::Ptr info, bool enabled) const;
 
-//virtual QModelIndex mapToSource(const QModelIndex &proxyIndex) const;
-
 public slots:
 
   void displayColumnSelection(const QPoint &pos);

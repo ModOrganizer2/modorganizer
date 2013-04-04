@@ -92,8 +92,28 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <TlHelp32.h>
 
 
+#include <QNetworkInterface>
+
+
 using namespace MOBase;
 using namespace MOShared;
+
+
+static bool isOnline()
+{
+  QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
+
+  bool connected = false;
+  for (auto iter = interfaces.begin(); iter != interfaces.end(); ++iter) {
+    if ( (iter->flags() & QNetworkInterface::IsUp) &&
+         (iter->flags() & QNetworkInterface::IsRunning) &&
+        !(iter->flags() & QNetworkInterface::IsLoopBack)) {
+      connected = true;
+    }
+  }
+
+  return connected;
+}
 
 
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
@@ -134,12 +154,11 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
   m_ModListSortProxy->setSourceModel(&m_ModList);
 
-  QAbstractProxyModel *proxyModel = new QIdentityProxyModel(this);
-  proxyModel->setSourceModel(m_ModListSortProxy);
-  ui->modList->setModel(proxyModel);
+  ui->modList->setModel(m_ModListSortProxy);
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(ui->modList));
+  //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
   ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
   ui->modList->installEventFilter(&m_ModList);
@@ -161,6 +180,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   // set up plugin list
   m_PluginListSortProxy = new PluginListSortProxy(this);
   m_PluginListSortProxy->setSourceModel(&m_PluginList);
+
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
@@ -202,10 +222,13 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
           this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
+
   connect(&m_ModList, SIGNAL(modorder_changed()), this, SLOT(modorder_changed()));
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
+  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
+
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
@@ -242,7 +265,13 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   FileDialogMemory::restore(initSettings);
 
   fixCategories();
-  m_Updater.testForUpdate();
+
+  if (isOnline() && !m_Settings.offlineMode()) {
+    m_Updater.testForUpdate();
+  } else {
+    qDebug("user doesn't seem to be connected to the internet");
+  }
+
   m_StartTime = QTime::currentTime();
 
   m_Tutorial.expose("modList", &m_ModList);
@@ -670,6 +699,10 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_Settings.directInterface().setValue("first_start", false);
   }
+
+  // this has no visible impact when called before the ui is visible
+  int grouping = m_Settings.directInterface().value("group_state").toInt();
+  ui->groupCombo->setCurrentIndex(grouping);
 }
 
 
@@ -978,12 +1011,14 @@ IModInterface *MainWindow::getMod(const QString &name)
 
 IModInterface *MainWindow::createMod(const QString &name)
 {
-  unsigned int index = ModInfo::getIndex(name);
+  QString fixedName = name;
+  fixDirectoryName(fixedName);
+  unsigned int index = ModInfo::getIndex(fixedName);
   if (index != UINT_MAX) {
-    throw MyException(tr("The mod \"%1\" already exists!").arg(name));
+    throw MyException(tr("The mod \"%1\" already exists!").arg(fixedName));
   }
 
-  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name.trimmed());
+  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(fixedName.trimmed());
 
   QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
 
@@ -1648,9 +1683,6 @@ void MainWindow::readSettings()
   languageChange(m_Settings.language());
   int selectedExecutable = settings.value("selected_executable").toInt();
   setExecutableIndex(selectedExecutable);
-
-  int grouping = settings.value("group_state").toInt();
-  ui->groupCombo->setCurrentIndex(grouping);
 }
 
 
@@ -2490,8 +2522,14 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 {
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-    OverwriteInfoDialog dialog(modInfo, this);
-    dialog.exec();
+    QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
+    if (dialog == NULL) {
+      dialog = new OverwriteInfoDialog(modInfo, this);
+      dialog->setObjectName("__overwriteDialog");
+    }
+    dialog->show();
+    dialog->raise();
+    dialog->activateWindow();
   } else {
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
@@ -2634,6 +2672,17 @@ void MainWindow::testExtractBSA(int modIndex)
 }
 
 
+void MainWindow::ignoreMissingData_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  QDir(info->absolutePath()).mkdir("textures");
+  info->testValid();
+  connect(this, SIGNAL(modListDataChanged(QModelIndex,QModelIndex)), &m_ModList, SIGNAL(dataChanged(QModelIndex,QModelIndex)));
+
+  emit modListDataChanged(m_ModList.index(m_ContextRow, 0), m_ModList.index(m_ContextRow, m_ModList.columnCount() - 1));
+}
+
+
 void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_ModList.data(m_ModList.index(m_ContextRow, 0), Qt::UserRole).toInt();
@@ -2671,6 +2720,28 @@ void MainWindow::syncOverwrite()
     modInfo->testValid();
     refreshDirectoryStructure();
   }
+}
+
+
+void MainWindow::createModFromOverwrite()
+{
+  QString name = QInputDialog::getText(this, tr("Create Mod..."),
+                        tr("This will move all files from overwrite into a new, regular mod."
+                           "Please enter a name: "));
+  QString fixedName = fixDirectoryName(name);
+  if (fixedName.isEmpty()) {
+    reportError(tr("Invalid name"));
+    return;
+  } else if (getMod(fixedName) != NULL) {
+    reportError(tr("A mod with this name already exists"));
+    return;
+  }
+
+  IModInterface *newMod = createMod(name);
+
+  ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(m_ContextRow);
+
+  shellMove(QStringList(overwriteInfo->absolutePath() + "\\*"), QStringList(newMod->absolutePath()), this);
 }
 
 
@@ -2959,7 +3030,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
-        menu.addAction(tr("Sync to Mods..."), this, SLOT(syncOverwrite()));
+        if (QDir(info->absolutePath()).count() > 2) {
+          menu.addAction(tr("Sync to Mods..."), this, SLOT(syncOverwrite()));
+          menu.addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
+        }
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
@@ -2991,6 +3065,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             action->setEnabled(false);
             menu.addAction(action);
           } break;
+        }
+        std::vector<ModInfo::EFlag> flags = info->getFlags();
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
+          menu.addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
         menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
@@ -4062,25 +4140,30 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
     case 1: {
-        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_CATEGORY, Qt::UserRole);
+        newModel = new QtGroupingProxy(&m_ModList, QModelIndex(), ModList::COL_CATEGORY, Qt::UserRole,
+                                       0, Qt::UserRole + 2);
       } break;
     case 2: {
-        newModel = new QtGroupingProxy(m_ModListSortProxy, QModelIndex(), ModList::COL_MODID);
+        newModel = new QtGroupingProxy(&m_ModList, QModelIndex(), ModList::COL_MODID, Qt::DisplayRole,
+                                       QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE,
+                                       Qt::UserRole + 2);
       } break;
     default: {
         newModel = NULL;
       } break;
   }
-
   if (newModel != NULL) {
-    newModel->setSourceModel(m_ModListSortProxy);
+//    newModel->setSourceModel(m_ModListSortProxy);
+    m_ModListSortProxy->setSourceModel(newModel);
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), ui->modList, SLOT(expand(QModelIndex)));
 
-    ui->modList->setModel(newModel);
+//    ui->modList->setModel(newModel);
   } else {
-    ui->modList->setModel(m_ModListSortProxy);
+    m_ModListSortProxy->setSourceModel(&m_ModList);
+//    ui->modList->setModel(m_ModListSortProxy);
   }
+//  ui->modList->setModel(m_ModListSortProxy);
   // ui->modList->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
