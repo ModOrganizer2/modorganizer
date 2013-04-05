@@ -209,32 +209,28 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
 
   updateDownloadListDelegate();
-  connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
-
-  connect(&m_DownloadManager, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
-
-  connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
-  connect(&m_NexusDialog, SIGNAL(requestDownload(QNetworkReply*, int, QString)), this, SLOT(downloadRequested(QNetworkReply*, int, QString)));
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
-  connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)),
-          this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
-  connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
+  connect(&m_DownloadManager, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
+
+  connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(&m_ModList, SIGNAL(modorder_changed()), this, SLOT(modorder_changed()));
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
-  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
-
-  connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
-  connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
-  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
-  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
   connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), this, SLOT(modlistChanged(QModelIndex, int)));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
+  connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
+  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
+  connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
+  connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
+
+  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
+  connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
+  connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
   connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(&m_DirectoryRefresher, SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
@@ -242,16 +238,19 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   connect(&m_Settings, SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
   connect(&m_Settings, SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
-  connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
   connect(&m_Updater, SIGNAL(restart()), this, SLOT(close()));
   connect(&m_Updater, SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(&m_Updater, SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
+  connect(&m_NexusDialog, SIGNAL(requestDownload(QNetworkReply*, int, QString)), this, SLOT(downloadRequested(QNetworkReply*, int, QString)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
+
+  connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));

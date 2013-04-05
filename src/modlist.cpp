@@ -528,7 +528,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   }
 
   if (source.count() != 0) {
-    shellCopy(source, target, NULL);
+    shellMove(source, target, NULL);
   }
 
   return true;
