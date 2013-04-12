@@ -36,7 +36,7 @@ public:
 
   void setProfile(Profile *profile);
 
-  void setCategoryFilter(int category);
+  void setCategoryFilter(const std::vector<int> &categories);
 
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
@@ -79,7 +79,7 @@ private:
 
   Profile *m_Profile;
 
-  int m_CategoryFilter;
+  std::vector<int> m_CategoryFilter;
   std::bitset<ModList::COL_LASTCOLUMN + 1> m_EnabledColumns;
   QString m_CurrentFilter;
 

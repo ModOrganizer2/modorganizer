@@ -29,7 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   : QSortFilterProxyModel(parent), m_Profile(profile),
-    m_CategoryFilter(CategoryFactory::CATEGORY_NONE), m_CurrentFilter()
+    m_CategoryFilter(), m_CurrentFilter()
 {
   m_EnabledColumns.set(ModList::COL_FLAGS);
   m_EnabledColumns.set(ModList::COL_NAME);
@@ -47,12 +47,12 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  emit filterActive((m_CategoryFilter != CategoryFactory::CATEGORY_NONE) || !m_CurrentFilter.isEmpty());
+  emit filterActive((m_CategoryFilter.size() > 0) || !m_CurrentFilter.isEmpty());
 }
 
-void ModListSortProxy::setCategoryFilter(int category)
+void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
-  m_CategoryFilter = category;
+  m_CategoryFilter = categories;
   updateFilterActive();
   this->invalidate();
 }
@@ -197,13 +197,30 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
     return false;
   }
 
-  return ((m_CategoryFilter == CategoryFactory::CATEGORY_NONE) ||
-      ((m_CategoryFilter < CategoryFactory::CATEGORY_SPECIAL_FIRST) && (info->categorySet(m_CategoryFilter))) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CHECKED) && enabled) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UNCHECKED) && !enabled) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) && info->updateAvailable()) ||
-      ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY) && (info->getCategories().size() == 0)) ||
-          ((m_CategoryFilter == CategoryFactory::CATEGORY_SPECIAL_CONFLICT) && (hasConflictFlag(info->getFlags()))));
+  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
+    switch (*iter) {
+      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
+        if (!enabled) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
+        if (enabled) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
+        if (!info->updateAvailable()) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
+        if (info->getCategories().size() > 0) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
+        if (!hasConflictFlag(info->getFlags())) return false;
+      } break;
+      default: {
+        if (!info->categorySet(*iter)) return false;
+      } break;
+    }
+  }
+
+  return true;
 }
 
 

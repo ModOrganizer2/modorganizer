@@ -71,6 +71,9 @@
            <property name="contextMenuPolicy">
             <enum>Qt::CustomContextMenu</enum>
            </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::ExtendedSelection</enum>
+           </property>
            <attribute name="headerVisible">
             <bool>false</bool>
            </attribute>

@@ -90,11 +90,9 @@ void ProfilesDialog::on_closeButton_clicked()
 
 void ProfilesDialog::addItem(const QString &name)
 {
+  QDir profileDir(name);
+  QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
   try {
-//    QVariant temp;
-    QDir profileDir(name);
-//    temp.setValue(Profile(profileDir));
-    QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir))));
     m_FailState = false;
   } catch (const std::exception& e) {
@@ -106,8 +104,6 @@ void ProfilesDialog::addItem(const QString &name)
 void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 {
   try {
-//    QVariant temp;
-//    temp.setValue(Profile(name, useDefaultSettings));
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, useDefaultSettings))));
@@ -123,10 +119,6 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 void ProfilesDialog::createProfile(const QString &name, const Profile &reference)
 {
   try {
-//    Profile newProfile = Profile::createFrom(name, reference);
-
-//    QVariant temp;
-//    temp.setValue(newProfile);
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
     newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference))));
@@ -212,10 +204,6 @@ void ProfilesDialog::on_renameButton_clicked()
 
   ui->profilesList->currentItem()->setText(name);
   currentProfile->rename(name);
-
-//  QVariant temp;
-//  temp.setValue(currentProfile);
-//  ui->profilesList->currentItem()->setData(Qt::UserRole, temp);
 }
 
 
@@ -257,6 +245,7 @@ void ProfilesDialog::on_profilesList_currentItemChanged(QListWidgetItem *current
   QPushButton *renameButton = findChild<QPushButton*>("renameButton");
 
   if (current != NULL) {
+    if (!current->data(Qt::UserRole).isValid()) return;
     const Profile::Ptr currentProfile = current->data(Qt::UserRole).value<Profile::Ptr>();
 
     try {

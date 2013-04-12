@@ -84,7 +84,7 @@ Profile::Profile(const QDir& directory)
 {
   initTimer();
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
-    throw std::runtime_error(QObject::tr("modlist.txt missing").toUtf8().constData());
+    qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
   }
 
   GameInfo::instance().repairProfile(ToWString(m_Directory.absolutePath()));
@@ -185,7 +185,7 @@ void Profile::createTweakedIniFile()
 {
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
 
-  if (!shellDelete(QStringList(tweakedIni), NULL)) {
+  if (QFile::exists(tweakedIni) && !shellDelete(QStringList(tweakedIni), NULL)) {
     reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
     return;
   }

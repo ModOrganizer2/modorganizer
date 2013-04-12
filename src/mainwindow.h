@@ -423,7 +423,6 @@ private slots: // ui slots
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_btnRefreshData_clicked();
-  void on_categoriesList_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_compactBox_toggled(bool checked);
   void on_conflictsCheckBox_toggled(bool checked);
@@ -440,6 +439,7 @@ private slots: // ui slots
   void on_espList_customContextMenuRequested(const QPoint &pos);
   void on_displayCategoriesBtn_toggled(bool checked);
   void on_groupCombo_currentIndexChanged(int index);
+  void on_categoriesList_itemSelectionChanged();
 };
 
 #endif // MAINWINDOW_H
