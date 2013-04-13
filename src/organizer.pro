@@ -78,7 +78,8 @@ SOURCES += \
     csvbuilder.cpp \
     savetextasdialog.cpp \
     qtgroupingproxy.cpp \
-    modlistview.cpp
+    modlistview.cpp \
+    problemsdialog.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -144,7 +145,8 @@ HEADERS  += \
     csvbuilder.h \
     savetextasdialog.h \
     qtgroupingproxy.h \
-    modlistview.h
+    modlistview.h \
+    problemsdialog.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -174,7 +176,8 @@ FORMS    += \
     baincomplexinstallerdialog.ui \
     activatemodsdialog.ui \
     profileinputdialog.ui \
-    savetextasdialog.ui
+    savetextasdialog.ui \
+    problemsdialog.ui
 
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk "$(BOOSTPATH)"
 

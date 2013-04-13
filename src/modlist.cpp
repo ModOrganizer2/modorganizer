@@ -20,12 +20,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlist.h"
 
 #include "report.h"
-#include "utility.h"
 #include "messagedialog.h"
 #include "installationtester.h"
 #include "qtgroupingproxy.h"
 #include <gameinfo.h>
-
+#include <utility.h>
 #include <QFileInfo>
 #include <QDir>
 #include <QDirIterator>
@@ -301,19 +300,25 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 
 bool ModList::renameMod(int index, const QString &newName)
 {
+  QString nameFixed = newName;
+  if (!fixDirectoryName(nameFixed) || nameFixed.isEmpty()) {
+    MessageDialog::showMessage(tr("Invalid name"), NULL);
+    return false;
+  }
+
   // before we rename, write back the current profile so we don't lose changes and to ensure
   // there is no scheduled asynchronous rewrite anytime soon
   m_Profile->writeModlistNow();
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  modInfo->setName(newName);
+  modInfo->setName(nameFixed);
   // this just broke all profiles! The recipient of modRenamed has to do some magic
   // to can't write the currently active profile back
-  emit modRenamed(oldName, newName);
+  emit modRenamed(oldName, nameFixed);
 
   // invalidate the currently displayed state of this list
-//  notifyChange(-1);
+  notifyChange(-1);
   return true;
 }
 

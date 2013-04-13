@@ -54,9 +54,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "csvbuilder.h"
 #include "gameinfoimpl.h"
 #include "savetextasdialog.h"
+#include "problemsdialog.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
+#include <ipluginproxy.h>
 #include <map>
 #include <ctime>
 #include <QTime>
@@ -84,14 +86,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPluginLoader>
 #include <QRadioButton>
 #include <QDesktopWidget>
+#include <QtPlugin>
 #include <QIdentityProxyModel>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <Psapi.h>
 #include <shlobj.h>
 #include <TlHelp32.h>
-
-
 #include <QNetworkInterface>
 
 
@@ -394,8 +395,7 @@ void MainWindow::updateToolBar()
 
 void MainWindow::updateProblemsButton()
 {
-  QString problemDescription;
-  if (checkForProblems(problemDescription)) {
+  if (checkForProblems()) {
     ui->actionProblems->setEnabled(true);
     ui->actionProblems->setIconText(tr("Problems"));
     ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
@@ -436,17 +436,19 @@ bool MainWindow::errorReported(QString &logFile)
 }
 
 
-bool MainWindow::checkForProblems(QString &problemDescription)
+bool MainWindow::checkForProblems()
 {
-  problemDescription = "";
+//  problemDescription = "";
 
   foreach (IPluginDiagnose *diagnose, m_DiagnosisPlugins) {
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
-    foreach (unsigned int key, activeProblems) {
-      problemDescription.append(tr("<li>%1</li>").arg(diagnose->shortDescription(key)));
+    if (activeProblems.size() > 0) {
+      return true;
     }
   }
+  return false;
 
+/*
   QString NCCBinary = QCoreApplication::applicationDirPath().mid(0).append("/NCC/NexusClientCLI.exe");
   if (!QFile::exists(NCCBinary)) {
     problemDescription.append(tr("<li>NCC not installed. You won't be able to install some scripted mod-installers. Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a></li>"));
@@ -479,7 +481,7 @@ bool MainWindow::checkForProblems(QString &problemDescription)
   } else {
     ui->actionProblems->setToolTip(tr("Everything seems to be in order"));
   }
-  return res;
+  return res;*/
 }
 
 
@@ -886,6 +888,8 @@ void MainWindow::toolPluginInvoke()
     plugin->display();
   } catch (const std::exception &e) {
     reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
+  } catch (...) {
+    reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
   }
 }
 
@@ -912,13 +916,15 @@ bool MainWindow::registerPlugin(QObject *plugin)
     m_Settings.registerPlugin(pluginObj);
   }
 
+  bool addon = false;
+
   { // diagnosis plugins
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
+      addon = true;
     }
   }
-
   { // tool plugins
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
     if (verifyPlugin(tool)) {
@@ -934,7 +940,25 @@ bool MainWindow::registerPlugin(QObject *plugin)
       return true;
     }
   }
-  return false;
+  { // proxy plugins
+    IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
+    if (verifyPlugin(proxy)) {
+      QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
+      foreach (const QString &pluginName, pluginNames) {
+        QObject *proxiedPlugin = proxy->instantiate(pluginName);
+        if (proxiedPlugin != NULL) {
+          if (registerPlugin(proxiedPlugin)) {
+            qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
+          } else {
+            qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+          }
+        }
+      }
+      return true;
+    }
+  }
+
+  return addon;
 }
 
 
@@ -978,12 +1002,20 @@ IGameInfo &MainWindow::gameInfo() const
 
 QString MainWindow::profileName() const
 {
-  return m_CurrentProfile->getName();
+  if (m_CurrentProfile != NULL) {
+    return m_CurrentProfile->getName();
+  } else {
+    return "";
+  }
 }
 
 QString MainWindow::profilePath() const
 {
-  return m_CurrentProfile->getPath();
+  if (m_CurrentProfile != NULL) {
+    return m_CurrentProfile->getPath();
+  } else {
+    return "";
+  }
 }
 
 QString MainWindow::downloadsPath() const
@@ -1043,6 +1075,12 @@ void MainWindow::modDataChanged(IModInterface*)
 QVariant MainWindow::pluginSetting(const QString &pluginName, const QString &key) const
 {
   return m_Settings.pluginSetting(pluginName, key);
+}
+
+QString MainWindow::pluginDataPath() const
+{
+  QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
+  return pluginPath + "/data";
 }
 
 
@@ -4058,11 +4096,16 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
   m_CheckBSATimer.start(500);
 }
 
+
 void MainWindow::on_actionProblems_triggered()
 {
-  QString problemDescription;
-  checkForProblems(problemDescription);
-  QMessageBox::information(this, tr("Problems"), problemDescription);
+//  QString problemDescription;
+//  checkForProblems(problemDescription);
+//  QMessageBox::information(this, tr("Problems"), problemDescription);
+  ProblemsDialog problems(m_DiagnosisPlugins, this);
+  if (problems.hasProblems()) {
+    problems.exec();
+  }
 }
 
 void MainWindow::setCategoryListVisible(bool visible)

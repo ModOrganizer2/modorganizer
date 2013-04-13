@@ -103,6 +103,7 @@ public:
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+  virtual QString pluginDataPath() const;
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
@@ -205,7 +206,7 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  bool checkForProblems(QString &problemDescription);
+  bool checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);

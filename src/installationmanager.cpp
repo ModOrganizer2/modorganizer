@@ -18,9 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "installationmanager.h"
-
 #include "utility.h"
-
 #include "report.h"
 #include "categories.h"
 #include "questionboxmemory.h"
