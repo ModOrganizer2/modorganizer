@@ -43,6 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shellapi.h>
 #include <QPushButton>
 #include <QApplication>
+#include <QDateTime>
 #include <QDirIterator>
 #include <boost/assign.hpp>
 
@@ -718,6 +719,11 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
     newestVersion = metaFile.value("newestVersion", "").toString();
     unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(metaFile.value("category", 0).toInt());
     categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
+  }
+
+  if (version.isEmpty()) {
+    QDateTime lastMod = fileInfo.lastModified();
+    version = "d" + lastMod.toString("yyyy.M.d");
   }
 
   { // guess the mod name and mod if from the file name if there was no meta information
