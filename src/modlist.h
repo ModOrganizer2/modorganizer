@@ -105,16 +105,20 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
   virtual QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
-  virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
+  virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
+  virtual QStringList mimeTypes() const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
   virtual void removeRow(int row, const QModelIndex &parent);
-
 
   virtual QModelIndex index(int row, int column,
                             const QModelIndex &parent = QModelIndex()) const;
   virtual QModelIndex parent(const QModelIndex &child) const;
 
+  virtual QMap<int, QVariant> itemData(const QModelIndex &index) const;
+
 public slots:
+
+  void dropModeUpdate(bool dropOnItems);
 
 signals:
 
@@ -200,6 +204,10 @@ private:
 
   bool renameMod(int index, const QString &newName);
 
+  bool dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent);
+
+  bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
+
 private slots:
 
 private:
@@ -224,6 +232,8 @@ private:
   mutable bool m_Modified;
 
   QFontMetrics m_FontMetrics;
+
+  bool m_DropOnItems;
 
 };
 

@@ -1140,12 +1140,6 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="774"/>
-        <source>Installation as fomod failed: %1</source>
-        <oldsource>failed to open archive &quot;%1&quot;: %2</oldsource>
-        <translation type="unfinished">impossible d&apos;ouvrir l&apos;archive &quot;%1&quot;: %2</translation>
-    </message>
-    <message>
         <location filename="installationmanager.cpp" line="79"/>
         <source>archive.dll not loaded: &quot;%1&quot;</source>
         <translation type="unfinished"></translation>

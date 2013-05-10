@@ -599,13 +599,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         return m_ESPs[index].m_Name;
       } break;
       case COL_PRIORITY: {
-        if (m_ESPs[index].m_Priority == 0) {
-          return tr("min");
-        } else if (m_ESPs[index].m_Priority == static_cast<int>(m_ESPs.size()) - 1) {
-          return tr("max");
-        } else {
-          return QString::number(m_ESPs[index].m_Priority);
-        }
+        return m_ESPs[index].m_Priority;
       } break;
       case COL_MODINDEX: {
         if (m_ESPs[index].m_LoadOrder == -1) {

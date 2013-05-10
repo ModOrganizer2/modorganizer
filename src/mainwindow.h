@@ -94,6 +94,7 @@ public:
   void loadPlugins();
 
   virtual MOBase::IGameInfo &gameInfo() const;
+  virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;
   virtual QString downloadsPath() const;
@@ -103,6 +104,7 @@ public:
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+  virtual QString pluginDataPath() const;
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
@@ -136,6 +138,10 @@ signals:
    * @brief emitted when the selected style changes
    */
   void styleChanged(const QString &styleFile);
+
+
+
+  void modListDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight);
 
 protected:
 
@@ -201,7 +207,7 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  bool checkForProblems(QString &problemDescription);
+  bool checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);
@@ -310,6 +316,7 @@ private slots:
   void endorse_clicked();
   void dontendorse_clicked();
   void unendorse_clicked();
+  void ignoreMissingData_clicked();
   void visitOnNexus_clicked();
   void openExplorer_clicked();
   void information_clicked();
@@ -337,6 +344,8 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void syncOverwrite();
+
+  void createModFromOverwrite();
 
   void removeOrigin(const QString &name);
 

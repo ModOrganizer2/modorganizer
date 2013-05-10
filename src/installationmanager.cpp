@@ -18,9 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "installationmanager.h"
-
 #include "utility.h"
-
 #include "report.h"
 #include "categories.h"
 #include "questionboxmemory.h"
@@ -45,6 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shellapi.h>
 #include <QPushButton>
 #include <QApplication>
+#include <QDateTime>
 #include <QDirIterator>
 #include <boost/assign.hpp>
 
@@ -694,7 +693,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
                                   GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
-  bool success = false;
+//  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
@@ -707,7 +706,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
-  bool nameGuessed = false;
+//  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
@@ -720,6 +719,11 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
     newestVersion = metaFile.value("newestVersion", "").toString();
     unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(metaFile.value("category", 0).toInt());
     categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
+  }
+
+  if (version.isEmpty()) {
+    QDateTime lastMod = fileInfo.lastModified();
+    version = "d" + lastMod.toString("yyyy.M.d");
   }
 
   { // guess the mod name and mod if from the file name if there was no meta information
@@ -800,10 +804,14 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
         return false;
       } break;
       case IPluginInstaller::RESULT_SUCCESS: {
-        DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-        hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
-                       ((*iniTweakNode)->numLeafs() != 0);
-        return true;
+        if (filesTree != NULL) {
+          DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
+          hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
+                         ((*iniTweakNode)->numLeafs() != 0);
+          return true;
+        } else {
+          return false;
+        }
       } break;
     }
   }

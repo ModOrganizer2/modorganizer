@@ -64,6 +64,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDesktopServices>
 #include <eh.h>
 #include <windows_error.h>
+#include <boost/scoped_array.hpp>
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
 
@@ -283,6 +284,24 @@ int main(int argc, char *argv[])
   QPixmap pixmap(":/MO/gui/splash");
   QSplashScreen splash(pixmap);
   splash.show();
+
+  { // extend path to include dll directory so plugins don't need a manifest
+    static const int BUFSIZE = 4096;
+
+    boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
+    DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
+    if (offset > BUFSIZE) {
+      oldPath.reset(new TCHAR[offset]);
+      ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
+    }
+
+    std::tstring newPath(oldPath.get());
+    newPath += TEXT(";");
+    newPath += ToWString(QDir::toNativeSeparators(QCoreApplication::applicationDirPath())).c_str();
+    newPath += TEXT("\\dlls");
+
+    ::SetEnvironmentVariable(TEXT("PATH"), newPath.c_str());
+  }
 
   registerMetaTypes();
 

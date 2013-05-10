@@ -57,21 +57,20 @@ void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
   this->invalidate();
 }
 
-
 Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 {
   Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
   if (sortColumn() != ModList::COL_PRIORITY) {
     flags &= ~Qt::ItemIsDragEnabled;
   }
+
   return flags;
 }
 
 
-
 void ModListSortProxy::displayColumnSelection(const QPoint &pos)
 {
-  QMenu menu;
+   QMenu menu;
 
   for (int i = 0; i <= ModList::COL_LASTCOLUMN; ++i) {
     QCheckBox *checkBox = new QCheckBox(&menu);
@@ -105,7 +104,7 @@ void ModListSortProxy::enableAllVisible()
   if (m_Profile == NULL) return;
 
   for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).row();
+    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
     m_Profile->setModEnabled(modID, true);
   }
   invalidate();
@@ -115,18 +114,25 @@ void ModListSortProxy::enableAllVisible()
 void ModListSortProxy::disableAllVisible()
 {
   if (m_Profile == NULL) return;
+
   for (int i = 0; i < this->rowCount(); ++i) {
-    int modID = mapToSource(index(i, 0)).row();
+    int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
     m_Profile->setModEnabled(modID, false);
   }
+  invalidate();
 }
 
 
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
-  int leftIndex  = left.row();
-  int rightIndex = right.row();
+  bool lOk, rOk;
+  int leftIndex  = left.data(Qt::UserRole + 1).toInt(&lOk);
+  int rightIndex = right.data(Qt::UserRole + 1).toInt(&rOk);
+  if (!lOk || !rOk) {
+    return false;
+  }
+
   ModInfo::Ptr leftMod = ModInfo::getByIndex(leftIndex);
   ModInfo::Ptr rightMod = ModInfo::getByIndex(rightIndex);
 

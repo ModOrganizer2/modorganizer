@@ -68,8 +68,6 @@ public:
    **/
   virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
 
-signals:
-
 public slots:
 
   /**
@@ -80,8 +78,6 @@ public slots:
   void update(int row);
 
   void aboutToUpdate();
-
-private:
 
 private:
 

@@ -168,7 +168,9 @@ void NexusDialog::loginFinished(bool necessary)
 
 void NexusDialog::loadNexus()
 {
-  m_View->load(QUrl(m_Url));
+  if (m_View != NULL) {
+    m_View->load(QUrl(m_Url));
+  }
 }
 
 

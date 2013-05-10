@@ -32,34 +32,35 @@ using namespace MOShared;
 
 
 NexusBridge::NexusBridge()
+  : m_Interface(NexusInterface::instance())
+  , m_Url(MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()))
 {
-  m_Interface = NexusInterface::instance();
 }
 
 
-void NexusBridge::requestDescription(int modID, QVariant userData, const QString &url)
+void NexusBridge::requestDescription(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, url));
+  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_Url));
 }
 
-void NexusBridge::requestFiles(int modID, QVariant userData, const QString &url)
+void NexusBridge::requestFiles(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, url));
+  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_Url));
 }
 
-void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData, const QString &url)
+void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, url));
+  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_Url));
 }
 
-void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData, const QString &url)
+void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, url));
+  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_Url));
 }
 
-void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData, const QString &url)
+void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, url));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_Url));
 }
 
 void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
@@ -67,7 +68,7 @@ void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmDescriptionAvailable(modID, userData, resultData);
+    emit descriptionAvailable(modID, userData, resultData);
   }
 }
 
@@ -76,7 +77,26 @@ void NexusBridge::nxmFilesAvailable(int modID, QVariant userData, QVariant resul
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmFilesAvailable(modID, userData, resultData);
+
+    QList<ModRepositoryFileInfo*> fileInfoList;
+
+    QVariantList resultList = resultData.toList();
+
+    foreach(QVariant file, resultList) {
+      ModRepositoryFileInfo *temp = new ModRepositoryFileInfo(NULL);
+      QVariantMap fileInfo = file.toMap();
+      temp->uri = fileInfo["uri"].toString();
+      temp->name = fileInfo["name"].toString();
+      temp->description = fileInfo["description"].toString();
+      temp->version = VersionInfo(fileInfo["version"].toString());
+      temp->categoryID = fileInfo["category_id"].toInt();
+      temp->fileID = fileInfo["id"].toInt();
+      temp->fileSize = fileInfo["size"].toInt();
+      fileInfoList.append(temp);
+    }
+
+    emit bla(userData.toString());
+    emit filesAvailable(modID, userData, fileInfoList);
   }
 }
 
@@ -85,7 +105,7 @@ void NexusBridge::nxmFileInfoAvailable(int modID, int fileID, QVariant userData,
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmFileInfoAvailable(modID, fileID, userData, resultData);
+    emit fileInfoAvailable(modID, fileID, userData, resultData);
   }
 }
 
@@ -94,7 +114,7 @@ void NexusBridge::nxmDownloadURLsAvailable(int modID, int fileID, QVariant userD
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmDownloadURLsAvailable(modID, fileID, userData, resultData);
+    //emit downloadURLsAvailable(modID, fileID, userData, resultData);
   }
 }
 
@@ -103,7 +123,7 @@ void NexusBridge::nxmEndorsementToggled(int modID, QVariant userData, QVariant r
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmEndorsementToggled(modID, userData, resultData);
+    //emit endorsementToggled(modID, userData, resultData);
   }
 }
 
@@ -112,7 +132,7 @@ void NexusBridge::nxmRequestFailed(int modID, QVariant userData, int requestID, 
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit nxmRequestFailed(modID, userData, errorMessage);
+    //emit requestFailed(modID, userData, errorMessage);
   }
 }
 

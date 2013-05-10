@@ -77,7 +77,9 @@ SOURCES += \
     gameinfoimpl.cpp \
     csvbuilder.cpp \
     savetextasdialog.cpp \
-    qtgroupingproxy.cpp
+    qtgroupingproxy.cpp \
+    modlistview.cpp \
+    problemsdialog.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -142,7 +144,9 @@ HEADERS  += \
     gameinfoimpl.h \
     csvbuilder.h \
     savetextasdialog.h \
-    qtgroupingproxy.h
+    qtgroupingproxy.h \
+    modlistview.h \
+    problemsdialog.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -172,7 +176,8 @@ FORMS    += \
     baincomplexinstallerdialog.ui \
     activatemodsdialog.ui \
     profileinputdialog.ui \
-    savetextasdialog.ui
+    savetextasdialog.ui \
+    problemsdialog.ui
 
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk "$(BOOSTPATH)"
 
@@ -190,6 +195,7 @@ CONFIG(debug, debug|release) {
 	LIBS += -L$$OUT_PWD/../shared/release -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
 	QMAKE_CXXFLAGS += /Zi
+	QMAKE_CXXFLAGS -= -O2
 	QMAKE_LFLAGS += /DEBUG
 }
 

@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <gameinfo.h>
 #include <versioninfo.h>
+#include <imodrepositorybridge.h>
 #include <QNetworkReply>
 #include <QNetworkDiskCache>
 #include <QQueue>
@@ -46,7 +47,7 @@ class NexusInterface;
  * NexusBridge does this automatically. Users connect to the signals of NexusBridge they intend
  * to handle and only receive the signals the caused
  **/
-class NexusBridge : public QObject
+class NexusBridge : public MOBase::IModRepositoryBridge
 {
 
   Q_OBJECT
@@ -62,18 +63,15 @@ public:
    * @param userData user data to be returned with the result
    * @param url the url to request from
    **/
-  void requestDescription(int modID, QVariant userData,
-                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  virtual void requestDescription(int modID, QVariant userData);
 
   /**
    * @brief request a list of the files belonging to a mod
    *
    * @param modID id of the mod caller is interested in
    * @param userData user data to be returned with the result
-   * @param url the url to request from
    **/
-  void requestFiles(int modID, QVariant userData,
-                    const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  virtual void requestFiles(int modID, QVariant userData);
 
   /**
    * @brief request info about a single file of a mod
@@ -81,10 +79,8 @@ public:
    * @param modID id of the mod caller is interested in
    * @param fileID id of the file the caller is interested in
    * @param userData user data to be returned with the result
-   * @param url the url to request from
    **/
-  void requestFileInfo(int modID, int fileID, QVariant userData,
-                       const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  virtual void requestFileInfo(int modID, int fileID, QVariant userData);
 
   /**
    * @brief request the download url of a file
@@ -92,28 +88,28 @@ public:
    * @param modID id of the mod caller is interested in
    * @param fileID id of the file the caller is interested in
    * @param userData user data to be returned with the result
-   * @param url the url to request from
    **/
-  void requestDownloadURL(int modID, int fileID, QVariant userData,
-                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  virtual void requestDownloadURL(int modID, int fileID, QVariant userData);
 
   /**
    * @brief requestToggleEndorsement
-   * @param modID
-   * @param userData
-   * @param url
+   * @param modID id of the mod caller is interested in
+   * @param userData user data to be returned with the result
    */
-  void requestToggleEndorsement(int modID, bool endorse, QVariant userData,
-                                const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  virtual void requestToggleEndorsement(int modID, bool endorse, QVariant userData);
+/*
+signals:
+
+  void descriptionAvailable(int modID, QVariant userData, QVariant resultData);
+  void filesAvailable(int modID, QVariant userData, const QList<MOBase::NexusFileInfo*> &resultData);
+  void fileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
+  void downloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
+  void endorsementToggled(int modID, QVariant userData, QVariant resultData);
+  void requestFailed(int modID, QVariant userData, const QString &errorMessage);*/
 
 signals:
 
-  void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
-  void nxmFilesAvailable(int modID, QVariant userData, QVariant resultData);
-  void nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
-  void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
-  void nxmEndorsementToggled(int modID, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(int modID, QVariant userData, const QString &errorMessage);
+  void bla(QString userData);
 
 public slots:
 
@@ -127,6 +123,7 @@ public slots:
 private:
 
   NexusInterface *m_Interface;
+  QString m_Url;
   std::set<int> m_RequestIDs;
 
 };

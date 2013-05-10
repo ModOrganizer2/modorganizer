@@ -14,6 +14,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
+// Modifications 2013-03-27 to 2013-03-29 by Sebastian Herbord
+
+
 #include "QtGroupingProxy.h"
 
 #include <QDebug>
@@ -28,10 +31,13 @@
     \ingroup model-view
 */
 
-QtGroupingProxy::QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode, int groupedColumn )
+QtGroupingProxy::QtGroupingProxy(QAbstractItemModel *model, QModelIndex rootNode, int groupedColumn, int groupedRole, unsigned int flags , int aggregateRole)
   : QAbstractProxyModel()
   , m_rootNode( rootNode )
   , m_groupedColumn( 0 )
+  , m_groupedRole( groupedRole )
+  , m_aggregateRole( aggregateRole )
+  , m_flags( flags )
 {
   setSourceModel( model );
 
@@ -84,6 +90,15 @@ QtGroupingProxy::belongsTo( const QModelIndex &idx )
 
   //get all the data for this index from the model
   ItemData itemData = sourceModel()->itemData( idx );
+  if (m_groupedRole != Qt::DisplayRole) {
+    itemData[Qt::DisplayRole] = itemData[m_groupedRole];
+  }
+
+  // invalid value in grouped role -> ungrouped
+  if (!itemData[Qt::DisplayRole].isValid()) {
+    return rowDataList;
+  }
+
   QMapIterator<int, QVariant> i( itemData );
   while( i.hasNext() )
   {
@@ -91,7 +106,7 @@ QtGroupingProxy::belongsTo( const QModelIndex &idx )
     int role = i.key();
     QVariant variant = i.value();
     // qDebug() << "role " << role << " : (" << variant.typeName() << ") : "<< variant;
-    if( variant.type() == QVariant::List )
+    if ( variant.type() == QVariant::List )
     {
       //a list of variants get's expanded to multiple rows
       QVariantList list = variant.toList();
@@ -111,6 +126,7 @@ QtGroupingProxy::belongsTo( const QModelIndex &idx )
         rowData.insert( m_groupedColumn, indexData );
         rowDataList.insert( i, rowData );
       }
+      break;
     }
     else if( !variant.isNull() )
     {
@@ -155,8 +171,38 @@ QtGroupingProxy::buildTree()
   }
   //dumpGroups();
 
+  if (m_flags & FLAG_NOSINGLE) {
+    // awkward: flatten single-item groups as a post-processing steps.
+
+    int currentKey = 0;
+    quint32 quint32max = std::numeric_limits<quint32>::max();
+    std::vector<int> rmgroups;
+
+    QHash<quint32, QList<int> > temp;
+
+    for (auto iter = m_groupHash.begin(); iter != m_groupHash.end(); ++iter) {
+      if ((iter.key() == quint32max) ||
+          (iter->count() == 1)) {
+        temp[quint32max].append(iter.value());
+        if (iter.key() != quint32max) {
+          rmgroups.push_back(iter.key());
+        }
+      } else {
+        temp[currentKey++] = *iter;
+      }
+    }
+    m_groupHash = temp;
+
+    // second loop is necessary because qt containers can't be iterated from end to
+    // removing by index from begin to end is ugly
+    for (auto iter = rmgroups.rbegin(); iter != rmgroups.rend(); ++iter) {
+      m_groupMaps.removeAt(*iter);
+    }
+  }
+
   endResetModel();
 
+  // restore expand-state
   for( int row = 0; row < rowCount(); row++ ) {
     QModelIndex idx = index( row, 0, QModelIndex() );
     if (m_expandedItems.contains(idx.data(Qt::UserRole).toString())) {
@@ -171,6 +217,7 @@ QtGroupingProxy::addSourceRow( const QModelIndex &idx )
   QList<int> updatedGroups;
 
   QList<RowData> groupData = belongsTo( idx );
+
   //an empty list here means it's supposed to go in root.
   if( groupData.isEmpty() )
   {
@@ -338,12 +385,12 @@ QtGroupingProxy::rowCount( const QModelIndex &index ) const
     int rows = m_groupHash.value( groupIndex ).count();
     //qDebug() << rows << " in group " << m_groupMaps[groupIndex];
     return rows;
+  } else {
+    QModelIndex originalIndex = mapToSource( index );
+    int rowCount = sourceModel()->rowCount( originalIndex );
+    //qDebug() << "original item: rowCount == " << rowCount;
+    return rowCount;
   }
-
-  QModelIndex originalIndex = mapToSource( index );
-  int rowCount = sourceModel()->rowCount( originalIndex );
-  //qDebug() << "original item: rowCount == " << rowCount;
-  return rowCount;
 }
 
 int
@@ -358,6 +405,44 @@ QtGroupingProxy::columnCount( const QModelIndex &index ) const
   return sourceModel()->columnCount( mapToSource( index ) );
 }
 
+
+static bool variantLess(const QVariant &LHS, const QVariant &RHS)
+{
+  if ((LHS.type() == RHS.type()) &&
+      ((LHS.type() == QVariant::Int) || (LHS.type() == QVariant::UInt))) {
+    return LHS.toInt() < RHS.toInt();
+  }
+
+  // this should always work (comparing empty strings in the worst case) but
+  // the results may be wrong
+  return LHS.toString() < RHS.toString();
+}
+
+
+static QVariant variantMax(const QVariantList &variants)
+{
+  QVariant result = variants.first();
+  foreach (const QVariant &iter, variants) {
+    if (variantLess(result, iter)) {
+      result = iter;
+    }
+  }
+  return result;
+}
+
+
+static QVariant variantMin(const QVariantList &variants)
+{
+  QVariant result = variants.first();
+  foreach (const QVariant &iter, variants) {
+    if (variantLess(iter, result)) {
+      result = iter;
+    }
+  }
+  return result;
+}
+
+
 QVariant
 QtGroupingProxy::data( const QModelIndex &index, int role ) const
 {
@@ -368,18 +453,8 @@ QtGroupingProxy::data( const QModelIndex &index, int role ) const
   int column = index.column();
   if( isGroup( index ) )
   {
-    if (column != 0) return QVariant();
-
-    //qDebug() << __FUNCTION__ << "is a group";
-    //use cached or precalculated data
-    if( m_groupMaps[row][column].contains( Qt::DisplayRole ) )
-    {
-      //qDebug() << "Using cached data";
+    if ((role != Qt::DisplayRole) && (role != Qt::EditRole)) {
       switch (role) {
-        case Qt::DisplayRole: {
-            QString value = m_groupMaps[row][column].value( role ).toString();
-            return QString("----- %1 -----").arg(value.isEmpty() ? tr("<unset>") : value);
-          } break;
         case Qt::ForegroundRole: {
             return QBrush(Qt::gray);
           } break;
@@ -394,10 +469,44 @@ QtGroupingProxy::data( const QModelIndex &index, int role ) const
         case Qt::UserRole: {
             return m_groupMaps[row][column].value( Qt::DisplayRole ).toString();
           } break;
+        case Qt::CheckStateRole: {
+            if (column != 0) return QVariant();
+            int childCount = m_groupHash.value( row ).count();
+            int checked = 0;
+            QModelIndex parentIndex = this->index( row, 0, index.parent() );
+            for( int childRow = 0; childRow < childCount; ++childRow )
+            {
+              QModelIndex childIndex = this->index( childRow, 0, parentIndex );
+              QVariant data = mapToSource( childIndex ).data( Qt::CheckStateRole );
+              if (data.toInt() == 2) ++checked;
+            }
+            if (checked == childCount) return Qt::Checked;
+            else if (checked == 0) return Qt::Unchecked;
+            else return Qt::PartiallyChecked;
+          } break;
         default: {
-            return QVariant();
+            QModelIndex parentIndex = this->index( row, 0, index.parent() );
+            if (m_groupHash.value( row ).count() > 0) {
+              return this->index(0, 0, parentIndex).data(role);
+            } else {
+              return QVariant();
+            }
             //                return m_groupMaps[row][column].value( role );
           } break;
+      }
+    }
+
+    //qDebug() << __FUNCTION__ << "is a group";
+    //use cached or precalculated data
+    if( m_groupMaps[row][column].contains( Qt::DisplayRole ) )
+    {
+      // qDebug() << "Using cached data for " << row << "x" << column << ": " << m_groupMaps[row][column].value(Qt::DisplayRole).toString();
+      if ((m_flags & FLAG_NOGROUPNAME) != 0) {
+        QModelIndex parentIndex = this->index( row, 0, index.parent() );
+        QModelIndex childIndex = this->index( 0, column, parentIndex );
+        return childIndex.data(role).toString();
+      } else {
+        return m_groupMaps[row][column].value( role ).toString();
       }
     }
 
@@ -410,6 +519,13 @@ QtGroupingProxy::data( const QModelIndex &index, int role ) const
     int childCount = m_groupHash.value( row ).count();
     if( childCount == 0 )
       return QVariant();
+
+    int function = AGGR_NONE;
+    if (m_aggregateRole >= Qt::UserRole) {
+      QModelIndex parentIndex = this->index( row, 0, index.parent() );
+      QModelIndex childIndex = this->index( 0, column, parentIndex );
+      function = mapToSource(childIndex).data(m_aggregateRole).toInt();
+    }
 
     //qDebug() << __FUNCTION__ << "childCount: " << childCount;
     //Need a parentIndex with column == 0 because only those have children.
@@ -427,19 +543,29 @@ QtGroupingProxy::data( const QModelIndex &index, int role ) const
     ItemData roleMap = m_groupMaps[row].value( column );
     foreach( const QVariant &variant, variantsOfChildren )
     {
-      if( roleMap[ role ] != variant )
+      if( roleMap[ role ] != variant ) {
         roleMap.insert( role, variantsOfChildren );
+      }
     }
 
     //qDebug() << QString("roleMap[%1]:").arg(role) << roleMap[role];
-    //only one unique variant? No need to return a list
-    if( variantsOfChildren.count() == 1 )
-      return variantsOfChildren.first();
 
     if( variantsOfChildren.count() == 0 )
       return QVariant();
 
-    return variantsOfChildren;
+    //only one unique variant? No need to return a list
+    switch (function) {
+      case AGGR_EMPTY: return QVariant();
+      case AGGR_FIRST: return variantsOfChildren.first();
+      case AGGR_MAX:   return variantMax(variantsOfChildren);
+      case AGGR_MIN:   return variantMin(variantsOfChildren);
+      default: {
+          if( variantsOfChildren.count() == 1 )
+            return variantsOfChildren.first();
+
+          return variantsOfChildren;
+        } break;
+    }
   }
 
   return mapToSource( index ).data( role );
@@ -591,7 +717,7 @@ QtGroupingProxy::mapFromSource( const QModelIndex &idx ) const
 
   //qDebug() << "proxyParent: " << proxyParent;
   //qDebug() << "proxyRow: " << proxyRow;
-  return this->index( proxyRow, 0, proxyParent );
+  return this->index( proxyRow, idx.column(), proxyParent );
 }
 
 Qt::ItemFlags
@@ -611,9 +737,27 @@ QtGroupingProxy::flags( const QModelIndex &idx ) const
   if( isGroup( idx ) )
   {
     //        dumpGroups();
-    //        Qt::ItemFlags defaultFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
-    Qt::ItemFlags defaultFlags(Qt::NoItemFlags);
+    Qt::ItemFlags defaultFlags( Qt::ItemIsEnabled | Qt::ItemIsSelectable );
+    //Qt::ItemFlags defaultFlags(Qt::ItemIsEnabled);
     bool groupIsEditable = true;
+
+    if (idx.column() == 0) {
+      bool checkable = true;
+      foreach ( int originalRow, m_groupHash.value( idx.row() ) )
+      {
+        QModelIndex originalIdx = sourceModel()->index( originalRow, 0,
+                                                        m_rootNode.parent() );
+        if ( (originalIdx.flags() & Qt::ItemIsUserCheckable) == 0 )
+        {
+          qDebug("row %d is not checkable", originalRow);
+          checkable = false;
+        }
+      }
+
+      if ( checkable ) {
+        defaultFlags |= Qt::ItemIsUserCheckable;
+      }
+    }
 
     //it's possible to have empty groups
     if( m_groupHash.value( idx.row() ).count() == 0 )
@@ -637,7 +781,6 @@ QtGroupingProxy::flags( const QModelIndex &idx ) const
           break;
       }
     }
-
     if( groupIsEditable )
       return (  defaultFlags | Qt::ItemIsEditable | Qt::ItemIsDropEnabled );
     return defaultFlags;
@@ -650,9 +793,9 @@ QtGroupingProxy::flags( const QModelIndex &idx ) const
   QModelIndex groupedColumnIndex =
       sourceModel()->index( originalIdx.row(), m_groupedColumn, originalIdx.parent() );
   bool groupIsEditable = sourceModel()->flags( groupedColumnIndex ).testFlag( Qt::ItemIsEditable );
+
   if( groupIsEditable )
     return originalItemFlags | Qt::ItemIsDragEnabled;
-
   return originalItemFlags;
 }
 
@@ -715,8 +858,9 @@ QtGroupingProxy::hasChildren( const QModelIndex &parent ) const
   if( !parent.isValid() )
     return true;
 
-  if( isGroup( parent ) )
+  if( isGroup( parent ) ) {
     return !m_groupHash.value( parent.row() ).isEmpty();
+  }
 
   return sourceModel()->hasChildren( mapToSource( parent ) );
 }
