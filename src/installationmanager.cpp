@@ -693,7 +693,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
                                   GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
-  bool success = false;
+//  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
@@ -706,7 +706,7 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
-  bool nameGuessed = false;
+//  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
@@ -804,10 +804,14 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
         return false;
       } break;
       case IPluginInstaller::RESULT_SUCCESS: {
-        DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
-        hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
-                       ((*iniTweakNode)->numLeafs() != 0);
-        return true;
+        if (filesTree != NULL) {
+          DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
+          hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
+                         ((*iniTweakNode)->numLeafs() != 0);
+          return true;
+        } else {
+          return false;
+        }
       } break;
     }
   }

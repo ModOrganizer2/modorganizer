@@ -50,5 +50,6 @@
         <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
         <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
         <file alias="emblem_notes">resources/accessories-text-editor.png</file>
+        <file alias="version_date">resources/x-office-calendar.png</file>
     </qresource>
 </RCC>

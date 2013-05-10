@@ -136,6 +136,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       QString version = modInfo->getVersion().canonicalString();
       if (version.isEmpty() && modInfo->canBeUpdated()) {
         version = "?";
+      } else if (version[0] == 'd') {
+        version.remove(0, 1);
       }
       return version;
     } else if (column == COL_PRIORITY) {
@@ -228,10 +230,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
     return result;
   } else if (role == Qt::DecorationRole) {
-    if ((column == COL_VERSION) &&
-        modInfo->updateAvailable() &&
-        modInfo->getNewestVersion().isValid()) {
-      return QIcon(":/MO/gui/update_available");
+    if (column == COL_VERSION) {
+      if (modInfo->updateAvailable() &&
+          modInfo->getNewestVersion().isValid()) {
+        return QIcon(":/MO/gui/update_available");
+      } else if (modInfo->getVersion().isVersionDate()) {
+        return QIcon(":/MO/gui/version_date");
+      }
     }
     return QVariant();
   } else if (role == Qt::ForegroundRole) {

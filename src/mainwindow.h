@@ -94,6 +94,7 @@ public:
   void loadPlugins();
 
   virtual MOBase::IGameInfo &gameInfo() const;
+  virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;
   virtual QString downloadsPath() const;

@@ -900,7 +900,7 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
   action->setData(qVariantFromValue((void*)tool));
-  connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()));
+  connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
   QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
   toolBtn->menu()->addAction(action);
 }
@@ -911,6 +911,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
     if (pluginObj == NULL) {
+      qDebug("not an IPlugin");
       return false;
     }
     m_Settings.registerPlugin(pluginObj);
@@ -958,6 +959,8 @@ bool MainWindow::registerPlugin(QObject *plugin)
     }
   }
 
+  qDebug("no matching plugin interface");
+
   return addon;
 }
 
@@ -997,6 +1000,12 @@ void MainWindow::loadPlugins()
 IGameInfo &MainWindow::gameInfo() const
 {
   return *m_GameInfo;
+}
+
+
+IModRepositoryBridge *MainWindow::createNexusBridge() const
+{
+  return new NexusBridge();
 }
 
 
