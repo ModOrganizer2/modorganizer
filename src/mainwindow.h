@@ -105,6 +105,8 @@ public:
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   virtual QString pluginDataPath() const;
+  virtual void installMod(const QString &fileName);
+  virtual MOBase::IDownloadManager *downloadManager();
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
@@ -177,7 +179,6 @@ private:
   void refreshDirectoryStructure();
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod(const QString &fileName);
   void installMod();
   bool modifyExecutablesDialog();
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);

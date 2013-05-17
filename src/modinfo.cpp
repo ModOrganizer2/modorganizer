@@ -327,7 +327,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   for (int i = 0; i < numNexusFiles; ++i) {
     metaFile.setArrayIndex(i);
     QString infoString = metaFile.value("info", "").toString();
-    ModRepositoryFileInfo *info = new ModRepositoryFileInfo(infoString, this);
+    ModRepositoryFileInfo info(infoString);
     m_NexusFileInfos.push_back(info);
   }
   metaFile.endArray();
@@ -351,7 +351,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   }
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(filesAvailable(int,QVariant,const QList<ModRepositoryFileInfo*>&)), this, SLOT(nxmFilesAvailable(int,QVariant,QList<ModRepositoryFileInfo*>)));
+  connect(&m_NexusBridge, SIGNAL(filesAvailable(int,QVariant,const QList<ModRepositoryFileInfo>&)), this, SLOT(nxmFilesAvailable(int,QVariant,QList<ModRepositoryFileInfo>)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(requestFailed(int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,QVariant,QString)));
 }
@@ -393,7 +393,7 @@ void ModInfoRegular::saveMeta()
         metaFile.beginWriteArray("nexusFiles");
         for (int i = 0; i < m_NexusFileInfos.size(); ++i) {
           metaFile.setArrayIndex(i);
-          metaFile.setValue("info", m_NexusFileInfos.at(i)->toString());
+          metaFile.setValue("info", m_NexusFileInfos.at(i).toString());
         }
         metaFile.endArray();
       } else {
@@ -425,7 +425,7 @@ void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
 }
 
 
-void ModInfoRegular::nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo*> &resultData)
+void ModInfoRegular::nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo> &resultData)
 {
   m_NexusFileInfos = resultData;
   m_LastNexusQuery = QDateTime::currentDateTime();
@@ -653,7 +653,7 @@ QString ModInfoRegular::notes() const
   return m_Notes;
 }
 
-void ModInfoRegular::getNexusFiles(QList<ModRepositoryFileInfo*>::const_iterator &begin, QList<ModRepositoryFileInfo*>::const_iterator &end)
+void ModInfoRegular::getNexusFiles(QList<ModRepositoryFileInfo>::const_iterator &begin, QList<ModRepositoryFileInfo>::const_iterator &end)
 {
   begin = m_NexusFileInfos.begin();
   end = m_NexusFileInfos.end();

@@ -106,10 +106,17 @@ static bool isOnline()
   QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
 
   bool connected = false;
-  for (auto iter = interfaces.begin(); iter != interfaces.end(); ++iter) {
+  for (auto iter = interfaces.begin(); iter != interfaces.end() && !connected; ++iter) {
     if ( (iter->flags() & QNetworkInterface::IsUp) &&
          (iter->flags() & QNetworkInterface::IsRunning) &&
         !(iter->flags() & QNetworkInterface::IsLoopBack)) {
+      auto addresses = iter->addressEntries();
+      if (addresses.count() == 0) {
+        continue;
+      }
+      qDebug("interface %s seems to be up (address: %s)",
+             qPrintable(iter->humanReadableName()),
+             qPrintable(addresses[0].ip().toString()));
       connected = true;
     }
   }
@@ -996,6 +1003,8 @@ void MainWindow::loadPlugins()
       }
     }
   }
+
+  m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
 }
 
 IGameInfo &MainWindow::gameInfo() const
@@ -1818,6 +1827,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::installMod(const QString &fileName)
 {
+qDebug("install %s", qPrintable(fileName));
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
   m_CurrentProfile->writeModlistNow();
@@ -1845,6 +1855,11 @@ void MainWindow::installMod(const QString &fileName)
   } else if (m_InstallationManager.wasCancelled()) {
     QMessageBox::information(this, tr("Installation cancelled"), tr("The mod was not installed completely."), QMessageBox::Ok);
   }
+}
+
+IDownloadManager *MainWindow::downloadManager()
+{
+  return &m_DownloadManager;
 }
 
 
@@ -3020,6 +3035,7 @@ void MainWindow::exportModListCSV()
       fields.push_back(std::make_pair(QString("mod_installed_name"), CSVBuilder::TYPE_STRING));
       fields.push_back(std::make_pair(QString("mod_version"), CSVBuilder::TYPE_STRING));
       fields.push_back(std::make_pair(QString("file_installed_name"), CSVBuilder::TYPE_STRING));
+//      fields.push_back(std::make_pair(QString("file_category"), CSVBuilder::TYPE_INTEGER));
       builder.setFields(fields);
 
       builder.writeHeader();

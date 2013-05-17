@@ -781,21 +781,21 @@ void ModInfoDialog::modDetailsUpdated(bool success)
     // prevent sorting while we change the table
     filesWidget->setSortingEnabled(false);
     int row = 0;
-    QList<ModRepositoryFileInfo*>::const_iterator current, end;
+    QList<ModRepositoryFileInfo>::const_iterator current, end;
     m_ModInfo->getNexusFiles(current, end);
     for (; current != end; ++current) {
-      ModRepositoryFileInfo *fileInfo = *current;
+      const ModRepositoryFileInfo &fileInfo = *current;
       filesWidget->insertRow(row);
-      int type = fileInfo->categoryID;
+      int type = fileInfo.categoryID;
       filesWidget->setItem(row, 4, new QTableWidgetItem(QString("%1").arg(type)));
       filesWidget->setItem(row, 0, new QTableWidgetItem(getFileCategory(type)));
-      QTableWidgetItem *nameItem = new QTableWidgetItem(fileInfo->name);
-      nameItem->setToolTip(fileInfo->description);
-      nameItem->setData(Qt::UserRole, fileInfo->fileID);
+      QTableWidgetItem *nameItem = new QTableWidgetItem(fileInfo.name);
+      nameItem->setToolTip(fileInfo.description);
+      nameItem->setData(Qt::UserRole, fileInfo.fileID);
       filesWidget->setItem(row, 1, nameItem);
-      filesWidget->setItem(row, 2, new QTableWidgetItem(fileInfo->version.canonicalString()));
+      filesWidget->setItem(row, 2, new QTableWidgetItem(fileInfo.version.canonicalString()));
       QTableWidgetItem *sizeItem = new QTableWidgetItem();
-      sizeItem->setData(Qt::DisplayRole, fileInfo->fileSize);
+      sizeItem->setData(Qt::DisplayRole, fileInfo.fileSize);
       filesWidget->setItem(row, 3, sizeItem);
       ++row;
     }

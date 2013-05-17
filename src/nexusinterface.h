@@ -107,10 +107,6 @@ signals:
   void endorsementToggled(int modID, QVariant userData, QVariant resultData);
   void requestFailed(int modID, QVariant userData, const QString &errorMessage);*/
 
-signals:
-
-  void bla(QString userData);
-
 public slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
@@ -262,6 +258,8 @@ private slots:
   void requestTimeout();
 
   void downloadRequestedNXM(const QString &url);
+
+  void fakeFiles();
 
 private:
 

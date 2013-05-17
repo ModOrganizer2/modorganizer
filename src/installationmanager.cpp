@@ -706,7 +706,6 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
-//  bool nameGuessed = false;
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {

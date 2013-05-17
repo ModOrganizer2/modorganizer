@@ -137,7 +137,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : QObject(parent), m_NexusInterface(nexusInterface), m_DirWatcher()
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher()
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
 }
@@ -173,6 +173,12 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
   refreshList();
 }
 
+void DownloadManager::setSupportedExtensions(const QStringList &extensions)
+{
+   m_SupportedExtensions = extensions;
+   refreshList();
+}
+
 void DownloadManager::refreshList()
 {
   // remove finished downloads
@@ -185,11 +191,11 @@ void DownloadManager::refreshList()
     }
   }
 
-  QStringList nameFilters;
-  nameFilters.append("*.rar");
-  nameFilters.append("*.zip");
-  nameFilters.append("*.7z");
-  nameFilters.append("*.fomod");
+  QStringList nameFilters(m_SupportedExtensions);
+  foreach (const QString &extension, m_SupportedExtensions) {
+    nameFilters.append("*." + extension);
+  }
+
   nameFilters.append(QString("*").append(UNFINISHED));
 
   QDir dir(QDir::fromNativeSeparators(m_OutputDirectory));
@@ -328,7 +334,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   }
 
   if (deleteFile) {
-    if (!QFile(filePath).remove()) {
+    if (!shellDelete(QStringList(filePath), NULL)) {
       reportError(tr("failed to delete %1").arg(filePath));
       return;
     }
@@ -419,7 +425,6 @@ void DownloadManager::cancelDownload(int index)
 
   if (m_ActiveDownloads.at(index)->m_State == STATE_DOWNLOADING) {
     setState(m_ActiveDownloads.at(index), STATE_CANCELING);
-    qDebug("canceled %d - %s", index, m_ActiveDownloads[index]->m_FileName.toUtf8().constData());
   }
 }
 
@@ -622,7 +627,6 @@ QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 
 void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadManager::DownloadState state)
 {
-  qDebug("change state of %s %d -> %d", qPrintable(info->m_FileName), info->m_State, state);
   info->m_State = state;
   switch (state) {
     case STATE_PAUSED:
@@ -640,6 +644,12 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     } break;
     case STATE_READY: {
       createMetaFile(info);
+      for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+        if (m_ActiveDownloads[i] == info) {
+          emit downloadComplete(i);
+          return;
+        }
+      }
     } break;
     default: /* NOP */ break;
   }
@@ -861,6 +871,23 @@ bool DownloadManager::ServerByPreference(const QVariant &LHS, const QVariant &RH
   return LHSUsers < RHSUsers;
 }
 
+int DownloadManager::startDownloadURLs(const QStringList &urls)
+{
+  addDownload(urls, -1);
+  return m_ActiveDownloads.size() - 1;
+}
+
+int DownloadManager::startDownloadNexusFile(int modID, int fileID)
+{
+  int newID = m_ActiveDownloads.size();
+  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(ToQString(MOShared::GameInfo::instance().getGameName())).arg(modID).arg(fileID));
+  return newID;
+}
+
+QString DownloadManager::downloadPath(int id)
+{
+  return getFilePath(id);
+}
 
 void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
@@ -935,7 +962,7 @@ void DownloadManager::downloadFinished()
     if ((info->m_State != STATE_CANCELING) &&
         (info->m_State != STATE_PAUSING)) {
       if ((info->m_Output.size() == 0) ||
-          (reply->error() != QNetworkReply::NoError) ||
+          ((reply->error() != QNetworkReply::NoError) && (reply->error() != QNetworkReply::OperationCanceledError)) ||
           reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("text", Qt::CaseInsensitive)) {
         if (info->m_Tries == 0) {
           emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
@@ -983,7 +1010,7 @@ void DownloadManager::downloadFinished()
     reply->close();
     reply->deleteLater();
 
-    if (info->m_Tries > 0) {
+    if ((info->m_Tries > 0) && error) {
       --info->m_Tries;
       resumeDownload(index);
     }

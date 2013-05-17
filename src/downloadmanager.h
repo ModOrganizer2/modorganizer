@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADMANAGER_H
 
 #include "nexusinterface.h"
+#include <idownloadmanager.h>
 #include <set>
 #include <QObject>
 #include <QUrl>
@@ -52,7 +53,7 @@ Q_DECLARE_METATYPE(NexusInfo)
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
  **/
-class DownloadManager : public QObject
+class DownloadManager : public MOBase::IDownloadManager
 {
   Q_OBJECT
 
@@ -145,15 +146,10 @@ public:
   QString getOutputDirectory() const { return m_OutputDirectory; }
 
   /**
-   * @brief start a download from a url
-   *
-   * @param url the url to download from
-   * @param modID the nexus mod id this download belongs to
-   * @param fileID the nexus file id this download belongs to, if known. Defaults to 0.
-   * @param nexusInfo information previously retrieved from the nexus network
-   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
-   **/
-  bool addDownload(const QStringList &URLs, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+   * @brief set the list of supported extensions
+   * @param extensions list of supported extensions
+   */
+  void setSupportedExtensions(const QStringList &extensions);
 
   /**
    * @brief download from an already open network connection
@@ -263,6 +259,11 @@ public:
    */
   static bool ServerByPreference(const QVariant &LHS, const QVariant &RHS);
 
+
+  virtual int startDownloadURLs(const QStringList &urls);
+  virtual int startDownloadNexusFile(int modID, int fileID);
+  virtual QString downloadPath(int id);
+
 signals:
 
   void aboutToUpdate();
@@ -330,6 +331,17 @@ private:
 
   void startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
 
+  /**
+   * @brief start a download from a url
+   *
+   * @param url the url to download from
+   * @param modID the nexus mod id this download belongs to
+   * @param fileID the nexus file id this download belongs to, if known. Defaults to 0.
+   * @param nexusInfo information previously retrieved from the nexus network
+   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
+   **/
+  bool addDownload(const QStringList &URLs, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = NULL) const;
 
@@ -353,6 +365,7 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
+  QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;
 

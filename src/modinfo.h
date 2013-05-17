@@ -374,8 +374,8 @@ public:
    * @param begin iterator to the first file
    * @param end iterator to one past the last file
    */
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator &begin,
-                             QList<MOBase::ModRepositoryFileInfo*>::const_iterator &end) = 0;
+  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator &begin,
+                             QList<MOBase::ModRepositoryFileInfo>::const_iterator &end) = 0;
 
   /**
    * @return nexus description of the mod (html)
@@ -686,7 +686,7 @@ public:
    * @param begin iterator to the first file
    * @param end iterator to one past the last file
    */
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator &begin, QList<MOBase::ModRepositoryFileInfo*>::const_iterator &end);
+  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator &begin, QList<MOBase::ModRepositoryFileInfo>::const_iterator &end);
 
   /**
    * @return nexus description of the mod (html)
@@ -721,7 +721,7 @@ private:
 private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
-  void nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo*> &resultData);
+  void nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo> &resultData);
   void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
   void nxmRequestFailed(int modID, QVariant userData, const QString &errorMessage);
 
@@ -748,7 +748,7 @@ private:
   QString m_InstallationFile;
   QString m_Notes;
   QString m_NexusDescription;
-  QList<MOBase::ModRepositoryFileInfo*> m_NexusFileInfos;
+  QList<MOBase::ModRepositoryFileInfo> m_NexusFileInfos;
 
   QDateTime m_LastNexusQuery;
 
@@ -828,8 +828,8 @@ public:
   virtual int getHighlight() const;
   virtual QString getDescription() const;
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator&,
-                             QList<MOBase::ModRepositoryFileInfo*>::const_iterator&) {}
+  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator&,
+                             QList<MOBase::ModRepositoryFileInfo>::const_iterator&) {}
   virtual QString getNexusDescription() const { return QString(); }
 
 private:
