@@ -42,11 +42,13 @@ using namespace MOBase;
 
 static const char UNFINISHED[] = ".unfinished";
 
+unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
+
 
 DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs)
 {
   DownloadInfo *info = new DownloadInfo;
-
+  info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
   info->m_Progress = 0;
   info->m_ResumePos = 0;
@@ -88,6 +90,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
     }
   }
 
+  info->m_DownloadID = s_NextDownloadID++;
   info->m_Output.setFileName(filePath);
   info->m_ModID  = metaFile.value("modID", 0).toInt();
   info->m_FileID = metaFile.value("fileID", 0).toInt();
@@ -461,6 +464,18 @@ void DownloadManager::resumeDownload(int index)
 }
 
 
+DownloadManager::DownloadInfo *DownloadManager::downloadInfoByID(unsigned int id)
+{
+  auto iter = std::find_if(m_ActiveDownloads.begin(), m_ActiveDownloads.end(),
+               [id](DownloadInfo *info) { return info->m_DownloadID == id; });
+  if (iter != m_ActiveDownloads.end()) {
+    return *iter;
+  } else {
+    return NULL;
+  }
+}
+
+
 void DownloadManager::queryInfo(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
@@ -622,7 +637,6 @@ QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 
 void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadManager::DownloadState state)
 {
-  qDebug("change state of %s %d -> %d", qPrintable(info->m_FileName), info->m_State, state);
   info->m_State = state;
   switch (state) {
     case STATE_PAUSED:
@@ -633,10 +647,10 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       info->m_Reply->abort();
     } break;
     case STATE_FETCHINGMODINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_ModID, this, qVariantFromValue(static_cast<void*>(info))));
+      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_ModID, this, info->m_DownloadID));
     } break;
     case STATE_FETCHINGFILEINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_ModID, this, qVariantFromValue(static_cast<void*>(info))));
+      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_ModID, this, info->m_DownloadID));
     } break;
     case STATE_READY: {
       createMetaFile(info);
@@ -729,7 +743,10 @@ void DownloadManager::nxmDescriptionAvailable(int, QVariant userData, QVariant r
 
   QVariantMap result = resultData.toMap();
 
-  DownloadInfo *info = static_cast<DownloadInfo*>(userData.value<void*>());
+//  DownloadInfo *info = static_cast<DownloadInfo*>(userData.value<void*>());
+  DownloadInfo *info = downloadInfoByID(userData.toInt());
+  if (info == NULL) return;
+
   info->m_NexusInfo.m_Category = result["category_id"].toInt();
   info->m_NexusInfo.m_ModName = result["name"].toString().trimmed();
   info->m_NexusInfo.m_NewestVersion = result["version"].toString();
@@ -751,7 +768,8 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
     m_RequestIDs.erase(idIter);
   }
 
-  DownloadInfo *info = static_cast<DownloadInfo*>(userData.value<void*>());
+  DownloadInfo *info = downloadInfoByID(userData.toInt());
+  if (info == NULL) return;
 
   QVariantList result = resultData.toList();
 
