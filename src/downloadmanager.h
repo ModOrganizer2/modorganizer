@@ -76,6 +76,7 @@ public:
 private:
 
   struct DownloadInfo {
+    unsigned int m_DownloadID;
     QString m_FileName;
     QFile m_Output;
     QNetworkReply *m_Reply;
@@ -109,7 +110,8 @@ private:
     bool isPausedState();
 
     QString currentURL();
-
+  private:
+    static unsigned int s_NextDownloadID;
   private:
     DownloadInfo() : m_TotalSize(0), m_ReQueried(false) {}
   };
@@ -354,6 +356,8 @@ private:
   QString getFileNameFromNetworkReply(QNetworkReply *reply);
 
   void setState(DownloadInfo *info, DownloadManager::DownloadState state);
+
+  DownloadInfo *downloadInfoByID(unsigned int id);
 
 private:
 

@@ -65,6 +65,8 @@ void LogBuffer::write() const
     return;
   }
 
+  DWORD lastError = ::GetLastError();
+
   QFile file(m_OutFileName);
   if (!file.open(QIODevice::WriteOnly)) {
     reportError(tr("failed to write log to %1: %2").arg(m_OutFileName).arg(file.errorString()));
@@ -77,6 +79,7 @@ void LogBuffer::write() const
     file.write(m_Messages.at(i % m_Messages.size()).toUtf8());
     file.write("\r\n");
   }
+  ::SetLastError(lastError);
 }
 
 
