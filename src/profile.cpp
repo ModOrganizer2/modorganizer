@@ -72,7 +72,7 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
-    shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)), NULL);
+    shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)));
     throw;
   }
   refreshModStatus();
@@ -185,7 +185,7 @@ void Profile::createTweakedIniFile()
 {
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
 
-  if (QFile::exists(tweakedIni) && !shellDelete(QStringList(tweakedIni), NULL)) {
+  if (QFile::exists(tweakedIni) && !shellDelete(QStringList(tweakedIni))) {
     reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
     return;
   }
@@ -673,7 +673,7 @@ bool Profile::enableLocalSaves(bool enable)
                                                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                                             QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
-      shellDelete(QStringList(m_Directory.absoluteFilePath("_saves")), NULL);
+      shellDelete(QStringList(m_Directory.absoluteFilePath("_saves")));
     } else if (res == QMessageBox::No) {
       m_Directory.rename("saves", "_saves");
     } else {

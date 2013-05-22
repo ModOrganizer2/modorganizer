@@ -1065,24 +1065,33 @@ IModInterface *MainWindow::createMod(const QString &name)
   fixDirectoryName(fixedName);
   unsigned int index = ModInfo::getIndex(fixedName);
   if (index != UINT_MAX) {
-    throw MyException(tr("The mod \"%1\" already exists!").arg(fixedName));
+    ModInfo::Ptr result = ModInfo::getByIndex(index);
+    if (!result->isEmpty()) {
+      throw MyException(tr("The mod \"%1\" already exists!").arg(fixedName));
+    }
+    return result.data();
+  } else {
+    QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(fixedName.trimmed());
+
+    QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
+
+    settingsFile.setValue("modid", 0);
+    settingsFile.setValue("version", 0);
+    settingsFile.setValue("newestVersion", 0);
+    settingsFile.setValue("category", 0);
+    settingsFile.setValue("installationFile", 0);
+    return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
   }
-
-  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(fixedName.trimmed());
-
-  QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
-
-  settingsFile.setValue("modid", 0);
-  settingsFile.setValue("version", 0);
-  settingsFile.setValue("newestVersion", 0);
-  settingsFile.setValue("category", 0);
-  settingsFile.setValue("installationFile", 0);
-  return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
 }
 
 bool MainWindow::removeMod(IModInterface *mod)
 {
-  return ModInfo::removeMod(ModInfo::getIndex(mod->name()));
+  unsigned int index = ModInfo::getIndex(mod->name());
+  if (index == UINT_MAX) {
+    return mod->remove();
+  } else {
+    return ModInfo::removeMod(index);
+  }
 }
 
 
@@ -1827,11 +1836,11 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::installMod(const QString &fileName)
 {
-qDebug("install %s", qPrintable(fileName));
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
   m_CurrentProfile->writeModlistNow();
-  if (m_InstallationManager.install(fileName, m_Settings.getModDirectory(), modName, hasIniTweaks)) {
+  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+  if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
     MessageDialog::showMessage(tr("Installation successful"), this);
     refreshModList();
 
@@ -2447,7 +2456,7 @@ void MainWindow::restoreBackup_clicked()
         (QMessageBox::question(this, tr("Overwrite?"),
           tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
-      if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)), NULL)) {
+      if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
         reportError(tr("failed to remove mod \"%1\"").arg(regName));
       } else {
         QString destinationPath = QDir::fromNativeSeparators(m_Settings.getModDirectory()) + "/" + regName;
@@ -3495,7 +3504,8 @@ void MainWindow::installDownload(int index)
     m_CurrentProfile->writeModlistNow();
 
     bool hasIniTweaks = false;
-    if (m_InstallationManager.install(fileName, m_Settings.getModDirectory(), modName, hasIniTweaks)) {
+    m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+    if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
       MessageDialog::showMessage(tr("Installation successful"), this);
 
       refreshModList();

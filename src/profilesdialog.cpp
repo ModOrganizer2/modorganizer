@@ -179,7 +179,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     if (item != NULL) {
       delete item;
     }
-    shellDelete(QStringList(profilePath), NULL);
+    shellDelete(QStringList(profilePath));
   }
 }
 

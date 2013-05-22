@@ -68,8 +68,7 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager(QWidget *parent)
   : QObject(parent), m_ParentWidget(parent),
-    m_NCCPath(QApplication::applicationDirPath() + "/NCC/NexusClientCLI.exe"),
-    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod"))
+    m_InstallationProgress(parent), m_SupportedExtensions() //boost::assign::list_of("zip")("rar")("7z")("fomod")
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -134,12 +133,6 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *baseNode)
   std::wstring currentPath;
 
   mapToArchive(baseNode, currentPath, data);
-}
-
-
-bool InstallationManager::unpackPackageTXT()
-{
-  return unpackSingleFile("package.txt");
 }
 
 
@@ -268,7 +261,7 @@ IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValu
 {
   GuessedValue<QString> temp(modName);
   bool iniTweaks;
-  if (install(archiveName, "modsdir", temp, iniTweaks)) {
+  if (install(archiveName, temp, iniTweaks)) {
     return IPluginInstaller::RESULT_SUCCESS;
   } else {
     return IPluginInstaller::RESULT_FAILED;
@@ -379,69 +372,6 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
 }
 
 
-bool InstallationManager::checkBainPackage(DirectoryTree *dataTree)
-{
-  int numDirs = dataTree->numNodes();
-  // each directory would have to serve as a top-level directory
-  for (DirectoryTree::const_node_iterator iter = dataTree->nodesBegin();
-       iter != dataTree->nodesEnd(); ++iter) {
-    const QString &dirName = (*iter)->getData().name;
-    if ((dirName.compare("fomod", Qt::CaseInsensitive) == 0) ||
-        (dirName.startsWith("--"))) {
-      --numDirs;
-      continue;
-    }
-    if (!isSimpleArchiveTopLayer(*iter, true)) {
-      qDebug("%s is not a top layer directory", (*iter)->getData().name.toUtf8().constData());
-      return false;
-    }
-  }
-
-  if (numDirs < 2) {
-    // a complex bain package contains at least 2 directories to choose from
-    qDebug("only %d dirs", numDirs);
-    return false;
-  }
-
-  return true;
-}
-
-
-bool InstallationManager::checkNMMInstaller()
-{
-  return QFile::exists(m_NCCPath);
-}
-
-
-bool InstallationManager::checkFomodPackage(DirectoryTree *dataTree, QString &offset, bool &xmlInstaller)
-{
-  bool scriptInstaller = false;
-  xmlInstaller = false;
-  for (DirectoryTree::const_node_iterator iter = dataTree->nodesBegin();
-       iter != dataTree->nodesEnd(); ++iter) {
-    const QString &dirName = (*iter)->getData().name;
-    if (dirName.compare("fomod", Qt::CaseInsensitive) == 0) {
-      for (DirectoryTree::const_leaf_iterator fileIter = (*iter)->leafsBegin();
-           fileIter != (*iter)->leafsEnd(); ++fileIter) {
-        if (fileIter->getName().compare("ModuleConfig.xml", Qt::CaseInsensitive) == 0) {
-          xmlInstaller = true;
-        } else if (fileIter->getName().compare("script.cs", Qt::CaseInsensitive) == 0) {
-          scriptInstaller = true;
-        }
-      }
-      break;
-    }
-  }
-  if (!xmlInstaller && !scriptInstaller && (dataTree->numNodes() == 1) && (dataTree->numLeafs() == 0)) {
-    DirectoryTree::Node *node = *dataTree->nodesBegin();
-    offset = node->getData().name;
-    return checkFomodPackage(node, offset, xmlInstaller);
-  }
-
-  return (xmlInstaller || scriptInstaller);
-}
-
-
 void InstallationManager::updateProgress(float percentage)
 {
   m_InstallationProgress.setValue(static_cast<int>(percentage * 100.0));
@@ -464,7 +394,7 @@ void InstallationManager::report7ZipError(LPCWSTR errorMessage)
 }
 
 
-QString InstallationManager::generateBackupName(const QString &directoryName)
+QString InstallationManager::generateBackupName(const QString &directoryName) const
 {
   QString backupName = directoryName + "_backup";
   if (QDir(backupName).exists()) {
@@ -480,9 +410,9 @@ QString InstallationManager::generateBackupName(const QString &directoryName)
 }
 
 
-bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedValue<QString> &modName)
+bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
 {
-  QString targetDirectory = QDir::fromNativeSeparators(modsDirectory.mid(0).append("\\").append(modName));
+  QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
 
   while (QDir(targetDirectory).exists()) {
     QueryOverwriteDialog overwriteDialog(m_ParentWidget);
@@ -503,7 +433,7 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedVal
           if (!ensureValidModName(modName)) {
             return false;
           }
-          targetDirectory = QDir::fromNativeSeparators(modsDirectory.mid(0).append("\\").append(modName));
+          targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
         }
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_REPLACE) {
         // save original settings like categories. Because it makes sense
@@ -516,9 +446,10 @@ bool InstallationManager::testOverwrite(const QString &modsDirectory, GuessedVal
         }
 
         // remove the directory with all content, then recreate it empty
-        shellDelete(QStringList(targetDirectory), NULL);
+        shellDelete(QStringList(targetDirectory));
         if (!QDir().mkdir(targetDirectory)) {
-          // windows may keep the directory around for a moment, preventing its re-creation
+          // windows may keep the directory around for a moment, preventing its re-creation. Not sure
+          // if this still happens with shellDelete
           Sleep(100);
           QDir().mkdir(targetDirectory);
         }
@@ -568,7 +499,7 @@ bool InstallationManager::fixModName(QString &name)
 }
 */
 
-bool InstallationManager::ensureValidModName(GuessedValue<QString> &name)
+bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
 {
   while (name->isEmpty()) {
     bool ok;
@@ -584,7 +515,7 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name)
 }
 
 
-bool InstallationManager::doInstall(const QString &modsDirectory, GuessedValue<QString> &modName, int modID,
+bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
                                     const QString &version, const QString &newestVersion, int categoryID)
 {
   if (!ensureValidModName(modName)) {
@@ -592,11 +523,11 @@ bool InstallationManager::doInstall(const QString &modsDirectory, GuessedValue<Q
   }
 
   // determine target directory
-  if (!testOverwrite(modsDirectory, modName)) {
+  if (!testOverwrite(modName)) {
     return false;
   }
 
-  QString targetDirectory = QDir::fromNativeSeparators(modsDirectory.mid(0).append("\\").append(modName));
+  QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
 
   qDebug("installing to \"%s\"", targetDirectory.toUtf8().constData());
 
@@ -689,11 +620,9 @@ bool InstallationManager::wasCancelled()
 }
 
 
-bool InstallationManager::install(const QString &fileName, const QString &modsDirectory,
-                                  GuessedValue<QString> &modName, bool &hasIniTweaks)
+bool InstallationManager::install(const QString &fileName, GuessedValue<QString> &modName, bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
-//  bool success = false;
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
     return false;
@@ -772,7 +701,8 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
           installResult = installerSimple->install(modName, *filesTree);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
             mapToArchive(filesTree);
-            if (!doInstall(modsDirectory, modName, modID, version, newestVersion, categoryID)) {
+            // the simple installer only prepares the installation, the rest works the same for all installers
+            if (!doInstall(modName, modID, version, newestVersion, categoryID)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
           }
@@ -786,7 +716,9 @@ bool InstallationManager::install(const QString &fileName, const QString &modsDi
              ((filesTree == NULL) && installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExtensions = installerCustom->supportedExtensions();
           if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
-            installResult = installerCustom->install(modName, fileName);
+            if (testOverwrite(modName)) {
+              installResult = installerCustom->install(modName, fileName);
+            }
           }
         }
       }

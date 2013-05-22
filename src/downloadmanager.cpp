@@ -334,13 +334,13 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   }
 
   if (deleteFile) {
-    if (!shellDelete(QStringList(filePath), NULL)) {
+    if (!shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete %1").arg(filePath));
       return;
     }
 
     QFile metaFile(filePath.append(".meta"));
-    if (metaFile.exists() && !metaFile.remove()) {
+    if (metaFile.exists() && !shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete meta file for %1").arg(filePath));
     }
   } else {

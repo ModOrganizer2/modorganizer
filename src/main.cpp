@@ -84,7 +84,7 @@ void removeOldLogfiles()
       deleteFiles.append(files.at(i).absoluteFilePath());
     }
 
-    if (!shellDelete(deleteFiles, NULL)) {
+    if (!shellDelete(deleteFiles)) {
       qWarning("failed to remove log files: %s", qPrintable(windowsErrorString(::GetLastError())));
     }
   }
@@ -102,7 +102,7 @@ bool bootstrap()
   QString moDirectory = QDir::fromNativeSeparators(ToQString(gameInfo.getOrganizerDirectory()));
   QString backupDirectory = moDirectory.mid(0).append("/update_backup");
   if (QDir(backupDirectory).exists()) {
-    shellDelete(QStringList(backupDirectory), NULL);
+    shellDelete(QStringList(backupDirectory));
   }
 
   // cycle logfile

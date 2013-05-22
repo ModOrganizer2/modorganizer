@@ -369,6 +369,15 @@ ModInfoRegular::~ModInfoRegular()
   }
 }
 
+bool ModInfoRegular::isEmpty() const
+{
+  QDirIterator iter(m_Path, QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+  if (!iter.hasNext()) return true;
+  iter.next();
+  if ((iter.fileName() == "meta.ini") && !iter.hasNext()) return true;
+  return false;
+}
+
 
 void ModInfoRegular::saveMeta()
 {
@@ -573,7 +582,7 @@ void ModInfoRegular::setNeverEndorse()
 bool ModInfoRegular::remove()
 {
   m_MetaInfoChanged = false;
-  return shellDelete(QStringList(absolutePath()), NULL);
+  return shellDelete(QStringList(absolutePath()));
 }
 
 void ModInfoRegular::endorse(bool doEndorse)

@@ -179,6 +179,8 @@ public:
 
   virtual bool isRegular() const { return false; }
 
+  virtual bool isEmpty() const { return false; }
+
   /**
    * @brief test if there is a newer version of the mod
    *
@@ -494,6 +496,8 @@ public:
   ~ModInfoRegular();
 
   virtual bool isRegular() const { return true; }
+
+  virtual bool isEmpty() const;
 
   /**
    * @brief test if there is a newer version of the mod

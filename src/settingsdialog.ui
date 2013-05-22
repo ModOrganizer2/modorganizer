@@ -240,55 +240,6 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="instalerTab">
-      <attribute name="title">
-       <string>Installer</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_6">
-       <item>
-        <widget class="QCheckBox" name="preferIntegratedBox">
-         <property name="toolTip">
-          <string>Choose the integrated fomod installer over the external one wherever possible.</string>
-         </property>
-         <property name="whatsThis">
-          <string>Use the integrated fomod installer if possible. This installer is only able to handle archives scripted using an xml-file (that's maybe half the fomods out there), other files are still installed using the external installer if it's available.</string>
-         </property>
-         <property name="text">
-          <string>Prefer integrated fomod installer</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="quickInstallerBox">
-         <property name="toolTip">
-          <string>Use a very simple installation dialog if MO recognizes the structure of the installation archive. If you prefer your life complicated, uncheck this box.</string>
-         </property>
-         <property name="whatsThis">
-          <string>Use a very simple installation dialog if MO recognizes the structure of the installation archive. If you prefer your life complicated, uncheck this box.</string>
-         </property>
-         <property name="text">
-          <string>Enable &quot;Quick Installer&quot;</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </widget>
      <widget class="QWidget" name="nexusTab">
       <attribute name="title">
        <string>Nexus</string>

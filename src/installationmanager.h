@@ -57,16 +57,17 @@ public:
 
   ~InstallationManager();
 
+  void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
+
   /**
    * @brief install a mod from an archive
    *
    * @param fileName absolute file name of the archive to install
-   * @param modsDirectory directory to install mods to
    * @param modName suggested name of the mod. If this is empty (the default), a name will be guessed based on the filename. The user will always have a chance to rename the mod
    * @return true if the archive was installed, false if installation failed or was refused
    * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
    **/
-  bool install(const QString &fileName, const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks);
+  bool install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks);
 
   /**
    * @return true if the installation was canceled
@@ -81,8 +82,6 @@ public:
    * @todo This function doesn't belong here, it is only public because the SelfUpdater class also uses "Archive" to get to the package.txt file
    **/
   static QString getErrorString(Archive::Error errorCode);
-
-  void installManual(MOBase::DirectoryTree::Node *baseNode, MOBase::DirectoryTree *filesTree, bool &hasIniTweaks, QString &modName, int categoryID, const QString &modsDirectory, QString newestVersion, QString version, int modID, bool success, bool manualRequest);
 
   /**
    * @brief register an installer-plugin
@@ -125,6 +124,13 @@ public:
    */
   virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
 
+  /**
+   * @brief test if the specified mod name is free. If not, query the user how to proceed
+   * @param modName current possible names for the mod
+   * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
+   */
+  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName) const;
+
 private:
 
   void queryPassword(LPSTR password);
@@ -142,30 +148,20 @@ private:
 
   // recursive worker function for mapToArchive
   void mapToArchive(const MOBase::DirectoryTree::Node *node, std::wstring path, FileData * const *data);
-  bool unpackPackageTXT();
   bool unpackSingleFile(const QString &fileName);
 
 
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
-  bool checkBainPackage(MOBase::DirectoryTree *dataTree);
-  bool checkFomodPackage(MOBase::DirectoryTree *dataTree, QString &offset, bool &xmlInstaller);
-  bool checkNMMInstaller();
-
-//  static bool fixModName(QString &name);
 
   bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName);
 
-  bool doInstall(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName,
+  bool doInstall(MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID);
 
-  bool installFomodExternal(const QString &fileName, const QString &pluginsFileName, const QString &modDirectory);
-  bool installFomodInternal(MOBase::DirectoryTree *&baseNode, const QString &fomodPath, const QString &modsDirectory,
-                            int modID, const QString &version, const QString &newestVersion,
-                            int categoryID, QString &modName, bool nameGuessed, bool &manualRequest);
-  QString generateBackupName(const QString &directoryName);
+  QString generateBackupName(const QString &directoryName) const;
 
-  bool ensureValidModName(MOBase::GuessedValue<QString> &name);
+  bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
 private slots:
 
@@ -191,10 +187,10 @@ private:
 
   QWidget *m_ParentWidget;
 
+  QString m_ModsDirectory;
+
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
-
-  QString m_NCCPath;
 
   Archive *m_CurrentArchive;
   QString m_CurrentFile;

@@ -369,9 +369,7 @@ void Settings::query(QWidget *parent)
   QLineEdit *modDirEdit = dialog.findChild<QLineEdit*>("modDirEdit");
   QLineEdit *cacheDirEdit = dialog.findChild<QLineEdit*>("cacheDirEdit");
 
-  QCheckBox *preferIntegratedCheckBox = dialog.findChild<QCheckBox*>("preferIntegratedBox");
   QCheckBox *preferExternalBox = dialog.findChild<QCheckBox*>("preferExternalBox");
-  QCheckBox *quickInstallerBox = dialog.findChild<QCheckBox*>("quickInstallerBox");
   QCheckBox *offlineBox = dialog.findChild<QCheckBox*>("offlineBox");
   QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
 
@@ -450,9 +448,7 @@ void Settings::query(QWidget *parent)
   downloadDirEdit->setText(getDownloadDirectory());
   modDirEdit->setText(getModDirectory());
   cacheDirEdit->setText(getCacheDirectory());
-  preferIntegratedCheckBox->setChecked(m_Settings.value("Settings/prefer_integrated_installer", false).toBool());
   preferExternalBox->setChecked(m_Settings.value("Settings/prefer_external_browser", false).toBool());
-  quickInstallerBox->setChecked(m_Settings.value("Settings/enable_quick_installer", true).toBool());
   offlineBox->setChecked(m_Settings.value("Settings/offline_mode", false).toBool());
   nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
   logLevelBox->setCurrentIndex(logLevel());
@@ -521,10 +517,8 @@ void Settings::query(QWidget *parent)
     if (nxmHandler != handleNXMBox->isChecked()) {
       setNXMHandlerActive(handleNXMBox->isChecked(), registryWritable);
     }
-    m_Settings.setValue("Settings/prefer_integrated_installer", preferIntegratedCheckBox->isChecked());
     m_Settings.setValue("Settings/prefer_external_browser", preferExternalBox->isChecked());
     m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
-    m_Settings.setValue("Settings/enable_quick_installer", quickInstallerBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
 
