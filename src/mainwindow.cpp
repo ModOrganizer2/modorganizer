@@ -2429,10 +2429,6 @@ void MainWindow::refreshFilters()
 void MainWindow::renameMod_clicked()
 {
   try {
-/*    QModelIndex treeIdx = m_ModListGroupProxy->mapFromSource(m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0)));
-    ui->modList->setCurrentIndex(treeIdx);
-    ui->modList->edit(treeIdx);*/
-
     ui->modList->edit(ui->modList->currentIndex());
   } catch (const std::exception &e) {
     reportError(tr("failed to rename mod: %1").arg(e.what()));
