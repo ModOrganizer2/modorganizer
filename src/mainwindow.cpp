@@ -1059,9 +1059,13 @@ IModInterface *MainWindow::getMod(const QString &name)
 }
 
 
-IModInterface *MainWindow::createMod(const QString &name)
+IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
 {
-  QString fixedName = name;
+  if (!m_InstallationManager.testOverwrite(name)) {
+    return NULL;
+  }
+
+/*  QString fixedName = name;
   fixDirectoryName(fixedName);
   unsigned int index = ModInfo::getIndex(fixedName);
   if (index != UINT_MAX) {
@@ -1070,8 +1074,8 @@ IModInterface *MainWindow::createMod(const QString &name)
       throw MyException(tr("The mod \"%1\" already exists!").arg(fixedName));
     }
     return result.data();
-  } else {
-    QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(fixedName.trimmed());
+  } else {*/
+    QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name);
 
     QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
 
@@ -1081,7 +1085,7 @@ IModInterface *MainWindow::createMod(const QString &name)
     settingsFile.setValue("category", 0);
     settingsFile.setValue("installationFile", 0);
     return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
-  }
+//  }
 }
 
 bool MainWindow::removeMod(IModInterface *mod)
@@ -2795,14 +2799,21 @@ void MainWindow::syncOverwrite()
 
 void MainWindow::createModFromOverwrite()
 {
-  QString name = QInputDialog::getText(this, tr("Create Mod..."),
-                        tr("This will move all files from overwrite into a new, regular mod."
-                           "Please enter a name: "));
-  QString fixedName = fixDirectoryName(name);
-  if (fixedName.isEmpty()) {
-    reportError(tr("Invalid name"));
-    return;
-  } else if (getMod(fixedName) != NULL) {
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+
+  while (name->isEmpty()) {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Create Mod..."),
+                                      tr("This will move all files from overwrite into a new, regular mod.\n"
+                                         "Please enter a name: "), QLineEdit::Normal, "", &ok),
+                GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  }
+
+  if (getMod(name) != NULL) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
@@ -2812,6 +2823,8 @@ void MainWindow::createModFromOverwrite()
   ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(m_ContextRow);
 
   shellMove(QStringList(overwriteInfo->absolutePath() + "\\*"), QStringList(newMod->absolutePath()), this);
+
+  refreshModList();
 }
 
 

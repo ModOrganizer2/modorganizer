@@ -50,6 +50,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginlistsortproxy.h"
 #include "tutorialcontrol.h"
 #include "savegameinfowidgetgamebryo.h"
+#include <guessedvalue.h>
 
 namespace Ui {
     class MainWindow;
@@ -100,7 +101,7 @@ public:
   virtual QString downloadsPath() const;
   virtual MOBase::VersionInfo appVersion() const;
   virtual MOBase::IModInterface *getMod(const QString &name);
-  virtual MOBase::IModInterface *createMod(const QString &name);
+  virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;

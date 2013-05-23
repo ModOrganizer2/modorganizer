@@ -716,9 +716,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
              ((filesTree == NULL) && installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExtensions = installerCustom->supportedExtensions();
           if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
-            if (testOverwrite(modName)) {
-              installResult = installerCustom->install(modName, fileName);
-            }
+            installResult = installerCustom->install(modName, fileName);
           }
         }
       }
