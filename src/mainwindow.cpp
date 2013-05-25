@@ -2403,8 +2403,15 @@ void MainWindow::refreshFilters()
   ui->modList->setCurrentIndex(QModelIndex());
 
   // save previous filter text so we can restore it later, in case the filter still exists then
-  QTreeWidgetItem *currentItem = ui->categoriesList->currentItem();
-  QString previousFilter = currentItem != NULL ? currentItem->text(0) : tr("<All>");
+//  QTreeWidgetItem *currentItem = ui->categoriesList->currentItem();
+//  QString previousFilter = currentItem != NULL ? currentItem->text(0) : tr("<All>");
+
+
+  QStringList selectedItems;
+  foreach (QTreeWidgetItem *item, ui->categoriesList->selectedItems()) {
+    selectedItems.append(item->text(0));
+  }
+
 
   ui->categoriesList->clear();
   addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
@@ -2428,13 +2435,10 @@ void MainWindow::refreshFilters()
 
   addCategoryFilters(NULL, categoriesUsed, 0);
 
-  QList<QTreeWidgetItem*> matches = ui->categoriesList->findItems(previousFilter, Qt::MatchFixedString | Qt::MatchRecursive);
-  if (matches.size() > 0) {
-    QTreeWidgetItem *currentItem = matches.at(0);
-    ui->categoriesList->setCurrentItem(currentItem);
-    while (currentItem != NULL) {
-      currentItem->setExpanded(true);
-      currentItem = currentItem->parent();
+  foreach (const QString &item, selectedItems) {
+    QList<QTreeWidgetItem*> matches = ui->categoriesList->findItems(item, Qt::MatchFixedString | Qt::MatchRecursive);
+    if (matches.size() > 0) {
+      matches.at(0)->setSelected(true);
     }
   }
 
@@ -2445,10 +2449,6 @@ void MainWindow::refreshFilters()
 void MainWindow::renameMod_clicked()
 {
   try {
-/*    QModelIndex treeIdx = m_ModListGroupProxy->mapFromSource(m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0)));
-    ui->modList->setCurrentIndex(treeIdx);
-    ui->modList->edit(treeIdx);*/
-
     ui->modList->edit(ui->modList->currentIndex());
   } catch (const std::exception &e) {
     reportError(tr("failed to rename mod: %1").arg(e.what()));

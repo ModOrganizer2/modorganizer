@@ -547,6 +547,9 @@ bool Profile::invalidationActive(bool *supported) const
     *supported = true;
     wchar_t buffer[1024];
     std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
+    // epic ms fail: GetPrivateProfileString uses errno (for whatever reason) to signal a fail since the return value
+    // has a different meaning (number of bytes copied). HOWEVER, it will not set errno to 0 if NO error occured
+    errno = 0;
     if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                    L"", buffer, 1024, iniFileName.c_str()) == 0) {
       if (errno != 0x02) {
@@ -555,8 +558,7 @@ bool Profile::invalidationActive(bool *supported) const
         }
         return false;
       } else {
-        qCritical("failed to parse \"%ls\"", iniFileName.c_str());
-        QString errorMessage = tr("failed to parse ini file (%1): %2").arg(QDir::toNativeSeparators(getIniFileName())).arg(::GetLastError());
+        QString errorMessage = tr("failed to parse ini file (%1)").arg(ToQString(iniFileName));
         throw windows_error(errorMessage.toUtf8().constData());
       }
     }
@@ -580,6 +582,7 @@ void Profile::deactivateInvalidation() const
   if (GameInfo::instance().requiresBSAInvalidation()) {
     wchar_t buffer[1024];
     std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
+    errno = 0;
     if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                    L"", buffer, 1024, iniFileName.c_str()) == 0) {
       if (errno == 0x02) {
@@ -619,9 +622,15 @@ void Profile::activateInvalidation(const QString& dataDirectory) const
   if (GameInfo::instance().requiresBSAInvalidation()) {
     wchar_t buffer[1024];
     std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
+    errno = 0;
     if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                    L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      throw windows_error("failed to parse ini file");
+      if (errno == 0x02) {
+        throw windows_error("failed to parse ini file");
+      } else {
+        // ignore. shouldn't have gotten here anyway
+        return;
+      }
     }
     QStringList archives = ToQString(buffer).split(", ");
 

@@ -95,10 +95,15 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 
 void NXMAccessManager::pageLogin()
 {
-  QString requestString = QString("http://gatekeeper.nexusmods.com/Sessions/?Login&username=%2&password=%3").arg(m_Username).arg(m_Password);
+  QString requestString = QString("http://gatekeeper.nexusmods.com/Sessions/?Login");
+  QUrl postData;
+  postData.addQueryItem("username", m_Username);
+  postData.addQueryItem("password", m_Password);
 
   QNetworkRequest request(requestString);
-  m_LoginReply = get(request);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+
+  m_LoginReply = post(request, postData.encodedQuery());
 
   m_LoginTimeout.start();
   connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginFinished()));

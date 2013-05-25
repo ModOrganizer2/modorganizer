@@ -24,7 +24,7 @@ ProblemsDialog::ProblemsDialog(std::vector<MOBase::IPluginDiagnose *> diagnosePl
       if (diagnose->hasGuidedFix(key)) {
         ui->problemsWidget->setItemWidget(newItem, 1, new QPushButton(tr("Fix")));
       } else {
-        newItem->setText(1, tr("No guided fix :("));
+        newItem->setText(1, tr("No guided fix"));
       }
       ui->problemsWidget->addTopLevelItem(newItem);
     }
