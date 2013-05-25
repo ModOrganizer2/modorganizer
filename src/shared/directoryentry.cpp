@@ -192,7 +192,6 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
     m_Origin = origin;
     m_FileTime = fileTime;
     m_Archive = archive;
-//  } else if (FilesOrigin::getByID(origin).getPriority() > FilesOrigin::getByID(m_Origin).getPriority()) {
   } else if (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority()) {
     if (std::find(m_Alternatives.begin(), m_Alternatives.end(), m_Origin) == m_Alternatives.end()) {
       m_Alternatives.push_back(m_Origin);
@@ -269,7 +268,10 @@ bool FileEntry::removeOrigin(int origin)
 // sorted by priority descending
 static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 {
-  return entry->getOriginByID(LHS).getPriority() < entry->getOriginByID(RHS).getPriority();
+  int l = entry->getOriginByID(LHS).getPriority(); if (l < 0) l = INT_MAX;
+  int r = entry->getOriginByID(RHS).getPriority(); if (r < 0) r = INT_MAX;
+
+  return l < r;
 }
 
 

@@ -2191,9 +2191,6 @@ void MainWindow::modStatusChanged(unsigned int index)
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
     if (m_CurrentProfile->modEnabled(index)) {
       DirectoryRefresher::addModToStructure(m_DirectoryStructure, modInfo->name(), m_CurrentProfile->getModPriority(index), modInfo->absolutePath());
-/*      m_DirectoryStructure->addFromOrigin(ToWString(modInfo->name()),
-          ToWString(QDir::toNativeSeparators(modInfo->absolutePath())),
-          m_CurrentProfile->getModPriority(index));*/
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
     } else {
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
@@ -2201,6 +2198,16 @@ void MainWindow::modStatusChanged(unsigned int index)
         origin.enable(false);
       }
     }
+
+    for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      int priority = m_CurrentProfile->getModPriority(i);
+      if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
+        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority);
+      }
+    }
+    m_DirectoryStructure->getFileRegister()->sortOrigins();
+
     refreshLists();
   } catch (const std::exception& e) {
     reportError(tr("failed to update mod list: %1").arg(e.what()));
@@ -2485,11 +2492,15 @@ void MainWindow::modlistChanged(const QModelIndex &index, int role)
         m_PluginList.enableESP(esm);
       }
 
+      int enabled = 0;
       QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
       foreach (const QString &esp, esps) {
-        m_PluginList.enableESP(esp);
+        if (!m_PluginList.isEnabled(esp)) {
+          m_PluginList.enableESP(esp);
+          ++enabled;
+        }
       }
-      if (esps.count() > 1) {
+      if (enabled > 1) {
         MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
       }
     }
@@ -2628,9 +2639,6 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
       FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
 
-/*      m_DirectoryStructure->addFromOrigin(ToWString(modInfo->name()),
-                                          ToWString(QDir::toNativeSeparators(modInfo->absolutePath())),
-                                          m_CurrentProfile->getModPriority(index));*/
       DirectoryRefresher::addModToStructure(m_DirectoryStructure,
                                             modInfo->name(), m_CurrentProfile->getModPriority(index),
                                             modInfo->absolutePath());
@@ -2694,6 +2702,7 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
 void MainWindow::displayModInformation(int row, int tab)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+qDebug("%d - %s", row, qPrintable(modInfo->name()));
   displayModInformation(modInfo, row, tab);
 }
 
@@ -2840,7 +2849,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (!index.isValid()) {
     return;
   }
-//  QModelIndex sourceIdx = m_ModListGroupProxy->mapToSource(index);
   QModelIndex sourceIdx = mapToModel(&m_ModList, index);
   if (!sourceIdx.isValid()) {
     return;
@@ -2870,8 +2878,7 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
     if (m_CategoryFactory.getParentID(i) == targetID) {
       QMenu *targetMenu = menu;
       if (m_CategoryFactory.hasChildren(i)) {
-        targetMenu = menu->addMenu(
-            m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
+        targetMenu = menu->addMenu(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
       }
 
       int id = m_CategoryFactory.getCategoryID(i);
@@ -2902,6 +2909,7 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
 void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modRow);
+qDebug("%d - %s", modRow, qPrintable(modInfo->name()));
   foreach (QAction* action, menu->actions()) {
     if (action->menu() != NULL) {
       saveCategoriesFromMenu(action->menu(), modRow);
@@ -2909,8 +2917,8 @@ void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
       QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
       if (widgetAction != NULL) {
         QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
+qDebug("%s - %d", qPrintable(modInfo->name()), widgetAction->data().toInt());
         modInfo->setCategory(widgetAction->data().toInt(), checkbox->isChecked());
-//        m_ModList.setModCategory(modRow, widgetAction->data().toInt(), checkbox->isChecked());
       }
     }
   }
@@ -2924,7 +2932,6 @@ void MainWindow::saveCategories()
     qCritical("not a menu?");
     return;
   }
-//  m_ModList.resetCategories(m_ContextRow);
 
   QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
   if (selected.size() > 0) {
@@ -4256,18 +4263,14 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
         newModel = NULL;
       } break;
   }
+
   if (newModel != NULL) {
-//    newModel->setSourceModel(m_ModListSortProxy);
     m_ModListSortProxy->setSourceModel(newModel);
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), ui->modList, SLOT(expand(QModelIndex)));
 
-//    ui->modList->setModel(newModel);
   } else {
     m_ModListSortProxy->setSourceModel(&m_ModList);
-//    ui->modList->setModel(m_ModListSortProxy);
   }
-//  ui->modList->setModel(m_ModListSortProxy);
-  // ui->modList->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }

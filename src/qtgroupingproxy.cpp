@@ -57,6 +57,7 @@ QtGroupingProxy::QtGroupingProxy(QAbstractItemModel *model, QModelIndex rootNode
   connect( sourceModel(), SIGNAL(layoutChanged()), SLOT(buildTree()) );
   connect( sourceModel(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
            SLOT(modelDataChanged(QModelIndex,QModelIndex)) );
+  connect( sourceModel(), SIGNAL(modelReset()), this, SLOT(resetModel()) );
 
   if( groupedColumn != -1 )
     setGroupedColumn( groupedColumn );
@@ -982,6 +983,12 @@ QtGroupingProxy::modelRowsRemoved( const QModelIndex &parent, int start, int end
 
   //beginRemoveRows had to be called in modelRowsAboutToBeRemoved();
   endRemoveRows();
+}
+
+void
+QtGroupingProxy::resetModel()
+{
+  buildTree();
 }
 
 void
