@@ -94,8 +94,6 @@ void removeOldLogfiles()
 // set up required folders (for a first install or after an update or to fix a broken installation)
 bool bootstrap()
 {
-  qDebug("bootstapping");
-
   GameInfo &gameInfo = GameInfo::instance();
 
   // remove the temporary backup directory in case we're restarting after an update
@@ -150,7 +148,6 @@ bool bootstrap()
   }
 
   // verify the hook-dll exists
-  qDebug("checking dll");
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
   if (dllMod == NULL) {

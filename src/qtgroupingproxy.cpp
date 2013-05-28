@@ -488,7 +488,7 @@ QtGroupingProxy::data( const QModelIndex &index, int role ) const
         default: {
             QModelIndex parentIndex = this->index( row, 0, index.parent() );
             if (m_groupHash.value( row ).count() > 0) {
-              return this->index(0, 0, parentIndex).data(role);
+              return this->index(0, column, parentIndex).data(role);
             } else {
               return QVariant();
             }

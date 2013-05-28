@@ -610,6 +610,19 @@ void MainWindow::downloadFilterChanged(const QString &filter)
   }
 }
 
+void MainWindow::expandModList(const QModelIndex &index)
+{
+  QAbstractItemModel *model = ui->modList->model();
+#pragma message("why is this so complicated? mapping the index doesn't work, probably a bug in QtGroupingProxy?")
+  for (int i = 0; i < model->rowCount(); ++i) {
+    QModelIndex targetIdx = model->index(i, 0);
+    if (model->data(targetIdx).toString() == index.data().toString()) {
+      ui->modList->expand(targetIdx);
+      break;
+    }
+  }
+}
+
 bool MainWindow::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
@@ -2702,7 +2715,6 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
 void MainWindow::displayModInformation(int row, int tab)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-qDebug("%d - %s", row, qPrintable(modInfo->name()));
   displayModInformation(modInfo, row, tab);
 }
 
@@ -2909,7 +2921,6 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
 void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modRow);
-qDebug("%d - %s", modRow, qPrintable(modInfo->name()));
   foreach (QAction* action, menu->actions()) {
     if (action->menu() != NULL) {
       saveCategoriesFromMenu(action->menu(), modRow);
@@ -2917,7 +2928,6 @@ qDebug("%d - %s", modRow, qPrintable(modInfo->name()));
       QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
       if (widgetAction != NULL) {
         QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
-qDebug("%s - %d", qPrintable(modInfo->name()), widgetAction->data().toInt());
         modInfo->setCategory(widgetAction->data().toInt(), checkbox->isChecked());
       }
     }
@@ -2934,12 +2944,22 @@ void MainWindow::saveCategories()
   }
 
   QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
+
   if (selected.size() > 0) {
+    int min = INT_MAX;
+    int max = INT_MIN;
+
     for (int i = 0; i < selected.size(); ++i) {
-      saveCategoriesFromMenu(menu, m_ModListSortProxy->mapToSource(selected.at(i)).row());
+      QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
+      if (temp.row() < min) min = temp.row();
+      if (temp.row() > max) max = temp.row();
+      saveCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
     }
+    //m_ModList.notifyChange(min, max);
+    refreshModList();
   } else {
     saveCategoriesFromMenu(menu, m_ContextRow);
+    m_ModList.notifyChange(m_ContextRow);
   }
 
   refreshFilters();
@@ -4268,7 +4288,7 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     m_ModListSortProxy->setSourceModel(newModel);
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
-    connect(newModel, SIGNAL(expandItem(QModelIndex)), ui->modList, SLOT(expand(QModelIndex)));
+    connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
 
   } else {
     m_ModListSortProxy->setSourceModel(&m_ModList);

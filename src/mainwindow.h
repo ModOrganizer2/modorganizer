@@ -420,6 +420,8 @@ private slots:
   void espFilterChanged(const QString &filter);
   void downloadFilterChanged(const QString &filter);
 
+  void expandModList(const QModelIndex &index);
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
