@@ -967,13 +967,17 @@ bool MainWindow::registerPlugin(QObject *plugin)
     if (verifyPlugin(proxy)) {
       QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       foreach (const QString &pluginName, pluginNames) {
-        QObject *proxiedPlugin = proxy->instantiate(pluginName);
-        if (proxiedPlugin != NULL) {
-          if (registerPlugin(proxiedPlugin)) {
-            qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
-          } else {
-            qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+        try {
+          QObject *proxiedPlugin = proxy->instantiate(pluginName);
+          if (proxiedPlugin != NULL) {
+            if (registerPlugin(proxiedPlugin)) {
+              qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
+            } else {
+              qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+            }
           }
+        } catch (const std::exception &e) {
+          reportError(tr("failed to init plugin %1: %2").arg(pluginName).arg(e.what()));
         }
       }
       return true;

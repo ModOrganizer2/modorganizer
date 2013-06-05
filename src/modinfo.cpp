@@ -509,6 +509,7 @@ bool ModInfoRegular::setName(const QString &name)
 
   QString newPath = m_Path.mid(0).replace(m_Path.length() - m_Name.length(), m_Name.length(), name);
   QDir modDir(m_Path.mid(0, m_Path.length() - m_Name.length()));
+
   if (m_Name.compare(name, Qt::CaseInsensitive) == 0) {
     QString tempName = name;
     tempName.append("_temp");
@@ -524,23 +525,29 @@ bool ModInfoRegular::setName(const QString &name)
       return false;
     }
   } else {
-    if (!modDir.rename(m_Name, name)) {
+    if (!shellRename(modDir.absoluteFilePath(m_Name), modDir.absoluteFilePath(name))) {
+      qCritical("failed to rename mod %s (errorcode %d)",
+                qPrintable(name), ::GetLastError());
       return false;
     }
   }
 
   std::map<QString, unsigned int>::iterator nameIter = s_ModsByName.find(m_Name);
-  unsigned int index = nameIter->second;
-  s_ModsByName.erase(nameIter);
+  if (nameIter != s_ModsByName.end()) {
+    unsigned int index = nameIter->second;
+    s_ModsByName.erase(nameIter);
 
-  m_Name = name;
-  m_Path = newPath;
+    m_Name = name;
+    m_Path = newPath;
 
-  s_ModsByName[m_Name] = index;
+    s_ModsByName[m_Name] = index;
 
-  std::sort(s_Collection.begin(), s_Collection.end(), ByName);
-
-  updateIndices();
+    std::sort(s_Collection.begin(), s_Collection.end(), ByName);
+    updateIndices();
+  } else { // otherwise mod isn't registered yet?
+    m_Name = name;
+    m_Path = newPath;
+  }
 
   return true;
 }
