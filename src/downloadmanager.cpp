@@ -178,8 +178,8 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
 
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
-   m_SupportedExtensions = extensions;
-   refreshList();
+  m_SupportedExtensions = extensions;
+  refreshList();
 }
 
 void DownloadManager::refreshList()
