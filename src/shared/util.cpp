@@ -28,6 +28,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
+bool FileExists(const std::string &filename)
+{
+  WIN32_FIND_DATAA findData;
+  ZeroMemory(&findData, sizeof(WIN32_FIND_DATAA));
+  HANDLE search = ::FindFirstFileExA(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
+  if (search == INVALID_HANDLE_VALUE) {
+    return false;
+  } else {
+    FindClose(search);
+    return true;
+  }
+}
+
 bool FileExists(const std::wstring &filename)
 {
   WIN32_FIND_DATAW findData;

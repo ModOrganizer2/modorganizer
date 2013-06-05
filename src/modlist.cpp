@@ -203,7 +203,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QVariant();
       }
     } else if (column == COL_PRIORITY) {
-      return m_Profile->getModPriority(modIndex);
+      int priority = modInfo->getFixedPriority();
+      if (priority != INT_MIN) {
+        return priority;
+      } else {
+        return m_Profile->getModPriority(modIndex);
+      }
     } else {
       return modInfo->getNexusID();
     }
@@ -648,13 +653,14 @@ void ModList::removeRow(int row, const QModelIndex&)
 }
 
 
-void ModList::notifyChange(int row)
+void ModList::notifyChange(int rowStart, int rowEnd)
 {
-  if (row < 0) {
+  if (rowStart < 0) {
     beginResetModel();
     endResetModel();
   } else {
-    emit dataChanged(this->index(row, 0), this->index(row, this->columnCount() - 1));
+    if (rowEnd == -1) rowEnd = rowStart;
+    emit dataChanged(this->index(rowStart, 0), this->index(rowEnd, this->columnCount() - 1));
   }
 }
 

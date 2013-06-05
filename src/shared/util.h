@@ -30,7 +30,7 @@ namespace MOShared {
 
 static const int MAXPATH_UNICODE = 32767;
 
-
+bool FileExists(const std::string &filename);
 bool FileExists(const std::wstring &filename);
 
 bool FileExists(const std::wstring &searchPath, const std::wstring &filename);

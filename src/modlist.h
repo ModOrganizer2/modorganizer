@@ -91,7 +91,7 @@ public:
    */
   void removeRowForce(int row);
 
-  void notifyChange(int row);
+  void notifyChange(int rowStart, int rowEnd = -1);
 
   static QString getColumnName(int column);
 

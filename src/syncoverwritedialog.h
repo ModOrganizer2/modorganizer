@@ -40,7 +40,7 @@ public:
 
   void apply(const QString &modDirectory);
 private:
-  void refresh(const QString &path, MOShared::DirectoryEntry *directoryStructure);
+  void refresh(const QString &path);
   void readTree(const QString &path, MOShared::DirectoryEntry *directoryStructure, QTreeWidgetItem *subTree);
   void applyTo(QTreeWidgetItem *item, const QString &path, const QString &modDirectory);
 

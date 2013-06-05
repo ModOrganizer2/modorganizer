@@ -103,6 +103,7 @@ private slots:
   void modelRowsInserted( const QModelIndex &, int, int );
   void modelRowsAboutToBeRemoved( const QModelIndex &, int ,int );
   void modelRowsRemoved( const QModelIndex &, int, int );
+  void resetModel();
 
 protected:
   /** Maps an item to a group.

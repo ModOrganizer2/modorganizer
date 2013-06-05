@@ -610,6 +610,19 @@ void MainWindow::downloadFilterChanged(const QString &filter)
   }
 }
 
+void MainWindow::expandModList(const QModelIndex &index)
+{
+  QAbstractItemModel *model = ui->modList->model();
+#pragma message("why is this so complicated? mapping the index doesn't work, probably a bug in QtGroupingProxy?")
+  for (int i = 0; i < model->rowCount(); ++i) {
+    QModelIndex targetIdx = model->index(i, 0);
+    if (model->data(targetIdx).toString() == index.data().toString()) {
+      ui->modList->expand(targetIdx);
+      break;
+    }
+  }
+}
+
 bool MainWindow::saveCurrentLists()
 {
   if (m_DirectoryUpdate) {
@@ -954,13 +967,17 @@ bool MainWindow::registerPlugin(QObject *plugin)
     if (verifyPlugin(proxy)) {
       QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       foreach (const QString &pluginName, pluginNames) {
-        QObject *proxiedPlugin = proxy->instantiate(pluginName);
-        if (proxiedPlugin != NULL) {
-          if (registerPlugin(proxiedPlugin)) {
-            qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
-          } else {
-            qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+        try {
+          QObject *proxiedPlugin = proxy->instantiate(pluginName);
+          if (proxiedPlugin != NULL) {
+            if (registerPlugin(proxiedPlugin)) {
+              qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
+            } else {
+              qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+            }
           }
+        } catch (const std::exception &e) {
+          reportError(tr("failed to init plugin %1: %2").arg(pluginName).arg(e.what()));
         }
       }
       return true;
@@ -1059,9 +1076,13 @@ IModInterface *MainWindow::getMod(const QString &name)
 }
 
 
-IModInterface *MainWindow::createMod(const QString &name)
+IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
 {
-  QString fixedName = name;
+  if (!m_InstallationManager.testOverwrite(name)) {
+    return NULL;
+  }
+
+/*  QString fixedName = name;
   fixDirectoryName(fixedName);
   unsigned int index = ModInfo::getIndex(fixedName);
   if (index != UINT_MAX) {
@@ -1070,8 +1091,8 @@ IModInterface *MainWindow::createMod(const QString &name)
       throw MyException(tr("The mod \"%1\" already exists!").arg(fixedName));
     }
     return result.data();
-  } else {
-    QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(fixedName.trimmed());
+  } else {*/
+    QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name);
 
     QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
 
@@ -1081,7 +1102,7 @@ IModInterface *MainWindow::createMod(const QString &name)
     settingsFile.setValue("category", 0);
     settingsFile.setValue("installationFile", 0);
     return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
-  }
+//  }
 }
 
 bool MainWindow::removeMod(IModInterface *mod)
@@ -2187,9 +2208,6 @@ void MainWindow::modStatusChanged(unsigned int index)
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
     if (m_CurrentProfile->modEnabled(index)) {
       DirectoryRefresher::addModToStructure(m_DirectoryStructure, modInfo->name(), m_CurrentProfile->getModPriority(index), modInfo->absolutePath());
-/*      m_DirectoryStructure->addFromOrigin(ToWString(modInfo->name()),
-          ToWString(QDir::toNativeSeparators(modInfo->absolutePath())),
-          m_CurrentProfile->getModPriority(index));*/
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
     } else {
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
@@ -2197,6 +2215,16 @@ void MainWindow::modStatusChanged(unsigned int index)
         origin.enable(false);
       }
     }
+
+    for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      int priority = m_CurrentProfile->getModPriority(i);
+      if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
+        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority);
+      }
+    }
+    m_DirectoryStructure->getFileRegister()->sortOrigins();
+
     refreshLists();
   } catch (const std::exception& e) {
     reportError(tr("failed to update mod list: %1").arg(e.what()));
@@ -2481,11 +2509,15 @@ void MainWindow::modlistChanged(const QModelIndex &index, int role)
         m_PluginList.enableESP(esm);
       }
 
+      int enabled = 0;
       QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
       foreach (const QString &esp, esps) {
-        m_PluginList.enableESP(esp);
+        if (!m_PluginList.isEnabled(esp)) {
+          m_PluginList.enableESP(esp);
+          ++enabled;
+        }
       }
-      if (esps.count() > 1) {
+      if (enabled > 1) {
         MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
       }
     }
@@ -2624,9 +2656,6 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
       FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
 
-/*      m_DirectoryStructure->addFromOrigin(ToWString(modInfo->name()),
-                                          ToWString(QDir::toNativeSeparators(modInfo->absolutePath())),
-                                          m_CurrentProfile->getModPriority(index));*/
       DirectoryRefresher::addModToStructure(m_DirectoryStructure,
                                             modInfo->name(), m_CurrentProfile->getModPriority(index),
                                             modInfo->absolutePath());
@@ -2795,14 +2824,21 @@ void MainWindow::syncOverwrite()
 
 void MainWindow::createModFromOverwrite()
 {
-  QString name = QInputDialog::getText(this, tr("Create Mod..."),
-                        tr("This will move all files from overwrite into a new, regular mod."
-                           "Please enter a name: "));
-  QString fixedName = fixDirectoryName(name);
-  if (fixedName.isEmpty()) {
-    reportError(tr("Invalid name"));
-    return;
-  } else if (getMod(fixedName) != NULL) {
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+
+  while (name->isEmpty()) {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Create Mod..."),
+                                      tr("This will move all files from overwrite into a new, regular mod.\n"
+                                         "Please enter a name: "), QLineEdit::Normal, "", &ok),
+                GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  }
+
+  if (getMod(name) != NULL) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
@@ -2812,6 +2848,8 @@ void MainWindow::createModFromOverwrite()
   ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(m_ContextRow);
 
   shellMove(QStringList(overwriteInfo->absolutePath() + "\\*"), QStringList(newMod->absolutePath()), this);
+
+  refreshModList();
 }
 
 
@@ -2827,7 +2865,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (!index.isValid()) {
     return;
   }
-//  QModelIndex sourceIdx = m_ModListGroupProxy->mapToSource(index);
   QModelIndex sourceIdx = mapToModel(&m_ModList, index);
   if (!sourceIdx.isValid()) {
     return;
@@ -2857,8 +2894,7 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
     if (m_CategoryFactory.getParentID(i) == targetID) {
       QMenu *targetMenu = menu;
       if (m_CategoryFactory.hasChildren(i)) {
-        targetMenu = menu->addMenu(
-            m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
+        targetMenu = menu->addMenu(m_CategoryFactory.getCategoryName(i).replace('&', "&&"));
       }
 
       int id = m_CategoryFactory.getCategoryID(i);
@@ -2897,7 +2933,6 @@ void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
       if (widgetAction != NULL) {
         QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
         modInfo->setCategory(widgetAction->data().toInt(), checkbox->isChecked());
-//        m_ModList.setModCategory(modRow, widgetAction->data().toInt(), checkbox->isChecked());
       }
     }
   }
@@ -2911,15 +2946,24 @@ void MainWindow::saveCategories()
     qCritical("not a menu?");
     return;
   }
-//  m_ModList.resetCategories(m_ContextRow);
 
   QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
+
   if (selected.size() > 0) {
+    int min = INT_MAX;
+    int max = INT_MIN;
+
     for (int i = 0; i < selected.size(); ++i) {
-      saveCategoriesFromMenu(menu, m_ModListSortProxy->mapToSource(selected.at(i)).row());
+      QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
+      if (temp.row() < min) min = temp.row();
+      if (temp.row() > max) max = temp.row();
+      saveCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
     }
+    //m_ModList.notifyChange(min, max);
+    refreshModList();
   } else {
     saveCategoriesFromMenu(menu, m_ContextRow);
+    m_ModList.notifyChange(m_ContextRow);
   }
 
   refreshFilters();
@@ -4243,18 +4287,14 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
         newModel = NULL;
       } break;
   }
+
   if (newModel != NULL) {
-//    newModel->setSourceModel(m_ModListSortProxy);
     m_ModListSortProxy->setSourceModel(newModel);
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
-    connect(newModel, SIGNAL(expandItem(QModelIndex)), ui->modList, SLOT(expand(QModelIndex)));
+    connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
 
-//    ui->modList->setModel(newModel);
   } else {
     m_ModListSortProxy->setSourceModel(&m_ModList);
-//    ui->modList->setModel(m_ModListSortProxy);
   }
-//  ui->modList->setModel(m_ModListSortProxy);
-  // ui->modList->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }

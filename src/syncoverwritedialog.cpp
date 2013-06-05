@@ -37,7 +37,7 @@ SyncOverwriteDialog::SyncOverwriteDialog(const QString &path, DirectoryEntry *di
     ui(new Ui::SyncOverwriteDialog), m_SourcePath(path), m_DirectoryStructure(directoryStructure)
 {
   ui->setupUi(this);
-  refresh(path, directoryStructure);
+  refresh(path);
 
   QHeaderView *headerView = ui->syncTree->header();
 #if QT_VERSION >= 0x050000
@@ -53,6 +53,14 @@ SyncOverwriteDialog::SyncOverwriteDialog(const QString &path, DirectoryEntry *di
 SyncOverwriteDialog::~SyncOverwriteDialog()
 {
   delete ui;
+}
+
+
+static void addToComboBox(QComboBox *box, const QString &name, const QVariant &userData)
+{
+  if (QString::compare(name, "overwrite", Qt::CaseInsensitive) != 0) {
+    box->addItem(name, userData);
+  }
 }
 
 
@@ -86,9 +94,12 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
       QComboBox* combo = new QComboBox(ui->syncTree);
       combo->addItem(tr("<don't sync>"), -1);
       if (entry != NULL) {
+        bool ignore;
+        int origin = entry->getOrigin(ignore);
+        addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(origin).getName()), origin);
         const std::vector<int> &alternatives = entry->getAlternatives();
         for (std::vector<int>::const_iterator iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-          combo->addItem(ToQString(m_DirectoryStructure->getOriginByID(*iter).getName()), *iter);
+          addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(*iter).getName()), *iter);
         }
         combo->setCurrentIndex(combo->count() - 1);
       } else {
@@ -103,10 +114,10 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
 }
 
 
-void SyncOverwriteDialog::refresh(const QString &path, DirectoryEntry *directoryStructure)
+void SyncOverwriteDialog::refresh(const QString &path)
 {
   QTreeWidgetItem *rootItem = new QTreeWidgetItem(ui->syncTree, QStringList("<data>"));
-  readTree(path, directoryStructure, rootItem);
+  readTree(path, m_DirectoryStructure, rootItem);
   ui->syncTree->addTopLevelItem(rootItem);
   ui->syncTree->expandAll();
 }
@@ -140,6 +151,11 @@ void SyncOverwriteDialog::applyTo(QTreeWidgetItem *item, const QString &path, co
         }
       }
     }
+  }
+
+  QDir dir(m_SourcePath + "/" + path);
+  if ((path.length() > 0) && (dir.count() == 2)) {
+    dir.rmpath(".");
   }
 }
 

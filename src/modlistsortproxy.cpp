@@ -157,16 +157,12 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
     case ModList::COL_MODID: lt = leftMod->getNexusID() < rightMod->getNexusID(); break;
     case ModList::COL_VERSION: lt = leftMod->getVersion() < rightMod->getVersion(); break;
     case ModList::COL_PRIORITY: {
-      if (m_Profile != NULL) {
-        int leftPrio  = leftMod->getFixedPriority();
-        int rightPrio = rightMod->getFixedPriority();
-        if (leftPrio == INT_MIN)  leftPrio  = m_Profile->getModPriority(leftIndex);
-        if (rightPrio == INT_MIN) rightPrio = m_Profile->getModPriority(rightIndex);
+        QVariant leftPrio = left.data();
+        if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
+        QVariant rightPrio = right.data();
+        if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
 
-        lt = leftPrio < rightPrio;
-      } else {
-        lt = leftMod->name() < rightMod->name();
-      }
+        return leftPrio.toInt() < rightPrio.toInt();
     } break;
   }
   return lt;

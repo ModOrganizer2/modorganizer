@@ -68,7 +68,7 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager(QWidget *parent)
   : QObject(parent), m_ParentWidget(parent),
-    m_InstallationProgress(parent), m_SupportedExtensions() //boost::assign::list_of("zip")("rar")("7z")("fomod")
+    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod"))
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -695,10 +695,9 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     try {
       { // simple case
         IPluginInstallerSimple *installerSimple = dynamic_cast<IPluginInstallerSimple*>(installer);
-
         if ((installerSimple != NULL) &&
             (filesTree != NULL) && (installer->isArchiveSupported(*filesTree))) {
-          installResult = installerSimple->install(modName, *filesTree);
+          installResult = installerSimple->install(modName, *filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
             mapToArchive(filesTree);
             // the simple installer only prepares the installation, the rest works the same for all installers
@@ -716,9 +715,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
              ((filesTree == NULL) && installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExtensions = installerCustom->supportedExtensions();
           if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
-            if (testOverwrite(modName)) {
-              installResult = installerCustom->install(modName, fileName);
-            }
+            installResult = installerCustom->install(modName, fileName, version, modID);
           }
         }
       }
