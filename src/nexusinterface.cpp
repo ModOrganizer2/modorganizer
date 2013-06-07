@@ -45,7 +45,6 @@ void NexusBridge::requestDescription(int modID, QVariant userData)
 
 void NexusBridge::requestFiles(int modID, QVariant userData)
 {
-qDebug("request file %d", modID);
   m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_Url));
 }
 
@@ -385,26 +384,6 @@ void NexusInterface::nextRequest()
       url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
     } break;
   }
-
-/*
-    /// <summary>
-    /// Finds the mods containing the given search terms.
-    /// </summary>
-    /// <param name="p_strModNameSearchString">The terms to use to search for mods.</param>
-    /// <param name="p_strType">Whether the returned mods' names should include all of
-    /// the given search terms, or any of the terms.</param>
-    /// <returns>The mod info for the mods matching the given search criteria.</returns>
-    [OperationContract]
-    [WebGet(
-      BodyStyle = WebMessageBodyStyle.Bare,
-      UriTemplate = "Mods/?Find&name={p_strModNameSearchString}&type={p_strType}",
-      ResponseFormat = WebMessageFormat.Json)]
-    List<NexusModInfo> FindMods(string p_strModNameSearchString, string p_strType);
-
-
-
-*/
-
 
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");

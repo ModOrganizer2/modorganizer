@@ -673,6 +673,10 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
 
+  ON_BLOCK_EXIT([this] {
+    this->m_CurrentArchive->close();
+  });
+
   DirectoryTree *filesTree = archiveOpen ? createFilesTree() : NULL;
 
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
