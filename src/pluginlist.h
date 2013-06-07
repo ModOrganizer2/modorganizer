@@ -130,6 +130,8 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
+  void refreshLoadOrder();
+
 public: // implementation of the QAbstractTableModel interface
 
   virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -141,7 +143,6 @@ public: // implementation of the QAbstractTableModel interface
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 
-  void syncLoadOrder();
 public slots:
 
   /**
@@ -170,7 +171,7 @@ signals:
 
 private:
 
-  void refreshLoadOrder();
+  void syncLoadOrder();
   void updateIndices();
 
   void writePlugins(const QString &fileName, bool writeUnchecked) const;

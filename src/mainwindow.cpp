@@ -1588,7 +1588,6 @@ void MainWindow::refreshESPList()
                        m_CurrentProfile->getPluginsFileName(),
                        m_CurrentProfile->getLoadOrderFileName(),
                        m_CurrentProfile->getLockedOrderFileName());
-  //m_PluginList.readFrom(m_CurrentProfile->getPluginsFileName());
 }
 
 
@@ -2520,6 +2519,9 @@ void MainWindow::modlistChanged(const QModelIndex &index, int role)
       if (enabled > 1) {
         MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
       }
+      m_PluginList.refreshLoadOrder();
+      // immediately save plugin list
+      savePluginList();
     }
   }
 }
@@ -4234,14 +4236,28 @@ void MainWindow::on_categoriesList_customContextMenuRequested(const QPoint &pos)
 }
 
 
+void MainWindow::updateESPLock(bool locked)
+{
+  QItemSelection currentSelection = ui->espList->selectionModel()->selection();
+  if (currentSelection.count() == 0) {
+    // this path is probably useless
+    m_PluginList.lockESPIndex(m_ContextRow, locked);
+  } else {
+    Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
+      m_PluginList.lockESPIndex(mapToModel(&m_PluginList, idx).row(), locked);
+    }
+  }
+}
+
+
 void MainWindow::lockESPIndex()
 {
-  m_PluginList.lockESPIndex(m_ContextRow, true);
+  updateESPLock(true);
 }
 
 void MainWindow::unlockESPIndex()
 {
-  m_PluginList.lockESPIndex(m_ContextRow, false);
+  updateESPLock(false);
 }
 
 
@@ -4253,12 +4269,25 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Enable all"), &m_PluginList, SLOT(enableAll()));
   menu.addAction(tr("Disable all"), &m_PluginList, SLOT(disableAll()));
 
-  if ((m_ContextRow != -1) && m_PluginList.isEnabled(m_ContextRow)) {
-    if (m_PluginList.isESPLocked(m_ContextRow)) {
-      menu.addAction(tr("Unlock index"), this, SLOT(unlockESPIndex()));
-    } else {
-      menu.addAction(tr("Lock index"), this, SLOT(lockESPIndex()));
+  QItemSelection currentSelection = ui->espList->selectionModel()->selection();
+  bool hasLocked = false;
+  bool hasUnlocked = false;
+  Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
+    int row = m_PluginListSortProxy->mapToSource(idx).row();
+    if (m_PluginList.isEnabled(row)) {
+      if (m_PluginList.isESPLocked(row)) {
+        hasLocked = true;
+      } else {
+        hasUnlocked = true;
+      }
     }
+  }
+
+  if (hasLocked) {
+    menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
+  }
+  if (hasUnlocked) {
+    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
   }
 
   try {

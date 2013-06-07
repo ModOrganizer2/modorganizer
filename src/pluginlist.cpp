@@ -717,20 +717,29 @@ void PluginList::setPluginPriority(int row, int &newPriority)
     }
   }
 
-  int oldPriority = m_ESPs[row].m_Priority;
-  if (newPriorityTemp > oldPriority) {
-    // priority is higher than the old, so the gap we left is in lower priorities
-    for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
-      --m_ESPs[m_ESPsByPriority[i]].m_Priority;
+  // enforce valid range
+  if (newPriorityTemp < 0) newPriorityTemp = 0;
+  else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size())) newPriorityTemp = m_ESPsByPriority.size() - 1;
+
+  try {
+    int oldPriority = m_ESPs.at(row).m_Priority;
+    if (newPriorityTemp > oldPriority) {
+      // priority is higher than the old, so the gap we left is in lower priorities
+      for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
+        --m_ESPs.at(m_ESPsByPriority.at(i)).m_Priority;
+      }
+    } else {
+      for (int i = newPriorityTemp; i < oldPriority; ++i) {
+        ++m_ESPs.at(m_ESPsByPriority.at(i)).m_Priority;
+      }
+      ++newPriority;
     }
-  } else {
-    for (int i = newPriorityTemp; i < oldPriority; ++i) {
-      ++m_ESPs[m_ESPsByPriority[i]].m_Priority;
-    }
-    ++newPriority;
+
+    m_ESPs.at(row).m_Priority = newPriorityTemp;
+  } catch (const std::out_of_range&) {
+    reportError(tr("failed to restore load order for %1").arg(m_ESPs[row].m_Name));
   }
 
-  m_ESPs[row].m_Priority = newPriorityTemp;
   updateIndices();
 }
 

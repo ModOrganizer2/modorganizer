@@ -230,6 +230,8 @@ private:
 
   QIcon iconForExecutable(const QString &filePath);
 
+  void updateESPLock(bool locked);
+
 private:
 
   Ui::MainWindow *ui;
