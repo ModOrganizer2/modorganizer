@@ -228,16 +228,18 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
 {
-  bool modEnabled = m_Profile != NULL ? m_Profile->modEnabled(row) : false;
+  if (m_Profile == NULL) {
+    return false;
+  }
+
+  if (row >= static_cast<int>(m_Profile->numMods())) {
+    qWarning("invalid row idx %d", row);
+    return false;
+  }
+  bool modEnabled = m_Profile->modEnabled(row);
 
   return filterMatches(ModInfo::getByIndex(row), modEnabled);
 }
-
-
-/*bool ModListSortProxy::filterAcceptsColumn(int source_column, const QModelIndex &source_parent) const
-{
-  return m_EnabledColumns.test(source_column);
-}*/
 
 
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,

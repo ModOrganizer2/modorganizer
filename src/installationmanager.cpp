@@ -106,7 +106,8 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wst
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
     data[iter->getIndex()]->setSkip(false);
-    data[iter->getIndex()]->setOutputFileName(path.substr().append(ToWString(iter->getName())).c_str());
+    std::wstring temp = path.substr().append(ToWString(iter->getName()));
+    data[iter->getIndex()]->setOutputFileName(temp.c_str());
   }
 
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {

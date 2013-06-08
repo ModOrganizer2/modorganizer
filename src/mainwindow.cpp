@@ -125,6 +125,11 @@ static bool isOnline()
 }
 
 
+#ifdef TEST_MODELS
+#include <modeltest.h>
+#endif // TEST_MODELS
+
+
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
     m_ExeName(exeName), m_OldProfileIndex(-1),
@@ -162,6 +167,11 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   // set up mod list
   m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
   m_ModListSortProxy->setSourceModel(&m_ModList);
+
+#ifdef TEST_MODELS
+  new ModelTest(&m_ModList, this);
+  new ModelTest(m_ModListSortProxy, this);
+#endif //TEST_MODELS
 
   ui->modList->setModel(m_ModListSortProxy);
 
@@ -1259,7 +1269,6 @@ void MainWindow::refreshModList()
 {
   // don't lose changes!
   m_CurrentProfile->writeModlistNow(true);
-
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
   m_CurrentProfile->refreshModStatus();
 
@@ -2418,16 +2427,10 @@ void MainWindow::refreshFilters()
 
   ui->modList->setCurrentIndex(QModelIndex());
 
-  // save previous filter text so we can restore it later, in case the filter still exists then
-//  QTreeWidgetItem *currentItem = ui->categoriesList->currentItem();
-//  QString previousFilter = currentItem != NULL ? currentItem->text(0) : tr("<All>");
-
-
   QStringList selectedItems;
   foreach (QTreeWidgetItem *item, ui->categoriesList->selectedItems()) {
     selectedItems.append(item->text(0));
   }
-
 
   ui->categoriesList->clear();
   addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
@@ -2562,11 +2565,12 @@ void MainWindow::reinstallMod_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
   QString installationFile = modInfo->getInstallationFile();
   if (installationFile.length() != 0) {
-    // there was a bug where mods installed through NCC had the absolute download path stored
+    QString fullInstallationFile;
     if (QFileInfo(installationFile).isAbsolute()) {
-      installationFile = QFileInfo(installationFile).fileName();
+      fullInstallationFile = installationFile;
+    } else {
+      fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(installationFile);
     }
-    QString fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(installationFile);
     if (QFile::exists(fullInstallationFile)) {
       installMod(fullInstallationFile);
     } else {
@@ -2955,14 +2959,27 @@ void MainWindow::saveCategories()
     int min = INT_MAX;
     int max = INT_MIN;
 
+    QStringList selectedMods;
+
     for (int i = 0; i < selected.size(); ++i) {
       QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
+      selectedMods.append(temp.data().toString());
       if (temp.row() < min) min = temp.row();
       if (temp.row() > max) max = temp.row();
       saveCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
     }
     //m_ModList.notifyChange(min, max);
     refreshModList();
+
+    // find mods by their name because indices are invalidated
+    QAbstractItemModel *model = ui->modList->model();
+    Q_FOREACH(const QString &mod, selectedMods) {
+      QModelIndexList matches = model->match(model->index(0, 0), Qt::DisplayRole, mod, 1,
+                                             Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
+      if (matches.size() > 0) {
+        ui->modList->selectionModel()->select(matches.at(0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+      }
+    }
   } else {
     saveCategoriesFromMenu(menu, m_ContextRow);
     m_ModList.notifyChange(m_ContextRow);
@@ -4318,6 +4335,9 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   }
 
   if (newModel != NULL) {
+#ifdef TEST_MODELS
+    new ModelTest(newModel, this);
+#endif // TEST_MODELS
     m_ModListSortProxy->setSourceModel(newModel);
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));

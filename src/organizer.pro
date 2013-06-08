@@ -290,3 +290,8 @@ OTHER_FILES += \
     stylesheets/dark.qss \
     tutorials/tutorial_window_installer.js \
     tutorials/tutorials_installdialog.qml
+
+
+#SOURCES += modeltest.cpp
+#HEADERS += modeltest.h
+#DEFINES += TEST_MODELS

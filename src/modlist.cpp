@@ -656,8 +656,9 @@ void ModList::removeRow(int row, const QModelIndex&)
 void ModList::notifyChange(int rowStart, int rowEnd)
 {
   if (rowStart < 0) {
-    beginResetModel();
-    endResetModel();
+    reset();
+//    beginResetModel();
+//    endResetModel();
   } else {
     if (rowEnd == -1) rowEnd = rowStart;
     emit dataChanged(this->index(rowStart, 0), this->index(rowEnd, this->columnCount() - 1));
