@@ -184,7 +184,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   // restoreState also seems to restores the resize mode from previous session,
   // I don't really like that
-#if QT_VERSION >= 0x50000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   for (int i = 0; i < ui->modList->header()->count(); ++i) {
     ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
   }
@@ -204,7 +204,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   ui->espList->installEventFilter(&m_PluginList);
-#if QT_VERSION >= 0x50000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   for (int i = 0; i < ui->espList->header()->count(); ++i) {
     ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
   }
@@ -1498,7 +1498,7 @@ void MainWindow::refreshDirectoryStructure()
 
 QIcon MainWindow::iconForExecutable(const QString &filePath)
 {
-  HICON winIcon;
+/*  HICON winIcon;
   UINT res = ::ExtractIconExW(ToWString(filePath).c_str(), 0, &winIcon, NULL, 1);
   if (res == 1) {
     QIcon result = QIcon(QPixmap::fromWinHICON(winIcon));
@@ -1506,7 +1506,9 @@ QIcon MainWindow::iconForExecutable(const QString &filePath)
     return result;
   } else {
     return QIcon(":/MO/gui/executable");
-  }
+  }*/
+
+  return QIcon(":/MO/gui/executable");
 }
 
 
@@ -1610,7 +1612,7 @@ void MainWindow::refreshBSAList()
 {
   m_ArchivesInit = false;
   ui->bsaList->clear();
-#if QT_VERSION >= 0x50000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 #else
   ui->bsaList->header()->setResizeMode(QHeaderView::ResizeToContents);

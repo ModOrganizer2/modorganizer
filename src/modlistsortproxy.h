@@ -54,8 +54,6 @@ public:
 
   bool filterMatches(ModInfo::Ptr info, bool enabled) const;
 
-void callReset() { reset(); }
-
 public slots:
 
   void displayColumnSelection(const QPoint &pos);

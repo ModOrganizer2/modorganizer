@@ -82,6 +82,7 @@ InstallationManager::InstallationManager(QWidget *parent)
     throw MyException(getErrorString(m_CurrentArchive->getLastError()));
   }
 
+  m_InstallationProgress.setWindowFlags(m_InstallationProgress.windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 
@@ -385,13 +386,21 @@ void InstallationManager::updateProgress(float percentage)
 
 void InstallationManager::updateProgressFile(LPCWSTR fileName)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  m_InstallationProgress.setLabelText(QString::fromWCharArray(fileName));
+#else
   m_InstallationProgress.setLabelText(QString::fromUtf16(fileName));
+#endif
 }
 
 
 void InstallationManager::report7ZipError(LPCWSTR errorMessage)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  m_InstallationProgress.setLabelText(QString::fromWCharArray(errorMessage));
+#else
   reportError(QString::fromUtf16(errorMessage));
+#endif
 }
 
 

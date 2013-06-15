@@ -36,7 +36,7 @@ LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outp
 
 LogBuffer::~LogBuffer()
 {
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   qInstallMessageHandler(0);
 #else
   qInstallMsgHandler(0);
@@ -91,14 +91,14 @@ void LogBuffer::init(int messageCount, QtMsgType minMsgType, const QString &outp
     s_Instance.reset();
   }
   s_Instance.reset(new LogBuffer(messageCount, minMsgType, outputFileName));
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   qInstallMessageHandler(LogBuffer::log);
 #else
   qInstallMsgHandler(LogBuffer::log);
 #endif
 }
 
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 
 void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -106,7 +106,7 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
   if (!s_Instance.isNull()) {
     s_Instance->logMessage(type, message);
   }
-  fprintf(stdout, "(%s:%u, %s) %s\n", context.file, context.line, context.function, message.toLocal8Bit());
+  fprintf(stdout, "(%s:%u) %s\n", context.file, context.line, qPrintable(message));
   fflush(stdout);
 }
 

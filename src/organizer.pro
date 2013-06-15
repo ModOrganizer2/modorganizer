@@ -291,6 +291,8 @@ OTHER_FILES += \
     tutorials/tutorial_window_installer.js \
     tutorials/tutorials_installdialog.qml
 
+INCLUDEPATH += "$(ZLIBPATH)" "$(ZLIBPATH)/build" "$(BOOSTPATH)"
+LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
 
 #SOURCES += modeltest.cpp
 #HEADERS += modeltest.h

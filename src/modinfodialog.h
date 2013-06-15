@@ -162,7 +162,6 @@ private slots:
   void on_activateESP_clicked();
   void on_deactivateESP_clicked();
   void on_saveTXTButton_clicked();
-  void on_filesWidget_doubleClicked(const QModelIndex &index);
   void on_visitNexusLabel_linkActivated(const QString &link);
   void on_modIDEdit_editingFinished();
   void on_versionEdit_editingFinished();

@@ -425,7 +425,6 @@ int main(int argc, char *argv[])
 
     application.setStyleFile(settings.value("Settings/style", "").toString());
 
-    qDebug("setting up main window");
     // set up main window and its data structures
     MainWindow mainWindow(argv[0], settings);
     QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));

@@ -122,7 +122,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
     if (current == NULL) {
       continue;
     }
-    QString filename = QString::fromUtf16(current->getName().c_str());
+    QString filename = ToQString(current->getName());
     QString extension = filename.right(3).toLower();
 
     if ((extension == "esp") || (extension == "esm")) {

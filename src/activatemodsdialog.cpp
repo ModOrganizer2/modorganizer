@@ -30,7 +30,7 @@ ActivateModsDialog::ActivateModsDialog(const std::map<QString, std::vector<QStri
 
   QTableWidget *modsTable = findChild<QTableWidget*>("modsTable");
   QHeaderView *headerView = modsTable->horizontalHeader();
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   headerView->setSectionResizeMode(0, QHeaderView::Stretch);
   headerView->setSectionResizeMode(1, QHeaderView::Interactive);
 #else

@@ -101,8 +101,6 @@ private slots:
 
   void loginFailed(const QString &message);
   void loginFinished(bool necessary);
-//  void loginError(QNetworkReply::NetworkError errorCode);
-//  void loginTimeout();
 
   void initTab(NexusView *newView);
   void openInNewTab(const QUrl &url);
@@ -117,7 +115,6 @@ private slots:
 
   void tabCloseRequested(int index);
 
-//  void openByModID();
   void on_browserTabWidget_customContextMenuRequested(const QPoint &pos);
 
   void urlChanged(const QUrl &url);

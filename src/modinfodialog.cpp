@@ -764,43 +764,6 @@ void ModInfoDialog::modDetailsUpdated(bool success)
 
       updateVersionColor();
     }
-
-    QTableWidget *filesWidget = findChild<QTableWidget*>("filesWidget");
-    filesWidget->clearContents();
-    filesWidget->setRowCount(0);
-    filesWidget->setColumnCount(5);
-#if QT_VERSION >= 0x050000
-    filesWidget->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
-#else
-    filesWidget->horizontalHeader()->setResizeMode(1, QHeaderView::Stretch);
-#endif
-    filesWidget->horizontalHeader()->setVisible(true);
-    filesWidget->setColumnHidden(4, true);
-
-
-    // prevent sorting while we change the table
-    filesWidget->setSortingEnabled(false);
-    int row = 0;
-    QList<ModRepositoryFileInfo>::const_iterator current, end;
-    m_ModInfo->getNexusFiles(current, end);
-    for (; current != end; ++current) {
-      const ModRepositoryFileInfo &fileInfo = *current;
-      filesWidget->insertRow(row);
-      int type = fileInfo.categoryID;
-      filesWidget->setItem(row, 4, new QTableWidgetItem(QString("%1").arg(type)));
-      filesWidget->setItem(row, 0, new QTableWidgetItem(getFileCategory(type)));
-      QTableWidgetItem *nameItem = new QTableWidgetItem(fileInfo.name);
-      nameItem->setToolTip(fileInfo.description);
-      nameItem->setData(Qt::UserRole, fileInfo.fileID);
-      filesWidget->setItem(row, 1, nameItem);
-      filesWidget->setItem(row, 2, new QTableWidgetItem(fileInfo.version.canonicalString()));
-      QTableWidgetItem *sizeItem = new QTableWidgetItem();
-      sizeItem->setData(Qt::DisplayRole, fileInfo.fileSize);
-      filesWidget->setItem(row, 3, sizeItem);
-      ++row;
-    }
-    filesWidget->setSortingEnabled(true);
-    filesWidget->sortItems(4);
   }
 }
 
@@ -857,33 +820,6 @@ void ModInfoDialog::on_versionEdit_editingFinished()
   VersionInfo version(ui->versionEdit->text());
   m_ModInfo->setVersion(version);
   updateVersionColor();
-}
-
-void ModInfoDialog::on_filesWidget_doubleClicked(const QModelIndex &index)
-{
-  QTableWidget *filesWidget = findChild<QTableWidget*>("filesWidget");
-
-  QTableWidgetItem *selectedItem = filesWidget->item(index.row(), 1);
-  if (selectedItem == NULL) {
-    qDebug("no item in row %d", index.row());
-    return;
-  }
-
-  QString nexusLink = QString("nxm://%1/mods/%2/files/%3")
-                          .arg(ToQString(GameInfo::instance().getGameName()))
-                          .arg(m_Settings->value("modid").toInt())
-                          .arg(selectedItem->data(Qt::UserRole).toInt());
-
-  try {
-    if (QuestionBoxMemory::query(this, Settings::instance().directInterface(), "confirmNexusDownload",
-                                 tr("Confirm"), tr("Download \"%1\"?").arg(selectedItem->text()),
-                                 QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
-      emit downloadRequest(nexusLink);
-      MessageDialog::showMessage(tr("Download started"), this);
-    }
-  } catch (const std::exception &e) {
-    reportError(tr("Exception: %1").arg(e.what()));
-  }
 }
 
 

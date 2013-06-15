@@ -164,7 +164,7 @@ void CategoriesDialog::fillTable()
   CategoryFactory &categories = CategoryFactory::instance();
   QTableWidget *table = ui->categoriesTable;
 
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
   table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
   table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Fixed);

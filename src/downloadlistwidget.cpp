@@ -75,7 +75,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       QPalette labelPalette;
       m_InstallLabel->setVisible(true);
       m_Progress->setVisible(false);
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
       m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0));
 #else
       m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0, QApplication::UnicodeUTF8));
@@ -95,7 +95,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       if (state == DownloadManager::STATE_INSTALLED) {
         // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
         // of DownloadListWidgetDelegate?
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0));
 #else
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0, QApplication::UnicodeUTF8));
@@ -104,7 +104,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       } else {
         // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
         // of DownloadListWidgetDelegate?
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0));
 #else
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0, QApplication::UnicodeUTF8));

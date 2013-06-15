@@ -29,6 +29,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkCookieJar>
 #include <gameinfo.h>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#include <QUrlQuery>
+#endif
 
 using namespace MOBase;
 using namespace MOShared;
@@ -96,14 +99,24 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 void NXMAccessManager::pageLogin()
 {
   QString requestString = QString("http://gatekeeper.nexusmods.com/Sessions/?Login");
-  QUrl postData;
-  postData.addQueryItem("username", m_Username);
-  postData.addQueryItem("password", m_Password);
 
   QNetworkRequest request(requestString);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
 
-  m_LoginReply = post(request, postData.encodedQuery());
+  QByteArray postDataQuery;
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  QUrlQuery postData;
+  postData.addQueryItem("username", m_Username);
+  postData.addQueryItem("password", m_Password);
+  postDataQuery = postData.query(QUrl::FullyEncoded).toUtf8();
+#else
+  QUrl postData;
+  postData.addQueryItem("username", m_Username);
+  postData.addQueryItem("password", m_Password);
+  postDataQuery = postData.encodedQuery();
+#endif
+
+  m_LoginReply = post(request, postDataQuery);
 
   m_LoginTimeout.start();
   connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginFinished()));

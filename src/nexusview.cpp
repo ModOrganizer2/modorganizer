@@ -36,7 +36,6 @@ NexusView::NexusView(QWidget *parent)
   : QWebView(parent), m_LastSeenModID(0)
 {
   installEventFilter(this);
-//  this->pageAction(QWebPage::OpenLinkInNewWindow)
   connect(this, SIGNAL(urlChanged(QUrl)), this, SLOT(urlChanged(QUrl)));
 
   page()->settings()->setMaximumPagesInCache(10);
