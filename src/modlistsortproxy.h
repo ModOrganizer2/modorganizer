@@ -54,6 +54,18 @@ public:
 
   bool filterMatches(ModInfo::Ptr info, bool enabled) const;
 
+/*
+  virtual int rowCount( const QModelIndex & parent = QModelIndex() ) const {
+    int rc = QSortFilterProxyModel::rowCount(parent);
+    qDebug() << parent << " - " << rc;
+    return rc;
+  }*/
+
+  virtual bool hasChildren ( const QModelIndex & parent = QModelIndex() ) const {
+    return rowCount(parent) > 0;
+  }
+
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);

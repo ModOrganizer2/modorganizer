@@ -41,7 +41,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugintool.h>
 #include <iplugindiagnose.h>
 #include "settings.h"
-#include "nexusdialog.h"
 #include "downloadmanager.h"
 #include "installationmanager.h"
 #include "selfupdater.h"
@@ -163,7 +162,6 @@ private:
   void updateToolBar();
   void activateSelectedProfile();
 
-  void setBrowserGeometry(const QByteArray &geometry);
   void setExecutableIndex(int index);
 
   bool nexusLogin();
@@ -250,6 +248,7 @@ private:
   bool m_Refreshing;
 
   ModList m_ModList;
+  QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
   PluginList m_PluginList;
@@ -266,7 +265,6 @@ private:
 
   Settings m_Settings;
 
-  NexusDialog m_NexusDialog;
   DownloadManager m_DownloadManager;
   InstallationManager m_InstallationManager;
 
@@ -384,7 +382,8 @@ private slots:
   void modlistChanged(int row);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
-  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
+//  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
+  void nxmDownloadURLs(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString);
 
   void editCategories();

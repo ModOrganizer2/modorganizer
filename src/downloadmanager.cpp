@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "nxmurl.h"
 #include <gameinfo.h>
+#include <nxmurl.h>
 #include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
@@ -673,7 +674,8 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
 
 DownloadManager::DownloadInfo *DownloadManager::findDownload(QObject *reply, int *index) const
 {
-  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+  // reverse search as newer, thus more relevant, downloads are at the end
+  for (int i = m_ActiveDownloads.size() - 1; i >= 0; --i) {
     if (m_ActiveDownloads[i]->m_Reply == reply) {
       if (index != NULL) {
         *index = i;
@@ -702,8 +704,11 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         qDebug("file size %s: %lld", qPrintable(info->m_FileName), bytesTotal);
         info->m_TotalSize = bytesTotal;
       }
+      int oldProgress = info->m_Progress;
       info->m_Progress = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
-      emit update(index);
+      if (oldProgress != info->m_Progress) {
+        emit update(index);
+      }
     }
   }
 }
@@ -972,7 +977,6 @@ void DownloadManager::downloadFinished()
   if (info != NULL) {
     QNetworkReply *reply = info->m_Reply;
     QByteArray data = info->m_Reply->readAll();
-    qDebug("finished %s (%d) (%d)", info->m_FileName.toUtf8().constData(), reply->error(), info->m_State);
     info->m_Output.write(data);
     info->m_Output.close();
 

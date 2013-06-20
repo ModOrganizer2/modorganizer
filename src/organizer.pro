@@ -5,9 +5,9 @@
 #-------------------------------------------------
 
 contains(QT_VERSION, "^5.*") {
-	QT       += core gui widgets webkitwidgets network declarative script xml sql xmlpatterns
+  QT       += core gui widgets network declarative script xml sql xmlpatterns
 } else {
-	QT       += core gui webkit network xml declarative script sql xmlpatterns
+  QT       += core gui network xml declarative script sql xmlpatterns
 }
 
 TARGET = ModOrganizer
@@ -34,11 +34,8 @@ SOURCES += \
     pluginlistsortproxy.cpp \
     pluginlist.cpp \
     overwriteinfodialog.cpp \
-    nxmurl.cpp \
     nxmaccessmanager.cpp \
-    nexusview.cpp \
     nexusinterface.cpp \
-		nexusdialog.cpp \
     motddialog.cpp \
     modlistsortproxy.cpp \
     modlist.cpp \
@@ -79,7 +76,8 @@ SOURCES += \
     savetextasdialog.cpp \
     qtgroupingproxy.cpp \
     modlistview.cpp \
-    problemsdialog.cpp
+    problemsdialog.cpp \
+    serverinfo.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -102,11 +100,8 @@ HEADERS  += \
     pluginlistsortproxy.h \
     pluginlist.h \
     overwriteinfodialog.h \
-    nxmurl.h \
     nxmaccessmanager.h \
-    nexusview.h \
     nexusinterface.h \
-		nexusdialog.h \
     motddialog.h \
     modlistsortproxy.h \
     modlist.h \
@@ -146,7 +141,8 @@ HEADERS  += \
     savetextasdialog.h \
     qtgroupingproxy.h \
     modlistview.h \
-    problemsdialog.h
+    problemsdialog.h \
+    serverinfo.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -159,7 +155,6 @@ FORMS    += \
     queryoverwritedialog.ui \
     profilesdialog.ui \
     overwriteinfodialog.ui \
-    nexusdialog.ui \
     motddialog.ui \
     modinfodialog.ui \
     messagedialog.ui \

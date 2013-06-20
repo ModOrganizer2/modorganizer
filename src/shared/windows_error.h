@@ -29,7 +29,7 @@ namespace MOShared {
 
 class windows_error : public std::runtime_error {
 public:
-  windows_error(const std::string& message, int errorcode = -1)
+  windows_error(const std::string& message, int errorcode = ::GetLastError())
     : runtime_error(constructMessage(message, errorcode)), m_ErrorCode(errorcode)
   {}
   int getErrorCode() const { return m_ErrorCode; }

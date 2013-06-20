@@ -97,15 +97,6 @@ public:
    * @param userData user data to be returned with the result
    */
   virtual void requestToggleEndorsement(int modID, bool endorse, QVariant userData);
-/*
-signals:
-
-  void descriptionAvailable(int modID, QVariant userData, QVariant resultData);
-  void filesAvailable(int modID, QVariant userData, const QList<MOBase::NexusFileInfo*> &resultData);
-  void fileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
-  void downloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData);
-  void endorsementToggled(int modID, QVariant userData, QVariant resultData);
-  void requestFailed(int modID, QVariant userData, const QString &errorMessage);*/
 
 public slots:
 

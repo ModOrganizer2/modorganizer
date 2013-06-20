@@ -66,7 +66,7 @@ QNetworkReply *NXMAccessManager::createRequest(
 
 void NXMAccessManager::showCookies()
 {
-  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage())));
+  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage()) + "/"));
   foreach (QNetworkCookie cookie, cookies) {
     qDebug("%s - %s", cookie.name().constData(), cookie.value().constData());
   }
@@ -98,7 +98,8 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 
 void NXMAccessManager::pageLogin()
 {
-  QString requestString = QString("http://gatekeeper.nexusmods.com/Sessions/?Login");
+  QString requestString = QString("http://gatekeeper.nexusmods.com/Sessions/?Login&uri=%1")
+                             .arg(QString(QUrl::toPercentEncoding(ToQString(GameInfo::instance().getNexusPage()))));
 
   QNetworkRequest request(requestString);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -149,7 +150,7 @@ void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 bool NXMAccessManager::hasLoginCookies() const
 {
   bool sidCookie = false;
-  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage())));
+  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage()) + "/"));
   foreach (QNetworkCookie cookie, cookies) {
     if (cookie.name() == "sid") {
       sidCookie = true;

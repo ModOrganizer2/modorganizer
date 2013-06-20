@@ -38,6 +38,20 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+template <typename T>
+class QListWidgetItemEx : public QListWidgetItem {
+public:
+  QListWidgetItemEx(const QString &text, int sortRole = Qt::DisplayRole, QListWidget *parent = 0, int type = Type)
+    : QListWidgetItem(text, parent, type), m_SortRole(sortRole) {}
+
+  virtual bool operator< ( const QListWidgetItem & other ) const {
+    return this->data(m_SortRole).value<T>() < other.data(m_SortRole).value<T>();
+  }
+private:
+  int m_SortRole;
+};
+
+
 static const unsigned char Key2[20] = { 0x99, 0xb8, 0x76, 0x42, 0x3e, 0xc1, 0x60, 0xa4, 0x5b, 0x01,
                                         0xdb, 0xf8, 0x43, 0x3a, 0xb7, 0xb6, 0x98, 0xd4, 0x7d, 0xa2 };
 
@@ -201,21 +215,9 @@ void Settings::setupLoadMechanism()
 }
 
 
-bool Settings::preferIntegratedInstallers()
-{
-  return m_Settings.value("Settings/prefer_integrated_installer").toBool();
-}
-
-
 bool Settings::enableQuickInstaller()
 {
   return m_Settings.value("Settings/enable_quick_installer").toBool();
-}
-
-
-bool Settings::preferExternalBrowser()
-{
-  return m_Settings.value("Settings/prefer_external_browser").toBool();
 }
 
 
@@ -259,6 +261,32 @@ QString Settings::language()
   return result;
 }
 
+void Settings::updateServers(const QList<ServerInfo> &servers)
+{
+  m_Settings.beginGroup("Servers");
+  QStringList oldServerKeys = m_Settings.childKeys();
+
+  foreach (const ServerInfo &server, servers) {
+    if (!oldServerKeys.contains(server.name)) {
+      // not yet known server
+      QVariantMap newVal;
+      newVal["premium"] = server.premium;
+      newVal["preferred"] = server.preferred;
+      newVal["lastSeen"] = server.lastSeen;
+      m_Settings.setValue(server.name, newVal);
+    } else {
+      QVariantMap data = m_Settings.value(server.name).toMap();
+      data["lastSeen"] = server.lastSeen;
+      data["premium"] = server.premium;
+
+      m_Settings.setValue(server.name, data);
+    }
+  }
+
+  m_Settings.endGroup();
+  m_Settings.sync();
+}
+
 
 void Settings::addLanguages(QComboBox *languageBox)
 {
@@ -299,7 +327,7 @@ void Settings::addStyles(QComboBox *styleBox)
 
 bool Settings::isNXMHandler(bool *modifyable)
 {
-  QSettings handlerReg("HKEY_CLASSES_ROOT\\nxm\\shell\\open\\command",
+  QSettings handlerReg("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\shell\\open\\command",
                        QSettings::NativeFormat);
 
   QString currentExe = handlerReg.value("Default", "").toString().toUtf8().constData();
@@ -317,8 +345,8 @@ bool Settings::isNXMHandler(bool *modifyable)
 
 void Settings::setNXMHandlerActive(bool active, bool writable)
 {
-  QSettings handlerReg("HKEY_CLASSES_ROOT\\nxm\\",
-                       QSettings::NativeFormat);
+//  QSettings handlerReg("HKEY_CLASSES_ROOT\\nxm\\", QSettings::NativeFormat);
+  QSettings handlerReg("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\", QSettings::NativeFormat);
 
   if (writable) {
     QString myExe = QString("\"%1\" ").arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())).append("\"%1\"");
@@ -363,17 +391,19 @@ void Settings::query(QWidget *parent)
   QComboBox *languageBox = dialog.findChild<QComboBox*>("languageBox");
   QComboBox *styleBox = dialog.findChild<QComboBox*>("styleBox");
   QComboBox *logLevelBox = dialog.findChild<QComboBox*>("logLevelBox");
-  QCheckBox *handleNXMBox = dialog.findChild<QCheckBox*>("handleNXMBox");
+//  QCheckBox *handleNXMBox = dialog.findChild<QCheckBox*>("handleNXMBox");
 
   QLineEdit *downloadDirEdit = dialog.findChild<QLineEdit*>("downloadDirEdit");
   QLineEdit *modDirEdit = dialog.findChild<QLineEdit*>("modDirEdit");
   QLineEdit *cacheDirEdit = dialog.findChild<QLineEdit*>("cacheDirEdit");
 
-  QCheckBox *preferExternalBox = dialog.findChild<QCheckBox*>("preferExternalBox");
   QCheckBox *offlineBox = dialog.findChild<QCheckBox*>("offlineBox");
   QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
 
   QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
+
+  QListWidget *knownServersList = dialog.findChild<QListWidget*>("knownServersList");
+  QListWidget *preferredServersList = dialog.findChild<QListWidget*>("preferredServersList");
 
   //
   // set up current settings
@@ -437,18 +467,17 @@ void Settings::query(QWidget *parent)
     passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
   }
 
-  bool registryWritable = false;
+/*  bool registryWritable = false;
   bool nxmHandler = isNXMHandler(&registryWritable);
   handleNXMBox->setChecked(nxmHandler);
   if (!registryWritable) {
     handleNXMBox->setIcon(QIcon(":/MO/gui/locked"));
     handleNXMBox->setToolTip(tr("Administrative rights required to change this."));
-  }
+  }*/
 
   downloadDirEdit->setText(getDownloadDirectory());
   modDirEdit->setText(getModDirectory());
   cacheDirEdit->setText(getCacheDirectory());
-  preferExternalBox->setChecked(m_Settings.value("Settings/prefer_external_browser", false).toBool());
   offlineBox->setChecked(m_Settings.value("Settings/offline_mode", false).toBool());
   nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
   logLevelBox->setCurrentIndex(logLevel());
@@ -459,6 +488,22 @@ void Settings::query(QWidget *parent)
     listItem->setData(Qt::UserRole + 1, m_PluginSettings[plugin->name()]);
     pluginsList->addItem(listItem);
   }
+
+  m_Settings.beginGroup("Servers");
+  foreach (const QString &key, m_Settings.childKeys()) {
+    QVariantMap val = m_Settings.value(key).toMap();
+    QString type = val["premium"].toBool() ? "(premium)" : "(free)";
+    QListWidgetItem *newItem = new QListWidgetItemEx<int>(key + " " + type, Qt::UserRole + 1);
+    newItem->setData(Qt::UserRole, key);
+    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
+    if (val["preferred"].toInt() > 0) {
+      preferredServersList->addItem(newItem);
+    } else {
+      knownServersList->addItem(newItem);
+    }
+    preferredServersList->sortItems(Qt::DescendingOrder);
+  }
+  m_Settings.endGroup();
 
   if (dialog.exec() == QDialog::Accepted) {
     //
@@ -514,10 +559,9 @@ void Settings::query(QWidget *parent)
       m_Settings.remove("Settings/nexus_username");
       m_Settings.remove("Settings/nexus_password");
     }
-    if (nxmHandler != handleNXMBox->isChecked()) {
+/*    if (nxmHandler != handleNXMBox->isChecked()) {
       setNXMHandlerActive(handleNXMBox->isChecked(), registryWritable);
-    }
-    m_Settings.setValue("Settings/prefer_external_browser", preferExternalBox->isChecked());
+    }*/
     m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
@@ -533,5 +577,22 @@ void Settings::query(QWidget *parent)
         m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
       }
     }
+
+    // store server preference
+    m_Settings.beginGroup("Servers");
+    for (int i = 0; i < knownServersList->count(); ++i) {
+      QString key = knownServersList->item(i)->data(Qt::UserRole).toString();
+      QVariantMap val = m_Settings.value(key).toMap();
+      val["preferred"] = 0;
+      m_Settings.setValue(key, val);
+    }
+    int count = preferredServersList->count();
+    for (int i = 0; i < count; ++i) {
+      QString key = preferredServersList->item(i)->data(Qt::UserRole).toString();
+      QVariantMap val = m_Settings.value(key).toMap();
+      val["preferred"] = count - i;
+      m_Settings.setValue(key, val);
+    }
+    m_Settings.endGroup();
   }
 }

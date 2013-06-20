@@ -640,6 +640,8 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
 
   modName.setFilter(&fixDirectoryName);
 
+  modName.update(QFileInfo(fileName).completeBaseName(), GUESS_FALLBACK);
+
   // read out meta information from the download if available
   int modID = 0;
   QString version = "";

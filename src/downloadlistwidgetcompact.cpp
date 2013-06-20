@@ -59,8 +59,9 @@ DownloadListWidgetCompactDelegate::~DownloadListWidgetCompactDelegate()
 
 void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
+#pragma message("This is quite costy - room for optimization?")
+  if (index.column() != 2) return;
   try {
-//    m_ItemWidget->resize(option.rect.size());
     m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
     if (index.row() % 2 == 1) {
       m_ItemWidget->setBackgroundRole(QPalette::AlternateBase);

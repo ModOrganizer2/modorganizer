@@ -126,7 +126,7 @@ static bool isOnline()
 
 
 #ifdef TEST_MODELS
-#include <modeltest.h>
+#include "modeltest.h"
 #endif // TEST_MODELS
 
 
@@ -134,9 +134,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
     m_ExeName(exeName), m_OldProfileIndex(-1),
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
-    m_ModList(NexusInterface::instance()), m_ModListSortProxy(NULL),
+    m_ModList(NexusInterface::instance()), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
     m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
-    m_NexusDialog(NexusInterface::instance()->getAccessManager(), NULL),
     m_DownloadManager(NexusInterface::instance(), this),
     m_InstallationManager(this), m_Translator(NULL), m_TranslatorQt(NULL),
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
@@ -262,10 +261,12 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_Updater, SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(&m_Updater, SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-  connect(&m_NexusDialog, SIGNAL(requestDownload(QNetworkReply*, int, QString)), this, SLOT(downloadRequested(QNetworkReply*, int, QString)));
+  connect(ExitProxy::instance(), SIGNAL(exit()), this, SLOT(close()));
+
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
   connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+  connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
 
@@ -302,7 +303,6 @@ MainWindow::~MainWindow()
 {
   m_RefresherThread.exit();
   m_RefresherThread.wait();
-  m_NexusDialog.close();
   delete ui;
   delete m_GameInfo;
 }
@@ -750,8 +750,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
   setCursor(Qt::WaitCursor);
 
-  m_NexusDialog.close();
-
   storeSettings();
 
   // profile has to be cleaned up before the modinfo-buffer is cleared
@@ -771,12 +769,6 @@ void MainWindow::createFirstProfile()
     Profile newProf("Default", false);
     refreshProfiles(false);
   }
-}
-
-
-void MainWindow::setBrowserGeometry(const QByteArray &geometry)
-{
-  m_NexusDialog.restoreGeometry(geometry);
 }
 
 
@@ -1496,19 +1488,23 @@ void MainWindow::refreshDirectoryStructure()
 }
 
 
+#if QT_VERSION >= 0x050000
+extern QPixmap qt_pixmapFromWinHICON(HICON icon);
+#else
+#define qt_pixmapFromWinHICON(icon) QPixmap::fromWinHICON(icon)
+#endif
+
 QIcon MainWindow::iconForExecutable(const QString &filePath)
 {
-/*  HICON winIcon;
+  HICON winIcon;
   UINT res = ::ExtractIconExW(ToWString(filePath).c_str(), 0, &winIcon, NULL, 1);
   if (res == 1) {
-    QIcon result = QIcon(QPixmap::fromWinHICON(winIcon));
+    QIcon result = QIcon(qt_pixmapFromWinHICON(winIcon));
     ::DestroyIcon(winIcon);
     return result;
   } else {
     return QIcon(":/MO/gui/executable");
-  }*/
-
-  return QIcon(":/MO/gui/executable");
+  }
 }
 
 
@@ -1768,10 +1764,6 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value("window_geometry").toByteArray());
   }
 
-  if (settings.contains("browser_geometry")) {
-    setBrowserGeometry(settings.value("browser_geometry").toByteArray());
-  }
-
   bool filtersVisible = settings.value("filters_visible", false).toBool();
   setCategoryListVisible(filtersVisible);
   ui->displayCategoriesBtn->setChecked(filtersVisible);
@@ -1807,7 +1799,6 @@ void MainWindow::storeSettings()
   settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
 
   settings.setValue("window_geometry", this->saveGeometry());
-  settings.setValue("browser_geometry", m_NexusDialog.saveGeometry());
 
   settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
@@ -2593,7 +2584,7 @@ void MainWindow::endorseMod(ModInfo::Ptr mod)
     QString username, password;
     if (m_Settings.getNexusLogin(username, password)) {
       m_PostLoginTasks.push_back(boost::bind(&MainWindow::endorseMod, _1, mod));
-      m_NexusDialog.login(username, password);
+      NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2620,7 +2611,7 @@ void MainWindow::unendorse_clicked()
   } else {
     if (m_Settings.getNexusLogin(username, password)) {
       m_PostLoginTasks.push_back(boost::mem_fn(&MainWindow::unendorse_clicked));
-      m_NexusDialog.login(username, password);
+      NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2962,7 +2953,6 @@ void MainWindow::saveCategories()
     int max = INT_MIN;
 
     QStringList selectedMods;
-
     for (int i = 0; i < selected.size(); ++i) {
       QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
       selectedMods.append(temp.data().toString());
@@ -3027,7 +3017,7 @@ void MainWindow::checkModsForUpdates()
     QString username, password;
     if (m_Settings.getNexusLogin(username, password)) {
       m_PostLoginTasks.push_back(boost::mem_fn(&MainWindow::checkModsForUpdates));
-      m_NexusDialog.login(username, password);
+      NexusInterface::instance()->getAccessManager()->login(username, password);
     } else { // otherwise there will be no endorsement info
       m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
     }
@@ -3442,7 +3432,7 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  QString username, password;
+/*  QString username, password;
   m_NexusDialog.openUrl(ToQString(GameInfo::instance().getNexusPage()));
 
   if (m_Settings.getNexusLogin(username, password)) {
@@ -3454,28 +3444,17 @@ void MainWindow::on_actionNexus_triggered()
   m_NexusDialog.activateWindow();
 
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
-  tabWidget->setCurrentIndex(4);
+  tabWidget->setCurrentIndex(4);*/
+
+  ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
+  ui->tabWidget->setCurrentIndex(4);
 }
 
 
 void MainWindow::nexusLinkActivated(const QString &link)
 {
-  if (m_Settings.preferExternalBrowser()) {
-    ::ShellExecuteW(NULL, L"open", ToWString(link).c_str(), NULL, NULL, SW_SHOWNORMAL);
-  } else {
-    QString username, password;
-    m_NexusDialog.openUrl(link);
-    if (m_Settings.getNexusLogin(username, password)) {
-      m_NexusDialog.login(username, password);
-      m_LoginAttempted = true;
-    } else {
-      m_NexusDialog.loadNexus();
-    }
-    m_NexusDialog.show();
-
-    QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
-    tabWidget->setCurrentIndex(4);
-  }
+  ::ShellExecuteW(NULL, L"open", ToWString(link).c_str(), NULL, NULL, SW_SHOWNORMAL);
+  ui->tabWidget->setCurrentIndex(4);
 }
 
 
@@ -4000,7 +3979,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   }
 }
 
-
+/*
 void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
 {
   if (resultData.toBool()) {
@@ -4012,6 +3991,24 @@ void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
              this, SLOT(nxmEndorsementToggled(int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
   }
+}*/
+
+void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
+{
+  QVariantList serverList = resultData.toList();
+
+  QList<ServerInfo> servers;
+  foreach (const QVariant &server, serverList) {
+    QVariantMap serverInfo = server.toMap();
+    ServerInfo info;
+    info.name = serverInfo["Name"].toString();
+    info.premium = serverInfo["IsPremium"].toBool();
+    info.lastSeen = QDate::currentDate();
+    info.preferred = 0;
+    // other keys: ConnectedUsers, Country, URI
+    servers.append(info);
+  }
+  m_Settings.updateServers(servers);
 }
 
 

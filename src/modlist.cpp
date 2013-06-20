@@ -70,6 +70,16 @@ int ModList::rowCount(const QModelIndex &parent) const
 }
 
 
+bool ModList::hasChildren(const QModelIndex &parent) const
+{
+  if (!parent.isValid()) {
+    return ModInfo::getNumMods() > 0;
+  } else {
+    return false;
+  }
+}
+
+
 int ModList::columnCount(const QModelIndex &) const
 {
   return COL_LASTCOLUMN + 1;
@@ -456,7 +466,7 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
       }
     }
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-    if ((m_DropOnItems)  && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
+    if ((m_DropOnItems) && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
       result |= Qt::ItemIsDropEnabled;
     }
   } else {
@@ -667,7 +677,11 @@ void ModList::notifyChange(int rowStart, int rowEnd)
 
 QModelIndex ModList::index(int row, int column, const QModelIndex&) const
 {
-  return createIndex(row, column, row);
+  if ((row < 0) || (row >= rowCount()) || (column < 0) || (column >= columnCount())) {
+    return QModelIndex();
+  }
+  QModelIndex res = createIndex(row, column, row);
+  return res;
 }
 
 

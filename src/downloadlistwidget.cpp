@@ -60,6 +60,8 @@ DownloadListWidgetDelegate::~DownloadListWidgetDelegate()
 void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   try {
+    if (index.column() != 2) return;
+
     m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
 
     int downloadIndex = index.data().toInt();

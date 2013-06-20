@@ -62,7 +62,6 @@ signals:
 
  private slots:
 
-//   void pageLoginFinished();
    void loginFinished();
    void loginError(QNetworkReply::NetworkError errorCode);
    void loginTimeout();

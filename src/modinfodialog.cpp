@@ -119,8 +119,9 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   connect(m_UnhideAction, SIGNAL(triggered()), this, SLOT(unhideTriggered()));
   connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
 
-  ui->descriptionView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-  QObject::connect(ui->descriptionView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
+//  ui->descriptionView->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+//  QObject::connect(ui->descriptionView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
+  connect(ui->descriptionView, SIGNAL(anchorClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
 
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));

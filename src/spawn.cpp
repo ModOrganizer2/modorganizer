@@ -23,9 +23,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/scoped_array.hpp>
 #include <gameinfo.h>
 #include <inject.h>
+#include <Shellapi.h>
 #include <appconfig.h>
 #include <windows_error.h>
 #include <QApplication>
+#include <QMessageBox>
 
 
 using namespace MOBase;
@@ -105,8 +107,27 @@ HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QStr
       return INVALID_HANDLE_VALUE;
     }
   } catch (const windows_error &e) {
-    reportError(QObject::tr("failed to spawn \"%1\": %2").arg(binary.fileName()).arg(e.what()));
-    return INVALID_HANDLE_VALUE;
+    if (e.getErrorCode() == ERROR_ELEVATION_REQUIRED) {
+      // TODO: check if this is really correct. Are all settings updated that the secondary instance may use?
+
+      if (QMessageBox::question(NULL, QObject::tr("Elevation required"),
+                                QObject::tr("This process requires elevation to run.\n"
+                                    "This is a potential security risk so I highly advice you to investigate if\n"
+                                    "\"%1\"\n"
+                                    "can be installed to work without elevation.\n\n"
+                                    "Start elevated anyway? "
+                                    "(you will be asked if you want to allow ModOrganizer.exe to make changes to the system)").arg(
+                                        QDir::toNativeSeparators(binary.absoluteFilePath()))) == QMessageBox::Yes) {
+        ::ShellExecuteW(NULL, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
+                        (binaryName + L" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
+        return INVALID_HANDLE_VALUE;
+      } else {
+        return INVALID_HANDLE_VALUE;
+      }
+    } else {
+      reportError(QObject::tr("failed to spawn \"%1\": %2").arg(binary.fileName()).arg(e.what()));
+      return INVALID_HANDLE_VALUE;
+    }
   }
 
   if (hooked) {
@@ -133,4 +154,20 @@ HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QStr
     }
   }
   return processHandle;
+}
+
+
+ExitProxy *ExitProxy::s_Instance = NULL;
+
+ExitProxy *ExitProxy::instance()
+{
+  if (s_Instance == NULL) {
+    s_Instance = new ExitProxy();
+  }
+  return s_Instance;
+}
+
+void ExitProxy::emitExit()
+{
+  emit exit();
 }

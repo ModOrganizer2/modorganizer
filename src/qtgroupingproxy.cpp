@@ -183,7 +183,7 @@ QtGroupingProxy::buildTree()
 
     for (auto iter = m_groupHash.begin(); iter != m_groupHash.end(); ++iter) {
       if ((iter.key() == quint32max) ||
-          (iter->count() == 1)) {
+          (iter->count() < 2)) {
         temp[quint32max].append(iter.value());
         if (iter.key() != quint32max) {
           rmgroups.push_back(iter.key());
@@ -194,15 +194,15 @@ QtGroupingProxy::buildTree()
     }
     m_groupHash = temp;
 
-    // second loop is necessary because qt containers can't be iterated from end to
-    // removing by index from begin to end is ugly
-    for (auto iter = rmgroups.rbegin(); iter != rmgroups.rend(); ++iter) {
+    // second loop is necessary because qt containers can't be iterated from end to front
+    // and removing by index from begin to end is ugly
+    std::sort(rmgroups.begin(), rmgroups.end(), [] (int lhs, int rhs) { return rhs < lhs; });
+    for (auto iter = rmgroups.begin(); iter != rmgroups.end(); ++iter) {
       m_groupMaps.removeAt(*iter);
     }
   }
 
   endResetModel();
-
   // restore expand-state
   for( int row = 0; row < rowCount(); row++ ) {
     QModelIndex idx = index( row, 0, QModelIndex() );
@@ -215,6 +215,8 @@ QtGroupingProxy::buildTree()
 QList<int>
 QtGroupingProxy::addSourceRow( const QModelIndex &idx )
 {
+  // TODO: modeltest reports a discrepance between the "rowAboutToBeInserted" and "rowInserted" events
+
   QList<int> updatedGroups;
 
   QList<RowData> groupData = belongsTo( idx );
@@ -624,8 +626,9 @@ QModelIndex
 QtGroupingProxy::mapToSource( const QModelIndex &index ) const
 {
   //qDebug() << "mapToSource: " << index;
-  if( !index.isValid() )
+  if( !index.isValid() ) {
     return m_rootNode;
+  }
 
   if( isGroup( index ) )
   {
@@ -856,8 +859,9 @@ QtGroupingProxy::removeGroup( const QModelIndex &idx )
 bool
 QtGroupingProxy::hasChildren( const QModelIndex &parent ) const
 {
-  if( !parent.isValid() )
+  if( !parent.isValid() ) {
     return true;
+  }
 
   if( isGroup( parent ) ) {
     return !m_groupHash.value( parent.row() ).isEmpty();

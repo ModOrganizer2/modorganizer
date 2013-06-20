@@ -81,18 +81,12 @@ public:
   int getCurrentSortingMode() const;
 
   /**
-   * @brief force a refresh of the mod list
-   **/
-  void refresh();
-
-  /**
    * @brief remove the specified mod without asking for confirmation
    * @param row the row to remove
    */
   void removeRowForce(int row);
 
   void notifyChange(int rowStart, int rowEnd = -1);
-
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
@@ -100,6 +94,7 @@ public:
 public: // implementation of virtual functions of QAbstractItemModel
 
   virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+  virtual bool hasChildren(const QModelIndex &parent = QModelIndex()) const;
   virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
   virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
   virtual bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);

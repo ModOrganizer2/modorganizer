@@ -316,33 +316,6 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="handleNXMBox">
-         <property name="toolTip">
-          <string>Sets up MO as the global handler for NXM links.</string>
-         </property>
-         <property name="whatsThis">
-          <string>NXM Links are the green Download-buttons on Nexus. If this is checked, MO will be set up to handle those links.
-On some systems this will require administrative rights.</string>
-         </property>
-         <property name="text">
-          <string>Handle NXM Links</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="preferExternalBox">
-         <property name="toolTip">
-          <string>If checked, MO will use an external browser for buttons like &quot;Visit on Nexus&quot; instead of the integrated one.</string>
-         </property>
-         <property name="whatsThis">
-          <string>If checked, MO will use an external browser for buttons like &quot;Visit on Nexus&quot; instead of the integrated one.</string>
-         </property>
-         <property name="text">
-          <string>Prefer external browser</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QCheckBox" name="offlineBox">
          <property name="statusTip">
           <string>Disable automatic internet features</string>
@@ -354,6 +327,52 @@ On some systems this will require administrative rights.</string>
           <string>Offline Mode</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_6">
+           <item>
+            <widget class="QLabel" name="label_16">
+             <property name="text">
+              <string>Known Servers (Dynamically updated every download)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="knownServersList">
+             <property name="dragDropMode">
+              <enum>QAbstractItemView::DragDrop</enum>
+             </property>
+             <property name="defaultDropAction">
+              <enum>Qt::MoveAction</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_8">
+           <item>
+            <widget class="QLabel" name="label_17">
+             <property name="text">
+              <string>Preferred Servers (Drag &amp; Drop)</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="preferredServersList">
+             <property name="dragDropMode">
+              <enum>QAbstractItemView::DragDrop</enum>
+             </property>
+             <property name="defaultDropAction">
+              <enum>Qt::MoveAction</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
        </item>
        <item>
         <spacer name="verticalSpacer_3">
@@ -606,7 +625,7 @@ Please note that MO does identify itself as MO to the webserver, it's not lying 
 tl;dr-version: If Nexus-features don't work, insert the current version number of NMM here and try again.</string>
            </property>
            <property name="inputMask">
-            <string notr="true">009.009.009; </string>
+            <string notr="true">009.009.009</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WORKAROUNDS_H
 
 #include "loadmechanism.h"
-
+#include "serverinfo.h"
 #include <iplugin.h>
 
 #include <QSettings>
@@ -153,16 +153,6 @@ public:
   void setupLoadMechanism();
 
   /**
-   * @return true if the user prefers the integrated installer over external variants
-   **/
-  bool preferIntegratedInstallers();
-
-  /**
-   * @return true if the user prefers to use an external browser over the integrated one
-   **/
-  bool preferExternalBrowser();
-
-  /**
    * @return true if the user has enabled the quick installer (default true)
    **/
   bool enableQuickInstaller();
@@ -196,6 +186,12 @@ public:
    * @return short code of the configured language (corresponding to the translation files)
    */
   QString language();
+
+  /**
+   * @brief updates the list of known servers
+   * @param list of servers from a recent query
+   */
+  void updateServers(const QList<ServerInfo> &servers);
 
 private:
 
