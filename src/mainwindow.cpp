@@ -3195,7 +3195,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           } break;
           case ModInfo::ENDORSED_FALSE: {
             menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
-            menu.addAction(tr("Don't endorse"), this, SLOT(dontendorse_clicked()));
+            menu.addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
           } break;
           case ModInfo::ENDORSED_NEVER: {
             menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
@@ -3447,19 +3447,9 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-/*  QString username, password;
-  m_NexusDialog.openUrl(ToQString(GameInfo::instance().getNexusPage()));
-
-  if (m_Settings.getNexusLogin(username, password)) {
-    m_NexusDialog.login(username, password);
-  } else {
-    m_NexusDialog.loadNexus();
-  }
-  m_NexusDialog.show();
-  m_NexusDialog.activateWindow();
-
-  QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
-  tabWidget->setCurrentIndex(4);*/
+  std::wstring nxmPath = ToWString(QApplication::applicationDirPath() + "/nxmhandler.exe");
+  ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
+                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" " + nxmPath).c_str(), NULL, SW_SHOWNORMAL);
 
   ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);

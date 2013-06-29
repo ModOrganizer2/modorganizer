@@ -190,7 +190,7 @@ CONFIG(debug, debug|release) {
 	LIBS += -L$$OUT_PWD/../shared/release -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
 	QMAKE_CXXFLAGS += /Zi
-	QMAKE_CXXFLAGS -= -O2
+#	QMAKE_CXXFLAGS -= -O2
 	QMAKE_LFLAGS += /DEBUG
 }
 
