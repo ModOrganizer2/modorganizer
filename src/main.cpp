@@ -281,9 +281,12 @@ void registerMetaTypes()
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
+
+  qApp->addLibraryPath(application.applicationDirPath() + "/dlls");
+
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-  LogBuffer::init(20, QtDebugMsg, application.applicationDirPath().append("/logs/mo_interface.log"));
+  LogBuffer::init(20, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::currentPath()));
   qDebug("MO at: %s", qPrintable(application.applicationDirPath()));

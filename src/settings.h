@@ -96,6 +96,11 @@ public:
   QString getDownloadDirectory() const;
 
   /**
+   * retrieve a sorted list of preferred servers
+   */
+  std::map<QString, int> getPreferredServers();
+
+  /**
    * retrieve the directory where mods are stored (with native separators)
    **/
   QString getModDirectory() const;

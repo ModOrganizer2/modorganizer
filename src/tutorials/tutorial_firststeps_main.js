@@ -43,9 +43,10 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. The easiest is to use the embedded nexus browser. Click \"Nexus\"")
+        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. You can use your regular browser to send download from nexusmods to MO."
+                           + "Click on \"Nexus\" to open the appropriate nexusmods page. This will also register ModOrganizer as the downloader "
+                           + "for \"nxm links\" for the game MO is managing. \"nxm links\" are the green buttons on Nexus saying \"Download with Manager\".")
         highlightAction("actionNexus", true)
-        manager.activateTutorial("NexusDialog", "tutorial_firststeps_browser.js")
         tutorialControl.waitForAction("actionNexus")
     },
 
@@ -63,14 +64,7 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("I promised you multiple ways of getting mods into MO. Please open the settings dialog now.")
-        highlightAction("actionSettings", true)
-        manager.activateTutorial("SettingsDialog", "tutorial_firststeps_settings.js")
-        tutorialControl.waitForAction("actionSettings")
-    },
-
-    function() {
-        tutorial.text = qsTr("So far I only showed you how to get mods from Nexus.\n"
+        tutorial.text = qsTr("This is how to get mods from Nexus.\n"
                              + "You can also install mods from disk using the \"Install Mod\" button.")
         highlightAction("actionInstallMod", false)
         waitForClick()

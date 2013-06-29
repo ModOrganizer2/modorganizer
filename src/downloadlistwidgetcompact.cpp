@@ -48,6 +48,9 @@ DownloadListWidgetCompactDelegate::DownloadListWidgetCompactDelegate(DownloadMan
   m_DoneLabel = m_ItemWidget->findChild<QLabel*>("doneLabel");
 
   m_DoneLabel->setVisible(false);
+
+  connect(manager, SIGNAL(stateChanged(int,DownloadManager::DownloadState)), this, SLOT(stateChanged(int,DownloadManager::DownloadState)));
+  connect(manager, SIGNAL(downloadRemoved(int)), this, SLOT(resetCache(int)));
 }
 
 
@@ -57,11 +60,37 @@ DownloadListWidgetCompactDelegate::~DownloadListWidgetCompactDelegate()
 }
 
 
+void DownloadListWidgetCompactDelegate::stateChanged(int row,DownloadManager::DownloadState)
+{
+  m_Cache.remove(row);
+}
+
+
+void DownloadListWidgetCompactDelegate::resetCache(int)
+{
+  m_Cache.clear();
+}
+
+
+void DownloadListWidgetCompactDelegate::drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const
+{
+  QRect rect = option.rect;
+  rect.setLeft(0);
+  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2));
+  painter->drawPixmap(rect, cache);
+}
+
+
 void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
 #pragma message("This is quite costy - room for optimization?")
-  if (index.column() != 2) return;
   try {
+    auto iter = m_Cache.find(index.row());
+    if (iter != m_Cache.end()) {
+      drawCache(painter, option, *iter);
+      return;
+    }
+
     m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
     if (index.row() % 2 == 1) {
       m_ItemWidget->setBackgroundRole(QPalette::AlternateBase);
@@ -93,6 +122,9 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
       if (state == DownloadManager::STATE_INSTALLED) {
         m_DoneLabel->setText(tr("Installed"));
         m_DoneLabel->setForegroundRole(QPalette::Mid);
+      } else if (state == DownloadManager::STATE_UNINSTALLED) {
+        m_DoneLabel->setText(tr("Uninstalled"));
+        m_DoneLabel->setForegroundRole(QPalette::Dark);
       } else {
         m_DoneLabel->setText(tr("Done"));
         m_DoneLabel->setForegroundRole(QPalette::WindowText);
@@ -106,10 +138,23 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
       m_Progress->setValue(m_Manager->getProgress(downloadIndex));
     }
 
-    painter->save();
-    painter->translate(QPoint(0, option.rect.topLeft().y()));
-    m_ItemWidget->render(painter);
-    painter->restore();
+#pragma message("caching disabled because changes in the list (including resorting) doesn't work correctly")
+    if (false) {
+//    if (state >= DownloadManager::STATE_READY) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+      QPixmap cache = m_ItemWidget->grab();
+#else
+      QPixmap cache = QPixmap::grabWidget(m_ItemWidget);
+#endif
+      m_Cache[index.row()] = cache;
+      drawCache(painter, option, cache);
+    } else {
+      painter->save();
+      painter->translate(QPoint(0, option.rect.topLeft().y()));
+
+      m_ItemWidget->render(painter);
+      painter->restore();
+    }
   } catch (const std::exception &e) {
     qCritical("failed to paint download list item %d: %s", index.row(), e.what());
   }

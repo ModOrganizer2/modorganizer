@@ -179,6 +179,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
   ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
+  ui->modList->header()->setSectionHidden(0, false); // prevent the name-column from being hidden
   ui->modList->installEventFilter(&m_ModList);
 
   // restoreState also seems to restores the resize mode from previous session,
@@ -222,6 +223,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->linkButton->setMenu(linkMenu);
 
   m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
+  m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
 
   NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
@@ -239,6 +241,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
   connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
+  connect(&m_ModList, SIGNAL(modUninstalled(QString)), this, SLOT(modRemoved(QString)));
   connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), this, SLOT(modlistChanged(QModelIndex, int)));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
   connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
@@ -2553,6 +2556,17 @@ void MainWindow::removeMod_clicked()
 }
 
 
+void MainWindow::modRemoved(const QString &fileName)
+{
+  if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {
+    int index = m_DownloadManager.indexByName(fileName);
+    if (index >= 0) {
+      m_DownloadManager.markUninstalled(index);
+    }
+  }
+}
+
+
 void MainWindow::reinstallMod_clicked()
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
@@ -3417,6 +3431,7 @@ void MainWindow::on_actionSettings_triggered()
       m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
     }
   }
+  m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
 
   if (m_Settings.getModDirectory() != oldModDirectory) {
     refreshModList();
@@ -3551,8 +3566,8 @@ void MainWindow::installDownload(int index)
     m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
     if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
       MessageDialog::showMessage(tr("Installation successful"), this);
-
       refreshModList();
+
 
       QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
       if (posList.count() == 1) {
@@ -4165,7 +4180,7 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
 
   // display a list of all headers as checkboxes
   QAbstractItemModel *model = ui->modList->header()->model();
-  for (int i = 0; i < model->columnCount(); ++i) {
+  for (int i = 1; i < model->columnCount(); ++i) {
     QString columnName = model->headerData(i, Qt::Horizontal).toString();
     QCheckBox *checkBox = new QCheckBox(&menu);
     checkBox->setText(columnName);
@@ -4177,7 +4192,7 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
   menu.exec(pos);
 
   // view/hide columns depending on check-state
-  int i = 0;
+  int i = 1;
   foreach (const QAction *action, menu.actions()) {
     const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
     if (widgetAction != NULL) {

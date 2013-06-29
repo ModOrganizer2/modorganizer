@@ -30,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegExp>
 #include <QDirIterator>
 #include <QInputDialog>
+#include <boost/bind.hpp>
 #include <regex>
 #include <QMessageBox>
 
@@ -84,6 +85,8 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
 
     if (metaFile.value("paused", false).toBool()) {
       info->m_State = STATE_PAUSED;
+    } else if (metaFile.value("uninstalled", false).toBool()) {
+      info->m_State = STATE_UNINSTALLED;
     } else if (metaFile.value("installed", false).toBool()) {
       info->m_State = STATE_INSTALLED;
     } else {
@@ -176,6 +179,13 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
   m_DirWatcher.addPath(m_OutputDirectory);
   refreshList();
 }
+
+
+void DownloadManager::setPreferredServers(const std::map<QString, int> &preferredServers)
+{
+  m_PreferredServers = preferredServers;
+}
+
 
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
@@ -606,8 +616,23 @@ void DownloadManager::markInstalled(int index)
   DownloadInfo *info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
+  metaFile.setValue("uninstalled", false);
 
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
+}
+
+
+void DownloadManager::markUninstalled(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+
+  DownloadInfo *info = m_ActiveDownloads.at(index);
+  QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
+  metaFile.setValue("uninstalled", true);
+
+  setState(m_ActiveDownloads.at(index), STATE_UNINSTALLED);
 }
 
 
@@ -643,6 +668,13 @@ QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 
 void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadManager::DownloadState state)
 {
+  int row = 0;
+  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+    if (m_ActiveDownloads[i] == info) {
+      row = i;
+      break;
+    }
+  }
   info->m_State = state;
   switch (state) {
     case STATE_PAUSED:
@@ -660,15 +692,11 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     } break;
     case STATE_READY: {
       createMetaFile(info);
-      for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
-        if (m_ActiveDownloads[i] == info) {
-          emit downloadComplete(i);
-          return;
-        }
-      }
+      emit downloadComplete(row);
     } break;
     default: /* NOP */ break;
   }
+  emit stateChanged(row, state);
 }
 
 
@@ -736,6 +764,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
   metaFile.setValue("newestVersion", info->m_NexusInfo.m_NewestVersion);
   metaFile.setValue("category", info->m_NexusInfo.m_Category);
   metaFile.setValue("installed", info->m_State == DownloadManager::STATE_INSTALLED);
+  metaFile.setValue("uninstalled", info->m_State == DownloadManager::STATE_UNINSTALLED);
   metaFile.setValue("paused", (info->m_State == DownloadManager::STATE_PAUSED) ||
                               (info->m_State == DownloadManager::STATE_ERROR));
 
@@ -759,7 +788,6 @@ void DownloadManager::nxmDescriptionAvailable(int, QVariant userData, QVariant r
 
   QVariantMap result = resultData.toMap();
 
-//  DownloadInfo *info = static_cast<DownloadInfo*>(userData.value<void*>());
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == NULL) return;
 
@@ -869,30 +897,45 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant, QVar
 
 
 // sort function to sort by best download server
-bool DownloadManager::ServerByPreference(const QVariant &LHS, const QVariant &RHS)
+bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS)
 {
+  int LHSVal = 0;
+  int RHSVal = 0;
+
   QVariantMap LHSMap = LHS.toMap();
   QVariantMap RHSMap = RHS.toMap();
+
   int LHSUsers = LHSMap["ConnectedUsers"].toInt();
   int RHSUsers = RHSMap["ConnectedUsers"].toInt();
-  bool LHSPremium = LHSMap["IsPremium"].toBool();
-  bool RHSPremium = RHSMap["IsPremium"].toBool();
-
   // 0 users is probably a sign that the server is offline. Since there is currently no
   // mechanism to try a different server, we avoid those without users
-  if ((LHSUsers == 0) && (RHSUsers != 0)) return false;
-  if ((LHSUsers != 0) && (RHSUsers == 0)) return true;
-
-
-  if (LHSPremium && !RHSPremium) {
-    return true;
-  } else if (!LHSPremium && RHSPremium) {
-    return false;
+  if (LHSUsers == 0) {
+    LHSVal -= 500;
+  } else {
+    LHSVal -= LHSUsers;
+  }
+  if (RHSUsers == 0) {
+    RHSVal -= 500;
+  } else {
+    RHSVal -= RHSUsers;
   }
 
-  // TODO implement country preference
+  // user preference. This is a bit silly because the more servers on the preferred list the higher the boost
+  auto LHSPreference = preferredServers.find(LHSMap["Name"].toString());
+  auto RHSPreference = preferredServers.find(RHSMap["Name"].toString());
 
-  return LHSUsers < RHSUsers;
+  if (LHSPreference != preferredServers.end()) {
+    LHSVal += 100 + LHSPreference->second * 20;
+  }
+  if (RHSPreference != preferredServers.end()) {
+    RHSVal += 100 + RHSPreference->second * 20;
+  }
+
+  // premium isn't valued high because premium servers already get a massive boost for having few users online
+  if (LHSMap["IsPremium"].toBool()) LHSVal += 5;
+  if (RHSMap["IsPremium"].toBool()) RHSVal += 5;
+
+  return RHSVal < LHSVal;
 }
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
@@ -913,6 +956,16 @@ QString DownloadManager::downloadPath(int id)
   return getFilePath(id);
 }
 
+int DownloadManager::indexByName(const QString &fileName) const
+{
+  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+    if (m_ActiveDownloads[i]->m_FileName == fileName) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
@@ -928,14 +981,14 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
     emit showMessage(tr("No download server available. Please try again later."));
     return;
   }
-  qSort(resultList.begin(), resultList.end(), ServerByPreference);
+
+  std::sort(resultList.begin(), resultList.end(), boost::bind(&DownloadManager::ServerByPreference, m_PreferredServers, _1, _2));
 
   QStringList URLs;
 
   foreach (const QVariant &server, resultList) {
     URLs.append(server.toMap()["URI"].toString());
   }
-  qDebug("urls: %s", qPrintable(URLs.join(";")));
 
   addDownload(URLs, modID, fileID, info);
 }

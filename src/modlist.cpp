@@ -642,6 +642,8 @@ void ModList::removeRowForce(int row)
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
   }
+
+  emit modUninstalled(modInfo->getInstallationFile());
 }
 
 

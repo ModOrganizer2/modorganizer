@@ -70,7 +70,8 @@ public:
     STATE_FETCHINGMODINFO,
     STATE_FETCHINGFILEINFO,
     STATE_READY,
-    STATE_INSTALLED
+    STATE_INSTALLED,
+    STATE_UNINSTALLED
   };
 
 private:
@@ -148,6 +149,11 @@ public:
    * @return current download directory
    **/
   QString getOutputDirectory() const { return m_OutputDirectory; }
+
+  /**
+   * @brief setPreferredServers set the list of preferred servers
+   */
+  void setPreferredServers(const std::map<QString, int> &preferredServers);
 
   /**
    * @brief set the list of supported extensions
@@ -251,6 +257,13 @@ public:
   void markInstalled(int index);
 
   /**
+   * @brief mark a download as uninstalled
+   *
+   * @param index index of the file to mark uninstalled
+   */
+  void markUninstalled(int index);
+
+  /**
    * @brief refreshes the list of downloads
    */
   void refreshList();
@@ -261,12 +274,19 @@ public:
    * @param RHS
    * @return
    */
-  static bool ServerByPreference(const QVariant &LHS, const QVariant &RHS);
+  static bool ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS);
 
 
   virtual int startDownloadURLs(const QStringList &urls);
   virtual int startDownloadNexusFile(int modID, int fileID);
   virtual QString downloadPath(int id);
+
+  /**
+   * @brief retrieve a download index from the filename
+   * @param fileName file to look up
+   * @return index of that download or -1 if it wasn't found
+   */
+  int indexByName(const QString &fileName) const;
 
 signals:
 
@@ -285,6 +305,13 @@ signals:
    * @param message the message to display
    **/
   void showMessage(const QString &message);
+
+  /**
+   * @brief emitted whenever the state of a download changes
+   * @param row the row that changed
+   * @param state the new state
+   */
+  void stateChanged(int row, DownloadManager::DownloadState state);
 
 public slots:
 
@@ -371,6 +398,7 @@ private:
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
+  std::map<QString, int> m_PreferredServers;
   QStringList m_SupportedExtensions;
   std::set<int> m_RequestIDs;
   QVector<int> m_AlphabeticalTranslation;

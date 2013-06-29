@@ -30,7 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 DownloadListWidget::DownloadListWidget(QWidget *parent)
   : QWidget(parent), ui(new Ui::DownloadListWidget)
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
 }
 
 
@@ -48,6 +48,9 @@ DownloadListWidgetDelegate::DownloadListWidgetDelegate(DownloadManager *manager,
   m_InstallLabel = m_ItemWidget->findChild<QLabel*>("installLabel");
 
   m_InstallLabel->setVisible(false);
+
+  connect(manager, SIGNAL(stateChanged(int,DownloadManager::DownloadState)), this, SLOT(stateChanged(int,DownloadManager::DownloadState)));
+  connect(manager, SIGNAL(downloadRemoved(int)), this, SLOT(resetCache(int)));
 }
 
 
@@ -57,10 +60,35 @@ DownloadListWidgetDelegate::~DownloadListWidgetDelegate()
 }
 
 
+void DownloadListWidgetDelegate::stateChanged(int row,DownloadManager::DownloadState)
+{
+  m_Cache.remove(row);
+}
+
+
+void DownloadListWidgetDelegate::resetCache(int)
+{
+  m_Cache.clear();
+}
+
+
+void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const
+{
+  QRect rect = option.rect;
+  rect.setLeft(0);
+  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2));
+  painter->drawPixmap(rect, cache);
+}
+
+
 void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   try {
-    if (index.column() != 2) return;
+    auto iter = m_Cache.find(index.row());
+    if (iter != m_Cache.end()) {
+      drawCache(painter, option, *iter);
+      return;
+    }
 
     m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
 
@@ -103,9 +131,14 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0, QApplication::UnicodeUTF8));
 #endif
         labelPalette.setColor(QPalette::WindowText, Qt::darkGray);
+      } else if (state == DownloadManager::STATE_UNINSTALLED) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0));
+#else
+        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0, QApplication::UnicodeUTF8));
+#endif
+        labelPalette.setColor(QPalette::WindowText, Qt::lightGray);
       } else {
-        // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
-        // of DownloadListWidgetDelegate?
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
         m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0));
 #else
@@ -123,10 +156,23 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       m_Progress->setValue(m_Manager->getProgress(downloadIndex));
     }
 
-    painter->save();
-    painter->translate(QPoint(0, option.rect.topLeft().y()));
-    m_ItemWidget->render(painter);
-    painter->restore();
+#pragma message("caching disabled because changes in the list (including resorting) doesn't work correctly")
+//    if (state >= DownloadManager::STATE_READY) {
+    if (false) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+      QPixmap cache = m_ItemWidget->grab();
+#else
+      QPixmap cache = QPixmap::grabWidget(m_ItemWidget);
+#endif
+      m_Cache[index.row()] = cache;
+      drawCache(painter, option, cache);
+    } else {
+      painter->save();
+      painter->translate(QPoint(0, option.rect.topLeft().y()));
+
+      m_ItemWidget->render(painter);
+      painter->restore();
+    }
   } catch (const std::exception &e) {
     qCritical("failed to paint download list: %s", e.what());
   }

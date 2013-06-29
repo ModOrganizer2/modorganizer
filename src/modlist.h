@@ -160,6 +160,12 @@ signals:
   void modRenamed(const QString &oldName, const QString &newName);
 
   /**
+   * @brief emitted after a mod has been uninstalled
+   * @param fileName filename of the mod being uninstalled
+   */
+  void modUninstalled(const QString &fileName);
+
+  /**
    * @brief emitted whenever a row in the list has changed
    *
    * @param index the index of the changed field

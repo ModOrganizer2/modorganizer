@@ -153,6 +153,23 @@ QString Settings::getDownloadDirectory() const
   return QDir::toNativeSeparators(m_Settings.value("Settings/download_directory", ToQString(GameInfo::instance().getDownloadDir())).toString());
 }
 
+std::map<QString, int> Settings::getPreferredServers()
+{
+  std::map<QString, int> result;
+  m_Settings.beginGroup("Servers");
+
+  foreach (const QString &serverKey, m_Settings.childKeys()) {
+    QVariantMap data = m_Settings.value(serverKey).toMap();
+    int preference = data["preferred"].toInt();
+    if (preference > 0) {
+      result[serverKey] = preference;
+    }
+  }
+  m_Settings.endGroup();
+
+  return result;
+}
+
 QString Settings::getCacheDirectory() const
 {
   return QDir::toNativeSeparators(m_Settings.value("Settings/cache_directory", ToQString(GameInfo::instance().getCacheDir())).toString());

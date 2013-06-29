@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProcess>
 #include <QApplication>
 #include <util.h>
+#include <boost/bind.hpp>
 
 
 using namespace MOBase;
@@ -449,7 +450,9 @@ void SelfUpdater::nxmDownloadURLsAvailable(int, int, QVariant userData, QVariant
     m_UpdateRequestID = -1;
     QVariantList serverList = resultData.toList();
     if (serverList.count() != 0) {
-      qSort(serverList.begin(), serverList.end(), DownloadManager::ServerByPreference);
+      std::map<QString, int> dummy;
+      qSort(serverList.begin(), serverList.end(), boost::bind(&DownloadManager::ServerByPreference, dummy, _1, _2));
+
 
       QVariantMap dlServer = serverList.first().toMap();
 

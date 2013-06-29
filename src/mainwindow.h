@@ -393,6 +393,7 @@ private slots:
   void modOpenPrev();
 
   void modRenamed(const QString &oldName, const QString &newName);
+  void modRemoved(const QString &fileName);
 
   void hideSaveGameInfo();
 

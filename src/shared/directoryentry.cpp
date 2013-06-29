@@ -421,12 +421,33 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
 }
 
 
+static bool SupportOptimizedFind()
+{
+  OSVERSIONINFO versionInfo;
+  versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+  GetVersionEx(&versionInfo);
+
+  // large fetch and basic info for FindFirstFileEx is supported on win server 2008 r2, win 7 and newer
+  return (versionInfo.dwMajorVersion > 6) ||
+         ((versionInfo.dwMajorVersion == 6) && (versionInfo.dwMinorVersion >= 1));
+}
+
+
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
 {
   WIN32_FIND_DATAW findData;
 
   _snwprintf(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, L"\\*");
-  HANDLE searchHandle = ::FindFirstFileExW(buffer, FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, FIND_FIRST_EX_CASE_SENSITIVE);
+
+  HANDLE searchHandle = NULL;
+
+  if (SupportOptimizedFind()) {
+    searchHandle = ::FindFirstFileExW(buffer, FindExInfoBasic, &findData, FindExSearchNameMatch, NULL,
+                                      FIND_FIRST_EX_LARGE_FETCH);
+  } else {
+    searchHandle = ::FindFirstFileExW(buffer, FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
+  }
+
   if (searchHandle != INVALID_HANDLE_VALUE) {
     BOOL result = true;
     while (result) {

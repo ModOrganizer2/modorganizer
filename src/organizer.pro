@@ -268,14 +268,12 @@ OTHER_FILES += \
     tutorials/firststeps.qml \
     tutorials/tutorials.js \
     tutorials/tutorial_firststeps_main.js \
-    tutorials/tutorial_firststeps_settings.js \
     tutorials/tutorials_settingsdialog.qml \
     tutorials/tutorials_mainwindow.qml \
     tutorials/Highlight.qml \
     tutorials/TutorialDescription.qml \
     tutorials/TutorialOverlay.qml \
     tutorials/tutorials_nexusdialog.qml \
-    tutorials/tutorial_firststeps_browser.js \
     tutorials/tutorials_modinfodialog.qml \
     tutorials/tutorial_firststeps_modinfo.js \
     tutorials/tutorial_conflictresolution_main.js \

@@ -26,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressBar>
 #include <QTreeView>
 
+#include "downloadmanager.h"
+
 namespace Ui {
     class DownloadListWidget;
 }
@@ -72,6 +74,10 @@ protected:
   bool editorEvent(QEvent *event, QAbstractItemModel *model,
                    const QStyleOptionViewItem &option, const QModelIndex &index);
 
+private:
+
+  void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
+
 private slots:
 
   void issueInstall();
@@ -86,6 +92,9 @@ private slots:
   void issueRemoveFromViewCompleted();
   void issueQueryInfo();
 
+  void stateChanged(int row, DownloadManager::DownloadState);
+  void resetCache(int);
+
 private:
 
   DownloadListWidget *m_ItemWidget;
@@ -97,6 +106,8 @@ private:
   int m_ContextRow;
 
   QTreeView *m_View;
+
+  mutable QMap<int, QPixmap> m_Cache;
 };
 
 #endif // DOWNLOADLISTWIDGET_H
