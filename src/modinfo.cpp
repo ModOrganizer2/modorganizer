@@ -323,15 +323,6 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
     }
   }
 
-  int numNexusFiles = metaFile.beginReadArray("nexusFiles");
-  for (int i = 0; i < numNexusFiles; ++i) {
-    metaFile.setArrayIndex(i);
-    QString infoString = metaFile.value("info", "").toString();
-    ModRepositoryFileInfo info(infoString);
-    m_NexusFileInfos.push_back(info);
-  }
-  metaFile.endArray();
-
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -351,7 +342,6 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   }
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(filesAvailable(int,QVariant,const QList<ModRepositoryFileInfo>&)), this, SLOT(nxmFilesAvailable(int,QVariant,QList<ModRepositoryFileInfo>)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(requestFailed(int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,QVariant,QString)));
 }
@@ -398,13 +388,6 @@ void ModInfoRegular::saveMeta()
           metaFile.setValue("endorsed", m_EndorsedState);
         }
 
-
-        metaFile.beginWriteArray("nexusFiles");
-        for (int i = 0; i < m_NexusFileInfos.size(); ++i) {
-          metaFile.setArrayIndex(i);
-          metaFile.setValue("info", m_NexusFileInfos.at(i).toString());
-        }
-        metaFile.endArray();
       } else {
         reportError(tr("failed to write %1/meta.ini: %2").arg(absolutePath()).arg(metaFile.status()));
       }
@@ -430,13 +413,6 @@ void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
   if (m_EndorsedState != ENDORSED_NEVER) {
     m_EndorsedState = result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
   }
-  m_NexusBridge.requestFiles(m_NexusID, QVariant());
-}
-
-
-void ModInfoRegular::nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo> &resultData)
-{
-  m_NexusFileInfos = resultData;
   m_LastNexusQuery = QDateTime::currentDateTime();
   m_MetaInfoChanged = true;
   saveMeta();
@@ -667,12 +643,6 @@ QString ModInfoRegular::getDescription() const
 QString ModInfoRegular::notes() const
 {
   return m_Notes;
-}
-
-void ModInfoRegular::getNexusFiles(QList<ModRepositoryFileInfo>::const_iterator &begin, QList<ModRepositoryFileInfo>::const_iterator &end)
-{
-  begin = m_NexusFileInfos.begin();
-  end = m_NexusFileInfos.end();
 }
 
 QString ModInfoRegular::getNexusDescription() const

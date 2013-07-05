@@ -3448,8 +3448,9 @@ void MainWindow::on_actionSettings_triggered()
 void MainWindow::on_actionNexus_triggered()
 {
   std::wstring nxmPath = ToWString(QApplication::applicationDirPath() + "/nxmhandler.exe");
+  std::wstring executable = ToWString(QApplication::applicationFilePath());
   ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
-                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" " + nxmPath).c_str(), NULL, SW_SHOWNORMAL);
+                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" " + executable).c_str(), NULL, SW_SHOWNORMAL);
 
   ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);

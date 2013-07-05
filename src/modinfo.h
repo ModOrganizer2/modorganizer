@@ -359,15 +359,6 @@ public:
   virtual QString notes() const = 0;
 
   /**
-   * @brief return the list of files on nexus related to this mod in the form of iterators
-   * @note this is valid only after querying the files
-   * @param begin iterator to the first file
-   * @param end iterator to one past the last file
-   */
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator &begin,
-                             QList<MOBase::ModRepositoryFileInfo>::const_iterator &end) = 0;
-
-  /**
    * @return nexus description of the mod (html)
    */
   virtual QString getNexusDescription() const = 0;
@@ -402,7 +393,7 @@ public:
    * @brief sets the new primary category of the mod
    * @param categoryID the category to set
    */
-  void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; }
+  virtual void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; }
 
   /**
    * @return true if this mod is considered "valid", that is: it contains data used by the game
@@ -573,6 +564,12 @@ public:
   virtual void setNexusDescription(const QString &description);
 
   /**
+   * @brief sets the new primary category of the mod
+   * @param categoryID the category to set
+   */
+  virtual void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; m_MetaInfoChanged = true; }
+
+  /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
    * @param endorsed the new endorsement state
@@ -673,14 +670,6 @@ public:
   virtual QString notes() const;
 
   /**
-   * @brief return the list of files on nexus related to this mod in the form of iterators
-   * @note this is valid only after querying the files
-   * @param begin iterator to the first file
-   * @param end iterator to one past the last file
-   */
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator &begin, QList<MOBase::ModRepositoryFileInfo>::const_iterator &end);
-
-  /**
    * @return nexus description of the mod (html)
    */
   QString getNexusDescription() const;
@@ -713,7 +702,6 @@ private:
 private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
-  void nxmFilesAvailable(int, QVariant, const QList<ModRepositoryFileInfo> &resultData);
   void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
   void nxmRequestFailed(int modID, QVariant userData, const QString &errorMessage);
 
@@ -740,7 +728,6 @@ private:
   QString m_InstallationFile;
   QString m_Notes;
   QString m_NexusDescription;
-  QList<MOBase::ModRepositoryFileInfo> m_NexusFileInfos;
 
   QDateTime m_LastNexusQuery;
 
@@ -820,8 +807,6 @@ public:
   virtual int getHighlight() const;
   virtual QString getDescription() const;
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
-  virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo>::const_iterator&,
-                             QList<MOBase::ModRepositoryFileInfo>::const_iterator&) {}
   virtual QString getNexusDescription() const { return QString(); }
 
 private:
