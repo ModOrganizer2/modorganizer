@@ -62,6 +62,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSplashScreen>
 #include <QDirIterator>
 #include <QDesktopServices>
+#include <QNetworkProxy>
 #include <eh.h>
 #include <windows_error.h>
 #include <boost/scoped_array.hpp>
@@ -273,6 +274,21 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
 }
 
 
+void setupNetworkProxy()
+{
+  QNetworkProxyQuery query(QUrl("http://www.google.com"), QNetworkProxyQuery::UrlRequest);
+  query.setProtocolTag("http");
+
+  QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
+  if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
+    qDebug("Using proxy: %s", qPrintable(proxies.at(0).hostName()));
+    QNetworkProxy::setApplicationProxy(proxies[0]);
+  } else {
+    qDebug("Not using proxy");
+  }
+}
+
+
 void registerMetaTypes()
 {
   registerExecutable();
@@ -283,6 +299,8 @@ int main(int argc, char *argv[])
   MOApplication application(argc, argv);
 
   qApp->addLibraryPath(application.applicationDirPath() + "/dlls");
+
+  setupNetworkProxy();
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
