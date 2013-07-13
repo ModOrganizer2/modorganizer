@@ -1318,8 +1318,8 @@ void MainWindow::activateSelectedProfile()
 
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
 
-  refreshModList();
   refreshSaveList();
+  refreshModList();
 }
 
 
@@ -1484,7 +1484,6 @@ void MainWindow::refreshDirectoryStructure()
   m_DirectoryRefresher.setMods(activeModList);
 
   statusBar()->show();
-//  m_RefreshProgress->setVisible(true);
   m_RefreshProgress->setRange(0, 100);
 
   QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
@@ -1552,7 +1551,6 @@ void MainWindow::refreshDataTree()
 
 void MainWindow::refreshSaveList()
 {
-  refreshLists();
   ui->savegameList->clear();
 
   QDir savesDir;
@@ -2191,7 +2189,9 @@ void MainWindow::directory_refreshed()
     return;
   }
   m_DirectoryUpdate = false;
-  refreshLists();
+  if (m_CurrentProfile != NULL) {
+    refreshLists();
+  }
 //  m_RefreshProgress->setVisible(false);
   statusBar()->hide();
 }
@@ -2975,7 +2975,8 @@ void MainWindow::saveCategories()
       saveCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
     }
     //m_ModList.notifyChange(min, max);
-    refreshModList();
+    m_ModList.notifyChange(-1);
+//    refreshModList();
 
     // find mods by their name because indices are invalidated
     QAbstractItemModel *model = ui->modList->model();

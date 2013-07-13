@@ -27,6 +27,7 @@ private slots:
   void selectionChanged();
   void urlClicked(const QUrl &url);
 
+  void startFix();
 private:
 
   Ui::ProblemsDialog *ui;

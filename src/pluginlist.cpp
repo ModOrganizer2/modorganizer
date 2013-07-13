@@ -643,12 +643,9 @@ bool PluginList::setData(const QModelIndex &index, const QVariant &value, int ro
   if (role == Qt::CheckStateRole) {
     m_ESPs[index.row()].m_Enabled = value.toInt() == Qt::Checked;
 
-    emit layoutAboutToBeChanged();
-
     refreshLoadOrder();
     startSaveTime();
 
-    emit layoutChanged();
     return true;
   } else {
     return false;

@@ -145,8 +145,10 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
-    newItem->setData(1, Qt::DisplayRole, *iter);
-    newItem->setData(1, Qt::EditRole, *iter);
+    QVariant value = *iter;
+    newItem->setData(1, Qt::DisplayRole, value);
+    newItem->setData(1, Qt::EditRole, value);
+
     newItem->setFlags(newItem->flags() | Qt::ItemIsEditable);
     ui->pluginSettingsList->addTopLevelItem(newItem);
   }

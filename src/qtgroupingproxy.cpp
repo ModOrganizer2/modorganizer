@@ -215,10 +215,7 @@ QtGroupingProxy::buildTree()
 QList<int>
 QtGroupingProxy::addSourceRow( const QModelIndex &idx )
 {
-  // TODO: modeltest reports a discrepance between the "rowAboutToBeInserted" and "rowInserted" events
-
   QList<int> updatedGroups;
-
   QList<RowData> groupData = belongsTo( idx );
 
   //an empty list here means it's supposed to go in root.
@@ -265,7 +262,6 @@ QtGroupingProxy::addSourceRow( const QModelIndex &idx )
       updatedGroups << updatedGroup;
   }
 
-
   //update m_groupHash to the new source-model layout (one row added)
   QMutableHashIterator<quint32, QList<int> > i( m_groupHash );
   while( i.hasNext() )
@@ -290,9 +286,7 @@ QtGroupingProxy::addSourceRow( const QModelIndex &idx )
     if( updatedGroups.contains( i.key() ) )
     {
       //the row needs to be added to this group
-      beginInsertRows( index( i.key() ), insertedProxyRow, insertedProxyRow );
       groupList.insert( insertedProxyRow, idx.row() );
-      endInsertRows();
     }
   }
 
@@ -337,11 +331,13 @@ QModelIndex
 QtGroupingProxy::index( int row, int column, const QModelIndex &parent ) const
 {
   //    qDebug() << "index requested for: (" << row << "," << column << "), " << parent;
-  if( !hasIndex(row, column, parent) )
+  if( !hasIndex(row, column, parent) ) {
     return QModelIndex();
+  }
 
-  if( parent.column() > 0 )
+  if( parent.column() > 0 ) {
     return QModelIndex();
+  }
 
   /* We save the instructions to make the parent of the index in a struct.
      * The place of the struct in the list is stored in the internalId
