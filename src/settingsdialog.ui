@@ -329,6 +329,19 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="proxyBox">
+         <property name="statusTip">
+          <string>Use a proxy for network connections.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</string>
+         </property>
+         <property name="text">
+          <string>Use HTTP Proxy (Uses System Settings)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_6">

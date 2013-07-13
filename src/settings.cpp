@@ -237,6 +237,11 @@ bool Settings::enableQuickInstaller()
   return m_Settings.value("Settings/enable_quick_installer").toBool();
 }
 
+bool Settings::useProxy()
+{
+  return m_Settings.value("Settings/use_proxy", false).toBool();
+}
+
 
 void Settings::setMotDHash(uint hash)
 {
@@ -395,16 +400,7 @@ void Settings::query(QWidget *parent)
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
-  QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
-  QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
-  QComboBox *mechanismBox = dialog.findChild<QComboBox*>("mechanismBox");
-
-  QCheckBox *loginCheckBox = dialog.findChild<QCheckBox*>("loginCheckBox");
-  QLineEdit *usernameEdit = dialog.findChild<QLineEdit*>("usernameEdit");
-  QLineEdit *passwordEdit = dialog.findChild<QLineEdit*>("passwordEdit");
-
-  QLineEdit *appIDEdit = dialog.findChild<QLineEdit*>("appIDEdit");
-
+  // General Page
   QComboBox *languageBox = dialog.findChild<QComboBox*>("languageBox");
   QComboBox *styleBox = dialog.findChild<QComboBox*>("styleBox");
   QComboBox *logLevelBox = dialog.findChild<QComboBox*>("logLevelBox");
@@ -414,13 +410,26 @@ void Settings::query(QWidget *parent)
   QLineEdit *modDirEdit = dialog.findChild<QLineEdit*>("modDirEdit");
   QLineEdit *cacheDirEdit = dialog.findChild<QLineEdit*>("cacheDirEdit");
 
+  // nexus page
+  QCheckBox *loginCheckBox = dialog.findChild<QCheckBox*>("loginCheckBox");
+  QLineEdit *usernameEdit = dialog.findChild<QLineEdit*>("usernameEdit");
+  QLineEdit *passwordEdit = dialog.findChild<QLineEdit*>("passwordEdit");
   QCheckBox *offlineBox = dialog.findChild<QCheckBox*>("offlineBox");
-  QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
-
-  QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
+  QCheckBox *proxyBox = dialog.findChild<QCheckBox*>("proxyBox");
 
   QListWidget *knownServersList = dialog.findChild<QListWidget*>("knownServersList");
   QListWidget *preferredServersList = dialog.findChild<QListWidget*>("preferredServersList");
+
+  // plugis page
+  QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
+
+  // workarounds page
+  QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
+  QComboBox *mechanismBox = dialog.findChild<QComboBox*>("mechanismBox");
+  QLineEdit *appIDEdit = dialog.findChild<QLineEdit*>("appIDEdit");
+  QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
+  QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
+
 
   //
   // set up current settings
@@ -496,6 +505,7 @@ void Settings::query(QWidget *parent)
   modDirEdit->setText(getModDirectory());
   cacheDirEdit->setText(getCacheDirectory());
   offlineBox->setChecked(m_Settings.value("Settings/offline_mode", false).toBool());
+  proxyBox->setChecked(m_Settings.value("Settings/use_proxy", false).toBool());
   nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
   logLevelBox->setCurrentIndex(logLevel());
 
@@ -576,10 +586,8 @@ void Settings::query(QWidget *parent)
       m_Settings.remove("Settings/nexus_username");
       m_Settings.remove("Settings/nexus_password");
     }
-/*    if (nxmHandler != handleNXMBox->isChecked()) {
-      setNXMHandlerActive(handleNXMBox->isChecked(), registryWritable);
-    }*/
     m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
+    m_Settings.setValue("Settings/use_proxy", proxyBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
 

@@ -230,6 +230,9 @@ private:
 
   void updateESPLock(bool locked);
 
+  static void setupNetworkProxy(bool activate);
+  void activateProxy(bool activate);
+
 private:
 
   Ui::MainWindow *ui;

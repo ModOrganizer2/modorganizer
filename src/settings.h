@@ -163,6 +163,11 @@ public:
   bool enableQuickInstaller();
 
   /**
+   * @return true if the user configured the use of a network proxy
+   */
+  bool useProxy();
+
+  /**
    * @brief sets the new motd hash
    **/
   void setMotDHash(uint hash);

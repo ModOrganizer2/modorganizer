@@ -95,6 +95,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <shlobj.h>
 #include <TlHelp32.h>
 #include <QNetworkInterface>
+#include <QNetworkProxy>
+#include <QtConcurrentRun>
 
 
 using namespace MOBase;
@@ -1757,6 +1759,36 @@ void MainWindow::fixCategories()
 }
 
 
+void MainWindow::setupNetworkProxy(bool activate)
+{
+  QNetworkProxyFactory::setUseSystemConfiguration(activate);
+/*  QNetworkProxyQuery query(QUrl("http://www.google.com"), QNetworkProxyQuery::UrlRequest);
+  query.setProtocolTag("http");
+  QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
+  if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
+    qDebug("Using proxy: %s", qPrintable(proxies.at(0).hostName()));
+    QNetworkProxy::setApplicationProxy(proxies[0]);
+  } else {
+    qDebug("Not using proxy");
+  }*/
+}
+
+
+void MainWindow::activateProxy(bool activate)
+{
+  QProgressDialog busyDialog(tr("Activating Network Proxy"), QString(), 0, 0, parentWidget());
+  busyDialog.setWindowFlags(busyDialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+  busyDialog.setWindowModality(Qt::WindowModal);
+  busyDialog.show();
+  QFuture<void> future = QtConcurrent::run(MainWindow::setupNetworkProxy, activate);
+  while (!future.isFinished()) {
+    QCoreApplication::processEvents();
+    ::Sleep(100);
+  }
+  busyDialog.hide();
+}
+
+
 void MainWindow::readSettings()
 {
   QSettings settings(ToQString(GameInfo::instance().getIniFilename()), QSettings::IniFormat);
@@ -1772,6 +1804,10 @@ void MainWindow::readSettings()
   languageChange(m_Settings.language());
   int selectedExecutable = settings.value("selected_executable").toInt();
   setExecutableIndex(selectedExecutable);
+
+  if (settings.value("Settings/use_proxy", false).toBool()) {
+    activateProxy(true);
+  }
 }
 
 
@@ -3422,6 +3458,7 @@ void MainWindow::on_actionSettings_triggered()
 {
   QString oldModDirectory(m_Settings.getModDirectory());
   QString oldCacheDirectory(m_Settings.getCacheDirectory());
+  bool proxy = m_Settings.useProxy();
   m_Settings.query(this);
   fixCategories();
   refreshFilters();
@@ -3441,6 +3478,10 @@ void MainWindow::on_actionSettings_triggered()
 
   if (m_Settings.getCacheDirectory() != oldCacheDirectory) {
     NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
+  }
+
+  if (proxy != m_Settings.useProxy()) {
+    activateProxy(m_Settings.useProxy());
   }
 
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
