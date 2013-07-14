@@ -461,8 +461,6 @@ bool MainWindow::errorReported(QString &logFile)
 
 bool MainWindow::checkForProblems()
 {
-//  problemDescription = "";
-
   foreach (IPluginDiagnose *diagnose, m_DiagnosisPlugins) {
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
     if (activeProblems.size() > 0) {
@@ -470,41 +468,6 @@ bool MainWindow::checkForProblems()
     }
   }
   return false;
-
-/*
-  QString NCCBinary = QCoreApplication::applicationDirPath().mid(0).append("/NCC/NexusClientCLI.exe");
-  if (!QFile::exists(NCCBinary)) {
-    problemDescription.append(tr("<li>NCC not installed. You won't be able to install some scripted mod-installers. Get NCC from <a href=\"http://skyrim.nexusmods.com/downloads/file.php?id=1334\">the MO page on nexus</a></li>"));
-  } else {
-    VS_FIXEDFILEINFO versionInfo = GetFileVersion(ToWString(QDir::toNativeSeparators(NCCBinary)));
-    if ((versionInfo.dwFileVersionMS & 0xFFFF) != 0x02) {
-      problemDescription.append(tr("<li>NCC version may be incompatible.</li>"));
-    }
-  }
-
-  if (QSettings("HKEY_LOCAL_MACHINE\\Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5",
-                QSettings::NativeFormat).value("Install", 0) != 1) {
-    QString dotNetUrl = "http://www.microsoft.com/en-us/download/details.aspx?id=17851";
-    problemDescription.append(tr("<li>dotNet is not installed or outdated. This is required to use NCC. "
-                                 "Get it from here: <a href=\"%1\">%1</a></li>").arg(dotNetUrl));
-  }
-
-  QString logFile;
-  if (errorReported(logFile)) {
-    problemDescription.append(tr("<li>There was an error reported in your last log. Please see %1</li>").arg(logFile));
-  }
-
-  bool res = problemDescription.length() != 0;
-  if (res) {
-    problemDescription.prepend("<ul>").append("</ul>");
-
-    ui->actionProblems->setEnabled(true);
-    ui->actionProblems->setIconText(tr("Problems"));
-    ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
-  } else {
-    ui->actionProblems->setToolTip(tr("Everything seems to be in order"));
-  }
-  return res;*/
 }
 
 
@@ -945,13 +908,10 @@ bool MainWindow::registerPlugin(QObject *plugin)
     m_Settings.registerPlugin(pluginObj);
   }
 
-  bool addon = false;
-
   { // diagnosis plugins
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
-      addon = true;
     }
   }
   { // tool plugins
@@ -991,9 +951,17 @@ bool MainWindow::registerPlugin(QObject *plugin)
     }
   }
 
+  { // dummy plugins
+    // only initialize these, no processing otherwise
+    IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
+    if (verifyPlugin(dummy)) {
+      return true;
+    }
+  }
+
   qDebug("no matching plugin interface");
 
-  return addon;
+  return false;
 }
 
 
@@ -1925,6 +1893,19 @@ void MainWindow::installMod(const QString &fileName)
   }
 }
 
+QString MainWindow::resolvePath(const QString &fileName) const
+{
+  if (m_DirectoryStructure == NULL) {
+    return QString();
+  }
+  const FileEntry *file = m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
+  if (file != NULL) {
+    return ToQString(file->getFullPath());
+  } else {
+    return QString();
+  }
+}
+
 IDownloadManager *MainWindow::downloadManager()
 {
   return &m_DownloadManager;
@@ -2230,6 +2211,10 @@ void MainWindow::directory_refreshed()
   }
 //  m_RefreshProgress->setVisible(false);
   statusBar()->hide();
+
+  // some problem-reports may rely on the virtual directory tree so they need to be updated
+  // now
+  updateProblemsButton();
 }
 
 

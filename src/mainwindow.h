@@ -106,6 +106,7 @@ public:
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
   virtual QString pluginDataPath() const;
   virtual void installMod(const QString &fileName);
+  virtual QString resolvePath(const QString &fileName) const;
   virtual MOBase::IDownloadManager *downloadManager();
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);

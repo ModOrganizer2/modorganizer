@@ -644,7 +644,6 @@ const FileEntry *DirectoryEntry::searchFile(const std::wstring &path, const Dire
       (path == L"*")) {
     // no file name -> the path ended on a (back-)slash
     *directory = this;
-
     return NULL;
   }
 
@@ -672,18 +671,6 @@ const FileEntry *DirectoryEntry::searchFile(const std::wstring &path, const Dire
   return NULL;
 }
 
-/*
-void DirectoryEntry::sortOrigins()
-{
-  for (std::set<FileEntry>::iterator iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    const_cast<FileEntry&>(*iter).sortOrigins();
-  }
-  for (std::vector<DirectoryEntry*>::iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    (*iter)->sortOrigins();
-  }
-}
-*/
-
 DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 {
   for (std::vector<DirectoryEntry*>::const_iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
@@ -693,7 +680,6 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
   }
   return NULL;
 }
-
 
 
 const FileEntry *DirectoryEntry::findFile(const std::wstring &name)
