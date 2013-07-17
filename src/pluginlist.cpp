@@ -116,10 +116,10 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
   m_CurrentProfile = profileName;
 
-  std::vector<FileEntry*> files = baseDirectory.getFiles();
+  std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (auto iter = files.begin(); iter != files.end(); ++iter) {
-    FileEntry *current = *iter;
-    if (current == NULL) {
+    FileEntry::Ptr current = *iter;
+    if (current.get() == NULL) {
       continue;
     }
     QString filename = ToQString(current->getName());
@@ -450,8 +450,8 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
 
   for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     std::wstring espName = ToWString(iter->m_Name);
-    const FileEntry *fileEntry = directoryStructure.findFile(espName);
-    if (fileEntry != NULL) {
+    const FileEntry::Ptr fileEntry = directoryStructure.findFile(espName);
+    if (fileEntry.get() != NULL) {
       QString fileName;
       bool archive = false;
       int originid = fileEntry->getOrigin(archive);

@@ -671,7 +671,7 @@ ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
   std::wstring name = ToWString(m_Name);
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry*> files = origin.getFiles();
+    std::vector<FileEntry::Ptr> files = origin.getFiles();
     for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
       const std::vector<int> &alternatives = (*iter)->getAlternatives();
       if (alternatives.size() == 0) {
@@ -716,7 +716,7 @@ bool ModInfoRegular::isRedundant() const
   std::wstring name = ToWString(m_Name);
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry*> files = origin.getFiles();
+    std::vector<FileEntry::Ptr> files = origin.getFiles();
     bool ignore = false;
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
       if ((*iter)->getOrigin(ignore) == origin.getID()) {

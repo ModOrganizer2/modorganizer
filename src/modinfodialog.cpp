@@ -181,7 +181,7 @@ void ModInfoDialog::refreshLists()
   ui->overwrittenTree->clear();
 
   if (m_Origin != NULL) {
-    std::vector<FileEntry*> files = m_Origin->getFiles();
+    std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
       QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
       QString fileName = relativeName.mid(0).prepend(m_RootPath);

@@ -17,6 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include <QApplication>
 #include <QPushButton>
 #include <QListWidget>
@@ -65,6 +66,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <eh.h>
 #include <windows_error.h>
 #include <boost/scoped_array.hpp>
+
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
 

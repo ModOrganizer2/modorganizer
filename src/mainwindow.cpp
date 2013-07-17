@@ -93,6 +93,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/assign.hpp>
 #include <Psapi.h>
 #include <shlobj.h>
+#include <ShellAPI.h>
 #include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
@@ -310,6 +311,7 @@ MainWindow::~MainWindow()
   m_RefresherThread.wait();
   delete ui;
   delete m_GameInfo;
+  delete m_DirectoryStructure;
 }
 
 void MainWindow::updateStyle(const QString&)
@@ -1321,9 +1323,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
   {
-    std::vector<FileEntry*> files = directoryEntry.getFiles();
+    std::vector<FileEntry::Ptr> files = directoryEntry.getFiles();
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      FileEntry *current = *iter;
+      FileEntry::Ptr current = *iter;
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
       }
@@ -1626,9 +1628,9 @@ void MainWindow::refreshBSAList()
 
   std::vector<std::pair<UINT32, QTreeWidgetItem*> > items;
 
-  std::vector<FileEntry*> files = m_DirectoryStructure->getFiles();
+  std::vector<FileEntry::Ptr> files = m_DirectoryStructure->getFiles();
   for (auto iter = files.begin(); iter != files.end(); ++iter) {
-    FileEntry *current = *iter;
+    FileEntry::Ptr current = *iter;
 
     QString filename = ToQString(current->getName().c_str());
     QString extension = filename.right(3).toLower();
@@ -1898,8 +1900,8 @@ QString MainWindow::resolvePath(const QString &fileName) const
   if (m_DirectoryStructure == NULL) {
     return QString();
   }
-  const FileEntry *file = m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
-  if (file != NULL) {
+  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
+  if (file.get() != NULL) {
     return ToQString(file->getFullPath());
   } else {
     return QString();
@@ -2551,12 +2553,15 @@ void MainWindow::removeMod_clicked()
 {
   try {
     QItemSelectionModel *selection = ui->modList->selectionModel();
-    if (selection->hasSelection() && selection->selectedRows().count() > 1  ) {
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       QString mods;
       QStringList modNames;
       foreach (QModelIndex idx, selection->selectedRows()) {
 //        QString name = ModInfo::getByIndex(m_ModListGroupProxy->mapToSource(idx).row())->name();
         QString name = idx.data().toString();
+        if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
+          continue;
+        }
         mods += "<li>" + name + "</li>";
         modNames.append(name);
       }
@@ -3624,9 +3629,9 @@ void MainWindow::writeDataToFile(QFile &file, const QString &directory, const Di
 //    directoryEntry.getFiles(current, end);
 //    for (; current != end; ++current) {
 
-    std::vector<FileEntry*> files = directoryEntry.getFiles();
+    std::vector<FileEntry::Ptr> files = directoryEntry.getFiles();
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      FileEntry *current = *iter;
+      FileEntry::Ptr current = *iter;
       bool isArchive = false;
       int origin = current->getOrigin(isArchive);
       if (isArchive) {

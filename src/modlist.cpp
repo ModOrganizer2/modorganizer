@@ -655,6 +655,7 @@ void ModList::removeRow(int row, const QModelIndex&)
   if (m_Profile == NULL) return;
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+  if (!modInfo->isRegular()) return;
 
   QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
                          QMessageBox::Yes | QMessageBox::No);
@@ -793,7 +794,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
       if (rows.count() > 1) {
         emit removeSelectedMods();
       } else if (rows.count() == 1) {
-        removeRow(rows[0].row(), QModelIndex());
+        removeRow(rows[0].data(Qt::UserRole + 1).toInt(), QModelIndex());
       }
       return true;
     }

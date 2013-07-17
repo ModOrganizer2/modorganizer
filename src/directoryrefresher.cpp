@@ -33,6 +33,11 @@ DirectoryRefresher::DirectoryRefresher()
 {
 }
 
+DirectoryRefresher::~DirectoryRefresher()
+{
+  delete m_DirectoryStructure;
+}
+
 DirectoryEntry *DirectoryRefresher::getDirectoryStructure()
 {
   QMutexLocker locker(&m_RefreshLock);

@@ -90,10 +90,10 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
         newItem = NULL;
       }
     } else {
-      const FileEntry *entry = directoryStructure->findFile(ToWString(file));
+      const FileEntry::Ptr entry = directoryStructure->findFile(ToWString(file));
       QComboBox* combo = new QComboBox(ui->syncTree);
       combo->addItem(tr("<don't sync>"), -1);
-      if (entry != NULL) {
+      if (entry.get() != NULL) {
         bool ignore;
         int origin = entry->getOrigin(ignore);
         addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(origin).getName()), origin);

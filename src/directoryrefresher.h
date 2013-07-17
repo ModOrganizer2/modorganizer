@@ -21,10 +21,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DIRECTORYREFRESHER_H
 
 #include <QObject>
-#include <directoryentry.h>
 #include <vector>
 #include <QMutex>
 #include <tuple>
+#include <directoryentry.h>
 
 
 /**
@@ -42,6 +42,8 @@ public:
    *
    **/
   DirectoryRefresher();
+
+  ~DirectoryRefresher();
 
   /**
    * @brief retrieve the updated directory structure

@@ -184,6 +184,7 @@ CONFIG(debug, debug|release) {
 	DSTDIR = $$PWD/../../outputd
 	LIBS += -L$$OUT_PWD/../shared/debug -L$$OUT_PWD/../bsatk/debug
 	LIBS += -L$$OUT_PWD/../uibase/debug
+	LIBS += -lDbgHelp
 } else {
 	OUTDIR = $$OUT_PWD/release
 	DSTDIR = $$PWD/../../output

@@ -29,7 +29,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <QProgressBar>
 #include <QTranslator>
-#include <directoryentry.h>
 #include "executableslist.h"
 #include "modlist.h"
 #include "pluginlist.h"
@@ -50,6 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialcontrol.h"
 #include "savegameinfowidgetgamebryo.h"
 #include <guessedvalue.h>
+#include <directoryentry.h>
 
 namespace Ui {
     class MainWindow;

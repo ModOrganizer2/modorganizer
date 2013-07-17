@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "categories.h"
 #include "tutorabledialog.h"
-#include <directoryentry.h>
 
 #include <QDialog>
 #include <QSignalMapper>
@@ -37,6 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTreeWidgetItem>
 #include <QTextCodec>
 #include <set>
+#include <directoryentry.h>
 
 
 namespace Ui {

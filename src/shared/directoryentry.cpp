@@ -27,9 +27,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include <boost/bind.hpp>
+#include "util.h"
+#include "leaktrace.h"
+
+#include <map>
+
 
 namespace MOShared {
 
+
+static int s_Count = 0;
 
 
 class OriginConnection {
@@ -43,7 +50,9 @@ public:
 
   OriginConnection()
     : m_NextID(0)
-  {}
+  {
+    LEAK_TRACE;
+  }
 
   FilesOrigin& createOrigin(const std::wstring &originName, const std::wstring &directory, int priority,
                             boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection) {
@@ -123,7 +132,7 @@ void FilesOrigin::enable(bool enabled)
   if (!enabled) {
     std::set<FileEntry::Index> copy = m_Files;
     for (auto iter = copy.begin(); iter != copy.end(); ++iter) {
-      m_FileRegister->removeOrigin(*iter, m_ID);
+      m_FileRegister.lock()->removeOrigin(*iter, m_ID);
     }
     m_Files.clear();
   }
@@ -151,9 +160,41 @@ std::wstring tail(const std::wstring &source, const size_t count)
 }
 
 
+FilesOrigin::FilesOrigin()
+  : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0)
+{
+  LEAK_TRACE;
+}
+
+FilesOrigin::FilesOrigin(const FilesOrigin &reference)
+  : m_ID(reference.m_ID)
+  , m_Disabled(reference.m_Disabled)
+  , m_Name(reference.m_Name)
+  , m_Path(reference.m_Path)
+  , m_Priority(reference.m_Priority)
+  , m_FileRegister(reference.m_FileRegister)
+  , m_OriginConnection(reference.m_OriginConnection)
+{
+  LEAK_TRACE;
+}
+
+
+FilesOrigin::FilesOrigin(int ID, const std::wstring &name, const std::wstring &path, int priority, boost::shared_ptr<MOShared::FileRegister> fileRegister, boost::shared_ptr<MOShared::OriginConnection> originConnection)
+  : m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path), m_Priority(priority),
+    m_FileRegister(fileRegister), m_OriginConnection(originConnection)
+{
+  LEAK_TRACE;
+}
+
+FilesOrigin::~FilesOrigin()
+{
+  LEAK_UNTRACE;
+}
+
+
 void FilesOrigin::setPriority(int priority)
 {
-  m_OriginConnection->changePriorityLookup(m_Priority, priority);
+  m_OriginConnection.lock()->changePriorityLookup(m_Priority, priority);
 
   m_Priority = priority;
 }
@@ -161,7 +202,7 @@ void FilesOrigin::setPriority(int priority)
 
 void FilesOrigin::setName(const std::wstring &name)
 {
-  m_OriginConnection->changeNameLookup(m_Name, name);
+  m_OriginConnection.lock()->changeNameLookup(m_Name, name);
   // change path too
   if (tail(m_Path, m_Name.length()) == m_Name) {
     m_Path = m_Path.substr(0, m_Path.length() - m_Name.length()).append(name);
@@ -169,12 +210,12 @@ void FilesOrigin::setName(const std::wstring &name)
   m_Name = name;
 }
 
-std::vector<FileEntry*> FilesOrigin::getFiles() const
+std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 {
-  std::vector<FileEntry*> result;
+  std::vector<FileEntry::Ptr> result;
 
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    result.push_back(m_FileRegister->getFile(*iter));
+    result.push_back(m_FileRegister.lock()->getFile(*iter));
   }
 
   return result;
@@ -275,11 +316,22 @@ static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 }
 
 
+FileEntry::FileEntry()
+  : m_Index(UINT_MAX), m_Name(), m_Parent(NULL)
+{
+  LEAK_TRACE;
+}
+
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
   : m_Index(index), m_Name(name), m_Parent(parent), m_Origin(-1), m_Archive(L"")
 {
+  LEAK_TRACE;
 }
 
+FileEntry::~FileEntry()
+{
+  LEAK_UNTRACE;
+}
 
 void FileEntry::sortOrigins()
 {
@@ -322,28 +374,35 @@ std::wstring FileEntry::getRelativePath() const
 }
 
 
-
-
-
 //
 // DirectoryEntry
 //
 DirectoryEntry::DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID)
   : m_OriginConnection(new OriginConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID)
+    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID), m_TopLevel(true)
 {
   m_FileRegister.reset(new FileRegister(m_OriginConnection));
+  LEAK_TRACE;
 }
 
 DirectoryEntry::DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID,
                boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection)
   : m_FileRegister(fileRegister), m_OriginConnection(originConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID)
-{}
+    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID), m_TopLevel(false)
+{
+  LEAK_TRACE;
+}
 
 
 DirectoryEntry::~DirectoryEntry()
 {
+/*  if (m_TopLevel) {
+    if (m_FileRegister.use_count() > 1) {
+log("this should not happen");
+      delete m_FileRegister.get();
+    }
+  }*/
+  LEAK_UNTRACE;
   clear();
 }
 
@@ -573,7 +632,7 @@ int DirectoryEntry::anyOrigin() const
 {
   bool ignore;
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    FileEntry *entry = m_FileRegister->getFile(iter->second);
+    FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
     if (!entry->isFromArchive()) {
       return entry->getOrigin(ignore);
     }
@@ -612,8 +671,8 @@ FilesOrigin &DirectoryEntry::getOriginByName(const std::wstring &name) const
 int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
 {
   const DirectoryEntry *directory = NULL;
-  const FileEntry *file = searchFile(path, &directory);
-  if (file != NULL) {
+  const FileEntry::Ptr file = searchFile(path, &directory);
+  if (file.get() != NULL) {
     return file->getOrigin(archive);
   } else {
     if (directory != NULL) {
@@ -624,9 +683,9 @@ int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
   }
 }
 
-std::vector<FileEntry*> DirectoryEntry::getFiles() const
+std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
 {
-  std::vector<FileEntry*> result;
+  std::vector<FileEntry::Ptr> result;
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     result.push_back(m_FileRegister->getFile(iter->second));
   }
@@ -634,7 +693,7 @@ std::vector<FileEntry*> DirectoryEntry::getFiles() const
 }
 
 
-const FileEntry *DirectoryEntry::searchFile(const std::wstring &path, const DirectoryEntry **directory) const
+const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const DirectoryEntry **directory) const
 {
   if (directory != NULL) {
     *directory = NULL;
@@ -682,7 +741,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 }
 
 
-const FileEntry *DirectoryEntry::findFile(const std::wstring &name)
+const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name)
 {
   auto iter = m_Files.find(name);
   if (iter != m_Files.end()) {
@@ -734,7 +793,15 @@ DirectoryEntry *DirectoryEntry::getSubDirectoryRecursive(const std::wstring &pat
 FileRegister::FileRegister(boost::shared_ptr<OriginConnection> originConnection)
   : m_OriginConnection(originConnection)
 {
+  LEAK_TRACE;
 }
+
+FileRegister::~FileRegister()
+{
+  LEAK_UNTRACE;
+  m_Files.clear();
+}
+
 
 FileEntry::Index FileRegister::generateIndex()
 {
@@ -747,38 +814,38 @@ bool FileRegister::indexValid(FileEntry::Index index) const
   return m_Files.find(index) != m_Files.end();
 }
 
-FileEntry &FileRegister::createFile(const std::wstring &name, DirectoryEntry *parent)
+FileEntry::Ptr FileRegister::createFile(const std::wstring &name, DirectoryEntry *parent)
 {
   FileEntry::Index index = generateIndex();
-  m_Files[index] = FileEntry(index, name, parent);
+  m_Files[index] = FileEntry::Ptr(new FileEntry(index, name, parent));
   return m_Files[index];
 }
 
 
-FileEntry *FileRegister::getFile(FileEntry::Index index)
+FileEntry::Ptr FileRegister::getFile(FileEntry::Index index)
 {
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {
-    return &iter->second;
+    return iter->second;
   }
   return NULL;
 }
 
 
-void FileRegister::unregisterFile(FileEntry &file)
+void FileRegister::unregisterFile(FileEntry::Ptr file)
 {
   bool ignore;
   // unregister from origin
-  int originID = file.getOrigin(ignore);
-  m_OriginConnection->getByID(originID).removeFile(file.getIndex());
-  const std::vector<int> &alternatives = file.getAlternatives();
+  int originID = file->getOrigin(ignore);
+  m_OriginConnection->getByID(originID).removeFile(file->getIndex());
+  const std::vector<int> &alternatives = file->getAlternatives();
   for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-    m_OriginConnection->getByID(*iter).removeFile(file.getIndex());
+    m_OriginConnection->getByID(*iter).removeFile(file->getIndex());
   }
 
   // unregister from directory
-  if (file.getParent() != NULL) {
-    file.getParent()->removeFile(file.getIndex());
+  if (file->getParent() != NULL) {
+    file->getParent()->removeFile(file->getIndex());
   }
 }
 
@@ -796,7 +863,7 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
 {
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {
-    if (iter->second.removeOrigin(originID)) {
+    if (iter->second->removeOrigin(originID)) {
       unregisterFile(iter->second);
     }
   }
@@ -805,7 +872,8 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
 void FileRegister::sortOrigins()
 {
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    iter->second.sortOrigins();
+    iter->second->sortOrigins();
   }
 }
+
 } // namespace MOShared

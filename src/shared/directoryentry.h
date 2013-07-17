@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYENTRY_H
 #define DIRECTORYENTRY_H
 
+
 #include <string>
 #include <set>
 #include <vector>
@@ -29,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 #include <bsatk.h>
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include "util.h"
 
 
@@ -46,11 +48,15 @@ public:
 
   typedef unsigned int Index;
 
+  typedef boost::shared_ptr<FileEntry> Ptr;
+
 public:
 
-  FileEntry() : m_Index(UINT_MAX), m_Name(), m_Parent(NULL) {}
+  FileEntry();
 
   FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent);
+
+  ~FileEntry();
 
   Index getIndex() const { return m_Index; }
 
@@ -105,8 +111,9 @@ class FilesOrigin {
   friend class OriginConnection;
 public:
 
-  FilesOrigin()
-    : m_ID(0), m_Disabled(false), m_Name(), m_Path(), m_Priority(0) { }
+  FilesOrigin();
+  FilesOrigin(const FilesOrigin &reference);
+  ~FilesOrigin();
 
   // sets priority for this origin, but it will overwrite the exisiting mapping for this priority,
   // the previous origin will no longer be referenced
@@ -120,7 +127,7 @@ public:
   int getID() const { return m_ID; }
   const std::wstring &getPath() const { return m_Path; }
 
-  std::vector<FileEntry*> getFiles() const;
+  std::vector<FileEntry::Ptr> getFiles() const;
 
   void enable(bool enabled);
   bool isDisabled() const { return m_Disabled; }
@@ -131,9 +138,8 @@ public:
 private:
 
   FilesOrigin(int ID, const std::wstring &name, const std::wstring &path, int priority,
-              boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection)
-    : m_ID(ID), m_Disabled(false), m_Name(name), m_Path(path), m_Priority(priority),
-      m_FileRegister(fileRegister), m_OriginConnection(originConnection) {}
+              boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection);
+
 
 private:
 
@@ -145,8 +151,8 @@ private:
   std::wstring m_Name;
   std::wstring m_Path;
   int m_Priority;
-  boost::shared_ptr<FileRegister> m_FileRegister;
-  boost::shared_ptr<OriginConnection> m_OriginConnection;
+  boost::weak_ptr<FileRegister> m_FileRegister;
+  boost::weak_ptr<OriginConnection> m_OriginConnection;
 
 };
 
@@ -157,11 +163,12 @@ class FileRegister
 public:
 
   FileRegister(boost::shared_ptr<OriginConnection> originConnection);
+  ~FileRegister();
 
   bool indexValid(FileEntry::Index index) const;
 
-  FileEntry &createFile(const std::wstring &name, DirectoryEntry *parent);
-  FileEntry *getFile(FileEntry::Index index);
+  FileEntry::Ptr createFile(const std::wstring &name, DirectoryEntry *parent);
+  FileEntry::Ptr getFile(FileEntry::Index index);
 
   void removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
@@ -172,11 +179,11 @@ private:
 
   FileEntry::Index generateIndex();
 
-  void unregisterFile(FileEntry &file);
+  void unregisterFile(FileEntry::Ptr file);
 
 private:
 
-  std::map<FileEntry::Index, FileEntry> m_Files;
+  std::map<FileEntry::Index, FileEntry::Ptr> m_Files;
 
   boost::shared_ptr<OriginConnection> m_OriginConnection;
 
@@ -197,7 +204,6 @@ public:
   void clear();
   bool isPopulated() const { return m_Populated; }
 
-  boost::shared_ptr<FileRegister> getRegister() { return m_FileRegister; }
   const DirectoryEntry *getParent() const { return m_Parent; }
 
   // add files to this directory (and subdirectories) from the specified origin. That origin may exist or not
@@ -214,7 +220,7 @@ public:
 
   int getOrigin(const std::wstring &path, bool &archive);
 
-  std::vector<FileEntry*> getFiles() const;
+  std::vector<FileEntry::Ptr> getFiles() const;
 
   void getSubDirectories(std::vector<DirectoryEntry*>::const_iterator &begin, std::vector<DirectoryEntry*>::const_iterator &end) const {
     begin = m_SubDirectories.begin(); end = m_SubDirectories.end();
@@ -226,12 +232,12 @@ public:
     * @param name name of the file
     * @return fileentry object for the file or NULL if no file matches
     */
-  const FileEntry *findFile(const std::wstring &name);
+  const FileEntry::Ptr findFile(const std::wstring &name);
 
   /** search through this directory and all subdirectories for a file by the specified name.
       if directory is not NULL, the referenced variable will be set to true if the path refers to a directory.
       the returned pointer is NULL in that case */
-  const FileEntry *searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
+  const FileEntry::Ptr searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);
 
@@ -250,8 +256,8 @@ public:
     auto iter = m_Files.find(fileName);
     if (iter != m_Files.end()) {
       if (origin != NULL) {
-        FileEntry *entry = m_FileRegister->getFile(iter->second);
-        if (entry != NULL) {
+        FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+        if (entry.get() != NULL) {
           bool ignore;
           *origin = entry->getOrigin(ignore);
         }
@@ -262,13 +268,16 @@ public:
 
 private:
 
+  DirectoryEntry(const DirectoryEntry &reference);
+  DirectoryEntry &operator=(const DirectoryEntry &reference);
+
   void insert(const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime, const std::wstring &archive) {
     auto iter = m_Files.find(fileName);
-    FileEntry *file = NULL;
+    FileEntry::Ptr file;
     if (iter != m_Files.end()) {
       file = m_FileRegister->getFile(iter->second);
     } else {
-      file = &m_FileRegister->createFile(fileName, this);
+      file = m_FileRegister->createFile(fileName, this);
       m_Files[fileName] = file->getIndex();
     }
     file->addOrigin(origin.getID(), fileTime, archive);
@@ -309,6 +318,8 @@ private:
   int m_Origin;
 
   bool m_Populated;
+
+  bool m_TopLevel;
 
 };
 

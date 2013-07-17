@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define MODINFO_H
 
 #include "nexusinterface.h"
-#include <directoryentry.h>
 #include <versioninfo.h>
 #include <imodinterface.h>
 
@@ -34,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <map>
 #include <set>
 #include <vector>
+#include <directoryentry.h>
 
 using MOBase::ModRepositoryFileInfo;
 

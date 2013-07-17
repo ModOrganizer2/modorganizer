@@ -15,7 +15,7 @@ INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
 CONFIG(debug, debug|release) {
 		LIBS += -L$$OUT_PWD/../bsatk/debug
-
+	LIBS += -lDbgHelp
 } else {
 		LIBS += -L$$OUT_PWD/../bsatk/release
 }
@@ -39,7 +39,8 @@ SOURCES += \
     falloutnvinfo.cpp \
     util.cpp \
     skyriminfo.cpp \
-    appconfig.cpp
+    appconfig.cpp \
+    leaktrace.cpp
 
 HEADERS += \
     inject.h \
@@ -53,4 +54,5 @@ HEADERS += \
     util.h \
     skyriminfo.h \
     appconfig.h \
-    appconfig.inc
+    appconfig.inc \
+    leaktrace.h
