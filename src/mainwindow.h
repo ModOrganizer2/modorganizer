@@ -362,6 +362,8 @@ private slots:
   void checkModsForUpdates();
   void nexusLinkActivated(const QString &link);
 
+  void linkClicked(const QString &url);
+
   void loginSuccessful(bool necessary);
   void loginSuccessfulUpdate(bool necessary);
   void loginFailed(const QString &message);

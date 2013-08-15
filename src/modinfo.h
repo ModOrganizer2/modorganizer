@@ -354,9 +354,14 @@ public:
   virtual QString getDescription() const = 0;
 
   /**
-   * @return manually set notes for this mod
+   * @return notes for this mod
    */
   virtual QString notes() const = 0;
+
+  /**
+   * @return creation time of this mod
+   */
+  virtual QDateTime creationTime() const = 0;
 
   /**
    * @return nexus description of the mod (html)
@@ -670,6 +675,11 @@ public:
   virtual QString notes() const;
 
   /**
+   * @return time this mod was created (file time of the directory)
+   */
+  virtual QDateTime creationTime() const;
+
+  /**
    * @return nexus description of the mod (html)
    */
   QString getNexusDescription() const;
@@ -729,6 +739,7 @@ private:
   QString m_Notes;
   QString m_NexusDescription;
 
+  QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
 
   int m_NexusID;
@@ -741,6 +752,9 @@ private:
   NexusBridge m_NexusBridge;
 
   MOShared::DirectoryEntry **m_DirectoryStructure;
+
+  mutable EConflictType m_CurrentConflictState;
+  mutable QTime m_LastConflictCheck;
 
 };
 
@@ -797,6 +811,7 @@ public:
   virtual void endorse(bool) {}
   virtual QString name() const { return tr("Overwrite"); }
   virtual QString notes() const { return ""; }
+  virtual QDateTime creationTime() const { return QDateTime::currentDateTime(); }
   virtual QString absolutePath() const;
   virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
   virtual QString getInstallationFile() const { return ""; }

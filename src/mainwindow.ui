@@ -31,7 +31,16 @@
     <property name="spacing">
      <number>4</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
      <number>6</number>
     </property>
     <item>
@@ -719,19 +728,18 @@ p, li { white-space: pre-wrap; }
             <string notr="true">Archives</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
-            <property name="margin">
+            <property name="leftMargin">
              <number>6</number>
             </property>
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>IMPORTANT: You can change the order of BSAs here but installation order of mods has priority over the order specified here!</string>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
+             <number>6</number>
+            </property>
             <item>
              <widget class="QTreeWidget" name="bsaList">
               <property name="contextMenuPolicy">
@@ -749,14 +757,17 @@ BSAs checked here are loaded in such a way that your installation order is obeye
               <property name="editTriggers">
                <set>QAbstractItemView::NoEditTriggers</set>
               </property>
+              <property name="showDropIndicator" stdset="0">
+               <bool>false</bool>
+              </property>
               <property name="dragEnabled">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <property name="dragDropOverwriteMode">
                <bool>false</bool>
               </property>
               <property name="dragDropMode">
-               <enum>QAbstractItemView::InternalMove</enum>
+               <enum>QAbstractItemView::NoDragDrop</enum>
               </property>
               <property name="defaultDropAction">
                <enum>Qt::IgnoreAction</enum>
@@ -768,10 +779,10 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                <enum>QAbstractItemView::SelectRows</enum>
               </property>
               <property name="indentation">
-               <number>0</number>
+               <number>20</number>
               </property>
               <property name="itemsExpandable">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <attribute name="headerDefaultSectionSize">
                <number>200</number>
@@ -788,6 +799,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
               </column>
              </widget>
             </item>
+            <item>
+             <widget class="QLabel" name="bsaWarning">
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/resources/dialog-warning_16.png&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
            </layout>
           </widget>
           <widget class="QWidget" name="dataTab">
@@ -795,7 +816,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Data</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -865,7 +895,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Saves</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -894,7 +933,16 @@ p, li { white-space: pre-wrap; }
             <string>Downloads</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>2</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>2</number>
+            </property>
+            <property name="bottomMargin">
              <number>2</number>
             </property>
             <item>

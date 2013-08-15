@@ -699,11 +699,12 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     *directory = NULL;
   }
 
-  if ((path.length() == 0) ||
-      (path == L"*")) {
+  if ((path.length() == 0) || (path == L"*")) {
     // no file name -> the path ended on a (back-)slash
-    *directory = this;
-    return NULL;
+    if (directory != NULL) {
+      *directory = this;
+    }
+    return FileEntry::Ptr();
   }
 
   size_t len =  path.find_first_of(L"\\/");
@@ -727,8 +728,9 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
       return temp->searchFile(path.substr(len + 1), directory);
     }
   }
-  return NULL;
+  return FileEntry::Ptr();
 }
+
 
 DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 {
@@ -747,7 +749,7 @@ const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name)
   if (iter != m_Files.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {
-    return NULL;
+    return FileEntry::Ptr();
   }
 }
 
@@ -828,7 +830,7 @@ FileEntry::Ptr FileRegister::getFile(FileEntry::Index index)
   if (iter != m_Files.end()) {
     return iter->second;
   }
-  return NULL;
+  return FileEntry::Ptr();
 }
 
 
