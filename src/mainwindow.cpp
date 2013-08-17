@@ -256,6 +256,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
+  connect(ui->bsaWarning, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
+
   connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(&m_DirectoryRefresher, SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
   connect(&m_DirectoryRefresher, SIGNAL(error(QString)), this, SLOT(showError(QString)));
@@ -989,12 +991,14 @@ void MainWindow::loadPlugins()
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader pluginLoader(pluginName);
       if (pluginLoader.instance() == NULL) {
+        m_UnloadedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
                   pluginName.toUtf8().constData(), pluginLoader.errorString().toUtf8().constData());
       } else {
         if (registerPlugin(pluginLoader.instance())) {
           qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
         } else {
+          m_UnloadedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
         }
       }
@@ -1002,6 +1006,8 @@ void MainWindow::loadPlugins()
   }
 
   m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
+
+  m_DiagnosisPlugins.push_back(this);
 }
 
 IGameInfo &MainWindow::gameInfo() const
@@ -1651,7 +1657,8 @@ void MainWindow::refreshBSAList()
       QTreeWidgetItem *newItem = new QTreeWidgetItem(strings);
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, origin);
-      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+//      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       if (m_Settings.forceEnableCoreFiles() && m_DefaultArchives.contains(filename)) {
         newItem->setCheckState(0, Qt::Checked);
@@ -1661,6 +1668,7 @@ void MainWindow::refreshBSAList()
       }
 
       if (index < 0) index = 0;
+
       UINT32 sortValue = ((m_DirectoryStructure->getOriginByID(origin).getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
       items.push_back(std::make_pair(sortValue, newItem));
     }
@@ -1669,7 +1677,18 @@ void MainWindow::refreshBSAList()
   std::sort(items.begin(), items.end(), BySortValue);
 
   for (std::vector<std::pair<UINT32, QTreeWidgetItem*> >::iterator iter = items.begin(); iter != items.end(); ++iter) {
-    ui->bsaList->addTopLevelItem(iter->second);
+    int originID = iter->second->data(1, Qt::UserRole).toInt();
+    FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
+    QList<QTreeWidgetItem*> items = ui->bsaList->findItems(ToQString(origin.getName()), Qt::MatchFixedString);
+    QTreeWidgetItem *subItem = NULL;
+    if (items.length() > 0) {
+      subItem = items.at(0);
+    } else {
+      subItem = new QTreeWidgetItem(QStringList(ToQString(origin.getName())));
+      ui->bsaList->addTopLevelItem(subItem);
+    }
+    subItem->addChild(iter->second);
+    //ui->bsaList->addTopLevelItem(iter->second);
   }
 
   checkBSAList();
@@ -1684,26 +1703,34 @@ void MainWindow::checkBSAList()
   bool warning = false;
 
   for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-    QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
-    QString filename = item->text(0);
-    item->setIcon(0, QIcon());
-    item->setToolTip(0, QString());
+    bool modWarning = false;
+    QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
+    for (int j = 0; j < tlItem->childCount(); ++j) {
+      QTreeWidgetItem *item = tlItem->child(j);
+      QString filename = item->text(0);
+      item->setIcon(0, QIcon());
+      item->setToolTip(0, QString());
 
-    if (item->checkState(0) == Qt::Unchecked) {
-      if (m_DefaultArchives.contains(filename)) {
-        item->setIcon(0, QIcon(":/MO/gui/resources/dialog-warning.png"));
-        item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
-        warning = true;
-      } else {
-        QString espName = filename.mid(0, filename.length() - 3).append("esp").toLower();
-        QString esmName = filename.mid(0, filename.length() - 3).append("esm").toLower();
-        if (m_PluginList.isEnabled(espName) || m_PluginList.isEnabled(esmName)) {
+      if (item->checkState(0) == Qt::Unchecked) {
+        if (m_DefaultArchives.contains(filename)) {
           item->setIcon(0, QIcon(":/MO/gui/resources/dialog-warning.png"));
-          item->setToolTip(0, tr("This archive will still be loaded since there is a plugin of the same name but "
-                                    "its files will not follow installation order!"));
-          warning = true;
+          item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
+          modWarning = true;
+        } else {
+          QString espName = filename.mid(0, filename.length() - 3).append("esp").toLower();
+          QString esmName = filename.mid(0, filename.length() - 3).append("esm").toLower();
+          if (m_PluginList.isEnabled(espName) || m_PluginList.isEnabled(esmName)) {
+            item->setIcon(0, QIcon(":/MO/gui/resources/dialog-warning.png"));
+            item->setToolTip(0, tr("This archive will still be loaded since there is a plugin of the same name but "
+                                      "its files will not follow installation order!"));
+            modWarning = true;
+          }
         }
       }
+    }
+    if (modWarning) {
+      ui->bsaList->expandItem(ui->bsaList->topLevelItem(i));
+      warning = true;
     }
   }
 
@@ -1916,6 +1943,46 @@ IDownloadManager *MainWindow::downloadManager()
   return &m_DownloadManager;
 }
 
+std::vector<unsigned int> MainWindow::activeProblems() const
+{
+  std::vector<unsigned int> problems;
+  if (m_UnloadedPlugins.size() != 0) {
+    problems.push_back(PROBLEM_PLUGINSNOTLOADED);
+  }
+  return problems;
+}
+
+QString MainWindow::shortDescription(unsigned int key) const
+{
+  switch (key) {
+    case PROBLEM_PLUGINSNOTLOADED: {
+      return tr("Some plugins could not be loaded");
+    } break;
+  }
+}
+
+QString MainWindow::fullDescription(unsigned int key) const
+{
+  switch (key) {
+    case PROBLEM_PLUGINSNOTLOADED: {
+      QString result = tr("The following Plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:<ul>");
+      foreach (const QString &plugin, m_UnloadedPlugins) {
+        result += "<li>" + plugin + "</li>";
+      }
+      result += "<ul>";
+      return result;
+    } break;
+  }
+}
+
+bool MainWindow::hasGuidedFix(unsigned int key) const
+{
+  return false;
+}
+
+void MainWindow::startGuidedFix(unsigned int key) const
+{
+}
 
 void MainWindow::installMod()
 {
@@ -2074,7 +2141,6 @@ void MainWindow::issueTriggered()
 {
   ::ShellExecuteW(NULL, L"open", L"http://issue.tannin.eu/tbg", NULL, NULL, SW_SHOWNORMAL);
 }
-
 
 void MainWindow::tutorialTriggered()
 {
@@ -3315,6 +3381,7 @@ void MainWindow::fixMods_clicked()
   QStringList espFilter("*.esp");
   espFilter.append("*.esm");
 
+  // search in data
   {
     QDir dataDir(m_GamePath + "/data");
     QStringList esps = dataDir.entryList(espFilter);
@@ -3326,6 +3393,7 @@ void MainWindow::fixMods_clicked()
     }
   }
 
+  // search in mods
   for (unsigned int i = 0; i < m_CurrentProfile->numRegularMods(); ++i) {
     int modIndex = m_CurrentProfile->modIndexByPriority(i);
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
@@ -3339,12 +3407,25 @@ void MainWindow::fixMods_clicked()
     }
   }
 
+  // search in overwrite
+  {
+    QDir overwriteDir(ToQString(GameInfo::instance().getOverwriteDir()));
+    QStringList esps = overwriteDir.entryList(espFilter);
+    foreach (const QString &esp, esps) {
+      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
+      if (iter != missingPlugins.end()) {
+        iter->second.push_back("<overwrite>");
+      }
+    }
+  }
+
+
   ActivateModsDialog dialog(missingPlugins, this);
   if (dialog.exec() == QDialog::Accepted) {
     // activate the required mods, then enable all esps
     std::set<QString> modsToActivate = dialog.getModsToActivate();
     for (std::set<QString>::iterator iter = modsToActivate.begin(); iter != modsToActivate.end(); ++iter) {
-      if (*iter != "<data>") {
+      if ((*iter != "<data>") && (*iter != "<overwrite>")) {
         unsigned int modIndex = ModInfo::getIndex(*iter);
         m_CurrentProfile->setModEnabled(modIndex, true);
       }
@@ -3485,7 +3566,7 @@ void MainWindow::on_actionNexus_triggered()
   std::wstring nxmPath = ToWString(QApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QApplication::applicationFilePath());
   ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
-                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" " + executable).c_str(), NULL, SW_SHOWNORMAL);
+                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
 
   ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);
@@ -3496,6 +3577,12 @@ void MainWindow::nexusLinkActivated(const QString &link)
 {
   ::ShellExecuteW(NULL, L"open", ToWString(link).c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);
+}
+
+
+void MainWindow::linkClicked(const QString &url)
+{
+  ::ShellExecuteW(NULL, L"open", ToWString(url).c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
 

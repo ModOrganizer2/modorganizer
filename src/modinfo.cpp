@@ -298,7 +298,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
     m_EndorsedState(ENDORSED_UNKNOWN), m_DirectoryStructure(directoryStructure)
 {
   testValid();
-
+  m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
   QString metaFileName = path.absoluteFilePath("meta.ini");
   QSettings metaFile(metaFileName, QSettings::IniFormat);
@@ -645,6 +645,11 @@ QString ModInfoRegular::notes() const
   return m_Notes;
 }
 
+QDateTime ModInfoRegular::creationTime() const
+{
+  return m_CreationTime;
+}
+
 QString ModInfoRegular::getNexusDescription() const
 {
   return m_NexusDescription;
@@ -659,55 +664,63 @@ ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
 
 ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
 {
-  bool overwrite = false;
-  bool overwritten = false;
-  bool regular = false;
+  // this is costy so cache the result
+  QTime now = QTime::currentTime();
+  if (abs(m_LastConflictCheck.secsTo(now)) > 10) {
+    bool overwrite = false;
+    bool overwritten = false;
+    bool regular = false;
 
-  int dataID = 0;
-  if ((*m_DirectoryStructure)->originExists(L"data")) {
-    dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
-  }
+    int dataID = 0;
+    if ((*m_DirectoryStructure)->originExists(L"data")) {
+      dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+    }
 
-  std::wstring name = ToWString(m_Name);
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry::Ptr> files = origin.getFiles();
-    for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
-      const std::vector<int> &alternatives = (*iter)->getAlternatives();
-      if (alternatives.size() == 0) {
-        // no alternatives -> no conflict
-        regular = true;
-      } else {
-        for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-          // don't treat files overwritten in data as "conflict"
-          if (*altIter != dataID) {
-            bool ignore = false;
-            if ((*iter)->getOrigin(ignore) == origin.getID()) {
-              overwrite = true;
-              break;
-            } else {
-              overwritten = true;
-              break;
+    std::wstring name = ToWString(m_Name);
+    if ((*m_DirectoryStructure)->originExists(name)) {
+      FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+      std::vector<FileEntry::Ptr> files = origin.getFiles();
+      for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
+        const std::vector<int> &alternatives = (*iter)->getAlternatives();
+        if (alternatives.size() == 0) {
+          // no alternatives -> no conflict
+          regular = true;
+        } else {
+          for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
+            // don't treat files overwritten in data as "conflict"
+            if (*altIter != dataID) {
+              bool ignore = false;
+              if ((*iter)->getOrigin(ignore) == origin.getID()) {
+                overwrite = true;
+                break;
+              } else {
+                overwritten = true;
+                break;
+              }
+            } else if (alternatives.size() == 1) {
+              // only alternative is data -> no conflict
+              regular = true;
             }
-          } else if (alternatives.size() == 1) {
-            // only alternative is data -> no conflict
-            regular = true;
           }
         }
       }
     }
+
+    m_LastConflictCheck = QTime::currentTime();
+
+    if (overwrite && overwritten) m_CurrentConflictState = CONFLICT_MIXED;
+    else if (overwrite) m_CurrentConflictState = CONFLICT_OVERWRITE;
+    else if (overwritten) {
+      if (!regular) {
+        m_CurrentConflictState = CONFLICT_REDUNDANT;
+      } else {
+        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+      }
+    }
+    else m_CurrentConflictState = CONFLICT_NONE;
   }
 
-  if (overwrite && overwritten) return CONFLICT_MIXED;
-  else if (overwrite) return CONFLICT_OVERWRITE;
-  else if (overwritten) {
-    if (!regular) {
-      return CONFLICT_REDUNDANT;
-    } else {
-      return CONFLICT_OVERWRITTEN;
-    }
-  }
-  else return CONFLICT_NONE;
+  return m_CurrentConflictState;
 }
 
 

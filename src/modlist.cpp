@@ -178,6 +178,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         //return tr("None");
         return QVariant();
       }
+    } else if (column == COL_INSTALLTIME) {
+      return modInfo->creationTime();
     } else {
       return tr("invalid");
     }
@@ -718,6 +720,7 @@ QString ModList::getColumnName(int column)
     case COL_PRIORITY: return tr("Priority");
     case COL_CATEGORY: return tr("Category");
     case COL_MODID:    return tr("Nexus ID");
+    case COL_INSTALLTIME: return tr("Installation");
     default: return tr("unknown");
   }
 }
@@ -733,6 +736,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
+    case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");
   }
 }

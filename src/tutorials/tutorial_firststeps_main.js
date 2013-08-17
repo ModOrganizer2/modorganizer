@@ -93,7 +93,7 @@ function getTutorialSteps()
     function() {
         tutorial.text = qsTr("...but most contain plugins. These are plugins for the game and are required "
                             +"to add stuff to the game (new weapons, armors, quests, areas, ...). "
-                            +"Please open the \"ESPs\"-tab to get a list of plugins.")
+                            +"Please open the \"Plugins\"-tab to get a list of plugins.")
         if (tutorialControl.waitForTabOpen("tabWidget", 0)) {
             highlightItem("tabWidget", true)
         } else {
@@ -118,7 +118,7 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("Another special type of files are BSAs. These are bundles of game resources. "
-                             + "Please open the \"BSAs\"-tab.")
+                             + "Please open the \"Archives\"-tab.")
         if (tutorialControl.waitForTabOpen("tabWidget", 1)) {
             highlightItem("tabWidget", true)
         } else {
