@@ -288,6 +288,7 @@ public:
    */
   int indexByName(const QString &fileName) const;
 
+  void pauseAll();
 signals:
 
   void aboutToUpdate();
@@ -357,10 +358,10 @@ private slots:
 private:
 
   void createMetaFile(DownloadInfo *info);
-//  QString getOutputPath(const QUrl &url, const QString &fileName) const;
   QString getDownloadFileName(const QString &baseName) const;
 
   void startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
+  void resumeDownloadInt(int index);
 
   /**
    * @brief start a download from a url

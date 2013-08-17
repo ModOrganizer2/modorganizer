@@ -710,12 +710,15 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  if (m_DownloadManager.downloadsInProgress() &&
-    QMessageBox::question(this, tr("Downloads in progress"),
+  if (m_DownloadManager.downloadsInProgress()) {
+    if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
-    event->ignore();
-    return;
+      event->ignore();
+      return;
+    } else {
+      m_DownloadManager.pauseAll();
+    }
   }
 
   setCursor(Qt::WaitCursor);

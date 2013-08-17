@@ -54,6 +54,11 @@ public:
     LEAK_TRACE;
   }
 
+  ~OriginConnection()
+  {
+    LEAK_UNTRACE;
+  }
+
   FilesOrigin& createOrigin(const std::wstring &originName, const std::wstring &directory, int priority,
                             boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection) {
     int newID = createID();

@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/bind.hpp>
 #include <regex>
 #include <QMessageBox>
+#include <QCoreApplication>
 
 
 using QtJson::Json;
@@ -162,10 +163,39 @@ bool DownloadManager::downloadsInProgress()
 {
   for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter) {
     if ((*iter)->m_State < STATE_READY) {
-//      return true;
+      return true;
     }
   }
   return false;
+}
+
+void DownloadManager::pauseAll()
+{
+  // first loop: pause all downloads
+  for (int i = 0; i < m_ActiveDownloads.count(); ++i) {
+    if (m_ActiveDownloads[i]->m_State < STATE_READY) {
+      pauseDownload(i);
+    }
+  }
+
+  ::Sleep(100);
+
+  bool done = false;
+  // further loops: busy waiting for all downloads to complete. This could be neater...
+  while (!done) {
+    QCoreApplication::processEvents();
+    done = true;
+    foreach (DownloadInfo *info, m_ActiveDownloads) {
+      if ((info->m_State < STATE_CANCELED) ||
+          (info->m_State != STATE_FETCHINGFILEINFO) || (info->m_State != STATE_FETCHINGMODINFO)) {
+        done = false;
+        break;
+      }
+    }
+    if (!done) {
+      ::Sleep(100);
+    }
+  }
 }
 
 
@@ -456,8 +486,18 @@ void DownloadManager::pauseDownload(int index)
   }
 }
 
-
 void DownloadManager::resumeDownload(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("invalid index %1").arg(index));
+    return;
+  }
+  DownloadInfo *info = m_ActiveDownloads[index];
+  info->m_Tries = AUTOMATIC_RETRIES;
+  resumeDownloadInt(index);
+}
+
+void DownloadManager::resumeDownloadInt(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     reportError(tr("invalid index %1").arg(index));
