@@ -59,9 +59,10 @@ class QToolButton;
 class ModListSortProxy;
 class ModListGroupCategoriesProxy;
 
-class MainWindow : public QMainWindow, public MOBase::IOrganizer
+class MainWindow : public QMainWindow, public MOBase::IOrganizer, public MOBase::IPluginDiagnose
 {
   Q_OBJECT
+  Q_INTERFACES(MOBase::IPluginDiagnose)
 
 public:
   explicit MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent = 0);
@@ -108,6 +109,12 @@ public:
   virtual void installMod(const QString &fileName);
   virtual QString resolvePath(const QString &fileName) const;
   virtual MOBase::IDownloadManager *downloadManager();
+
+  virtual std::vector<unsigned int> activeProblems() const;
+  virtual QString shortDescription(unsigned int key) const;
+  virtual QString fullDescription(unsigned int key) const;
+  virtual bool hasGuidedFix(unsigned int key) const;
+  virtual void startGuidedFix(unsigned int key) const;
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
@@ -236,6 +243,10 @@ private:
 
 private:
 
+  static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
+
+private:
+
   Ui::MainWindow *ui;
 
   MOBase::TutorialControl m_Tutorial;
@@ -300,6 +311,7 @@ private:
   MOBase::IGameInfo *m_GameInfo;
 
   std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
+  std::vector<QString> m_UnloadedPlugins;
 
 private slots:
 

@@ -988,12 +988,14 @@ void MainWindow::loadPlugins()
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader pluginLoader(pluginName);
       if (pluginLoader.instance() == NULL) {
+        m_UnloadedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
                   pluginName.toUtf8().constData(), pluginLoader.errorString().toUtf8().constData());
       } else {
         if (registerPlugin(pluginLoader.instance())) {
           qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
         } else {
+          m_UnloadedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
         }
       }
@@ -1001,6 +1003,8 @@ void MainWindow::loadPlugins()
   }
 
   m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
+
+  m_DiagnosisPlugins.push_back(this);
 }
 
 IGameInfo &MainWindow::gameInfo() const
@@ -1936,6 +1940,46 @@ IDownloadManager *MainWindow::downloadManager()
   return &m_DownloadManager;
 }
 
+std::vector<unsigned int> MainWindow::activeProblems() const
+{
+  std::vector<unsigned int> problems;
+  if (m_UnloadedPlugins.size() != 0) {
+    problems.push_back(PROBLEM_PLUGINSNOTLOADED);
+  }
+  return problems;
+}
+
+QString MainWindow::shortDescription(unsigned int key) const
+{
+  switch (key) {
+    case PROBLEM_PLUGINSNOTLOADED: {
+      return tr("Some plugins could not be loaded");
+    } break;
+  }
+}
+
+QString MainWindow::fullDescription(unsigned int key) const
+{
+  switch (key) {
+    case PROBLEM_PLUGINSNOTLOADED: {
+      QString result = tr("The following Plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:<ul>");
+      foreach (const QString &plugin, m_UnloadedPlugins) {
+        result += "<li>" + plugin + "</li>";
+      }
+      result += "<ul>";
+      return result;
+    } break;
+  }
+}
+
+bool MainWindow::hasGuidedFix(unsigned int key) const
+{
+  return false;
+}
+
+void MainWindow::startGuidedFix(unsigned int key) const
+{
+}
 
 void MainWindow::installMod()
 {
@@ -3519,7 +3563,7 @@ void MainWindow::on_actionNexus_triggered()
   std::wstring nxmPath = ToWString(QApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QApplication::applicationFilePath());
   ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
-                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" " + executable).c_str(), NULL, SW_SHOWNORMAL);
+                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
 
   ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);
