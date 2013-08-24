@@ -11,7 +11,8 @@ SUBDIRS = bsatk \
 					helper \
           plugins \
           proxydll \
-          nxmhandler
+          nxmhandler \
+    BossDummy
 
 hookdll.depends = shared
 organizer.depends = shared, uibase, plugins
