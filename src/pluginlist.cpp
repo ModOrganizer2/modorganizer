@@ -823,9 +823,15 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 {
   if (event->type() == QEvent::KeyPress) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
+
+    if (itemView == NULL) {
+      return QObject::eventFilter(obj, event);
+    }
+
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if ((itemView != NULL) &&
-        (keyEvent->modifiers() == Qt::ControlModifier) &&
+
+    // ctrl+up and ctrl+down -> increase or decrease priority of selected plugins
+    if ((keyEvent->modifiers() == Qt::ControlModifier) &&
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
@@ -851,6 +857,27 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         }
       }
       refreshLoadOrder();
+      return true;
+    } else if (keyEvent->key() == Qt::Key_Space) {
+      QItemSelectionModel *selectionModel = itemView->selectionModel();
+      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
+
+      QModelIndex minRow, maxRow;
+      foreach (QModelIndex idx, selectionModel->selectedRows()) {
+        if (proxyModel != NULL) {
+          idx = proxyModel->mapToSource(idx);
+        }
+        if (!minRow.isValid() || (idx.row() < minRow.row())) {
+          minRow = idx;
+        }
+        if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
+          maxRow = idx;
+        }
+        int oldState = idx.data(Qt::CheckStateRole).toInt();
+        setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
+      }
+      emit dataChanged(minRow, maxRow);
+
       return true;
     }
   }

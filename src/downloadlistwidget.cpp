@@ -44,6 +44,7 @@ DownloadListWidgetDelegate::DownloadListWidgetDelegate(DownloadManager *manager,
   : QItemDelegate(parent), m_Manager(manager), m_ItemWidget(new DownloadListWidget), m_ContextRow(0), m_View(view)
 {
   m_NameLabel = m_ItemWidget->findChild<QLabel*>("nameLabel");
+  m_SizeLabel = m_ItemWidget->findChild<QLabel*>("sizeLabel");
   m_Progress = m_ItemWidget->findChild<QProgressBar*>("downloadProgress");
   m_InstallLabel = m_ItemWidget->findChild<QLabel*>("installLabel");
 
@@ -100,6 +101,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       name.append("...");
     }
     m_NameLabel->setText(name);
+    m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1024));
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
     if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
       QPalette labelPalette;

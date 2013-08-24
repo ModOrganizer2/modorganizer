@@ -207,6 +207,14 @@ public:
   QString getFileName(int index) const;
 
   /**
+   * @brief retrieve the file size of the download specified by index
+   *
+   * @param index index of the file to look up
+   * @return size of the file (total size during download)
+   */
+  qint64 getFileSize(int index) const;
+
+  /**
    * @brief retrieve the current progress of the download specified by index
    *
    * @param index index of the file to look up

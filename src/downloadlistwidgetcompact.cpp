@@ -44,6 +44,7 @@ DownloadListWidgetCompactDelegate::DownloadListWidgetCompactDelegate(DownloadMan
   : QItemDelegate(parent), m_Manager(manager), m_ItemWidget(new DownloadListWidgetCompact), m_View(view)
 {
   m_NameLabel = m_ItemWidget->findChild<QLabel*>("nameLabel");
+  m_SizeLabel = m_ItemWidget->findChild<QLabel*>("sizeLabel");
   m_Progress = m_ItemWidget->findChild<QProgressBar*>("downloadProgress");
   m_DoneLabel = m_ItemWidget->findChild<QLabel*>("doneLabel");
 
@@ -106,7 +107,13 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
       name.append("...");
     }
     m_NameLabel->setText(name);
+
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
+
+    if (state >= DownloadManager::STATE_READY) {
+      m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
+    }
+
     if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
       m_DoneLabel->setVisible(true);
       m_Progress->setVisible(false);

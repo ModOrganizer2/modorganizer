@@ -97,6 +97,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
 
   info->m_DownloadID = s_NextDownloadID++;
   info->m_Output.setFileName(filePath);
+  info->m_TotalSize = QFileInfo(filePath).size();
   info->m_ModID  = metaFile.value("modID", 0).toInt();
   info->m_FileID = metaFile.value("fileID", 0).toInt();
   info->m_CurrentUrl = 0;
@@ -594,6 +595,15 @@ QString DownloadManager::getFileName(int index) const
   }
 
   return m_ActiveDownloads.at(index)->m_FileName;
+}
+
+qint64 DownloadManager::getFileSize(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+
+  return m_ActiveDownloads.at(index)->m_TotalSize;
 }
 
 

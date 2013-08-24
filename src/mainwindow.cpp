@@ -945,7 +945,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
           if (proxiedPlugin != NULL) {
             if (registerPlugin(proxiedPlugin)) {
-              qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
+              qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
             } else {
               qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
             }

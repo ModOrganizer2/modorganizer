@@ -101,6 +101,7 @@ private:
   DownloadManager *m_Manager;
 
   QLabel *m_NameLabel;
+  QLabel *m_SizeLabel;
   QProgressBar *m_Progress;
   QLabel *m_InstallLabel;
   int m_ContextRow;
