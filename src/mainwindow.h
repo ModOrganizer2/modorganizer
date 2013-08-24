@@ -442,6 +442,16 @@ private slots:
 
   void expandModList(const QModelIndex &index);
 
+  /**
+   * @brief resize columns in mod list and plugin list to content
+   */
+  void resizeLists();
+
+  /**
+   * @brief allow columns in mod list and plugin list to be resized
+   */
+  void allowListResize();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();

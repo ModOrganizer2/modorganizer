@@ -185,19 +185,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->modList->header()->setSectionHidden(0, false); // prevent the name-column from being hidden
   ui->modList->installEventFilter(&m_ModList);
 
-  // restoreState also seems to restores the resize mode from previous session,
-  // I don't really like that
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  for (int i = 0; i < ui->modList->header()->count(); ++i) {
-    ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-#else
-  for (int i = 0; i < ui->modList->header()->count(); ++i) {
-    ui->modList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-#endif
+  resizeLists();
 
   // set up plugin list
   m_PluginListSortProxy = new PluginListSortProxy(this);
@@ -207,17 +195,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   ui->espList->installEventFilter(&m_PluginList);
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  for (int i = 0; i < ui->espList->header()->count(); ++i) {
-    ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-#else
-  for (int i = 0; i < ui->espList->header()->count(); ++i) {
-    ui->espList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->espList->header()->setResizeMode(0, QHeaderView::Stretch);
-#endif
 
   QMenu *linkMenu = new QMenu(this);
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
@@ -314,6 +291,69 @@ MainWindow::~MainWindow()
   delete ui;
   delete m_GameInfo;
   delete m_DirectoryStructure;
+}
+
+
+void MainWindow::resizeLists()
+{
+  // resize mod list to fit content
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+  }
+  ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
+#else
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    ui->modList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
+  }
+  ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
+#endif
+
+
+  // resize plugin list to fit content
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  for (int i = 0; i < ui->espList->header()->count(); ++i) {
+    ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+  }
+  ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+#else
+  for (int i = 0; i < ui->espList->header()->count(); ++i) {
+    ui->espList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
+  }
+  ui->espList->header()->setResizeMode(0, QHeaderView::Stretch);
+#endif
+}
+
+
+void MainWindow::allowListResize()
+{
+  // allow resize on mod list
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    ui->modList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
+  }
+  ui->modList->header()->setSectionResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
+#else
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    ui->modList->header()->setResizeMode(i, QHeaderView::Interactive);
+  }
+  ui->modList->header()->setResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
+#endif
+
+
+  // allow resize on plugin list
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  for (int i = 0; i < ui->espList->header()->count(); ++i) {
+    ui->espList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
+  }
+  ui->espList->header()->setSectionResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
+#else
+  for (int i = 0; i < ui->espList->header()->count(); ++i) {
+    ui->espList->header()->setResizeMode(i, QHeaderView::Interactive);
+  }
+  ui->espList->header()->setResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
+#endif
+
 }
 
 void MainWindow::updateStyle(const QString&)
@@ -707,6 +747,8 @@ void MainWindow::showEvent(QShowEvent *event)
   // this has no visible impact when called before the ui is visible
   int grouping = m_Settings.directInterface().value("group_state").toInt();
   ui->groupCombo->setCurrentIndex(grouping);
+
+  allowListResize();
 }
 
 
@@ -1958,6 +2000,9 @@ QString MainWindow::shortDescription(unsigned int key) const
     case PROBLEM_PLUGINSNOTLOADED: {
       return tr("Some plugins could not be loaded");
     } break;
+    default: {
+      return tr("Description missing");
+    } break;
   }
 }
 
@@ -1972,15 +2017,18 @@ QString MainWindow::fullDescription(unsigned int key) const
       result += "<ul>";
       return result;
     } break;
+    default: {
+      return tr("Description missing");
+    } break;
   }
 }
 
-bool MainWindow::hasGuidedFix(unsigned int key) const
+bool MainWindow::hasGuidedFix(unsigned int) const
 {
   return false;
 }
 
-void MainWindow::startGuidedFix(unsigned int key) const
+void MainWindow::startGuidedFix(unsigned int) const
 {
 }
 
