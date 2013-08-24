@@ -212,7 +212,8 @@ TRANSLATIONS = organizer_de.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-               organizer_ru.ts
+               organizer_ru.ts \
+               organizer.en.ts
 
 !isEmpty(TRANSLATIONS) {
   isEmpty(QMAKE_LRELEASE) {

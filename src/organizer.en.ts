@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="tr">
+<TS version="2.0" language="en_US">
 <context>
     <name>ActivateModsDialog</name>
     <message>
@@ -11,7 +11,7 @@
     <message>
         <location filename="activatemodsdialog.ui" line="20"/>
         <source>This is a list of esps and esms that were active when the save game was created.</source>
-        <translation>Bu oyun kaydı yaratıldığında aktif olan esp ve esm&apos;lerin bir listesidir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="activatemodsdialog.ui" line="23"/>
@@ -23,29 +23,22 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;For each esp, the right column contains the mod (or mods) that can be enabled to make the missing esps/esms available.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;If you hit Ok, all the mods selected in the right columns and all missing esps that have become available will be activated.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation> &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Bu, oyun kaydı yaratıldığında aktif olan espler ve esmlerin bir listesidir.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Her esp için, sağ kolon eksik esp/esm&apos;leri tekrar mevcut hale getirmek için kullanılabilecek modu (yada modları) içerir.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Eğer Tamam&apos;a basarsanız, sağ kolonda seçili olan tüm modlar ve müsait hale gelen tüm eksik espler aktif hale gelecektir.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="activatemodsdialog.ui" line="37"/>
         <source>Missing ESP</source>
-        <translation>Kayıp ESP</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="activatemodsdialog.ui" line="42"/>
         <source>Mod</source>
-        <translation>Mod</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="activatemodsdialog.cpp" line="49"/>
         <source>not found</source>
-        <translation>bulunamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -53,62 +46,60 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="14"/>
         <source>BAIN Package Installer</source>
-        <translation>BAIN Paket Yükleyici</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="22"/>
         <source>Name</source>
-        <translation>İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="34"/>
         <source>This looks like a Package prepared for Installation through BAIN. You can select options from the list below. If there is a package.txt file, it should contain detailed information about the options.</source>
-        <translation>Bu BAIN aracılığıyla yüklenmesi gereken bir paket gibi görünüyor. Aşağıdaki listeden seçenekleri seçebilirsiniz. Eğer bir paket.txt dosyası varsa, seçenekler hakkında ayrıntılı bilgi içermesi gerekmektedir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="44"/>
         <source>Components of this package.</source>
-        <translation>Bu paketin bileşenleri.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="47"/>
         <source>Components of this package.
 If there is a component called &quot;00 Core&quot; it is usually required. Options are ordered by priority as set up by the author.</source>
-        <translation>Bu paketinin bileşenleri 
-Eğer &quot;00 Core&quot; diye bir bileşen varsa, bu genellikle gereklidir. Seçenekler yaratıcı tarafından ayarlanmış önceliğe göre sıralıdır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="57"/>
         <location filename="baincomplexinstallerdialog.ui" line="60"/>
         <source>The package.txt is often part of BAIN packages and contains details about the options available.</source>
-        <translation>Paket.txt genellikle BAIN paketlerinin bir parçasıdır ve mevcut seçenekler hakkında bilgi içerir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="63"/>
         <source>Package.txt</source>
-        <translation>Paket.txt</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="83"/>
         <location filename="baincomplexinstallerdialog.ui" line="86"/>
         <source>Opens a Dialog that allows custom modifications.</source>
-        <translation>Özel isteğe göre ayarlanmış değişikliklere izin veren bir dialog açar.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="89"/>
         <source>Manual</source>
-        <translatorcomment>What does  manual mean here? By hand? Or like a book?</translatorcomment>
-        <translation>El ile</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="96"/>
         <source>Ok</source>
-        <translation>Tamam</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="103"/>
         <source>Cancel</source>
-        <translation>İptal</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -116,43 +107,43 @@ Eğer &quot;00 Core&quot; diye bir bileşen varsa, bu genellikle gereklidir. Se�
     <message>
         <location filename="categoriesdialog.ui" line="14"/>
         <source>Categories</source>
-        <translation>Kategoriler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="66"/>
         <source>ID</source>
-        <translation>Kimlik</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="69"/>
         <source>Internal ID for the category.</source>
-        <translation>Kategori için iç kimlik</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="72"/>
         <source>Internal ID for the category. The categories a mod belongs to are stored by this ID. It is recommended you use new IDs for categories you add instead of re-using existing ones.</source>
-        <translation>Kategori için iç kimlik. Bir mod&apos;un ait olduğu kategoriler bu kimlikle saklanır. Eklediğiniz kategoriler için, varolanları yeniden kullanmak yerine yeni kimlikler kullanmanız önerilir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="77"/>
         <source>Name</source>
-        <translation>İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="80"/>
         <location filename="categoriesdialog.ui" line="83"/>
         <source>Name of the Categorie used for display.</source>
-        <translation>Gösterim için kullanılan kategorinin adı.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="88"/>
         <source>Nexus IDs</source>
-        <translation>Nexus kimliği</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="91"/>
         <source>Comma-Separated list of Nexus IDs to be matched to the internal ID.</source>
-        <translation>İç kimliğe uydurulması gereken virgülle ayrılmış Nexus kimlikleri listesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="94"/>
@@ -163,33 +154,27 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;You can match one or multiple nexus categories to a internal ID. Whenever you download a mod from a Nexus Page, Mod Organizer will try to resolve the category defined on the Nexus to one available in MO.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;To find out a category id used by the nexus, visit the categories list of the nexus page and hover over the links there.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Bir veya birden fazla nexus kategorisini bir iç kimliğe eşleştiler. Ne zaman bir nexus sayfasından bir mod indirirseniz, Mod Organizer Nexus&apos;ta belirlenmiş kategoriyi MO&apos;da mevcut olan bir kategoriye uydurmaya çalışır.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Nexus tarafından kullanılmakta olan bir kategori hakkında öğrenmek için nexus sayfasındaki kategoriler listesine ziyaret edin ve fareyi bağlantılar üzerinde tutun.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="105"/>
         <source>Parent ID</source>
-        <translation>Ata kimlik</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="108"/>
         <source>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</source>
-        <translation>Eğer ayarlıysa, kategori bir başka kategorinin alt kategorisi olarak tanımlanır.  Ata kimliğin geçerli bir kategori kimliği olması gereklidir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.cpp" line="239"/>
         <source>Add</source>
-        <translation>Ekle</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categoriesdialog.cpp" line="240"/>
         <source>Remove</source>
-        <translation>Çıkar</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -197,40 +182,36 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="credentialsdialog.ui" line="14"/>
         <source>Login</source>
-        <translation>Oturum açmak</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="credentialsdialog.ui" line="20"/>
         <source>This feature may not work unless you&apos;re logged in with Nexus</source>
-        <translation>Bu özellik Nexus&apos;a oturuma açmazsanız çalışmayabilir</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="credentialsdialog.ui" line="32"/>
         <source>Username</source>
-        <translation>Kullanıcı adı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="credentialsdialog.ui" line="46"/>
         <source>Password</source>
-        <translation>Şifre</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="credentialsdialog.ui" line="64"/>
         <source>Remember</source>
-        <translation>Hatırla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="credentialsdialog.ui" line="75"/>
         <source>Never ask again</source>
-        <translation>Bir daha asla sorma</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>DirectoryRefresher</name>
-    <message>
-        <source>failed to read %1: %2</source>
-        <translation type="obsolete">%1: %2 okunamadı</translation>
-    </message>
     <message>
         <location filename="directoryrefresher.cpp" line="99"/>
         <source>failed to read bsa: %1</source>
@@ -242,23 +223,22 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlist.cpp" line="63"/>
         <source>Name</source>
-        <translation>İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="64"/>
         <source>Filetime</source>
-        <translatorcomment>Direct translation. What does this mean actually?</translatorcomment>
-        <translation>Dosyazamanı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="65"/>
         <source>Done</source>
-        <translation type="unfinished">Bitti</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="79"/>
         <source>Information missing, please select &quot;Query Info&quot; from the context menu to re-retrieve.</source>
-        <translation>Bilgi eksik, lütfen menüden &quot;Bilgi sorgula&quot; yı seçiniz</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -267,14 +247,14 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadlistwidget.ui" line="17"/>
         <location filename="downloadlistwidget.ui" line="59"/>
         <source>Placeholder</source>
-        <translation>Yer tutucu</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.ui" line="68"/>
         <location filename="downloadlistwidget.cpp" line="143"/>
         <location filename="downloadlistwidget.cpp" line="145"/>
         <source>Done - Double Click to install</source>
-        <translation>Bitti - Yüklemek için çift tıklayın</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="109"/>
@@ -286,7 +266,7 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadlistwidget.cpp" line="129"/>
         <location filename="downloadlistwidget.cpp" line="131"/>
         <source>Installed - Double Click to re-install</source>
-        <translation>Yüklendi - Tekrar yüklemek için çift tıklayın</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="136"/>
@@ -301,89 +281,16 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadlistwidgetcompact.ui" line="17"/>
         <location filename="downloadlistwidgetcompact.ui" line="47"/>
         <source>Placeholder</source>
-        <translation>Yer tutucu</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidgetcompact.ui" line="100"/>
         <source>Done</source>
-        <translation>Bitti</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>DownloadListWidgetCompactDelegate</name>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="123"/>
-        <source>Installed</source>
-        <translation>Yüklendi</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="126"/>
-        <source>Uninstalled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="129"/>
-        <source>Done</source>
-        <translation>Bitti</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="208"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="217"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="226"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="235"/>
-        <source>Are you sure?</source>
-        <translation>Emin misiniz?</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="209"/>
-        <source>This will remove all finished downloads from this list and from disk.</source>
-        <translation>Bu, tüm bitmiş indirilenleri listeden ve diskten kaldıracaktır.</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="218"/>
-        <source>This will remove all installed downloads from this list and from disk.</source>
-        <translation>Bu, tüm yüklenmiş indirilenleri listeden ve diskten kaldıracaktır.</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="227"/>
-        <source>This will permanently remove all finished downloads from this list (but NOT from disk).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="236"/>
-        <source>This will permanently remove all installed downloads from this list (but NOT from disk).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="262"/>
-        <source>Install</source>
-        <translation>Yükle</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="264"/>
-        <source>Query Info</source>
-        <translation>Sorgu Bilgisi</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="266"/>
-        <source>Delete</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="267"/>
-        <source>Remove from View</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="272"/>
-        <source>Remove</source>
-        <translation>Kaldır</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="269"/>
-        <source>Cancel</source>
-        <translation>İptal et</translation>
-    </message>
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="113"/>
         <source>Paused</source>
@@ -400,14 +307,87 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="123"/>
+        <source>Installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="126"/>
+        <source>Uninstalled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="129"/>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="208"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="217"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="226"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="235"/>
+        <source>Are you sure?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="209"/>
+        <source>This will remove all finished downloads from this list and from disk.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="218"/>
+        <source>This will remove all installed downloads from this list and from disk.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="227"/>
+        <source>This will permanently remove all finished downloads from this list (but NOT from disk).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="236"/>
+        <source>This will permanently remove all installed downloads from this list (but NOT from disk).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="262"/>
+        <source>Install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="264"/>
+        <source>Query Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="266"/>
+        <source>Delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="267"/>
+        <source>Remove from View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="269"/>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="downloadlistwidgetcompact.cpp" line="270"/>
         <source>Pause</source>
-        <translation>Duraklat</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="272"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="273"/>
         <source>Resume</source>
-        <translation>Devam et</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="277"/>
@@ -422,33 +402,43 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="280"/>
         <source>Remove Installed...</source>
-        <translation>Yüklenmişleri kaldır...</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="281"/>
         <source>Remove All...</source>
-        <translation>Hepsini kaldır...</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>DownloadListWidgetDelegate</name>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="116"/>
+        <source>Fetching Info 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="119"/>
+        <source>Fetching Info 2</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="226"/>
         <location filename="downloadlistwidget.cpp" line="235"/>
         <location filename="downloadlistwidget.cpp" line="244"/>
         <location filename="downloadlistwidget.cpp" line="253"/>
         <source>Are you sure?</source>
-        <translation>Emin misiniz?</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="227"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
-        <translation>Bu, tüm bitmiş indirilenleri listeden ve diskten kaldıracaktır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="236"/>
         <source>This will remove all installed downloads from this list and from disk.</source>
-        <translation>Bu, tüm bitmiş yüklenmiş listeden ve diskten kaldıracaktır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="245"/>
@@ -463,12 +453,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidget.cpp" line="279"/>
         <source>Install</source>
-        <translation>Yükle</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="281"/>
         <source>Query Info</source>
-        <translation>Bilgi sorgula</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="283"/>
@@ -481,34 +471,24 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="289"/>
-        <source>Remove</source>
-        <translation>Kaldır</translation>
-    </message>
-    <message>
         <location filename="downloadlistwidget.cpp" line="286"/>
         <source>Cancel</source>
-        <translation>İptal et</translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidget.cpp" line="116"/>
-        <source>Fetching Info 1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlistwidget.cpp" line="119"/>
-        <source>Fetching Info 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="287"/>
         <source>Pause</source>
-        <translation>Duraklat</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="289"/>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="290"/>
         <source>Resume</source>
-        <translation>Devam et</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="294"/>
@@ -523,12 +503,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidget.cpp" line="297"/>
         <source>Remove Installed...</source>
-        <translation>Yüklenmişleri kaldır</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="298"/>
         <source>Remove All...</source>
-        <translation>Hepsini kaldır...</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -536,22 +516,22 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadmanager.cpp" line="123"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
-        <translation>&quot;%1&quot;yi &quot;%2&quot; olarak yeniden adlandırma başarılı olamadı.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="274"/>
         <source>Download again?</source>
-        <translation>Tekrar indir?</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="274"/>
         <source>A file with the same name has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
-        <translation>Aynı dosya isminde bir dosya zaten indirilmiş. Tekrar indirmek istiyor musunuz? Yeni dosya farklı bir isim alacak.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="304"/>
         <source>failed to download %1: could not open output file: %2</source>
-        <translation>%1 indirilemedi : : çıkış dosyası %2  açılamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="334"/>
@@ -565,17 +545,17 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadmanager.cpp" line="613"/>
         <location filename="downloadmanager.cpp" line="628"/>
         <source>invalid index</source>
-        <translation>geçersiz dizin</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="352"/>
         <source>failed to delete %1</source>
-        <translation>%1 silinemedi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="358"/>
         <source>failed to delete meta file for %1</source>
-        <translation>%1&apos;in meta dosyası silinemedi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="418"/>
@@ -584,37 +564,33 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadmanager.cpp" line="463"/>
         <location filename="downloadmanager.cpp" line="498"/>
         <source>invalid index %1</source>
-        <translation>geçeriz dizin %1</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="515"/>
         <source>Please enter the nexus mod id</source>
-        <translation>Lütfen nexus mod kimliğini girin</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="515"/>
         <source>Mod ID:</source>
-        <translation>Mod kimliği:</translation>
-    </message>
-    <message>
-        <source>invalid alphabetical index %1</source>
-        <translation type="obsolete">geçersiz alfabetik dizin %1</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="848"/>
         <source>Information updated</source>
-        <translation>bilgi güncellendi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="850"/>
         <location filename="downloadmanager.cpp" line="864"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
-        <translation>Nexus&apos;ta uyan bir dosya bulunamadı! Dosya artık mevcut olmayabilir yada yeniden adlandırılmış olabilir!</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="852"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
-        <translation>Nexus&apos;ta seçili dosyaya isim olarak uyan dosya bulunamadı. Lütfen el ile doğru olanı seçin.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="981"/>
@@ -624,17 +600,17 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadmanager.cpp" line="1021"/>
         <source>Failed to request file info from nexus: %1</source>
-        <translation>Nexus&apos;tan dosya bilgisi istenilemedi: %1</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1044"/>
         <source>Download failed: %1 (%2)</source>
-        <translation>İndirme başarızı: %1 (%2)</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1110"/>
         <source>failed to re-open %1</source>
-        <translation>%1 tekrar açılamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -642,150 +618,145 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="editexecutablesdialog.ui" line="14"/>
         <source>Modify Executables</source>
-        <translation>Yürütülebilirleri değiştir</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="20"/>
         <source>List of configured executables</source>
-        <translation>Ayarlanmış yürütülebilirlerin listesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="23"/>
         <source>This is a list of your configured executables. Executables in grey are automatically recognised and can not be modified.</source>
-        <translation>Bu ayarlanmış yürütülebilirlerin bir listesidir. Gri olan yürütülebilirler otomatik olarak tanınmıştır ve değiştirilemezler.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="38"/>
         <source>Title</source>
-        <translation>Başlık</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="45"/>
         <location filename="editexecutablesdialog.ui" line="48"/>
         <source>Name of the executable. This is only for display purposes.</source>
-        <translation>İndirilebilirin ismi. Sadece gösterim maksatlıdır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="59"/>
         <source>Binary</source>
-        <translation>İkili değer</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="66"/>
         <location filename="editexecutablesdialog.ui" line="69"/>
         <source>Binary to run</source>
-        <translation>Çalıştırılacak ikili değer</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="76"/>
         <source>Browse filesystem</source>
-        <translation>Dosya sistemini gez</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="79"/>
         <source>Browse filesystem for the executable to run.</source>
-        <translation>Dosya sistemini çalıştırılacak yürütülebilirler için gez.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="82"/>
         <location filename="editexecutablesdialog.ui" line="103"/>
         <source>...</source>
-        <translation>...</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="93"/>
         <source>Start in</source>
-        <translatorcomment>What does this mean? What is the context it is used.</translatorcomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="114"/>
         <source>Arguments</source>
-        <translation>Değişkenler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="121"/>
         <location filename="editexecutablesdialog.ui" line="124"/>
         <source>Arguments to pass to the application</source>
-        <translation>Yürütülebilire gönderilecek değişkenler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="135"/>
         <source>Allow the Steam AppID to be used for this executable to be changed.</source>
-        <translation>Bu yürütülebilir için kullanılan, Steam AppID (Uygulama kimliği)&apos;nın değiştirilmesine izin ver.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="138"/>
         <source>Allow the Steam AppID to be used for this executable to be changed.
 Every game/tool distributed through Steam has a unique ID. MO needs to know this ID to start those programs directly, otherwise the program is started by steam and then MO will not work. By default, MO will use the AppID for the game.
 Right now the only case I know of where this needs to be overwritten is for the Skyrim Creation Kit which has its own AppID. This overwrite is already preconfigured.</source>
-        <translation>Bu yürütülebilir için kullanılan, Steam AppID (Uygulama kimliği)&apos;nın değiştirilmesine izin ver.
-Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır. MO&apos;nun bu programları direkt olarak çalıştırabilmesi için bu kimliği bilmesi gereklidir, aksi takdirde program steam tarafından başlatılır ve ardından MO çalışamaz.Önceden tanımlanmış durumda, MO oyun için olan AppID&apos;yi kullanır.
-Şu an itibariyle, bunun değiştirilmesi gerektiği tek durum kendine has AppID&apos;si olan Skyrim Creation Kit&apos;tir. Bu üstüne yazma zaten önceden ayarlanmıştır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="143"/>
         <source>Overwrite Steam AppID</source>
-        <translation>Steam AppID (Uygulama kimliği)&apos;nın üzerine yaz</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="153"/>
         <source>Steam AppID to use for this executable that differs from the games AppID.</source>
-        <translation>Bu yürütülebilir için kullanılacak olan ve oyununkinden farklı olan Steam AppID (Uygulama kimliği)</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="156"/>
         <source>Steam AppID to use for this executable that differs from the games AppID.
 Every game/tool distributed through Steam has a unique ID. MO needs to know this ID to start those programs directly, otherwise the program is started by steam and then MO will not work. By default, MO will use the AppID for the game (usually 72850).
 Right now the only case I know of where this needs to be overwritten is for the Skyrim Creation Kit which has its own AppID (usually 202480). This overwrite is already preconfigured.</source>
-        <translation>Bu yürütülebilir için kullanılacak olan ve oyununkinden farklı olan Steam AppID (Uygulama kimliği)
-Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır. MO&apos;nun bu programları direkt olarak çalıştırabilmesi için bu kimliği bilmesi gereklidir, aksi takdirde program steam tarafından başlatılır ve ardından MO çalışamaz.Önceden tanımlanmış durumda, MO oyun için olan AppID&apos;yi kullanır (genelde 72850).
-Şu an itibariyle, bunun değiştirilmesi gerektiği tek durum kendine has AppID&apos;si olan Skyrim Creation Kit&apos;tir. Bu üstüne yazma zaten önceden ayarlanmıştır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="169"/>
         <location filename="editexecutablesdialog.ui" line="172"/>
         <location filename="editexecutablesdialog.cpp" line="220"/>
         <source>If checked, MO will be closed once the specified executable is run.</source>
-        <translation>Eğer seçiliyse, belirlenmiş yürütülebilir çalıştırıldığında MO kapatılacaktır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="175"/>
         <source>Close MO when started</source>
-        <translation>Başladığında MO&apos;yu kapat.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="182"/>
         <location filename="editexecutablesdialog.ui" line="185"/>
         <source>Add an executable</source>
-        <translation>Bir yürütülebilir ekle.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="188"/>
         <location filename="editexecutablesdialog.cpp" line="190"/>
         <source>Add</source>
-        <translation>Ekle</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="199"/>
         <location filename="editexecutablesdialog.ui" line="202"/>
         <source>Remove the selected executable</source>
-        <translation>Seçili yürütülebiliri kaldır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="205"/>
         <source>Remove</source>
-        <translation>Kaldır</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="119"/>
         <source>Select a binary</source>
-        <translation>Bir ikili değer seç</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="119"/>
         <source>Executable (%1)</source>
-        <translation>Yürütülebilir (%1)</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="143"/>
@@ -800,27 +771,27 @@ Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır
     <message>
         <location filename="editexecutablesdialog.cpp" line="160"/>
         <source>Select a directory</source>
-        <translation>Bir klasör seç</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="169"/>
         <source>Confirm</source>
-        <translation>Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="169"/>
         <source>Really remove &quot;%1&quot; from executables?</source>
-        <translation>&quot;%1&quot; gerçekten yürütülebilirlerden kaldırılsın mı?</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="194"/>
         <source>Modify</source>
-        <translation>Değiştir</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="217"/>
         <source>MO must be kept running or this application will not work correctly.</source>
-        <translation>MO&apos;nun çalışmaya devam etmesi gereklidir yoksa uygulama düzgün çalışmayacaktır</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -828,36 +799,36 @@ Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır
     <message>
         <location filename="finddialog.ui" line="14"/>
         <source>Find</source>
-        <translation>Bul</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="finddialog.ui" line="24"/>
         <source>Find what:</source>
-        <translation>Neyi bul:</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="finddialog.ui" line="31"/>
         <location filename="finddialog.ui" line="34"/>
         <source>Search term</source>
-        <translation>Arama terimi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="finddialog.ui" line="47"/>
         <location filename="finddialog.ui" line="50"/>
         <source>Find next occurence from current file position.</source>
-        <translation>Şimdiki dosya konumundan bir sonraki oluşu bul</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="finddialog.ui" line="53"/>
         <source>&amp;Find Next</source>
-        <translation>&amp;Sonrakini bul</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="finddialog.ui" line="60"/>
         <location filename="finddialog.ui" line="63"/>
         <location filename="finddialog.ui" line="66"/>
         <source>Close</source>
-        <translation>Kapat</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -865,109 +836,52 @@ Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır
     <message>
         <location filename="fomodinstallerdialog.ui" line="14"/>
         <source>FOMOD Installation Dialog</source>
-        <translation>FOMOD Yükleme Dialoğu</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="22"/>
         <source>Name</source>
-        <translation>İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="46"/>
         <source>Author</source>
-        <translation>Yaratıcı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="60"/>
         <source>Version</source>
-        <translation>Versiyon</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="74"/>
         <source>Website</source>
-        <translation>Websitesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="81"/>
         <source>&lt;a href=&quot;#&quot;&gt;Link&lt;/a&gt;</source>
-        <translation>&lt;a href=&quot;#&quot;&gt;Bağlantı&lt;/a&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="160"/>
         <source>Manual</source>
-        <translation>El ile</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="170"/>
         <source>Back</source>
-        <translation>Geri</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="177"/>
         <source>Next</source>
-        <translation>Sonraki</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="184"/>
         <source>Cancel</source>
-        <translation>İptal et</translation>
-    </message>
-    <message>
-        <source>ModuleConfig.xml missing</source>
-        <translation type="obsolete">ModuleConfig.xml kayıp</translation>
-    </message>
-    <message>
-        <source>&lt;a href=&quot;%1&quot;&gt;Link&lt;/a&gt;</source>
-        <translation type="obsolete">&lt;a href=&quot;%1&quot;&gt;Bağlantı&lt;/a&gt;</translation>
-    </message>
-    <message>
-        <source>failed to parse info.xml: %1 (%2) (line %3, column %4)</source>
-        <translation type="obsolete">info.xml çözümlenemedi: %1 (%2) (satır %3, kolon%4)</translation>
-    </message>
-    <message>
-        <source>unsupported order type %1</source>
-        <translatorcomment>Order as in sorting?</translatorcomment>
-        <translation type="obsolete">desteklenmeyen sıralama türü %1</translation>
-    </message>
-    <message>
-        <source>unsupported group type %1</source>
-        <translation type="obsolete">desteklenmeyen grup türü %1</translation>
-    </message>
-    <message>
-        <source>This component is required</source>
-        <translation type="obsolete">Bu bileşen gereklidir</translation>
-    </message>
-    <message>
-        <source>It is recommended you enable this component</source>
-        <translation type="obsolete">Bu bileşeni devreye sokmanız tavsiye edilir</translation>
-    </message>
-    <message>
-        <source>Optional component</source>
-        <translation type="obsolete">İsteğe bağlı bileşen</translation>
-    </message>
-    <message>
-        <source>This component is not usable in combination with other installed plugins</source>
-        <translation type="obsolete">Bu bileşen diğer yüklü eklentilerle beraber kullanılamaz</translation>
-    </message>
-    <message>
-        <source>You may be experiencing instability in combination with other installed plugins</source>
-        <translation type="obsolete">Diğer yüklü eklentilerle beraber kararsızlık yaşayabilirsiniz</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="obsolete">Hiçbiri</translation>
-    </message>
-    <message>
-        <source>Select one or more of these options:</source>
-        <translation type="obsolete">Bir yada daha fazla seçenek seçin</translation>
-    </message>
-    <message>
-        <source>failed to parse ModuleConfig.xml: %1</source>
-        <translation type="obsolete">ModuleConfig.xml: %1 çözümlenemedi</translation>
-    </message>
-    <message>
-        <source>Install</source>
-        <translation type="obsolete">Yükle</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -975,37 +889,37 @@ Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır
     <message>
         <location filename="installdialog.ui" line="20"/>
         <source>Install Mods</source>
-        <translation>Modları yükle</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="32"/>
         <source>New Mod</source>
-        <translation>Yeni Mod</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="46"/>
         <source>Name</source>
-        <translation>İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="53"/>
         <source>Pick a name for the mod</source>
-        <translation>Mod için bir isim seçin</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="56"/>
         <source>Pick a name for the mod. This is also used as a directory name, so please don&apos;t use characters that are illegal in file names.</source>
-        <translation>Mod için bir isim seçin. Bu ayrıca klasör ismi olarak da kullanılır ve bu nedenle lütfen geçersiz dosya isimlerinde geçerli olmayan karakterler kullanmayınız.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="65"/>
         <source>Content</source>
-        <translation>İçerik</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="75"/>
         <source>Content of the archive. You can change the directory structure by using drag&amp;drop. Hint: Also try right clicking...</source>
-        <translation>Arşivin içeriği. Klasör yapısını çek&amp;bırakla değiştirebilirsiniz. Ayrıca sağ tıklamayı da deneyiniz...</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="78"/>
@@ -1014,16 +928,12 @@ Steam tarafından dağıtılan her oyun/aracın kendine has bir kimliği vardır
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This displays the content of the archive. &amp;lt;data&amp;gt; represents the base directory which will map to the game&apos;s data directory. You can change the base directory via the right-click context menu and you can move around files via drag&amp;amp;drop&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation> &lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Bu arşivin içeriğini gösterir &amp;lt;data&amp;gt; oyunun data klasörüne eşlenecek olan temel klasörü ifade eder.  Temel klasörü sağ tık içerik menüsü aracılığıyla değiştirebilirsiniz ve sürükleme ve bırakma ile dosyaları taşıyabilirsiniz.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="121"/>
         <source>Placeholder</source>
-        <translation>Yer tutucu</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="141"/>
@@ -1035,128 +945,29 @@ p, li { white-space: pre-wrap; }
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Looks good</source>
-        <translation type="obsolete">Düzgün duruyor</translation>
-    </message>
-    <message>
-        <source>No problem detected</source>
-        <translation type="obsolete">Problem bulunmadı</translation>
-    </message>
-    <message>
-        <source>No game data on top level</source>
-        <translation type="obsolete">En üst kademede herhangi bir oyun verisi yok</translation>
-    </message>
-    <message>
-        <source>There is no esp/esm file or asset directory (textures, meshes, interface, ...) on the top level.</source>
-        <translation type="obsolete">En üst kademede esp/esm dosyası yada mal klasörü (textures, meshes, interface, ...)  yok.</translation>
-    </message>
-    <message>
-        <source>Enter a directory name</source>
-        <translation type="obsolete">Bir klasör ismi girin</translation>
-    </message>
-    <message>
-        <source>A directory with that name exists</source>
-        <translation type="obsolete">O isimde bir klasör zaten vardır</translation>
-    </message>
-    <message>
-        <source>Set data directory</source>
-        <translation type="obsolete">Veri klasörü seçin</translation>
-    </message>
-    <message>
-        <source>Unset data directory</source>
-        <translation type="obsolete">Ayarlanmamış veri klasörü</translation>
-    </message>
-    <message>
-        <source>Create directory...</source>
-        <translation type="obsolete">Klasör yarat...</translation>
-    </message>
-    <message>
-        <source>&amp;Open</source>
-        <translation type="obsolete">&amp;Aç</translation>
-    </message>
 </context>
 <context>
     <name>InstallationManager</name>
     <message>
-        <source>mo_archive.dll not loaded: &quot;%1&quot;</source>
-        <translation type="obsolete">mo_archive.dll yüklü değil: &quot;%1&quot;</translation>
+        <location filename="installationmanager.cpp" line="75"/>
+        <source>archive.dll not loaded: &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="97"/>
         <source>Password required</source>
-        <translation>Şifre gerekli</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="97"/>
         <source>Password</source>
-        <translation>Şifre</translation>
-    </message>
-    <message>
-        <source>Directory exists</source>
-        <translation type="obsolete">Klasör var</translation>
-    </message>
-    <message>
-        <source>This mod seems to be installed already. Do you want to add files from this archive (overwriting existing ones) or do you want to completely replace the existing files (old files are deleted)?</source>
-        <translation type="obsolete">Bu mod zaten yüklü gözüküyor. Bu arşivden dosyalar ekelemek (zaten var olanların üzerine yazarak) istiyor munuz yada var olan dosyaları tamamen değiştirmek (eski dosyalar silinerek) istiyor musunuz?</translation>
-    </message>
-    <message>
-        <source>Add Files</source>
-        <translation type="obsolete">Dosyalar ekle</translation>
-    </message>
-    <message>
-        <source>Replace</source>
-        <translation type="obsolete">Değiştir</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="162"/>
         <location filename="installationmanager.cpp" line="244"/>
         <location filename="installationmanager.cpp" line="520"/>
         <source>Extracting files</source>
-        <translation>Dosyalar çıkarılıyor</translation>
-    </message>
-    <message>
-        <source>Preparing installer</source>
-        <translation type="obsolete">Yükleyici hazırlanıyor</translation>
-    </message>
-    <message>
-        <source>Installation as fomod failed: %1</source>
-        <translation type="obsolete">Fomod olarak yüklemek başarılamadı: %1</translation>
-    </message>
-    <message>
-        <source>failed to start %1</source>
-        <translation type="obsolete">%1 başlatılamadı</translation>
-    </message>
-    <message>
-        <source>Running external installer.
-Note: This installer will not be aware of other installed mods!</source>
-        <translation type="obsolete">Harici yükleyici çalıştırılıyor.
-Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
-    </message>
-    <message>
-        <source>Force Close</source>
-        <translation type="obsolete">Zorla kapat</translation>
-    </message>
-    <message>
-        <source>Confirm</source>
-        <translation type="obsolete">Onayla</translation>
-    </message>
-    <message>
-        <source>installation failed (errorcode %1)</source>
-        <translation type="obsolete">yükleme başarısız (hatakodu %1)</translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="613"/>
-        <source>File format &quot;%1&quot; not supported</source>
-        <translation>Dosya formatı &quot;%1&quot;  desteklenmiyor.</translation>
-    </message>
-    <message>
-        <source>failed to open archive &quot;%1&quot;: %2</source>
-        <translation type="obsolete">Arşiv  &quot;%1&quot;: %2 açılamadı.</translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="75"/>
-        <source>archive.dll not loaded: &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1172,7 +983,7 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
     <message>
         <location filename="installationmanager.cpp" line="439"/>
         <source>Name</source>
-        <translation type="unfinished">İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="492"/>
@@ -1185,16 +996,9 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Installer missing</source>
-        <translation type="obsolete">Yükleyici bulunamadı</translation>
-    </message>
-    <message>
-        <source>This package contains a scripted installer. To use this installer you need the optional &quot;NCC&quot;-package and the .net runtime. Do you want to continue, treating this as a manual installer?</source>
-        <translation type="obsolete">Bu paket kodlu bir yükleyici içermektedir. Bu yükleyiciyi kullanmak için isteye bağlı &quot;NCC-paketi&quot; ve .net runtime gereklidir. Buunu el ile yapılan bir yükleyici gibi kabul ederek devam etmek istiyor musunuz?</translation>
-    </message>
-    <message>
-        <source>Please install NCC</source>
-        <translation type="obsolete">Lüttfen NCC&apos;yi yükleyiniz.</translation>
+        <location filename="installationmanager.cpp" line="613"/>
+        <source>File format &quot;%1&quot; not supported</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="739"/>
@@ -1204,47 +1008,47 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
     <message>
         <location filename="installationmanager.cpp" line="749"/>
         <source>no error</source>
-        <translation>hata yok</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="752"/>
         <source>7z.dll not found</source>
-        <translation>7z.dll bulunamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="755"/>
         <source>7z.dll isn&apos;t valid</source>
-        <translation>7z.dll geçerli değil</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="758"/>
         <source>archive not found</source>
-        <translation>arşiv bulunamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="761"/>
         <source>failed to open archive</source>
-        <translation>arşiv açılamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="764"/>
         <source>unsupported archive type</source>
-        <translation>desteklenmeyen arşiv türü</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="767"/>
         <source>internal library error</source>
-        <translation>içsel kütüphane hatası</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="770"/>
         <source>archive invalid</source>
-        <translation>arşiv geçersiz</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="774"/>
         <source>unknown archive error</source>
-        <translation>bilinmeyen arşiv hatası</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1252,22 +1056,22 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
     <message>
         <location filename="lockeddialog.ui" line="14"/>
         <source>Locked</source>
-        <translation>Kilitli</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="lockeddialog.ui" line="20"/>
         <source>This dialog should disappear automatically if the application/game is done. Click unlock if it didn&apos;t.</source>
-        <translation>Eğer uygulama/oyun tamamlandığında bu dialoğun kaybolması gerekir. Eğer yapmazsa &quot;Kilit aç&quot;&apos;a tıklayın.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="lockeddialog.ui" line="23"/>
         <source>MO is locked while the executable is running.</source>
-        <translation>Yürütülebilir çalışırken MO kilitlidir.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="lockeddialog.ui" line="51"/>
         <source>Unlock</source>
-        <translation>Kilit aç</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1275,7 +1079,7 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
     <message>
         <location filename="logbuffer.cpp" line="72"/>
         <source>failed to write log to %1: %2</source>
-        <translation>%1: %2 ya kayıt yazılamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1297,7 +1101,7 @@ Not: Bu yükleyici diğer modlardan haberdar olmayacak!</translation>
         <location filename="mainwindow.ui" line="51"/>
         <location filename="mainwindow.ui" line="392"/>
         <source>Categories</source>
-        <translation type="unfinished">Kategoriler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="128"/>
@@ -1352,7 +1156,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="397"/>
         <source>Nexus IDs</source>
-        <translation type="unfinished">Nexus kimliği</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="405"/>
@@ -1415,10 +1219,6 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save</source>
-        <translation type="obsolete">Kaydet</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="669"/>
         <source>List of available esp/esm files</source>
         <translation type="unfinished"></translation>
@@ -1455,7 +1255,7 @@ BSAs checked here are loaded in such a way that your installation order is obeye
         <location filename="mainwindow.ui" line="799"/>
         <location filename="mainwindow.ui" line="873"/>
         <source>Mod</source>
-        <translation type="unfinished">Mod</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="807"/>
@@ -1745,19 +1545,19 @@ Right now this has very limited functionality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="619"/>
-        <source>failed to save load order: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.cpp" line="549"/>
         <source>failed to save archives order, do you have write access to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="619"/>
+        <source>failed to save load order: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.cpp" line="636"/>
         <source>Name</source>
-        <translation type="unfinished">İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="637"/>
@@ -1797,6 +1597,16 @@ Right now this has very limited functionality</source>
     <message>
         <location filename="mainwindow.cpp" line="885"/>
         <source>Plugin &quot;%1&quot; failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="887"/>
+        <source>Plugin &quot;%1&quot; failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="951"/>
+        <source>failed to init plugin %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1952,45 +1762,8 @@ Right now this has very limited functionality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2608"/>
-        <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2937"/>
-        <location filename="mainwindow.cpp" line="3268"/>
-        <source>Create Mod...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2938"/>
-        <source>This will move all files from overwrite into a new, regular mod.
-Please enter a name: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2947"/>
-        <source>A mod with this name already exists</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3339"/>
-        <source>&lt;All&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.cpp" line="2521"/>
         <source>&lt;Checked&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="887"/>
-        <source>Plugin &quot;%1&quot; failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="951"/>
-        <source>failed to init plugin %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2038,14 +1811,19 @@ Please enter a name: </source>
         <location filename="mainwindow.cpp" line="3876"/>
         <location filename="mainwindow.cpp" line="3900"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
-        <translation type="unfinished">&quot;%1&quot;yi &quot;%2&quot; olarak yeniden adlandırma başarılı olamadı.</translation>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2608"/>
+        <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2634"/>
         <location filename="mainwindow.cpp" line="3172"/>
         <location filename="mainwindow.cpp" line="3181"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2635"/>
@@ -2096,7 +1874,7 @@ Please enter a name: </source>
         <location filename="mainwindow.cpp" line="4216"/>
         <location filename="mainwindow.cpp" line="4268"/>
         <source>failed to read %1: %2</source>
-        <translation type="unfinished">%1: %2 okunamadı</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2862"/>
@@ -2107,6 +1885,23 @@ Please enter a name: </source>
     <message>
         <location filename="mainwindow.cpp" line="2896"/>
         <source>Nexus ID for this Mod is unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2937"/>
+        <location filename="mainwindow.cpp" line="3268"/>
+        <source>Create Mod...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2938"/>
+        <source>This will move all files from overwrite into a new, regular mod.
+Please enter a name: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2947"/>
+        <source>A mod with this name already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2278,6 +2073,11 @@ Please enter a name: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="3339"/>
+        <source>&lt;All&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.cpp" line="3341"/>
         <source>&lt;Multiple&gt;</source>
         <translation type="unfinished"></translation>
@@ -2327,7 +2127,7 @@ Please enter a name: </source>
     <message>
         <location filename="mainwindow.cpp" line="3798"/>
         <source>Binary</source>
-        <translation type="unfinished">İkili değer</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3824"/>
@@ -2413,16 +2213,6 @@ Please enter a name: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4428"/>
-        <source>Unlock load order</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4431"/>
-        <source>Lock load order</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.cpp" line="4147"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished"></translation>
@@ -2478,6 +2268,16 @@ Please enter a name: </source>
         <source>Disable all</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="mainwindow.cpp" line="4428"/>
+        <source>Unlock load order</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="4431"/>
+        <source>Lock load order</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MessageDialog</name>
@@ -2485,11 +2285,7 @@ Please enter a name: </source>
         <location filename="messagedialog.ui" line="150"/>
         <location filename="messagedialog.ui" line="180"/>
         <source>Placeholder</source>
-        <translation>Yer tutucu</translation>
-    </message>
-    <message>
-        <source>Please install NCC</source>
-        <translation type="obsolete">Lütfen NCC&apos;yi yükleyin</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2498,11 +2294,7 @@ Please enter a name: </source>
         <location filename="modinfo.cpp" line="96"/>
         <location filename="modinfo.cpp" line="125"/>
         <source>invalid index %1</source>
-        <translation>geçersiz dizin %1</translation>
-    </message>
-    <message>
-        <source>invalid mod id %1</source>
-        <translation type="obsolete">geçersiz mod kimliği %1</translation>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2518,63 +2310,63 @@ Please enter a name: </source>
     <message>
         <location filename="modinfodialog.ui" line="14"/>
         <source>Mod Info</source>
-        <translation>Mod bilgisi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="27"/>
         <source>Textfiles</source>
-        <translation>Yazı dosyaları</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="39"/>
         <source>A list of text-files in the mod directory.</source>
-        <translation>Mod klasöründeki yazı dosyalarının bir listesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="42"/>
         <source>A list of text-files in the mod directory like readmes. </source>
-        <translation>Mod klasöründeki benioku dosyaları gibi yazı dosyalarının bir listesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="64"/>
         <location filename="modinfodialog.ui" line="149"/>
         <source>Save</source>
-        <translation>Kaydet</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="74"/>
         <source>INI-Files</source>
-        <translation>INI-Dosyaları</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="94"/>
         <source>This is a list of .ini files in the mod.</source>
-        <translation>Mod klasöründeki .ini dosyalarının bir listesi</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="97"/>
         <source>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</source>
-        <translation>Moddaki .ini dosyalarının bir listesi. Bunlar genelde, ayarlabilir parametrelerin olduğuğu durumlarda modların davranışlarını ayarlamak için kullanılır.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="143"/>
         <source>Save changes to the file.</source>
-        <translation>Değişiklikleri dosyaya kaydet.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="146"/>
         <source>Save changes to the file. This overwrites the original. There is no automatic backup!</source>
-        <translation>Değişiklikleri dosyaya kaydet. Bu orijinal dosyanın üzerine yazar. Otomatik yedekleme yoktur!</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="159"/>
         <source>Images</source>
-        <translation>Resimler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="214"/>
         <source>Images located in the mod.</source>
-        <translation>Modun içinde yer alan resimler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="217"/>
@@ -2583,22 +2375,18 @@ Please enter a name: </source>
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This lists all the images (.jpg and .png) in the mod directory, like screenshots and such. Click one to get a larger view.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Bu mod klasöründe yer alan ekran resimleri ve benzeri resimlerin(.jpg ve.png) bir listesidir. Tıklayararak daha büyük görüntü alabilirsiniz&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="254"/>
         <location filename="modinfodialog.ui" line="277"/>
         <source>Optional ESPs</source>
-        <translation>İsteğe bağlı ESP&apos;ler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="260"/>
         <source>List of esps and esms that can not be loaded by the game.</source>
-        <translation>Oyun tarafından yüklenemeyen espler ve esmlerin bir listesi.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="263"/>
@@ -2610,29 +2398,22 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;They usually contain optional functionality, see the readme.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Most mods do not have optional esps, so chances are good you are looking at an empty list.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Şu an için oyun tarafından yüklenemeyen ve bu eklenti tarafından içerilen esp ve esm&apos;lerin bir listesidir.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Genelde isteğe bağlı özellikler içerirler, benioku dosyalarına bakın.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Pek çok mod isteğe bağlı esp&apos;ler içermez, bu nedenle büyük ihtimalle boş bir listeye bakıyorsunuz.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="292"/>
         <source>Make the selected mod in the lower list unavailable.</source>
-        <translation>Aşağıdaki listedeki seçili modu kullanılamaz yapar.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="295"/>
         <source>The selected esp (in the lower list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</source>
-        <translation>Seçili esp (aşağıdaki listede) modun bir alt klasörüne itilecek ve böylece oyuna &quot;görünmez&quot; olacaktır. Artık aktif hale getirilemez.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="321"/>
         <source>Move a file to the data directory.</source>
-        <translation>Dosyayı veri klasörüne taşı.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="324"/>
@@ -2693,7 +2474,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modinfodialog.ui" line="514"/>
         <source>Categories</source>
-        <translation type="unfinished">Kategoriler</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="537"/>
@@ -2736,7 +2517,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modinfodialog.ui" line="603"/>
         <source>Version</source>
-        <translation type="unfinished">Versiyon</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="633"/>
@@ -2762,10 +2543,6 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="obsolete">İsim</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="701"/>
@@ -2805,12 +2582,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modinfodialog.ui" line="771"/>
         <source>Next</source>
-        <translation type="unfinished">Sonraki</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="791"/>
         <source>Close</source>
-        <translation type="unfinished">Kapat</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.cpp" line="108"/>
@@ -2835,7 +2612,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modinfodialog.cpp" line="112"/>
         <source>&amp;Open</source>
-        <translation type="unfinished">&amp;Aç</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.cpp" line="113"/>
@@ -2846,6 +2623,12 @@ p, li { white-space: pre-wrap; }
         <location filename="modinfodialog.cpp" line="352"/>
         <location filename="modinfodialog.cpp" line="367"/>
         <source>Save changes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="352"/>
+        <location filename="modinfodialog.cpp" line="367"/>
+        <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2875,29 +2658,8 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="758"/>
-        <source>(description incomplete, please visit nexus)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="713"/>
-        <source>Current Version: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="717"/>
-        <source>No update available</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="modinfodialog.cpp" line="697"/>
         <source>Main</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="352"/>
-        <location filename="modinfodialog.cpp" line="367"/>
-        <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2926,19 +2688,34 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="modinfodialog.cpp" line="713"/>
+        <source>Current Version: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="717"/>
+        <source>No update available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="758"/>
+        <source>(description incomplete, please visit nexus)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="modinfodialog.cpp" line="779"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="858"/>
+        <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.cpp" line="869"/>
         <location filename="modinfodialog.cpp" line="874"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="858"/>
-        <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3010,13 +2787,13 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfo.h" line="812"/>
-        <source>Overwrite</source>
+        <location filename="modinfo.cpp" line="821"/>
+        <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="821"/>
-        <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
+        <location filename="modinfo.h" line="812"/>
+        <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3040,11 +2817,6 @@ p, li { white-space: pre-wrap; }
 </context>
 <context>
     <name>ModList</name>
-    <message>
-        <location filename="modlist.cpp" line="662"/>
-        <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
-    </message>
     <message>
         <location filename="modlist.cpp" line="94"/>
         <source>Overwrite</source>
@@ -3091,23 +2863,8 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="736"/>
-        <source>Category of the mod.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="737"/>
-        <source>Id of the mod as used on Nexus.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="738"/>
-        <source>Emblemes to highlight things that might require attention.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="298"/>
-        <source>Categories: &lt;br&gt;</source>
+        <location filename="modlist.cpp" line="184"/>
+        <source>invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3116,27 +2873,8 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Name</source>
-        <translation type="obsolete">İsim</translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="719"/>
-        <source>Version</source>
-        <translation type="unfinished">Versiyon</translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="733"/>
-        <source>Version of the mod (if available)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="720"/>
-        <source>Priority</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modlist.cpp" line="184"/>
-        <source>invalid</source>
+        <location filename="modlist.cpp" line="298"/>
+        <source>Categories: &lt;br&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3150,6 +2888,16 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="modlist.cpp" line="662"/>
+        <source>Confirm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="662"/>
+        <source>Are you sure you want to remove &quot;%1&quot;?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="modlist.cpp" line="717"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
@@ -3157,6 +2905,16 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlist.cpp" line="718"/>
         <source>Mod Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="719"/>
+        <source>Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="720"/>
+        <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3186,18 +2944,33 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="modlist.cpp" line="733"/>
+        <source>Version of the mod (if available)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="modlist.cpp" line="734"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="739"/>
-        <source>Time this mod was installed</source>
+        <location filename="modlist.cpp" line="736"/>
+        <source>Category of the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="662"/>
-        <source>Are you sure you want to remove &quot;%1&quot;?</source>
+        <location filename="modlist.cpp" line="737"/>
+        <source>Id of the mod as used on Nexus.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="738"/>
+        <source>Emblemes to highlight things that might require attention.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="739"/>
+        <source>Time this mod was installed</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3283,7 +3056,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="overwriteinfodialog.cpp" line="92"/>
         <source>&amp;Open</source>
-        <translation type="unfinished">&amp;Aç</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="overwriteinfodialog.cpp" line="93"/>
@@ -3299,7 +3072,7 @@ p, li { white-space: pre-wrap; }
         <location filename="overwriteinfodialog.cpp" line="148"/>
         <location filename="overwriteinfodialog.cpp" line="153"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="overwriteinfodialog.cpp" line="148"/>
@@ -3325,6 +3098,16 @@ p, li { white-space: pre-wrap; }
 </context>
 <context>
     <name>PluginList</name>
+    <message>
+        <location filename="pluginlist.cpp" line="87"/>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="pluginlist.cpp" line="88"/>
+        <source>Priority</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <location filename="pluginlist.cpp" line="89"/>
         <source>Mod Index</source>
@@ -3373,11 +3156,6 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="737"/>
-        <source>failed to restore load order for %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="pluginlist.cpp" line="631"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation type="unfinished"></translation>
@@ -3388,13 +3166,8 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="87"/>
-        <source>Name</source>
-        <translation type="unfinished">İsim</translation>
-    </message>
-    <message>
-        <location filename="pluginlist.cpp" line="88"/>
-        <source>Priority</source>
+        <location filename="pluginlist.cpp" line="737"/>
+        <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3643,7 +3416,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profilesdialog.ui" line="162"/>
         <source>Close</source>
-        <translation type="unfinished">Kapat</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="61"/>
@@ -3659,7 +3432,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profilesdialog.cpp" line="152"/>
         <source>Name</source>
-        <translation type="unfinished">İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="152"/>
@@ -3674,7 +3447,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profilesdialog.cpp" line="167"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="167"/>
@@ -3720,6 +3493,51 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="categories.cpp" line="276"/>
         <source>invalid category id %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="70"/>
+        <source>invalid field name &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="76"/>
+        <source>invalid type for &quot;%1&quot; (should be integer)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="81"/>
+        <source>invalid type for &quot;%1&quot; (should be string)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="86"/>
+        <source>invalid type for &quot;%1&quot; (should be float)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="103"/>
+        <source>no fields set up yet!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="140"/>
+        <source>field not set &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="237"/>
+        <source>invalid character in field &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="csvbuilder.cpp" line="240"/>
+        <source>empty field name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="gameinfoimpl.cpp" line="41"/>
+        <source>invalid game type %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3804,24 +3622,19 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="93"/>
-        <source>&quot;%1&quot; is missing</source>
+        <location filename="main.cpp" line="134"/>
+        <source>Permissions required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="134"/>
-        <source>Permissions required</source>
+        <location filename="main.cpp" line="135"/>
+        <source>The current user account doesn&apos;t have the required access rights to run Mod Organizer. The neccessary changes can be made automatically (the MO directory will be made writable for the current user account). You will be asked to run &quot;helper.exe&quot; with administrative rights).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="main.cpp" line="234"/>
         <location filename="main.cpp" line="272"/>
         <source>Woops</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="main.cpp" line="135"/>
-        <source>The current user account doesn&apos;t have the required access rights to run Mod Organizer. The neccessary changes can be made automatically (the MO directory will be made writable for the current user account). You will be asked to run &quot;helper.exe&quot; with administrative rights).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3899,6 +3712,11 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="profile.cpp" line="93"/>
+        <source>&quot;%1&quot; is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="profilesdialog.cpp" line="80"/>
         <source>Before you can use ModOrganizer, you need to create at least one profile. ATTENTION: Run the game at least once before creating a profile!</source>
         <translation type="unfinished"></translation>
@@ -3971,51 +3789,6 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <source>failed to run &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="70"/>
-        <source>invalid field name &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="76"/>
-        <source>invalid type for &quot;%1&quot; (should be integer)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="81"/>
-        <source>invalid type for &quot;%1&quot; (should be string)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="86"/>
-        <source>invalid type for &quot;%1&quot; (should be float)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="103"/>
-        <source>no fields set up yet!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="140"/>
-        <source>field not set &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="237"/>
-        <source>invalid character in field &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="csvbuilder.cpp" line="240"/>
-        <source>empty field name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="gameinfoimpl.cpp" line="41"/>
-        <source>invalid game type %1</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>QueryOverwriteDialog</name>
@@ -4042,7 +3815,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="queryoverwritedialog.ui" line="77"/>
         <source>Replace</source>
-        <translation type="unfinished">Değiştir</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="queryoverwritedialog.ui" line="84"/>
@@ -4119,7 +3892,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="savetextasdialog.ui" line="59"/>
         <source>Close</source>
-        <translation type="unfinished">Kapat</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="savetextasdialog.cpp" line="36"/>
@@ -4147,7 +3920,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="selectiondialog.ui" line="23"/>
         <source>Placeholder</source>
-        <translation type="unfinished">Yer tutucu</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="selectiondialog.ui" line="77"/>
@@ -4193,7 +3966,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="selfupdater.cpp" line="228"/>
         <source>failed to open archive &quot;%1&quot;: %2</source>
-        <translation type="unfinished">Arşiv  &quot;%1&quot;: %2 açılamadı.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="selfupdater.cpp" line="251"/>
@@ -4226,13 +3999,13 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="461"/>
-        <source>No download server available. Please try again later.</source>
+        <location filename="selfupdater.cpp" line="441"/>
+        <source>Failed to retrieve update information: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="441"/>
-        <source>Failed to retrieve update information: %1</source>
+        <location filename="selfupdater.cpp" line="461"/>
+        <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4251,7 +4024,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="settings.cpp" line="552"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="settings.cpp" line="552"/>
@@ -4399,6 +4172,46 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="settingsdialog.ui" line="245"/>
+        <location filename="settingsdialog.ui" line="261"/>
+        <source>Nexus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="251"/>
+        <source>Allows automatic log-in when the Nexus-Page for the game is clicked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="254"/>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Allows automatic log-in when the Nexus-Page for the game is clicked. Please note that the obfuscation with which the password  is stored in modorganizer.ini is not very strong. If you&apos;re worried someone might steal your password, don&apos;t store it here.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="270"/>
+        <source>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="273"/>
+        <source>Automatically Log-In to Nexus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="285"/>
+        <source>Username</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="299"/>
+        <source>Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="settingsdialog.ui" line="321"/>
         <source>Disable automatic internet features</source>
         <translation type="unfinished"></translation>
@@ -4437,57 +4250,6 @@ p, li { white-space: pre-wrap; }
         <location filename="settingsdialog.ui" line="372"/>
         <source>Preferred Servers (Drag &amp; Drop)</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="594"/>
-        <source>Mod Organizer needs a dll to be injected into the game so all mods are visible to it.
-There are several means to do this:
-*Mod Organizer* (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it.
-*Script Extender* In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin.
-*Proxy DLL* In this mode, MO replaces one of the game&apos;s dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don&apos;t work.
-
-If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="245"/>
-        <location filename="settingsdialog.ui" line="261"/>
-        <source>Nexus</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="251"/>
-        <source>Allows automatic log-in when the Nexus-Page for the game is clicked.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="254"/>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Allows automatic log-in when the Nexus-Page for the game is clicked. Please note that the obfuscation with which the password  is stored in modorganizer.ini is not very strong. If you&apos;re worried someone might steal your password, don&apos;t store it here.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="270"/>
-        <source>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="273"/>
-        <source>Automatically Log-In to Nexus</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="285"/>
-        <source>Username</source>
-        <translation type="unfinished">Kullanıcı adı</translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="299"/>
-        <source>Password</source>
-        <translation type="unfinished">Şifre</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="407"/>
@@ -4558,6 +4320,17 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="591"/>
         <source>Select loading mechanism. See help for details.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="594"/>
+        <source>Mod Organizer needs a dll to be injected into the game so all mods are visible to it.
+There are several means to do this:
+*Mod Organizer* (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it.
+*Script Extender* In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin.
+*Proxy DLL* In this mode, MO replaces one of the game&apos;s dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don&apos;t work.
+
+If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4664,18 +4437,18 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="simpleinstalldialog.ui" line="22"/>
         <source>Name</source>
-        <translation type="unfinished">İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="simpleinstalldialog.ui" line="49"/>
         <location filename="simpleinstalldialog.ui" line="52"/>
         <source>Opens a Dialog that allows custom modifications.</source>
-        <translation type="unfinished">Özel isteğe göre ayarlanmış değişikliklere izin veren bir dialog açar.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="simpleinstalldialog.ui" line="55"/>
         <source>Manual</source>
-        <translation type="unfinished">El ile</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="simpleinstalldialog.ui" line="62"/>
@@ -4717,7 +4490,7 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="syncoverwritedialog.ui" line="27"/>
         <source>Name</source>
-        <translation type="unfinished">İsim</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="syncoverwritedialog.ui" line="32"/>
@@ -4805,7 +4578,7 @@ On Windows XP:
     <message>
         <location filename="transfersavesdialog.ui" line="156"/>
         <source>Done</source>
-        <translation type="unfinished">Bitti</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="transfersavesdialog.ui" line="167"/>
@@ -4828,7 +4601,7 @@ On Windows XP:
         <location filename="transfersavesdialog.cpp" line="237"/>
         <location filename="transfersavesdialog.cpp" line="276"/>
         <source>Confirm</source>
-        <translation type="unfinished">Onayla</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="transfersavesdialog.cpp" line="165"/>

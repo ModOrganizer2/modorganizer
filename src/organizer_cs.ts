@@ -181,12 +181,12 @@ p, li { white-space: pre-wrap; }
         <translation>Přirazené číslo kategorie z ní udelá nadřazenou kategorii s podkategoriemi jako táto i jiné s přideleným rovnakým Rodičovským ID.</translation>
     </message>
     <message>
-        <location filename="categoriesdialog.cpp" line="238"/>
+        <location filename="categoriesdialog.cpp" line="239"/>
         <source>Add</source>
         <translation>Přidat</translation>
     </message>
     <message>
-        <location filename="categoriesdialog.cpp" line="239"/>
+        <location filename="categoriesdialog.cpp" line="240"/>
         <source>Remove</source>
         <translation>Odstranit</translation>
     </message>
@@ -231,7 +231,7 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">nemožno načíst %1: %2</translation>
     </message>
     <message>
-        <location filename="directoryrefresher.cpp" line="94"/>
+        <location filename="directoryrefresher.cpp" line="99"/>
         <source>failed to read bsa: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -269,16 +269,28 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="downloadlistwidget.ui" line="68"/>
-        <location filename="downloadlistwidget.cpp" line="91"/>
-        <location filename="downloadlistwidget.cpp" line="93"/>
+        <location filename="downloadlistwidget.cpp" line="143"/>
+        <location filename="downloadlistwidget.cpp" line="145"/>
         <source>Done - Double Click to install</source>
         <translation>Stáhnuté - dvouklik instaluj</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="82"/>
-        <location filename="downloadlistwidget.cpp" line="84"/>
+        <location filename="downloadlistwidget.cpp" line="109"/>
+        <location filename="downloadlistwidget.cpp" line="111"/>
+        <source>Paused - Double Click to resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="129"/>
+        <location filename="downloadlistwidget.cpp" line="131"/>
         <source>Installed - Double Click to re-install</source>
         <translation>Instalované - dvouklik přeinstaluj</translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="136"/>
+        <location filename="downloadlistwidget.cpp" line="138"/>
+        <source>Uninstalled - Double Click to re-install</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -298,100 +310,120 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadListWidgetCompactDelegate</name>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="84"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="123"/>
         <source>Installed</source>
         <translation>Nainstalované</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="87"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="126"/>
+        <source>Uninstalled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="129"/>
         <source>Done</source>
         <translation>Hotovo</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="153"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="162"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="171"/>
-        <location filename="downloadlistwidgetcompact.cpp" line="180"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="208"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="217"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="226"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="235"/>
         <source>Are you sure?</source>
         <translation>Jsi si jistý?</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="154"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="209"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
         <translation>Tímto vymažeš všechny dokončené stáhnutí se seznamu i z disku.</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="163"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="218"/>
         <source>This will remove all installed downloads from this list and from disk.</source>
         <translation>Tímto vymažeš jenom nainstalované stáhnutí se seznamu i z disku.</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="172"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="227"/>
         <source>This will permanently remove all finished downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="181"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="236"/>
         <source>This will permanently remove all installed downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="205"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="262"/>
         <source>Install</source>
         <translation>Instaluj</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="207"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="264"/>
         <source>Query Info</source>
         <translation>Získej Info</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="209"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="266"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="210"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="267"/>
         <source>Remove from View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="215"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="272"/>
         <source>Remove</source>
         <translation>Odstranit</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="212"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="269"/>
         <source>Cancel</source>
         <translation>Zrušit</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="213"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="113"/>
+        <source>Paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="116"/>
+        <source>Fetching Info 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="118"/>
+        <source>Fetching Info 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidgetcompact.cpp" line="270"/>
         <source>Pause</source>
         <translation>Pauza</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="216"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="273"/>
         <source>Resume</source>
         <translation>Pokračuj</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="220"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="277"/>
         <source>Delete Installed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="221"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="278"/>
         <source>Delete All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="223"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="280"/>
         <source>Remove Installed...</source>
         <translation>Odstraň už nainstalované...</translation>
     </message>
     <message>
-        <location filename="downloadlistwidgetcompact.cpp" line="224"/>
+        <location filename="downloadlistwidgetcompact.cpp" line="281"/>
         <source>Remove All...</source>
         <translation>Odstraň všechny...</translation>
     </message>
@@ -399,90 +431,100 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadListWidgetDelegate</name>
     <message>
-        <location filename="downloadlistwidget.cpp" line="161"/>
-        <location filename="downloadlistwidget.cpp" line="170"/>
-        <location filename="downloadlistwidget.cpp" line="179"/>
-        <location filename="downloadlistwidget.cpp" line="188"/>
+        <location filename="downloadlistwidget.cpp" line="226"/>
+        <location filename="downloadlistwidget.cpp" line="235"/>
+        <location filename="downloadlistwidget.cpp" line="244"/>
+        <location filename="downloadlistwidget.cpp" line="253"/>
         <source>Are you sure?</source>
         <translation>Jsi si jistý?</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="162"/>
+        <location filename="downloadlistwidget.cpp" line="227"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
         <translation>Tímto vymažeš všechny dokončené stáhnutí se seznamu i z disku.</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="171"/>
+        <location filename="downloadlistwidget.cpp" line="236"/>
         <source>This will remove all installed downloads from this list and from disk.</source>
         <translation>Tímto vymažeš jenom nainstalované stáhnutí se seznamu i z disku.</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="180"/>
+        <location filename="downloadlistwidget.cpp" line="245"/>
         <source>This will remove all finished downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="189"/>
+        <location filename="downloadlistwidget.cpp" line="254"/>
         <source>This will remove all installed downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="212"/>
+        <location filename="downloadlistwidget.cpp" line="279"/>
         <source>Install</source>
         <translation>Instaluj</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="214"/>
+        <location filename="downloadlistwidget.cpp" line="281"/>
         <source>Query Info</source>
         <translation>Získej Info</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="216"/>
+        <location filename="downloadlistwidget.cpp" line="283"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="217"/>
+        <location filename="downloadlistwidget.cpp" line="284"/>
         <source>Remove from View</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="222"/>
+        <location filename="downloadlistwidget.cpp" line="289"/>
         <source>Remove</source>
         <translation>Odstraniť</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="219"/>
+        <location filename="downloadlistwidget.cpp" line="286"/>
         <source>Cancel</source>
         <translation>Zrušit</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="220"/>
+        <location filename="downloadlistwidget.cpp" line="116"/>
+        <source>Fetching Info 1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="119"/>
+        <source>Fetching Info 2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlistwidget.cpp" line="287"/>
         <source>Pause</source>
         <translation>Pauza</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="223"/>
+        <location filename="downloadlistwidget.cpp" line="290"/>
         <source>Resume</source>
         <translation>Pokračuj</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="227"/>
+        <location filename="downloadlistwidget.cpp" line="294"/>
         <source>Delete Installed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="228"/>
+        <location filename="downloadlistwidget.cpp" line="295"/>
         <source>Delete All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="230"/>
+        <location filename="downloadlistwidget.cpp" line="297"/>
         <source>Remove Installed...</source>
         <translation>Odstranit už nainstalované...</translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="231"/>
+        <location filename="downloadlistwidget.cpp" line="298"/>
         <source>Remove All...</source>
         <translation>Odstranit všechny...</translation>
     </message>
@@ -490,64 +532,65 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadManager</name>
     <message>
-        <location filename="downloadmanager.cpp" line="57"/>
+        <location filename="downloadmanager.cpp" line="123"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation>Nezdařilo se přejmenovat &quot;%1&quot; na &quot;%2&quot;</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="216"/>
+        <location filename="downloadmanager.cpp" line="274"/>
         <source>Download again?</source>
         <translation>Stáhnout znovu?</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="216"/>
+        <location filename="downloadmanager.cpp" line="274"/>
         <source>A file with the same name has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
         <translation>Soubor se stejným jménem už byl stáhnutý. Chcete ho stáhnout znovu? Nový soubor bude pojmenován jinak.</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="244"/>
+        <location filename="downloadmanager.cpp" line="304"/>
         <source>failed to download %1: could not open output file: %2</source>
         <translation>Stahování zlyhalo %1: nemožno otevřít výslední soubor: %2</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="275"/>
-        <location filename="downloadmanager.cpp" line="461"/>
-        <location filename="downloadmanager.cpp" line="471"/>
-        <location filename="downloadmanager.cpp" line="481"/>
-        <location filename="downloadmanager.cpp" line="491"/>
-        <location filename="downloadmanager.cpp" line="501"/>
-        <location filename="downloadmanager.cpp" line="512"/>
-        <location filename="downloadmanager.cpp" line="521"/>
-        <location filename="downloadmanager.cpp" line="531"/>
+        <location filename="downloadmanager.cpp" line="334"/>
+        <location filename="downloadmanager.cpp" line="543"/>
+        <location filename="downloadmanager.cpp" line="553"/>
+        <location filename="downloadmanager.cpp" line="563"/>
+        <location filename="downloadmanager.cpp" line="573"/>
+        <location filename="downloadmanager.cpp" line="583"/>
+        <location filename="downloadmanager.cpp" line="594"/>
+        <location filename="downloadmanager.cpp" line="603"/>
+        <location filename="downloadmanager.cpp" line="613"/>
+        <location filename="downloadmanager.cpp" line="628"/>
         <source>invalid index</source>
         <translation>neplatný index</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="293"/>
+        <location filename="downloadmanager.cpp" line="352"/>
         <source>failed to delete %1</source>
         <translation>odstránění zlyhalo %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="299"/>
+        <location filename="downloadmanager.cpp" line="358"/>
         <source>failed to delete meta file for %1</source>
         <translation>odstránění meta souboru zlyhalo pro %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="358"/>
-        <location filename="downloadmanager.cpp" line="376"/>
-        <location filename="downloadmanager.cpp" line="390"/>
-        <location filename="downloadmanager.cpp" line="404"/>
-        <location filename="downloadmanager.cpp" line="423"/>
+        <location filename="downloadmanager.cpp" line="418"/>
+        <location filename="downloadmanager.cpp" line="436"/>
+        <location filename="downloadmanager.cpp" line="449"/>
+        <location filename="downloadmanager.cpp" line="463"/>
+        <location filename="downloadmanager.cpp" line="498"/>
         <source>invalid index %1</source>
         <translation>neplatný index %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="435"/>
+        <location filename="downloadmanager.cpp" line="515"/>
         <source>Please enter the nexus mod id</source>
         <translation>Prosím zadej Nexus mod ID</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="435"/>
+        <location filename="downloadmanager.cpp" line="515"/>
         <source>Mod ID:</source>
         <translation>Mod ID:</translation>
     </message>
@@ -556,38 +599,38 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">neplatný alfabetický index %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="707"/>
+        <location filename="downloadmanager.cpp" line="848"/>
         <source>Information updated</source>
         <translation>Info aktualizované</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="709"/>
-        <location filename="downloadmanager.cpp" line="723"/>
+        <location filename="downloadmanager.cpp" line="850"/>
+        <location filename="downloadmanager.cpp" line="864"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation>Žádný přislouchající soubor nenalezen na Nexusu! Možná už není k dispozici nebo byl přejmenovaný?</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="711"/>
+        <location filename="downloadmanager.cpp" line="852"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation>Žádný soubor na Nexusu nezodpovedá přesnému jménu. Zvolte ručne ten správný.</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="798"/>
+        <location filename="downloadmanager.cpp" line="981"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="836"/>
+        <location filename="downloadmanager.cpp" line="1021"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation>Zlyhalo získání info z Nexusu %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="857"/>
+        <location filename="downloadmanager.cpp" line="1044"/>
         <source>Download failed: %1 (%2)</source>
         <translation>Stahování zlyhalo: %1 (%2)</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="915"/>
+        <location filename="downloadmanager.cpp" line="1110"/>
         <source>failed to re-open %1</source>
         <translation>zlyhalo znovu-otevření %1</translation>
     </message>
@@ -697,7 +740,7 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
     <message>
         <location filename="editexecutablesdialog.ui" line="169"/>
         <location filename="editexecutablesdialog.ui" line="172"/>
-        <location filename="editexecutablesdialog.cpp" line="186"/>
+        <location filename="editexecutablesdialog.cpp" line="220"/>
         <source>If checked, MO will be closed once the specified executable is run.</source>
         <translation>Pokud je zaškrtnuté, MO se ukončí hned po spuštění Spouštěče.</translation>
     </message>
@@ -714,7 +757,7 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="188"/>
-        <location filename="editexecutablesdialog.cpp" line="156"/>
+        <location filename="editexecutablesdialog.cpp" line="190"/>
         <source>Add</source>
         <translation>Přidat</translation>
     </message>
@@ -730,37 +773,47 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
         <translation>Odstranit</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="116"/>
+        <location filename="editexecutablesdialog.cpp" line="119"/>
         <source>Select a binary</source>
         <translation>Vyber binární soubor</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="116"/>
+        <location filename="editexecutablesdialog.cpp" line="119"/>
         <source>Executable (%1)</source>
         <translation>Spuštění (%1)</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="126"/>
+        <location filename="editexecutablesdialog.cpp" line="143"/>
+        <source>Java (32-bit) required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="editexecutablesdialog.cpp" line="144"/>
+        <source>MO requires 32-bit java to run this application. If you already have it installed, select javaw.exe from that installation as the binary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="editexecutablesdialog.cpp" line="160"/>
         <source>Select a directory</source>
         <translation>Vyber Zložku</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="135"/>
+        <location filename="editexecutablesdialog.cpp" line="169"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="135"/>
+        <location filename="editexecutablesdialog.cpp" line="169"/>
         <source>Really remove &quot;%1&quot; from executables?</source>
         <translation>Opravdu odstranit &quot;%1&quot; ze seznamu Spouštění?</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="160"/>
+        <location filename="editexecutablesdialog.cpp" line="194"/>
         <source>Modify</source>
         <translation>Ulož</translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="183"/>
+        <location filename="editexecutablesdialog.cpp" line="217"/>
         <source>MO must be kept running or this application will not work correctly.</source>
         <translation>MO musí bežet, aby tahle aplikace pracovala správně.</translation>
     </message>
@@ -846,7 +899,6 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="177"/>
-        <location filename="fomodinstallerdialog.cpp" line="953"/>
         <source>Next</source>
         <translation>Další</translation>
     </message>
@@ -856,78 +908,60 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
         <translation>Zrušit</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="115"/>
         <source>ModuleConfig.xml missing</source>
-        <translation>ModuleConfig.xml chybí</translation>
+        <translation type="obsolete">ModuleConfig.xml chybí</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="380"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Link&lt;/a&gt;</source>
-        <translation>&lt;a href=&quot;%1&quot;&gt;Odkaz&lt;/a&gt;</translation>
+        <translation type="obsolete">&lt;a href=&quot;%1&quot;&gt;Odkaz&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="388"/>
         <source>failed to parse info.xml: %1 (%2) (line %3, column %4)</source>
-        <translation>zlyhalo rozebrání info.xml: %1 (%2) (line %3, column %4)</translation>
+        <translation type="obsolete">zlyhalo rozebrání info.xml: %1 (%2) (line %3, column %4)</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="407"/>
         <source>unsupported order type %1</source>
-        <translation>nepodporovaný druh pořadí %1</translation>
+        <translation type="obsolete">nepodporovaný druh pořadí %1</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="425"/>
         <source>unsupported group type %1</source>
-        <translation>nepodporovaný druh skupiny %1</translation>
+        <translation type="obsolete">nepodporovaný druh skupiny %1</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="581"/>
         <source>This component is required</source>
-        <translation>Tenhle komponent je povinný</translation>
+        <translation type="obsolete">Tenhle komponent je povinný</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="587"/>
         <source>It is recommended you enable this component</source>
-        <translation>Odporoučí se aktivovat tenhle komponent</translation>
+        <translation type="obsolete">Odporoučí se aktivovat tenhle komponent</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="593"/>
         <source>Optional component</source>
-        <translation>Dobrovolný komponent</translation>
+        <translation type="obsolete">Dobrovolný komponent</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="598"/>
         <source>This component is not usable in combination with other installed plugins</source>
-        <translation>Tenhle komponent není použitelný v kombinaci s jinými nainstalovanými pluginy</translation>
+        <translation type="obsolete">Tenhle komponent není použitelný v kombinaci s jinými nainstalovanými pluginy</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="603"/>
         <source>You may be experiencing instability in combination with other installed plugins</source>
-        <translation>Můžete se dočkat nestability v kombinaci s jinými nainstalovanými pluginy</translation>
+        <translation type="obsolete">Můžete se dočkat nestability v kombinaci s jinými nainstalovanými pluginy</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="640"/>
         <source>None</source>
-        <translation>Žádné</translation>
+        <translation type="obsolete">Žádné</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="656"/>
         <source>Select one or more of these options:</source>
-        <translation>Vyberte jednu nebo víc z možností:</translation>
-    </message>
-    <message>
-        <location filename="fomodinstallerdialog.cpp" line="838"/>
-        <source>failed to parse ModuleConfig.xml: %1 - %2</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">Vyberte jednu nebo víc z možností:</translation>
     </message>
     <message>
         <source>failed to parse ModuleConfig.xml: %1</source>
         <translation type="obsolete">zlyhalo rozebrání ModuleConfig.xml: %1</translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="939"/>
         <source>Install</source>
-        <translation>Instaluj</translation>
+        <translation type="obsolete">Instaluj</translation>
     </message>
 </context>
 <context>
@@ -944,7 +978,6 @@ Každá hra/aplikace distribuovaná skrz Steammá unikátní ID. MO potřebuje v
     </message>
     <message>
         <location filename="installdialog.ui" line="46"/>
-        <location filename="installdialog.cpp" line="245"/>
         <source>Name</source>
         <translation>Jméno</translation>
     </message>
@@ -997,64 +1030,44 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished">Zrušit</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="191"/>
         <source>Looks good</source>
-        <translation>Vypadá správně</translation>
+        <translation type="obsolete">Vypadá správně</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="192"/>
         <source>No problem detected</source>
-        <translation>Žádne problémy</translation>
+        <translation type="obsolete">Žádne problémy</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="195"/>
         <source>No game data on top level</source>
-        <translation>Data nejsou ve vrchní úrovni, označte ručně v kontext menu (pravým kliknutím na zložku Data)</translation>
+        <translation type="obsolete">Data nejsou ve vrchní úrovni, označte ručně v kontext menu (pravým kliknutím na zložku Data)</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="196"/>
         <source>There is no esp/esm file or asset directory (textures, meshes, interface, ...) on the top level.</source>
-        <translation>Nenalezeno esp/esm ani přidružené zložky (textures, meshes, interface, ...) ve vrchní úrovni.</translation>
+        <translation type="obsolete">Nenalezeno esp/esm ani přidružené zložky (textures, meshes, interface, ...) ve vrchní úrovni.</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="245"/>
         <source>Enter a directory name</source>
-        <translation>Zadejte název adresáře</translation>
+        <translation type="obsolete">Zadejte název adresáře</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="250"/>
         <source>A directory with that name exists</source>
-        <translation>Adresář rovnakého jména již existuje</translation>
+        <translation type="obsolete">Adresář rovnakého jména již existuje</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="277"/>
         <source>Set data directory</source>
-        <translation>Označ ako Data</translation>
+        <translation type="obsolete">Označ ako Data</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="278"/>
         <source>Unset data directory</source>
-        <translation>Odznač ako Data</translation>
+        <translation type="obsolete">Odznač ako Data</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="280"/>
         <source>Create directory...</source>
-        <translation>Vytvoř adresář...</translation>
+        <translation type="obsolete">Vytvoř adresář...</translation>
     </message>
     <message>
-        <location filename="installdialog.cpp" line="282"/>
         <source>&amp;Open</source>
-        <translation>&amp;Otevři</translation>
-    </message>
-    <message>
-        <location filename="installdialog.cpp" line="297"/>
-        <source>Continue?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="installdialog.cpp" line="297"/>
-        <source>This mod was probably NOT set up correctly, most likely it will NOT work. Really continue?</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">&amp;Otevři</translation>
     </message>
 </context>
 <context>
@@ -1064,12 +1077,12 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">mo_archive.dll nenačteno: &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="100"/>
+        <location filename="installationmanager.cpp" line="97"/>
         <source>Password required</source>
         <translation>Heslo požadováno</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="100"/>
+        <location filename="installationmanager.cpp" line="97"/>
         <source>Password</source>
         <translation>Heslo</translation>
     </message>
@@ -1090,48 +1103,42 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Nahradit</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="170"/>
-        <location filename="installationmanager.cpp" line="252"/>
-        <location filename="installationmanager.cpp" line="603"/>
+        <location filename="installationmanager.cpp" line="162"/>
+        <location filename="installationmanager.cpp" line="244"/>
+        <location filename="installationmanager.cpp" line="520"/>
         <source>Extracting files</source>
         <translation>Rozbalují se soubory</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="729"/>
         <source>Preparing installer</source>
-        <translation>Připravuji instalátor</translation>
+        <translation type="obsolete">Připravuji instalátor</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="774"/>
         <source>Installation as fomod failed: %1</source>
-        <translation>Instalace fomodu zlyhala: %1</translation>
+        <translation type="obsolete">Instalace fomodu zlyhala: %1</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="816"/>
         <source>failed to start %1</source>
-        <translation>Zlyhal start %1</translation>
+        <translation type="obsolete">Zlyhal start %1</translation>
     </message>
     <message>
         <source>Running external installer</source>
         <translation type="obsolete">Spouštím externí instalátor</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="820"/>
         <source>Force Close</source>
-        <translation>Ukončiř nasilu</translation>
+        <translation type="obsolete">Ukončiř nasilu</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="837"/>
         <source>Confirm</source>
-        <translation>Potvrdit</translation>
+        <translation type="obsolete">Potvrdit</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="895"/>
         <source>installation failed (errorcode %1)</source>
-        <translation>instalace zlyhala (errorcode %1)</translation>
+        <translation type="obsolete">instalace zlyhala (errorcode %1)</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="922"/>
+        <location filename="installationmanager.cpp" line="613"/>
         <source>File format &quot;%1&quot; not supported</source>
         <translation>Formát souboru &quot;%1&quot; nepodporován</translation>
     </message>
@@ -1140,9 +1147,8 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">nemožno otevřít archív &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1143"/>
         <source>Installer missing</source>
-        <translation>Instalátor chybí</translation>
+        <translation type="obsolete">Instalátor chybí</translation>
     </message>
     <message>
         <source>This package contains a scripted installer. To use this installer you need the optional &quot;nmm installer for MO&quot; package and the .net runtime. Do you want to continue, treating this as a manual installer?</source>
@@ -1153,109 +1159,96 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Tenhle mod je zdá se už nainstalován. Chcete do nej jenom přidat (a možná přepsat rovnaké) soubory nebo chcete kompletne nahradit celý mod (předchozí se úplne vymaže)?</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="79"/>
+        <location filename="installationmanager.cpp" line="75"/>
         <source>archive.dll not loaded: &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="496"/>
+        <location filename="installationmanager.cpp" line="433"/>
         <source>failed to create backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="502"/>
+        <location filename="installationmanager.cpp" line="439"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="502"/>
+        <location filename="installationmanager.cpp" line="439"/>
         <source>Name</source>
         <translation type="unfinished">Jméno</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="575"/>
+        <location filename="installationmanager.cpp" line="492"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="576"/>
+        <location filename="installationmanager.cpp" line="493"/>
         <source>The name you entered is invalid, please enter a different one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="820"/>
         <source>Running external installer.
 Note: This installer will not be aware of other installed mods!</source>
-        <translation>Běží externí instalátor.
+        <translation type="obsolete">Běží externí instalátor.
 Poznámka: Instalátor nerozpoznává už nainstalované mody!</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="892"/>
-        <source>Finalization of the installation failed. The mod may or may not work correctly. See mo_interface.log for details</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="1054"/>
-        <source>Failed to open &quot;%1&quot;: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="1068"/>
-        <source>This seems like a bundle of fomods, which one do you want to install?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="installationmanager.cpp" line="1144"/>
         <source>This package contains a scripted installer. To use this installer you need the optional &quot;NCC&quot;-package and the .net runtime. Do you want to continue, treating this as a manual installer?</source>
-        <translation>Tenhle balík obsahuje naskriptovaný instalátor. Pro nainstalovaní potřebujete volitelný balík &quot;NCC&quot; a nainstalováno .NET runtime. Chcete pokračovat v instalaci ručným spůsobem?</translation>
+        <translation type="obsolete">Tenhle balík obsahuje naskriptovaný instalátor. Pro nainstalovaní potřebujete volitelný balík &quot;NCC&quot; a nainstalováno .NET runtime. Chcete pokračovat v instalaci ručným spůsobem?</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1150"/>
         <source>Please install NCC</source>
-        <translation>Prosím nainstalujte doplněk NCC</translation>
+        <translation type="obsolete">Prosím nainstalujte doplněk NCC</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1259"/>
+        <location filename="installationmanager.cpp" line="739"/>
+        <source>None of the available installer plugins were able to handle that archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="installationmanager.cpp" line="749"/>
         <source>no error</source>
         <translation>žádná chyba</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1262"/>
+        <location filename="installationmanager.cpp" line="752"/>
         <source>7z.dll not found</source>
         <translation>7z.dll nenalezeno</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1265"/>
+        <location filename="installationmanager.cpp" line="755"/>
         <source>7z.dll isn&apos;t valid</source>
         <translation>7z.dll je neplatný</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1268"/>
+        <location filename="installationmanager.cpp" line="758"/>
         <source>archive not found</source>
         <translation>archív nenalezen</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1271"/>
+        <location filename="installationmanager.cpp" line="761"/>
         <source>failed to open archive</source>
         <translation>nemožno otevřít archív</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1274"/>
+        <location filename="installationmanager.cpp" line="764"/>
         <source>unsupported archive type</source>
         <translation>nepodporovaný typ archívu</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1277"/>
+        <location filename="installationmanager.cpp" line="767"/>
         <source>internal library error</source>
         <translation>chyba internal library </translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1280"/>
+        <location filename="installationmanager.cpp" line="770"/>
         <source>archive invalid</source>
         <translation>archív je neplatný</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="1284"/>
+        <location filename="installationmanager.cpp" line="774"/>
         <source>unknown archive error</source>
         <translation>neznáma chyba archívu</translation>
     </message>
@@ -1286,7 +1279,7 @@ Poznámka: Instalátor nerozpoznává už nainstalované mody!</translation>
 <context>
     <name>LogBuffer</name>
     <message>
-        <location filename="logbuffer.cpp" line="70"/>
+        <location filename="logbuffer.cpp" line="72"/>
         <source>failed to write log to %1: %2</source>
         <translation>nezdařil se zápis do logu %1: %2</translation>
     </message>
@@ -1307,22 +1300,23 @@ Poznámka: Instalátor nerozpoznává už nainstalované mody!</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="mainwindow.ui" line="42"/>
+        <location filename="mainwindow.ui" line="51"/>
+        <location filename="mainwindow.ui" line="392"/>
         <source>Categories</source>
         <translation type="unfinished">Kategorie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="113"/>
+        <location filename="mainwindow.ui" line="128"/>
         <source>Profile</source>
         <translation type="unfinished">Profil</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="123"/>
+        <location filename="mainwindow.ui" line="138"/>
         <source>Pick a module collection</source>
         <translation type="unfinished">Vyber kolekci modulů</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="126"/>
+        <location filename="mainwindow.ui" line="141"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1337,53 +1331,58 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Prosím mějte na paměti, že v současnosti poradí esp se neukladá pro různé profily.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="144"/>
+        <location filename="mainwindow.ui" line="159"/>
         <source>Refresh list</source>
         <translation type="unfinished">Znovunačíst seznam</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="147"/>
+        <location filename="mainwindow.ui" line="162"/>
         <source>Refresh list. This is usually not necessary unless you modified data outside the program.</source>
         <translation type="unfinished">Obnoví seznam. Tohle obvykle není zapotřebí, jedine že by jste měnili obsah dat mimo program MO.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="163"/>
-        <source>Installed Mods</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="272"/>
+        <location filename="mainwindow.ui" line="278"/>
         <source>List of available mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="275"/>
+        <location filename="mainwindow.ui" line="281"/>
         <source>This is a list of installed mods. Use the checkboxes to activate/deactivate mods and drag &amp; drop mods to change their &quot;installation&quot; orders.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="363"/>
-        <location filename="mainwindow.ui" line="913"/>
+        <location filename="mainwindow.ui" line="366"/>
         <source>Filter</source>
         <translation type="unfinished">Filter</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="383"/>
+        <location filename="mainwindow.ui" line="387"/>
+        <source>No groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="397"/>
+        <source>Nexus IDs</source>
+        <translation type="unfinished">Nexus ID</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="405"/>
+        <location filename="mainwindow.ui" line="722"/>
+        <location filename="mainwindow.ui" line="1021"/>
         <source>Namefilter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="402"/>
         <source>Start</source>
-        <translation type="unfinished">Start</translation>
+        <translation type="obsolete">Start</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="429"/>
+        <location filename="mainwindow.ui" line="440"/>
         <source>Pick a program to run.</source>
         <translation type="unfinished">Vyber program na spuštění.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="432"/>
+        <location filename="mainwindow.ui" line="443"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1398,12 +1397,12 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Můžeš přidávat různé nástroje, ale neručím, že ty které jsem netestoval poběží správně.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="480"/>
+        <location filename="mainwindow.ui" line="491"/>
         <source>Run program</source>
         <translation type="unfinished">Spustit program</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="483"/>
+        <location filename="mainwindow.ui" line="494"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1416,17 +1415,17 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Spusti vybraný program s nastavením ModOrganizeru.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="493"/>
+        <location filename="mainwindow.ui" line="504"/>
         <source>Run</source>
         <translation type="unfinished">Spustit</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="534"/>
+        <location filename="mainwindow.ui" line="545"/>
         <source>Create a shortcut in your start menu or on the desktop to the specified program</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="537"/>
+        <location filename="mainwindow.ui" line="548"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1439,40 +1438,37 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Tohle vytvoří odkaz v menu Start, který přímo bude spouštět zvolený program přes MO.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="544"/>
+        <location filename="mainwindow.ui" line="555"/>
         <source>Shortcut</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="610"/>
         <source>save esp list and load order.</source>
-        <translation type="unfinished">Uložit seznam esp a pořadí načtení.</translation>
+        <translation type="obsolete">Uložit seznam esp a pořadí načtení.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="613"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Save the list of active mods and load order. This automatically happens if you close MO or start a program.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <translation type="obsolete">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Ulož nastavění aktivace a pořadí esp souborů. Tohle se také děje automaticky při spuštění programu nebo ukončení MO.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="620"/>
         <source>Save</source>
-        <translation type="unfinished">Uložit</translation>
+        <translation type="obsolete">Uložit</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="679"/>
+        <location filename="mainwindow.ui" line="669"/>
         <source>List of available esp/esm files</source>
         <translation type="unfinished">Seznam dostupných esp/esm souborů</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="682"/>
+        <location filename="mainwindow.ui" line="672"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1485,17 +1481,16 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Tenhle seznam obsahuje esp a esm soubory z aktivovaných modů. Tyhle mají svoje vlastní pořadí priority. Tahaním myší je možné měnit pořadí. Prosím mějte na paměti, že MO zobrazí seznam jenom z modů, které jsou aktivovány (zaškrtnuté).&lt;br /&gt;Existuje skvělý nástroj &amp;quot;BOSS&amp;quot; který automaticky správně seřadí tyhle soubory.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="736"/>
         <source>IMPORTANT: You can change the order of BSAs here but installation order of mods has priority over the order specified here!</source>
-        <translation type="unfinished">DŮLEŽITÉ: Můžete měnit pořadí BSA souborů tady, ale soubory modů ako takých má vyšší prioritu a přepíše konflikty, které by vznikly zde!</translation>
+        <translation type="obsolete">DŮLEŽITÉ: Můžete měnit pořadí BSA souborů tady, ale soubory modů ako takých má vyšší prioritu a přepíše konflikty, které by vznikly zde!</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="749"/>
+        <location filename="mainwindow.ui" line="751"/>
         <source>List of available BS Archives. Archives not checked here are not managed by MO and ignore installation order.</source>
         <translation type="unfinished">Seznam BS archivů, které jsou k dispozici. Archivy, které jsou zde neni označeny nebudou načteny do hry.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="752"/>
+        <location filename="mainwindow.ui" line="754"/>
         <source>BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
 By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
 
@@ -1506,62 +1501,67 @@ By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp
 BSAs checked here are loaded in such a way that your installation order is obeyed properly.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="789"/>
-        <location filename="mainwindow.ui" line="844"/>
+        <location filename="mainwindow.ui" line="794"/>
+        <location filename="mainwindow.ui" line="868"/>
         <source>File</source>
         <translation type="unfinished">Soubor</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="794"/>
-        <location filename="mainwindow.ui" line="849"/>
+        <location filename="mainwindow.ui" line="799"/>
+        <location filename="mainwindow.ui" line="873"/>
         <source>Mod</source>
         <translation type="unfinished">Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="803"/>
+        <location filename="mainwindow.ui" line="807"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/resources/dialog-warning_16.png&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="818"/>
         <source>Data</source>
         <translation type="unfinished">Data</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="812"/>
+        <location filename="mainwindow.ui" line="836"/>
         <source>refresh data-directory overview</source>
         <translation type="unfinished">znovunačti data</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="815"/>
+        <location filename="mainwindow.ui" line="839"/>
         <source>Refresh the overview. This may take a moment.</source>
         <translation type="unfinished">Obnov náhled. Tohle může chvíli trvat.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="818"/>
-        <location filename="mainwindow.cpp" line="2808"/>
-        <location filename="mainwindow.cpp" line="3503"/>
+        <location filename="mainwindow.ui" line="842"/>
+        <location filename="mainwindow.cpp" line="3257"/>
+        <location filename="mainwindow.cpp" line="3982"/>
         <source>Refresh</source>
         <translation type="unfinished">Znovunačíst</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="834"/>
+        <location filename="mainwindow.ui" line="858"/>
         <source>This is an overview of your data directory as visible to the game (and tools). </source>
         <translation type="unfinished">Tohle je náhled tvé data struktury, kterou načte hra (i nástroje).</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="859"/>
-        <location filename="mainwindow.ui" line="862"/>
+        <location filename="mainwindow.ui" line="883"/>
+        <location filename="mainwindow.ui" line="886"/>
         <source>Filter the above list so that only conflicts are displayed.</source>
         <translation type="unfinished">Přefiltruje seznam nahoře tak, že budou zobrazeny pouze konflikty.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="865"/>
+        <location filename="mainwindow.ui" line="889"/>
         <source>Show only conflicts</source>
         <translation type="unfinished">Ukaž jenom konflikty</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="873"/>
+        <location filename="mainwindow.ui" line="897"/>
         <source>Saves</source>
         <translation type="unfinished">Uložené pozice</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="888"/>
+        <location filename="mainwindow.ui" line="921"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -1578,155 +1578,155 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Pokud kliknete &amp;quot;Fixni Mody...&amp;quot; v kontext menu, MO se pokusí aktivovat všechny mody a esp soubory, které byli v pozici používány. Nic se však nevypne!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="902"/>
+        <location filename="mainwindow.ui" line="935"/>
         <source>Downloads</source>
         <translation type="unfinished">Stáhnuté</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="932"/>
+        <location filename="mainwindow.ui" line="967"/>
         <source>This is a list of mods you downloaded from Nexus. Double click one to install it.</source>
         <translation type="unfinished">Tohle je seznam modů, které jsi stánul z Nexusu. Dvojklik nainstaluje mod.</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="979"/>
+        <location filename="mainwindow.ui" line="1014"/>
         <source>Compact</source>
         <translation type="unfinished">Kompaktní</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1003"/>
+        <location filename="mainwindow.ui" line="1045"/>
         <source>Tool Bar</source>
         <translation type="unfinished">Panel nástrojú</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1045"/>
+        <location filename="mainwindow.ui" line="1087"/>
         <source>Install Mod</source>
         <translation type="unfinished">Instaluj mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1048"/>
+        <location filename="mainwindow.ui" line="1090"/>
         <source>Install &amp;Mod</source>
         <translation type="unfinished">Instaluj &amp;Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1051"/>
+        <location filename="mainwindow.ui" line="1093"/>
         <source>Install a new mod from an archive</source>
         <translation type="unfinished">Instaluj nový mod z archívu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1054"/>
+        <location filename="mainwindow.ui" line="1096"/>
         <source>Ctrl+M</source>
         <translation type="unfinished">Ctrl+M</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1063"/>
+        <location filename="mainwindow.ui" line="1105"/>
         <source>Profiles</source>
         <translation type="unfinished">Profily</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1066"/>
+        <location filename="mainwindow.ui" line="1108"/>
         <source>&amp;Profiles</source>
         <translation type="unfinished">&amp;Profily</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1069"/>
+        <location filename="mainwindow.ui" line="1111"/>
         <source>Configure Profiles</source>
         <translation type="unfinished">Nastav profily</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1072"/>
+        <location filename="mainwindow.ui" line="1114"/>
         <source>Ctrl+P</source>
         <translation type="unfinished">Ctrl+P</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1081"/>
+        <location filename="mainwindow.ui" line="1123"/>
         <source>Executables</source>
         <translation type="unfinished">Spouštění</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1084"/>
+        <location filename="mainwindow.ui" line="1126"/>
         <source>&amp;Executables</source>
         <translation type="unfinished">&amp;Spouštění</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1087"/>
+        <location filename="mainwindow.ui" line="1129"/>
         <source>Configure the executables that can be started through Mod Organizer</source>
         <translation type="unfinished">Konfigurace spouštění, které lze použít pro načtení modů z MO</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1090"/>
+        <location filename="mainwindow.ui" line="1132"/>
         <source>Ctrl+E</source>
         <translation type="unfinished">Ctrl+E</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1099"/>
-        <location filename="mainwindow.ui" line="1105"/>
+        <location filename="mainwindow.ui" line="1141"/>
+        <location filename="mainwindow.ui" line="1147"/>
         <source>Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1102"/>
+        <location filename="mainwindow.ui" line="1144"/>
         <source>&amp;Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1108"/>
+        <location filename="mainwindow.ui" line="1150"/>
         <source>Ctrl+I</source>
         <translation type="unfinished">Ctrl+I</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1117"/>
+        <location filename="mainwindow.ui" line="1159"/>
         <source>Settings</source>
         <translation type="unfinished">Nastavení</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1120"/>
+        <location filename="mainwindow.ui" line="1162"/>
         <source>&amp;Settings</source>
         <translation type="unfinished">&amp;Nastavení</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1123"/>
+        <location filename="mainwindow.ui" line="1165"/>
         <source>Configure settings and workarounds</source>
         <translation type="unfinished">Konfigurace a nastavení programu a různých řešení</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1126"/>
+        <location filename="mainwindow.ui" line="1168"/>
         <source>Ctrl+S</source>
         <translation type="unfinished">Ctrl+S</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1135"/>
+        <location filename="mainwindow.ui" line="1177"/>
         <source>Nexus</source>
         <translation type="unfinished">Nexus</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1138"/>
+        <location filename="mainwindow.ui" line="1180"/>
         <source>Search nexus network for more mods</source>
         <translation type="unfinished">Prohledat mody na nexusu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1141"/>
+        <location filename="mainwindow.ui" line="1183"/>
         <source>Ctrl+N</source>
         <translation type="unfinished">Ctrl+N</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1153"/>
-        <location filename="mainwindow.cpp" line="3451"/>
+        <location filename="mainwindow.ui" line="1195"/>
+        <location filename="mainwindow.cpp" line="3930"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1156"/>
+        <location filename="mainwindow.ui" line="1198"/>
         <source>Mod Organizer is up-to-date</source>
         <translation type="unfinished">Verze Mod Organizer u je aktuální</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1168"/>
-        <location filename="mainwindow.cpp" line="339"/>
+        <location filename="mainwindow.ui" line="1210"/>
+        <location filename="mainwindow.cpp" line="430"/>
         <source>No Problems</source>
         <translation type="unfinished">Žádné problémy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1171"/>
+        <location filename="mainwindow.ui" line="1213"/>
         <source>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.
 
 !Work in progress!
@@ -1737,802 +1737,834 @@ Right now this has very limited functionality</source>
 V současnosti má omezenou funkcionalitu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1183"/>
-        <location filename="mainwindow.ui" line="1186"/>
+        <location filename="mainwindow.ui" line="1225"/>
+        <location filename="mainwindow.ui" line="1228"/>
         <source>Help</source>
         <translation type="unfinished">Pomoc</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1189"/>
+        <location filename="mainwindow.ui" line="1231"/>
         <source>Ctrl+H</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1198"/>
+        <location filename="mainwindow.ui" line="1240"/>
         <source>Endorse MO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1201"/>
-        <location filename="mainwindow.cpp" line="3531"/>
+        <location filename="mainwindow.ui" line="1243"/>
+        <location filename="mainwindow.cpp" line="4010"/>
         <source>Endorse Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="176"/>
+        <location filename="mainwindow.cpp" line="223"/>
         <source>Toolbar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="177"/>
+        <location filename="mainwindow.cpp" line="224"/>
         <source>Desktop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="178"/>
+        <location filename="mainwindow.cpp" line="225"/>
         <source>Start Menu</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="336"/>
-        <location filename="mainwindow.cpp" line="413"/>
-        <location filename="mainwindow.cpp" line="3836"/>
+        <location filename="mainwindow.cpp" line="427"/>
         <source>Problems</source>
         <translation type="unfinished">Problémy</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="337"/>
-        <location filename="mainwindow.cpp" line="414"/>
+        <location filename="mainwindow.cpp" line="428"/>
         <source>There are potential problems with your setup</source>
         <translation type="unfinished">Existují potenciální problémy s programem</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="340"/>
-        <location filename="mainwindow.cpp" line="416"/>
+        <location filename="mainwindow.cpp" line="431"/>
         <source>Everything seems to be in order</source>
         <translation type="unfinished">Všechno se jeví v pořádku</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="382"/>
-        <source>&lt;li&gt;%1&lt;/li&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="388"/>
         <source>&lt;li&gt;NCC not installed. You won&apos;t be able to install some scripted mod-installers. Get NCC from &lt;a href=&quot;http://skyrim.nexusmods.com/downloads/file.php?id=1334&quot;&gt;the MO page on nexus&lt;/a&gt;&lt;/li&gt;</source>
-        <translation type="unfinished">&lt;li&gt;NCC není nainstalován. Nebudete moci instalovat některé naskriptované instalátory modů. NCC najdete na &lt;a href=&quot;http://skyrim.nexusmods.com/downloads/file.php?id=1334&quot;&gt;stránce MO na nexusu&lt;/a&gt;&lt;/li&gt;</translation>
+        <translation type="obsolete">&lt;li&gt;NCC není nainstalován. Nebudete moci instalovat některé naskriptované instalátory modů. NCC najdete na &lt;a href=&quot;http://skyrim.nexusmods.com/downloads/file.php?id=1334&quot;&gt;stránce MO na nexusu&lt;/a&gt;&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="392"/>
         <source>&lt;li&gt;NCC version may be incompatible.&lt;/li&gt;</source>
-        <translation type="unfinished">&lt;li&gt;Verze NCC je zřejmě nekompatibilní.&lt;/li&gt;</translation>
+        <translation type="obsolete">&lt;li&gt;Verze NCC je zřejmě nekompatibilní.&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="399"/>
         <source>&lt;li&gt;dotNet is not installed or outdated. This is required to use NCC. Get it from here: &lt;a href=&quot;%1&quot;&gt;%1&lt;/a&gt;&lt;/li&gt;</source>
-        <translation type="unfinished">&lt;li&gt;dotNet není nainstalován nebo je neaktuální. Tohle vyžaduje NCC. Najděte ho zde: &lt;a href=&quot;%1&quot;&gt;%1&lt;/a&gt;&lt;/li&gt;</translation>
+        <translation type="obsolete">&lt;li&gt;dotNet není nainstalován nebo je neaktuální. Tohle vyžaduje NCC. Najděte ho zde: &lt;a href=&quot;%1&quot;&gt;%1&lt;/a&gt;&lt;/li&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="405"/>
-        <source>&lt;li&gt;There was an error reported in your last log. Please see %1&lt;/li&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="427"/>
+        <location filename="mainwindow.cpp" line="483"/>
         <source>Help on UI</source>
         <translation type="unfinished">Pomoc s programem</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="431"/>
+        <location filename="mainwindow.cpp" line="487"/>
         <source>Documentation Wiki</source>
         <translation type="unfinished">Dokumentace wiki</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="435"/>
+        <location filename="mainwindow.cpp" line="491"/>
         <source>Report Issue</source>
         <translation type="unfinished">Nahlásit chybu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="439"/>
+        <location filename="mainwindow.cpp" line="495"/>
         <source>Tutorials</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="496"/>
         <source>load order could not be saved</source>
-        <translation type="unfinished">pořadí načtení se nezdařilo uložit</translation>
+        <translation type="obsolete">pořadí načtení se nezdařilo uložit</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="501"/>
+        <location filename="mainwindow.cpp" line="619"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished">zlyhalo uložení pořadí načtení: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="514"/>
+        <location filename="mainwindow.cpp" line="549"/>
         <source>failed to save archives order, do you have write access to &quot;%1&quot;?</source>
         <translation type="unfinished">zlyhal zápis pořadí archivů, máte administrátorsky povoleno zapisovat na &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="530"/>
+        <location filename="mainwindow.cpp" line="636"/>
         <source>Name</source>
         <translation type="unfinished">Jméno</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="531"/>
+        <location filename="mainwindow.cpp" line="637"/>
         <source>Please enter a name for the new profile</source>
         <translation type="unfinished">Prosím zadej jméno pro nový profil</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="539"/>
+        <location filename="mainwindow.cpp" line="645"/>
         <source>failed to create profile: %1</source>
         <translation type="unfinished">Zlyhalo vytvoření profilu: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="582"/>
+        <location filename="mainwindow.cpp" line="688"/>
         <source>Show tutorial?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="583"/>
+        <location filename="mainwindow.cpp" line="689"/>
         <source>You are starting Mod Organizer for the first time. Do you want to show a tutorial of its basic features? If you choose no you can always start the tutorial from the &quot;Help&quot;-menu.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="606"/>
+        <location filename="mainwindow.cpp" line="716"/>
         <source>Downloads in progress</source>
         <translation type="unfinished">Probíhá stahování</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="607"/>
+        <location filename="mainwindow.cpp" line="717"/>
         <source>There are still downloads in progress, do you really want to quit?</source>
         <translation type="unfinished">Pořád probíhá stahování, určitě chcete skončit (zruší stahování)?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="657"/>
+        <location filename="mainwindow.cpp" line="760"/>
         <source>failed to read savegame: %1</source>
         <translation type="unfinished">nezdařilo se načíst pozici: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="782"/>
+        <location filename="mainwindow.cpp" line="885"/>
         <source>Plugin &quot;%1&quot; failed: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="904"/>
-        <source>The mod &quot;%1&quot; already exists!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="944"/>
+        <location filename="mainwindow.cpp" line="1127"/>
         <source>Failed to start &quot;%1&quot;</source>
         <translation type="unfinished">Zlyhal start &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="946"/>
+        <location filename="mainwindow.cpp" line="1129"/>
         <source>Waiting</source>
         <translation type="unfinished">Čekání</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="946"/>
+        <location filename="mainwindow.cpp" line="1129"/>
         <source>Please press OK once you&apos;re logged into steam.</source>
         <translation type="unfinished">Stiskni OK až budeš přihlášen do Steamu.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="958"/>
+        <location filename="mainwindow.cpp" line="1141"/>
         <source>&quot;%1&quot; not found</source>
         <translation type="unfinished">&quot;%1&quot; nenalezeno</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="972"/>
+        <location filename="mainwindow.cpp" line="1155"/>
         <source>Start Steam?</source>
         <translation type="unfinished">Spustit Steam?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="973"/>
+        <location filename="mainwindow.cpp" line="1156"/>
         <source>Steam is required to be running already to correctly start the game. Should MO try to start steam now?</source>
         <translation type="unfinished">Steam by měl běžet aby se podařilo spustit hru. Má se MO pokusit spustit steam teď?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1185"/>
+        <location filename="mainwindow.cpp" line="1370"/>
         <source>Also in: &lt;br&gt;</source>
         <translation type="unfinished">Také v: &lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1196"/>
+        <location filename="mainwindow.cpp" line="1381"/>
         <source>No conflict</source>
         <translation type="unfinished">Žádné konflikty</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1306"/>
+        <location filename="mainwindow.cpp" line="1496"/>
         <source>&lt;Edit...&gt;</source>
         <translation type="unfinished">&lt;Edit...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1507"/>
+        <location filename="mainwindow.cpp" line="1714"/>
         <source>This bsa is enabled in the ini file so it may be required!</source>
         <translation type="unfinished">Tenhle BSA soubor je aktivován v ini souboru, tak zřejmě je vyžadován!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1514"/>
+        <location filename="mainwindow.cpp" line="1721"/>
         <source>This archive will still be loaded since there is a plugin of the same name but its files will not follow installation order!</source>
         <translation type="unfinished">Tento archív se stejně načte, protože existuje plugin se stejným jménem ale jeho soubory nebudou zodpovídat pořadí nainstalování!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1664"/>
-        <location filename="mainwindow.cpp" line="3198"/>
+        <location filename="mainwindow.cpp" line="1776"/>
+        <source>Activating Network Proxy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1900"/>
+        <location filename="mainwindow.cpp" line="3678"/>
         <source>Installation successful</source>
         <translation type="unfinished">Instalace úspěšná</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1675"/>
-        <location filename="mainwindow.cpp" line="3211"/>
+        <location filename="mainwindow.cpp" line="1911"/>
+        <location filename="mainwindow.cpp" line="3691"/>
         <source>Configure Mod</source>
         <translation type="unfinished">Konfigurace Modu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1676"/>
-        <location filename="mainwindow.cpp" line="3212"/>
+        <location filename="mainwindow.cpp" line="1912"/>
+        <location filename="mainwindow.cpp" line="3692"/>
         <source>This mod contains ini tweaks. Do you want to configure them now?</source>
         <translation type="unfinished">Tenhle mod obsahuje ini úpravy. Chcete je nastavovat teď?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1682"/>
-        <location filename="mainwindow.cpp" line="3218"/>
+        <location filename="mainwindow.cpp" line="1918"/>
+        <location filename="mainwindow.cpp" line="3698"/>
         <source>mod &quot;%1&quot; not found</source>
         <translation type="unfinished">mod &quot;%1&quot; nenalezen</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1685"/>
-        <location filename="mainwindow.cpp" line="3225"/>
+        <location filename="mainwindow.cpp" line="1921"/>
+        <location filename="mainwindow.cpp" line="3704"/>
         <source>Installation cancelled</source>
         <translation type="unfinished">Instalace zrušena</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1685"/>
-        <location filename="mainwindow.cpp" line="3225"/>
+        <location filename="mainwindow.cpp" line="1921"/>
+        <location filename="mainwindow.cpp" line="3704"/>
         <source>The mod was not installed completely.</source>
         <translation type="unfinished">Tento mod se nenainstaloval úplne.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1699"/>
+        <location filename="mainwindow.cpp" line="1956"/>
+        <source>Some plugins could not be loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1965"/>
+        <source>The following Plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:&lt;ul&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1992"/>
         <source>Choose Mod</source>
         <translation type="unfinished">Vyber Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1700"/>
+        <location filename="mainwindow.cpp" line="1993"/>
         <source>Mod Archive</source>
         <translation type="unfinished">Archív Modu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1860"/>
+        <location filename="mainwindow.cpp" line="2146"/>
         <source>Start Tutorial?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1861"/>
+        <location filename="mainwindow.cpp" line="2147"/>
         <source>You&apos;re about to start a tutorial. For technical reasons it&apos;s not possible to end the tutorial early. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2006"/>
-        <location filename="mainwindow.cpp" line="3124"/>
+        <location filename="mainwindow.cpp" line="2292"/>
+        <location filename="mainwindow.cpp" line="3606"/>
         <source>Download started</source>
         <translation type="unfinished">Stahování začalo</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2030"/>
+        <location filename="mainwindow.cpp" line="2323"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished">nezdařilo se aktualizovat seznam modů: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2057"/>
+        <location filename="mainwindow.cpp" line="2350"/>
         <source>failed to spawn notepad.exe: %1</source>
         <translation type="unfinished">zlyhalo otevření notepad.exe: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2098"/>
+        <location filename="mainwindow.cpp" line="2391"/>
         <source>failed to open %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2176"/>
+        <location filename="mainwindow.cpp" line="2469"/>
         <source>failed to change origin name: %1</source>
         <translation type="unfinished">Nezdařilo se změnit původní jméno: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2216"/>
-        <location filename="mainwindow.cpp" line="2219"/>
+        <location filename="mainwindow.cpp" line="2608"/>
+        <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2937"/>
+        <location filename="mainwindow.cpp" line="3268"/>
+        <source>Create Mod...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2938"/>
+        <source>This will move all files from overwrite into a new, regular mod.
+Please enter a name: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2947"/>
+        <source>A mod with this name already exists</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3339"/>
         <source>&lt;All&gt;</source>
         <translation type="unfinished">&lt;Všechny&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2220"/>
+        <location filename="mainwindow.cpp" line="2521"/>
         <source>&lt;Checked&gt;</source>
         <translation type="unfinished">&lt;Aktivované&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2221"/>
+        <location filename="mainwindow.cpp" line="887"/>
+        <source>Plugin &quot;%1&quot; failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="951"/>
+        <source>failed to init plugin %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2522"/>
         <source>&lt;Unchecked&gt;</source>
         <translation type="unfinished">&lt;Neaktivované&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2222"/>
+        <location filename="mainwindow.cpp" line="2523"/>
         <source>&lt;Update&gt;</source>
         <translation type="unfinished">&lt;Aktualizace&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2223"/>
+        <location filename="mainwindow.cpp" line="2524"/>
         <source>&lt;No category&gt;</source>
         <translation type="unfinished">&lt;Bez kategorie&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2224"/>
+        <location filename="mainwindow.cpp" line="2525"/>
         <source>&lt;Conflicted&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2260"/>
+        <location filename="mainwindow.cpp" line="2558"/>
         <source>failed to rename mod: %1</source>
         <translation type="unfinished">Nezdařilo se přejmenovat mod: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2273"/>
+        <location filename="mainwindow.cpp" line="2571"/>
         <source>Overwrite?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2274"/>
+        <location filename="mainwindow.cpp" line="2572"/>
         <source>This will replace the existing mod &quot;%1&quot;. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2277"/>
+        <location filename="mainwindow.cpp" line="2575"/>
         <source>failed to remove mod &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2281"/>
-        <location filename="mainwindow.cpp" line="3397"/>
-        <location filename="mainwindow.cpp" line="3421"/>
+        <location filename="mainwindow.cpp" line="2579"/>
+        <location filename="mainwindow.cpp" line="3876"/>
+        <location filename="mainwindow.cpp" line="3900"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation type="unfinished">Nezdařilo se přejmenovat &quot;%1&quot; na &quot;%2&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2302"/>
-        <location filename="mainwindow.cpp" line="2723"/>
-        <location filename="mainwindow.cpp" line="2732"/>
+        <location filename="mainwindow.cpp" line="2634"/>
+        <location filename="mainwindow.cpp" line="3172"/>
+        <location filename="mainwindow.cpp" line="3181"/>
         <source>Confirm</source>
         <translation type="unfinished">Potvrdit</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2303"/>
+        <location filename="mainwindow.cpp" line="2635"/>
         <source>Remove the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2314"/>
+        <location filename="mainwindow.cpp" line="2646"/>
         <source>failed to remove mod: %1</source>
         <translation type="unfinished">Nezdařilo se odstranit mod: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2332"/>
-        <location filename="mainwindow.cpp" line="2335"/>
+        <location filename="mainwindow.cpp" line="2676"/>
+        <location filename="mainwindow.cpp" line="2679"/>
         <source>Failed</source>
         <translation type="unfinished">Zlyhání</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2332"/>
+        <location filename="mainwindow.cpp" line="2676"/>
         <source>Installation file no longer exists</source>
         <translation type="unfinished">Instalační soubor již neexistuje</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2336"/>
+        <location filename="mainwindow.cpp" line="2680"/>
         <source>Mods installed with old versions of MO can&apos;t be reinstalled in this way.</source>
         <translation type="unfinished">Mody nainstalovány staršími verzemi MO nemůžou být přeinstalovány tímto spůsobem.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2351"/>
-        <location filename="mainwindow.cpp" line="2373"/>
+        <location filename="mainwindow.cpp" line="2695"/>
+        <location filename="mainwindow.cpp" line="2722"/>
         <source>You need to be logged in with Nexus to endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2448"/>
-        <location filename="mainwindow.cpp" line="3757"/>
+        <location filename="mainwindow.cpp" line="2838"/>
+        <location filename="mainwindow.cpp" line="4259"/>
         <source>Extract BSA</source>
         <translation type="unfinished">Extrakce BSA</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2449"/>
+        <location filename="mainwindow.cpp" line="2839"/>
         <source>This mod contains at least one BSA. Do you want to unpack it?
 (This removes the BSA after completion. If you don&apos;t know about BSAs, just select no)</source>
         <translation type="unfinished">Tento mod obsahuje alespoň jeden BSA soubor. Chcete rozpakovat i jeho obsah?
 (BSA se po úspěšném rozpakování odstrání. Pokud nevíte, co je BSA, zvolte možnost Ne)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2459"/>
-        <location filename="mainwindow.cpp" line="3714"/>
-        <location filename="mainwindow.cpp" line="3766"/>
+        <location filename="mainwindow.cpp" line="2849"/>
+        <location filename="mainwindow.cpp" line="4216"/>
+        <location filename="mainwindow.cpp" line="4268"/>
         <source>failed to read %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2472"/>
-        <location filename="mainwindow.cpp" line="3779"/>
+        <location filename="mainwindow.cpp" line="2862"/>
+        <location filename="mainwindow.cpp" line="4281"/>
         <source>This archive contains invalid hashes. Some files may be broken.</source>
         <translation type="unfinished">Tento archiv má neplatné identifikační součty. Nekteré soubory mohou být poškozeny.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2495"/>
+        <location filename="mainwindow.cpp" line="2896"/>
         <source>Nexus ID for this Mod is unknown</source>
         <translation type="unfinished">Nexus ID pro tento Mod není známo</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2541"/>
         <source>Priority</source>
-        <translation type="unfinished">Priorita</translation>
+        <translation type="obsolete">Priorita</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2541"/>
         <source>Choose Priority</source>
-        <translation type="unfinished">Zvol Prioritu</translation>
+        <translation type="obsolete">Zvol Prioritu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2723"/>
+        <location filename="mainwindow.cpp" line="3172"/>
         <source>Really enable all visible mods?</source>
         <translation type="unfinished">Opravdu aktivovat všechny zobrazené mody?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2732"/>
+        <location filename="mainwindow.cpp" line="3181"/>
         <source>Really disable all visible mods?</source>
         <translation type="unfinished">Opravdu deaktivovat všechny zobrazené mody?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2741"/>
+        <location filename="mainwindow.cpp" line="3190"/>
         <source>Choose what to export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2743"/>
+        <location filename="mainwindow.cpp" line="3192"/>
         <source>Everything</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2743"/>
+        <location filename="mainwindow.cpp" line="3192"/>
         <source>All installed mods are included in the list</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2744"/>
+        <location filename="mainwindow.cpp" line="3193"/>
         <source>Active Mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2744"/>
+        <location filename="mainwindow.cpp" line="3193"/>
         <source>Only active (checked) mods from your current profile are included</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2745"/>
+        <location filename="mainwindow.cpp" line="3194"/>
         <source>Visible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2745"/>
+        <location filename="mainwindow.cpp" line="3194"/>
         <source>All mods visible in the mod list are included</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2787"/>
+        <location filename="mainwindow.cpp" line="3237"/>
         <source>export failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2801"/>
+        <location filename="mainwindow.cpp" line="3250"/>
         <source>Install Mod...</source>
         <translation type="unfinished">Instaluj Mod...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2803"/>
+        <location filename="mainwindow.cpp" line="3252"/>
         <source>Enable all visible</source>
         <translation type="unfinished">Aktivuj všechny v seznamu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2804"/>
+        <location filename="mainwindow.cpp" line="3253"/>
         <source>Disable all visible</source>
         <translation type="unfinished">Deaktivuj všechny v seznamu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2806"/>
+        <location filename="mainwindow.cpp" line="3255"/>
         <source>Check all for update</source>
         <translation type="unfinished">Skontroluj všechny pro aktualizaci</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2810"/>
+        <location filename="mainwindow.cpp" line="3259"/>
         <source>Export to csv...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2817"/>
+        <location filename="mainwindow.cpp" line="3267"/>
         <source>Sync to Mods...</source>
         <translation type="unfinished">Synchronizuj s Mody...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2819"/>
+        <location filename="mainwindow.cpp" line="3271"/>
         <source>Restore Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2820"/>
+        <location filename="mainwindow.cpp" line="3272"/>
         <source>Remove Backup...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2822"/>
+        <location filename="mainwindow.cpp" line="3274"/>
         <source>Set Category</source>
         <translation type="unfinished">Označ Kategorii</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2826"/>
+        <location filename="mainwindow.cpp" line="3278"/>
         <source>Primary Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2830"/>
+        <location filename="mainwindow.cpp" line="3282"/>
         <source>Rename Mod...</source>
         <translation type="unfinished">Přejmenuj Mod...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2831"/>
+        <location filename="mainwindow.cpp" line="3283"/>
         <source>Remove Mod...</source>
         <translation type="unfinished">Odstranit Mod...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2832"/>
+        <location filename="mainwindow.cpp" line="3284"/>
         <source>Reinstall Mod</source>
         <translation type="unfinished">Přeinstaluj Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2835"/>
+        <location filename="mainwindow.cpp" line="3287"/>
         <source>Un-Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2838"/>
+        <location filename="mainwindow.cpp" line="3290"/>
+        <location filename="mainwindow.cpp" line="3294"/>
         <source>Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2841"/>
+        <location filename="mainwindow.cpp" line="3291"/>
+        <source>Won&apos;t endorse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3297"/>
         <source>Endorsement state unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2847"/>
+        <location filename="mainwindow.cpp" line="3304"/>
+        <source>Ignore missing data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3307"/>
         <source>Visit on Nexus</source>
         <translation type="unfinished">Navštiv na Nexusu</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2848"/>
+        <location filename="mainwindow.cpp" line="3308"/>
         <source>Open in explorer</source>
         <translation type="unfinished">Otevři v prohlížeči</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2851"/>
+        <location filename="mainwindow.cpp" line="3311"/>
         <source>Information...</source>
         <translation type="unfinished">Informace...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2857"/>
-        <location filename="mainwindow.cpp" line="3902"/>
+        <location filename="mainwindow.cpp" line="3317"/>
+        <location filename="mainwindow.cpp" line="4437"/>
         <source>Exception: </source>
         <translation type="unfinished">Výnimky:</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2859"/>
-        <location filename="mainwindow.cpp" line="3904"/>
+        <location filename="mainwindow.cpp" line="3319"/>
+        <location filename="mainwindow.cpp" line="4439"/>
         <source>Unknown exception</source>
         <translation type="unfinished">Neznámá výnimka</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2962"/>
+        <location filename="mainwindow.cpp" line="3341"/>
+        <source>&lt;Multiple&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3453"/>
         <source>Fix Mods...</source>
         <translation type="unfinished">Oprav Mody...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2987"/>
-        <location filename="mainwindow.cpp" line="3018"/>
+        <location filename="mainwindow.cpp" line="3477"/>
+        <location filename="mainwindow.cpp" line="3508"/>
         <source>failed to remove %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3002"/>
-        <location filename="mainwindow.cpp" line="3033"/>
+        <location filename="mainwindow.cpp" line="3492"/>
+        <location filename="mainwindow.cpp" line="3523"/>
         <source>failed to create %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3047"/>
+        <location filename="mainwindow.cpp" line="3538"/>
         <source>Can&apos;t change download directory while downloads are in progress!</source>
         <translation type="unfinished">Není možné změnit cíl pro stahování když probíhá stahování!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3127"/>
+        <location filename="mainwindow.cpp" line="3609"/>
         <source>Download failed</source>
         <translation type="unfinished">Stahování zlyhalo</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3274"/>
+        <location filename="mainwindow.cpp" line="3753"/>
         <source>failed to write to file %1</source>
         <translation type="unfinished">Nezdařil se zápis do souboru %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3280"/>
+        <location filename="mainwindow.cpp" line="3759"/>
         <source>%1 written</source>
         <translation type="unfinished">%1 zapsáno</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3319"/>
+        <location filename="mainwindow.cpp" line="3798"/>
         <source>Select binary</source>
         <translation type="unfinished">Vyber binární soubor</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3319"/>
+        <location filename="mainwindow.cpp" line="3798"/>
         <source>Binary</source>
         <translation type="unfinished">Soubor</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3345"/>
+        <location filename="mainwindow.cpp" line="3824"/>
         <source>Enter Name</source>
         <translation type="unfinished">Zadej jméno</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3346"/>
+        <location filename="mainwindow.cpp" line="3825"/>
         <source>Please enter a name for the executable</source>
         <translation type="unfinished">Prosím zadej jméno pro spouštění</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3357"/>
+        <location filename="mainwindow.cpp" line="3836"/>
         <source>Not an executable</source>
         <translation type="unfinished">Není spustitelný</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3357"/>
+        <location filename="mainwindow.cpp" line="3836"/>
         <source>This is not a recognized executable.</source>
         <translation type="unfinished">Tenhle soubor není rozpoznán jako spustitelný.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3382"/>
-        <location filename="mainwindow.cpp" line="3407"/>
+        <location filename="mainwindow.cpp" line="3861"/>
+        <location filename="mainwindow.cpp" line="3886"/>
         <source>Replace file?</source>
         <translation type="unfinished">Nahradit soubor?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3382"/>
+        <location filename="mainwindow.cpp" line="3861"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation type="unfinished">Už existuje skrytá verze tohto souboru. Nahradit?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3385"/>
-        <location filename="mainwindow.cpp" line="3410"/>
+        <location filename="mainwindow.cpp" line="3864"/>
+        <location filename="mainwindow.cpp" line="3889"/>
         <source>File operation failed</source>
         <translation type="unfinished">Operace se souborem zlyhala</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3385"/>
-        <location filename="mainwindow.cpp" line="3410"/>
+        <location filename="mainwindow.cpp" line="3864"/>
+        <location filename="mainwindow.cpp" line="3889"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation type="unfinished">Nepodařilo se odstranit &quot;%1&quot;. Možná nejsou k dispozici požadována práva?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3407"/>
+        <location filename="mainwindow.cpp" line="3886"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation type="unfinished">Už existuje viditelná verze tohto souboru. Nahradit?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3453"/>
+        <location filename="mainwindow.cpp" line="3932"/>
         <source>Update available</source>
         <translation type="unfinished">Aktualizace k dispozici</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3490"/>
+        <location filename="mainwindow.cpp" line="3969"/>
         <source>Open/Execute</source>
         <translation type="unfinished">Otevřít/Spustit</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3491"/>
+        <location filename="mainwindow.cpp" line="3970"/>
         <source>Add as Executable</source>
         <translation type="unfinished">Přidat Spouštení</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3495"/>
+        <location filename="mainwindow.cpp" line="3974"/>
         <source>Un-Hide</source>
         <translation type="unfinished">Odekrýt</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3497"/>
+        <location filename="mainwindow.cpp" line="3976"/>
         <source>Hide</source>
         <translation type="unfinished">Skrýt</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3502"/>
+        <location filename="mainwindow.cpp" line="3981"/>
         <source>Write To File...</source>
         <translation type="unfinished">Zápis do souboru...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3532"/>
+        <location filename="mainwindow.cpp" line="4011"/>
         <source>Do you want to endorse Mod Organizer on %1 now?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3632"/>
-        <source>Thank you!</source>
+        <location filename="mainwindow.cpp" line="4428"/>
+        <source>Unlock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3632"/>
-        <source>Thank you for your endorsement!</source>
+        <location filename="mainwindow.cpp" line="4431"/>
+        <source>Lock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3649"/>
+        <location filename="mainwindow.cpp" line="4147"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3656"/>
-        <location filename="mainwindow.cpp" line="3673"/>
+        <location filename="mainwindow.cpp" line="4154"/>
+        <location filename="mainwindow.cpp" line="4171"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3682"/>
+        <location filename="mainwindow.cpp" line="4180"/>
         <source>login failed: %1. Trying to download anyway</source>
         <translation type="unfinished">přihlášení zlyhalo: %1. Pokouším se beztak stahovat</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3693"/>
+        <location filename="mainwindow.cpp" line="4186"/>
+        <source>login failed: %1</source>
+        <translation type="unfinished">přihlášení zlyhalo: %1</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="4195"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished">přihlášení zlyhalo: %1. Na aktualizaci MO je potřebné přihlášení k Nexusu.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3726"/>
+        <location filename="mainwindow.cpp" line="4228"/>
         <source>Error</source>
         <translation type="unfinished">Chyba</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3726"/>
+        <location filename="mainwindow.cpp" line="4228"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation type="unfinished">zlyhala extrakce %1 (errorcode %2)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3822"/>
+        <location filename="mainwindow.cpp" line="4324"/>
         <source>Extract...</source>
         <translation type="unfinished">Extrakce...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3866"/>
+        <location filename="mainwindow.cpp" line="4374"/>
         <source>Edit Categories...</source>
         <translation type="unfinished">Editovat Kategorie...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3888"/>
+        <location filename="mainwindow.cpp" line="4410"/>
         <source>Enable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3889"/>
+        <location filename="mainwindow.cpp" line="4411"/>
         <source>Disable all</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3893"/>
-        <source>Unlock index</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3895"/>
-        <source>Lock index</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2552,21 +2584,20 @@ V současnosti má omezenou funkcionalitu</translation>
 <context>
     <name>ModInfo</name>
     <message>
+        <location filename="modinfo.cpp" line="96"/>
         <location filename="modinfo.cpp" line="125"/>
-        <location filename="modinfo.cpp" line="153"/>
         <source>invalid index %1</source>
         <translation>neplatný index %1</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="140"/>
         <source>invalid mod id %1</source>
-        <translation>neplatné mod id %1</translation>
+        <translation type="obsolete">neplatné mod id %1</translation>
     </message>
 </context>
 <context>
     <name>ModInfoBackup</name>
     <message>
-        <location filename="modinfo.cpp" line="810"/>
+        <location filename="modinfo.cpp" line="784"/>
         <source>This is the backup of a mod</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2648,18 +2679,18 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Tohle je seznam všech obrázků (.jpg a.png) obsažených v modu, jako naříklad screenshoty. Kliknutím na jeden ho zvětšíš.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="245"/>
-        <location filename="modinfodialog.ui" line="268"/>
+        <location filename="modinfodialog.ui" line="254"/>
+        <location filename="modinfodialog.ui" line="277"/>
         <source>Optional ESPs</source>
         <translation>Volitelné ESP</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="251"/>
+        <location filename="modinfodialog.ui" line="260"/>
         <source>List of esps and esms that can not be loaded by the game.</source>
         <translation>Seznam souborů .esp a .esm, které nebudou načteni do hry. </translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="254"/>
+        <location filename="modinfodialog.ui" line="263"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2678,103 +2709,103 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Většina modů nemá volitelné esp, tak s nejvyšší pravděpodobností býva tenhle seznam prázdný.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="283"/>
+        <location filename="modinfodialog.ui" line="292"/>
         <source>Make the selected mod in the lower list unavailable.</source>
         <translation>Znepřístupni označený mod v seznamu dolů.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="286"/>
+        <location filename="modinfodialog.ui" line="295"/>
         <source>The selected esp (in the lower list) will be pushed into a subdirectory of the mod and will thus become &quot;invisible&quot; to the game. It can then no longer be activated.</source>
         <translation>Označený soubor esp (v seznamu dolů) bude přemístěn do podadresáře modu a tak se stane &quot;neviditelným&quot; pro hru. V takovem stavu se nedá aktivovat.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="312"/>
+        <location filename="modinfodialog.ui" line="321"/>
         <source>Move a file to the data directory.</source>
         <translation>Přesuň soubor mezi Data.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="315"/>
+        <location filename="modinfodialog.ui" line="324"/>
         <source>This moves a esp to the esp directory so it can be enabled in the main window. Please note that the ESP merely becomes &quot;available&quot;, it will not necessarily be loaded! That is configured in the main window of omo.</source>
         <translation>Přesune soubor esp do adresáře, kde má být, aby mohl být aktivován. Prosím berte na vědomí, že tato akce jenom soubor &quot;zpřistupní&quot;, nedělá ho automaticky aktivním. To se pak aktivuje v hlavním oknu mezi esp.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="350"/>
+        <location filename="modinfodialog.ui" line="359"/>
         <source>ESPs in the data directory and thus visible to the game.</source>
         <translation>ESP soubory mezi Data a tedy přístupné pro hru.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="353"/>
+        <location filename="modinfodialog.ui" line="362"/>
         <source>These are the mod files that are in the (virtual) data directory of your game and will thus be selecteable in the esp list in the main window.</source>
         <translation>Tady jsou soubory modu, které se nacházejí ve (virtuálním) data adresáři hry a proto je bude možné aktivovat v seznamu esp v hlavním okně.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="360"/>
+        <location filename="modinfodialog.ui" line="369"/>
         <source>Available ESPs</source>
         <translation>ESP k dispozici</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="368"/>
+        <location filename="modinfodialog.ui" line="377"/>
         <source>Conflicts</source>
         <translation>Konflikty</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="376"/>
+        <location filename="modinfodialog.ui" line="385"/>
         <source>The following conflicted files are provided by this mod</source>
         <translation>Konfliktní soubory, které budou přebity tímhle modem</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="423"/>
-        <location filename="modinfodialog.ui" line="470"/>
+        <location filename="modinfodialog.ui" line="432"/>
+        <location filename="modinfodialog.ui" line="479"/>
         <source>File</source>
         <translation>Soubor</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="428"/>
+        <location filename="modinfodialog.ui" line="437"/>
         <source>Overwritten Mods</source>
         <translation>Přepsané mody</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="438"/>
+        <location filename="modinfodialog.ui" line="447"/>
         <source>The following conflicted files are provided by other mods</source>
         <translation>Konfliktní soubory, které další mody přebijou</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="475"/>
+        <location filename="modinfodialog.ui" line="484"/>
         <source>Providing Mod</source>
         <translation>Mod původu</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="485"/>
+        <location filename="modinfodialog.ui" line="494"/>
         <source>Non-Conflicted files</source>
         <translation>Nekonfliktní soubory</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="505"/>
+        <location filename="modinfodialog.ui" line="514"/>
         <source>Categories</source>
         <translation>Kategorie</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="528"/>
+        <location filename="modinfodialog.ui" line="537"/>
         <source>Primary Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="545"/>
+        <location filename="modinfodialog.ui" line="554"/>
         <source>Nexus Info</source>
         <translation>Nexus Info</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="553"/>
+        <location filename="modinfodialog.ui" line="562"/>
         <source>Mod ID</source>
         <translation>Mod ID</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="560"/>
+        <location filename="modinfodialog.ui" line="569"/>
         <source>Mod ID for this mod on Nexus.</source>
         <translation>Mod ID tohodle modu na Nexusu.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="563"/>
+        <location filename="modinfodialog.ui" line="572"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2787,7 +2818,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Mod ID pro tenhle mod na Nexusu. Vyplňuje se automaticky pokud ste soubor i stáhli i nainstalovali přímo skrz MO. Jinak ho můžete zadat ručne. Správne ID naleznete u modu na Nexusu. Adresa bude vypadat takhle: &lt;/span&gt;&lt;a href=&quot; http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; text-decoration: underline; color:#0000ff;&quot;&gt;http://skyrim.nexusmods.com/downloads/file.php?id=1334&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; color:#000000;&quot;&gt;. V takovem případe 1334 je Mod ID. Mimo jiné odkaz je přímo na Mod Organizer tak proč rovnou nejít zadat Endorse?&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="587"/>
+        <location filename="modinfodialog.ui" line="596"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2800,63 +2831,66 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Nainstalovaná verze modu. Bublina ukáže číslo nejaktuálnější verzi modu na Nexusu. Číslo verze se nastaví samo jenom pokud byl mod nainstalován skrz MO.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="594"/>
-        <location filename="modinfodialog.ui" line="715"/>
+        <location filename="modinfodialog.ui" line="603"/>
         <source>Version</source>
         <translation>Verze</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="624"/>
+        <location filename="modinfodialog.ui" line="633"/>
         <source>Refresh</source>
         <translation type="unfinished">Znovunačíst</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="627"/>
+        <location filename="modinfodialog.ui" line="636"/>
         <source>Refresh all information from Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="641"/>
+        <location filename="modinfodialog.ui" line="650"/>
         <source>Description</source>
         <translation>Popis</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="656"/>
+        <location filename="modinfodialog.ui" line="665"/>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>about:blank</source>
-        <translation>about:blank</translation>
+        <translation type="obsolete">about:blank</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="667"/>
         <source>Files</source>
-        <translation>Soubory</translation>
+        <translation type="obsolete">Soubory</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="686"/>
         <source>List of files currently uploaded on nexus. Double click to download.</source>
-        <translation>Seznam souborů momentálně nahraných na nexusu. Dvojklik stáhne soubor.</translation>
+        <translation type="obsolete">Seznam souborů momentálně nahraných na nexusu. Dvojklik stáhne soubor.</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="705"/>
         <source>Type</source>
-        <translation>Druh</translation>
+        <translation type="obsolete">Druh</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="710"/>
         <source>Name</source>
-        <translation>Jméno</translation>
+        <translation type="obsolete">Jméno</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="720"/>
         <source>Size (kB)</source>
-        <translation>Velikost (kB)</translation>
+        <translation type="obsolete">Velikost (kB)</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="746"/>
+        <location filename="modinfodialog.ui" line="701"/>
         <source>Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="760"/>
+        <location filename="modinfodialog.ui" line="715"/>
         <source>Notes</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2869,17 +2903,17 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Už jste tenhle mod endorsovali?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="770"/>
+        <location filename="modinfodialog.ui" line="725"/>
         <source>Filetree</source>
         <translation>Struktura souborů</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="779"/>
+        <location filename="modinfodialog.ui" line="734"/>
         <source>A directory view of this mod</source>
         <translation>Zložkový náhled na mod</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="782"/>
+        <location filename="modinfodialog.ui" line="737"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -2894,7 +2928,17 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Zmeny se okamžite dejí přimo na disku, takže&lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;buďte opatrní&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.ui" line="822"/>
+        <location filename="modinfodialog.ui" line="764"/>
+        <source>Previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.ui" line="771"/>
+        <source>Next</source>
+        <translation type="unfinished">Další</translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.ui" line="791"/>
         <source>Close</source>
         <translation>Zavřít</translation>
     </message>
@@ -2929,8 +2973,8 @@ p, li { white-space: pre-wrap; }
         <translation>&amp;Nová Složka</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="350"/>
-        <location filename="modinfodialog.cpp" line="365"/>
+        <location filename="modinfodialog.cpp" line="352"/>
+        <location filename="modinfodialog.cpp" line="367"/>
         <source>Save changes?</source>
         <translation>Uložit změny?</translation>
     </message>
@@ -2939,28 +2983,28 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Uložit změny v &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="561"/>
+        <location filename="modinfodialog.cpp" line="563"/>
         <source>File Exists</source>
         <translation>Soubor existuje</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="561"/>
+        <location filename="modinfodialog.cpp" line="563"/>
         <source>A file with that name exists, please enter a new one</source>
         <translation>Soubor s rovnakým názvem existuje, prosím zadejte jiné jméno</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="578"/>
+        <location filename="modinfodialog.cpp" line="580"/>
         <source>failed to move file</source>
         <translation>zlyhalo přesunutí souboru</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="603"/>
+        <location filename="modinfodialog.cpp" line="605"/>
         <source>failed to create directory &quot;optional&quot;</source>
         <translation>zlyhalo vytvoření zložky &quot;optional&quot;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="641"/>
-        <location filename="modinfodialog.cpp" line="1214"/>
+        <location filename="modinfodialog.cpp" line="643"/>
+        <location filename="modinfodialog.cpp" line="1155"/>
         <source>Info requested, please wait</source>
         <translation>Info vyžádáno, prosím počkejte</translation>
     </message>
@@ -2970,53 +3014,53 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">(popis chybí, prosím navštivte nexus pro kompletní zobrazení)</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="754"/>
+        <location filename="modinfodialog.cpp" line="758"/>
         <source>(description incomplete, please visit nexus)</source>
         <translation>(popis chybí, prosím navštivte nexus pro kompletní zobrazení)</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="710"/>
+        <location filename="modinfodialog.cpp" line="713"/>
         <source>Current Version: %1</source>
         <translation>Současná verze: %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="713"/>
+        <location filename="modinfodialog.cpp" line="717"/>
         <source>No update available</source>
         <translation>Žádný update není k dispozici</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="695"/>
+        <location filename="modinfodialog.cpp" line="697"/>
         <source>Main</source>
         <translation>Hlavní</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="350"/>
-        <location filename="modinfodialog.cpp" line="365"/>
+        <location filename="modinfodialog.cpp" line="352"/>
+        <location filename="modinfodialog.cpp" line="367"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="696"/>
+        <location filename="modinfodialog.cpp" line="698"/>
         <source>Update</source>
         <translation>Update</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="697"/>
+        <location filename="modinfodialog.cpp" line="699"/>
         <source>Optional</source>
         <translation>Volitelné</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="698"/>
+        <location filename="modinfodialog.cpp" line="700"/>
         <source>Old</source>
         <translation>Staré</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="699"/>
+        <location filename="modinfodialog.cpp" line="701"/>
         <source>Misc</source>
         <translation>Jiné</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="700"/>
+        <location filename="modinfodialog.cpp" line="702"/>
         <source>Unknown</source>
         <translation>Neznámé</translation>
     </message>
@@ -3025,99 +3069,95 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">požadavka zlyhala: %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="811"/>
+        <location filename="modinfodialog.cpp" line="779"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;%1&quot;&gt;Navštivte na Nexusu&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="875"/>
-        <location filename="modinfodialog.cpp" line="928"/>
-        <location filename="modinfodialog.cpp" line="933"/>
+        <location filename="modinfodialog.cpp" line="869"/>
+        <location filename="modinfodialog.cpp" line="874"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="875"/>
         <source>Download &quot;%1&quot;?</source>
-        <translation>Stáhnout &quot;%1&quot;?</translation>
+        <translation type="obsolete">Stáhnout &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="878"/>
         <source>Download started</source>
-        <translation>Stahování začalo</translation>
+        <translation type="obsolete">Stahování začalo</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="881"/>
         <source>Exception: %1</source>
-        <translation>Výnimka: %1</translation>
+        <translation type="obsolete">Výnimka: %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="917"/>
+        <location filename="modinfodialog.cpp" line="858"/>
         <source>Failed to delete %1</source>
         <translation>Zlyhalo vymazání %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="928"/>
+        <location filename="modinfodialog.cpp" line="869"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation>Jsi si jistý, že chceš vymazat &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="933"/>
+        <location filename="modinfodialog.cpp" line="874"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation>Jsi si jistý, že chceš vymazat označené soubory?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1007"/>
-        <location filename="modinfodialog.cpp" line="1013"/>
+        <location filename="modinfodialog.cpp" line="948"/>
+        <location filename="modinfodialog.cpp" line="954"/>
         <source>New Folder</source>
         <translation>Nová zložka</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1019"/>
+        <location filename="modinfodialog.cpp" line="960"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation>Zlyhalo vytvoření &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1123"/>
-        <location filename="modinfodialog.cpp" line="1147"/>
+        <location filename="modinfodialog.cpp" line="1064"/>
+        <location filename="modinfodialog.cpp" line="1088"/>
         <source>Replace file?</source>
         <translation>Nahradit soubor?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1123"/>
+        <location filename="modinfodialog.cpp" line="1064"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation>Už existuje skrytá verze tohto souboru. Nahradit?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1126"/>
-        <location filename="modinfodialog.cpp" line="1150"/>
+        <location filename="modinfodialog.cpp" line="1067"/>
+        <location filename="modinfodialog.cpp" line="1091"/>
         <source>File operation failed</source>
         <translation>Operace se souborem zlyhala</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1126"/>
-        <location filename="modinfodialog.cpp" line="1150"/>
+        <location filename="modinfodialog.cpp" line="1067"/>
+        <location filename="modinfodialog.cpp" line="1091"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation>Nepodařilo se odstranit &quot;%1&quot;. Možná nejsou k dispozici požadována práva?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1137"/>
-        <location filename="modinfodialog.cpp" line="1160"/>
+        <location filename="modinfodialog.cpp" line="1078"/>
+        <location filename="modinfodialog.cpp" line="1101"/>
         <source>failed to rename %1 to %2</source>
         <translation>Nezdařilo se přejmenovat %1 na %2</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1147"/>
+        <location filename="modinfodialog.cpp" line="1088"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation>Už existuje viditelná verze tohto souboru. Nahradit?</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1194"/>
+        <location filename="modinfodialog.cpp" line="1135"/>
         <source>Un-Hide</source>
         <translation>Odekrýt</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1196"/>
+        <location filename="modinfodialog.cpp" line="1137"/>
         <source>Hide</source>
         <translation>Skrýt</translation>
     </message>
@@ -3125,12 +3165,12 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfo.h" line="805"/>
+        <location filename="modinfo.h" line="812"/>
         <source>Overwrite</source>
         <translation>Přepsat</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="847"/>
+        <location filename="modinfo.cpp" line="821"/>
         <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation type="unfinished">Tenhle kvázi mod obsahuje soubory, které byli vytvořeny nebo změněny během spuštení, tzn. ve virtuálním Data stromě (ku příkladu Construction Kit je sem vytváří&apos;)</translation>
     </message>
@@ -3138,17 +3178,17 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoRegular</name>
     <message>
-        <location filename="modinfo.cpp" line="424"/>
+        <location filename="modinfo.cpp" line="392"/>
         <source>failed to write %1/meta.ini: %2</source>
         <translation>zlyhal zápis %1/meta.ini: %2</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="661"/>
+        <location filename="modinfo.cpp" line="625"/>
         <source>%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory</source>
         <translation type="unfinished">%1 neobsahuje žádné esp/esm ani jiné použitelné struktury (textures, meshes, interface,...)</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="665"/>
+        <location filename="modinfo.cpp" line="629"/>
         <source>Categories: &lt;br&gt;</source>
         <translation type="unfinished">Kategorie: &lt;br&gt;</translation>
     </message>
@@ -3156,7 +3196,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModList</name>
     <message>
-        <location filename="modlist.cpp" line="558"/>
+        <location filename="modlist.cpp" line="662"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
@@ -3173,72 +3213,70 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">neplatný index řádku %1</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="85"/>
+        <location filename="modlist.cpp" line="94"/>
         <source>Overwrite</source>
         <translation>Přepsat</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="100"/>
+        <location filename="modlist.cpp" line="109"/>
         <source>This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)</source>
         <translation>Tenhle záznam obsahuje soubory, které byli vytvořeny během spuštení, tzn. ve virtuálním Data stromě (ku příkladu Construction Kit je sem vytváří&apos;)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="109"/>
+        <location filename="modlist.cpp" line="118"/>
         <source>Backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="110"/>
+        <location filename="modlist.cpp" line="119"/>
         <source>No valid game data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="111"/>
+        <location filename="modlist.cpp" line="120"/>
         <source>Not endorsed yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="113"/>
+        <location filename="modlist.cpp" line="122"/>
         <source>Overwrites files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="114"/>
+        <location filename="modlist.cpp" line="123"/>
         <source>Overwritten files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="115"/>
+        <location filename="modlist.cpp" line="124"/>
         <source>Overwrites &amp; Overwritten</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="116"/>
+        <location filename="modlist.cpp" line="125"/>
         <source>Redundant</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="147"/>
         <source>min</source>
-        <translation>min</translation>
+        <translation type="obsolete">min</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="150"/>
         <source>max</source>
-        <translation>max</translation>
+        <translation type="obsolete">max</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="611"/>
+        <location filename="modlist.cpp" line="736"/>
         <source>Category of the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="612"/>
+        <location filename="modlist.cpp" line="737"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="613"/>
+        <location filename="modlist.cpp" line="738"/>
         <source>Emblemes to highlight things that might require attention.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3247,7 +3285,7 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">%1 neobsahuje žádné esp/esm ani jiné použitelné struktury (textures, meshes, interface,...)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="258"/>
+        <location filename="modlist.cpp" line="298"/>
         <source>Categories: &lt;br&gt;</source>
         <translation>Kategorie: &lt;br&gt;</translation>
     </message>
@@ -3256,77 +3294,96 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Tenhle kvázi mod obsahuje soubory, které byli vytvořeny nebo změněny během spuštení, tzn. ve virtuálním Data stromě (ku příkladu Construction Kit je sem vytváří&apos;)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="254"/>
+        <location filename="modlist.cpp" line="294"/>
         <source>installed version: %1, newest version: %2</source>
         <translation>nainstalovaná verze: %1, nejnovjší verze: %2</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="594"/>
         <source>Name</source>
-        <translation>Jméno</translation>
+        <translation type="obsolete">Jméno</translation>
     </message>
     <message>
         <source>Names of your mods</source>
         <translation type="obsolete">Jména vašich modů</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="595"/>
+        <location filename="modlist.cpp" line="719"/>
         <source>Version</source>
         <translation>Verze</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="608"/>
+        <location filename="modlist.cpp" line="733"/>
         <source>Version of the mod (if available)</source>
         <translation>Verze modu (pokud je k dispozici)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="596"/>
+        <location filename="modlist.cpp" line="720"/>
         <source>Priority</source>
         <translation>Priorita</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="178"/>
+        <location filename="modlist.cpp" line="184"/>
         <source>invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="518"/>
+        <location filename="modlist.cpp" line="327"/>
+        <source>Invalid name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="603"/>
         <source>drag&amp;drop failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="593"/>
+        <location filename="modlist.cpp" line="717"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="597"/>
+        <location filename="modlist.cpp" line="718"/>
+        <source>Mod Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="721"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="598"/>
+        <location filename="modlist.cpp" line="722"/>
         <source>Nexus ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="599"/>
-        <location filename="modlist.cpp" line="614"/>
+        <location filename="modlist.cpp" line="723"/>
+        <source>Installation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="724"/>
+        <location filename="modlist.cpp" line="740"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="607"/>
+        <location filename="modlist.cpp" line="732"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="609"/>
+        <location filename="modlist.cpp" line="734"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation>Priorita aplikace modu. Čím větší, tím &quot;důležitější&quot; je mod a proto může přebít mody s nižší prioritou. </translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="558"/>
+        <location filename="modlist.cpp" line="739"/>
+        <source>Time this mod was installed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="662"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation>Určitě chcete odstranit &quot;%1&quot;?</translation>
     </message>
@@ -3339,12 +3396,11 @@ p, li { white-space: pre-wrap; }
         <translation>Oznam dne</translation>
     </message>
     <message>
-        <location filename="motddialog.ui" line="58"/>
         <source>about:blank</source>
-        <translation>about:blank</translation>
+        <translation type="obsolete">about:blank</translation>
     </message>
     <message>
-        <location filename="motddialog.ui" line="81"/>
+        <location filename="motddialog.ui" line="42"/>
         <source>OK</source>
         <translation>OK</translation>
     </message>
@@ -3376,12 +3432,12 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>NXMAccessManager</name>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="111"/>
+        <location filename="nxmaccessmanager.cpp" line="130"/>
         <source>timeout</source>
         <translation>Překročen časový limit</translation>
     </message>
     <message>
-        <location filename="nxmaccessmanager.cpp" line="149"/>
+        <location filename="nxmaccessmanager.cpp" line="168"/>
         <source>Please check your password</source>
         <translation>Oveřte heslo</translation>
     </message>
@@ -3389,68 +3445,59 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>NXMUrl</name>
     <message>
-        <location filename="nxmurl.cpp" line="30"/>
         <source>invalid nxm-link: %1</source>
-        <translation>neplatný nxm-link: %1</translation>
+        <translation type="obsolete">neplatný nxm-link: %1</translation>
     </message>
 </context>
 <context>
     <name>NexusDialog</name>
     <message>
-        <location filename="nexusdialog.ui" line="14"/>
         <source>Nexus</source>
-        <translation>Nexus</translation>
+        <translation type="obsolete">Nexus</translation>
     </message>
     <message>
-        <location filename="nexusdialog.ui" line="256"/>
         <source>Mod ID</source>
-        <translation>Mod ID</translation>
+        <translation type="obsolete">Mod ID</translation>
     </message>
     <message>
-        <location filename="nexusdialog.ui" line="273"/>
         <source>Search</source>
-        <translation>Hledej</translation>
+        <translation type="obsolete">Hledej</translation>
     </message>
     <message>
-        <location filename="nexusdialog.cpp" line="95"/>
         <source>new</source>
-        <translation>nový</translation>
+        <translation type="obsolete">nový</translation>
     </message>
     <message>
-        <location filename="nexusdialog.cpp" line="153"/>
         <source>login failed: %1</source>
-        <translation>přihlášení zlyhalo: %1</translation>
+        <translation type="obsolete">přihlášení zlyhalo: %1</translation>
     </message>
     <message>
-        <location filename="nexusdialog.cpp" line="161"/>
         <source>login successful</source>
-        <translation>přihlášen úspěšně</translation>
+        <translation type="obsolete">přihlášen úspěšně</translation>
     </message>
     <message>
-        <location filename="nexusdialog.cpp" line="244"/>
         <source>failed to start download</source>
-        <translation>zlyhal start stahování</translation>
+        <translation type="obsolete">zlyhal start stahování</translation>
     </message>
     <message>
-        <location filename="nexusdialog.cpp" line="260"/>
         <source>Download started</source>
-        <translation>Stahování začalo</translation>
+        <translation type="obsolete">Stahování začalo</translation>
     </message>
 </context>
 <context>
     <name>NexusInterface</name>
     <message>
-        <location filename="nexusinterface.cpp" line="182"/>
+        <location filename="nexusinterface.cpp" line="201"/>
         <source>Failed to guess mod id for &quot;%1&quot;, please pick the correct one</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="398"/>
+        <location filename="nexusinterface.cpp" line="421"/>
         <source>empty response</source>
         <translation>prázdná odozva</translation>
     </message>
     <message>
-        <location filename="nexusinterface.cpp" line="427"/>
+        <location filename="nexusinterface.cpp" line="450"/>
         <source>invalid response</source>
         <translation>neplatná odozva</translation>
     </message>
@@ -4380,22 +4427,27 @@ V současnosti má omezenou funkcionalitu</translation>
         <translation>Přepsat</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="89"/>
+        <location filename="overwriteinfodialog.ui" line="39"/>
+        <source>You can use drag&amp;drop to move files and directories to regular mods.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="overwriteinfodialog.cpp" line="90"/>
         <source>&amp;Delete</source>
         <translation>&amp;Vymaž</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="90"/>
+        <location filename="overwriteinfodialog.cpp" line="91"/>
         <source>&amp;Rename</source>
         <translation>&amp;Přejmenuj</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="91"/>
+        <location filename="overwriteinfodialog.cpp" line="92"/>
         <source>&amp;Open</source>
         <translation>&amp;Otevři</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="92"/>
+        <location filename="overwriteinfodialog.cpp" line="93"/>
         <source>&amp;New Folder</source>
         <translation>&amp;Nová zložka</translation>
     </message>
@@ -4404,34 +4456,34 @@ V současnosti má omezenou funkcionalitu</translation>
         <translation type="obsolete">Zlyhalo vymazání %1</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="136"/>
+        <location filename="overwriteinfodialog.cpp" line="137"/>
         <source>Failed to delete &quot;%1&quot;</source>
         <translation>odstránění zlyhalo &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="147"/>
-        <location filename="overwriteinfodialog.cpp" line="152"/>
+        <location filename="overwriteinfodialog.cpp" line="148"/>
+        <location filename="overwriteinfodialog.cpp" line="153"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="147"/>
+        <location filename="overwriteinfodialog.cpp" line="148"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation>Jsi si jistý, že chceš vymazat &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="152"/>
+        <location filename="overwriteinfodialog.cpp" line="153"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation>Jsi si jistý, že chceš vymazat označené soubory?</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="202"/>
-        <location filename="overwriteinfodialog.cpp" line="208"/>
+        <location filename="overwriteinfodialog.cpp" line="203"/>
+        <location filename="overwriteinfodialog.cpp" line="209"/>
         <source>New Folder</source>
         <translation>Nová Zložka</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="214"/>
+        <location filename="overwriteinfodialog.cpp" line="215"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation>Zlyhalo vytvoření &quot;%1&quot;</translation>
     </message>
@@ -4444,33 +4496,33 @@ V současnosti má omezenou funkcionalitu</translation>
         <translation type="obsolete">esp nenalezeno: %1</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="87"/>
+        <location filename="pluginlist.cpp" line="89"/>
         <source>Mod Index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="88"/>
-        <location filename="pluginlist.cpp" line="100"/>
+        <location filename="pluginlist.cpp" line="90"/>
+        <location filename="pluginlist.cpp" line="102"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="96"/>
+        <location filename="pluginlist.cpp" line="98"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="97"/>
+        <location filename="pluginlist.cpp" line="99"/>
         <source>Load priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites data from plugins with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="99"/>
+        <location filename="pluginlist.cpp" line="101"/>
         <source>The modindex determins the formids of objects originating from this mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="197"/>
+        <location filename="pluginlist.cpp" line="199"/>
         <source>esp not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4480,38 +4532,41 @@ V současnosti má omezenou funkcionalitu</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="352"/>
-        <location filename="pluginlist.cpp" line="406"/>
+        <location filename="pluginlist.cpp" line="351"/>
+        <location filename="pluginlist.cpp" line="405"/>
         <source>failed to open output file: %1</source>
         <translation>zlyhalo otevření výstupního souboru: %1</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="394"/>
+        <location filename="pluginlist.cpp" line="393"/>
         <source>Some of your plugins have invalid names! These plugins can not be loaded by the game. Please see mo_interface.log for a list of affected plugins and rename them.</source>
         <translation>Některé vaše pluginy mají neplatné názvy! Tyhle pluginy nemůžou být načteny hrou. Prosím nahlédněte do souboru mo_interface.log pro kompletní seznam pluginů a přejmenujte je.</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="604"/>
+        <location filename="pluginlist.cpp" line="737"/>
+        <source>failed to restore load order for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>min</source>
-        <translation>min</translation>
+        <translation type="obsolete">min</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="606"/>
         <source>max</source>
-        <translation>max</translation>
+        <translation type="obsolete">max</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="638"/>
+        <location filename="pluginlist.cpp" line="631"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation>Tenhle plugin nemůže být deaktivován (vyžaduje to hra)</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="640"/>
+        <location filename="pluginlist.cpp" line="633"/>
         <source>Origin: %1</source>
         <translation>Původní mod: %1</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="85"/>
+        <location filename="pluginlist.cpp" line="87"/>
         <source>Name</source>
         <translation>Jméno</translation>
     </message>
@@ -4520,7 +4575,7 @@ V současnosti má omezenou funkcionalitu</translation>
         <translation type="obsolete">Jména vašich modů</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="86"/>
+        <location filename="pluginlist.cpp" line="88"/>
         <source>Priority</source>
         <translation>Priorita</translation>
     </message>
@@ -4538,43 +4593,110 @@ V současnosti má omezenou funkcionalitu</translation>
     </message>
 </context>
 <context>
+    <name>ProblemsDialog</name>
+    <message>
+        <location filename="problemsdialog.ui" line="14"/>
+        <source>Problems</source>
+        <translation type="unfinished">Problémy</translation>
+    </message>
+    <message>
+        <location filename="problemsdialog.ui" line="49"/>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="problemsdialog.cpp" line="29"/>
+        <source>fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="problemsdialog.cpp" line="30"/>
+        <source>Fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="problemsdialog.cpp" line="34"/>
+        <source>No guided fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>Profile</name>
     <message>
         <source>failed to apply ini tweaks</source>
         <translation type="obsolete">Zlyhalo uplatnění změn v ini</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="247"/>
-        <location filename="profile.cpp" line="276"/>
-        <location filename="profile.cpp" line="360"/>
-        <location filename="profile.cpp" line="378"/>
-        <location filename="profile.cpp" line="388"/>
+        <location filename="profile.cpp" line="56"/>
+        <source>invalid profile name %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="60"/>
+        <source>failed to create %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="152"/>
+        <source>failed to open &quot;%1&quot; for writing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="189"/>
+        <source>failed to update tweaked ini file, wrong settings may be used: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="219"/>
+        <source>failed to create tweaked ini: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="271"/>
+        <location filename="profile.cpp" line="300"/>
+        <location filename="profile.cpp" line="384"/>
+        <location filename="profile.cpp" line="402"/>
+        <location filename="profile.cpp" line="412"/>
         <source>invalid index %1</source>
         <translation>Neplatný index  %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="341"/>
+        <location filename="profile.cpp" line="365"/>
         <source>Overwrite directory couldn&apos;t be parsed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="350"/>
+        <location filename="profile.cpp" line="374"/>
         <source>invalid priority %1</source>
         <translation>neplatná priorita %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="530"/>
-        <location filename="profile.cpp" line="557"/>
+        <location filename="profile.cpp" line="561"/>
+        <source>failed to parse ini file (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="589"/>
         <source>failed to parse ini file (%1): %2</source>
         <translation>zlyhalo rozebrání ini souboru (%1): %2</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="633"/>
+        <location filename="profile.cpp" line="613"/>
+        <location filename="profile.cpp" line="650"/>
+        <source>failed to modify &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profile.cpp" line="679"/>
         <source>Delete savegames?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="634"/>
+        <location filename="profile.cpp" line="680"/>
         <source>Do you want to delete local savegames? (If you select &quot;No&quot;, the save games will show up again if you re-enable local savegames)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4749,63 +4871,78 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="profilesdialog.ui" line="123"/>
-        <location filename="profilesdialog.ui" line="126"/>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profilesdialog.ui" line="133"/>
+        <location filename="profilesdialog.ui" line="136"/>
         <source>Transfer save games to the selected profile.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="129"/>
+        <location filename="profilesdialog.ui" line="139"/>
         <source>Transfer Saves</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="152"/>
+        <location filename="profilesdialog.ui" line="162"/>
         <source>Close</source>
         <translation>Zavřit</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="59"/>
+        <location filename="profilesdialog.cpp" line="61"/>
         <source>Archive invalidation isn&apos;t required for this game.</source>
         <translation>Invalidace archívu není potřebná pro tuhle hru.</translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="99"/>
-        <location filename="profilesdialog.cpp" line="150"/>
+        <location filename="profilesdialog.cpp" line="144"/>
         <source>failed to create profile: %1</source>
         <translation>Zlyhalo vytvoření profilu: %1</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="158"/>
+        <location filename="profilesdialog.cpp" line="152"/>
         <source>Name</source>
         <translation>Jméno</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="158"/>
+        <location filename="profilesdialog.cpp" line="152"/>
         <source>Please enter a name for the new profile</source>
         <translation>Prosím zadej jméno pro nový profil</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="166"/>
+        <location filename="profilesdialog.cpp" line="160"/>
         <source>failed to copy profile: %1</source>
         <translation>zlyhalo kopírování profilu: %1</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="173"/>
+        <location filename="profilesdialog.cpp" line="167"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="173"/>
+        <location filename="profilesdialog.cpp" line="167"/>
         <source>Are you sure you want to remove this profile?</source>
         <translation>Jsi si jistý, že chceš odstranit tento profil?</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="216"/>
+        <location filename="profilesdialog.cpp" line="196"/>
+        <source>Rename Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profilesdialog.cpp" line="196"/>
+        <source>New Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="profilesdialog.cpp" line="233"/>
         <source>failed to change archive invalidation state: %1</source>
         <translation>Zlyhala změna stavu invalidace archívu: %1</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="250"/>
+        <location filename="profilesdialog.cpp" line="270"/>
         <source>failed to determine if invalidation is active: %1</source>
         <translation>Nepodařilo se zjistit jestli je invalidace aktivní: %1</translation>
     </message>
@@ -4813,20 +4950,20 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>QObject</name>
     <message>
-        <location filename="categories.cpp" line="126"/>
+        <location filename="categories.cpp" line="133"/>
         <source>Failed to save custom categories</source>
         <translation>Nezdařilo se uložit uživatelské kategorie</translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="191"/>
-        <location filename="categories.cpp" line="226"/>
-        <location filename="categories.cpp" line="236"/>
-        <location filename="categories.cpp" line="246"/>
+        <location filename="categories.cpp" line="210"/>
+        <location filename="categories.cpp" line="245"/>
+        <location filename="categories.cpp" line="255"/>
+        <location filename="categories.cpp" line="265"/>
         <source>invalid index %1</source>
         <translation>neplatný index %1</translation>
     </message>
     <message>
-        <location filename="categories.cpp" line="257"/>
+        <location filename="categories.cpp" line="276"/>
         <source>invalid category id %1</source>
         <translation>neplatné id kategorie %1</translation>
     </message>
@@ -4842,8 +4979,8 @@ p, li { white-space: pre-wrap; }
         <translation>Jméno účtu nebylo rozpoznáno</translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="66"/>
-        <location filename="selfupdater.cpp" line="51"/>
+        <location filename="installationmanager.cpp" line="63"/>
+        <location filename="selfupdater.cpp" line="52"/>
         <source>invalid 7-zip32.dll: %1</source>
         <translation>neplatný 7-zip32.dll: %1</translation>
     </message>
@@ -4875,49 +5012,49 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="loadmechanism.cpp" line="167"/>
-        <location filename="loadmechanism.cpp" line="259"/>
+        <location filename="loadmechanism.cpp" line="260"/>
         <source>Failed to rename %1 to %2</source>
         <translation>Nepodařilo se přejmenovat %1: %2</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="174"/>
+        <location filename="loadmechanism.cpp" line="175"/>
         <source>Failed to deactivate proxy-dll loading</source>
         <translation>Nepodařilo se deaktivovat načítání proxy-dll</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="208"/>
-        <location filename="loadmechanism.cpp" line="242"/>
-        <location filename="loadmechanism.cpp" line="262"/>
+        <location filename="loadmechanism.cpp" line="209"/>
+        <location filename="loadmechanism.cpp" line="243"/>
+        <location filename="loadmechanism.cpp" line="263"/>
         <source>Failed to copy %1 to %2</source>
         <translation>zlyhalo kopírování %1 do %2</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="213"/>
+        <location filename="loadmechanism.cpp" line="214"/>
         <source>Failed to set up script extender loading</source>
         <translation>Zlyhalo nastavení načítání skript extenderu</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="239"/>
+        <location filename="loadmechanism.cpp" line="240"/>
         <source>Failed to delete old proxy-dll %1</source>
         <translation>Nepodařilo se vymazat starý proxy-dll %1</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="255"/>
+        <location filename="loadmechanism.cpp" line="256"/>
         <source>Failed to overwrite %1</source>
         <translation>Nepodařilo se přepsat %1</translation>
     </message>
     <message>
-        <location filename="loadmechanism.cpp" line="267"/>
+        <location filename="loadmechanism.cpp" line="268"/>
         <source>Failed to set up proxy-dll loading</source>
         <translation>Zlyhalo nastavení proxy-dll načítání</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="84"/>
+        <location filename="profile.cpp" line="93"/>
         <source>&quot;%1&quot; is missing</source>
         <translation>&quot;%1&quot; chybí</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="124"/>
+        <location filename="main.cpp" line="134"/>
         <source>Permissions required</source>
         <translation>Chybí oprávnění</translation>
     </message>
@@ -4926,8 +5063,8 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Uživatelský účet nemá dostatečná oprávnění pro spuštění Mod Organizeru. Nevyhnutné zmeny se můžou udělat automaticky (adresář MO se nastaví ako přepisovatelný pro současného uživatele). Budete požádáni spustit &quot;mo_helper.exe&quot; s administrátorskými právami).</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="212"/>
-        <location filename="main.cpp" line="250"/>
+        <location filename="main.cpp" line="234"/>
+        <location filename="main.cpp" line="272"/>
         <source>Woops</source>
         <translation>Hups</translation>
     </message>
@@ -4936,96 +5073,94 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">ModOrganizer havaroval! Má se vytvořit diagnostický soubor? Pokud mi tento soubor pošlete (sherb@gmx.net), bude omnoho vyšší šance, že chybu opravím.</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="125"/>
+        <location filename="main.cpp" line="135"/>
         <source>The current user account doesn&apos;t have the required access rights to run Mod Organizer. The neccessary changes can be made automatically (the MO directory will be made writable for the current user account). You will be asked to run &quot;helper.exe&quot; with administrative rights).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="213"/>
-        <source>ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file by email (sherb@gmx.net), the bug is a lot more likely to be fixed. Please include a short description of what you were doing when the crash happened</source>
+        <location filename="main.cpp" line="235"/>
+        <source>ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file (%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. Please include a short description of what you were doing when the crash happened</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="251"/>
+        <location filename="main.cpp" line="273"/>
         <source>ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1</source>
         <translation>ModOrganizer havaroval! Naneštěstí, nezdařilo se ani vytvořit diagnostický soubor: %1</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="290"/>
-        <location filename="settings.cpp" line="366"/>
+        <location filename="main.cpp" line="335"/>
+        <location filename="settings.cpp" line="441"/>
         <source>Mod Organizer</source>
         <translation>Mod Organizer</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="290"/>
+        <location filename="main.cpp" line="335"/>
         <source>An instance of Mod Organizer is already running</source>
         <translation>Jedna instance Mod Organizeru už běží</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="312"/>
+        <location filename="main.cpp" line="357"/>
         <source>No game identified in &quot;%1&quot;. The directory is required to contain the game binary and its launcher.</source>
         <translation>Žádná hra nebyla nalezena v &quot;%1&quot;. Je potřebné, aby adresář obsahoval binár hry a spouštěč.</translation>
     </message>
     <message>
-        <location filename="main.cpp" line="315"/>
-        <location filename="main.cpp" line="344"/>
+        <location filename="main.cpp" line="360"/>
+        <location filename="main.cpp" line="389"/>
         <source>Please select the game to manage</source>
         <translation>Prosím vyberte hru, kterou chcete spravovat</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="595"/>
+        <location filename="mainwindow.cpp" line="701"/>
         <source>Please use &quot;Help&quot; from the toolbar to get usage instructions to all elements</source>
         <translation>Prosím použijte &quot;Pomoc&quot; z panelu nástrojú pro instrukce ke všem elementům</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1229"/>
-        <location filename="mainwindow.cpp" line="3164"/>
+        <location filename="mainwindow.cpp" line="1414"/>
+        <location filename="mainwindow.cpp" line="3646"/>
         <source>&lt;Manage...&gt;</source>
         <translation>&lt;Manage...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1247"/>
+        <location filename="mainwindow.cpp" line="1432"/>
         <source>failed to parse profile %1: %2</source>
         <translation>Nezdařilo se rozebrat profil %1: %2</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="295"/>
-        <location filename="profile.cpp" line="204"/>
+        <location filename="profile.cpp" line="228"/>
         <source>failed to find &quot;%1&quot;</source>
         <translation>Nepodařilo sa najít &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="368"/>
+        <location filename="pluginlist.cpp" line="367"/>
         <source>encoding error, please report this as a bug and include the file mo_interface.log!</source>
         <translation>Chyba kódování, prosím nahlaste tuto chybu a poskytněte záznamový soubor mo_interface.log!</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="472"/>
+        <location filename="pluginlist.cpp" line="467"/>
         <source>failed to access %1</source>
         <translation>zlyhal přístup k %1</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="486"/>
+        <location filename="pluginlist.cpp" line="481"/>
         <source>failed to set file time %1</source>
         <translation>nepodařilo se nastavit čas souboru %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="51"/>
-        <location filename="profile.cpp" line="58"/>
+        <location filename="profile.cpp" line="67"/>
         <source>failed to create %1</source>
         <translation>Nepodařilo se vytvořit %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="78"/>
         <source>modlist.txt missing</source>
-        <translation>modlist.txt chybí</translation>
+        <translation type="obsolete">modlist.txt chybí</translation>
     </message>
     <message>
         <source>failed to copy &quot;%1&quot; to &quot;%2&quot;, this is going to end badly...</source>
         <translation type="obsolete">nepodařilo se skopírovat &quot;%1&quot; do &quot;%2&quot;, tohle dopadne velice špatně...</translation>
     </message>
     <message>
-        <location filename="profilesdialog.cpp" line="78"/>
+        <location filename="profilesdialog.cpp" line="80"/>
         <source>Before you can use ModOrganizer, you need to create at least one profile. ATTENTION: Run the game at least once before creating a profile!</source>
         <translation>Předtím než budete moci používat ModOrganizer, musíte vytvořit alespoň jeden profil. VÝSTRAHA: Spustěte hru alespoň jednou než vytvoříte profil!</translation>
     </message>
@@ -5048,37 +5183,52 @@ p, li { white-space: pre-wrap; }
         <translation>nepodařilo se otevřít %1</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="373"/>
+        <location filename="settings.cpp" line="448"/>
         <source>Script Extender</source>
         <translation>Skript Extender</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="380"/>
+        <location filename="settings.cpp" line="455"/>
         <source>Proxy DLL</source>
         <translation>Proxy DLL</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="81"/>
+        <location filename="spawn.cpp" line="106"/>
         <source>failed to spawn &quot;%1&quot;</source>
         <translation>nepodařilo se vytvořit &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="85"/>
+        <location filename="spawn.cpp" line="113"/>
+        <source>Elevation required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="spawn.cpp" line="114"/>
+        <source>This process requires elevation to run.
+This is a potential security risk so I highly advice you to investigate if
+&quot;%1&quot;
+can be installed to work without elevation.
+
+Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe to make changes to the system)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="spawn.cpp" line="128"/>
         <source>failed to spawn &quot;%1&quot;: %2</source>
         <translation>nepodařilo se vytvořit &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="93"/>
+        <location filename="spawn.cpp" line="137"/>
         <source>&quot;%1&quot; doesn&apos;t exist</source>
         <translation>&quot;%1&quot; neexistuje</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="100"/>
+        <location filename="spawn.cpp" line="144"/>
         <source>failed to inject dll into &quot;%1&quot;: %2</source>
         <translation>nepodařilo se vsunout dll do &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="108"/>
+        <location filename="spawn.cpp" line="152"/>
         <source>failed to run &quot;%1&quot;</source>
         <translation>nepodařilo se spustit &quot;%1&quot;</translation>
     </message>
@@ -5285,70 +5435,75 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">mo_archive.dll nenačteno: &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="65"/>
+        <location filename="selfupdater.cpp" line="66"/>
         <source>archive.dll not loaded: &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="115"/>
-        <location filename="selfupdater.cpp" line="139"/>
-        <location filename="selfupdater.cpp" line="264"/>
-        <location filename="selfupdater.cpp" line="412"/>
+        <location filename="selfupdater.cpp" line="116"/>
+        <location filename="selfupdater.cpp" line="140"/>
+        <location filename="selfupdater.cpp" line="269"/>
+        <location filename="selfupdater.cpp" line="417"/>
         <source>Update</source>
         <translation>Aktualizace</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="116"/>
+        <location filename="selfupdater.cpp" line="117"/>
         <source>An update is available (newest version: %1), do you want to install it?</source>
         <translation>Je k dispozici Aktualizace (nejnovší verze: %1), chcete nainstalovat?</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="140"/>
+        <location filename="selfupdater.cpp" line="141"/>
         <source>Download in progress</source>
         <translation>Stahování probíhá</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="195"/>
+        <location filename="selfupdater.cpp" line="196"/>
         <source>Download failed: %1</source>
         <translation>Stahování zlyhalo: %1</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="206"/>
+        <location filename="selfupdater.cpp" line="207"/>
         <source>Failed to install update: %1</source>
         <translation>Zlyhala instalace aktualizace: %1</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="227"/>
+        <location filename="selfupdater.cpp" line="228"/>
         <source>failed to open archive &quot;%1&quot;: %2</source>
         <translation>nepodařilo se otevřít archív &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="264"/>
+        <location filename="selfupdater.cpp" line="251"/>
+        <source>failed to move outdated files: %1. Please update manually.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="selfupdater.cpp" line="269"/>
         <source>Update installed, Mod Organizer will now be restarted.</source>
         <translation>Aktualizace nainstalována, Mod Organizer se teď restartuje.</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="292"/>
+        <location filename="selfupdater.cpp" line="297"/>
         <source>Error</source>
         <translation>Chyba</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="348"/>
+        <location filename="selfupdater.cpp" line="353"/>
         <source>Failed to parse response. Please report this as a bug and include the file mo_interface.log.</source>
         <translation>Zlyhala odozva. Prosím nahlaste tuto chybu autorovi a přiložte soubor mo_interface.log.</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="413"/>
+        <location filename="selfupdater.cpp" line="418"/>
         <source>No incremental update available for this version, the complete package needs to be downloaded (%1 kB)</source>
         <translation>Inkrementální aktualizace není k dispozici, je potřebné stáhnout celý nový balík (%1 kB)</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="422"/>
+        <location filename="selfupdater.cpp" line="427"/>
         <source>no file for update found. Please update manually.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="454"/>
+        <location filename="selfupdater.cpp" line="461"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5357,7 +5512,7 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">Nenalezen soubor pro aktualizaci</translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="436"/>
+        <location filename="selfupdater.cpp" line="441"/>
         <source>Failed to retrieve update information: %1</source>
         <translation>Nepodařilo se získat informace o aktualizaci: %1</translation>
     </message>
@@ -5365,27 +5520,26 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>Settings</name>
     <message>
-        <location filename="settings.cpp" line="231"/>
+        <location filename="settings.cpp" line="260"/>
         <source>setting for invalid plugin &quot;%1&quot; requested</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="235"/>
+        <location filename="settings.cpp" line="264"/>
         <source>invalid setting &quot;%1&quot; requested for plugin &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="420"/>
         <source>Administrative rights required to change this.</source>
-        <translation>Administrátorské práva jsou požadovány na tuhle změnu.</translation>
+        <translation type="obsolete">Administrátorské práva jsou požadovány na tuhle změnu.</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="456"/>
+        <location filename="settings.cpp" line="552"/>
         <source>Confirm</source>
         <translation>Potvrdit</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="456"/>
+        <location filename="settings.cpp" line="552"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
         <translation>Zmena adresáře modu změní všechny tvoje profily! Nenalezené mody (nebo přejmenované) v nové lokaci budou deaktivovány ve všech profilech. Není možnosť návratu pokud si nezazálohujete profily ručně. Pokračovat?</translation>
     </message>
@@ -5466,30 +5620,24 @@ p, li { white-space: pre-wrap; }
         <translation>Cache</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="251"/>
         <source>Choose the integrated fomod installer over the external one wherever possible.</source>
-        <translation>Zvolit integrovaný fomod instalátor místo externího kdykoliv je to možné.</translation>
+        <translation type="obsolete">Zvolit integrovaný fomod instalátor místo externího kdykoliv je to možné.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="254"/>
         <source>Use the integrated fomod installer if possible. This installer is only able to handle archives scripted using an xml-file (that&apos;s maybe half the fomods out there), other files are still installed using the external installer if it&apos;s available.</source>
-        <translation>Použít integrovaný fomod instalátor pokud je to možné. Instalátor dokáže pracovat pouze s archívy naskriptovány v xml souboru (to je zhruba polovina fomodů, které jsou), ostatní soubory jsou instalovány použitím externího instalátoru, pokud je k dispozici.</translation>
+        <translation type="obsolete">Použít integrovaný fomod instalátor pokud je to možné. Instalátor dokáže pracovat pouze s archívy naskriptovány v xml souboru (to je zhruba polovina fomodů, které jsou), ostatní soubory jsou instalovány použitím externího instalátoru, pokud je k dispozici.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="257"/>
         <source>Prefer integrated fomod installer</source>
-        <translation>Preferovat integrovaný fomod instalátor</translation>
+        <translation type="obsolete">Preferovat integrovaný fomod instalátor</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="264"/>
-        <location filename="settingsdialog.ui" line="267"/>
         <source>Use a very simple installation dialog if MO recognizes the structure of the installation archive. If you prefer your life complicated, uncheck this box.</source>
-        <translation>Použití jednoduchého dotazu pro instalaci pokud MO rozpozná strukturu v instalačním archivu. Pokud preferujete úplný přehled a zložitost, odznačte políčko.</translation>
+        <translation type="obsolete">Použití jednoduchého dotazu pro instalaci pokud MO rozpozná strukturu v instalačním archivu. Pokud preferujete úplný přehled a zložitost, odznačte políčko.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="270"/>
         <source>Enable &quot;Quick Installer&quot;</source>
-        <translation>Používat &quot;Rychlou instalaci&quot;</translation>
+        <translation type="obsolete">Používat &quot;Rychlou instalaci&quot;</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="231"/>
@@ -5564,23 +5712,73 @@ p, li { white-space: pre-wrap; }
         <translation>Konfigurovat Kategorie Modů</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="245"/>
-        <source>Installer</source>
-        <translation>Instalační</translation>
+        <location filename="settingsdialog.ui" line="321"/>
+        <source>Disable automatic internet features</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="294"/>
-        <location filename="settingsdialog.ui" line="310"/>
+        <location filename="settingsdialog.ui" line="324"/>
+        <source>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="327"/>
+        <source>Offline Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="334"/>
+        <source>Use a proxy for network connections.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="337"/>
+        <source>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="340"/>
+        <source>Use HTTP Proxy (Uses System Settings)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="351"/>
+        <source>Known Servers (Dynamically updated every download)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="372"/>
+        <source>Preferred Servers (Drag &amp; Drop)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="594"/>
+        <source>Mod Organizer needs a dll to be injected into the game so all mods are visible to it.
+There are several means to do this:
+*Mod Organizer* (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it.
+*Script Extender* In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin.
+*Proxy DLL* In this mode, MO replaces one of the game&apos;s dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don&apos;t work.
+
+If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installer</source>
+        <translation type="obsolete">Instalační</translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="245"/>
+        <location filename="settingsdialog.ui" line="261"/>
         <source>Nexus</source>
         <translation>Nexus</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="300"/>
+        <location filename="settingsdialog.ui" line="251"/>
         <source>Allows automatic log-in when the Nexus-Page for the game is clicked.</source>
         <translation>Povolí automatické přihlasováni na stránky Nexusu pokud je označeno.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="303"/>
+        <location filename="settingsdialog.ui" line="254"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5593,99 +5791,84 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Povolí automatické přihlasováni na stránky Nexusu pokud je označeno. Prosím berte na vědomí ,že maskování hesla v souboru modorganizer.ini není příliš silné. Pokud máte obavy, že by vám někdo mohl ukrást heslo, neukládajte ho.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="319"/>
+        <location filename="settingsdialog.ui" line="270"/>
         <source>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="322"/>
+        <location filename="settingsdialog.ui" line="273"/>
         <source>Automatically Log-In to Nexus</source>
         <translation>Automaticky přihlásit do Nexusu</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="334"/>
+        <location filename="settingsdialog.ui" line="285"/>
         <source>Username</source>
         <translation>Přihlasovací jméno</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="348"/>
+        <location filename="settingsdialog.ui" line="299"/>
         <source>Password</source>
         <translation>Heslo</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="370"/>
-        <source>Sets up MO as the global handler for NXM links.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="373"/>
-        <source>NXM Links are the green Download-buttons on Nexus. If this is checked, MO will be set up to handle those links.
-On some systems this will require administrative rights.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="377"/>
         <source>Handle NXM Links</source>
-        <translation>Spravovat odkazy z Nexusu</translation>
+        <translation type="obsolete">Spravovat odkazy z Nexusu</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="384"/>
-        <location filename="settingsdialog.ui" line="387"/>
         <source>If checked, MO will use an external browser for buttons like &quot;Visit on Nexus&quot; instead of the integrated one.</source>
-        <translation>Pokud je označeno, MO bude používat váš osobní externí prohlížeč pro příkazy jako &quot;navštiv na Nexusu&quot; místo vstavaného prohlížeče.</translation>
+        <translation type="obsolete">Pokud je označeno, MO bude používat váš osobní externí prohlížeč pro příkazy jako &quot;navštiv na Nexusu&quot; místo vstavaného prohlížeče.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="390"/>
         <source>Prefer external browser</source>
-        <translation>Preferuj externí prohlížeč</translation>
+        <translation type="obsolete">Preferuj externí prohlížeč</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="411"/>
+        <location filename="settingsdialog.ui" line="407"/>
         <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="431"/>
+        <location filename="settingsdialog.ui" line="427"/>
         <source>Author:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="445"/>
+        <location filename="settingsdialog.ui" line="441"/>
         <source>Version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="459"/>
+        <location filename="settingsdialog.ui" line="455"/>
         <source>Description:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="497"/>
+        <location filename="settingsdialog.ui" line="493"/>
         <source>Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="502"/>
+        <location filename="settingsdialog.ui" line="498"/>
         <source>Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="513"/>
+        <location filename="settingsdialog.ui" line="509"/>
         <source>Workarounds</source>
         <translation>Řešení</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="521"/>
+        <location filename="settingsdialog.ui" line="517"/>
         <source>Steam App ID</source>
         <translation>Steam App ID</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="541"/>
+        <location filename="settingsdialog.ui" line="537"/>
         <source>The Steam AppID for your game</source>
         <translation>Steam AppID pro vaši hru</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="544"/>
+        <location filename="settingsdialog.ui" line="540"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5712,17 +5895,16 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;22380 je id, které hledáte.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="575"/>
+        <location filename="settingsdialog.ui" line="571"/>
         <source>Load Mechanism</source>
         <translation>Mechanizmus spuštění</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="595"/>
+        <location filename="settingsdialog.ui" line="591"/>
         <source>Select loading mechanism. See help for details.</source>
         <translation>Vyberte mechanizmus použit pro spuštění. Pro víc detailů čti Nápovědu.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="598"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5732,7 +5914,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Mod Organizer&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it. This does not work for the Steam version of Oblivion!&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Script Extender&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; In this mode, MO is installed as a Script Extender (obse, fose, nvse, skse)  plugin. (recommended if you have a script extender installed)&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Proxy DLL&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; In this mode, MO replaces one of the game&apos;s dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don&apos;t work.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+        <translation type="obsolete">&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
@@ -5743,17 +5925,17 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Proxy DLL&lt;/span&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt; V tomhle módu, MO nahradí jedno dll samotné hry takovým, které načte MO (a také původní obsah dll samozřejmě). Tohle bude fungovat POUZE pro Steamové verze her a bylo testováno pouze u Skyrimu. Vyhněte se téhle metóde pokud funguje jedna z předchozích.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="617"/>
+        <location filename="settingsdialog.ui" line="611"/>
         <source>NMM Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="637"/>
+        <location filename="settingsdialog.ui" line="631"/>
         <source>The Version of Nexus Mod Manager to impersonate.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="640"/>
+        <location filename="settingsdialog.ui" line="634"/>
         <source>Mod Organizer uses an API provided by the Nexus to provide features like checking for updates and downloading files. Unfortunately this API has not been made available officially to third party tools like MO so we have to impersonate the Nexus Mod Manager to be allowed in.
 On top of this Nexus has used the client identification to lock out outdated versions of NMM to force users to update. This means that MO also needs to impersonate the new version of NMM even if MO doesn&apos;t need an update. Therefore you can configure the version to identify as here.
 Please note that MO does identify itself as MO to the webserver, it&apos;s not lying about what it is. It is merely adding a &quot;compatible&quot; NMM version to the user agent.
@@ -5762,53 +5944,53 @@ tl;dr-version: If Nexus-features don&apos;t work, insert the current version num
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="662"/>
+        <location filename="settingsdialog.ui" line="656"/>
         <source>Enforces that inactive ESPs and ESMs are never loaded.</source>
         <translation>Zabezpečí, aby se neaktivní ESP a ESM vůbec nezobrazovali.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="665"/>
+        <location filename="settingsdialog.ui" line="659"/>
         <source>It seems that the Games occasionally load ESP or ESM files even if they haven&apos;t been activated as plugins.
 I don&apos;t yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</source>
         <translation>Zdá se, že hry občasně načtou ESP nebo ESM soubory i když nebyli označeny ako aktivní pluginy.
 Nevím za jakých podmínek se to stává, ale uživatelé říkaj, že v některých případech je to neželané. Pokud je tohle označeno, ESP a ESM soubory které v seznamu nejsou označeny, nemůžou být za žádných okolností načtené ve hře.</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="669"/>
+        <location filename="settingsdialog.ui" line="663"/>
         <source>Hide inactive ESPs/ESMs</source>
         <translation>Skrýt neaktivní ESP/ESM</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="676"/>
+        <location filename="settingsdialog.ui" line="670"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="679"/>
+        <location filename="settingsdialog.ui" line="673"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
 Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="683"/>
+        <location filename="settingsdialog.ui" line="677"/>
         <source>Force-enable game files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="693"/>
-        <location filename="settingsdialog.ui" line="697"/>
+        <location filename="settingsdialog.ui" line="687"/>
+        <location filename="settingsdialog.ui" line="691"/>
         <source>For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
 For the other games this is not a sufficient replacement for AI!</source>
         <translation>Pro Skyrim, tohle je možné použít místo Invalidace Archívu. Pro všechny profily bude IA nepotřebná.
 Pro ostatné hry tohle není dostatečná náhrada Invalidace Archívu!  </translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="701"/>
+        <location filename="settingsdialog.ui" line="695"/>
         <source>Back-date BSAs</source>
         <translation>Uprav dátumy BSA</translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="725"/>
+        <location filename="settingsdialog.ui" line="719"/>
         <source>These are workarounds for problems with Mod Organizer. Please make sure you read the help text before changing anything here.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5917,17 +6099,17 @@ Pro ostatné hry tohle není dostatečná náhrada Invalidace Archívu!  </trans
         <translation>Synchronizuj</translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="87"/>
+        <location filename="syncoverwritedialog.cpp" line="95"/>
         <source>&lt;don&apos;t sync&gt;</source>
         <translation>&lt;don&apos;t sync&gt;</translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="136"/>
+        <location filename="syncoverwritedialog.cpp" line="147"/>
         <source>failed to remove %1</source>
         <translation>Nepodařilo se odstranit %1</translation>
     </message>
     <message>
-        <location filename="syncoverwritedialog.cpp" line="138"/>
+        <location filename="syncoverwritedialog.cpp" line="149"/>
         <source>failed to move %1 to %2</source>
         <translation>nepodařilo se přesunout %1 do %2</translation>
     </message>
