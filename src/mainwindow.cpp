@@ -100,6 +100,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtConcurrentRun>
 
 
+#ifdef TEST_MODELS
+#include "modeltest.h"
+#endif // TEST_MODELS
+
+
 using namespace MOBase;
 using namespace MOShared;
 
@@ -126,11 +131,6 @@ static bool isOnline()
 
   return connected;
 }
-
-
-#ifdef TEST_MODELS
-#include "modeltest.h"
-#endif // TEST_MODELS
 
 
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
@@ -162,7 +162,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   updateProblemsButton();
 
   updateToolBar();
-//  ui->toolBar->blockSignals(true);
 
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
 
@@ -181,11 +180,11 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(ui->modList));
   //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
-  ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
+  if (initSettings.contains("mod_list_state")) {
+    ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
+  }
   ui->modList->header()->setSectionHidden(0, false); // prevent the name-column from being hidden
   ui->modList->installEventFilter(&m_ModList);
-
-  resizeLists();
 
   // set up plugin list
   m_PluginListSortProxy = new PluginListSortProxy(this);
@@ -193,8 +192,13 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
+  if (initSettings.contains("plugin_list_state")) {
+    ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
+  }
   ui->espList->installEventFilter(&m_PluginList);
+
+  resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
+
 
   QMenu *linkMenu = new QMenu(this);
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
@@ -294,34 +298,37 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::resizeLists()
+void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
 {
-  // resize mod list to fit content
+  if (!modListCustom) {
+    // resize mod list to fit content
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  for (int i = 0; i < ui->modList->header()->count(); ++i) {
-    ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
+    for (int i = 0; i < ui->modList->header()->count(); ++i) {
+      ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+    }
+    ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
 #else
-  for (int i = 0; i < ui->modList->header()->count(); ++i) {
-    ui->modList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
+    for (int i = 0; i < ui->modList->header()->count(); ++i) {
+      ui->modList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
+    }
+    ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
 #endif
+  }
 
-
-  // resize plugin list to fit content
+  if (!pluginListCustom) {
+    // resize plugin list to fit content
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  for (int i = 0; i < ui->espList->header()->count(); ++i) {
-    ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    for (int i = 0; i < ui->espList->header()->count(); ++i) {
+      ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
+    }
+    ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
 #else
-  for (int i = 0; i < ui->espList->header()->count(); ++i) {
-    ui->espList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-  }
-  ui->espList->header()->setResizeMode(0, QHeaderView::Stretch);
+    for (int i = 0; i < ui->espList->header()->count(); ++i) {
+      ui->espList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
+    }
+    ui->espList->header()->setResizeMode(0, QHeaderView::Stretch);
 #endif
+  }
 }
 
 
@@ -580,9 +587,12 @@ void MainWindow::saveArchiveList()
     QFile archiveFile(m_CurrentProfile->getArchivesFileName());
     if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
       for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *item = ui->bsaList->topLevelItem(i);
-        if ((item != NULL) && (item->checkState(0) == Qt::Checked)) {
-          archiveFile.write(item->text(0).toUtf8().append("\r\n"));
+        QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
+        for (int j = 0; j < tlItem->childCount(); ++j) {
+          QTreeWidgetItem *item = tlItem->child(j);
+          if (item->checkState(0) == Qt::Checked) {
+            archiveFile.write(item->text(0).toUtf8().append("\r\n"));
+          }
         }
       }
     } else {
@@ -1038,7 +1048,7 @@ void MainWindow::loadPlugins()
                   pluginName.toUtf8().constData(), pluginLoader.errorString().toUtf8().constData());
       } else {
         if (registerPlugin(pluginLoader.instance())) {
-          qDebug("loaded plugin \"%s\"", pluginName.toUtf8().constData());
+          qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
         } else {
           m_UnloadedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
@@ -1615,7 +1625,8 @@ void MainWindow::refreshESPList()
   m_CurrentProfile->writeModlist();
 
   // clear list
-  m_PluginList.refresh(m_CurrentProfile->getName(), *m_DirectoryStructure,
+  m_PluginList.refresh(m_CurrentProfile->getName(),
+                       *m_DirectoryStructure,
                        m_CurrentProfile->getPluginsFileName(),
                        m_CurrentProfile->getLoadOrderFileName(),
                        m_CurrentProfile->getLockedOrderFileName());
@@ -1839,6 +1850,10 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value("window_geometry").toByteArray());
   }
 
+  if (settings.contains("window_split")) {
+    ui->splitter->restoreState(settings.value("window_split").toByteArray());
+  }
+
   bool filtersVisible = settings.value("filters_visible", false).toBool();
   setCategoryListVisible(filtersVisible);
   ui->displayCategoriesBtn->setChecked(filtersVisible);
@@ -1877,7 +1892,8 @@ void MainWindow::storeSettings()
   settings.setValue("compact_downloads", ui->compactBox->isChecked());
   settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
 
-  settings.setValue("window_geometry", this->saveGeometry());
+  settings.setValue("window_geometry", saveGeometry());
+  settings.setValue("window_split", ui->splitter->saveState());
 
   settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
@@ -4305,10 +4321,9 @@ bool MainWindow::extractProgress(QProgressDialog &progress, int percentage, std:
 
 void MainWindow::extractBSATriggered()
 {
-  QTreeWidgetItem *item = ui->bsaList->topLevelItem(m_ContextRow);
+  QTreeWidgetItem *item = m_ContextItem;
 
   QString targetFolder = FileDialogMemory::getExistingDirectory("extractBSA", this, tr("Extract BSA"));
-
   if (!targetFolder.isEmpty()) {
     BSA::Archive archive;
     QString originPath = QDir::fromNativeSeparators(ToQString(m_DirectoryStructure->getOriginByName(ToWString(item->text(1))).getPath()));
@@ -4324,10 +4339,8 @@ void MainWindow::extractBSATriggered()
     progress.setMaximum(100);
     progress.setValue(0);
     progress.show();
-
     archive.extractAll(QDir::toNativeSeparators(targetFolder).toUtf8().constData(),
                        boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
-
     if (result == BSA::ERROR_INVALIDHASHES) {
       reportError(tr("This archive contains invalid hashes. Some files may be broken."));
     }
@@ -4369,7 +4382,9 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
 
 void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
 {
-  m_ContextRow = ui->bsaList->indexOfTopLevelItem(ui->bsaList->itemAt(pos));
+  m_ContextItem = ui->bsaList->itemAt(pos);
+
+//  m_ContextRow = ui->bsaList->indexOfTopLevelItem(ui->bsaList->itemAt(pos));
 
   QMenu menu;
   menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
@@ -4474,6 +4489,8 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
       }
     }
   }
+
+  menu.addSeparator();
 
   if (hasLocked) {
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));

@@ -223,6 +223,9 @@ private:
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;
 
+  QTextCodec *m_Utf8Codec;
+  QTextCodec *m_LocalCodec;
+
   mutable QTimer m_SaveTimer;
 
 };

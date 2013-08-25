@@ -78,6 +78,15 @@ PluginList::PluginList(QObject *parent)
 {
   m_SaveTimer.setSingleShot(true);
   connect(&m_SaveTimer, SIGNAL(timeout()), this, SIGNAL(saveTimer()));
+
+  m_Utf8Codec = QTextCodec::codecForName("utf-8");
+  m_LocalCodec = QTextCodec::codecForName("Windows-1252");
+
+  if (m_LocalCodec == NULL) {
+    qCritical("required 8-bit string-encoding not supported.");
+    m_LocalCodec = m_Utf8Codec;
+  }
+
 }
 
 
@@ -203,21 +212,27 @@ void PluginList::enableESP(const QString &name)
 
 void PluginList::enableAll()
 {
-  for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-    iter->m_Enabled = true;
+  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really enable all plugins?"),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
+      iter->m_Enabled = true;
+    }
+    startSaveTime();
   }
-  startSaveTime();
 }
 
 
 void PluginList::disableAll()
 {
-  for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-    if (!iter->m_ForceEnabled) {
-      iter->m_Enabled = false;
+  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really disable all plugins?"),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
+      if (!iter->m_ForceEnabled) {
+        iter->m_Enabled = false;
+      }
     }
+    startSaveTime();
   }
-  startSaveTime();
 }
 
 
@@ -300,7 +315,7 @@ void PluginList::readEnabledFrom(const QString &fileName)
     QByteArray line = file.readLine();
     QString modName;
     if ((line.size() > 0) && (line.at(0) != '#')) {
-      modName = QString::fromUtf8(line.trimmed().constData());
+      modName = m_LocalCodec->toUnicode(line.trimmed().constData());
     }
     if (modName.size() > 0) {
       std::map<QString, int>::iterator iter = m_ESPsByName.find(modName.toLower());
@@ -351,22 +366,7 @@ void PluginList::writePlugins(const QString &fileName, bool writeUnchecked) cons
     throw MyException(tr("failed to open output file: %1").arg(fileName));
   }
 
-  QTextCodec *textCodec = writeUnchecked ? QTextCodec::codecForName("utf-8")
-                                         : QTextCodec::codecForName("Windows-1252");
-
-  if (textCodec == NULL) {
-    QList<QByteArray> encodingList = QTextCodec::availableCodecs();
-    QString encodings;
-    QTextStream temp(&encodings);
-    foreach (QByteArray encoding, encodingList) {
-      temp << encoding << ", ";
-    }
-    qCritical("required string-encoding not supported. Available codecs: %s",
-              encodings.toUtf8().constData());
-
-    throw std::runtime_error(QObject::tr("encoding error, please report this as a bug and include the file "
-                                         "mo_interface.log!").toUtf8().constData());
-  }
+  QTextCodec *textCodec = writeUnchecked ? m_Utf8Codec : m_LocalCodec;
 
   file.resize(0);
 

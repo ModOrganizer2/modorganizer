@@ -110,7 +110,7 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
 
     DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
 
-    if (state >= DownloadManager::STATE_READY) {
+    if ((m_SizeLabel != NULL) && (state >= DownloadManager::STATE_READY)) {
       m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
     }
 

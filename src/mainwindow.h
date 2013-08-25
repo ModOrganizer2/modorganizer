@@ -445,7 +445,7 @@ private slots:
   /**
    * @brief resize columns in mod list and plugin list to content
    */
-  void resizeLists();
+  void resizeLists(bool modListCustom, bool pluginListCustom);
 
   /**
    * @brief allow columns in mod list and plugin list to be resized
