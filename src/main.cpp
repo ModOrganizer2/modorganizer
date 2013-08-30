@@ -283,15 +283,15 @@ void registerMetaTypes()
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
-  qApp->addLibraryPath(application.applicationDirPath() + "/dlls");
+
+  application.addLibraryPath(application.applicationDirPath() + "/dlls");
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
   LogBuffer::init(20, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
-  qDebug("Working directory: %s", qPrintable(QDir::currentPath()));
-  qDebug("MO at: %s", qPrintable(application.applicationDirPath()));
-  qDebug("user name: %s", getenv("USERNAME"));
+  qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
+  qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
   QPixmap pixmap(":/MO/gui/splash");
   QSplashScreen splash(pixmap);
   splash.show();
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
-    qDebug("managing game at %s", qPrintable(gamePath));
+    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
     ExecutablesList executablesList;
 

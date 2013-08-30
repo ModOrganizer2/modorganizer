@@ -114,7 +114,7 @@ public:
    * @note the temporary file is automatically cleaned up after the installation
    * @note This call can be very slow if the archive is large and "solid"
    */
-  virtual QStringList extractFiles(const QStringList &files);
+  virtual QStringList extractFiles(const QStringList &files, bool flatten);
 
   /**
    * @brief installs an archive

@@ -31,7 +31,16 @@
     <property name="spacing">
      <number>4</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
      <number>6</number>
     </property>
     <item>
@@ -721,7 +730,16 @@ p, li { white-space: pre-wrap; }
             <string notr="true">Archives</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -800,7 +818,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Data</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -870,7 +897,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Saves</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -899,7 +935,16 @@ p, li { white-space: pre-wrap; }
             <string>Downloads</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>2</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>2</number>
+            </property>
+            <property name="bottomMargin">
              <number>2</number>
             </property>
             <item>
@@ -927,8 +972,14 @@ p, li { white-space: pre-wrap; }
                 <property name="horizontalScrollBarPolicy">
                  <enum>Qt::ScrollBarAlwaysOff</enum>
                 </property>
-                <property name="showDropIndicator" stdset="0">
-                 <bool>false</bool>
+                <property name="dragEnabled">
+                 <bool>true</bool>
+                </property>
+                <property name="dragDropMode">
+                 <enum>QAbstractItemView::DragDrop</enum>
+                </property>
+                <property name="defaultDropAction">
+                 <enum>Qt::MoveAction</enum>
                 </property>
                 <property name="alternatingRowColors">
                  <bool>true</bool>

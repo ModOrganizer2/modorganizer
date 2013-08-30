@@ -83,6 +83,13 @@ public:
   bool forceEnableCoreFiles() const;
 
   /**
+   * @brief register download speed
+   * @param url complete download url
+   * @param bytesPerSecond download size in bytes per second
+   */
+  void setDownloadSpeed(const QString &serverName, int bytesPerSecond);
+
+  /**
    * the steam appid is assigned by the steam platform to each product sold there.
    * The appid may differ between different versions of a game so it may be impossible
    * for Mod Organizer to automatically recognize it, though usually it does

@@ -218,6 +218,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->savegameList->setMouseTracking(true);
 
   connect(&m_DownloadManager, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
+  connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString,int)), this, SLOT(downloadSpeed(QString,int)));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -1035,7 +1036,7 @@ void MainWindow::loadPlugins()
   }
 
   QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
-  qDebug("looking for plugins in %s", pluginPath.toUtf8().constData());
+  qDebug("looking for plugins in %s", QDir::toNativeSeparators(pluginPath).toUtf8().constData());
   QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
   while (iter.hasNext()) {
     iter.next();
@@ -3592,6 +3593,12 @@ void MainWindow::linkMenu()
   }
 }
 
+void MainWindow::downloadSpeed(const QString &serverName, int bytesPerSecond)
+{
+  m_Settings.setDownloadSpeed(serverName, bytesPerSecond);
+}
+
+
 void MainWindow::on_actionSettings_triggered()
 {
   QString oldModDirectory(m_Settings.getModDirectory());
@@ -4098,7 +4105,6 @@ void MainWindow::updateDownloadListDelegate()
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->sortByColumn(1, Qt::AscendingOrder);
   ui->downloadView->header()->resizeSections(QHeaderView::Fixed);
-//  ui->downloadView->setFirstColumnSpanned(0, QModelIndex(), true);
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), this, SLOT(installDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), &m_DownloadManager, SLOT(queryInfo(int)));

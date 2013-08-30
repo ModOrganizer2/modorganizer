@@ -283,6 +283,7 @@ bool DownloadManager::addDownload(const QStringList &URLs,
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, modID, fileID, nexusInfo);
 }
 
+
 bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName,
                                   int modID, int fileID, const NexusInfo &nexusInfo)
 {
@@ -1034,6 +1035,8 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
 
   std::sort(resultList.begin(), resultList.end(), boost::bind(&DownloadManager::ServerByPreference, m_PreferredServers, _1, _2));
 
+  info.m_DownloadMap = resultList;
+
   QStringList URLs;
 
   foreach (const QVariant &server, resultList) {
@@ -1121,6 +1124,17 @@ void DownloadManager::downloadFinished()
       createMetaFile(info);
       emit update(index);
     } else {
+
+      QString url = info->m_Urls[info->m_CurrentUrl];
+      foreach (const QVariant &server, info->m_NexusInfo.m_DownloadMap) {
+        QVariantMap serverMap = server.toMap();
+        if (serverMap["URI"].toString() == url) {
+          int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
+          emit downloadSpeed(serverMap["Name"].toString(), info->m_TotalSize / deltaTime);
+          break;
+        }
+      }
+
       setState(info, STATE_FETCHINGMODINFO); // need to set this state before changing the file name, otherwise .unfinished is appended
 
       QString newName = getFileNameFromNetworkReply(reply);

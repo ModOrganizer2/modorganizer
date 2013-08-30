@@ -452,6 +452,8 @@ private slots:
    */
   void allowListResize();
 
+  void downloadSpeed(const QString &serverName, int bytesPerSecond);
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();

@@ -153,6 +153,24 @@ QString Settings::getDownloadDirectory() const
   return QDir::toNativeSeparators(m_Settings.value("Settings/download_directory", ToQString(GameInfo::instance().getDownloadDir())).toString());
 }
 
+
+void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
+{
+  m_Settings.beginGroup("Servers");
+
+  foreach (const QString &serverKey, m_Settings.childKeys()) {
+    QVariantMap data = m_Settings.value(serverKey).toMap();
+    if (serverKey == serverName) {
+      data["downloadCount"] = data["downloadCount"].toInt() + 1;
+      data["downloadSpeed"] = data["downloadSpeed"].toDouble() + static_cast<double>(bytesPerSecond);
+      m_Settings.setValue(serverKey, data);
+    }
+  }
+
+  m_Settings.endGroup();
+  m_Settings.sync();
+}
+
 std::map<QString, int> Settings::getPreferredServers()
 {
   std::map<QString, int> result;
@@ -293,8 +311,11 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
       // not yet known server
       QVariantMap newVal;
       newVal["premium"] = server.premium;
-      newVal["preferred"] = server.preferred;
+      newVal["preferred"] = server.preferred ? 1 : 0;
       newVal["lastSeen"] = server.lastSeen;
+      newVal["downloadCount"] = 0;
+      newVal["downloadSpeed"] = 0.0;
+
       m_Settings.setValue(server.name, newVal);
     } else {
       QVariantMap data = m_Settings.value(server.name).toMap();
@@ -493,14 +514,6 @@ void Settings::query(QWidget *parent)
     passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
   }
 
-/*  bool registryWritable = false;
-  bool nxmHandler = isNXMHandler(&registryWritable);
-  handleNXMBox->setChecked(nxmHandler);
-  if (!registryWritable) {
-    handleNXMBox->setIcon(QIcon(":/MO/gui/locked"));
-    handleNXMBox->setToolTip(tr("Administrative rights required to change this."));
-  }*/
-
   downloadDirEdit->setText(getDownloadDirectory());
   modDirEdit->setText(getModDirectory());
   cacheDirEdit->setText(getCacheDirectory());
@@ -520,7 +533,15 @@ void Settings::query(QWidget *parent)
   foreach (const QString &key, m_Settings.childKeys()) {
     QVariantMap val = m_Settings.value(key).toMap();
     QString type = val["premium"].toBool() ? "(premium)" : "(free)";
-    QListWidgetItem *newItem = new QListWidgetItemEx<int>(key + " " + type, Qt::UserRole + 1);
+
+    QString descriptor = key + " " + type;
+    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
+      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
+      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
+    }
+
+    QListWidgetItem *newItem = new QListWidgetItemEx<int>(descriptor, Qt::UserRole + 1);
+
     newItem->setData(Qt::UserRole, key);
     newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
     if (val["preferred"].toInt() > 0) {

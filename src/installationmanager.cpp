@@ -114,7 +114,8 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wst
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
     if ((*iter)->getData().index != -1) {
       data[(*iter)->getData().index]->setSkip(false);
-      data[(*iter)->getData().index]->setOutputFileName(path.substr().append(ToWString((*iter)->getData().name)).c_str());
+      std::wstring temp = path.substr().append(ToWString((*iter)->getData().name));
+      data[(*iter)->getData().index]->setOutputFileName(temp.c_str());
     }
     mapToArchive(*iter, path.substr().append(ToWString((*iter)->getData().name)), data);
   }
@@ -151,6 +152,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
     if (_wcsicmp(data[i]->getFileName(), ToWString(fileName).c_str()) == 0) {
       available = true;
       data[i]->setSkip(false);
+qDebug("usf %ls -> %s", data[i]->getFileName(), qPrintable(baseName));
       data[i]->setOutputFileName(ToWString(baseName).c_str());
       m_TempFilesToDelete.insert(baseName);
     } else {
@@ -206,7 +208,7 @@ QString canonicalize(const QString &name)
 }
 
 
-QStringList InstallationManager::extractFiles(const QStringList &filesOrig)
+QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool flatten)
 {
   QStringList files;
 
@@ -222,20 +224,26 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig)
 
   for (size_t i = 0; i < size; ++i) {
     if (files.contains(ToQString(data[i]->getFileName()), Qt::CaseInsensitive)) {
-      const wchar_t *baseName = wcsrchr(data[i]->getFileName(), '\\');
-      if (baseName == NULL) {
-        baseName = wcsrchr(data[i]->getFileName(), '/');
+      const wchar_t *targetFile = data[i]->getFileName();
+      if (flatten) {
+        targetFile = wcsrchr(data[i]->getFileName(), '\\');
+        if (targetFile == NULL) {
+          targetFile = wcsrchr(data[i]->getFileName(), '/');
+        }
+        if (targetFile == NULL) {
+          qCritical("failed to find backslash in %ls", data[i]->getFileName());
+          continue;
+        } else {
+          // skip the slash
+          ++targetFile;
+        }
       }
-      if (baseName == NULL) {
-        qCritical("failed to find backslash in %ls", data[i]->getFileName());
-        continue;
-      }
-      data[i]->setOutputFileName(baseName);
+      data[i]->setOutputFileName(targetFile);
 
-      result.append(QDir::tempPath().append("/").append(ToQString(baseName)));
+      result.append(QDir::tempPath().append("/").append(ToQString(targetFile)));
 
       data[i]->setSkip(false);
-      m_TempFilesToDelete.insert(ToQString(baseName));
+      m_TempFilesToDelete.insert(ToQString(targetFile));
     } else {
       data[i]->setSkip(true);
     }
@@ -252,6 +260,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig)
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
+    m_InstallationProgress.hide();
     throw std::runtime_error("extracting failed");
   }
 
@@ -401,6 +410,7 @@ void InstallationManager::report7ZipError(LPCWSTR errorMessage)
 #else
   reportError(QString::fromUtf16(errorMessage));
 #endif
+  m_CurrentArchive->cancel();
 }
 
 
@@ -527,6 +537,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
+    m_InstallationProgress.hide();
     if (m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {

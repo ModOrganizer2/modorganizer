@@ -45,6 +45,7 @@ struct NexusInfo {
   QString m_Version;
   QString m_NewestVersion;
   QString m_FileName;
+  QVariantList m_DownloadMap;
   bool m_Set;
 };
 Q_DECLARE_METATYPE(NexusInfo)
@@ -321,6 +322,11 @@ signals:
    * @param state the new state
    */
   void stateChanged(int row, DownloadManager::DownloadState state);
+
+  /**
+   * @brief emitted whenever a download completes successfully, reporting the download speed for the server used
+   */
+  void downloadSpeed(const QString &serverName, int bytesPerSecond);
 
 public slots:
 

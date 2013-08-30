@@ -675,14 +675,13 @@ bool Profile::enableLocalSaves(bool enable)
       m_Directory.mkdir("saves");
     }
   } else {
-
     QMessageBox::StandardButton res = QMessageBox::question(QApplication::activeModalWidget(), tr("Delete savegames?"),
                                                             tr("Do you want to delete local savegames? (If you select \"No\", the save games "
                                                                "will show up again if you re-enable local savegames)"),
                                                             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
                                                             QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
-      shellDelete(QStringList(m_Directory.absoluteFilePath("_saves")));
+      shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
     } else if (res == QMessageBox::No) {
       m_Directory.rename("saves", "_saves");
     } else {

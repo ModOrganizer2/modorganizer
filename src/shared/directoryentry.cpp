@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 #include "windows_error.h"
 #include <boost/bind.hpp>
+#include <boost/scoped_array.hpp>
 #include "util.h"
 #include "leaktrace.h"
 
@@ -443,16 +444,10 @@ FilesOrigin &DirectoryEntry::createOrigin(const std::wstring &originName, const 
 void DirectoryEntry::addFromOrigin(const std::wstring &originName, const std::wstring &directory, int priority)
 {
   FilesOrigin &origin = createOrigin(originName, directory, priority);
-  wchar_t *buffer = new wchar_t[MAXPATH_UNICODE + 1];
-  memset(buffer, L'\0', MAXPATH_UNICODE + 1);
-  try {
-    int offset = _snwprintf(buffer, MAXPATH_UNICODE, L"%ls", directory.c_str());
-    addFiles(origin, buffer, offset);
-  } catch (...) {
-    delete [] buffer;
-    buffer = NULL;
-  }
-  delete [] buffer;
+  boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
+  memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
+  int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
+  addFiles(origin, buffer.get(), offset);
   m_Populated = true;
 }
 
