@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "downloadlistsortproxy.h"
+#include "downloadlist.h"
 
 DownloadListSortProxy::DownloadListSortProxy(const DownloadManager *manager, QObject *parent)
   : QSortFilterProxyModel(parent), m_Manager(manager), m_CurrentFilter()
@@ -30,18 +31,21 @@ void DownloadListSortProxy::updateFilter(const QString &filter)
   invalidateFilter();
 }
 
+
 bool DownloadListSortProxy::lessThan(const QModelIndex &left,
                                      const QModelIndex &right) const
 {
   int leftIndex  = sourceModel()->data(left).toInt();
   int rightIndex = sourceModel()->data(right).toInt();
 
-  if (left.column() == 0) {
+  if (left.column() == DownloadList::COL_NAME) {
     return m_Manager->getFileName(leftIndex).compare(m_Manager->getFileName(rightIndex), Qt::CaseInsensitive) < 0;
-  } else if (left.column() == 1) {
-    return leftIndex < rightIndex;
-  } else {
+  } else if (left.column() == DownloadList::COL_FILETIME) {
+    return m_Manager->getFileTime(leftIndex) < m_Manager->getFileTime(rightIndex);
+  } else if (left.column() == DownloadList::COL_STATUS) {
     return m_Manager->getState(leftIndex) < m_Manager->getState(rightIndex);
+  } else {
+    return leftIndex < rightIndex;
   }
 }
 

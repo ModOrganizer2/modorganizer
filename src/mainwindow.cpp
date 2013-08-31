@@ -104,6 +104,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modeltest.h"
 #endif // TEST_MODELS
 
+#pragma warning( disable : 4428 )
 
 using namespace MOBase;
 using namespace MOShared;
@@ -3017,6 +3018,9 @@ void MainWindow::createModFromOverwrite()
   }
 
   IModInterface *newMod = createMod(name);
+  if (newMod == NULL) {
+    return;
+  }
 
   ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(m_ContextRow);
 

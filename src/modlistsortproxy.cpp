@@ -164,6 +164,9 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
 
         return leftPrio.toInt() < rightPrio.toInt();
     } break;
+    case ModList::COL_INSTALLTIME: {
+      return left.data().toDateTime() < right.data().toDateTime();
+    } break;
   }
   return lt;
 }

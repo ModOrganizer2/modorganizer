@@ -53,6 +53,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Ne
   DownloadInfo *info = new DownloadInfo;
   info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
+  info->m_PreResumeSize = 0LL;
   info->m_Progress = 0;
   info->m_ResumePos = 0;
   info->m_ModID = modID;
@@ -98,6 +99,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   info->m_DownloadID = s_NextDownloadID++;
   info->m_Output.setFileName(filePath);
   info->m_TotalSize = QFileInfo(filePath).size();
+  info->m_PreResumeSize = info->m_TotalSize;
   info->m_ModID  = metaFile.value("modID", 0).toInt();
   info->m_FileID = metaFile.value("fileID", 0).toInt();
   info->m_CurrentUrl = 0;
@@ -332,6 +334,8 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     mode |= QIODevice::Append;
   }
 
+  newDownload->m_StartTime.start();
+
   if (!newDownload->m_Output.open(mode)) {
     reportError(tr("failed to download %1: could not open output file: %2")
                 .arg(reply->url().toString()).arg(newDownload->m_Output.fileName()));
@@ -344,6 +348,8 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
   connect(newDownload->m_Reply, SIGNAL(metaDataChanged()), this, SLOT(metaDataChanged()));
 
   if (!resume) {
+    newDownload->m_PreResumeSize = newDownload->m_Output.size();
+
     emit aboutToUpdate();
 
     m_ActiveDownloads.append(newDownload);
@@ -596,6 +602,20 @@ QString DownloadManager::getFileName(int index) const
   }
 
   return m_ActiveDownloads.at(index)->m_FileName;
+}
+
+QDateTime DownloadManager::getFileTime(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+
+  DownloadInfo *info = m_ActiveDownloads.at(index);
+  if (!info->m_Created.isValid()) {
+    info->m_Created = QFileInfo(info->m_Output).created();
+  }
+
+  return info->m_Created;
 }
 
 qint64 DownloadManager::getFileSize(int index) const
@@ -1130,7 +1150,7 @@ void DownloadManager::downloadFinished()
         QVariantMap serverMap = server.toMap();
         if (serverMap["URI"].toString() == url) {
           int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
-          emit downloadSpeed(serverMap["Name"].toString(), info->m_TotalSize / deltaTime);
+          emit downloadSpeed(serverMap["Name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
           break;
         }
       }

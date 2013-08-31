@@ -36,6 +36,14 @@ class DownloadList : public QAbstractTableModel
 
 public:
 
+  enum EColumn {
+    COL_NAME = 0,
+    COL_FILETIME,
+    COL_STATUS
+  };
+
+public:
+
   /**
    * @brief constructor
    *

@@ -60,8 +60,8 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
   if ((role == Qt::DisplayRole) &&
       (orientation == Qt::Horizontal)) {
     switch (section) {
-      case 0: return tr("Name");
-      case 1: return tr("Filetime");
+      case COL_NAME: return tr("Name");
+      case COL_FILETIME: return tr("Filetime");
       default: return tr("Done");
     }
   } else {

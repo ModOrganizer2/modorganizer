@@ -83,6 +83,7 @@ private:
     QFile m_Output;
     QNetworkReply *m_Reply;
     QTime m_StartTime;
+    qint64 m_PreResumeSize;
     int m_Progress;
     int m_ModID;
     int m_FileID;
@@ -91,6 +92,9 @@ private:
     QStringList m_Urls;
     qint64 m_ResumePos;
     qint64 m_TotalSize;
+
+    QDateTime m_Created; // used as a cache in DownloadManager::getFileTime, may not be valid elsewhere
+
     int m_Tries;
     bool m_ReQueried;
 
@@ -216,6 +220,13 @@ public:
   qint64 getFileSize(int index) const;
 
   /**
+   * @brief retrieve the creation time of the download specified by index
+   * @param index index of the file to look up
+   * @return size of the file (total size during download)
+   */
+  QDateTime getFileTime(int index) const;
+
+  /**
    * @brief retrieve the current progress of the download specified by index
    *
    * @param index index of the file to look up
@@ -298,6 +309,7 @@ public:
   int indexByName(const QString &fileName) const;
 
   void pauseAll();
+
 signals:
 
   void aboutToUpdate();
