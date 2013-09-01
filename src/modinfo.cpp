@@ -410,7 +410,7 @@ void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
   QVariantMap result = resultData.toMap();
   m_NewestVersion.parse(result["version"].toString());
   m_NexusDescription = result["description"].toString();
-  if (m_EndorsedState != ENDORSED_NEVER) {
+  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("voted_by_user"))) {
     m_EndorsedState = result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
   }
   m_LastNexusQuery = QDateTime::currentDateTime();

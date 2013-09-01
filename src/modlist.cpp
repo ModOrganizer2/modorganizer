@@ -747,7 +747,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   if (event->type() == QEvent::ContextMenu) {
     QContextMenuEvent *contextEvent = static_cast<QContextMenuEvent*>(event);
     QWidget *object = qobject_cast<QWidget*>(obj);
-    if (object != NULL) {
+    if ((object != NULL) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
       emit requestColumnSelect(object->mapToGlobal(contextEvent->pos()));
 
       return true;

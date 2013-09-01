@@ -2592,6 +2592,7 @@ void MainWindow::refreshFilters()
   addFilterItem(NULL, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
   addFilterItem(NULL, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY);
   addFilterItem(NULL, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT);
+  addFilterItem(NULL, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED);
 
   std::set<int> categoriesUsed;
   for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
@@ -3311,6 +3312,17 @@ void MainWindow::exportModListCSV()
   }
 }
 
+
+void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
+{
+  QPushButton *pushBtn = new QPushButton(subMenu->title());
+  pushBtn->setMenu(subMenu);
+  QWidgetAction *action = new QWidgetAction(menu);
+  action->setDefaultWidget(pushBtn);
+  menu->addAction(action);
+}
+
+
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
@@ -3319,6 +3331,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     m_ContextRow = mapToModel(&m_ModList, modList->indexAt(pos)).row();
 
     QMenu menu;
+
     menu.addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
 
     menu.addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
@@ -3343,13 +3356,16 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else {
-        QMenu *addCategoryMenu = menu.addMenu(tr("Set Category"));
+        // Set categories is a separate menu connected to a push button. This way it doesn't simply close every time you hover the mouse outside
+        QMenu *addCategoryMenu = new QMenu(tr("Set Category"));
         addCategories(addCategoryMenu, 0);
         connect(addCategoryMenu, SIGNAL(aboutToHide()), this, SLOT(saveCategories()));
+        addMenuAsPushButton(&menu, addCategoryMenu);
 
-        QMenu *primaryCategoryMenu = menu.addMenu(tr("Primary Category"));
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
         connect(primaryCategoryMenu, SIGNAL(aboutToHide()), this, SLOT(savePrimaryCategory()));
+        addMenuAsPushButton(&menu, primaryCategoryMenu);
 
         menu.addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu.addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
@@ -4146,7 +4162,6 @@ void MainWindow::modDetailsUpdated(bool)
 void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int)
 {
   m_ModsToUpdate -= modIDs.size();
-
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
@@ -4159,8 +4174,9 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(VersionInfo(result["version"].toString()));
         (*iter)->setNexusDescription(result["description"].toString());
-        if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
-          // don't use endorsement info if we're not logged in
+        if (NexusInterface::instance()->getAccessManager()->loggedIn() &&
+            result.contains("voted_by_user")) {
+          // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
       }

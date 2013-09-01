@@ -219,6 +219,10 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
       case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
         if (!hasConflictFlag(info->getFlags())) return false;
       } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
+        ModInfo::EEndorsedState state = info->endorsedState();
+        return (state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER);
+      } break;
       default: {
         if (!info->categorySet(*iter)) return false;
       } break;

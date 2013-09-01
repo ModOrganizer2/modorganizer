@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkAccessManager>
 #include <QTimer>
 #include <QNetworkReply>
+#include <QProgressDialog>
 
 
 /**
@@ -85,6 +86,7 @@ private:
 
   QTimer m_LoginTimeout;
   QNetworkReply *m_LoginReply;
+  QProgressDialog m_ProgressDialog;
 
   QString m_Username;
   QString m_Password;

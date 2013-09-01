@@ -23,10 +23,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "selfupdater.h"
 #include <QMessageBox>
+#include <QPushButton>
 #include <QNetworkProxy>
 #include <QNetworkRequest>
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
+#include <QCoreApplication>
 #include <gameinfo.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
@@ -117,8 +119,13 @@ void NXMAccessManager::pageLogin()
   postDataQuery = postData.encodedQuery();
 #endif
 
-  m_LoginReply = post(request, postDataQuery);
+  m_ProgressDialog.setLabelText(tr("Logging into Nexus"));
+  QList<QPushButton*> buttons = m_ProgressDialog.findChildren<QPushButton*>();
+  buttons.at(0)->setEnabled(false);
+  m_ProgressDialog.show();
+  QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
+  m_LoginReply = post(request, postDataQuery);
   m_LoginTimeout.start();
   connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginFinished()));
   connect(m_LoginReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(loginError(QNetworkReply::NetworkError)));
@@ -138,6 +145,7 @@ void NXMAccessManager::loginTimeout()
 
 void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 {
+  m_ProgressDialog.hide();
   emit loginFailed(m_LoginReply->errorString());
   m_LoginTimeout.stop();
   m_LoginReply->deleteLater();
@@ -162,6 +170,7 @@ bool NXMAccessManager::hasLoginCookies() const
 
 void NXMAccessManager::loginFinished()
 {
+  m_ProgressDialog.hide();
   if (hasLoginCookies()) {
     emit loginSuccessful(true);
   } else {

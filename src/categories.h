@@ -46,6 +46,7 @@ public:
   static const int CATEGORY_SPECIAL_UPDATEAVAILABLE = 10002;
   static const int CATEGORY_SPECIAL_NOCATEGORY = 10003;
   static const int CATEGORY_SPECIAL_CONFLICT = 10004;
+  static const int CATEGORY_SPECIAL_NOTENDORSED = 10005;
 
 public:
 
