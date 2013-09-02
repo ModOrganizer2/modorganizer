@@ -91,7 +91,7 @@ QVariant ModList::getOverwriteData(int column, int role) const
   switch (role) {
     case Qt::DisplayRole: {
       if (column == 0) {
-        return tr("Overwrite");
+        return "Overwrite";
       } else {
         return QVariant();
       }

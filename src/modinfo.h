@@ -809,7 +809,7 @@ public:
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
-  virtual QString name() const { return tr("Overwrite"); }
+  virtual QString name() const { return "Overwrite"; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const { return QDateTime::currentDateTime(); }
   virtual QString absolutePath() const;
