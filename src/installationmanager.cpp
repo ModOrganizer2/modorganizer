@@ -152,7 +152,6 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
     if (_wcsicmp(data[i]->getFileName(), ToWString(fileName).c_str()) == 0) {
       available = true;
       data[i]->setSkip(false);
-qDebug("usf %ls -> %s", data[i]->getFileName(), qPrintable(baseName));
       data[i]->setOutputFileName(ToWString(baseName).c_str());
       m_TempFilesToDelete.insert(baseName);
     } else {
@@ -726,6 +725,13 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       qCritical("plugin \"%s\" incompatible: %s",
                 qPrintable(installer->name()), e.what());
     }
+
+    // clean up temp files
+    // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
+    foreach (const QString &tempFile, m_TempFilesToDelete) {
+      QFile::remove(QDir::tempPath() + "/" + tempFile);
+    }
+
 
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location

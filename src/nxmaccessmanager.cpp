@@ -40,7 +40,7 @@ using namespace MOShared;
 
 
 NXMAccessManager::NXMAccessManager(QObject *parent)
-  : QNetworkAccessManager(parent), m_LoginReply(NULL)
+  : QNetworkAccessManager(parent), m_LoginReply(NULL), m_ProgressDialog()
 {
 }
 
