@@ -182,16 +182,7 @@ void cleanupDir()
     "QtXml4.dll",
     "QtWebKit4.dll",
     "qjpeg4.dll",
-/*    "dlls/phonon4.dll",
-    "dlls/QtCore4.dll",
-    "dlls/QtGui4.dll",
-    "dlls/QtNetwork4.dll",
-    "dlls/QtXml4.dll",
-    "dlls/QtXmlPatterns4.dll",
-    "dlls/QtWebKit4.dll",
-    "dlls/QtDeclarative4.dll",
-    "dlls/QtScript4.dll",
-    "dlls/QtSql4.dll"*/
+    "NCC/GamebryoBase.dll"
   };
 
   static const int NUM_FILES = sizeof(fileNames) / sizeof(QString);
