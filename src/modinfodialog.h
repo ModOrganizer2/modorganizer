@@ -186,6 +186,9 @@ private slots:
 
   void on_prevButton_clicked();
 
+  void on_iniTweaksList_customContextMenuRequested(const QPoint &pos);
+
+  void createTweak();
 private:
 
   Ui::ModInfoDialog *ui;

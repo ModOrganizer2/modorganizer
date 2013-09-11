@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include "settings.h"
 #include <gameinfo.h>
+#include <espfile.h>
 #include <windows_error.h>
 
 #include <QtDebug>
@@ -140,7 +141,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
       bool archive = false;
       FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
-      m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName())));
+      m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath())));
     }
   }
 
@@ -329,6 +330,8 @@ void PluginList::readEnabledFrom(const QString &fileName)
   }
 
   file.close();
+
+  testMasters();
 }
 
 
@@ -589,6 +592,31 @@ int PluginList::columnCount(const QModelIndex &) const
 }
 
 
+void PluginList::testMasters()
+{
+  std::set<QString> enabledMasters;
+  for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
+    if (iter->m_Enabled) {
+      enabledMasters.insert(iter->m_Name.toLower());
+    }
+  }
+
+  for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
+    iter->m_MasterUnset = false;
+    if (iter->m_Enabled) {
+      for (auto master = iter->m_Masters.begin(); master != iter->m_Masters.end(); ++master) {
+        if (enabledMasters.find(master->toLower()) == enabledMasters.end()) {
+          iter->m_MasterUnset = true;
+          break;
+        }
+      }
+    }
+  }
+
+  emit layoutChanged();
+}
+
+
 QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 {
   int index = modelIndex.row();
@@ -613,13 +641,22 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       } break;
     }
   } else if ((role == Qt::DecorationRole) && (modelIndex.column() == 0)) {
-    if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
+    if (m_ESPs[index].m_MasterUnset) {
+      return QIcon(":/MO/gui/warning");
+    } else if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
       return QIcon(":/MO/gui/locked");
     } else {
       return QVariant();
     }
   } else if ((role == Qt::CheckStateRole) && (modelIndex.column() == 0)) {
     return m_ESPs[index].m_Enabled ? Qt::Checked : Qt::Unchecked;
+  } else if (role == Qt::FontRole) {
+    QFont result;
+    if (m_ESPs[index].m_IsMaster) {
+      result.setItalic(true);
+      result.setWeight(QFont::Bold);
+    }
+    return result;
   } else if (role == Qt::TextAlignmentRole) {
     if (modelIndex.column() == 0) {
       return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
@@ -630,7 +667,11 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_ForceEnabled) {
       return tr("This plugin can't be disabled (enforced by the game)");
     } else {
-      return tr("Origin: %1").arg(m_ESPs[index].m_OriginName);
+      QString text = tr("Origin: %1").arg(m_ESPs[index].m_OriginName);
+      if (m_ESPs[index].m_MasterUnset) {
+        text += "\nDepends on the following masters: " + SetJoin(m_ESPs[index].m_Masters, ", ");
+      }
+      return text;
     }
   } else {
     return QVariant();
@@ -694,17 +735,16 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 {
   int newPriorityTemp = newPriority;
 
-  QString sourceExtension = m_ESPs[row].m_Name.right(3).toLower();
-  if (sourceExtension == "esp") {
+  if (!m_ESPs[row].m_IsMaster) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           (m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_Name.right(3).toLower() == "esm")) {
+           m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_IsMaster) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
-           (m_ESPs[m_ESPsByPriority[newPriorityTemp - 1]].m_Name.right(3).toLower() == "esp")) {
+           !m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_IsMaster) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
@@ -774,6 +814,8 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
 void PluginList::startSaveTime()
 {
+  testMasters();
+
   if (!m_SaveTimer.isActive()) {
     m_SaveTimer.start(2000);
   }
@@ -813,7 +855,6 @@ bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, 
     newPriority = m_ESPs[row].m_Priority;
   }
   changePluginPriority(sourceRows, newPriority);
-
 
   return false;
 }
@@ -882,4 +923,22 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
     }
   }
   return QObject::eventFilter(obj, event);
+}
+
+
+PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath)
+  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false), m_Priority(0),
+    m_LoadOrder(-1), m_Time(time), m_OriginName(originName)
+{
+  try {
+    ESP::File file(ToWString(fullPath));
+    m_IsMaster = file.isMaster();
+    std::set<std::string> masters = file.masters();
+    for (auto iter = masters.begin(); iter != masters.end(); ++iter) {
+      m_Masters.insert(QString(iter->c_str()));
+    }
+  } catch (const std::exception &e) {
+    reportError(tr("failed to parse esp file %1: %2").arg(fullPath).arg(e.what()));
+    m_IsMaster = false;
+  }
 }

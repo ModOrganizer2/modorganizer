@@ -27,8 +27,7 @@
         <file>resources/emblem-important.png</file>
         <file>resources/check.png</file>
         <file>mo_icon.ico</file>
-        <file>resources/dialog-warning.png</file>
-        <file>resources/dialog-warning_16.png</file>
+        <file alias="warning">resources/dialog-warning.png</file>
         <file alias="emblem_backup">resources/symbol-backup.png</file>
         <file alias="icon_tools">resources/applications-accessories.png</file>
         <file alias="emblem_problem">resources/emblem-unreadable.png</file>
@@ -51,5 +50,6 @@
         <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
         <file alias="emblem_notes">resources/accessories-text-editor.png</file>
         <file alias="version_date">resources/x-office-calendar.png</file>
+        <file alias="warning_16">resources/dialog-warning_16.png</file>
     </qresource>
 </RCC>

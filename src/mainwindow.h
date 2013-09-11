@@ -276,6 +276,8 @@ private:
 
   int m_ContextRow;
   QTreeWidgetItem *m_ContextItem;
+  QAction *m_ContextAction;
+
   int m_SelectedSaveGame;
 
   Settings m_Settings;
@@ -454,6 +456,9 @@ private slots:
 
   void downloadSpeed(const QString &serverName, int bytesPerSecond);
 
+  void toolBar_customContextMenuRequested(const QPoint &point);
+  void removeFromToolbar();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
@@ -485,6 +490,7 @@ private slots: // ui slots
   void on_displayCategoriesBtn_toggled(bool checked);
   void on_groupCombo_currentIndexChanged(int index);
   void on_categoriesList_itemSelectionChanged();
+  void on_linkButton_pressed();
 };
 
 #endif // MAINWINDOW_H

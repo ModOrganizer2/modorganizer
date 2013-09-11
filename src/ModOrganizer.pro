@@ -13,7 +13,8 @@ SUBDIRS = bsatk \
           proxydll \
           nxmhandler \
     BossDummy \
-    pythonRunner
+    pythonRunner \
+    esptk
 
 hookdll.depends = shared
 organizer.depends = shared, uibase, plugins

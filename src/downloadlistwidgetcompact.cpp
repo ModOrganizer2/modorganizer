@@ -137,7 +137,7 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
         m_DoneLabel->setForegroundRole(QPalette::WindowText);
       }
       if (m_Manager->isInfoIncomplete(downloadIndex)) {
-        m_NameLabel->setText("<img src=\":/MO/gui/resources/dialog-warning_16.png\"/> " + m_NameLabel->text());
+        m_NameLabel->setText("<img src=\":/MO/gui/warning_16\"/> " + m_NameLabel->text());
       }
     } else {
       m_DoneLabel->setVisible(false);

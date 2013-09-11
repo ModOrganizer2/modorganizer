@@ -144,7 +144,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_InstallationManager(this), m_Translator(NULL), m_TranslatorQt(NULL),
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false), m_LoginAttempted(false),
-    m_ArchivesInit(false), m_ContextItem(NULL), m_CurrentSaveView(NULL),
+    m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
     m_GameInfo(new GameInfoImpl())
 {
   ui->setupUi(this);
@@ -260,6 +260,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
+
+  connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
 
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
@@ -1325,17 +1327,6 @@ void MainWindow::setExecutableIndex(int index)
     executableBox->setCurrentIndex(1);
   }
 
-  const Executable &selectedExecutable = executableBox->itemData(executableBox->currentIndex()).value<Executable>();
-
-  QIcon addIcon(":/MO/gui/link");
-  QIcon removeIcon(":/MO/gui/remove");
-
-  QFileInfo linkDesktopFile(QDir::fromNativeSeparators(getDesktopDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
-  QFileInfo linkMenuFile(QDir::fromNativeSeparators(getStartMenuDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
-
-  ui->linkButton->menu()->actions().at(0)->setIcon(selectedExecutable.m_Toolbar ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(1)->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(2)->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }
 
 
@@ -1768,14 +1759,14 @@ void MainWindow::checkBSAList()
 
       if (item->checkState(0) == Qt::Unchecked) {
         if (m_DefaultArchives.contains(filename)) {
-          item->setIcon(0, QIcon(":/MO/gui/resources/dialog-warning.png"));
+          item->setIcon(0, QIcon(":/MO/gui/warning"));
           item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
           modWarning = true;
         } else {
           QString espName = filename.mid(0, filename.length() - 3).append("esp").toLower();
           QString esmName = filename.mid(0, filename.length() - 3).append("esm").toLower();
           if (m_PluginList.isEnabled(espName) || m_PluginList.isEnabled(esmName)) {
-            item->setIcon(0, QIcon(":/MO/gui/resources/dialog-warning.png"));
+            item->setIcon(0, QIcon(":/MO/gui/warning"));
             item->setToolTip(0, tr("This archive will still be loaded since there is a plugin of the same name but "
                                       "its files will not follow installation order!"));
             modWarning = true;
@@ -1790,7 +1781,7 @@ void MainWindow::checkBSAList()
   }
 
   if (warning) {
-    ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/resources/dialog-warning.png"));
+    ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/warning"));
   } else {
     ui->tabWidget->setTabIcon(1, QIcon());
   }
@@ -2735,8 +2726,13 @@ void MainWindow::reinstallMod_clicked()
   QString installationFile = modInfo->getInstallationFile();
   if (installationFile.length() != 0) {
     QString fullInstallationFile;
-    if (QFileInfo(installationFile).isAbsolute()) {
-      fullInstallationFile = installationFile;
+    QFileInfo fileInfo(installationFile);
+    if (fileInfo.isAbsolute()) {
+      if (fileInfo.exists()) {
+        fullInstallationFile = installationFile;
+      } else {
+        fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(fileInfo.fileName());
+      }
     } else {
       fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(installationFile);
     }
@@ -4494,6 +4490,25 @@ void MainWindow::unlockESPIndex()
 }
 
 
+void MainWindow::removeFromToolbar()
+{
+  Executable &exe = m_ExecutablesList.find(m_ContextAction->text());
+  exe.m_Toolbar = false;
+  updateToolBar();
+}
+
+
+void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
+{
+  QAction *action = ui->toolBar->actionAt(point);
+  if (action->objectName().startsWith("custom_")) {
+    m_ContextAction = action;
+    QMenu menu;
+    menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
+    menu.exec(ui->toolBar->mapToGlobal(point));
+  }
+}
+
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 {
   m_ContextRow = m_PluginListSortProxy->mapToSource(ui->espList->indexAt(pos)).row();
@@ -4564,4 +4579,19 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   } else {
     m_ModListSortProxy->setSourceModel(&m_ModList);
   }
+}
+
+void MainWindow::on_linkButton_pressed()
+{
+  const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
+
+  QIcon addIcon(":/MO/gui/link");
+  QIcon removeIcon(":/MO/gui/remove");
+
+  QFileInfo linkDesktopFile(QDir::fromNativeSeparators(getDesktopDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
+  QFileInfo linkMenuFile(QDir::fromNativeSeparators(getStartMenuDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
+
+  ui->linkButton->menu()->actions().at(0)->setIcon(selectedExecutable.m_Toolbar ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(1)->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(2)->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }

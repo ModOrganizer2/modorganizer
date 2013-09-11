@@ -171,6 +171,29 @@ signals:
 
 private:
 
+  struct ESPInfo {
+
+    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath);
+    QString m_Name;
+    QString m_FullPath;
+    bool m_Enabled;
+    bool m_ForceEnabled;
+    bool m_Removed;
+    int m_Priority;
+    int m_LoadOrder;
+    FILETIME m_Time;
+    QString m_OriginName;
+    bool m_IsMaster;
+    std::set<QString> m_Masters;
+    mutable bool m_MasterUnset;
+  };
+
+  friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
+  friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
+  friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
+
+private:
+
   void syncLoadOrder();
   void updateIndices();
 
@@ -184,28 +207,7 @@ private:
 
   void startSaveTime();
 
-private:
-
-  struct ESPInfo {
-
-    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName)
-      : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false), m_Priority(0),
-        m_LoadOrder(-1), m_Time(time), m_OriginName(originName),
-        m_IsMaster(name.endsWith("esm", Qt::CaseInsensitive)) {}
-    QString m_Name;
-    bool m_Enabled;
-    bool m_ForceEnabled;
-    bool m_Removed;
-    int m_Priority;
-    int m_LoadOrder;
-    FILETIME m_Time;
-    QString m_OriginName;
-    bool m_IsMaster;
-  };
-
-  friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
-  friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
+  void testMasters();
 
 private:
 

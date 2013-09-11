@@ -38,6 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemModel>
 #include <Shlwapi.h>
 #include <sstream>
+#include <QInputDialog>
 
 
 using QtJson::Json;
@@ -146,7 +147,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
   tabWidget->setTabEnabled(TAB_TEXTFILES, textFileList->count() != 0);
-  tabWidget->setTabEnabled(TAB_INIFILES, (iniFileList->count() != 0) || (iniTweaksList->count() != 0));
+  //tabWidget->setTabEnabled(TAB_INIFILES, (iniFileList->count() != 0) || (iniTweaksList->count() != 0));
   tabWidget->setTabEnabled(TAB_IMAGES, thumbnailArea->count() != 0);
   tabWidget->setTabEnabled(TAB_ESPS, (inactiveESPList->count() != 0) || (activeESPList->count() != 0));
   tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != NULL);
@@ -409,8 +410,6 @@ void ModInfoDialog::openTextFile(const QString &fileName)
 
 void ModInfoDialog::openIniFile(const QString &fileName)
 {
-  QPushButton* saveButton = findChild<QPushButton*>("saveButton");
-
   QFile iniFile(fileName);
   iniFile.open(QIODevice::ReadOnly);
   QByteArray buffer = iniFile.readAll();
@@ -421,7 +420,7 @@ void ModInfoDialog::openIniFile(const QString &fileName)
   iniFileView->setProperty("encoding", codec->name());
   iniFile.close();
 
-  saveButton->setEnabled(false);
+  ui->saveButton->setEnabled(false);
 }
 
 
@@ -515,8 +514,9 @@ void ModInfoDialog::saveCurrentIniFile()
 {
   QVariant fileNameVar = ui->iniFileView->property("currentFile");
   QVariant encodingVar = ui->iniFileView->property("encoding");
-  if (fileNameVar.isValid()) {
+  if (fileNameVar.isValid() && !fileNameVar.toString().isEmpty()) {
     QString fileName = fileNameVar.toString();
+    QDir().mkpath(QFileInfo(fileName).absolutePath());
     QFile txtFile(fileName);
     txtFile.open(QIODevice::WriteOnly);
     txtFile.resize(0);
@@ -1170,4 +1170,30 @@ void ModInfoDialog::on_prevButton_clicked()
 {
   emit modOpenPrev();
   this->accept();
+}
+
+
+void ModInfoDialog::createTweak()
+{
+  QString name = QInputDialog::getText(this, tr("Name"), tr("Please enter a name"));
+  if (!fixDirectoryName(name)) {
+    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
+    return;
+  } else if (name.isEmpty()) {
+    return;
+  } else if (ui->iniTweaksList->findItems(name, Qt::MatchFixedString).count() != 0) {
+    QMessageBox::critical(this, tr("Error"), tr("A tweak by that name exists"));
+    return;
+  }
+
+  QListWidgetItem *newTweak = new QListWidgetItem(name);
+  newTweak->setData(Qt::UserRole, "INI Tweaks/" + name + ".ini");
+  ui->iniTweaksList->addItem(newTweak);
+}
+
+void ModInfoDialog::on_iniTweaksList_customContextMenuRequested(const QPoint &pos)
+{
+  QMenu menu;
+  menu.addAction(tr("Create Tweak"), this, SLOT(createTweak()));
+  menu.exec(ui->iniTweaksList->mapToGlobal(pos));
 }

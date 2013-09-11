@@ -664,8 +664,11 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     modName.update(guessedModName, GUESS_GOOD);
   }
 
-  qDebug("using mod name \"%s\" (id %d)", modName->toUtf8().constData(), modID);
-  m_CurrentFile = fileInfo.fileName();
+  m_CurrentFile = fileInfo.absoluteFilePath();
+  if (fileInfo.dir() == QDir(ToQString(GameInfo::instance().getDownloadDir()))) {
+    m_CurrentFile = fileInfo.fileName();
+  }
+  qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));
 
   // open the archive and construct the directory tree the installers work on
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),

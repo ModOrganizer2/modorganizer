@@ -77,7 +77,10 @@ SOURCES += \
     qtgroupingproxy.cpp \
     modlistview.cpp \
     problemsdialog.cpp \
-    serverinfo.cpp
+    serverinfo.cpp \
+    ../esptk/record.cpp \
+    ../esptk/espfile.cpp \
+    ../esptk/subrecord.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -142,7 +145,10 @@ HEADERS  += \
     qtgroupingproxy.h \
     modlistview.h \
     problemsdialog.h \
-    serverinfo.h
+    serverinfo.h \
+    ../esptk/record.h \
+    ../esptk/espfile.h \
+    ../esptk/subrecord.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -174,7 +180,7 @@ FORMS    += \
     savetextasdialog.ui \
     problemsdialog.ui
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk "$(BOOSTPATH)"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
