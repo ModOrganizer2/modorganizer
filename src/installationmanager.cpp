@@ -431,7 +431,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 
 bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
 {
-  QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
+  QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
 
   while (QDir(targetDirectory).exists()) {
     QueryOverwriteDialog overwriteDialog(m_ParentWidget);

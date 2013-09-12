@@ -213,6 +213,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
 
+  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+
   updateDownloadListDelegate();
 
   ui->savegameList->installEventFilter(this);
@@ -1123,6 +1125,8 @@ IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
   if (!m_InstallationManager.testOverwrite(name)) {
     return NULL;
   }
+
+  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
 
 /*  QString fixedName = name;
   fixDirectoryName(fixedName);
@@ -3621,6 +3625,7 @@ void MainWindow::on_actionSettings_triggered()
   QString oldCacheDirectory(m_Settings.getCacheDirectory());
   bool proxy = m_Settings.useProxy();
   m_Settings.query(this);
+  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   fixCategories();
   refreshFilters();
   if (QDir::fromNativeSeparators(m_DownloadManager.getOutputDirectory()) != QDir::fromNativeSeparators(m_Settings.getDownloadDirectory())) {

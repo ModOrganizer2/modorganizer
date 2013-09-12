@@ -57,6 +57,11 @@ public:
 
   ~InstallationManager();
 
+  /**
+   * @brief update the directory where mods are to be installed
+   * @param modsDirectory the mod directory
+   * @note this is called a lot, probably redundantly
+   */
   void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
 
   /**
