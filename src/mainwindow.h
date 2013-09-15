@@ -39,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <imoinfo.h>
 #include <iplugintool.h>
 #include <iplugindiagnose.h>
+#include <ipluginmodpage.h>
 #include "settings.h"
 #include "downloadmanager.h"
 #include "installationmanager.h"
@@ -48,6 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginlistsortproxy.h"
 #include "tutorialcontrol.h"
 #include "savegameinfowidgetgamebryo.h"
+#include "browserdialog.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
 
@@ -130,6 +132,7 @@ public slots:
   void directory_refreshed();
 
   void toolPluginInvoke();
+  void modPagePluginInvoke();
 
 signals:
 
@@ -165,6 +168,7 @@ private:
   void actionToToolButton(QAction *&sourceAction);
   bool verifyPlugin(MOBase::IPlugin *plugin);
   void registerPluginTool(MOBase::IPluginTool *tool);
+  void registerModPage(MOBase::IPluginModPage *modPage);
   bool registerPlugin(QObject *pluginObj);
 
   void updateToolBar();
@@ -241,6 +245,8 @@ private:
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
 
+  void setBrowserGeometry(const QByteArray &geometry);
+
 private:
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
@@ -313,7 +319,10 @@ private:
   MOBase::IGameInfo *m_GameInfo;
 
   std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
+  std::vector<MOBase::IPluginModPage*> m_ModPages;
   std::vector<QString> m_UnloadedPlugins;
+
+  BrowserDialog m_IntegratedBrowser;
 
 private slots:
 
@@ -458,6 +467,8 @@ private slots:
 
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
+
+  void requestDownload(const QUrl &url, QNetworkReply *reply);
 
 private slots: // ui slots
   // actions

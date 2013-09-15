@@ -55,6 +55,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "gameinfoimpl.h"
 #include "savetextasdialog.h"
 #include "problemsdialog.h"
+#include "browserdialog.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -265,6 +266,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
 
+  connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), this, SLOT(requestDownload(QUrl,QNetworkReply*)));
+
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
   m_CheckBSATimer.setSingleShot(true);
@@ -298,6 +301,7 @@ MainWindow::~MainWindow()
 {
   m_RefresherThread.exit();
   m_RefresherThread.wait();
+  m_IntegratedBrowser.close();
   delete ui;
   delete m_GameInfo;
   delete m_DirectoryStructure;
@@ -783,6 +787,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
   setCursor(Qt::WaitCursor);
 
+  m_IntegratedBrowser.close();
+
   storeSettings();
 
   // profile has to be cleaned up before the modinfo-buffer is cleared
@@ -802,6 +808,12 @@ void MainWindow::createFirstProfile()
     Profile newProf("Default", false);
     refreshProfiles(false);
   }
+}
+
+
+void MainWindow::setBrowserGeometry(const QByteArray &geometry)
+{
+  m_IntegratedBrowser.restoreGeometry(geometry);
 }
 
 
@@ -950,6 +962,50 @@ void MainWindow::toolPluginInvoke()
 }
 
 
+void MainWindow::requestDownload(const QUrl &url, QNetworkReply *reply)
+{
+  QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+
+  QList<QAction*> browserActions = browserBtn->menu()->actions();
+  foreach (QAction *action, browserActions) {
+    // the nexus action doesn't have a plugin connected currently
+    if (action->data().isValid()) {
+      IPluginModPage *plugin = qobject_cast<IPluginModPage*>(qvariant_cast<QObject*>(action->data()));
+      if (plugin == NULL) {
+        qCritical("invalid mod page. This is a bug");
+        continue;
+      }
+      ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
+      if (plugin->handlesDownload(url, reply->url(), *fileInfo)) {
+        fileInfo->repository = plugin->name();
+        m_DownloadManager.addDownload(reply, fileInfo);
+        return;
+      }
+    }
+  }
+
+  if (QMessageBox::question(this, tr("Download?"),
+        tr("A download has been started but no installed page plugin recognizes it.\n"
+           "If you download anyway no information (i.e. version) will be associated with the download.\n"
+           "Continue?"),
+        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo());
+  }
+}
+
+
+void MainWindow::modPagePluginInvoke()
+{
+  QAction *triggeredAction = qobject_cast<QAction*>(sender());
+  IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
+  if (plugin->useIntegratedBrowser()) {
+    m_IntegratedBrowser.setWindowTitle(plugin->displayName());
+    m_IntegratedBrowser.openUrl(plugin->pageURL());
+  } else {
+    ::ShellExecuteW(NULL, L"open", ToWString(plugin->pageURL().toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+  }
+}
+
 void MainWindow::registerPluginTool(IPluginTool *tool)
 {
   QAction *action = new QAction(tool->icon(), tool->displayName(), ui->toolBar);
@@ -958,6 +1014,34 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
   action->setData(qVariantFromValue((void*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
   QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
+  toolBtn->menu()->addAction(action);
+}
+
+
+void MainWindow::registerModPage(IPluginModPage *modPage)
+{
+  QToolButton *browserBtn = NULL;
+  // turn the browser action into a drop-down menu if necessary
+  if (ui->actionNexus->menu() == NULL) {
+    QAction *nexusAction = ui->actionNexus;
+    // TODO: use a different icon for nexus!
+    ui->actionNexus = new QAction(nexusAction->icon(), tr("Browse Mod Page"), ui->toolBar);
+    ui->toolBar->insertAction(nexusAction, ui->actionNexus);
+    ui->toolBar->removeAction(nexusAction);
+    actionToToolButton(ui->actionNexus);
+
+    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+    browserBtn->menu()->addAction(nexusAction);
+  } else {
+    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+  }
+
+  QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
+  modPage->setParentWidget(this);
+  action->setData(qVariantFromValue(reinterpret_cast<QObject*>(modPage)));
+
+  connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
   toolBtn->menu()->addAction(action);
 }
 
@@ -977,6 +1061,13 @@ bool MainWindow::registerPlugin(QObject *plugin)
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
+    }
+  }
+  { // mod page plugin
+    IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
+    if (verifyPlugin(modPage)) {
+      registerModPage(modPage);
+      return true;
     }
   }
   { // tool plugins
@@ -1891,6 +1982,8 @@ void MainWindow::storeSettings()
 
   settings.setValue("window_geometry", saveGeometry());
   settings.setValue("window_split", ui->splitter->saveState());
+
+  settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
 
   settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
@@ -3697,7 +3790,7 @@ void MainWindow::downloadRequestedNXM(const QString &url)
 void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QString &fileName)
 {
   try {
-    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, modID)) {
+    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, new ModRepositoryFileInfo(modID))) {
       MessageDialog::showMessage(tr("Download started"), this);
     }
   } catch (const std::exception &e) {

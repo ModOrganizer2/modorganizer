@@ -36,21 +36,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 
 
-struct NexusInfo {
-  NexusInfo() : m_Category(0), m_FileCategory(0), m_Set(false) {}
-  int m_Category;
-  int m_FileCategory;
-  QString m_Name;
-  QString m_ModName;
-  QString m_Version;
-  QString m_NewestVersion;
-  QString m_FileName;
-  QVariantList m_DownloadMap;
-  bool m_Set;
-};
-Q_DECLARE_METATYPE(NexusInfo)
-
-
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
  **/
@@ -70,6 +55,7 @@ public:
     STATE_ERROR,
     STATE_FETCHINGMODINFO,
     STATE_FETCHINGFILEINFO,
+    STATE_NOFETCH,
     STATE_READY,
     STATE_INSTALLED,
     STATE_UNINSTALLED
@@ -78,6 +64,7 @@ public:
 private:
 
   struct DownloadInfo {
+    ~DownloadInfo() { delete m_FileInfo; }
     unsigned int m_DownloadID;
     QString m_FileName;
     QFile m_Output;
@@ -85,8 +72,6 @@ private:
     QTime m_StartTime;
     qint64 m_PreResumeSize;
     int m_Progress;
-    int m_ModID;
-    int m_FileID;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -98,9 +83,9 @@ private:
     int m_Tries;
     bool m_ReQueried;
 
-    NexusInfo m_NexusInfo;
+    MOBase::ModRepositoryFileInfo *m_FileInfo;
 
-    static DownloadInfo *createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs);
+    static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
     static DownloadInfo *createFromMeta(const QString &filePath);
 
     /**
@@ -121,7 +106,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_FileInfo(NULL) {}
   };
 
 public:
@@ -170,13 +155,20 @@ public:
    * @brief download from an already open network connection
    *
    * @param reply the network reply to download from
-   * @param fileName the name to use for the file. This may be overridden by the name in the nexusInfo-structure or if the http stream specifies a name
-   * @param modID the nexus mod id this download belongs to
-   * @param fileID the nexus file id this download belongs to, if known. Defaults to 0.
-   * @param nexusInfo information previously retrieved from the nexus network
+   * @param fileInfo information about the file, like mod id, file id, version, ...
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+  bool addDownload(QNetworkReply *reply, const MOBase::ModRepositoryFileInfo *fileInfo);
+
+  /**
+   * @brief download from an already open network connection
+   *
+   * @param reply the network reply to download from
+   * @param fileName the name to use for the file. This may be overridden by the name in the fileInfo-structure or if the http stream specifies a name
+   * @param fileInfo information previously retrieved from the nexus network
+   * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
+   **/
+  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   /**
    * @brief start a download using a nxm-link
@@ -267,7 +259,7 @@ public:
    * @param index index of the file to look up
    * @return the nexus mod information
    **/
-  NexusInfo getNexusInfo(int index) const;
+  const MOBase::ModRepositoryFileInfo *getFileInfo(int index) const;
 
   /**
    * @brief mark a download as installed
@@ -393,12 +385,10 @@ private:
    * @brief start a download from a url
    *
    * @param url the url to download from
-   * @param modID the nexus mod id this download belongs to
-   * @param fileID the nexus file id this download belongs to, if known. Defaults to 0.
-   * @param nexusInfo information previously retrieved from the nexus network
+   * @param fileInfo information previously retrieved from the mod page
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QStringList &URLs, int modID, int fileID = 0, const NexusInfo &nexusInfo = NexusInfo());
+  bool addDownload(const QStringList &URLs, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = NULL) const;

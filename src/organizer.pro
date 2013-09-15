@@ -5,9 +5,9 @@
 #-------------------------------------------------
 
 contains(QT_VERSION, "^5.*") {
-  QT       += core gui widgets network declarative script xml sql xmlpatterns
+  QT       += core gui widgets network declarative script xml sql xmlpatterns webkit
 } else {
-  QT       += core gui network xml declarative script sql xmlpatterns
+  QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
 
 TARGET = ModOrganizer
@@ -80,7 +80,10 @@ SOURCES += \
     serverinfo.cpp \
     ../esptk/record.cpp \
     ../esptk/espfile.cpp \
-    ../esptk/subrecord.cpp
+    ../esptk/subrecord.cpp \
+    browserview.cpp \
+    browserdialog.cpp \
+    persistentcookiejar.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -148,7 +151,10 @@ HEADERS  += \
     serverinfo.h \
     ../esptk/record.h \
     ../esptk/espfile.h \
-    ../esptk/subrecord.h
+    ../esptk/subrecord.h \
+    browserview.h \
+    browserdialog.h \
+    persistentcookiejar.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -178,7 +184,8 @@ FORMS    += \
     activatemodsdialog.ui \
     profileinputdialog.ui \
     savetextasdialog.ui \
-    problemsdialog.ui
+    problemsdialog.ui \
+    browserdialog.ui
 
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
 

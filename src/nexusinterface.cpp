@@ -155,15 +155,16 @@ NXMAccessManager *NexusInterface::getAccessManager()
 }
 
 
-NexusInterface *NexusInterface::s_Instance = NULL;
+//NexusInterface *NexusInterface::s_Instance = NULL;
 
 
 NexusInterface *NexusInterface::instance()
 {
-  if (s_Instance == NULL) {
+  static NexusInterface s_Instance;
+/*  if (s_Instance == NULL) {
     s_Instance = new NexusInterface;
-  }
-  return s_Instance;
+  }*/
+  return &s_Instance;
 }
 
 

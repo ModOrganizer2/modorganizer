@@ -48,7 +48,7 @@ static const char UNFINISHED[] = ".unfinished";
 unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
 
 
-DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs)
+DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo *fileInfo, const QStringList &URLs)
 {
   DownloadInfo *info = new DownloadInfo;
   info->m_DownloadID = s_NextDownloadID++;
@@ -56,9 +56,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Ne
   info->m_PreResumeSize = 0LL;
   info->m_Progress = 0;
   info->m_ResumePos = 0;
-  info->m_ModID = modID;
-  info->m_FileID = fileID;
-  info->m_NexusInfo = nexusInfo;
+  info->m_FileInfo = new ModRepositoryFileInfo(*fileInfo);
   info->m_Urls = URLs;
   info->m_CurrentUrl = 0;
   info->m_Tries = AUTOMATIC_RETRIES;
@@ -100,16 +98,21 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   info->m_Output.setFileName(filePath);
   info->m_TotalSize = QFileInfo(filePath).size();
   info->m_PreResumeSize = info->m_TotalSize;
-  info->m_ModID  = metaFile.value("modID", 0).toInt();
-  info->m_FileID = metaFile.value("fileID", 0).toInt();
   info->m_CurrentUrl = 0;
   info->m_Urls = metaFile.value("url", "").toString().split(";");
   info->m_Tries = 0;
-  info->m_NexusInfo.m_Name     = metaFile.value("name", 0).toString();
-  info->m_NexusInfo.m_ModName  = metaFile.value("modName", "").toString();
-  info->m_NexusInfo.m_Version  = metaFile.value("version", 0).toString();
-  info->m_NexusInfo.m_NewestVersion = metaFile.value("newestVersion", "").toString();
-  info->m_NexusInfo.m_Category = metaFile.value("category", 0).toInt();
+  info->m_FileInfo = new ModRepositoryFileInfo();
+  info->m_FileInfo->name     = metaFile.value("name", "").toString();
+  info->m_FileInfo->modName  = metaFile.value("modName", "").toString();
+  info->m_FileInfo->modID  = metaFile.value("modID", 0).toInt();
+  info->m_FileInfo->fileID = metaFile.value("fileID", 0).toInt();
+  info->m_FileInfo->description = metaFile.value("description").toString();
+  info->m_FileInfo->version.parse(metaFile.value("version", "0").toString());
+  info->m_FileInfo->newestVersion.parse(metaFile.value("newestVersion", "0").toString());
+  info->m_FileInfo->categoryID = metaFile.value("category", 0).toInt();
+  info->m_FileInfo->fileCategory = metaFile.value("fileCategory", 0).toInt();
+  info->m_FileInfo->repository = metaFile.value("repository", "Nexus").toString();
+  info->m_FileInfo->userData = metaFile.value("userData").toMap();
 
   return info;
 }
@@ -184,8 +187,11 @@ void DownloadManager::pauseAll()
   ::Sleep(100);
 
   bool done = false;
+
+  int tries = 20;
+
   // further loops: busy waiting for all downloads to complete. This could be neater...
-  while (!done) {
+  while (!done && (tries > 0)) {
     QCoreApplication::processEvents();
     done = true;
     foreach (DownloadInfo *info, m_ActiveDownloads) {
@@ -197,6 +203,7 @@ void DownloadManager::pauseAll()
     }
     if (!done) {
       ::Sleep(100);
+      --tries;
     }
   }
 }
@@ -273,8 +280,7 @@ void DownloadManager::refreshList()
 }
 
 
-bool DownloadManager::addDownload(const QStringList &URLs,
-                                  int modID, int fileID, const NexusInfo &nexusInfo)
+bool DownloadManager::addDownload(const QStringList &URLs, const ModRepositoryFileInfo *fileInfo)
 {
   QString fileName = QFileInfo(URLs.first()).fileName();
   if (fileName.isEmpty()) {
@@ -282,20 +288,30 @@ bool DownloadManager::addDownload(const QStringList &URLs,
   }
 
   QNetworkRequest request(URLs.first());
-  return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, modID, fileID, nexusInfo);
+  return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, fileInfo);
 }
 
 
-bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName,
-                                  int modID, int fileID, const NexusInfo &nexusInfo)
+bool DownloadManager::addDownload(QNetworkReply *reply, const ModRepositoryFileInfo *fileInfo)
+{
+  QString fileName = getFileNameFromNetworkReply(reply);
+  if (fileName.isEmpty()) {
+    fileName = "unknown";
+  }
+
+  return addDownload(reply, QStringList(reply->url().toString()), fileName, fileInfo);
+}
+
+
+bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, const ModRepositoryFileInfo *fileInfo)
 {
   // download invoked from an already open network reply (i.e. download link in the browser)
-  DownloadInfo *newDownload = DownloadInfo::createNew(nexusInfo, modID, fileID, URLs);
+  DownloadInfo *newDownload = DownloadInfo::createNew(fileInfo, URLs);
 
   QString baseName = fileName;
 
-  if (!nexusInfo.m_FileName.isEmpty()) {
-    baseName = nexusInfo.m_FileName;
+  if (!fileInfo->fileName.isEmpty()) {
+    baseName = fileInfo->fileName;
   } else {
     QString dispoName = getFileNameFromNetworkReply(reply);
 
@@ -548,16 +564,21 @@ void DownloadManager::queryInfo(int index)
   }
   DownloadInfo *info = m_ActiveDownloads[index];
 
+  if (info->m_FileInfo->repository != "Nexus") {
+    qWarning("re-querying file info is currently only possible with Nexus");
+    return;
+  }
+
   if (info->m_State < DownloadManager::STATE_READY) {
     // UI shouldn't allow this
     return;
   }
 
-  if (info->m_ModID == 0UL) {
+  if (info->m_FileInfo->modID == 0UL) {
     QString fileName = getFileName(index);
     QString ignore;
-    NexusInterface::interpretNexusFileName(fileName, ignore, info->m_ModID, true);
-    if (info->m_ModID < 0) {
+    NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID, true);
+    if (info->m_FileInfo->modID < 0) {
       QString modIDString;
       while (modIDString.isEmpty()) {
         modIDString = QInputDialog::getText(NULL, tr("Please enter the nexus mod id"), tr("Mod ID:"), QLineEdit::Normal,
@@ -570,7 +591,7 @@ void DownloadManager::queryInfo(int index)
           modIDString.clear();
         }
       }
-      info->m_ModID = modIDString.toInt(NULL, 10);
+      info->m_FileInfo->modID = modIDString.toInt(NULL, 10);
     }
   }
   info->m_ReQueried = true;
@@ -655,7 +676,11 @@ bool DownloadManager::isInfoIncomplete(int index) const
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
-  return (info->m_FileID == 0) || (info->m_ModID == 0) || info->m_NexusInfo.m_Version.isEmpty();
+  if (info->m_FileInfo->repository != "Nexus") {
+    // other repositories currently don't support re-querying info anyway
+    return false;
+  }
+  return (info->m_FileInfo->fileID == 0) || (info->m_FileInfo->modID == 0) || !info->m_FileInfo->version.isValid();
 }
 
 
@@ -664,17 +689,17 @@ int DownloadManager::getModID(int index) const
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     throw MyException(tr("invalid index"));
   }
-  return m_ActiveDownloads.at(index)->m_ModID;
+  return m_ActiveDownloads.at(index)->m_FileInfo->modID;
 }
 
 
-NexusInfo DownloadManager::getNexusInfo(int index) const
+const ModRepositoryFileInfo *DownloadManager::getFileInfo(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     throw MyException(tr("invalid index"));
   }
 
-  return m_ActiveDownloads.at(index)->m_NexusInfo;
+  return m_ActiveDownloads.at(index)->m_FileInfo;
 }
 
 
@@ -756,10 +781,10 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       info->m_Reply->abort();
     } break;
     case STATE_FETCHINGMODINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_ModID, this, info->m_DownloadID));
+      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_FileInfo->modID, this, info->m_DownloadID));
     } break;
     case STATE_FETCHINGFILEINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_ModID, this, info->m_DownloadID));
+      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->modID, this, info->m_DownloadID));
     } break;
     case STATE_READY: {
       createMetaFile(info);
@@ -825,15 +850,18 @@ void DownloadManager::downloadReadyRead()
 void DownloadManager::createMetaFile(DownloadInfo *info)
 {
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()), QSettings::IniFormat);
-  metaFile.setValue("modID", info->m_ModID);
-  metaFile.setValue("fileID", info->m_FileID);
+  metaFile.setValue("modID", info->m_FileInfo->modID);
+  metaFile.setValue("fileID", info->m_FileInfo->fileID);
   metaFile.setValue("url", info->m_Urls.join(";"));
-  metaFile.setValue("name", info->m_NexusInfo.m_Name);
-  metaFile.setValue("modName", info->m_NexusInfo.m_ModName);
-  metaFile.setValue("version", info->m_NexusInfo.m_Version);
-  metaFile.setValue("fileCategory", info->m_NexusInfo.m_FileCategory);
-  metaFile.setValue("newestVersion", info->m_NexusInfo.m_NewestVersion);
-  metaFile.setValue("category", info->m_NexusInfo.m_Category);
+  metaFile.setValue("name", info->m_FileInfo->name);
+  metaFile.setValue("description", info->m_FileInfo->description);
+  metaFile.setValue("modName", info->m_FileInfo->modName);
+  metaFile.setValue("version", info->m_FileInfo->version.canonicalString());
+  metaFile.setValue("newestVersion", info->m_FileInfo->newestVersion.canonicalString());
+  metaFile.setValue("fileCategory", info->m_FileInfo->fileCategory);
+  metaFile.setValue("category", info->m_FileInfo->categoryID);
+  metaFile.setValue("repository", info->m_FileInfo->repository);
+  metaFile.setValue("userData", info->m_FileInfo->userData);
   metaFile.setValue("installed", info->m_State == DownloadManager::STATE_INSTALLED);
   metaFile.setValue("uninstalled", info->m_State == DownloadManager::STATE_UNINSTALLED);
   metaFile.setValue("paused", (info->m_State == DownloadManager::STATE_PAUSED) ||
@@ -862,14 +890,26 @@ void DownloadManager::nxmDescriptionAvailable(int, QVariant userData, QVariant r
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == NULL) return;
 
-  info->m_NexusInfo.m_Category = result["category_id"].toInt();
-  info->m_NexusInfo.m_ModName = result["name"].toString().trimmed();
-  info->m_NexusInfo.m_NewestVersion = result["version"].toString();
+  info->m_FileInfo->categoryID = result["category_id"].toInt();
+  info->m_FileInfo->modName = result["name"].toString().trimmed();
+  info->m_FileInfo->newestVersion.parse(result["version"].toString());
 
-  if (info->m_FileID != 0) {
+  if (info->m_FileInfo->fileID != 0) {
     setState(info, STATE_READY);
   } else {
     setState(info, STATE_FETCHINGFILEINFO);
+  }
+}
+
+
+EFileCategory convertFileCategory(int id)
+{
+  // TODO: need to handle file categories in the mod page plugin
+  switch (id) {
+    case 0: return TYPE_MAIN;
+    case 1: return TYPE_UPDATE;
+    case 2: return TYPE_OPTION;
+    default: return TYPE_MAIN;
   }
 }
 
@@ -905,10 +945,10 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
     QString fileNameVariant = fileName.mid(0).replace(' ', '_');
     if ((fileName == info->m_FileName) || (fileName == alternativeLocalName) ||
         (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
-      info->m_NexusInfo.m_Name = fileInfo["name"].toString();
-      info->m_NexusInfo.m_Version = fileInfo["version"].toString();
-      info->m_NexusInfo.m_FileCategory = fileInfo["category_id"].toInt();
-      info->m_FileID = fileInfo["id"].toInt();
+      info->m_FileInfo->name = fileInfo["name"].toString();
+      info->m_FileInfo->version.parse(fileInfo["version"].toString());
+      info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+      info->m_FileInfo->fileID = fileInfo["id"].toInt();
       found = true;
       break;
     }
@@ -927,16 +967,16 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
       }
       if (selection.exec() == QDialog::Accepted) {
         QVariantMap fileInfo = selection.getChoiceData().toMap();
-        info->m_NexusInfo.m_Name = fileInfo["name"].toString();
-        info->m_NexusInfo.m_Version = fileInfo["version"].toString();
-        info->m_NexusInfo.m_FileCategory = fileInfo["category_id"].toInt();
-        info->m_FileID = fileInfo["id"].toInt();
+        info->m_FileInfo->name = fileInfo["name"].toString();
+        info->m_FileInfo->version.parse(fileInfo["version"].toString());
+        info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+        info->m_FileInfo->fileID = fileInfo["id"].toInt();
       } else {
         emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
       }
     }
   } else {
-    if (info->m_FileID == 0) {
+    if (info->m_FileInfo->fileID == 0) {
       qWarning("could not determine file id for %s (state %d)",
                info->m_FileName.toUtf8().constData(), info->m_State);
     }
@@ -955,15 +995,22 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant, QVar
     m_RequestIDs.erase(idIter);
   }
 
-  NexusInfo info;
+  ModRepositoryFileInfo *info = new ModRepositoryFileInfo();
 
   QVariantMap result = resultData.toMap();
 
-  info.m_Name = result["name"].toString();
-  info.m_Version = result["version"].toString();
-  info.m_FileName = result["uri"].toString();
+  info->name = result["name"].toString();
+  info->version.parse(result["version"].toString());
+  info->fileName = result["uri"].toString();
+  info->fileCategory = result["category_id"].toInt();
+  info->description = result["description"].toString();
 
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info)));
+  info->repository = "Nexus";
+  info->modID = modID;
+  info->fileID = fileID;
+
+  QObject *test = info;
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test)));
 }
 
 
@@ -1011,7 +1058,7 @@ bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferred
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
 {
-  addDownload(urls, -1);
+  addDownload(urls, NULL);
   return m_ActiveDownloads.size() - 1;
 }
 
@@ -1046,7 +1093,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
     m_RequestIDs.erase(idIter);
   }
 
-  NexusInfo info = userData.value<NexusInfo>();
+  ModRepositoryFileInfo *info = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
   QVariantList resultList = resultData.toList();
   if (resultList.length() == 0) {
     emit showMessage(tr("No download server available. Please try again later."));
@@ -1055,7 +1102,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
 
   std::sort(resultList.begin(), resultList.end(), boost::bind(&DownloadManager::ServerByPreference, m_PreferredServers, _1, _2));
 
-  info.m_DownloadMap = resultList;
+  info->userData["downloadMap"] = resultList;
 
   QStringList URLs;
 
@@ -1063,7 +1110,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
     URLs.append(server.toMap()["URI"].toString());
   }
 
-  addDownload(URLs, modID, fileID, info);
+  addDownload(URLs, info);
 }
 
 
@@ -1080,7 +1127,7 @@ void DownloadManager::nxmRequestFailed(int modID, QVariant, int requestID, const
 
   for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter, ++index) {
     DownloadInfo *info = *iter;
-    if (info->m_ModID == modID) {
+    if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
         m_ActiveDownloads.erase(iter);
         delete info;
@@ -1146,18 +1193,26 @@ void DownloadManager::downloadFinished()
     } else {
 
       QString url = info->m_Urls[info->m_CurrentUrl];
-      foreach (const QVariant &server, info->m_NexusInfo.m_DownloadMap) {
-        QVariantMap serverMap = server.toMap();
-        if (serverMap["URI"].toString() == url) {
-          int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
-          if (deltaTime > 5) {
-            emit downloadSpeed(serverMap["Name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
-          } // no division by zero please! Also, if the download is shorter than a few seconds, the result is way to inprecise
-          break;
+      if (info->m_FileInfo->userData.contains("downloadMap")) {
+        foreach (const QVariant &server, info->m_FileInfo->userData["downloadMap"].toList()) {
+          QVariantMap serverMap = server.toMap();
+          if (serverMap["URI"].toString() == url) {
+            int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
+            if (deltaTime > 5) {
+              emit downloadSpeed(serverMap["Name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
+            } // no division by zero please! Also, if the download is shorter than a few seconds, the result is way to inprecise
+            break;
+          }
         }
       }
 
-      setState(info, STATE_FETCHINGMODINFO); // need to set this state before changing the file name, otherwise .unfinished is appended
+      bool isNexus = info->m_FileInfo->repository == "Nexus";
+      // need to change state before changing the file name, otherwise .unfinished is appended
+      if (isNexus) {
+        setState(info, STATE_FETCHINGMODINFO);
+      } else {
+        setState(info, STATE_NOFETCH);
+      }
 
       QString newName = getFileNameFromNetworkReply(reply);
       QString oldName = QFileInfo(info->m_Output).fileName();
@@ -1165,6 +1220,10 @@ void DownloadManager::downloadFinished()
         info->setName(getDownloadFileName(newName), true);
       } else {
         info->setName(m_OutputDirectory + "/" + info->m_FileName, true); // don't rename but remove the ".unfinished" extension
+      }
+
+      if (!isNexus) {
+        setState(info, STATE_READY);
       }
 
       emit update(index);

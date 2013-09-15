@@ -297,7 +297,7 @@ private:
 
 private:
 
-  static NexusInterface *s_Instance;
+//  static NexusInterface *s_Instance;
 
   QNetworkDiskCache *m_DiskCache;
 

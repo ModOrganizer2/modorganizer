@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "utility.h"
 #include "selfupdater.h"
+#include "persistentcookiejar.h"
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>
@@ -29,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkCookie>
 #include <QNetworkCookieJar>
 #include <QCoreApplication>
+#include <QDir>
 #include <gameinfo.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
@@ -42,6 +44,8 @@ using namespace MOShared;
 NXMAccessManager::NXMAccessManager(QObject *parent)
   : QNetworkAccessManager(parent), m_LoginReply(NULL), m_ProgressDialog()
 {
+  setCookieJar(new PersistentCookieJar(
+      QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/nexus_cookies.dat", this));
 }
 
 
