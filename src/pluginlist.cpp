@@ -594,6 +594,8 @@ int PluginList::columnCount(const QModelIndex &) const
 
 void PluginList::testMasters()
 {
+//  emit layoutAboutToBeChanged();
+
   std::set<QString> enabledMasters;
   for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     if (iter->m_Enabled) {
@@ -613,7 +615,8 @@ void PluginList::testMasters()
     }
   }
 
-  emit layoutChanged();
+#pragma message("emitting this seems to cause a crash!")
+//  emit layoutChanged();
 }
 
 
@@ -738,18 +741,18 @@ void PluginList::setPluginPriority(int row, int &newPriority)
   if (!m_ESPs[row].m_IsMaster) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_IsMaster) {
+           m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
-           !m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_IsMaster) {
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           (m_ESPs[m_ESPsByPriority[newPriorityTemp]].m_ForceEnabled)) {
+           (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_ForceEnabled)) {
       ++newPriorityTemp;
     }
   }
@@ -806,9 +809,9 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
   }
   refreshLoadOrder();
 
-  startSaveTime();
-
   emit layoutChanged();
+
+  startSaveTime();
 }
 
 

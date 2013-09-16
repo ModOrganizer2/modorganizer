@@ -792,9 +792,9 @@ ModInfoBackup::ModInfoBackup(const QDir &path, DirectoryEntry **directoryStructu
 
 
 ModInfoOverwrite::ModInfoOverwrite()
+  : m_StartupTime(QDateTime::currentDateTime())
 {
   testValid();
-
 }
 
 
