@@ -21,10 +21,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_settingsdialog.h"
 #include "categoriesdialog.h"
 #include "helper.h"
+#include "noeditdelegate.h"
 #include <gameinfo.h>
 #include <QDirIterator>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QShortcut>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -37,6 +39,9 @@ SettingsDialog::SettingsDialog(QWidget *parent)
   : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog)
 {
   ui->setupUi(this);
+
+  QShortcut *delShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
 }
 
 SettingsDialog::~SettingsDialog()
@@ -146,10 +151,17 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
     QVariant value = *iter;
+
+    ui->pluginSettingsList->setItemDelegateForColumn(0, new NoEditDelegate());
     newItem->setData(1, Qt::DisplayRole, value);
     newItem->setData(1, Qt::EditRole, value);
 
     newItem->setFlags(newItem->flags() | Qt::ItemIsEditable);
     ui->pluginSettingsList->addTopLevelItem(newItem);
   }
+}
+
+void SettingsDialog::deleteBlacklistItem()
+{
+  ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
 }

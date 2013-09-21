@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profileinputdialog.h"
 #include "ui_profileinputdialog.h"
+#include <utility.h>
 
 ProfileInputDialog::ProfileInputDialog(QWidget *parent) :
   QDialog(parent),
@@ -34,7 +35,9 @@ ProfileInputDialog::~ProfileInputDialog()
 
 QString ProfileInputDialog::getName() const
 {
-  return ui->nameEdit->text().trimmed();
+  QString result = ui->nameEdit->text();
+  MOBase::fixDirectoryName(result);
+  return result;
 }
 
 

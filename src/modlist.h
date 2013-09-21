@@ -182,6 +182,14 @@ signals:
    */
   void removeSelectedMods();
 
+  /**
+   * @brief fileMoved emitted when a file is moved from one mod to another
+   * @param relativePath relative path of the file moved
+   * @param oldOriginName name of the origin that previously contained the file
+   * @param newOriginName name of the origin that now contains the file
+   */
+  void fileMoved(const QString &relativePath, const QString &oldOriginName, const QString &newOriginName);
+
 protected:
 
   // event filter, handles event from the header and the tree view itself

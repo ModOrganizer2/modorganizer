@@ -477,6 +477,7 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   return result;
 }
 
+
 QStringList ModList::mimeTypes() const
 {
   QStringList result = QAbstractItemModel::mimeTypes();
@@ -544,6 +545,12 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QDir modDirectory(modInfo->absolutePath());
   QDir gameDirectory(QDir::fromNativeSeparators(ToQString(MOShared::GameInfo::instance().getOverwriteDir())));
 
+  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
+    std::vector<ModInfo::EFlag> flags = mod->getFlags();
+    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
+
+  QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
+
   foreach (const QUrl &url, mimeData->urls()) {
     QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
     if (relativePath.startsWith("..")) {
@@ -552,6 +559,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
     }
     source.append(url.toLocalFile());
     target.append(modDirectory.absoluteFilePath(relativePath));
+    emit fileMoved(relativePath, overwriteName, modInfo->name());
   }
 
   if (source.count() != 0) {

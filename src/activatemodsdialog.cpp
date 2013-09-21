@@ -65,11 +65,6 @@ ActivateModsDialog::~ActivateModsDialog()
 }
 
 
-void ActivateModsDialog::on_buttonBox_accepted()
-{
-}
-
-
 std::set<QString> ActivateModsDialog::getModsToActivate()
 {
   std::set<QString> result;

@@ -98,6 +98,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkInterface>
 #include <QNetworkProxy>
 #include <QtConcurrentRun>
+#include <QCoreApplication>
 
 
 #ifdef TEST_MODELS
@@ -233,6 +234,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), this, SLOT(modlistChanged(QModelIndex, int)));
   connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
   connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
+  connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), this, SLOT(fileMoved(QString, QString, QString)));
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
@@ -997,6 +999,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
     if (verifyPlugin(proxy)) {
+      proxy->setParentWidget(this);
       QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       foreach (const QString &pluginName, pluginNames) {
         try {
@@ -1040,11 +1043,38 @@ void MainWindow::loadPlugins()
     registerPlugin(plugin);
   }
 
+  QFile loadCheck(QCoreApplication::applicationDirPath() + "/plugin_loadcheck.tmp");
+  if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
+    // oh, there was a failed plugin load last time. Find out which plugin was loaded last
+    QString fileName;
+    while (!loadCheck.atEnd()) {
+      fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
+    }
+    if (QMessageBox::question(this, tr("Plugin error"),
+      tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
+         "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
+         "The plugin may be able to recover from the problem)").arg(fileName),
+          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
+      m_Settings.addBlacklistPlugin(fileName);
+    }
+    loadCheck.close();
+  }
+
+  loadCheck.open(QIODevice::WriteOnly);
+
   QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
   qDebug("looking for plugins in %s", QDir::toNativeSeparators(pluginPath).toUtf8().constData());
   QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
+
   while (iter.hasNext()) {
     iter.next();
+    if (m_Settings.pluginBlacklisted(iter.fileName())) {
+      qDebug("plugin \"%s\" blacklisted", qPrintable(iter.fileName()));
+      continue;
+    }
+    loadCheck.write(iter.fileName().toUtf8());
+    loadCheck.write("\n");
+    loadCheck.flush();
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader pluginLoader(pluginName);
@@ -1062,6 +1092,9 @@ void MainWindow::loadPlugins()
       }
     }
   }
+
+  // remove the load check file on success
+  loadCheck.remove();
 
   m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
 
@@ -1172,6 +1205,21 @@ QVariant MainWindow::pluginSetting(const QString &pluginName, const QString &key
   return m_Settings.pluginSetting(pluginName, key);
 }
 
+void MainWindow::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
+{
+  m_Settings.setPluginSetting(pluginName, key, value);
+}
+
+QVariant MainWindow::persistent(const QString &pluginName, const QString &key, const QVariant &def) const
+{
+  return m_Settings.pluginPersistent(pluginName, key, def);
+}
+
+void MainWindow::setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
+{
+  m_Settings.setPluginPersistent(pluginName, key, value, sync);
+}
+
 QString MainWindow::pluginDataPath() const
 {
   QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
@@ -1273,11 +1321,9 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
 
       this->setEnabled(true);
       refreshDirectoryStructure();
-      refreshDataTree();
       if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
-      refreshLists();
       dialog->hide();
     }
   }
@@ -1622,11 +1668,15 @@ void MainWindow::refreshESPList()
   m_CurrentProfile->writeModlist();
 
   // clear list
-  m_PluginList.refresh(m_CurrentProfile->getName(),
-                       *m_DirectoryStructure,
-                       m_CurrentProfile->getPluginsFileName(),
-                       m_CurrentProfile->getLoadOrderFileName(),
-                       m_CurrentProfile->getLockedOrderFileName());
+  try {
+    m_PluginList.refresh(m_CurrentProfile->getName(),
+                         *m_DirectoryStructure,
+                         m_CurrentProfile->getPluginsFileName(),
+                         m_CurrentProfile->getLoadOrderFileName(),
+                         m_CurrentProfile->getLockedOrderFileName());
+  } catch (const std::exception &e) {
+    reportError(tr("Failed to refresh list of esps: %s").arg(e.what()));
+  }
 }
 
 
@@ -1926,7 +1976,6 @@ void MainWindow::on_btnRefreshData_clicked()
 {
   if (!m_DirectoryUpdate) {
     refreshDirectoryStructure();
-    refreshDataTree();
   } else {
     qDebug("directory update");
   }
@@ -2331,8 +2380,12 @@ void MainWindow::directory_refreshed()
 {
   DirectoryEntry *newStructure = m_DirectoryRefresher.getDirectoryStructure();
   if (newStructure != NULL) {
-    delete m_DirectoryStructure;
+    DirectoryEntry *oldStructure = m_DirectoryStructure;
     m_DirectoryStructure = newStructure;
+    delete oldStructure;
+
+    refreshDataTree();
+    refreshLists();
   } else {
     // TODO: don't know why this happens, this slot seems to get called twice with only one emit
     return;
@@ -2538,6 +2591,29 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 void MainWindow::modlistChanged(int)
 {
   m_ModListSortProxy->invalidate();
+}
+
+
+void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName)
+{
+  const FileEntry::Ptr filePtr = m_DirectoryStructure->findFile(ToWString(filePath));
+  if (filePtr.get() != NULL) {
+    try {
+      FilesOrigin &oldOrigin = m_DirectoryStructure->getOriginByName(ToWString(oldOriginName));
+      FilesOrigin &newOrigin = m_DirectoryStructure->getOriginByName(ToWString(newOriginName));
+
+      QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
+      WIN32_FIND_DATAW findData;
+      ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
+
+      filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
+      filePtr->removeOrigin(oldOrigin.getID());
+    } catch (const std::exception &e) {
+      reportError(tr("Failed to move \"%1\" from mod \"%2\" to \"%3\": %4").arg(filePath).arg(oldOriginName).arg(newOriginName).arg(e.what()));
+    }
+  } else {
+    reportError(tr("Failed to relocate \"%1\"").arg(filePath));
+  }
 }
 
 

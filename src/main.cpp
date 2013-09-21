@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
 
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(moPath, ToWString(gamePath))) {
+      if (!GameInfo::init(moPath, ToWString(QDir::toNativeSeparators(gamePath)))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));

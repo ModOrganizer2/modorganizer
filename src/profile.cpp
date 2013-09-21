@@ -755,6 +755,7 @@ QString Profile::getIniFileName() const
   return m_Directory.absoluteFilePath(ToQString(primaryIniFile));
 }
 
+
 QString Profile::getPath() const
 {
   return QDir::cleanPath(m_Directory.absolutePath());

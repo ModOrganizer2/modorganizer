@@ -87,6 +87,19 @@ void Settings::clearPlugins()
 {
   m_Plugins.clear();
   m_PluginSettings.clear();
+
+  m_PluginBlacklist.clear();
+  int count = m_Settings.beginReadArray("pluginBlacklist");
+  for (int i = 0; i < count; ++i) {
+    m_Settings.setArrayIndex(i);
+    m_PluginBlacklist.insert(m_Settings.value("name").toString());
+  }
+  m_Settings.endArray();
+}
+
+bool Settings::pluginBlacklisted(const QString &fileName) const
+{
+  return m_PluginBlacklist.contains(fileName);
 }
 
 void Settings::registerPlugin(IPlugin *plugin)
@@ -275,14 +288,45 @@ QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) 
 {
   auto iterPlugin = m_PluginSettings.find(pluginName);
   if (iterPlugin == m_PluginSettings.end()) {
-    throw MyException(tr("setting for invalid plugin \"%1\" requested").arg(key));
+    return QVariant();
   }
   auto iterSetting = iterPlugin->find(key);
   if (iterSetting == iterPlugin->end()) {
-    throw MyException(tr("invalid setting \"%1\" requested for plugin \"%2\"").arg(key).arg(pluginName));
+    return QVariant();
   }
 
   return *iterSetting;
+}
+
+void Settings::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
+{
+  auto iterPlugin = m_PluginSettings.find(pluginName);
+  if (iterPlugin == m_PluginSettings.end()) {
+    throw MyException(tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+  }
+
+  // store the new setting both in memory and in the ini
+  m_PluginSettings[pluginName][key] = value;
+  m_Settings.setValue("Plugins/" + pluginName + "/" + key, value);
+}
+
+QVariant Settings::pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const
+{
+  if (!m_PluginSettings.contains(pluginName)) {
+    return def;
+  }
+  return m_Settings.value("PluginPersistance/" + pluginName + "/" + key, def);
+}
+
+void Settings::setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
+{
+  if (!m_PluginSettings.contains(pluginName)) {
+    throw MyException(tr("attempt to store setting for unknown plugin \"%1\"").arg(pluginName));
+  }
+  m_Settings.setValue("PluginPersistance/" + pluginName + "/" + key, value);
+  if (sync) {
+    m_Settings.sync();
+  }
 }
 
 QString Settings::language()
@@ -330,6 +374,23 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
   m_Settings.sync();
 }
 
+void Settings::addBlacklistPlugin(const QString &fileName)
+{
+  m_PluginBlacklist.insert(fileName);
+  writePluginBlacklist();
+}
+
+void Settings::writePluginBlacklist()
+{
+  m_Settings.beginWriteArray("pluginBlacklist");
+  int idx = 0;
+  foreach (const QString &plugin, m_PluginBlacklist) {
+    m_Settings.setArrayIndex(idx++);
+    m_Settings.setValue("name", plugin);
+  }
+
+  m_Settings.endArray();
+}
 
 void Settings::addLanguages(QComboBox *languageBox)
 {
@@ -443,6 +504,7 @@ void Settings::query(QWidget *parent)
 
   // plugis page
   QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
+  QListWidget *pluginBlacklistList = dialog.findChild<QListWidget*>("pluginBlacklist");
 
   // workarounds page
   QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
@@ -522,6 +584,7 @@ void Settings::query(QWidget *parent)
   nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
   logLevelBox->setCurrentIndex(logLevel());
 
+  // display plugin settings
   foreach (IPlugin *plugin, m_Plugins) {
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
@@ -529,6 +592,12 @@ void Settings::query(QWidget *parent)
     pluginsList->addItem(listItem);
   }
 
+  // display plugin blacklist
+  foreach (const QString &pluginName, m_PluginBlacklist) {
+    pluginBlacklistList->addItem(pluginName);
+  }
+
+  // display server preferences
   m_Settings.beginGroup("Servers");
   foreach (const QString &key, m_Settings.childKeys()) {
     QVariantMap val = m_Settings.value(key).toMap();
@@ -623,6 +692,13 @@ void Settings::query(QWidget *parent)
         m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
       }
     }
+
+    // store plugin blacklist
+    m_PluginBlacklist.clear();
+    foreach (QListWidgetItem *item, pluginBlacklistList->findItems("*", Qt::MatchWildcard)) {
+      m_PluginBlacklist.insert(item->text());
+    }
+    writePluginBlacklist();
 
     // store server preference
     m_Settings.beginGroup("Servers");

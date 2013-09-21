@@ -95,7 +95,7 @@ public:
 
 private:
 
-  SkyrimInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  SkyrimInfo(const std::wstring &moDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

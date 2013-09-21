@@ -172,16 +172,6 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
   }
 }
 
-/*void ExecutablesList::remove(const QString &executableName)
-{
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Custom && (iter->m_BinaryInfo.absoluteFilePath() == executableName)) {
-      m_Executables.erase(iter);
-      break;
-    }
-  }
-}*/
-
 
 void ExecutablesList::remove(const QString &title)
 {

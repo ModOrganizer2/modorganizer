@@ -140,8 +140,12 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
                             std::find(primaryPlugins.begin(), primaryPlugins.end(), ToWString(filename.toLower())) != primaryPlugins.end();
 
       bool archive = false;
-      FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
-      m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath())));
+      try {
+        FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath())));
+      } catch (const std::exception &e) {
+        reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
+      }
     }
   }
 

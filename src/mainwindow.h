@@ -105,6 +105,9 @@ public:
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
   virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+  virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
+  virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def = QVariant()) const;
+  virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync = true);
   virtual QString pluginDataPath() const;
   virtual void installMod(const QString &fileName);
   virtual QString resolvePath(const QString &fileName) const;
@@ -315,6 +318,8 @@ private:
   std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
   std::vector<QString> m_UnloadedPlugins;
 
+  QFile m_PluginsCheck;
+
 private slots:
 
   void showMessage(const QString &message);
@@ -435,6 +440,7 @@ private slots:
   void updateStyle(const QString &style);
 
   void modlistChanged(const QModelIndex &index, int role);
+  void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
 
   void savePluginList();
 

@@ -51,7 +51,6 @@ SOURCES += \
     json.cpp \
     installationmanager.cpp \
     helper.cpp \
-    finddialog.cpp \
     filedialogmemory.cpp \
     executableslist.cpp \
     editexecutablesdialog.cpp \
@@ -66,7 +65,6 @@ SOURCES += \
     categoriesdialog.cpp \
     categories.cpp \
     bbcode.cpp \
-    archivetree.cpp \
     activatemodsdialog.cpp \
     moapplication.cpp \
     profileinputdialog.cpp \
@@ -80,7 +78,8 @@ SOURCES += \
     serverinfo.cpp \
     ../esptk/record.cpp \
     ../esptk/espfile.cpp \
-    ../esptk/subrecord.cpp
+    ../esptk/subrecord.cpp \
+    noeditdelegate.cpp
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -119,7 +118,6 @@ HEADERS  += \
     json.h \
     installationmanager.h \
     helper.h \
-    finddialog.h \
     filedialogmemory.h \
     executableslist.h \
     editexecutablesdialog.h \
@@ -134,7 +132,6 @@ HEADERS  += \
     categoriesdialog.h \
     categories.h \
     bbcode.h \
-    archivetree.h \
     activatemodsdialog.h \
     moapplication.h \
     profileinputdialog.h \
@@ -148,7 +145,9 @@ HEADERS  += \
     serverinfo.h \
     ../esptk/record.h \
     ../esptk/espfile.h \
-    ../esptk/subrecord.h
+    ../esptk/subrecord.h \
+    ../esptk/espexceptions.h \
+    noeditdelegate.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -218,8 +217,8 @@ TRANSLATIONS = organizer_de.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-               organizer_ru.ts \
-               organizer.en.ts
+#               organizer.en.ts \
+               organizer_ru.ts
 
 !isEmpty(TRANSLATIONS) {
   isEmpty(QMAKE_LRELEASE) {

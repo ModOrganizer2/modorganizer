@@ -62,36 +62,36 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
 }
 
 
-bool GameInfo::identifyGame(const std::wstring &omoDirectory, const std::wstring &searchPath)
+bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &searchPath)
 {
   if (OblivionInfo::identifyGame(searchPath)) {
-    s_Instance = new OblivionInfo(omoDirectory, searchPath);
+    s_Instance = new OblivionInfo(moDirectory, searchPath);
   } else if (Fallout3Info::identifyGame(searchPath)) {
-    s_Instance = new Fallout3Info(omoDirectory, searchPath);
+    s_Instance = new Fallout3Info(moDirectory, searchPath);
   } else if (FalloutNVInfo::identifyGame(searchPath)) {
-    s_Instance = new FalloutNVInfo(omoDirectory, searchPath);
+    s_Instance = new FalloutNVInfo(moDirectory, searchPath);
   } else if (SkyrimInfo::identifyGame(searchPath)) {
-    s_Instance = new SkyrimInfo(omoDirectory, searchPath);
+    s_Instance = new SkyrimInfo(moDirectory, searchPath);
   }
 
   return s_Instance != NULL;
 }
 
 
-bool GameInfo::init(const std::wstring &omoDirectory, const std::wstring &gamePath)
+bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &gamePath)
 {
   if (s_Instance == NULL) {
     if (gamePath.length() == 0) {
       // search upward in the directory until a recognized game-binary is found
-      std::wstring searchPath(omoDirectory);
-      while (!identifyGame(omoDirectory, searchPath)) {
+      std::wstring searchPath(moDirectory);
+      while (!identifyGame(moDirectory, searchPath)) {
         size_t lastSep = searchPath.find_last_of(L"/\\");
         if (lastSep == std::string::npos) {
           return false;
         }
         searchPath.erase(lastSep);
       }
-    } else if (!identifyGame(omoDirectory, gamePath)) {
+    } else if (!identifyGame(moDirectory, gamePath)) {
       return false;
     }
   }

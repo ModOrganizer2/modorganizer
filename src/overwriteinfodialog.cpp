@@ -37,7 +37,6 @@ public:
 
   virtual int columnCount(const QModelIndex &parent) const {
     m_RegularColumnCount = QFileSystemModel::columnCount(parent);
-//    return m_RegularColumnCount + 1;
     return m_RegularColumnCount;
   }
 

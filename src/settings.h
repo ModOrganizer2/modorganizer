@@ -57,6 +57,7 @@ public:
   /**
    * @brief register plugin to be configurable
    * @param plugin the plugin to register
+   * @return true if the plugin may be registered, false if it is blacklisted
    */
   void registerPlugin(MOBase::IPlugin *plugin);
 
@@ -195,9 +196,36 @@ public:
    * @param pluginName name of the plugin
    * @param key name of the setting to retrieve
    * @return the requested value as a QVariant
-   * @throws an exception is thrown if this setting doesn't exist
+   * @note an invalid QVariant is returned if the the plugin/setting is not declared
    */
   QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+
+  /**
+   * @brief set a setting for one of the installed mods
+   * @param pluginName name of the plugin
+   * @param key name of the setting to change
+   * @param value the new value to set
+   * @throw an exception is thrown if pluginName is invalid
+   */
+  void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
+
+  /**
+   * @brief retrieve a persistent value for a plugin
+   * @param pluginName name of the plugin to store data for
+   * @param key id of the value to retrieve
+   * @param def default value to return if the value is not set
+   * @return the requested value
+   */
+  QVariant pluginPersistent(const QString &pluginName, const QString &key, const QVariant &def) const;
+
+  /**
+   * @brief set a persistent value for a plugin
+   * @param pluginName name of the plugin to store data for
+   * @param key id of the value to retrieve
+   * @param value value to set
+   * @throw an exception is thrown if pluginName is invalid
+   */
+  void setPluginPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
 
   /**
    * @return short code of the configured language (corresponding to the translation files)
@@ -210,6 +238,19 @@ public:
    */
   void updateServers(const QList<ServerInfo> &servers);
 
+  /**
+   * @brief add a plugin that is to be blacklisted
+   * @param fileName name of the plugin to blacklist
+   */
+  void addBlacklistPlugin(const QString &fileName);
+
+  /**
+   * @brief test if a plugin is blacklisted and shouldn't be loaded
+   * @param fileName name of the plugin
+   * @return true if the file is blacklisted
+   */
+  bool pluginBlacklisted(const QString &fileName) const;
+
 private:
 
   QString obfuscate(const QString &password) const;
@@ -219,6 +260,8 @@ private:
   void addStyles(QComboBox *styleBox);
   bool isNXMHandler(bool *modifyable);
   void setNXMHandlerActive(bool active, bool writable);
+  void readPluginBlacklist();
+  void writePluginBlacklist();
 
 private slots:
 
@@ -240,6 +283,8 @@ private:
   std::vector<MOBase::IPlugin*> m_Plugins;
 
   QMap<QString, QMap<QString, QVariant> > m_PluginSettings;
+
+  QSet<QString> m_PluginBlacklist;
 
 };
 
