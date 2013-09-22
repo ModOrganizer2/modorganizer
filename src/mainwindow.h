@@ -464,6 +464,7 @@ private slots:
 
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
+  void overwriteClosed(int);
 
 private slots: // ui slots
   // actions

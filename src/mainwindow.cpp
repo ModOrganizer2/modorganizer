@@ -1272,6 +1272,11 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     }
   }
 
+  while (m_RefreshProgress->isVisible()) {
+    ::Sleep(1000);
+    QCoreApplication::processEvents();
+  }
+
   return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
 }
 
@@ -2612,7 +2617,7 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
       reportError(tr("Failed to move \"%1\" from mod \"%2\" to \"%3\": %4").arg(filePath).arg(oldOriginName).arg(newOriginName).arg(e.what()));
     }
   } else {
-    reportError(tr("Failed to relocate \"%1\"").arg(filePath));
+    // this is probably not an error, the specified path is likely a directory
   }
 }
 
@@ -2871,6 +2876,15 @@ void MainWindow::unendorse_clicked()
 }
 
 
+void MainWindow::overwriteClosed(int)
+{
+  QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
+  if (dialog != NULL) {
+    dialog->deleteLater();
+  }
+}
+
+
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
 {
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -2883,6 +2897,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     dialog->show();
     dialog->raise();
     dialog->activateWindow();
+    connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
   } else {
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
@@ -3100,8 +3115,8 @@ void MainWindow::createModFromOverwrite()
   }
 
   ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(m_ContextRow);
-
-  shellMove(QStringList(overwriteInfo->absolutePath() + "\\*"), QStringList(newMod->absolutePath()), this);
+  shellMove(QStringList(QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
+            QStringList(QDir::toNativeSeparators(newMod->absolutePath())), this);
 
   refreshModList();
 }
