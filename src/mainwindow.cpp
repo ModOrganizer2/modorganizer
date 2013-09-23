@@ -2004,6 +2004,10 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 
 void MainWindow::installMod(const QString &fileName)
 {
+  if (m_CurrentProfile == NULL) {
+    return;
+  }
+
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
   m_CurrentProfile->writeModlistNow();
