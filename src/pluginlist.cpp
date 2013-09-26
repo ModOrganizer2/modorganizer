@@ -608,12 +608,11 @@ void PluginList::testMasters()
   }
 
   for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-    iter->m_MasterUnset = false;
+    iter->m_MasterUnset.clear();
     if (iter->m_Enabled) {
       for (auto master = iter->m_Masters.begin(); master != iter->m_Masters.end(); ++master) {
         if (enabledMasters.find(master->toLower()) == enabledMasters.end()) {
-          iter->m_MasterUnset = true;
-          break;
+          iter->m_MasterUnset.insert(*master);
         }
       }
     }
@@ -648,7 +647,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       } break;
     }
   } else if ((role == Qt::DecorationRole) && (modelIndex.column() == 0)) {
-    if (m_ESPs[index].m_MasterUnset) {
+    if (m_ESPs[index].m_MasterUnset.size() > 0) {
       return QIcon(":/MO/gui/warning");
     } else if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
       return QIcon(":/MO/gui/locked");
@@ -675,8 +674,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       return tr("This plugin can't be disabled (enforced by the game)");
     } else {
       QString text = tr("Origin: %1").arg(m_ESPs[index].m_OriginName);
-      if (m_ESPs[index].m_MasterUnset) {
-        text += "\nDepends on the following masters: " + SetJoin(m_ESPs[index].m_Masters, ", ");
+      if (m_ESPs[index].m_MasterUnset.size() > 0) {
+        text += "\n" + tr("Missing Masters") + ": " + SetJoin(m_ESPs[index].m_MasterUnset, ", ");
       }
       return text;
     }

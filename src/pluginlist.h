@@ -185,7 +185,7 @@ private:
     QString m_OriginName;
     bool m_IsMaster;
     std::set<QString> m_Masters;
-    mutable bool m_MasterUnset;
+    mutable std::set<QString> m_MasterUnset;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
