@@ -98,6 +98,8 @@ private:
     int m_Tries;
     bool m_ReQueried;
 
+    quint32 m_TaskProgressId;
+
     NexusInfo m_NexusInfo;
 
     static DownloadInfo *createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs);

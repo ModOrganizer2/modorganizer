@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmurl.h"
 #include <gameinfo.h>
 #include <nxmurl.h>
+#include <taskprogressmanager.h>
 #include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
@@ -63,6 +64,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Ne
   info->m_CurrentUrl = 0;
   info->m_Tries = AUTOMATIC_RETRIES;
   info->m_State = STATE_STARTED;
+  info->m_TaskProgressId = TaskProgressManager::instance().getId();
 
   return info;
 }
@@ -105,6 +107,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   info->m_CurrentUrl = 0;
   info->m_Urls = metaFile.value("url", "").toString().split(";");
   info->m_Tries = 0;
+  info->m_TaskProgressId = TaskProgressManager::instance().getId();
   info->m_NexusInfo.m_Name     = metaFile.value("name", 0).toString();
   info->m_NexusInfo.m_ModName  = metaFile.value("modName", "").toString();
   info->m_NexusInfo.m_Version  = metaFile.value("version", 0).toString();
@@ -805,6 +808,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
       }
       int oldProgress = info->m_Progress;
       info->m_Progress = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
+      TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
       if (oldProgress != info->m_Progress) {
         emit update(index);
       }

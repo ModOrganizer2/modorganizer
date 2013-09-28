@@ -568,8 +568,9 @@ void DirectoryEntry::removeDirRecursive()
 
   for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
     (*iter)->removeDirRecursive();
+    delete *iter;
   }
-  m_SubDirectories.clear();
+    m_SubDirectories.clear();
 }
 
 void DirectoryEntry::removeDir(const std::wstring &path)
@@ -578,8 +579,10 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   if (pos == std::string::npos) {
     for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
       if (_wcsicmp((*iter)->getName().c_str(), path.c_str()) == 0) {
-        (*iter)->removeDirRecursive();
+        DirectoryEntry *entry = *iter;
+        entry->removeDirRecursive();
         m_SubDirectories.erase(iter);
+        delete entry;
         break;
       }
     }

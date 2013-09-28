@@ -350,8 +350,6 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
 ModInfoRegular::~ModInfoRegular()
 {
   try {
-    //TODO this may cause the meta-file and the directory to be
-    // re-created after a remove
     saveMeta();
   } catch (const std::exception &e) {
     qCritical("failed to save meta information for \"%s\": %s",
@@ -371,28 +369,25 @@ bool ModInfoRegular::isEmpty() const
 
 void ModInfoRegular::saveMeta()
 {
-  if (m_MetaInfoChanged) {
-    if (QFile::exists(absolutePath().append("/meta.ini"))) {
-      QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
-      if (metaFile.status() == QSettings::NoError) {
-        std::set<int> temp = m_Categories;
-        temp.erase(m_PrimaryCategory);
-        metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
-        metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
-        metaFile.setValue("version", m_Version.canonicalString());
-        metaFile.setValue("modid", m_NexusID);
-        metaFile.setValue("notes", m_Notes);
-        metaFile.setValue("nexusDescription", m_NexusDescription);
-        metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
-        if (m_EndorsedState != ENDORSED_UNKNOWN) {
-          metaFile.setValue("endorsed", m_EndorsedState);
-        }
-
-      } else {
-        reportError(tr("failed to write %1/meta.ini: %2").arg(absolutePath()).arg(metaFile.status()));
+  // only write meta data if the mod directory exists
+  if (m_MetaInfoChanged && QFile::exists(absolutePath())) {
+    QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
+    if (metaFile.status() == QSettings::NoError) {
+      std::set<int> temp = m_Categories;
+      temp.erase(m_PrimaryCategory);
+      metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
+      metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
+      metaFile.setValue("version", m_Version.canonicalString());
+      metaFile.setValue("modid", m_NexusID);
+      metaFile.setValue("notes", m_Notes);
+      metaFile.setValue("nexusDescription", m_NexusDescription);
+      metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      if (m_EndorsedState != ENDORSED_UNKNOWN) {
+        metaFile.setValue("endorsed", m_EndorsedState);
       }
+      metaFile.sync(); // sync needs to be called to ensure the file is created
     } else {
-      qWarning("mod %s has no meta.ini at %s/meta.ini", m_Name.toUtf8().constData(), absolutePath().toUtf8().constData());
+      reportError(tr("failed to write %1/meta.ini: %2").arg(absolutePath()).arg(metaFile.status()));
     }
     m_MetaInfoChanged = false;
   }

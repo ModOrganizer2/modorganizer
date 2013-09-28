@@ -675,8 +675,13 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     } else {
       QString text = tr("Origin: %1").arg(m_ESPs[index].m_OriginName);
       if (m_ESPs[index].m_MasterUnset.size() > 0) {
-        text += "\n" + tr("Missing Masters") + ": " + SetJoin(m_ESPs[index].m_MasterUnset, ", ");
+        text += "<br>" + tr("Missing Masters") + ": <b>" + SetJoin(m_ESPs[index].m_MasterUnset, ", ") + "</b>";
       }
+      std::set<QString> enabledMasters;
+      std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
+                          m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
+                          std::inserter(enabledMasters, enabledMasters.end()));
+      text += "<br>" + tr("Enabled Masters") + ": " + SetJoin(enabledMasters, ", ");
       return text;
     }
   } else {

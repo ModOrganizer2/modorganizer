@@ -149,7 +149,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_GameInfo(new GameInfoImpl())
 {
   ui->setupUi(this);
-
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()).append(" Mod Organizer v").append(m_Updater.getVersion().canonicalString()));
 
   m_RefreshProgress = new QProgressBar(statusBar());
@@ -3193,7 +3192,6 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
   }
   return childEnabled;
 }
-
 
 void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
 {
