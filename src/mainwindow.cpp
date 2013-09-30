@@ -1329,6 +1329,7 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
       dialog->hide();
+      dialog->deleteLater();
     }
   }
 }
