@@ -156,7 +156,7 @@ HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QStr
   return processHandle;
 }
 
-
+/*
 ExitProxy *ExitProxy::s_Instance = NULL;
 
 ExitProxy *ExitProxy::instance()
@@ -170,4 +170,4 @@ ExitProxy *ExitProxy::instance()
 void ExitProxy::emitExit()
 {
   emit exit();
-}
+}*/

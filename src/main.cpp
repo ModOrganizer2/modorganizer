@@ -18,6 +18,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
+#ifdef LEAK_CHECK_WITH_VLD
+#include <wchar.h>
+#include <vld.h>
+#endif // LEAK_CHECK_WITH_VLD
+
 #include <QApplication>
 #include <QPushButton>
 #include <QListWidget>
@@ -430,61 +435,65 @@ int main(int argc, char *argv[])
 
     application.setStyleFile(settings.value("Settings/style", "").toString());
 
-    // set up main window and its data structures
-    MainWindow mainWindow(argv[0], settings);
-    QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-    QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
+    int res = 1;
+    { // scope to control lifetime of mainwindow
+      // set up main window and its data structures
+      MainWindow mainWindow(argv[0], settings);
+      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
+      QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
 
-    mainWindow.setExecutablesList(executablesList);
-    mainWindow.readSettings();
+      mainWindow.setExecutablesList(executablesList);
+      mainWindow.readSettings();
 
-    QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
+      QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
 
-    { // see if there is a profile on the command line
-      int profileIndex = arguments.indexOf("-p", 1);
-      if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
-        qDebug("profile overwritten on command line");
-        selectedProfileName = arguments.at(profileIndex + 1);
+      { // see if there is a profile on the command line
+        int profileIndex = arguments.indexOf("-p", 1);
+        if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
+          qDebug("profile overwritten on command line");
+          selectedProfileName = arguments.at(profileIndex + 1);
+        }
+        arguments.removeAt(profileIndex);
+        arguments.removeAt(profileIndex);
       }
-      arguments.removeAt(profileIndex);
-      arguments.removeAt(profileIndex);
-    }
-    qDebug("configured profile: %s", qPrintable(selectedProfileName));
+      qDebug("configured profile: %s", qPrintable(selectedProfileName));
 
-    // if we have a command line parameter, it is either a nxm link or
-    // a binary to start
-    if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
-      QString exeName = arguments.at(1);
-      qDebug("starting %s from command line", qPrintable(exeName));
-      arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-      arguments.removeFirst(); // remove binary name
-      // pass the remaining parameters to the binary
-      mainWindow.spawnProgram(exeName, arguments.join(" "), selectedProfileName, QDir());
-      return 0;
-    }
+      // if we have a command line parameter, it is either a nxm link or
+      // a binary to start
+      if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
+        QString exeName = arguments.at(1);
+        qDebug("starting %s from command line", qPrintable(exeName));
+        arguments.removeFirst(); // remove application name (ModOrganizer.exe)
+        arguments.removeFirst(); // remove binary name
+        // pass the remaining parameters to the binary
+        mainWindow.spawnProgram(exeName, arguments.join(" "), selectedProfileName, QDir());
+        return 0;
+      }
 
-    mainWindow.createFirstProfile();
+      mainWindow.createFirstProfile();
 
-    if (selectedProfileName.length() != 0) {
-      if (!mainWindow.setCurrentProfile(selectedProfileName)) {
+      if (selectedProfileName.length() != 0) {
+        if (!mainWindow.setCurrentProfile(selectedProfileName)) {
+          mainWindow.setCurrentProfile(1);
+          qWarning("failed to set profile: %s",
+                   selectedProfileName.toUtf8().constData());
+        }
+      } else {
         mainWindow.setCurrentProfile(1);
-        qWarning("failed to set profile: %s",
-                 selectedProfileName.toUtf8().constData());
       }
-    } else {
-      mainWindow.setCurrentProfile(1);
-    }
 
-    qDebug("displaying main window");
-    mainWindow.show();
+      qDebug("displaying main window");
+      mainWindow.show();
 
-    if ((arguments.size() > 1) &&
-        (isNxmLink(arguments.at(1)))) {
-      qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
-      mainWindow.externalMessage(arguments.at(1));
+      if ((arguments.size() > 1) &&
+          (isNxmLink(arguments.at(1)))) {
+        qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
+        mainWindow.externalMessage(arguments.at(1));
+      }
+      splash.finish(&mainWindow);
+      res = application.exec();
     }
-    splash.finish(&mainWindow);
-    return application.exec();
+    return res;
   } catch (const std::exception &e) {
     reportError(e.what());
     return 1;

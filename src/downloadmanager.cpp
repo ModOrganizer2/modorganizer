@@ -162,6 +162,7 @@ DownloadManager::~DownloadManager()
   for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter) {
     delete *iter;
   }
+  m_ActiveDownloads.clear();
 }
 
 

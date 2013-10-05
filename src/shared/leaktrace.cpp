@@ -114,6 +114,7 @@ static struct __TraceData {
   }
 
   std::map<unsigned long, StackData> m_Traces;
+
 } __trace;
 
 

@@ -294,6 +294,7 @@ private:
   NexusInterface();
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
+  static void cleanup();
 
 private:
 

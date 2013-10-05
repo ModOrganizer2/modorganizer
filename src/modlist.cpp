@@ -143,13 +143,16 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_NAME) {
       return modInfo->name();
     } else if (column == COL_VERSION) {
-      QString version = modInfo->getVersion().canonicalString();
-      if (version.isEmpty() && modInfo->canBeUpdated()) {
-        version = "?";
-      } else if (version[0] == 'd') {
-        version.remove(0, 1);
+      VersionInfo verInfo = modInfo->getVersion();
+      if (role == Qt::EditRole) {
+        return verInfo.canonicalString();
+      } else {
+        QString version = verInfo.displayString();
+        if (version.isEmpty() && modInfo->canBeUpdated()) {
+          version = "?";
+        }
+        return version;
       }
-      return version;
     } else if (column == COL_PRIORITY) {
       int priority = modInfo->getFixedPriority();
       if (priority != INT_MIN) {
@@ -241,17 +244,18 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         result.setItalic(true);
       }
     } else if (column == COL_VERSION) {
-      if (modInfo->updateAvailable()) {
+      if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
       }
     }
     return result;
   } else if (role == Qt::DecorationRole) {
     if (column == COL_VERSION) {
-      if (modInfo->updateAvailable() &&
-          modInfo->getNewestVersion().isValid()) {
+      if (modInfo->updateAvailable()) {
         return QIcon(":/MO/gui/update_available");
-      } else if (modInfo->getVersion().isVersionDate()) {
+      } else if (modInfo->downgradeAvailable()) {
+        return QIcon(":/MO/gui/warning");
+      } else if (modInfo->getVersion().scheme() == VersionInfo::SCHEME_DATE) {
         return QIcon(":/MO/gui/version_date");
       }
     }
@@ -264,7 +268,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
-      } else if (modInfo->updateAvailable()) {
+      } else if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         return QBrush(Qt::red);
       } else {
         return QBrush(Qt::darkGreen);
@@ -291,7 +295,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QString();
       }
     } else if (column == COL_VERSION) {
-      return tr("installed version: %1, newest version: %2").arg(modInfo->getVersion().canonicalString()).arg(modInfo->getNewestVersion().canonicalString());
+      QString text = tr("installed version: %1, newest version: %2").arg(modInfo->getVersion().displayString()).arg(modInfo->getNewestVersion().displayString());
+      if (modInfo->downgradeAvailable()) {
+        text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
+                          "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
+                          "Either way you may want to \"upgrade\".");
+      }
+      return text;
     } else if (column == COL_CATEGORY) {
       const std::set<int> &categories = modInfo->getCategories();
       std::wostringstream categoryString;

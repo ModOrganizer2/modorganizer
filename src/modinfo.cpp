@@ -303,10 +303,11 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   QString metaFileName = path.absoluteFilePath("meta.ini");
   QSettings metaFile(metaFileName, QSettings::IniFormat);
 
-  m_Notes           = metaFile.value("notes", "").toString();
-  m_NexusID         = metaFile.value("modid", -1).toInt();
+  m_Notes            = metaFile.value("notes", "").toString();
+  m_NexusID          = metaFile.value("modid", -1).toInt();
   m_Version.parse(metaFile.value("version", "").toString());
-  m_NewestVersion = metaFile.value("newestVersion", "").toString();
+  m_NewestVersion    = metaFile.value("newestVersion", "").toString();
+  m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
@@ -377,6 +378,7 @@ void ModInfoRegular::saveMeta()
       temp.erase(m_PrimaryCategory);
       metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
       metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
+      metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
       metaFile.setValue("version", m_Version.canonicalString());
       metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
@@ -396,7 +398,19 @@ void ModInfoRegular::saveMeta()
 
 bool ModInfoRegular::updateAvailable() const
 {
+  if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
+    return false;
+  }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
+}
+
+
+bool ModInfoRegular::downgradeAvailable() const
+{
+  if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
+    return false;
+  }
+  return m_NewestVersion.isValid() && (m_NewestVersion < m_Version);
 }
 
 
@@ -574,6 +588,16 @@ void ModInfoRegular::endorse(bool doEndorse)
 QString ModInfoRegular::absolutePath() const
 {
   return m_Path;
+}
+
+void ModInfoRegular::ignoreUpdate(bool ignore)
+{
+  if (ignore) {
+    m_IgnoredVersion = m_NewestVersion;
+  } else {
+    m_IgnoredVersion.clear();
+  }
+  m_MetaInfoChanged = true;
 }
 
 

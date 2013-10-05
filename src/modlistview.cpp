@@ -4,7 +4,7 @@
 #include <QProxyStyle>
 
 
-class ModListViewStyle: public QProxyStyle{
+class ModListViewStyle: public QProxyStyle {
 public:
   ModListViewStyle(QStyle *style, int indentation);
 
@@ -37,7 +37,7 @@ void ModListViewStyle::drawPrimitive(PrimitiveElement element, const QStyleOptio
 ModListView::ModListView(QWidget *parent)
   : QTreeView(parent)
 {
-  setStyle(new ModListViewStyle(style(), indentation()));
+//  setStyle(new ModListViewStyle(style(), indentation()));
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent *event)

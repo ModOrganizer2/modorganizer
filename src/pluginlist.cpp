@@ -90,6 +90,10 @@ PluginList::PluginList(QObject *parent)
 
 }
 
+PluginList::~PluginList()
+{
+}
+
 
 QString PluginList::getColumnName(int column)
 {

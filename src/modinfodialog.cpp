@@ -76,7 +76,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_UTF8Codec = QTextCodec::codecForName("utf-8");
 
   QListWidget *textFileList = findChild<QListWidget*>("textFileList");
-  QListWidget *iniFileList = findChild<QListWidget*>("iniFileList");
   QListWidget *iniTweaksList = findChild<QListWidget*>("iniTweaksList");
   QListWidget *activeESPList = findChild<QListWidget*>("activeESPList");
   QListWidget *inactiveESPList = findChild<QListWidget*>("inactiveESPList");
@@ -707,7 +706,7 @@ QString ModInfoDialog::getFileCategory(int categoryID)
 void ModInfoDialog::updateVersionColor()
 {
 //  QPalette versionColor;
-  if (m_ModInfo->getVersion() < m_ModInfo->getNewestVersion()) {
+  if (m_ModInfo->getVersion() != m_ModInfo->getNewestVersion()) {
     ui->versionEdit->setStyleSheet("color: red");
 //    versionColor.setColor(QPalette::Text, Qt::red);
     ui->versionEdit->setToolTip(tr("Current Version: %1").arg(m_ModInfo->getNewestVersion().canonicalString()));
@@ -758,13 +757,7 @@ void ModInfoDialog::modDetailsUpdated(bool success)
       ui->descriptionView->setHtml(tr("(description incomplete, please visit nexus)"));
     }
 
-    QString version = m_ModInfo->getNewestVersion().canonicalString();
-
-    if (!version.isEmpty()) {
-      m_ModInfo->setNewestVersion(version);
-
-      updateVersionColor();
-    }
+    updateVersionColor();
   }
 }
 

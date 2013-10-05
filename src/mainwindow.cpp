@@ -139,8 +139,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
     m_ExeName(exeName), m_OldProfileIndex(-1),
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
-    m_ModList(NexusInterface::instance()), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
-    m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
+    m_ModList(this), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
+    m_PluginList(this), m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
     m_DownloadManager(NexusInterface::instance(), this),
     m_InstallationManager(this), m_Translator(NULL), m_TranslatorQt(NULL),
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
@@ -149,7 +149,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_GameInfo(new GameInfoImpl())
 {
   ui->setupUi(this);
-  this->setWindowTitle(ToQString(GameInfo::instance().getGameName()).append(" Mod Organizer v").append(m_Updater.getVersion().canonicalString()));
+  this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
 
   m_RefreshProgress = new QProgressBar(statusBar());
   m_RefreshProgress->setTextVisible(true);
@@ -255,7 +255,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_Updater, SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(&m_Updater, SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-  connect(ExitProxy::instance(), SIGNAL(exit()), this, SLOT(close()));
+//  connect(ExitProxy::instance(), SIGNAL(exit()), this, SLOT(close()));
 
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
@@ -412,7 +412,7 @@ void MainWindow::actionToToolButton(QAction *&sourceAction)
   button->setToolButtonStyle(ui->toolBar->toolButtonStyle());
   button->setToolTip(sourceAction->toolTip());
   button->setShortcut(sourceAction->shortcut());
-  QMenu *buttonMenu = new QMenu(sourceAction->text());
+  QMenu *buttonMenu = new QMenu(sourceAction->text(), button);
   button->setMenu(buttonMenu);
   QAction *newAction = ui->toolBar->insertWidget(sourceAction, button);
   newAction->setObjectName(sourceAction->objectName());
@@ -1499,6 +1499,8 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       updateTo(directoryChild, temp.str(), **current, conflictsOnly);
       if (directoryChild->childCount() != 0) {
         subTree->addChild(directoryChild);
+      } else {
+        delete directoryChild;
       }
     }
   }
@@ -3069,7 +3071,6 @@ void MainWindow::openExplorer_clicked()
   ::ShellExecuteW(NULL, L"explore", ToWString(modInfo->absolutePath()).c_str(), NULL, NULL, SW_SHOWNORMAL);
 }
 
-
 void MainWindow::information_clicked()
 {
   try {
@@ -3078,7 +3079,6 @@ void MainWindow::information_clicked()
     reportError(e.what());
   }
 }
-
 
 void MainWindow::syncOverwrite()
 {
@@ -3090,7 +3090,6 @@ void MainWindow::syncOverwrite()
     refreshDirectoryStructure();
   }
 }
-
 
 void MainWindow::createModFromOverwrite()
 {
@@ -3125,13 +3124,11 @@ void MainWindow::createModFromOverwrite()
   refreshModList();
 }
 
-
 void MainWindow::cancelModListEditor()
 {
   ui->modList->setEnabled(false);
   ui->modList->setEnabled(true);
 }
-
 
 void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
 {
@@ -3154,7 +3151,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     reportError(e.what());
   }
 }
-
 
 bool MainWindow::addCategories(QMenu *menu, int targetID)
 {
@@ -3210,7 +3206,6 @@ void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
   }
 }
 
-
 void MainWindow::saveCategories()
 {
   QMenu *menu = qobject_cast<QMenu*>(sender());
@@ -3254,8 +3249,6 @@ void MainWindow::saveCategories()
   refreshFilters();
 }
 
-
-
 void MainWindow::savePrimaryCategory()
 {
   QMenu *menu = qobject_cast<QMenu*>(sender());
@@ -3280,7 +3273,6 @@ void MainWindow::savePrimaryCategory()
   }
 }
 
-
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
@@ -3298,6 +3290,45 @@ void MainWindow::checkModsForUpdates()
   }
 }
 
+void MainWindow::changeVersioningScheme() {
+  if (QMessageBox::question(this, tr("Continue?"),
+        tr("This will try to change the versioning scheme so that the newest version is interpreted as an update to "
+           "the installed version."),
+        QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
+
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+
+    bool success = false;
+
+    static VersionInfo::VersionScheme schemes[] = { VersionInfo::SCHEME_REGULAR, VersionInfo::SCHEME_DECIMALMARK, VersionInfo::SCHEME_NUMBERSANDLETTERS };
+
+    for (int i = 0; i < sizeof(schemes) / sizeof(VersionInfo::VersionScheme) && !success; ++i) {
+      VersionInfo verOld(info->getVersion().canonicalString(), schemes[i]);
+      VersionInfo verNew(info->getNewestVersion().canonicalString(), schemes[i]);
+      if (verOld < verNew) {
+        info->setVersion(verOld);
+        info->setNewestVersion(verNew);
+        success = true;
+      }
+    }
+    if (!success) {
+      QMessageBox::information(this, tr("Sorry"),
+          tr("I don't know a versioning scheme where %1 is newer than %2.").arg(info->getNewestVersion().canonicalString()).arg(info->getVersion().canonicalString()),
+          QMessageBox::Ok);
+    }
+  }
+}
+
+void MainWindow::ignoreUpdate() {
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  info->ignoreUpdate(true);
+}
+
+void MainWindow::unignoreUpdate()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  info->ignoreUpdate(false);
+}
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info)
 {
@@ -3319,7 +3350,6 @@ void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInf
   }
 }
 
-
 void MainWindow::addPrimaryCategoryCandidates()
 {
   QMenu *menu = qobject_cast<QMenu*>(sender());
@@ -3333,7 +3363,6 @@ void MainWindow::addPrimaryCategoryCandidates()
   addPrimaryCategoryCandidates(menu, modInfo);
 }
 
-
 void MainWindow::enableVisibleMods()
 {
   if (QMessageBox::question(NULL, tr("Confirm"), tr("Really enable all visible mods?"),
@@ -3342,7 +3371,6 @@ void MainWindow::enableVisibleMods()
   }
 }
 
-
 void MainWindow::disableVisibleMods()
 {
   if (QMessageBox::question(NULL, tr("Confirm"), tr("Really disable all visible mods?"),
@@ -3350,7 +3378,6 @@ void MainWindow::disableVisibleMods()
     m_ModListSortProxy->disableAllVisible();
   }
 }
-
 
 void MainWindow::exportModListCSV()
 {
@@ -3406,7 +3433,6 @@ void MainWindow::exportModListCSV()
   }
 }
 
-
 void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 {
   QPushButton *pushBtn = new QPushButton(subMenu->title());
@@ -3416,13 +3442,13 @@ void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
   menu->addAction(action);
 }
 
-
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
     QTreeView *modList = findChild<QTreeView*>("modList");
 
-    m_ContextRow = mapToModel(&m_ModList, modList->indexAt(pos)).row();
+    QModelIndex index = mapToModel(&m_ModList, modList->indexAt(pos));
+    m_ContextRow = index.row();
 
     QMenu menu;
 
@@ -3460,6 +3486,17 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
         connect(primaryCategoryMenu, SIGNAL(aboutToHide()), this, SLOT(savePrimaryCategory()));
         addMenuAsPushButton(&menu, primaryCategoryMenu);
+
+        menu.addSeparator();
+        if (info->downgradeAvailable()) {
+          menu.addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
+        }
+        if (info->updateIgnored()) {
+          menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
+        } else {
+          menu.addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
+        }
+        menu.addSeparator();
 
         menu.addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu.addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
@@ -4207,9 +4244,9 @@ void MainWindow::on_actionEndorseMO_triggered()
 void MainWindow::updateDownloadListDelegate()
 {
   if (ui->compactBox->isChecked()) {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetCompactDelegate(&m_DownloadManager, ui->downloadView));
+    ui->downloadView->setItemDelegate(new DownloadListWidgetCompactDelegate(&m_DownloadManager, ui->downloadView, ui->downloadView));
   } else {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetDelegate(&m_DownloadManager, ui->downloadView));
+    ui->downloadView->setItemDelegate(new DownloadListWidgetDelegate(&m_DownloadManager, ui->downloadView, ui->downloadView));
   }
 
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(&m_DownloadManager, ui->downloadView);
@@ -4267,7 +4304,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
     } else {
       std::vector<ModInfo::Ptr> info = ModInfo::getByModID(result["id"].toInt());
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
-        (*iter)->setNewestVersion(VersionInfo(result["version"].toString()));
+        (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance()->getAccessManager()->loggedIn() &&
             result.contains("voted_by_user")) {

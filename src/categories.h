@@ -180,6 +180,8 @@ private:
 
   void setParents();
 
+  static void cleanup();
+
 private:
 
   static CategoryFactory *s_Instance;
@@ -187,6 +189,8 @@ private:
   std::vector<Category> m_Categories;
   std::map<int, unsigned int> m_IDMap;
   std::map<int, unsigned int> m_NexusMap;
+
+private:
 
 };
 

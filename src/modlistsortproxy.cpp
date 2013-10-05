@@ -211,7 +211,7 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
         if (enabled) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (!info->updateAvailable()) return false;
+        if (!info->updateAvailable() && !info->downgradeAvailable()) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
         if (info->getCategories().size() > 0) return false;

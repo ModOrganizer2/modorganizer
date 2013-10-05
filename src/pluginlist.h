@@ -53,6 +53,8 @@ public:
    **/
   PluginList(QObject *parent = NULL);
 
+  ~PluginList();
+
   /**
    * @brief does a complete refresh of the list
    *

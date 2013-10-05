@@ -13,9 +13,17 @@ CONFIG += staticlib
 
 INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
+
+# only for custom leak detection
+#DEFINES += TRACE_LEAKS
+#LIBS += -lDbgHelp
+
+
 CONFIG(debug, debug|release) {
-		LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -L$$OUT_PWD/../bsatk/debug
 	LIBS += -lDbgHelp
+  QMAKE_CXXFLAGS_DEBUG -= -Zi
+  QMAKE_CXXFLAGS += -Z7
 } else {
 		LIBS += -L$$OUT_PWD/../bsatk/release
 }

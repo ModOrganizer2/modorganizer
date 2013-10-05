@@ -40,6 +40,13 @@ GameInfo* GameInfo::s_Instance = NULL;
 GameInfo::GameInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
   : m_GameDirectory(gameDirectory), m_OrganizerDirectory(omoDirectory)
 {
+  atexit(&cleanup);
+}
+
+
+void GameInfo::cleanup() {
+  delete GameInfo::s_Instance;
+  GameInfo::s_Instance = NULL;
 }
 
 

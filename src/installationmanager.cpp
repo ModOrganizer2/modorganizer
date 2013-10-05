@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QDirIterator>
 #include <boost/assign.hpp>
+#include <boost/scoped_ptr.hpp>
 
 
 using namespace MOBase;
@@ -678,8 +679,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     this->m_CurrentArchive->close();
   });
 
-  DirectoryTree *filesTree = archiveOpen ? createFilesTree() : NULL;
-
+  QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : NULL);
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -704,7 +704,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
             (filesTree != NULL) && (installer->isArchiveSupported(*filesTree))) {
           installResult = installerSimple->install(modName, *filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
-            mapToArchive(filesTree);
+            mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest works the same for all installers
             if (!doInstall(modName, modID, version, newestVersion, categoryID)) {
               installResult = IPluginInstaller::RESULT_FAILED;

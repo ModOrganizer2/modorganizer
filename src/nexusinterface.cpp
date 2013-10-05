@@ -68,6 +68,7 @@ void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
+
     emit descriptionAvailable(modID, userData, resultData);
   }
 }
@@ -142,10 +143,18 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 NexusInterface::NexusInterface()
   : m_NMMVersion()
 {
+  atexit(&cleanup);
   m_AccessManager = new NXMAccessManager(this);
 
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+}
+
+
+void NexusInterface::cleanup()
+{
+  delete NexusInterface::s_Instance;
+  NexusInterface::s_Instance = NULL;
 }
 
 
@@ -405,6 +414,7 @@ void NexusInterface::downloadRequestedNXM(const QString &url)
   emit requestNXMDownload(url);
 }
 
+#include <QDebug>
 
 void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 {

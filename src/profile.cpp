@@ -185,7 +185,7 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
     QString fileName = getModlistFileName();
 
     if (QFile::exists(fileName)) {
-      shellDelete(QStringList(fileName));
+      shellDelete(QStringList(fileName), false, QApplication::activeModalWidget());
     }
 
     if (!file.copy(fileName)) {
@@ -238,6 +238,7 @@ void Profile::createTweakedIniFile()
   if (error) {
     reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorStringA().c_str()));
   }
+  qDebug("%s saved", qPrintable(QDir::toNativeSeparators(tweakedIni)));
 }
 
 

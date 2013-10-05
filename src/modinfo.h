@@ -193,6 +193,22 @@ public:
   virtual bool updateAvailable() const = 0;
 
   /**
+   * @return true if the update currently available is ignored
+   */
+  virtual bool updateIgnored() const = 0;
+
+  /**
+   * @brief test if the "newest" version of the mod is older than the installed version
+   *
+   * test if there is a newer version of the mod. This does NOT cause
+   * information to be retrieved from the nexus, it will only test version information already
+   * available locally. Use checkAllForUpdate() to update this version information
+   *
+   * @return true if the newest version is older than the installed one
+   **/
+  virtual bool downgradeAvailable() const = 0;
+
+  /**
    * @brief request an update of nexus description for this mod.
    *
    * This requests mod information from the nexus. This is an asynchronous request,
@@ -308,6 +324,11 @@ public:
    * @return newest version of the mod
    **/
   virtual MOBase::VersionInfo getNewestVersion() const = 0;
+
+  /**
+   * @brief ignore the newest version for updates
+   */
+  virtual void ignoreUpdate(bool ignore) = 0;
 
   /**
    * @brief getter for the nexus mod id
@@ -495,6 +516,22 @@ public:
   bool updateAvailable() const;
 
   /**
+   * @return true if the current update is being ignored
+   */
+  virtual bool updateIgnored() const { return m_IgnoredVersion == m_NewestVersion; }
+
+  /**
+   * @brief test if there is a newer version of the mod
+   *
+   * test if there is a newer version of the mod. This does NOT cause
+   * information to be retrieved from the nexus, it will only test version information already
+   * available locally. Use checkAllForUpdate() to update this version information
+   *
+   * @return true if there is a newer version
+   **/
+  bool downgradeAvailable() const;
+
+  /**
    * @brief request an update of nexus description for this mod.
    * 
    * This requests mod information from the nexus. This is an asynchronous request,
@@ -619,6 +656,11 @@ public:
    * @return newest version of the mod
    **/
   MOBase::VersionInfo getNewestVersion() const { return m_NewestVersion; }
+
+  /**
+   * @brief ignore the newest version for updates
+   */
+  void ignoreUpdate(bool ignore);
 
   /**
    * @brief getter for the installation file
@@ -746,6 +788,7 @@ private:
 
   bool m_MetaInfoChanged;
   MOBase::VersionInfo m_NewestVersion;
+  MOBase::VersionInfo m_IgnoredVersion;
 
   EEndorsedState m_EndorsedState;
 
@@ -767,10 +810,13 @@ class ModInfoBackup : public ModInfoRegular
 public:
 
   virtual bool updateAvailable() const { return false; }
+  virtual bool updateIgnored() const { return false; }
+  virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
   virtual void setNexusID(int) {}
   virtual void endorse(bool) {}
   virtual int getFixedPriority() const { return -1; }
+  virtual void ignoreUpdate(bool) {}
   virtual bool canBeUpdated() const { return false; }
   virtual bool canBeEnabled() const { return false; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
@@ -798,12 +844,15 @@ class ModInfoOverwrite : public ModInfo
 public:
 
   virtual bool updateAvailable() const { return false; }
+  virtual bool updateIgnored() const { return false; }
+  virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
   virtual void setCategory(int, bool) {}
   virtual bool setName(const QString&) { return false; }
   virtual void setNotes(const QString&) {}
   virtual void setNexusID(int) {}
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
+  virtual void ignoreUpdate(bool) {}
   virtual void setNexusDescription(const QString&) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}

@@ -183,7 +183,6 @@ INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
-
 CONFIG(debug, debug|release) {
 	OUTDIR = $$OUT_PWD/debug
 	DSTDIR = $$PWD/../../outputd
@@ -293,6 +292,12 @@ OTHER_FILES += \
 
 INCLUDEPATH += "$(ZLIBPATH)" "$(ZLIBPATH)/build" "$(BOOSTPATH)"
 LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
+
+
+# leak detection with vld
+#INCLUDEPATH += "E:/Visual Leak Detector/include"
+#LIBS += -L"E:/Visual Leak Detector/lib/Win32"
+#DEFINES += LEAK_CHECK_WITH_VLD
 
 #SOURCES += modeltest.cpp
 #HEADERS += modeltest.h

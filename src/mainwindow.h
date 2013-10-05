@@ -466,6 +466,10 @@ private slots:
   void removeFromToolbar();
   void overwriteClosed(int);
 
+  void changeVersioningScheme();
+  void ignoreUpdate();
+  void unignoreUpdate();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();

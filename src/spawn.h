@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * @brief a dirty little trick so we can issue a clean restart from startBinary
  * @note unused
  */
-class ExitProxy : public QObject {
+/*class ExitProxy : public QObject {
   Q_OBJECT
 public:
   static ExitProxy *instance();
@@ -42,7 +42,7 @@ private:
   ExitProxy() {}
 private:
   static ExitProxy *s_Instance;
-};
+};*/
 
 
 /**

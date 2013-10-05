@@ -176,9 +176,11 @@ private:
   static bool identifyGame(const std::wstring &omoDirectory, const std::wstring &searchPath);
   std::wstring getSpecialPath(LPCWSTR name) const;
 
+  static void cleanup();
+
 private:
 
-  static GameInfo* s_Instance;
+  static GameInfo *s_Instance;
 
   std::wstring m_MyGamesDirectory;
 

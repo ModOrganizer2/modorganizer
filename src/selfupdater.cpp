@@ -126,7 +126,6 @@ void SelfUpdater::startUpdate()
 
 void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 {
-  qDebug("download: %s", downloadLink.toUtf8().constData());
   QNetworkAccessManager *accessManager = m_Interface->getAccessManager();
   QUrl dlUrl(downloadLink);
   QNetworkRequest request(dlUrl);
@@ -324,7 +323,6 @@ void SelfUpdater::nxmDescriptionAvailable(int, QVariant, QVariant resultData, in
     if (m_NewestVersion.isEmpty()) {
       QTimer::singleShot(5000, this, SLOT(testForUpdate()));
     }
-
     VersionInfo currentVersion(m_MOVersion);
     VersionInfo newestVersion(m_NewestVersion);
 
