@@ -185,7 +185,7 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
     QString fileName = getModlistFileName();
 
     if (QFile::exists(fileName)) {
-      shellDelete(QStringList(fileName), false, QApplication::activeModalWidget());
+      shellDeleteQuiet(fileName);
     }
 
     if (!file.copy(fileName)) {
@@ -205,7 +205,7 @@ void Profile::createTweakedIniFile()
 {
   QString tweakedIni = m_Directory.absoluteFilePath("initweaks.ini");
 
-  if (QFile::exists(tweakedIni) && !shellDelete(QStringList(tweakedIni))) {
+  if (QFile::exists(tweakedIni) && !shellDeleteQuiet(tweakedIni)) {
     reportError(tr("failed to update tweaked ini file, wrong settings may be used: %1").arg(windowsErrorString(::GetLastError())));
     return;
   }

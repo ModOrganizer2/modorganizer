@@ -3293,8 +3293,8 @@ void MainWindow::checkModsForUpdates()
 
 void MainWindow::changeVersioningScheme() {
   if (QMessageBox::question(this, tr("Continue?"),
-        tr("This will try to change the versioning scheme so that the newest version is interpreted as an update to "
-           "the installed version."),
+        tr("The versioning scheme decides which version is considered newer than another.\n"
+           "This function will guess the versioning scheme under the assumption that the installed version is outdated."),
         QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
 
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
@@ -3492,10 +3492,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         if (info->downgradeAvailable()) {
           menu.addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
-        if (info->updateIgnored()) {
-          menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
-        } else {
-          menu.addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
+        if (info->updateAvailable() || info->downgradeAvailable()) {
+          if (info->updateIgnored()) {
+            menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
+          } else {
+            menu.addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
+          }
         }
         menu.addSeparator();
 

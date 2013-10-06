@@ -144,15 +144,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return modInfo->name();
     } else if (column == COL_VERSION) {
       VersionInfo verInfo = modInfo->getVersion();
-      if (role == Qt::EditRole) {
-        return verInfo.canonicalString();
-      } else {
-        QString version = verInfo.displayString();
+      QString version = verInfo.displayString();
+      if (role != Qt::EditRole) {
         if (version.isEmpty() && modInfo->canBeUpdated()) {
           version = "?";
         }
-        return version;
       }
+      return version;
     } else if (column == COL_PRIORITY) {
       int priority = modInfo->getFixedPriority();
       if (priority != INT_MIN) {
@@ -405,7 +403,8 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       } break;
       case COL_VERSION: {
         ModInfo::Ptr info = ModInfo::getByIndex(modID);
-        VersionInfo version(value.toString());
+        VersionInfo::VersionScheme scheme = info->getVersion().scheme();
+        VersionInfo version(value.toString(), scheme);
         if (version.isValid()) {
           info->setVersion(version);
           return true;
