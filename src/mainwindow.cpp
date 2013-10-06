@@ -4228,6 +4228,7 @@ void MainWindow::on_actionUpdate_triggered()
       (m_AskForNexusPW && queryLogin(username, password)))) {
     NexusInterface::instance()->getAccessManager()->login(username, password);
     m_LoginAttempted = true;
+    m_PostLoginTasks.push_back([&](MainWindow*) { m_Updater.startUpdate(); });
   } else {
     m_Updater.startUpdate();
   }
