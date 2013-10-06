@@ -2387,6 +2387,8 @@ void MainWindow::refresher_progress(int percent)
 
 void MainWindow::directory_refreshed()
 {
+  statusBar()->hide();
+
   DirectoryEntry *newStructure = m_DirectoryRefresher.getDirectoryStructure();
   if (newStructure != NULL) {
     DirectoryEntry *oldStructure = m_DirectoryStructure;
@@ -2404,7 +2406,6 @@ void MainWindow::directory_refreshed()
     refreshLists();
   }
 //  m_RefreshProgress->setVisible(false);
-  statusBar()->hide();
 
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
