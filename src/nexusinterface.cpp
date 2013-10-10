@@ -397,7 +397,7 @@ void NexusInterface::nextRequest()
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
 #pragma message("automatically insert the correct version number")
-  request.setRawHeader("User-Agent", QString("Mod Organizer v0.99.0 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
+  request.setRawHeader("User-Agent", QString("Mod Organizer v1.0.5 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 
@@ -413,8 +413,6 @@ void NexusInterface::downloadRequestedNXM(const QString &url)
 {
   emit requestNXMDownload(url);
 }
-
-#include <QDebug>
 
 void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 {
