@@ -34,7 +34,7 @@ public:
 
 public slots:
 
-  void setStyleFile(const QString &style);
+  bool setStyleFile(const QString &style);
 
 private slots:
 

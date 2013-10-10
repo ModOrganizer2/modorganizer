@@ -208,6 +208,11 @@ void DownloadListWidgetDelegate::issueRemoveFromView()
   emit removeDownload(m_ContextRow, false);
 }
 
+void DownloadListWidgetDelegate::issueRestoreToView()
+{
+  emit restoreDownload(m_ContextRow);
+}
+
 void DownloadListWidgetDelegate::issueCancel()
 {
   emit cancelDownload(m_ContextRow);
@@ -277,13 +282,18 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
         QMenu menu(m_View);
         m_ContextRow = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index).row();
         DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
+        bool hidden = m_Manager->isHidden(m_ContextRow);
         if (state >= DownloadManager::STATE_READY) {
           menu.addAction(tr("Install"), this, SLOT(issueInstall()));
           if (m_Manager->isInfoIncomplete(m_ContextRow)) {
             menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
           }
           menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
-          menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+          if (hidden) {
+            menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
+          } else {
+            menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+          }
         } else if (state == DownloadManager::STATE_DOWNLOADING){
           menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
           menu.addAction(tr("Pause"), this, SLOT(issuePause()));
@@ -295,9 +305,11 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
         menu.addSeparator();
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
-        menu.addSeparator();
-        menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-        menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+        if (!hidden) {
+          menu.addSeparator();
+          menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+        }
         menu.exec(mouseEvent->globalPos());
 
         event->accept();

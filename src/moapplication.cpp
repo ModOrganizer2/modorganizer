@@ -32,7 +32,7 @@ MOApplication::MOApplication(int argc, char **argv)
 }
 
 
-void MOApplication::setStyleFile(const QString &styleName)
+bool MOApplication::setStyleFile(const QString &styleName)
 {
   // remove all files from watch
   QStringList currentWatch = m_StyleWatcher.files();
@@ -42,11 +42,15 @@ void MOApplication::setStyleFile(const QString &styleName)
   // set new stylesheet or clear it
   if (styleName.length() != 0) {
     QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
+    if (!QFile::exists(styleSheetName)) {
+      return false;
+    }
     m_StyleWatcher.addPath(styleSheetName);
     updateStyle(styleSheetName);
   } else {
     setStyleSheet("");
   }
+  return true;
 }
 
 

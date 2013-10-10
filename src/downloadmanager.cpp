@@ -69,14 +69,16 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Ne
   return info;
 }
 
-DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(const QString &filePath)
+DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(const QString &filePath, bool showHidden)
 {
   DownloadInfo *info = new DownloadInfo;
 
   QString metaFileName = filePath + ".meta";
   QSettings metaFile(metaFileName, QSettings::IniFormat);
-  if (metaFile.value("removed", false).toBool()) {
+  if (!showHidden && metaFile.value("removed", false).toBool()) {
     return NULL;
+  } else {
+    info->m_Hidden = metaFile.value("removed", false).toBool();
   }
 
   QString fileName = QFileInfo(filePath).fileName();
@@ -151,7 +153,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher()
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
 }
@@ -188,13 +190,15 @@ void DownloadManager::pauseAll()
   ::Sleep(100);
 
   bool done = false;
+  QTime startTime = QTime::currentTime();
   // further loops: busy waiting for all downloads to complete. This could be neater...
-  while (!done) {
+  while (!done && (startTime.secsTo(QTime::currentTime()) < 5)) {
     QCoreApplication::processEvents();
     done = true;
     foreach (DownloadInfo *info, m_ActiveDownloads) {
       if ((info->m_State < STATE_CANCELED) ||
-          (info->m_State != STATE_FETCHINGFILEINFO) || (info->m_State != STATE_FETCHINGMODINFO)) {
+          (info->m_State == STATE_FETCHINGFILEINFO) ||
+          (info->m_State == STATE_FETCHINGMODINFO)) {
         done = false;
         break;
       }
@@ -227,6 +231,12 @@ void DownloadManager::setPreferredServers(const std::map<QString, int> &preferre
 void DownloadManager::setSupportedExtensions(const QStringList &extensions)
 {
   m_SupportedExtensions = extensions;
+  refreshList();
+}
+
+void DownloadManager::setShowHidden(bool showHidden)
+{
+  m_ShowHidden = showHidden;
   refreshList();
 }
 
@@ -267,7 +277,7 @@ void DownloadManager::refreshList()
 
     QString fileName = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + file;
 
-    DownloadInfo *info = DownloadInfo::createFromMeta(fileName);
+    DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden);
     if (info != NULL) {
       m_ActiveDownloads.push_front(info);
     }
@@ -437,6 +447,22 @@ void DownloadManager::refreshAlphabeticalTranslation()
 }
 
 
+void DownloadManager::restoreDownload(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+
+  DownloadInfo *download = m_ActiveDownloads.at(index);
+  download->m_Hidden = false;
+
+  QString filePath = m_OutputDirectory + "/" + download->m_FileName;
+
+  QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
+  metaSettings.setValue("removed", false);
+}
+
+
 void DownloadManager::removeDownload(int index, bool deleteFile)
 {
   try {
@@ -492,9 +518,13 @@ void DownloadManager::pauseDownload(int index)
     return;
   }
 
-  if (m_ActiveDownloads.at(index)->m_State == STATE_DOWNLOADING) {
-    setState(m_ActiveDownloads.at(index), STATE_PAUSING);
-    qDebug("pausing %d - %s", index, m_ActiveDownloads[index]->m_FileName.toUtf8().constData());
+  DownloadInfo *info = m_ActiveDownloads.at(index);
+
+  if (info->m_State == STATE_DOWNLOADING) {
+    setState(info, STATE_PAUSING);
+    qDebug("pausing %d - %s", index, info->m_FileName.toUtf8().constData());
+  } else if ((info->m_State == STATE_FETCHINGMODINFO) || (info->m_State == STATE_FETCHINGFILEINFO)) {
+    setState(info, STATE_READY);
   }
 }
 
@@ -671,6 +701,14 @@ int DownloadManager::getModID(int index) const
   return m_ActiveDownloads.at(index)->m_ModID;
 }
 
+bool DownloadManager::isHidden(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+  return m_ActiveDownloads.at(index)->m_Hidden;
+}
+
 
 NexusInfo DownloadManager::getNexusInfo(int index) const
 {
@@ -843,6 +881,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
   metaFile.setValue("uninstalled", info->m_State == DownloadManager::STATE_UNINSTALLED);
   metaFile.setValue("paused", (info->m_State == DownloadManager::STATE_PAUSED) ||
                               (info->m_State == DownloadManager::STATE_ERROR));
+  metaFile.setValue("removed", info->m_Hidden);
 
   // slightly hackish...
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
@@ -1110,6 +1149,7 @@ void DownloadManager::downloadFinished()
     QByteArray data = info->m_Reply->readAll();
     info->m_Output.write(data);
     info->m_Output.close();
+    TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
 
     bool error = false;
 

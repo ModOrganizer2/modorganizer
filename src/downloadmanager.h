@@ -102,8 +102,10 @@ private:
 
     NexusInfo m_NexusInfo;
 
+    bool m_Hidden;
+
     static DownloadInfo *createNew(const NexusInfo &nexusInfo, int modID, int fileID, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(const QString &filePath);
+    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden);
 
     /**
      * @brief rename the file
@@ -167,6 +169,11 @@ public:
    * @param extensions list of supported extensions
    */
   void setSupportedExtensions(const QStringList &extensions);
+
+  /**
+   * @brief sets whether hidden files are to be shown after all
+   */
+  void setShowHidden(bool showHidden);
 
   /**
    * @brief download from an already open network connection
@@ -264,6 +271,13 @@ public:
   int getModID(int index) const;
 
   /**
+   * @brief determine if the specified file is supposed to be hidden
+   * @param index index of the file to look up
+   * @return true if the specified file is supposed to be hidden
+   */
+  bool isHidden(int index) const;
+
+  /**
    * @brief retrieve all nexus info of the download specified by index
    *
    * @param index index of the file to look up
@@ -353,6 +367,12 @@ public slots:
   void removeDownload(int index, bool deleteFile);
 
   /**
+   * @brief restores the specified download to view (which was previously hidden
+   * @param index index of the download to restore
+   */
+  void restoreDownload(int index);
+
+  /**
    * @brief cancel the specified download. This will lead to the corresponding file to be deleted
    *
    * @param index index of the download to cancel
@@ -435,6 +455,8 @@ private:
   QFileSystemWatcher m_DirWatcher;
 
   std::map<QString, int> m_DownloadFails;
+
+  bool m_ShowHidden;
 
 };
 

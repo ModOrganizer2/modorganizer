@@ -184,11 +184,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 QString InstallationManager::extractFile(const QString &fileName)
 {
   if (unpackSingleFile(fileName)) {
-    QString tempFileName = QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
-
-    m_FilesToDelete.insert(tempFileName);
-
-    return tempFileName;
+    return QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
   } else {
     return QString();
   }
@@ -571,49 +567,36 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
 }
 
 
-void InstallationManager::openFile(const QString &fileName)
-{
-  unpackSingleFile(fileName);
-
-  QString tempFileName = QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
-
-  SHELLEXECUTEINFOW execInfo;
-  memset(&execInfo, 0, sizeof(SHELLEXECUTEINFOW));
-  execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-  execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.lpVerb = L"open";
-  std::wstring fileNameW = ToWString(tempFileName);
-  execInfo.lpFile = fileNameW.c_str();
-  execInfo.nShow = SW_SHOWNORMAL;
-  if (!::ShellExecuteExW(&execInfo)) {
-    qCritical("failed to spawn %s: %d", tempFileName.toUtf8().constData(), ::GetLastError());
-  }
-
-  m_FilesToDelete.insert(tempFileName);
-}
-
-
-// copy and pasted from mo_dll
-bool EndsWith(LPCWSTR string, LPCWSTR subString)
-{
-  size_t slen = wcslen(string);
-  size_t len = wcslen(subString);
-  if (slen < len) {
-    return false;
-  }
-
-  for (size_t i = 0; i < len; ++i) {
-    if (towlower(string[slen - len + i]) != towlower(subString[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-
 bool InstallationManager::wasCancelled()
 {
   return m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+}
+
+
+void InstallationManager::postInstallCleanup() const
+{
+  m_CurrentArchive->close();
+
+  // directories we may want to remove. sorted from longest to shortest to ensure we remove subdirectories first.
+  auto longestFirst = [](const QString &LHS, const QString &RHS) -> bool {
+                          if (LHS.size() != RHS.size()) return LHS.size() > RHS.size();
+                          else return LHS < RHS;
+                        };
+
+  std::set<QString, std::function<bool(const QString&, const QString&)>> directoriesToRemove(longestFirst);
+
+  // clean up temp files
+  // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
+  foreach (const QString &tempFile, m_TempFilesToDelete) {
+    QFileInfo fileInfo(QDir::tempPath() + "/" + tempFile);
+    QFile::remove(fileInfo.absoluteFilePath());
+    directoriesToRemove.insert(fileInfo.absolutePath());
+  }
+
+  // try to delete each directory we had temporary files in. the call fails for non-empty directories which is ok
+  foreach (const QString &dir, directoriesToRemove) {
+    QDir().rmdir(dir);
+  }
 }
 
 
@@ -675,9 +658,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
 
-  ON_BLOCK_EXIT([this] {
-    this->m_CurrentArchive->close();
-  });
+  ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
   QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : NULL);
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
@@ -728,13 +709,6 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       qCritical("plugin \"%s\" incompatible: %s",
                 qPrintable(installer->name()), e.what());
     }
-
-    // clean up temp files
-    // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
-    foreach (const QString &tempFile, m_TempFilesToDelete) {
-      QFile::remove(QDir::tempPath() + "/" + tempFile);
-    }
-
 
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location

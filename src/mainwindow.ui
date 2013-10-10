@@ -968,11 +968,18 @@ p, li { white-space: pre-wrap; }
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,2">
               <item>
                <widget class="QCheckBox" name="compactBox">
                 <property name="text">
                  <string>Compact</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showHiddenBox">
+                <property name="text">
+                 <string>Show Hidden</string>
                 </property>
                </widget>
               </item>

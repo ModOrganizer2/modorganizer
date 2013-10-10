@@ -433,7 +433,10 @@ int main(int argc, char *argv[])
     qDebug("initializing tutorials");
     TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
 
-    application.setStyleFile(settings.value("Settings/style", "").toString());
+    if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
+      // disable invalid stylesheet
+      settings.setValue("Settings/style", "");
+    }
 
     int res = 1;
     { // scope to control lifetime of mainwindow

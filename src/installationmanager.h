@@ -168,9 +168,7 @@ private:
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
-private slots:
-
-  void openFile(const QString &fileName);
+  void postInstallCleanup() const;
 
 private:
 
@@ -202,7 +200,6 @@ private:
 
   QProgressDialog m_InstallationProgress;
 
-  std::set<QString> m_FilesToDelete;
   std::set<QString> m_TempFilesToDelete;
 
 };

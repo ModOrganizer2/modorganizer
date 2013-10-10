@@ -502,6 +502,7 @@ private slots: // ui slots
   void on_groupCombo_currentIndexChanged(int index);
   void on_categoriesList_itemSelectionChanged();
   void on_linkButton_pressed();
+  void on_showHiddenBox_toggled(bool checked);
 };
 
 #endif // MAINWINDOW_H

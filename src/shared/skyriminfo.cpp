@@ -295,6 +295,7 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
   result.push_back(ExecutableInfo(L"SKSE", L"skse_loader.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"SBW", L"SBW.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"Skyrim", L"TESV.exe", L"", L"", DEFAULT_CLOSE));
+  result.push_back(ExecutableInfo(L"Skyrim Launcher", L"SkyrimLauncher.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", DEFAULT_STAY));
   result.push_back(ExecutableInfo(L"Creation Kit", L"CreationKit.exe", L"", L"", DEFAULT_STAY, L"202480"));
 

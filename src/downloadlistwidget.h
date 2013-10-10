@@ -65,6 +65,7 @@ signals:
   void installDownload(int index);
   void queryInfo(int index);
   void removeDownload(int index, bool deleteFile);
+  void restoreDownload(int index);
   void cancelDownload(int index);
   void pauseDownload(int index);
   void resumeDownload(int index);
@@ -83,6 +84,7 @@ private slots:
   void issueInstall();
   void issueDelete();
   void issueRemoveFromView();
+  void issueRestoreToView();
   void issueCancel();
   void issuePause();
   void issueResume();
