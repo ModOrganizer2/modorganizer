@@ -746,6 +746,12 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 }
 
 
+DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &path)
+{
+  return getSubDirectoryRecursive(path, false, -1);
+}
+
+
 const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name)
 {
   auto iter = m_Files.find(name);

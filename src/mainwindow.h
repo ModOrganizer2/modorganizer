@@ -89,8 +89,8 @@ public:
 
   void createFirstProfile();
 
-  void spawnProgram(const QString &fileName, const QString &argumentsArg,
-                    const QString &profileName, const QDir &currentDirectory);
+/*  void spawnProgram(const QString &fileName, const QString &argumentsArg,
+                    const QString &profileName, const QDir &currentDirectory);*/
 
   void loadPlugins();
 
@@ -111,7 +111,11 @@ public:
   virtual QString pluginDataPath() const;
   virtual void installMod(const QString &fileName);
   virtual QString resolvePath(const QString &fileName) const;
+  virtual QStringList listDirectories(const QString &directoryName) const;
+  virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
   virtual MOBase::IDownloadManager *downloadManager();
+  virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
+  virtual bool onAboutToRun(const boost::function<bool(const QString&)> &func);
 
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
@@ -319,6 +323,8 @@ private:
   std::vector<QString> m_UnloadedPlugins;
 
   QFile m_PluginsCheck;
+
+  SignalAboutToRunApplication m_AboutToRun;
 
 private slots:
 

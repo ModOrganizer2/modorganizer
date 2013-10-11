@@ -953,7 +953,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time, c
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    reportError(tr("failed to parse esp file %1: %2").arg(fullPath).arg(e.what()));
+    qCritical("failed to parse esp file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
   }
 }
