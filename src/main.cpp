@@ -466,7 +466,7 @@ int main(int argc, char *argv[])
         arguments.removeFirst(); // remove application name (ModOrganizer.exe)
         arguments.removeFirst(); // remove binary name
         // pass the remaining parameters to the binary
-        mainWindow.spawnProgram(exeName, arguments.join(" "), selectedProfileName, QDir());
+        mainWindow.startApplication(exeName, arguments, QString(), selectedProfileName);
         return 0;
       }
 

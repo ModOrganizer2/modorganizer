@@ -227,6 +227,7 @@ public:
   }
 
   DirectoryEntry *findSubDirectory(const std::wstring &name) const;
+  DirectoryEntry *findSubDirectoryRecursive(const std::wstring &path);
 
   /** retrieve a file in this directory by name.
     * @param name name of the file

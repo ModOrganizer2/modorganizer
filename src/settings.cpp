@@ -105,6 +105,7 @@ bool Settings::pluginBlacklisted(const QString &fileName) const
 void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);
+  m_PluginSettings.insert(plugin->name(), QMap<QString, QVariant>());
   foreach (const PluginSetting &setting, plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {

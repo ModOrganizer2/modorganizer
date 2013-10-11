@@ -1276,10 +1276,15 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     QCoreApplication::processEvents();
   }
 
-  return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
+  if (m_AboutToRun(binary.absoluteFilePath())) {
+    return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
+  } else {
+    qDebug("start of \"%s\" canceled by plugin", qPrintable(binary.absoluteFilePath()));
+    return INVALID_HANDLE_VALUE;
+  }
 }
 
-
+/*
 void MainWindow::spawnProgram(const QString &fileName, const QString &argumentsArg,
                               const QString &profileName, const QDir &currentDirectory)
 {
@@ -1299,7 +1304,7 @@ void MainWindow::spawnProgram(const QString &fileName, const QString &argumentsA
   }
   spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
-
+*/
 
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
 {
@@ -1895,7 +1900,6 @@ void MainWindow::activateProxy(bool activate)
   busyDialog.hide();
 }
 
-
 void MainWindow::readSettings()
 {
   QSettings settings(ToQString(GameInfo::instance().getIniFilename()), QSettings::IniFormat);
@@ -2053,9 +2057,84 @@ QString MainWindow::resolvePath(const QString &fileName) const
   }
 }
 
+QStringList MainWindow::listDirectories(const QString &directoryName) const
+{
+  QStringList result;
+  DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(directoryName));
+  if (dir != NULL) {
+    std::vector<DirectoryEntry*>::iterator current, end;
+    dir->getSubDirectories(current, end);
+    for (; current != end; ++current) {
+      result.append(ToQString((*current)->getName()));
+    }
+  }
+  return result;
+}
+
+QStringList MainWindow::findFiles(const QString &path, const std::function<bool(const QString&)> &filter) const
+{
+  QStringList result;
+  DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
+  if (dir != NULL) {
+    std::vector<FileEntry::Ptr> files = dir->getFiles();
+    foreach (FileEntry::Ptr file, files) {
+      if (filter(ToQString(file->getName()))) {
+        result.append(ToQString(file->getFullPath()));
+      }
+    }
+  } else {
+    qWarning("directory %s not found", qPrintable(path));
+  }
+  return result;
+}
+
 IDownloadManager *MainWindow::downloadManager()
 {
   return &m_DownloadManager;
+}
+
+HANDLE MainWindow::startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile)
+{
+  QFileInfo binary;
+  QString arguments = args.join(" ");
+  QString currentDirectory = cwd;
+  QString profileName = (profile.length() > 0) ? profile : m_CurrentProfile->getName();
+  QString steamAppID;
+  if (executable.contains('\\') || executable.contains('/')) {
+    // file path
+    binary = QFileInfo(executable);
+    if (binary.isRelative()) {
+      // relative path, should be relative to game directory
+      binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
+    }
+    if (cwd.length() == 0) {
+      currentDirectory = binary.absolutePath();
+    }
+  } else {
+    // only a file name, search executables list
+    try {
+      const Executable &exe = m_ExecutablesList.find(executable);
+      steamAppID = exe.m_SteamAppID;
+      if (arguments == "") {
+        arguments = exe.m_Arguments;
+      }
+      binary = exe.m_BinaryInfo;
+      if (cwd.length() == 0) {
+        currentDirectory = exe.m_WorkingDirectory;
+      }
+    } catch (const std::runtime_error&) {
+      qWarning("\"%s\" not set up as executable", executable.toUtf8().constData());
+      return INVALID_HANDLE_VALUE;
+    }
+  }
+
+  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
+}
+
+bool MainWindow::onAboutToRun(const boost::function<bool (const QString &)> &func)
+{
+  auto conn = m_AboutToRun.connect(func);
+  return conn.connected();
 }
 
 std::vector<unsigned int> MainWindow::activeProblems() const
