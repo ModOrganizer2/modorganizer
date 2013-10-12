@@ -376,6 +376,15 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
 void DownloadManager::addNXMDownload(const QString &url)
 {
   NXMUrl nxmInfo(url);
+
+  QString managedGame = ToQString(MOShared::GameInfo::instance().getGameShortName());
+
+  if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
+    QMessageBox::information(NULL, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
+    "has been set up for \"%2\".").arg(nxmInfo.game()).arg(managedGame), QMessageBox::Ok);
+    return;
+  }
+
   m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.getModId(), nxmInfo.getFileId(), this, QVariant()));
 }
 
@@ -990,7 +999,7 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
 }
 
 
-void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant, QVariant resultData, int requestID)
+void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {
@@ -1007,7 +1016,11 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant, QVar
   info.m_Version = result["version"].toString();
   info.m_FileName = result["uri"].toString();
 
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info)));
+  if (userData.isValid()) {
+    m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info), userData.toString()));
+  } else {
+    m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info)));
+  }
 }
 
 
