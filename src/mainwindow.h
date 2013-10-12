@@ -50,6 +50,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfowidgetgamebryo.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
+#include <boost/signals2.hpp>
 
 namespace Ui {
     class MainWindow;
@@ -63,6 +64,28 @@ class MainWindow : public QMainWindow, public MOBase::IOrganizer, public MOBase:
 {
   Q_OBJECT
   Q_INTERFACES(MOBase::IPluginDiagnose)
+
+private:
+
+  struct SignalCombinerAnd
+  {
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const
+    {
+      while (first != last) {
+        if (!(*first)) {
+          return false;
+        }
+        ++first;
+      }
+      return true;
+    }
+  };
+
+public:
+
+  typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
 
 public:
   explicit MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent = 0);
@@ -115,7 +138,7 @@ public:
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
   virtual MOBase::IDownloadManager *downloadManager();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-  virtual bool onAboutToRun(const boost::function<bool(const QString&)> &func);
+  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
 
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;

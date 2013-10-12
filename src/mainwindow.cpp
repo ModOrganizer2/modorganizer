@@ -111,6 +111,8 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+
+
 static bool isOnline()
 {
   QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
@@ -146,7 +148,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false), m_LoginAttempted(false),
     m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
-    m_GameInfo(new GameInfoImpl())
+    m_GameInfo(new GameInfoImpl()), m_AboutToRun()
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
@@ -2131,7 +2133,7 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
 
-bool MainWindow::onAboutToRun(const boost::function<bool (const QString &)> &func)
+bool MainWindow::onAboutToRun(const std::function<bool (const QString &)> &func)
 {
   auto conn = m_AboutToRun.connect(func);
   return conn.connected();
