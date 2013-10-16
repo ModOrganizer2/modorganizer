@@ -66,6 +66,28 @@ class MainWindow : public QMainWindow, public MOBase::IOrganizer, public MOBase:
   Q_OBJECT
   Q_INTERFACES(MOBase::IPluginDiagnose)
 
+private:
+
+  struct SignalCombinerAnd
+  {
+    typedef bool result_type;
+    template<typename InputIterator>
+    bool operator()(InputIterator first, InputIterator last) const
+    {
+      while (first != last) {
+        if (!(*first)) {
+          return false;
+        }
+        ++first;
+      }
+      return true;
+    }
+  };
+
+public:
+
+  typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
+
 public:
 
   struct SignalCombinerAnd

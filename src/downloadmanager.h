@@ -125,7 +125,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false) {}
   };
 
 public:

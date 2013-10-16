@@ -111,6 +111,8 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+
+
 static bool isOnline()
 {
   QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
@@ -146,7 +148,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false), m_LoginAttempted(false),
     m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
-    m_GameInfo(new GameInfoImpl())
+    m_GameInfo(new GameInfoImpl()), m_AboutToRun()
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
