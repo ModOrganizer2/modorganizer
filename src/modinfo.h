@@ -268,6 +268,13 @@ public:
   virtual void setNexusDescription(const QString &description) = 0;
 
   /**
+   * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
+   * @param categoryID the nexus category id
+   * @note if a mapping is not possible, the category is set to the default value
+   */
+  virtual void addNexusCategory(int categoryID) = 0;
+
+  /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
    * @param endorsed the new endorsement state
@@ -606,6 +613,13 @@ public:
   virtual void setNexusDescription(const QString &description);
 
   /**
+   * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
+   * @param categoryID the nexus category id
+   * @note if a mapping is not possible, the category is set to the default value
+   */
+  virtual void addNexusCategory(int categoryID);
+
+  /**
    * @brief sets the new primary category of the mod
    * @param categoryID the category to set
    */
@@ -854,6 +868,7 @@ public:
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void ignoreUpdate(bool) {}
   virtual void setNexusDescription(const QString&) {}
+  virtual void addNexusCategory(int) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }

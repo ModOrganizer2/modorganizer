@@ -554,6 +554,11 @@ void ModInfoRegular::setNexusDescription(const QString &description)
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::addNexusCategory(int categoryID)
+{
+  m_Categories.insert(CategoryFactory::instance().resolveNexusID(categoryID));
+}
+
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {

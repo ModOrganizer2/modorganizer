@@ -2131,7 +2131,7 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
 
-bool MainWindow::onAboutToRun(const boost::function<bool (const QString &)> &func)
+bool MainWindow::onAboutToRun(const std::function<bool (const QString &)> &func)
 {
   auto conn = m_AboutToRun.connect(func);
   return conn.connected();
