@@ -2095,6 +2095,11 @@ IDownloadManager *MainWindow::downloadManager()
   return &m_DownloadManager;
 }
 
+IPluginList *MainWindow::pluginList()
+{
+  return &m_PluginList;
+}
+
 HANDLE MainWindow::startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile)
 {
   QFileInfo binary;

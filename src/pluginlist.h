@@ -25,12 +25,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include <vector>
 #include <directoryentry.h>
+#include <ipluginlist.h>
 
 
 /**
  * @brief model representing the plugins (.esp/.esm) in the current virtual data folder
  **/
-class PluginList : public QAbstractTableModel
+class PluginList : public QAbstractTableModel, public MOBase::IPluginList
 {
   Q_OBJECT
 
@@ -133,6 +134,12 @@ public:
   static QString getColumnToolTip(int column);
 
   void refreshLoadOrder();
+
+public:
+  virtual PluginState state(const QString &name) const;
+  virtual int priority(const QString &name) const;
+  virtual int loadOrder(const QString &name) const;
+  virtual bool isMaster(const QString &name) const;
 
 public: // implementation of the QAbstractTableModel interface
 

@@ -571,6 +571,46 @@ void PluginList::refreshLoadOrder()
   }
 }
 
+IPluginList::PluginState PluginList::state(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return IPluginList::STATE_MISSING;
+  } else {
+    return m_ESPs[iter->second].m_Enabled ? IPluginList::STATE_ACTIVE : IPluginList::STATE_INACTIVE;
+  }
+}
+
+int PluginList::priority(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].m_Priority;
+  }
+}
+
+int PluginList::loadOrder(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return -1;
+  } else {
+    return m_ESPs[iter->second].m_LoadOrder;
+  }
+}
+
+bool PluginList::isMaster(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].m_IsMaster;
+  }
+}
+
 
 void PluginList::updateIndices()
 {

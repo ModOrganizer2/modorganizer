@@ -84,28 +84,6 @@ private:
     }
   };
 
-public:
-
-  typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
-
-public:
-
-  struct SignalCombinerAnd
-  {
-    typedef bool result_type;
-    template<typename InputIterator>
-    bool operator()(InputIterator first, InputIterator last) const
-    {
-      while (first != last) {
-        if (!(*first)) {
-          return false;
-        }
-        ++first;
-      }
-      return true;
-    }
-  };
-
   typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
 
 public:
@@ -158,6 +136,7 @@ public:
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
   virtual MOBase::IDownloadManager *downloadManager();
+  virtual MOBase::IPluginList *pluginList();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
 
