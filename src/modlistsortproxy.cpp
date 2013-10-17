@@ -137,10 +137,30 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   ModInfo::Ptr rightMod = ModInfo::getByIndex(rightIndex);
 
   bool lt = false;
+
+  {
+    QModelIndex leftPrioIdx = left.sibling(left.row(), ModList::COL_PRIORITY);
+    QVariant leftPrio = leftPrioIdx.data();
+    if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
+    QModelIndex rightPrioIdx = right.sibling(right.row(), ModList::COL_PRIORITY);
+    QVariant rightPrio = rightPrioIdx.data();
+    if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
+
+    lt = leftPrio.toInt() < rightPrio.toInt();
+  }
+
   switch (left.column()) {
-    case ModList::COL_FLAGS: lt = leftMod->getFlags().size() < rightMod->getFlags().size(); break;
-    case ModList::COL_NAME: lt = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive) < 0; break;
+    case ModList::COL_FLAGS: {
+      if (leftMod->getFlags().size() != rightMod->getFlags().size())
+        lt = leftMod->getFlags().size() < rightMod->getFlags().size();
+    } break;
+    case ModList::COL_NAME: {
+      int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
+      if (comp != 0)
+        lt = comp < 0;
+    } break;
     case ModList::COL_CATEGORY: {
+      if (leftMod->getPrimaryCategory() != rightMod->getPrimaryCategory()) {
         if (leftMod->getPrimaryCategory() < 0) lt = false;
         else if (rightMod->getPrimaryCategory() < 0) lt = true;
         else {
@@ -153,19 +173,24 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
             qCritical("failed to compare categories: %s", e.what());
           }
         }
-      } break;
-    case ModList::COL_MODID: lt = leftMod->getNexusID() < rightMod->getNexusID(); break;
-    case ModList::COL_VERSION: lt = leftMod->getVersion() < rightMod->getVersion(); break;
-    case ModList::COL_PRIORITY: {
-        QVariant leftPrio = left.data();
-        if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
-        QVariant rightPrio = right.data();
-        if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
-
-        return leftPrio.toInt() < rightPrio.toInt();
+      }
+    } break;
+    case ModList::COL_MODID: {
+      if (leftMod->getNexusID() != rightMod->getNexusID())
+        lt = leftMod->getNexusID() < rightMod->getNexusID();
+    } break;
+    case ModList::COL_VERSION: {
+      if (leftMod->getVersion() != rightMod->getVersion())
+        lt = leftMod->getVersion() < rightMod->getVersion();
     } break;
     case ModList::COL_INSTALLTIME: {
-      return left.data().toDateTime() < right.data().toDateTime();
+      QDateTime leftTime = left.data().toDateTime();
+      QDateTime rightTime = right.data().toDateTime();
+      if (leftTime != rightTime)
+        return leftTime < rightTime;
+    } break;
+    case ModList::COL_PRIORITY: {
+      // nop, already compared by priority
     } break;
   }
   return lt;

@@ -80,23 +80,6 @@ public:
     ENDORSED_UNKNOWN,
     ENDORSED_NEVER
   };
-/*
-  struct NexusFileInfo {
-    NexusFileInfo(const QString &data);
-    NexusFileInfo(int id, const QString &name, const QString &url, const QString &version,
-                  const QString &description, int category, int size)
-      : id(id), name(name), url(url), version(version), description(description),
-        category(category), size(size) {}
-    int id;
-    QString name;
-    QString url;
-    QString version;
-    QString description;
-    int category;
-    int size;
-
-    QString toString() const;
-  };*/
 
 public:
 
