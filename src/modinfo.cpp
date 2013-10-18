@@ -324,6 +324,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
     }
   }
 
+
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -589,6 +590,11 @@ void ModInfoRegular::endorse(bool doEndorse)
   }
 }
 
+void ModInfoRegular::clearCaches()
+{
+  m_LastConflictCheck = QTime();
+}
+
 
 QString ModInfoRegular::absolutePath() const
 {
@@ -690,7 +696,7 @@ ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
 {
   // this is costy so cache the result
   QTime now = QTime::currentTime();
-  if (abs(m_LastConflictCheck.secsTo(now)) > 10) {
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
     bool overwrite = false;
     bool overwritten = false;
     bool regular = false;

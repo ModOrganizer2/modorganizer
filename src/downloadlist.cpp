@@ -75,12 +75,14 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
   if (role == Qt::DisplayRole) {
     return index.row();
   } else if (role == Qt::ToolTipRole) {
+    QString text = m_Manager->getFileName(index.row()) + "\n";
     if (m_Manager->isInfoIncomplete(index.row())) {
-      return tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
+      text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
     } else {
       NexusInfo info = m_Manager->getNexusInfo(index.row());
-      return QString("%1 (ID %2) %3").arg(info.m_ModName).arg(m_Manager->getModID(index.row())).arg(info.m_Version);
+      text += QString("%1 (ID %2) %3").arg(info.m_ModName).arg(m_Manager->getModID(index.row())).arg(info.m_Version);
     }
+    return text;
   } else {
     return QVariant();
   }

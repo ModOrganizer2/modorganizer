@@ -2080,7 +2080,7 @@ QStringList MainWindow::findFiles(const QString &path, const std::function<bool(
   if (dir != NULL) {
     std::vector<FileEntry::Ptr> files = dir->getFiles();
     foreach (FileEntry::Ptr file, files) {
-      if (filter(ToQString(file->getName()))) {
+      if (filter(ToQString(file->getFullPath()))) {
         result.append(ToQString(file->getFullPath()));
       }
     }
@@ -2498,6 +2498,11 @@ void MainWindow::directory_refreshed()
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
   updateProblemsButton();
+
+  for (int i = 0; i < m_ModList.rowCount(); ++i) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+    modInfo->clearCaches();
+  }
 }
 
 

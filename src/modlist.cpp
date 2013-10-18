@@ -373,9 +373,10 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     }
     return true;
   } else if (role == Qt::EditRole) {
+    bool res = false;
     switch (index.column()) {
       case COL_NAME: {
-        return renameMod(modID, value.toString());
+        res = renameMod(modID, value.toString());
       } break;
       case COL_PRIORITY: {
         bool ok = false;
@@ -384,9 +385,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
           m_Profile->setModPriority(modID, newPriority);
 
           emit modlist_changed(index, role);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       case COL_MODID: {
@@ -396,9 +397,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         if (ok) {
           info->setNexusID(newID);
           emit modlist_changed(index, role);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       case COL_VERSION: {
@@ -407,17 +408,21 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         VersionInfo version(value.toString(), scheme);
         if (version.isValid()) {
           info->setVersion(version);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       default: {
         qWarning("edit on column \"%s\" not supported",
                  getColumnName(index.column()).toUtf8().constData());
-        return false;
+        res = false;
       } break;
     }
+    if (res) {
+      emit dataChanged(index, index);
+    }
+    return res;
   } else {
     return false;
   }

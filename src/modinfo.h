@@ -283,6 +283,11 @@ public:
   virtual void endorse(bool doEndorse) = 0;
 
   /**
+   * @brief clear all caches held for this mod
+   */
+  virtual void clearCaches() {}
+
+  /**
    * @brief getter for the mod name
    *
    * @return the mod name
@@ -632,6 +637,11 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse);
+
+  /**
+   * @brief clear all caches held for this mod
+   */
+  virtual void clearCaches();
 
   /**
    * @brief getter for the mod name
