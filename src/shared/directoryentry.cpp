@@ -492,6 +492,12 @@ static bool SupportOptimizedFind()
 }
 
 
+static bool DirCompareByName(const DirectoryEntry *lhs, const DirectoryEntry *rhs)
+{
+  return wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
+}
+
+
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
 {
   WIN32_FIND_DATAW findData;
@@ -523,6 +529,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
       result = ::FindNextFileW(searchHandle, &findData);
     }
   }
+  std::sort(m_SubDirectories.begin(), m_SubDirectories.end(), &DirCompareByName);
   ::FindClose(searchHandle);
 }
 

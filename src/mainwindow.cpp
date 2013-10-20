@@ -59,14 +59,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <appconfig.h>
 #include <utility.h>
 #include <ipluginproxy.h>
+#include <questionboxmemory.h>
 #include <map>
 #include <ctime>
-#include <QTime>
 #include <util.h>
+#include <wchar.h>
+#include <QTime>
 #include <QInputDialog>
 #include <QSettings>
 #include <QWhatsThis>
-#include <wchar.h>
 #include <sstream>
 #include <QProcess>
 #include <QMenu>
@@ -161,6 +162,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   statusBar()->clearMessage();
 
   ui->actionEndorseMO->setVisible(false);
+
+  MOBase::QuestionBoxMemory::init(initSettings.fileName());
 
   updateProblemsButton();
 
@@ -1264,7 +1267,7 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
       (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
       if (QuestionBoxMemory::query(this->isVisible() ? this : NULL,
-            m_Settings.directInterface(), "steamQuery", tr("Start Steam?"),
+            "steamQuery", tr("Start Steam?"),
             tr("Steam is required to be running already to correctly start the game. "
                "Should MO try to start steam now?"),
             QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
@@ -3094,7 +3097,7 @@ void MainWindow::testExtractBSA(int modIndex)
 
   QFileInfoList archives = dir.entryInfoList(QStringList("*.bsa"));
   if (archives.length() != 0 &&
-      (QuestionBoxMemory::query(this, m_Settings.directInterface(), "unpackBSA", tr("Extract BSA"),
+      (QuestionBoxMemory::query(this, "unpackBSA", tr("Extract BSA"),
                              tr("This mod contains at least one BSA. Do you want to unpack it?\n"
                                 "(This removes the BSA after completion. If you don't know about BSAs, just select no)"),
                              QDialogButtonBox::Yes | QDialogButtonBox::No, QDialogButtonBox::No) == QMessageBox::Yes)) {

@@ -27,7 +27,6 @@ SOURCES += \
     savegamegamebryo.cpp \
     savegame.cpp \
     report.cpp \
-    questionboxmemory.cpp \
     queryoverwritedialog.cpp \
     profilesdialog.cpp \
     profile.cpp \
@@ -95,7 +94,6 @@ HEADERS  += \
     savegamegamebyro.h \
     savegame.h \
     report.h \
-    questionboxmemory.h \
     queryoverwritedialog.h \
     profilesdialog.h \
     profile.h \
@@ -156,7 +154,6 @@ FORMS    += \
     settingsdialog.ui \
 		selectiondialog.ui \
     savegameinfowidget.ui \
-    questionboxmemory.ui \
     queryoverwritedialog.ui \
     profilesdialog.ui \
     overwriteinfodialog.ui \
