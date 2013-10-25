@@ -2134,7 +2134,7 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
       }
     } catch (const std::runtime_error&) {
       qWarning("\"%s\" not set up as executable", executable.toUtf8().constData());
-      return INVALID_HANDLE_VALUE;
+      binary = QFileInfo(executable);
     }
   }
 

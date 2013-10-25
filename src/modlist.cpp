@@ -169,10 +169,16 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int category = modInfo->getPrimaryCategory();
       if (category != -1) {
         CategoryFactory &categoryFactory = CategoryFactory::instance();
-        try {
-          return categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(category));
-        } catch (const std::exception &e) {
-          qCritical("failed to retrieve category name: %s", e.what());
+        if (categoryFactory.categoryExists(category)) {
+          try {
+            return categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(category));
+          } catch (const std::exception &e) {
+            qCritical("failed to retrieve category name: %s", e.what());
+            return QString();
+          }
+        } else {
+          qWarning("category %d doesn't exist (may have been removed)", category);
+          modInfo->setCategory(category, false);
           return QString();
         }
       } else {

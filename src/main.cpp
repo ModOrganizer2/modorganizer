@@ -400,6 +400,27 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
+    int edition = 0;
+    if (settings.contains("game_edition")) {
+      edition = settings.value("game_edition").toInt();
+    } else {
+      std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
+      if (editions.size() < 2) {
+        edition = 0;
+      } else {
+        SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), NULL);
+        int index = 0;
+        for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
+          selection.addChoice(ToQString(*iter), "", index++);
+        }
+        if (selection.exec() == QDialog::Rejected) {
+          return -1;
+        } else {
+          settings.setValue("game_edition", selection.getChoiceData().toInt());
+        }
+      }
+    }
+
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
     ExecutablesList executablesList;

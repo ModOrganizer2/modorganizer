@@ -30,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <shlobj.h>
 #include <sstream>
 #include <cassert>
+#include <boost/assign.hpp>
 
 namespace MOShared {
 
@@ -182,6 +183,11 @@ std::wstring GameInfo::getTutorialDir() const
 bool GameInfo::requiresSteam() const
 {
   return FileExists(getGameDirectory().append(L"\\steam_api.dll"));
+}
+
+std::vector<std::wstring> GameInfo::getSteamVariants() const
+{
+  return boost::assign::list_of(L"Regular");
 }
 
 

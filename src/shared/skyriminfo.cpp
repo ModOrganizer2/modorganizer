@@ -169,7 +169,7 @@ std::wstring SkyrimInfo::getOMODExt()
 }
 
 
-std::wstring SkyrimInfo::getSteamAPPId()
+std::wstring SkyrimInfo::getSteamAPPId(int) const
 {
   return L"72850";
 }

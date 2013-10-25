@@ -136,7 +136,7 @@ std::wstring FalloutNVInfo::getOMODExt()
 }
 
 
-std::wstring FalloutNVInfo::getSteamAPPId()
+std::wstring FalloutNVInfo::getSteamAPPId(int) const
 {
   return L"22380";
 }

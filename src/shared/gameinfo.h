@@ -137,7 +137,8 @@ public:
 
   virtual std::wstring getOMODExt() = 0;
 
-  virtual std::wstring getSteamAPPId() = 0;
+  virtual std::vector<std::wstring> getSteamVariants() const;
+  virtual std::wstring getSteamAPPId(int variant = 0) const = 0;
 
   virtual std::wstring getSEName() = 0;
 

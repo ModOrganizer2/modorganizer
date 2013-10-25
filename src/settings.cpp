@@ -159,7 +159,7 @@ bool Settings::automaticLoginEnabled() const
 
 QString Settings::getSteamAppID() const
 {
-  return m_Settings.value("Settings/app_id", ToQString(GameInfo::instance().getSteamAPPId())).toString();
+  return m_Settings.value("Settings/app_id", ToQString(GameInfo::instance().getSteamAPPId(m_Settings.value("game_edition", 0).toInt()))).toString();
 }
 
 QString Settings::getDownloadDirectory() const

@@ -560,7 +560,6 @@ void ModInfoRegular::addNexusCategory(int categoryID)
   m_Categories.insert(CategoryFactory::instance().resolveNexusID(categoryID));
 }
 
-
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {
   if (m_EndorsedState != ENDORSED_NEVER) {

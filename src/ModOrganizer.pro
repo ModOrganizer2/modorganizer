@@ -3,21 +3,21 @@ CONFIG += ordered
 
 
 SUBDIRS = bsatk \
-					shared \
-					uibase \
-					organizer \
-					hookdll \
-					archive \
-					helper \
+          shared \
+          uibase \
+          organizer \
+          hookdll \
+          archive \
+          helper \
           plugins \
           proxydll \
           nxmhandler \
-    BossDummy \
-    pythonRunner \
-    esptk
+          BossDummy \
+          pythonRunner \
+          esptk
 
 hookdll.depends = shared
-organizer.depends = shared, uibase, plugins
+organizer.depends = shared uibase plugins
 
 CONFIG(debug, debug|release) {
     DESTDIR = outputd

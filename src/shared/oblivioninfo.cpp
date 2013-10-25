@@ -243,7 +243,7 @@ std::wstring OblivionInfo::getOMODExt()
 }
 
 
-std::wstring OblivionInfo::getSteamAPPId()
+std::wstring OblivionInfo::getSteamAPPId(int) const
 {
   return L"22330";
 }

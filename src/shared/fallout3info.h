@@ -66,7 +66,8 @@ public:
   virtual std::wstring getReferenceDataFile();
   virtual std::wstring getOMODExt();
 
-  virtual std::wstring getSteamAPPId();
+  virtual std::vector<std::wstring> getSteamVariants() const;
+  virtual std::wstring getSteamAPPId(int variant = 0) const;
 
   virtual std::wstring getSEName();
 
