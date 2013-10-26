@@ -254,17 +254,19 @@ void ModInfoDialog::refreshLists()
     } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
                (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
       QImage image = QImage(fileName);
-      if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-        image = image.scaledToWidth(128);
-      } else {
-        image = image.scaledToHeight(96);
-      }
+      if (!image.isNull()) {
+        if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
+          image = image.scaledToWidth(128);
+        } else {
+          image = image.scaledToHeight(96);
+        }
 
-      QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
-      thumbnailButton->setIconSize(QSize(image.width(), image.height()));
-      connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
-      m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
-      ui->thumbnailArea->addWidget(thumbnailButton);
+        QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
+        thumbnailButton->setIconSize(QSize(image.width(), image.height()));
+        connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
+        m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
+        ui->thumbnailArea->addWidget(thumbnailButton);
+      }
     }
   }
 
@@ -400,7 +402,13 @@ void ModInfoDialog::openTextFile(const QString &fileName)
   textFile.open(QIODevice::ReadOnly);
   QByteArray buffer = textFile.readAll();
   QTextCodec *codec = QTextCodec::codecForUtfText(buffer, m_UTF8Codec);
-  ui->textFileView->setText(codec->toUnicode(buffer));
+  QString text = codec->toUnicode(buffer);
+  if (codec->fromUnicode(text) != buffer) {
+    qDebug("conversion failed assuming local encoding");
+    codec = QTextCodec::codecForLocale();
+    text = codec->toUnicode(buffer);
+  }
+  ui->textFileView->setText(text);
   ui->textFileView->setProperty("currentFile", fileName);
   ui->textFileView->setProperty("encoding", codec->name());
   ui->saveTXTButton->setEnabled(false);

@@ -510,7 +510,7 @@ private slots: // ui slots
   void on_actionEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
+  void on_bsaList_itemMoved();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_compactBox_toggled(bool checked);

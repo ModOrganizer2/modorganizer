@@ -577,7 +577,7 @@ p, li { white-space: pre-wrap; }
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="espTab">
            <property name="sizePolicy">
@@ -725,7 +725,7 @@ p, li { white-space: pre-wrap; }
              <number>6</number>
             </property>
             <item>
-             <widget class="QTreeWidget" name="bsaList">
+             <widget class="MOBase::SortableTreeWidget" name="bsaList">
               <property name="contextMenuPolicy">
                <enum>Qt::CustomContextMenu</enum>
               </property>
@@ -742,7 +742,7 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="showDropIndicator" stdset="0">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="dragEnabled">
                <bool>false</bool>
@@ -751,10 +751,10 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                <bool>false</bool>
               </property>
               <property name="dragDropMode">
-               <enum>QAbstractItemView::NoDragDrop</enum>
+               <enum>QAbstractItemView::DragDrop</enum>
               </property>
               <property name="defaultDropAction">
-               <enum>Qt::IgnoreAction</enum>
+               <enum>Qt::MoveAction</enum>
               </property>
               <property name="selectionMode">
                <enum>QAbstractItemView::SingleSelection</enum>
@@ -768,17 +768,18 @@ BSAs checked here are loaded in such a way that your installation order is obeye
               <property name="itemsExpandable">
                <bool>true</bool>
               </property>
+              <property name="columnCount">
+               <number>1</number>
+              </property>
+              <attribute name="headerVisible">
+               <bool>false</bool>
+              </attribute>
               <attribute name="headerDefaultSectionSize">
                <number>200</number>
               </attribute>
               <column>
                <property name="text">
                 <string>File</string>
-               </property>
-              </column>
-              <column>
-               <property name="text">
-                <string>Mod</string>
                </property>
               </column>
              </widget>
@@ -1223,6 +1224,11 @@ Right now this has very limited functionality</string>
    <class>ModListView</class>
    <extends>QTreeView</extends>
    <header>modlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MOBase::SortableTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>sortabletreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

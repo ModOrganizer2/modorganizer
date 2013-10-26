@@ -205,7 +205,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
 
-
   QMenu *linkMenu = new QMenu(this);
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
@@ -246,6 +245,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
+
+  connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(on_bsaList_itemMoved()));
 
   connect(ui->bsaWarning, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
 
@@ -681,7 +682,7 @@ bool MainWindow::saveCurrentLists()
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }
 
-  // ensure the archive list exists
+  // save only if the file doesn't exist at all, changes made in the ui are saved immediately
   if (!QFile::exists(m_CurrentProfile->getArchivesFileName())) {
     saveArchiveList();
   }
@@ -883,8 +884,7 @@ void MainWindow::hideSaveGameInfo()
   }
 }
 
-
-bool MainWindow::eventFilter(QObject* object, QEvent *event)
+bool MainWindow::eventFilter(QObject *object, QEvent *event)
 {
   if ((object == ui->savegameList) &&
       ((event->type() == QEvent::Leave) || (event->type() == QEvent::WindowDeactivate))) {
@@ -1802,6 +1802,7 @@ void MainWindow::refreshBSAList()
       subItem = items.at(0);
     } else {
       subItem = new QTreeWidgetItem(QStringList(ToQString(origin.getName())));
+      subItem->setFlags(subItem->flags() & ~Qt::ItemIsDragEnabled);
       ui->bsaList->addTopLevelItem(subItem);
     }
     subItem->addChild(iter->second);
@@ -4649,7 +4650,7 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
   menu.exec(ui->bsaList->mapToGlobal(pos));
 }
 
-void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
+void MainWindow::on_bsaList_itemMoved()
 {
   saveArchiveList();
   m_CheckBSATimer.start(500);
