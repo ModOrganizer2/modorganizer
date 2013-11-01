@@ -137,6 +137,7 @@ public:
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
   virtual MOBase::IDownloadManager *downloadManager();
   virtual MOBase::IPluginList *pluginList();
+  virtual MOBase::IModList *modList();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
 
@@ -510,7 +511,7 @@ private slots: // ui slots
   void on_actionEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void on_bsaList_itemMoved();
+  void bsaList_itemMoved();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_compactBox_toggled(bool checked);
@@ -531,6 +532,7 @@ private slots: // ui slots
   void on_categoriesList_itemSelectionChanged();
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
+  void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
 };
 
 #endif // MAINWINDOW_H

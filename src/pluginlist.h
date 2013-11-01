@@ -140,6 +140,7 @@ public:
   virtual int priority(const QString &name) const;
   virtual int loadOrder(const QString &name) const;
   virtual bool isMaster(const QString &name) const;
+  virtual QString origin(const QString &name) const;
 
 public: // implementation of the QAbstractTableModel interface
 

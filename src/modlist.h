@@ -26,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "profile.h"
 
+#include <imodlist.h>
+
 #include <QFile>
 #include <QListWidget>
 #include <QNetworkReply>
@@ -41,7 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * This is used in a view in the main window of MO. It combines general information about
  * the mods from ModInfo with status information from the Profile
  **/
-class ModList : public QAbstractItemModel
+class ModList : public QAbstractItemModel, public MOBase::IModList
 {
   Q_OBJECT
 
@@ -91,6 +93,17 @@ public:
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
+
+public:
+
+  /// \copydoc MOBase::IModList::state
+  virtual ModState state(const QString &name) const;
+
+  /// \copydoc MOBase::IModList::priority
+  virtual int priority(const QString &name) const;
+
+  /// \copydoc MOBase::IModList::setPriority
+  virtual bool setPriority(const QString &name, int newPriority);
 
 public: // implementation of virtual functions of QAbstractItemModel
 

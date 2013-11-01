@@ -551,6 +551,46 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit modorder_changed();
 }
 
+IModList::ModState ModList::state(const QString &name) const
+{
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return IModList::STATE_MISSING;
+  } else {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    if (modInfo->canBeEnabled()) {
+      return m_Profile->modEnabled(modIndex) ? IModList::STATE_ACTIVE : IModList::STATE_INACTIVE;
+    } else {
+      return IModList::STATE_NOTOPTIONAL;
+    }
+  }
+}
+
+int ModList::priority(const QString &name) const
+{
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return -1;
+  } else {
+    return m_Profile->getModPriority(modIndex);
+  }
+}
+
+bool ModList::setPriority(const QString &name, int newPriority)
+{
+  if ((newPriority < 0) || (newPriority >= static_cast<int>(m_Profile->numRegularMods()))) {
+    return false;
+  }
+
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return false;
+  } else {
+    m_Profile->setModPriority(modIndex, newPriority);
+    notifyChange(modIndex);
+    return true;
+  }
+}
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {

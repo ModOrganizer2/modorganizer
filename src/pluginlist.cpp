@@ -611,6 +611,15 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+QString PluginList::origin(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].m_OriginName;
+  }
+}
 
 void PluginList::updateIndices()
 {

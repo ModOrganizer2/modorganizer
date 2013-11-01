@@ -246,7 +246,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
-  connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(on_bsaList_itemMoved()));
+  connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(bsaList_itemMoved()));
 
   connect(ui->bsaWarning, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
 
@@ -1673,7 +1673,7 @@ void MainWindow::refreshSaveList()
 
 void MainWindow::refreshLists()
 {
-  if (m_DirectoryStructure->isPopulated()) {
+  if ((m_CurrentProfile != NULL) && m_DirectoryStructure->isPopulated()) {
     refreshESPList();
     refreshBSAList();
   } // no point in refreshing lists if no files have been added to the directory tree
@@ -2102,6 +2102,11 @@ IDownloadManager *MainWindow::downloadManager()
 IPluginList *MainWindow::pluginList()
 {
   return &m_PluginList;
+}
+
+IModList *MainWindow::modList()
+{
+  return &m_ModList;
 }
 
 HANDLE MainWindow::startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile)
@@ -4650,12 +4655,18 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
   menu.exec(ui->bsaList->mapToGlobal(pos));
 }
 
-void MainWindow::on_bsaList_itemMoved()
+void MainWindow::bsaList_itemMoved()
 {
   saveArchiveList();
   m_CheckBSATimer.start(500);
 }
 
+
+void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
+{
+  saveArchiveList();
+  m_CheckBSATimer.start(500);
+}
 
 void MainWindow::on_actionProblems_triggered()
 {
@@ -4836,3 +4847,4 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 {
   m_DownloadManager.setShowHidden(checked);
 }
+
