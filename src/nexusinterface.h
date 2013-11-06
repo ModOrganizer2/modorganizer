@@ -307,6 +307,7 @@ private:
   std::list<NXMRequestInfo> m_ActiveRequest;
   QQueue<NXMRequestInfo> m_RequestQueue;
 
+  MOBase::VersionInfo m_MOVersion;
   QString m_NMMVersion;
 
 };

@@ -551,19 +551,49 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit modorder_changed();
 }
 
-IModList::ModState ModList::state(const QString &name) const
+void ModList::modInfoAboutToChange(ModInfo::Ptr info)
 {
-  unsigned int modIndex = ModInfo::getIndex(name);
-  if (modIndex == UINT_MAX) {
-    return IModList::STATE_MISSING;
+  m_ChangeInfo.name = info->name();
+  m_ChangeInfo.state = state(info->name());
+}
+
+void ModList::modInfoChanged(ModInfo::Ptr info)
+{
+  if (info->name() == m_ChangeInfo.name) {
+    IModList::ModStates newState = state(info->name());
+    if (m_ChangeInfo.state != newState) {
+      m_ModStateChanged(info->name(), newState);
+    }
   } else {
+    qCritical("modInfoChanged not called after modInfoAboutToChange");
+  }
+}
+
+IModList::ModStates ModList::state(const QString &name) const
+{
+  ModStates result;
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex != UINT_MAX) {
+    result |= IModList::STATE_EXISTS;
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    if (modInfo->isEmpty()) {
+      result |= IModList::STATE_EMPTY;
+    }
+    if (modInfo->endorsedState() == ModInfo::ENDORSED_TRUE) {
+      result |= IModList::STATE_ENDORSED;
+    }
+    if (modInfo->isValid()) {
+      result |= IModList::STATE_VALID;
+    }
     if (modInfo->canBeEnabled()) {
-      return m_Profile->modEnabled(modIndex) ? IModList::STATE_ACTIVE : IModList::STATE_INACTIVE;
+      if (m_Profile->modEnabled(modIndex)) {
+        result |= IModList::STATE_ACTIVE;
+      }
     } else {
-      return IModList::STATE_NOTOPTIONAL;
+      result |= IModList::STATE_ESSENTIAL;
     }
   }
+  return result;
 }
 
 int ModList::priority(const QString &name) const
@@ -590,6 +620,13 @@ bool ModList::setPriority(const QString &name, int newPriority)
     notifyChange(modIndex);
     return true;
   }
+}
+
+
+bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
+{
+  auto conn = m_ModStateChanged.connect(func);
+  return conn.connected();
 }
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)

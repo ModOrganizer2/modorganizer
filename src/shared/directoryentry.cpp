@@ -494,7 +494,7 @@ static bool SupportOptimizedFind()
 
 static bool DirCompareByName(const DirectoryEntry *lhs, const DirectoryEntry *rhs)
 {
-  return wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
+  return _wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
 }
 
 

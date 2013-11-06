@@ -199,10 +199,11 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
   readLockedOrderFrom(lockedOrderFile);
 
-  refreshLoadOrder();
-
   emit layoutChanged();
+  refreshLoadOrder();
   emit dataChanged(this->index(0, 0), this->index(m_ESPs.size(), 1));
+
+  m_Refreshed();
 }
 
 
@@ -534,6 +535,7 @@ void PluginList::syncLoadOrder()
 
 void PluginList::refreshLoadOrder()
 {
+  emit layoutAboutToBeChanged();
   syncLoadOrder();
   // set priorities according to locked load order
   std::map<int, QString> lockedLoadOrder;
@@ -550,9 +552,9 @@ void PluginList::refreshLoadOrder()
       // find the location to insert at
       while ((targetPrio < static_cast<int>(m_ESPs.size() - 1)) &&
              (m_ESPs[m_ESPsByPriority[targetPrio]].m_LoadOrder < iter->first)) {
-        if (QString::compare(m_ESPs[m_ESPsByPriority[targetPrio]].m_Name, iter->second) != 0) {
+//        if (QString::compare(m_ESPs[m_ESPsByPriority[targetPrio]].m_Name, iter->second) != 0) {
           ++targetPrio;
-        }
+//        }
       }
 
       if (static_cast<size_t>(targetPrio) >= m_ESPs.size()) {
@@ -569,6 +571,7 @@ void PluginList::refreshLoadOrder()
       }
     }
   }
+  emit layoutChanged();
 }
 
 IPluginList::PluginState PluginList::state(const QString &name) const
@@ -619,6 +622,12 @@ QString PluginList::origin(const QString &name) const
   } else {
     return m_ESPs[iter->second].m_OriginName;
   }
+}
+
+bool PluginList::onRefreshed(const std::function<void ()> &callback)
+{
+  auto conn = m_Refreshed.connect(callback);
+  return conn.connected();
 }
 
 void PluginList::updateIndices()
@@ -743,10 +752,11 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 }
 
 
-bool PluginList::setData(const QModelIndex &index, const QVariant &value, int role)
+bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)
 {
   if (role == Qt::CheckStateRole) {
-    m_ESPs[index.row()].m_Enabled = value.toInt() == Qt::Checked;
+    m_ESPs[modIndex.row()].m_Enabled = value.toInt() == Qt::Checked;
+    emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
     startSaveTime();
@@ -829,14 +839,17 @@ void PluginList::setPluginPriority(int row, int &newPriority)
       for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
         --m_ESPs.at(m_ESPsByPriority.at(i)).m_Priority;
       }
+      emit dataChanged(index(oldPriority + 1, 0), index(newPriorityTemp, columnCount()));
     } else {
       for (int i = newPriorityTemp; i < oldPriority; ++i) {
         ++m_ESPs.at(m_ESPsByPriority.at(i)).m_Priority;
       }
+      emit dataChanged(index(newPriorityTemp, 0), index(oldPriority - 1, columnCount()));
       ++newPriority;
     }
 
     m_ESPs.at(row).m_Priority = newPriorityTemp;
+    emit dataChanged(index(row, 0), index(row, columnCount()));
   } catch (const std::out_of_range&) {
     reportError(tr("failed to restore load order for %1").arg(m_ESPs[row].m_Name));
   }
@@ -868,9 +881,9 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
   for (std::vector<int>::const_iterator iter = rows.begin(); iter != rows.end(); ++iter) {
     setPluginPriority(*iter, newPriority);
   }
-  refreshLoadOrder();
 
   emit layoutChanged();
+  refreshLoadOrder();
 
   startSaveTime();
 }
@@ -958,7 +971,6 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         int newPriority = m_ESPs[idx.row()].m_Priority + diff;
         if ((newPriority >= 0) && (newPriority < rowCount())) {
           setPluginPriority(idx.row(), newPriority);
-          emit dataChanged(this->index(idx.row(), 0), this->index(idx.row(), this->columnCount() - 1));
         }
       }
       refreshLoadOrder();

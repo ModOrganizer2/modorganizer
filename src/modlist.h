@@ -32,7 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidget>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
-
+#include <boost/signals2.hpp>
 #include <set>
 #include <vector>
 #include <QVector>
@@ -60,6 +60,8 @@ public:
 
     COL_LASTCOLUMN = COL_PRIORITY
   };
+
+  typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
 
 public:
 
@@ -94,16 +96,22 @@ public:
 
   void changeModPriority(int sourceIndex, int newPriority);
 
+  void modInfoAboutToChange(ModInfo::Ptr info);
+  void modInfoChanged(ModInfo::Ptr info);
+
 public:
 
   /// \copydoc MOBase::IModList::state
-  virtual ModState state(const QString &name) const;
+  virtual ModStates state(const QString &name) const;
 
   /// \copydoc MOBase::IModList::priority
   virtual int priority(const QString &name) const;
 
   /// \copydoc MOBase::IModList::setPriority
   virtual bool setPriority(const QString &name, int newPriority);
+
+  /// \copydoc MOBase::IModList::onModStateChanged
+  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func);
 
 public: // implementation of virtual functions of QAbstractItemModel
 
@@ -245,6 +253,11 @@ private:
     unsigned int categoryOrder;
   };
 
+  struct TModInfoChange {
+    QString name;
+    QFlags<IModList::ModStates> state;
+  };
+
 private:
 
   Profile *m_Profile;
@@ -257,6 +270,10 @@ private:
   QFontMetrics m_FontMetrics;
 
   bool m_DropOnItems;
+
+  TModInfoChange m_ChangeInfo;
+
+  SignalModStateChanged m_ModStateChanged;
 
 };
 

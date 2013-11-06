@@ -20,12 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLIST_H
 #define PLUGINLIST_H
 
+#include <directoryentry.h>
+#include <ipluginlist.h>
 #include <QString>
 #include <QListWidget>
 #include <QTimer>
+#include <boost/signals2.hpp>
 #include <vector>
-#include <directoryentry.h>
-#include <ipluginlist.h>
 
 
 /**
@@ -44,6 +45,8 @@ public:
 
     COL_LASTCOLUMN = COL_MODINDEX
   };
+
+  typedef boost::signals2::signal<void ()> SignalRefreshed;
 
 public:
 
@@ -141,6 +144,7 @@ public:
   virtual int loadOrder(const QString &name) const;
   virtual bool isMaster(const QString &name) const;
   virtual QString origin(const QString &name) const;
+  virtual bool onRefreshed(const std::function<void()> &callback);
 
 public: // implementation of the QAbstractTableModel interface
 
@@ -239,6 +243,8 @@ private:
   QTextCodec *m_LocalCodec;
 
   mutable QTimer m_SaveTimer;
+
+  SignalRefreshed m_Refreshed;
 
 };
 

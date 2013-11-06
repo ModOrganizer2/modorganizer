@@ -652,7 +652,7 @@ Please note that MO does identify itself as MO to the webserver, it's not lying 
 tl;dr-version: If Nexus-features don't work, insert the current version number of NMM here and try again.</string>
            </property>
            <property name="inputMask">
-            <string notr="true">009.009.009; </string>
+            <string notr="true">009.009.009</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>

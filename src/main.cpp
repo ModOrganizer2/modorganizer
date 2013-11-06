@@ -140,7 +140,7 @@ bool bootstrap()
           QObject::tr("The current user account doesn't have the required access rights to run "
              "Mod Organizer. The neccessary changes can be made automatically (the MO directory "
              "will be made writable for the current user account). You will be asked to run "
-             "\"helper.exe\" with administrative rights)."),
+             "\"helper.exe\" with administrative rights."),
              QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
         if (!Helper::init(GameInfo::instance().getOrganizerDirectory())) {
           return false;

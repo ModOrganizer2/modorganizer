@@ -487,6 +487,7 @@ void MainWindow::updateProblemsButton()
     ui->actionProblems->setIconText(tr("Problems"));
     ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
   } else {
+    ui->actionProblems->setEnabled(false);
     ui->actionProblems->setIconText(tr("No Problems"));
     ui->actionProblems->setToolTip(tr("Everything seems to be in order"));
   }
@@ -983,6 +984,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
+      diagnose->onInvalidated([&] () { this->updateProblemsButton(); });
     }
   }
   { // tool plugins
@@ -2178,7 +2180,7 @@ QString MainWindow::fullDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_PLUGINSNOTLOADED: {
-      QString result = tr("The following Plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:<ul>");
+      QString result = tr("The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:") + "<ul>";
       foreach (const QString &plugin, m_UnloadedPlugins) {
         result += "<li>" + plugin + "</li>";
       }
@@ -2985,8 +2987,9 @@ void MainWindow::unendorse_clicked()
 
 void MainWindow::overwriteClosed(int)
 {
-  QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
+  OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
   if (dialog != NULL) {
+    m_ModList.modInfoChanged(dialog->modInfo());
     dialog->deleteLater();
   }
 }
@@ -2994,6 +2997,7 @@ void MainWindow::overwriteClosed(int)
 
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
 {
+  m_ModList.modInfoAboutToChange(modInfo);
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
     QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
@@ -3019,6 +3023,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     dialog.exec();
     modInfo->saveMeta();
     emit modInfoDisplayed();
+    m_ModList.modInfoChanged(modInfo);
   }
 
   if (m_CurrentProfile->modEnabled(index)) {

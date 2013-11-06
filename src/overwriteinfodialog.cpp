@@ -72,7 +72,8 @@ private:
 
 OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(NULL),
-    m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL)
+    m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL),
+    m_ModInfo(modInfo)
 {
   ui->setupUi(this);
 
@@ -100,7 +101,6 @@ OverwriteInfoDialog::~OverwriteInfoDialog()
 {
   delete ui;
 }
-
 
 bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)
 {

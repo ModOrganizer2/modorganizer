@@ -37,6 +37,8 @@ public:
   explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent = 0);
   ~OverwriteInfoDialog();
 
+  ModInfo::Ptr modInfo() const { return m_ModInfo; }
+
 private:
 
   void openFile(const QModelIndex &index);
@@ -61,6 +63,8 @@ private:
   QAction *m_RenameAction;
   QAction *m_OpenAction;
   QAction *m_NewFolderAction;
+
+  ModInfo::Ptr m_ModInfo;
 
 };
 

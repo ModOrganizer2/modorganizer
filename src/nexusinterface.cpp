@@ -22,8 +22,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
+#include <QApplication>
 #include <utility.h>
 #include <regex>
+#include <util.h>
 
 using QtJson::Json;
 
@@ -148,6 +150,13 @@ NexusInterface::NexusInterface()
 
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+
+
+  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
+
+  m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
+                            version.dwFileVersionMS & 0xFFFF,
+                            version.dwFileVersionLS >> 16);
 }
 
 
@@ -396,8 +405,10 @@ void NexusInterface::nextRequest()
 
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-#pragma message("automatically insert the correct version number")
-  request.setRawHeader("User-Agent", QString("Mod Organizer v1.0.5 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
+  request.setRawHeader("User-Agent",
+      QString("Mod Organizer v%1 (compatible to Nexus Client v%2)")
+         .arg(m_MOVersion.displayString())
+         .arg(m_NMMVersion).toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 

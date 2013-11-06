@@ -21,6 +21,9 @@ public:
   ~ProblemsDialog();
 
   bool hasProblems() const;
+private:
+
+  void runDiagnosis();
 
 private slots:
 
@@ -31,6 +34,7 @@ private slots:
 private:
 
   Ui::ProblemsDialog *ui;
+  std::vector<MOBase::IPluginDiagnose *> m_DiagnosePlugins;
 };
 
 #endif // PROBLEMSDIALOG_H

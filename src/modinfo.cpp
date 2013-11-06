@@ -827,6 +827,15 @@ ModInfoOverwrite::ModInfoOverwrite()
 }
 
 
+bool ModInfoOverwrite::isEmpty() const
+{
+  QDirIterator iter(absolutePath(), QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+  if (!iter.hasNext()) return true;
+  iter.next();
+  if ((iter.fileName() == "meta.ini") && !iter.hasNext()) return true;
+  return false;
+}
+
 QString ModInfoOverwrite::absolutePath() const
 {
   return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOverwriteDir()));

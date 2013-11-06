@@ -866,6 +866,7 @@ public:
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const { return m_StartupTime; }
