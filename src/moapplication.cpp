@@ -19,7 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "moapplication.h"
 #include "report.h"
-#include "utility.h"
+#include <utility.h>
 #include <appconfig.h>
 #include <QFile>
 #include <QStringList>

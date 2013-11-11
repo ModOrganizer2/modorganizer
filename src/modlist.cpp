@@ -564,6 +564,9 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
     if (m_ChangeInfo.state != newState) {
       m_ModStateChanged(info->name(), newState);
     }
+    int row = ModInfo::getIndex(info->name());
+    info->testValid();
+    emit dataChanged(index(row, 0), index(row, columnCount()));
   } else {
     qCritical("modInfoChanged not called after modInfoAboutToChange");
   }

@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "nxmaccessmanager.h"
 
-#include "utility.h"
+#include <utility.h>
 #include <gameinfo.h>
 #include <versioninfo.h>
 #include <imodrepositorybridge.h>
