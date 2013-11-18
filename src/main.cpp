@@ -60,7 +60,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "moapplication.h"
 #include "tutorialmanager.h"
-#include <QLibrary>
 #include <iostream>
 #include <QMessageBox>
 #include <QSharedMemory>
@@ -156,6 +155,7 @@ bool bootstrap()
 
   // verify the hook-dll exists
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
+
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
   if (dllMod == NULL) {
     throw windows_error("hook.dll is missing or invalid");

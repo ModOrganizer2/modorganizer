@@ -506,7 +506,6 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-
 bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
                                     const QString &version, const QString &newestVersion, int categoryID)
 {
@@ -528,7 +527,6 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress.setValue(0);
   m_InstallationProgress.setWindowModality(Qt::WindowModal);
   m_InstallationProgress.show();
-
   if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(targetDirectory)).c_str(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),

@@ -1,16 +1,20 @@
 import qbs.base 1.0
 
-Application {
-    name: 'Shared'
+StaticLibrary {
+    name: {
+        print(qbs.getenv("BOOSTPATH") + "/stage/lib")
+        return 'Shared'
+    }
 
     Depends { name: 'cpp' }
     Depends { name: 'BSAToolkit' }
 
     cpp.defines: []
-    cpp.libraryPaths: [ qbs.getenv("BOOSTPATH") ]
-    cpp.includePaths: [ 'bsatk', qbs.getenv("BOOSTPATH") ]
+    cpp.libraryPaths: [ qbs.getenv("BOOSTPATH") + "/stage/lib" ]
+    cpp.includePaths: [ '../bsatk', qbs.getenv("BOOSTPATH") ]
     files: [
         '*.h',
-        '*.cpp'
+        '*.cpp',
+        '*.inc'
     ]
 }

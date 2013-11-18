@@ -188,8 +188,13 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->modList->header()->installEventFilter(&m_ModList);
   if (initSettings.contains("mod_list_state")) {
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
+  } else {
+    // hide these columns by default
+    ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
   }
-  ui->modList->header()->setSectionHidden(0, false); // prevent the name-column from being hidden
+
+  ui->modList->header()->setSectionHidden(ModList::COL_NAME, false); // prevent the name-column from being hidden
   ui->modList->installEventFilter(&m_ModList);
 
   // set up plugin list
@@ -1364,10 +1369,12 @@ void MainWindow::startExeAction()
 }
 
 
-void MainWindow::refreshModList()
+void MainWindow::refreshModList(bool saveChanges)
 {
   // don't lose changes!
-  m_CurrentProfile->writeModlistNow(true);
+  if (saveChanges) {
+    m_CurrentProfile->writeModlistNow(true);
+  }
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
   m_CurrentProfile->refreshModStatus();
 
@@ -2096,6 +2103,32 @@ QStringList MainWindow::findFiles(const QString &path, const std::function<bool(
   return result;
 }
 
+QList<IOrganizer::FileInfo> MainWindow::findFileInfos(const QString &path, const std::function<bool (const IOrganizer::FileInfo &)> &filter) const
+{
+  QList<IOrganizer::FileInfo> result;
+  DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
+  if (dir != NULL) {
+    std::vector<FileEntry::Ptr> files = dir->getFiles();
+    foreach (FileEntry::Ptr file, files) {
+      FileInfo info;
+      info.filePath = ToQString(file->getFullPath());
+      bool fromArchive = false;
+      info.origins.append(ToQString(m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive)).getName()));
+      info.archive = fromArchive ? ToQString(file->getArchive()) : "";
+      foreach (int idx, file->getAlternatives()) {
+        info.origins.append(ToQString(m_DirectoryStructure->getOriginByID(idx).getName()));
+      }
+
+      if (filter(info)) {
+        result.append(info);
+      }
+    }
+  } else {
+    qWarning("directory %s not found", qPrintable(path));
+  }
+  return result;
+}
+
 IDownloadManager *MainWindow::downloadManager()
 {
   return &m_DownloadManager;
@@ -2161,6 +2194,9 @@ std::vector<unsigned int> MainWindow::activeProblems() const
   if (m_UnloadedPlugins.size() != 0) {
     problems.push_back(PROBLEM_PLUGINSNOTLOADED);
   }
+  if (m_PluginList.enabledCount() > 256) {
+    problems.push_back(PROBLEM_TOOMANYPLUGINS);
+  }
   return problems;
 }
 
@@ -2169,6 +2205,9 @@ QString MainWindow::shortDescription(unsigned int key) const
   switch (key) {
     case PROBLEM_PLUGINSNOTLOADED: {
       return tr("Some plugins could not be loaded");
+    } break;
+    case PROBLEM_TOOMANYPLUGINS: {
+      return tr("Too many esps and esms enabled");
     } break;
     default: {
       return tr("Description missing");
@@ -2186,6 +2225,10 @@ QString MainWindow::fullDescription(unsigned int key) const
       }
       result += "<ul>";
       return result;
+    } break;
+    case PROBLEM_TOOMANYPLUGINS: {
+      return tr("The game doesn't allow more than 256 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or "
+                "merge some plugins into one. You can find a guide here: <a href=\"http://wiki.step-project.com/Guide:Merging_Plugins\">http://wiki.step-project.com/Guide:Merging_Plugins</a>");
     } break;
     default: {
       return tr("Description missing");
@@ -3195,6 +3238,7 @@ void MainWindow::syncOverwrite()
     modInfo->testValid();
     refreshDirectoryStructure();
   }
+
 }
 
 void MainWindow::createModFromOverwrite()

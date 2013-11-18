@@ -186,7 +186,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QVariant();
       }
     } else if (column == COL_INSTALLTIME) {
-      return modInfo->creationTime();
+      // display installation time for mods that can be updated
+      if (modInfo->canBeUpdated()) {
+        return modInfo->creationTime();
+      } else {
+        return QVariant();
+      }
     } else {
       return tr("invalid");
     }

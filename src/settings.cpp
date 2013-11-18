@@ -422,6 +422,9 @@ void Settings::addLanguages(QComboBox *languageBox)
 void Settings::addStyles(QComboBox *styleBox)
 {
   styleBox->addItem("None", "");
+  styleBox->addItem("Plastique", "Plastique");
+  styleBox->addItem("Cleanlooks", "Cleanlooks");
+
   QDirIterator langIter(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath()), QStringList("*.qss"), QDir::Files);
   while (langIter.hasNext()) {
     langIter.next();

@@ -499,6 +499,17 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
   return true;
 }
 
+int PluginList::enabledCount() const
+{
+  int enabled = 0;
+  foreach (auto info, m_ESPs) {
+    if (info.m_Enabled) {
+      ++enabled;
+    }
+  }
+  return enabled;
+}
+
 bool PluginList::isESPLocked(int index) const
 {
   return m_LockedOrder.find(m_ESPs.at(index).m_Name.toLower()) != m_LockedOrder.end();
@@ -713,6 +724,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       return QIcon(":/MO/gui/warning");
     } else if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
       return QIcon(":/MO/gui/locked");
+    } else if (m_ESPs[index].m_IsDummy && m_ESPs[index].m_Enabled) {
+      return QIcon(":/MO/gui/edit_clear");
     } else {
       return QVariant();
     }
@@ -723,6 +736,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_IsMaster) {
       result.setItalic(true);
       result.setWeight(QFont::Bold);
+    } else if (m_ESPs[index].m_IsDummy) {
+      result.setItalic(true);
     }
     return result;
   } else if (role == Qt::TextAlignmentRole) {
@@ -744,6 +759,10 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
       text += "<br>" + tr("Enabled Masters") + ": " + SetJoin(enabledMasters, ", ");
+      if (m_ESPs[index].m_IsDummy) {
+        text += "<br>This file is a dummy! It exists only so the bsa with the same name gets loaded. With MO you don't need this: "
+                "If you enable the archive with the same name in the \"Archive\" tab you can disable this plugin.";
+      }
       return text;
     }
   } else {
@@ -1009,6 +1028,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time, c
   try {
     ESP::File file(ToWString(fullPath));
     m_IsMaster = file.isMaster();
+    m_IsDummy = file.isDummy();
     std::set<std::string> masters = file.masters();
     for (auto iter = masters.begin(); iter != masters.end(); ++iter) {
       m_Masters.insert(QString(iter->c_str()));
@@ -1016,5 +1036,6 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time, c
   } catch (const std::exception &e) {
     qCritical("failed to parse esp file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
+    m_IsDummy = false;
   }
 }

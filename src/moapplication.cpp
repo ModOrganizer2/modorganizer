@@ -23,12 +23,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <appconfig.h>
 #include <QFile>
 #include <QStringList>
+#include <QPlastiqueStyle>
+#include <QCleanlooksStyle>
 
 
 MOApplication::MOApplication(int argc, char **argv)
   : QApplication(argc, argv)
 {
   connect(&m_StyleWatcher, SIGNAL(fileChanged(QString)), SLOT(updateStyle(QString)));
+  m_DefaultStyle = style()->objectName();
 }
 
 
@@ -42,11 +45,12 @@ bool MOApplication::setStyleFile(const QString &styleName)
   // set new stylesheet or clear it
   if (styleName.length() != 0) {
     QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
-    if (!QFile::exists(styleSheetName)) {
-      return false;
+    if (QFile::exists(styleSheetName)) {
+      m_StyleWatcher.addPath(styleSheetName);
+      updateStyle(styleSheetName);
+    } else {
+      updateStyle(styleName);
     }
-    m_StyleWatcher.addPath(styleSheetName);
-    updateStyle(styleSheetName);
   } else {
     setStyleSheet("");
   }
@@ -74,11 +78,18 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
 
 void MOApplication::updateStyle(const QString &fileName)
 {
-  QFile file(fileName);
-  if (file.open(QFile::ReadOnly)) {
-    setStyleSheet(file.readAll());
+  if (fileName == "Plastique") {
+    setStyle(new QPlastiqueStyle);
+    setStyleSheet("");
+  } else if (fileName == "Cleanlooks") {
+    setStyle(new QCleanlooksStyle);
+    setStyleSheet("");
   } else {
-    qDebug("no stylesheet");
+    setStyle(m_DefaultStyle);
+    if (QFile::exists(fileName)) {
+      setStyleSheet(QString("file:///%1").arg(fileName));
+    } else {
+      qWarning("invalid stylesheet: %s", qPrintable(fileName));
+    }
   }
-  file.close();
 }

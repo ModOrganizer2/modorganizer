@@ -275,6 +275,10 @@ private:
 
   SignalModStateChanged m_ModStateChanged;
 
+
+  // QAbstractItemModel interface
+
+  // IModList interface
 };
 
 #endif // MODLIST_H

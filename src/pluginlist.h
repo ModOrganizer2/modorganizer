@@ -126,6 +126,12 @@ public:
    **/
   bool saveLoadOrder(MOShared::DirectoryEntry &directoryStructure);
 
+  /**
+   * @return number of enabled plugins in the list
+   */
+  int enabledCount() const;
+
+
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
   bool isESPLocked(int index) const;
@@ -198,6 +204,7 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
+    bool m_IsDummy;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
   };

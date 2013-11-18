@@ -43,6 +43,8 @@ private slots:
 private:
 
   QFileSystemWatcher m_StyleWatcher;
+  QString m_DefaultStyle;
+
 };
 
 

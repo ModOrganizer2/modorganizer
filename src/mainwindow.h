@@ -98,7 +98,6 @@ public:
   void refreshBSAList();
   void refreshDataTree();
   void refreshSaveList();
-  void refreshModList();
 
   void setExecutablesList(const ExecutablesList &executablesList);
 
@@ -135,11 +134,14 @@ public:
   virtual QString resolvePath(const QString &fileName) const;
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
+  virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
+
   virtual MOBase::IDownloadManager *downloadManager();
   virtual MOBase::IPluginList *pluginList();
   virtual MOBase::IModList *modList();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
+  virtual void refreshModList(bool saveChanges = true);
 
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
@@ -274,6 +276,7 @@ private:
 private:
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
+  static const unsigned int PROBLEM_TOOMANYPLUGINS = 2;
 
 private:
 
