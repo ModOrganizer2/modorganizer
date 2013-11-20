@@ -1177,10 +1177,10 @@ void ModInfoDialog::on_prevButton_clicked()
 void ModInfoDialog::createTweak()
 {
   QString name = QInputDialog::getText(this, tr("Name"), tr("Please enter a name"));
-  if (!fixDirectoryName(name)) {
-    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
+  if (name.isNull()) {
     return;
-  } else if (name.isEmpty()) {
+  } else if (!fixDirectoryName(name)) {
+    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
     return;
   } else if (ui->iniTweaksList->findItems(name, Qt::MatchFixedString).count() != 0) {
     QMessageBox::critical(this, tr("Error"), tr("A tweak by that name exists"));
