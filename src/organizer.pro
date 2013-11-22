@@ -213,7 +213,7 @@ TRANSLATIONS = organizer_de.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-#               organizer.en.ts \
+               organizer_en.ts \
                organizer_ru.ts
 
 !isEmpty(TRANSLATIONS) {

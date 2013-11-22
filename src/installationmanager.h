@@ -65,6 +65,12 @@ public:
   void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
 
   /**
+   * @brief update the directory where downloads are stored
+   * @param downloadDirectory the download directory
+   */
+  void setDownloadDirectory(const QString &downloadDirectory) { m_DownloadsDirectory = downloadDirectory; }
+
+  /**
    * @brief install a mod from an archive
    *
    * @param fileName absolute file name of the archive to install
@@ -191,6 +197,7 @@ private:
   QWidget *m_ParentWidget;
 
   QString m_ModsDirectory;
+  QString m_DownloadsDirectory;
 
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;

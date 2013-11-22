@@ -223,6 +223,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+  m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
 
   updateDownloadListDelegate();
 
@@ -1433,6 +1434,12 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
         (m_CurrentProfile != NULL) &&
         m_CurrentProfile->exists()) {
       saveCurrentLists();
+    }
+
+    // ensure the new index is valid
+    if (index < 0 || index >= ui->profileBox->count()) {
+      qDebug("invalid profile index, using last profile");
+      ui->profileBox->setCurrentIndex(ui->profileBox->count() - 1);
     }
 
     if (ui->profileBox->currentIndex() == 0) {
@@ -3909,6 +3916,7 @@ void MainWindow::on_actionSettings_triggered()
   bool proxy = m_Settings.useProxy();
   m_Settings.query(this);
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+  m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
   fixCategories();
   refreshFilters();
   if (QDir::fromNativeSeparators(m_DownloadManager.getOutputDirectory()) != QDir::fromNativeSeparators(m_Settings.getDownloadDirectory())) {

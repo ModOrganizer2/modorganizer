@@ -647,7 +647,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   }
 
   m_CurrentFile = fileInfo.absoluteFilePath();
-  if (fileInfo.dir() == QDir(ToQString(GameInfo::instance().getDownloadDir()))) {
+  if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
   qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));

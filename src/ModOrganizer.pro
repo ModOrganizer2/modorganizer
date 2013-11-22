@@ -1,5 +1,4 @@
 TEMPLATE = subdirs
-CONFIG += ordered
 
 
 SUBDIRS = bsatk \
@@ -16,6 +15,7 @@ SUBDIRS = bsatk \
           pythonRunner \
           esptk
 
+plugins.depends = pythonRunner
 hookdll.depends = shared
 organizer.depends = shared uibase plugins
 
