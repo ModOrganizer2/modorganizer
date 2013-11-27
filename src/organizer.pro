@@ -207,13 +207,12 @@ CONFIG += embed_manifest_exe
 # QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
 
 TRANSLATIONS = organizer_de.ts \
-							 organizer_es.ts \
-							 organizer_fr.ts \
-							 organizer_zh_TW.ts \
+               organizer_es.ts \
+               organizer_fr.ts \
+               organizer_zh_TW.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-               organizer_en.ts \
                organizer_ru.ts
 
 !isEmpty(TRANSLATIONS) {

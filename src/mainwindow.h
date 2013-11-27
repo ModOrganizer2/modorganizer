@@ -197,7 +197,7 @@ private:
   void actionToToolButton(QAction *&sourceAction);
   bool verifyPlugin(MOBase::IPlugin *plugin);
   void registerPluginTool(MOBase::IPluginTool *tool);
-  bool registerPlugin(QObject *pluginObj);
+  bool registerPlugin(QObject *pluginObj, const QString &fileName);
 
   void updateToolBar();
   void activateSelectedProfile();
@@ -272,6 +272,7 @@ private:
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
+  QTranslator *installTranslator(const QString &name);
 
 private:
 
@@ -318,9 +319,6 @@ private:
   DownloadManager m_DownloadManager;
   InstallationManager m_InstallationManager;
 
-  QTranslator *m_Translator;
-  QTranslator *m_TranslatorQt;
-
   SelfUpdater m_Updater;
 
   CategoryFactory &m_CategoryFactory;
@@ -351,6 +349,9 @@ private:
   QFile m_PluginsCheck;
 
   SignalAboutToRunApplication m_AboutToRun;
+
+  QString m_CurrentLanguage;
+  std::vector<QTranslator*> m_Translators;
 
 private slots:
 
