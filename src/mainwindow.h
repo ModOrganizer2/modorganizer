@@ -230,9 +230,23 @@ private:
 
   void refreshFilters();
 
-  void saveCategoriesFromMenu(QMenu *menu, int modRow);
+  /**
+   * Sets category selections from menu; for multiple mods, this will only apply
+   * the changes made in the menu (which is the delta between the current menu selection and the reference mod)
+   * @param menu the menu after editing by the user
+   * @param modRow index of the mod to edit
+   */
+  void addRemoveCategoriesFromMenu(QMenu *menu, int modRow);
 
-  bool addCategories(QMenu *menu, int targetID);
+  /**
+   * Sets category selections from menu; for multiple mods, this will completely
+   * replace the current set of categories on each selected with those selected in the menu
+   * @param menu the menu after editing by the user
+   * @param modRow index of the mod to edit
+   */
+  void replaceCategoriesFromMenu(QMenu *menu, int modRow);
+
+  bool populateMenuCategories(QMenu *menu, int targetID);
 
   void updateDownloadListDelegate();
 
@@ -431,7 +445,9 @@ private slots:
 
   void originModified(int originID);
 
-  void saveCategories();
+  void addRemoveCategories_MenuHandler();
+  void replaceCategories_MenuHandler();
+
   void savePrimaryCategory();
   void addPrimaryCategoryCandidates();
 

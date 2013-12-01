@@ -3309,7 +3309,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
 }
 
-bool MainWindow::addCategories(QMenu *menu, int targetID)
+bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
   const std::set<int> &categories = modInfo->getCategories();
@@ -3338,7 +3338,7 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
       targetMenu->addAction(checkableAction.take());
 
       if (m_CategoryFactory.hasChildren(i)) {
-        if (addCategories(targetMenu, m_CategoryFactory.getCategoryID(i)) || enabled) {
+        if (populateMenuCategories(targetMenu, m_CategoryFactory.getCategoryID(i)) || enabled) {
           targetMenu->setIcon(QIcon(":/MO/gui/resources/check.png"));
         }
       }
@@ -3347,12 +3347,12 @@ bool MainWindow::addCategories(QMenu *menu, int targetID)
   return childEnabled;
 }
 
-void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
+void MainWindow::replaceCategoriesFromMenu(QMenu *menu, int modRow)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modRow);
   foreach (QAction* action, menu->actions()) {
     if (action->menu() != NULL) {
-      saveCategoriesFromMenu(action->menu(), modRow);
+      replaceCategoriesFromMenu(action->menu(), modRow);
     } else {
       QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
       if (widgetAction != NULL) {
@@ -3363,8 +3363,35 @@ void MainWindow::saveCategoriesFromMenu(QMenu *menu, int modRow)
   }
 }
 
-void MainWindow::saveCategories()
+void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow)
 {
+  if (m_ContextRow != -1 && m_ContextRow != modRow) {
+    ModInfo::Ptr editedModInfo = ModInfo::getByIndex(m_ContextRow);
+    foreach (QAction* action, menu->actions()) {
+      if (action->menu() != NULL) {
+        addRemoveCategoriesFromMenu(action->menu(), modRow);
+      } else {
+        QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
+        if (widgetAction != NULL) {
+          QCheckBox *checkbox = qobject_cast<QCheckBox*>(widgetAction->defaultWidget());
+          int categoryId = widgetAction->data().toInt();
+          bool checkedBefore = editedModInfo->categorySet(categoryId);
+          bool checkedAfter = checkbox->isChecked();
+
+          if (checkedBefore != checkedAfter) { // only update if the category was changed on the edited mod
+            ModInfo::Ptr currentModInfo = ModInfo::getByIndex(modRow);
+            currentModInfo->setCategory(categoryId, checkedAfter);
+          }
+        }
+      }
+    }
+  } else {
+    //This block shouldn't be reached, but if it is then fall back to replace (context row is invalid or replacing edited mod)
+    replaceCategoriesFromMenu(menu, modRow);
+  }
+}
+
+void MainWindow::addRemoveCategories_MenuHandler() {
   QMenu *menu = qobject_cast<QMenu*>(sender());
   if (menu == NULL) {
     qCritical("not a menu?");
@@ -3383,11 +3410,16 @@ void MainWindow::saveCategories()
       selectedMods.append(temp.data().toString());
       if (temp.row() < min) min = temp.row();
       if (temp.row() > max) max = temp.row();
-      saveCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
+      // save the currently selected mod for last... then we can use it as a pattern for what is changing...
+      int modRow =  m_ModListSortProxy->mapToSource(selected.at(i)).row();
+      if (modRow != m_ContextRow) {
+        addRemoveCategoriesFromMenu(menu,modRow);
+      }
     }
-    //m_ModList.notifyChange(min, max);
+    //come back to the currently selected mod, after the others have been set
+    replaceCategoriesFromMenu(menu, m_ContextRow);
+
     m_ModList.notifyChange(-1);
-//    refreshModList();
 
     // find mods by their name because indices are invalidated
     QAbstractItemModel *model = ui->modList->model();
@@ -3399,7 +3431,50 @@ void MainWindow::saveCategories()
       }
     }
   } else {
-    saveCategoriesFromMenu(menu, m_ContextRow);
+    //For single mod selections, just do a replace
+    replaceCategoriesFromMenu(menu, m_ContextRow);
+    m_ModList.notifyChange(m_ContextRow);
+  }
+
+  refreshFilters();
+}
+
+void MainWindow::replaceCategories_MenuHandler() {
+  QMenu *menu = qobject_cast<QMenu*>(sender());
+  if (menu == NULL) {
+    qCritical("not a menu?");
+    return;
+  }
+
+  QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
+
+  if (selected.size() > 0) {
+    int min = INT_MAX;
+    int max = INT_MIN;
+
+    QStringList selectedMods;
+    for (int i = 0; i < selected.size(); ++i) {
+      QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
+      selectedMods.append(temp.data().toString());
+      if (temp.row() < min) min = temp.row();
+      if (temp.row() > max) max = temp.row();
+      replaceCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
+    }
+
+    m_ModList.notifyChange(-1);
+
+    // find mods by their name because indices are invalidated
+    QAbstractItemModel *model = ui->modList->model();
+    Q_FOREACH(const QString &mod, selectedMods) {
+      QModelIndexList matches = model->match(model->index(0, 0), Qt::DisplayRole, mod, 1,
+                                             Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
+      if (matches.size() > 0) {
+        ui->modList->selectionModel()->select(matches.at(0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
+      }
+    }
+  } else {
+    //For single mod selections, just do a replace
+    replaceCategoriesFromMenu(menu, m_ContextRow);
     m_ModList.notifyChange(m_ContextRow);
   }
 
@@ -3567,7 +3642,7 @@ void MainWindow::exportModListCSV()
         bool enabled = m_CurrentProfile->modEnabled(i);
         if ((selection.getChoiceData().toInt() == 1) && !enabled) {
           continue;
-        } else if ((selection.getChoiceData().toInt() == 2) && !m_ModListSortProxy->filterMatches(info, enabled)) {
+        } else if ((selection.getChoiceData().toInt() == 2) && !m_ModListSortProxy->filterMatchesMod(info, enabled)) {
           continue;
         }
         std::vector<ModInfo::EFlag> flags = info->getFlags();
@@ -3633,11 +3708,15 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else {
-        // Set categories is a separate menu connected to a push button. This way it doesn't simply close every time you hover the mouse outside
-        QMenu *addCategoryMenu = new QMenu(tr("Set Category"));
-        addCategories(addCategoryMenu, 0);
-        connect(addCategoryMenu, SIGNAL(aboutToHide()), this, SLOT(saveCategories()));
-        addMenuAsPushButton(&menu, addCategoryMenu);
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Add/Remove Categories"));
+        populateMenuCategories(addRemoveCategoriesMenu, 0);
+        connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
+        addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
+
+        QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
+        populateMenuCategories(replaceCategoriesMenu, 0);
+        connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
+        addMenuAsPushButton(&menu, replaceCategoriesMenu);
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));

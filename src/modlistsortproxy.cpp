@@ -220,7 +220,7 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 }
 
 
-bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
+bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
   if (!m_CurrentFilter.isEmpty() &&
       !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
@@ -258,7 +258,7 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
 }
 
 
-bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
+bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
   if (m_Profile == NULL) {
     return false;
@@ -268,9 +268,25 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
     qWarning("invalid row idx %d", row);
     return false;
   }
-  bool modEnabled = m_Profile->modEnabled(row);
 
-  return filterMatches(ModInfo::getByIndex(row), modEnabled);
+  QModelIndex idx = sourceModel()->index(row, 0, parent);
+  if (!idx.isValid()) {
+    qDebug("invalid index");
+    return false;
+  }
+  if (idx.isValid() && sourceModel()->hasChildren(idx)) {
+    for (int i = 0; i < sourceModel()->rowCount(idx); ++i) {
+      if (filterAcceptsRow(i, idx)) {
+        return true;
+      }
+    }
+
+    return false;
+  } else {
+    bool modEnabled = idx.sibling(row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
+    unsigned int index = idx.data(Qt::UserRole + 1).toInt();
+    return filterMatchesMod(ModInfo::getByIndex(index), modEnabled);
+  }
 }
 
 

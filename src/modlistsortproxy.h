@@ -52,14 +52,7 @@ public:
    **/
   void disableAllVisible();
 
-  bool filterMatches(ModInfo::Ptr info, bool enabled) const;
-
-/*
-  virtual int rowCount( const QModelIndex & parent = QModelIndex() ) const {
-    int rc = QSortFilterProxyModel::rowCount(parent);
-    qDebug() << parent << " - " << rc;
-    return rc;
-  }*/
+  bool filterMatchesMod(ModInfo::Ptr info, bool enabled) const;
 
   virtual bool hasChildren ( const QModelIndex & parent = QModelIndex() ) const {
     return rowCount(parent) > 0;
