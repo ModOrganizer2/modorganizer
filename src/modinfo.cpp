@@ -541,6 +541,13 @@ bool ModInfoRegular::setName(const QString &name)
 void ModInfoRegular::setNotes(const QString &notes)
 {
   m_Notes = notes;
+  m_MetaInfoChanged = true;
+}
+
+void ModInfoRegular::setNexusID(int modID)
+{
+  m_NexusID = modID;
+  m_MetaInfoChanged = true;
 }
 
 void ModInfoRegular::setVersion(const VersionInfo &version)

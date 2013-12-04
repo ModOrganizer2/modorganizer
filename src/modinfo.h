@@ -570,7 +570,7 @@ public:
    *
    * @param modID the nexus mod id
    **/
-  void setNexusID(int modID) { m_NexusID = modID; }
+  void setNexusID(int modID);
 
   /**
    * @brief set the version of this mod

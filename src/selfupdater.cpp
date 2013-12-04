@@ -436,6 +436,7 @@ void SelfUpdater::nxmRequestFailed(int, QVariant, int requestID, const QString &
       QTimer::singleShot(60000, this, SLOT(testForUpdate()));
       --m_Attempts;
     } else {
+      qWarning("Failed to retrieve update information: %s", qPrintable(errorMessage));
       MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent);
     }
   }
