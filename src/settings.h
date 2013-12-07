@@ -251,6 +251,11 @@ public:
    */
   bool pluginBlacklisted(const QString &fileName) const;
 
+  /**
+   * @return all loaded MO plugins
+   */
+  std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
+
 private:
 
   QString obfuscate(const QString &password) const;

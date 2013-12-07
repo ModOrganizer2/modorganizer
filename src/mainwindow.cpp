@@ -144,8 +144,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
     m_ModList(this), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
     m_PluginList(this), m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
-    m_DownloadManager(NexusInterface::instance(), this),
-    m_InstallationManager(this), m_Translator(NULL), m_TranslatorQt(NULL),
+    m_DownloadManager(NexusInterface::instance(), this), m_InstallationManager(this),
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false), m_LoginAttempted(false),
     m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
@@ -207,6 +206,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   }
   ui->espList->installEventFilter(&m_PluginList);
+
+  ui->bsaList->setLocalMoveOnly(true);
 
   resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
 
@@ -975,7 +976,7 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
 }
 
 
-bool MainWindow::registerPlugin(QObject *plugin)
+bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
 {
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
@@ -983,6 +984,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
       qDebug("not an IPlugin");
       return false;
     }
+    plugin->setProperty("filename", fileName);
     m_Settings.registerPlugin(pluginObj);
   }
 
@@ -1017,7 +1019,7 @@ bool MainWindow::registerPlugin(QObject *plugin)
         try {
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
           if (proxiedPlugin != NULL) {
-            if (registerPlugin(proxiedPlugin)) {
+            if (registerPlugin(proxiedPlugin, pluginName)) {
               qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
             } else {
               qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
@@ -1052,7 +1054,7 @@ void MainWindow::loadPlugins()
   m_Settings.clearPlugins();
 
   foreach (QObject *plugin, QPluginLoader::staticInstances()) {
-    registerPlugin(plugin);
+    registerPlugin(plugin, "");
   }
 
   QFile loadCheck(QCoreApplication::applicationDirPath() + "/plugin_loadcheck.tmp");
@@ -1095,7 +1097,7 @@ void MainWindow::loadPlugins()
         qCritical("failed to load plugin %s: %s",
                   pluginName.toUtf8().constData(), pluginLoader.errorString().toUtf8().constData());
       } else {
-        if (registerPlugin(pluginLoader.instance())) {
+        if (registerPlugin(pluginLoader.instance(), pluginName)) {
           qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
         } else {
           m_UnloadedPlugins.push_back(pluginName);
@@ -1790,8 +1792,8 @@ void MainWindow::refreshBSAList()
       QTreeWidgetItem *newItem = new QTreeWidgetItem(strings);
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, origin);
-//      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
-      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
+      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+//      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       if (m_Settings.forceEnableCoreFiles() && m_DefaultArchives.contains(filename)) {
         newItem->setCheckState(0, Qt::Checked);
@@ -4077,35 +4079,40 @@ void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QStrin
 }
 
 
+void MainWindow::installTranslator(const QString &name)
+{
+  QTranslator *translator = new QTranslator(this);
+  QString fileName = name + "_" + m_CurrentLanguage;
+  if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
+    qWarning("localization file %s not found", qPrintable(fileName));
+  }
+  qApp->installTranslator(translator);
+  m_Translators.push_back(translator);
+}
+
+
 void MainWindow::languageChange(const QString &newLanguage)
 {
-  if (m_Translator != NULL) {
-    QCoreApplication::removeTranslator(m_Translator);
-    delete m_Translator;
-    m_Translator = NULL;
+  foreach (QTranslator *trans, m_Translators) {
+    qApp->removeTranslator(trans);
   }
-  if (m_TranslatorQt != NULL) {
-    QCoreApplication::removeTranslator(m_TranslatorQt);
-    delete m_TranslatorQt;
-    m_TranslatorQt = NULL;
-  }
+  m_Translators.clear();
+
+  m_CurrentLanguage = newLanguage;
 
   if (newLanguage != "en_US") {
-    // add our own translations
-    m_Translator = new QTranslator(this);
-    QString locFile = ToQString(AppConfig::translationPrefix()) + "_" + newLanguage;
-    if (!m_Translator->load(locFile, QCoreApplication::applicationDirPath() + "/translations")) {
-      qDebug("localization %s not found", locFile.toUtf8().constData());
+    installTranslator("qt");
+    installTranslator(ToQString(AppConfig::translationPrefix()));
+    foreach(IPlugin *plugin, m_Settings.plugins()) {
+      QObject *pluginObj = dynamic_cast<QObject*>(plugin);
+      if (pluginObj != NULL) {
+        QVariant fileNameVariant = pluginObj->property("filename");
+        if (fileNameVariant.isValid()) {
+          QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
+          installTranslator(fileName);
+        }
+      }
     }
-    QCoreApplication::installTranslator(m_Translator);
-
-    // also add the translations for qt default strings
-    m_TranslatorQt = new QTranslator(this);
-    locFile = QString("qt_") + newLanguage;
-    if (!m_TranslatorQt->load(locFile, QCoreApplication::applicationDirPath() + "/translations")) {
-      qDebug("localization %s not found", locFile.toUtf8().constData());
-    }
-    QCoreApplication::installTranslator(m_TranslatorQt);
   }
   ui->retranslateUi(this);
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
