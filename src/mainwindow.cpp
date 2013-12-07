@@ -3168,7 +3168,6 @@ void MainWindow::testExtractBSA(int modIndex)
 
     foreach (QFileInfo archiveInfo, archives) {
       BSA::Archive archive;
-
       BSA::EErrorCode result = archive.read(archiveInfo.absoluteFilePath().toLocal8Bit().constData());
       if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
         reportError(tr("failed to read %1: %2").arg(archiveInfo.fileName()).arg(result));
@@ -3180,7 +3179,7 @@ void MainWindow::testExtractBSA(int modIndex)
       progress.setValue(0);
       progress.show();
 
-      archive.extractAll(modInfo->absolutePath().toUtf8().constData(),
+      archive.extractAll(modInfo->absolutePath().toLocal8Bit().constData(),
                          boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
 
       if (result == BSA::ERROR_INVALIDHASHES) {
@@ -4745,7 +4744,7 @@ void MainWindow::extractBSATriggered()
     progress.setMaximum(100);
     progress.setValue(0);
     progress.show();
-    archive.extractAll(QDir::toNativeSeparators(targetFolder).toUtf8().constData(),
+    archive.extractAll(QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
                        boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
     if (result == BSA::ERROR_INVALIDHASHES) {
       reportError(tr("This archive contains invalid hashes. Some files may be broken."));
