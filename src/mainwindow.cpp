@@ -3257,7 +3257,7 @@ void MainWindow::createModFromOverwrite()
     bool ok;
     name.update(QInputDialog::getText(this, tr("Create Mod..."),
                                       tr("This will move all files from overwrite into a new, regular mod.\n"
-                                         "Please enter a name: "), QLineEdit::Normal, "", &ok),
+                                         "Please enter a name:"), QLineEdit::Normal, "", &ok),
                 GUESS_USER);
     if (!ok) {
       return;

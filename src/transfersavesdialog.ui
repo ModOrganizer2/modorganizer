@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Transfer Savegames</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
@@ -35,7 +35,7 @@ On Windows Vista/Windows 7:
   C:\Users\[UserName]\Documents\My Games\Skyrim\Saves
 
 On Windows XP:
-  C:\Documents and Settings[UserName]\My Documents\My Games\Skyrim\Saves
+  C:\Documents and Settings\[UserName]\My Documents\My Games\Skyrim\Saves
 </string>
        </property>
       </widget>
