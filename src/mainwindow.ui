@@ -31,16 +31,7 @@
     <property name="spacing">
      <number>4</number>
     </property>
-    <property name="leftMargin">
-     <number>6</number>
-    </property>
-    <property name="topMargin">
-     <number>6</number>
-    </property>
-    <property name="rightMargin">
-     <number>6</number>
-    </property>
-    <property name="bottomMargin">
+    <property name="margin">
      <number>6</number>
     </property>
     <item>
@@ -586,7 +577,7 @@ p, li { white-space: pre-wrap; }
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="espTab">
            <property name="sizePolicy">
@@ -730,16 +721,7 @@ p, li { white-space: pre-wrap; }
             <string notr="true">Archives</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>6</number>
             </property>
             <item>
@@ -819,16 +801,7 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Data</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>6</number>
             </property>
             <item>
@@ -898,16 +871,7 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Saves</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <property name="leftMargin">
-             <number>6</number>
-            </property>
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <property name="rightMargin">
-             <number>6</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>6</number>
             </property>
             <item>
@@ -936,16 +900,7 @@ p, li { white-space: pre-wrap; }
             <string>Downloads</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="leftMargin">
-             <number>2</number>
-            </property>
-            <property name="topMargin">
-             <number>2</number>
-            </property>
-            <property name="rightMargin">
-             <number>2</number>
-            </property>
-            <property name="bottomMargin">
+            <property name="margin">
              <number>2</number>
             </property>
             <item>

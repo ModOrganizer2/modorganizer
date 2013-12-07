@@ -3998,7 +3998,7 @@ void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QStrin
 }
 
 
-QTranslator *MainWindow::installTranslator(const QString &name)
+void MainWindow::installTranslator(const QString &name)
 {
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
@@ -4006,7 +4006,7 @@ QTranslator *MainWindow::installTranslator(const QString &name)
     qWarning("localization file %s not found", qPrintable(fileName));
   }
   qApp->installTranslator(translator);
-  return translator;
+  m_Translators.push_back(translator);
 }
 
 
@@ -4028,7 +4028,7 @@ void MainWindow::languageChange(const QString &newLanguage)
         QVariant fileNameVariant = pluginObj->property("filename");
         if (fileNameVariant.isValid()) {
           QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
-          m_Translators.push_back(installTranslator(fileName));
+          installTranslator(fileName);
         }
       }
     }

@@ -272,7 +272,7 @@ private:
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
-  QTranslator *installTranslator(const QString &name);
+  void installTranslator(const QString &name);
 
 private:
 
