@@ -207,6 +207,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   }
   ui->espList->installEventFilter(&m_PluginList);
 
+  ui->bsaList->setLocalMoveOnly(true);
+
   resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
 
   QMenu *linkMenu = new QMenu(this);
@@ -1790,8 +1792,8 @@ void MainWindow::refreshBSAList()
       QTreeWidgetItem *newItem = new QTreeWidgetItem(strings);
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, origin);
-//      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
-      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
+      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+//      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       if (m_Settings.forceEnableCoreFiles() && m_DefaultArchives.contains(filename)) {
         newItem->setCheckState(0, Qt::Checked);
