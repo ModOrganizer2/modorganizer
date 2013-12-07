@@ -155,13 +155,13 @@ std::wstring Fallout3Info::getSEName()
 
 std::wstring Fallout3Info::getNexusPage()
 {
-  return L"http://www.nexusmods.com/fallout3";
+  return L"http://nmm.nexusmods.com/fallout3";
 }
 
 
 std::wstring Fallout3Info::getNexusInfoUrlStatic()
 {
-  return L"http://www.nexusmods.com/fallout3";
+  return L"http://nmm.nexusmods.com/fallout3";
 }
 
 
