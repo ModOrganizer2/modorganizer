@@ -73,6 +73,7 @@ public:
   virtual std::wstring getNexusInfoUrl() { return OblivionInfo::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return OblivionInfo::getNexusModIDStatic(); }
+  virtual int getNexusGameID() { return 101; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);

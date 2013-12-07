@@ -153,7 +153,8 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
+    m_DateExpression("/Date\\((\\d+)\\)/")
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
 }
@@ -851,7 +852,6 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
       setState(info, STATE_PAUSED);
     } else {
       if (bytesTotal > info->m_TotalSize) {
-        qDebug("file size %s: %lld", qPrintable(info->m_FileName), bytesTotal);
         info->m_TotalSize = bytesTotal;
       }
       int oldProgress = info->m_Progress;
@@ -883,6 +883,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
   metaFile.setValue("name", info->m_NexusInfo.m_Name);
   metaFile.setValue("modName", info->m_NexusInfo.m_ModName);
   metaFile.setValue("version", info->m_NexusInfo.m_Version);
+  metaFile.setValue("fileTime", info->m_NexusInfo.m_FileTime);
   metaFile.setValue("fileCategory", info->m_NexusInfo.m_FileCategory);
   metaFile.setValue("newestVersion", info->m_NexusInfo.m_NewestVersion);
   metaFile.setValue("category", info->m_NexusInfo.m_Category);
@@ -914,15 +915,24 @@ void DownloadManager::nxmDescriptionAvailable(int, QVariant userData, QVariant r
 
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == NULL) return;
-
   info->m_NexusInfo.m_Category = result["category_id"].toInt();
   info->m_NexusInfo.m_ModName = result["name"].toString().trimmed();
   info->m_NexusInfo.m_NewestVersion = result["version"].toString();
-
   if (info->m_FileID != 0) {
     setState(info, STATE_READY);
   } else {
     setState(info, STATE_FETCHINGFILEINFO);
+  }
+}
+
+
+QDateTime DownloadManager::matchDate(const QString &timeString)
+{
+  if (m_DateExpression.exactMatch(timeString)) {
+    return QDateTime::fromMSecsSinceEpoch(m_DateExpression.cap(1).toLongLong());
+  } else {
+    qWarning("date not matched: %s", qPrintable(timeString));
+    return QDateTime::currentDateTime();
   }
 }
 
@@ -960,7 +970,11 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
         (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
       info->m_NexusInfo.m_Name = fileInfo["name"].toString();
       info->m_NexusInfo.m_Version = fileInfo["version"].toString();
+      if (info->m_NexusInfo.m_Version.isEmpty()) {
+        info->m_NexusInfo.m_Version = info->m_NexusInfo.m_NewestVersion;
+      }
       info->m_NexusInfo.m_FileCategory = fileInfo["category_id"].toInt();
+      info->m_NexusInfo.m_FileTime = matchDate(fileInfo["date"].toString());
       info->m_FileID = fileInfo["id"].toInt();
       found = true;
       break;
@@ -1014,7 +1028,11 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
 
   info.m_Name = result["name"].toString();
   info.m_Version = result["version"].toString();
+  if (info.m_Version.isEmpty()) {
+    info.m_Version = info.m_NewestVersion;
+  }
   info.m_FileName = result["uri"].toString();
+  info.m_FileTime = matchDate(result["date"].toString());
 
   if (userData.isValid()) {
     m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info), userData.toString()));

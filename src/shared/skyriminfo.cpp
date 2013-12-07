@@ -183,13 +183,13 @@ std::wstring SkyrimInfo::getSEName()
 
 std::wstring SkyrimInfo::getNexusPage()
 {
-  return L"http://skyrim.nexusmods.com";
+  return L"http://www.nexusmods.com/skyrim";
 }
 
 
 std::wstring SkyrimInfo::getNexusInfoUrlStatic()
 {
-  return L"http://skyrim.nexusmods.com";
+  return L"http://www.nexusmods.com/skyrim";
 }
 
 

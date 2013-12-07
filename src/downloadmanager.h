@@ -46,6 +46,7 @@ struct NexusInfo {
   QString m_NewestVersion;
   QString m_FileName;
   QVariantList m_DownloadMap;
+  QDateTime m_FileTime;
   bool m_Set;
 };
 Q_DECLARE_METATYPE(NexusInfo)
@@ -437,6 +438,8 @@ private:
 
   DownloadInfo *downloadInfoByID(unsigned int id);
 
+  QDateTime matchDate(const QString &timeString);
+
 private:
 
   static const int AUTOMATIC_RETRIES = 3;
@@ -457,6 +460,8 @@ private:
   std::map<QString, int> m_DownloadFails;
 
   bool m_ShowHidden;
+
+  QRegExp m_DateExpression;
 
 };
 

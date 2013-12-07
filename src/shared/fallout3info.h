@@ -76,6 +76,7 @@ public:
   virtual std::wstring getNexusInfoUrl() { return Fallout3Info::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return Fallout3Info::getNexusModIDStatic(); }
+  virtual int getNexusGameID() { return 120; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);

@@ -145,6 +145,7 @@ public:
   virtual std::wstring getNexusPage() = 0;
   virtual std::wstring getNexusInfoUrl() = 0;
   virtual int getNexusModID() = 0;
+  virtual int getNexusGameID() = 0;
 
   // clone relevant files to the specified directory
   virtual void createProfile(const std::wstring &directory, bool useDefaults) = 0;

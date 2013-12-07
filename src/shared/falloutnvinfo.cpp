@@ -209,13 +209,13 @@ std::wstring FalloutNVInfo::getSEName()
 
 std::wstring FalloutNVInfo::getNexusPage()
 {
-  return L"http://newvegas.nexusmods.com";
+  return L"http://www.nexusmods.com/newvegas";
 }
 
 
 std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
 {
-  return L"http://newvegas.nexusmods.com";
+  return L"http://www.nexusmods.com/newvegas";
 }
 
 

@@ -380,29 +380,33 @@ void NexusInterface::nextRequest()
   info.m_Timeout->setInterval(60000);
 
   QString url;
-  switch (info.m_Type) {
-    case NXMRequestInfo::TYPE_DESCRIPTION: {
-      url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
-    } break;
-    case NXMRequestInfo::TYPE_FILES: {
-      url = QString("%1/Files/indexfrommod/%2/").arg(info.m_URL).arg(info.m_ModID);
-    } break;
-    case NXMRequestInfo::TYPE_FILEINFO: {
-      url = QString("%1/Files/%2/").arg(info.m_URL).arg(info.m_FileID);
-    } break;
-    case NXMRequestInfo::TYPE_DOWNLOADURL: {
-      url = QString("%1/Files/download/%2").arg(info.m_URL).arg(info.m_FileID);
-    } break;
-    case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-      url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
-    } break;
-    case NXMRequestInfo::TYPE_GETUPDATES: {
-      QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
-      modIDList = "[" + modIDList + "]";
-      url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
-    } break;
+  if (!info.m_Reroute) {
+    switch (info.m_Type) {
+      case NXMRequestInfo::TYPE_DESCRIPTION: {
+        url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
+      } break;
+      case NXMRequestInfo::TYPE_FILES: {
+        url = QString("%1/Files/indexfrommod/%2/").arg(info.m_URL).arg(info.m_ModID);
+      } break;
+      case NXMRequestInfo::TYPE_FILEINFO: {
+        url = QString("%1/Files/%2/").arg(info.m_URL).arg(info.m_FileID);
+      } break;
+      case NXMRequestInfo::TYPE_DOWNLOADURL: {
+        url = QString("%1/Files/download/%2").arg(info.m_URL).arg(info.m_FileID);
+      } break;
+      case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
+        url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
+      } break;
+      case NXMRequestInfo::TYPE_GETUPDATES: {
+        QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
+        modIDList = "[" + modIDList + "]";
+        url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
+      } break;
+    }
+    url.append(QString("?game_id=%1").arg(GameInfo::instance().getNexusGameID()));
+  } else {
+    url = info.m_URL;
   }
-
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
   request.setRawHeader("User-Agent",
@@ -433,13 +437,21 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
     qWarning("request failed: %s", reply->errorString().toUtf8().constData());
     emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, reply->errorString());
   } else {
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 301) {
+      // redirect request, return request to queue
+      iter->m_URL = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
+      iter->m_Reroute = true;
+      m_RequestQueue.enqueue(*iter);
+      nextRequest();
+      return;
+    }
     QByteArray data = reply->readAll();
     if (data.isNull() || data.isEmpty() || (strcmp(data.constData(), "null") == 0)) {
       QString nexusError(reply->rawHeader("NexusErrorInfo"));
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-
       emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
@@ -509,7 +521,6 @@ void NexusInterface::requestTimeout()
     qWarning("invalid sender type");
     return;
   }
-  qWarning("request timeout");
   for (std::list<NXMRequestInfo>::iterator iter = m_ActiveRequest.begin(); iter != m_ActiveRequest.end(); ++iter) {
     if (iter->m_Timeout == timer) {
       // this abort causes a "request failed" which cleans up the rest
