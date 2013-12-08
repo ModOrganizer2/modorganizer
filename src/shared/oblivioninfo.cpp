@@ -189,9 +189,13 @@ std::wstring OblivionInfo::getSEName()
 }
 
 
-std::wstring OblivionInfo::getNexusPage()
+std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
 {
-  return L"http://nmm.nexusmods.com/oblivion";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/oblivion";
+  } else {
+    return L"http://www.nexusmods.com/oblivion";
+  }
 }
 
 

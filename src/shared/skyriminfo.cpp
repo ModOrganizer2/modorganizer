@@ -181,9 +181,13 @@ std::wstring SkyrimInfo::getSEName()
 }
 
 
-std::wstring SkyrimInfo::getNexusPage()
+std::wstring SkyrimInfo::getNexusPage(bool nmmScheme)
 {
-  return L"http://nmm.nexusmods.com/skyrim";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/skyrim";
+  } else {
+    return L"http://www.nexusmods.com/skyrim";
+  }
 }
 
 

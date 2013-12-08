@@ -3215,7 +3215,7 @@ void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_ModList.data(m_ModList.index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
-    nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage())).arg(modID));
+    nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }

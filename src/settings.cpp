@@ -214,7 +214,12 @@ QString Settings::getModDirectory() const
 
 QString Settings::getNMMVersion() const
 {
-  return m_Settings.value("Settings/nmm_version", "0.34.0").toString();
+  static const QString MIN_NMM_VERSION = "0.46.0";
+  QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
+  if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
+    result = MIN_NMM_VERSION;
+  }
+  return result;
 }
 
 bool Settings::getNexusLogin(QString &username, QString &password) const
@@ -583,9 +588,9 @@ void Settings::query(QWidget *parent)
   downloadDirEdit->setText(getDownloadDirectory());
   modDirEdit->setText(getModDirectory());
   cacheDirEdit->setText(getCacheDirectory());
-  offlineBox->setChecked(m_Settings.value("Settings/offline_mode", false).toBool());
-  proxyBox->setChecked(m_Settings.value("Settings/use_proxy", false).toBool());
-  nmmVersionEdit->setText(m_Settings.value("Settings/nmm_version", "0.33.1").toString());
+  offlineBox->setChecked(offlineMode());
+  proxyBox->setChecked(useProxy());
+  nmmVersionEdit->setText(getNMMVersion());
   logLevelBox->setCurrentIndex(logLevel());
 
   // display plugin settings

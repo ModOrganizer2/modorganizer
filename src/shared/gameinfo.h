@@ -142,7 +142,7 @@ public:
 
   virtual std::wstring getSEName() = 0;
 
-  virtual std::wstring getNexusPage() = 0;
+  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
   virtual std::wstring getNexusInfoUrl() = 0;
   virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;

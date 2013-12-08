@@ -71,7 +71,7 @@ public:
 
   virtual std::wstring getSEName();
 
-  virtual std::wstring getNexusPage();
+  virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return Fallout3Info::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();

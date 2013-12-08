@@ -153,9 +153,13 @@ std::wstring Fallout3Info::getSEName()
 }
 
 
-std::wstring Fallout3Info::getNexusPage()
+std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
 {
-  return L"http://nmm.nexusmods.com/fallout3";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/fallout3";
+  } else {
+    return L"http://www.nexusmods.com/fallout3";
+  }
 }
 
 

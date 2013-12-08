@@ -381,6 +381,7 @@ void NexusInterface::nextRequest()
 
   QString url;
   if (!info.m_Reroute) {
+    bool hasParams = false;
     switch (info.m_Type) {
       case NXMRequestInfo::TYPE_DESCRIPTION: {
         url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
@@ -396,14 +397,16 @@ void NexusInterface::nextRequest()
       } break;
       case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
         url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
+        hasParams = true;
       } break;
       case NXMRequestInfo::TYPE_GETUPDATES: {
         QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
         modIDList = "[" + modIDList + "]";
         url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
+        hasParams = true;
       } break;
     }
-    url.append(QString("?game_id=%1").arg(GameInfo::instance().getNexusGameID()));
+    url.append(QString("%1game_id=%2").arg(hasParams ? '&' : '?').arg(GameInfo::instance().getNexusGameID()));
   } else {
     url = info.m_URL;
   }
