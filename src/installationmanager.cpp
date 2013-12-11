@@ -426,7 +426,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 }
 
 
-bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
+bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
 
@@ -440,6 +440,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
           return false;
         }
       }
+      *merge = (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE);
       if (overwriteDialog.action() == QueryOverwriteDialog::ACT_RENAME) {
         bool ok = false;
         QString name = QInputDialog::getText(m_ParentWidget, tr("Mod Name"), tr("Name"),
@@ -513,8 +514,9 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     return false;
   }
 
+  bool merge = false;
   // determine target directory
-  if (!testOverwrite(modName)) {
+  if (!testOverwrite(modName, &merge)) {
     return false;
   }
 
@@ -549,7 +551,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   }
   if (!settingsFile.contains("version") ||
       (!version.isEmpty() &&
-       (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString())))) {
+       (!merge || (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString()))))) {
     settingsFile.setValue("version", version);
   }
   if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
