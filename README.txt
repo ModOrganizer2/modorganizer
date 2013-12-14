@@ -1,46 +1,115 @@
 HOW TO BUILD
 ============
 
+Intro:
+------
+
+Building Mod Organizer can be a rather daunting task especially if you're not very comfortable with C++ development under windows.
+Please note that if you only want to work on and build a plugin you can save yourself a lot of trouble
+
+Overview:
+---------
+
+As of December 2013 MO consists of the following subprojects:
+- organizer: The main userinterface. heavy usage of various libraries
+- hookdll: core library of the virtual file system
+- uibase: interop between plugins and the main application as well as some reusable functionality
+- shared: functionality shared between organizer and hookdll. I'm attempting to get rid of this library over time
+- nxmhandler: tool to pass handling of nxm links to MO or other applications
+- helper: tool for doing operations requiring elevated priviledges if MO doesn't have them
+- proxydll: dll used in the "proxy dll" load mechanism
+- esptk: small library containing functionality to work with esps/esms
+- bsatk: small library containing functionality to work with bsas. Requires zlib to extract files. Requires boost_thread to provide multi-threaded extraction
+- archive: small wrapper library around 7zip for dealing with mod archives. Requires 7zip
+- NCC: extension to NMM to provide a binary with command line interface for fomod installation. This is c# code and does not build with the rest of the project. Requires the rest of NMM
+- bossdummy: dummy dll that looks like the boss.dll. This is used instead of the real boss dlls in NCC to save some disk space
+- pythonrunner: library for embedding python code. Requires boost_python, python 2.7 and pyqt4
+
+And various plugins:
+- checkFNIS: Activates each time an application is started from MO and runs fnis if necessary
+- diagnoseBasic: Various diagnostic checks on the game
+- inieditor: minimalistic file editor for ini files
+- installerBain: handles non-scripted bain installers
+- installerBCF: no functionality. Supposed to eventually allow installations using bcfs (bain conversion file). python code
+- installerBundle: handles installation of archives wrapped in archives
+- installerFomod: handles installation of xml fomods
+- installerManual: handles installations of archives that aren't supported by any other plugin (or if the user chooses to do the installation manually)
+- installerNCC: handles installation of any fomod (requires NCC)
+- installerQuick: handles very simple one-click installations
+- NMMImport: importer from existing nmm installation
+- proxyPython: integrates pythonrunner as a plugin into MO
+- pyniEdit: more user-friendly ini editor. python code
+
+
 Requirements:
 -------------
 
 Visual C++ compiler 2010 (VC 10.0) or up
-- Included in visual c++ express 2010 or windows sdk 7.0
+- Included in visual c++ express 2010 or windows sdk 7.x
+- Do install windows sdk too if only for the cdb debugger which is included in that package
 Note: If you're having trouble installing the windows sdk, you may be affected by this bug: http://support.microsoft.com/kb/2717426
 
-QtSDK 4.8.x (http://qt-project.org/downloads)
-- Qt5 is not yet supported but WIP
+Qt Libraries 4.8.x (http://qt-project.org/downloads)
+- i.e. "Qt libraries 4.8.5 for Windows (VS 2010, 235 MB)"
+- tested: 4.8.5
+- Qt5 is not yet supported but WIP. You will see a few conditional qt5 pathes
 - Install according to instruction
 
 boost libraries (http://www.boost.org/)
-- Compile according to their instructions (using vc++): http://www.boost.org/doc/libs/1_54_0/more/getting_started/windows.html
-- A few of the boost libraries need to be built (the rest is header-only). The only compiled lib MO needs (at the time of writing) is
-  boost_thread. You can disable the others to safe yourself compile time (even on a modern system compiling boost can easily take an hour)
+- tested: 1.49
+- Build according to their instructions (using vc++): http://www.boost.org/doc/libs/1_54_0/more/getting_started/windows.html
+- A few of the boost libraries need to be built (the rest is header-only). The only compiled libs MO needs (at the time of writing) are
+  boost_thread (for everything that links agains bsatk) and boost_python (for pythonrunner). You can disable the others to save yourself compile time (even on a modern system compiling boost can easily take an hour)
 
 zlib (http://www.zlib.net/)
 - Compile static library according to their instructions
 - Depending on the version of zlib and how you built you should have a file called zlibstatic.lib or zlibstat.lib in "build" or "x86\ZLibStatRelease".
 - Please copy that lib file to "build\zlibstatic.lib" (if it doesn't exist) so MO finds it.
 
-7z.dll (http://www.7-zip.org/download.html)
-- Part of the 7-zip program
-- Has to be the 32-bit dll! (approx. 893kb)
-- If you don't want to install 7-zip (32-bit) you can open the 7z installer (i.e. 7z920.exe) in an archiving tool and unpack only the 7z.dll
+7z sourcecode (http://www.7-zip.org/download.html)
+- only for "archive" subproject
+- no need to compile, will be linked into project
+
+Python 2.7 (32-bit)
+- only for pythonrunner
+
+PyQt4 for Python 2.7
+- tested: 4.10
+- only for pythonrunner
+
 
 Recommended:
 ------------
 
 Qt Creator
+- http://qt-project.org/downloads#qt-creator
+- I.e. "Qt Creator 2.8.1 for Windows (53 MB)"
+- With Qt Creator usually the rule is "the newer the better"
+- Start Qt Creator and check if things are set up correctly:
+  1) Go to Tools > Options > Build & Run > Qt Versions
+	2.1) If the QtSDK 4.8.x you installed earlier is not auto-detected, click "Add" to add it manually
+	2.2) Navigate to your <your qt4 installation>\bin\qmake.exe
+	2.3) Restart qt creator
+	3) Go to Tools > Options > Build & Run > Kits
+	3.1) If no Kit is auto-detected (or the auto-detected ones have picked up the wrong qt or vc++ installation) click "Add"
+	3.2) Enter a Name (i.e. "Qt 4.8.5 MSVC2010 32bit")
+	3.3) In Compiler select the visual studio compiler installed earlier (may show up as "Microsoft Windows SDK for Windows x). Make sure you select the x86 variant
+	3.4) CDB should be auto-detected
+	3.5) Select the qt version set up earlier
+	4) Apply and close the options
 
 Set up (using Qt Creator):
 --------------------------
 
 1. Using Qt Creator open source/ModOrganizer.pro from your working copy
 2. Open the "Projects" tab, open the "Details" for "Build Environment"
-3. Click "Add" to add a variable called "BOOSTPATH" with the path of your boost installation as the value (i.e. C:\code\boost_1_52_0)
-4. Click "Add" to add a variable called "ZLIBPATH" with the path of your zlib installation as the value (i.e. C:\code\zlib-1.2.7)
-5. Switch the build configuration at the very top of the same page from "debug" to "release" (or vice versa) and repeat steps 3 and 4
-6. Compile the configuration(s) you want to use (debug and/or release) (Build All). This should compile correctly.
+3a. Click "Add" to add a variable called "BOOSTPATH" with the path of your boost installation as the value (i.e. C:\code\boost_1_49_0)
+3b. Click "Add" to add a variable called "ZLIBPATH" with the path of your zlib installation as the value (i.e. C:\code\zlib-1.2.7)
+3c. Click "Add" to add a variable called "7ZIPPATH" with the path of your zlib installation as the value (i.e. C:\code\7zip)
+3d. Click "Add" to add a variable called "PYTHONPATH" with the path of your zlib installation as the value (i.e. C:\code\python)
+4. Switch the build configuration at the very top of the same page from "debug" to "release" (or vice versa) and repeat step 3
+5. Compile the configuration(s) you want to use (debug and/or release) (Build All). This should compile correctly.
+6. <reserved for future use. Maybe grab a coffee?>
 7. return to the "projects" tab and switch to "Run Settings"
 8. Determine the folder of the qt binaries in the package you downloaded. This could be "QtSDK\Desktop\Qt\4.8.5\msvc2010\bin" or "Qt4.8.5\bin"
 For Release build:
@@ -69,3 +138,77 @@ Set up (without Qt Creator):
 I'm not using this workflow so I can't give more detailed instructions.
 Please note that the primary project format of MO remains qmake, if you work with visual studio and make changes to the project (like adding
 source files) you have to manually transfer those changes to the .pro file.
+
+
+
+-----------------
+Troubleshooting (thanks to Ross):
+-----------------
+
+1) When I try to build, I am seeing the error "error: LNK1104: cannot open file 'zlibstatic.lib'"
+
+	a) Make sure you have the following files
+		{ZLIBPATH}\build\zconf.h
+  		{ZLIBPATH}\build\zlib.h
+  		{ZLIBPATH}\build\zlibstatic.lib
+
+	b) make sure "zlibstat.lib" was renamed to "zlibstatic.lib"
+	c) currently, there are references to zlibstatic in the following 2 project files:
+		./bsatk/bsatk.pro
+		./hookdll/hookdll.pro
+
+2) After building, I try to open {MOPROJECTPATH}\outputd\ModOragnizer.exe and get this error
+	"The program can't start because QtDeclaratived4.dll is missing from your computer. Try reinstalling the program to fix this problem."
+
+		-> When setting up Qt4.8.x, make sure you copied the "d" (debug) versions of the dll files to {MOPROJECTPATH}\outputd\dlls
+		   If you copied the release version or did not copy the dlls at all, you may see this error.
+		   The *.dll files can be found in {QT48xPATH}\bin
+
+		Similiar:
+		http://stackoverflow.com/questions/11196416/cant-start-qt-exe-file-on-windows-7
+
+3) I am getting one or more of the the following compiler warnings...
+
+	"{MOPROJECTPATH}\source\bsatk\bsaexception.cpp:32: warning: C4996: 'vsnprintf': This function or variable may be unsafe.
+	Consider using vsnprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details."
+		-> Ignore/suppress warning like this and make be ultra-careful using printf-style functions. vsnprintf_s is a visual-c++ only function so using those would make porting (i.e. to mingw) harder
+	
+	"C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\INCLUDE\stdio.h:354: see declaration of 'vsnprintf'"
+		-> see previous
+	
+	"debug\bsaarchive.obj:-1: warning: LNK4042: object specified more than once; extras ignored"
+
+		-> This appears to be an issue when using VC++ 2010 as the compiler. There are some posts on StackOverflow
+			which suggest fixes when using VC++ as the IDE, but not sure how to apply them to Qt Creator.
+				http://stackoverflow.com/questions/3729515
+				http://stackoverflow.com/questions/3695174
+			
+		-> Also, not sure if this affects VC++ 2012 / VC++ 2013 / GCC via cygwin/mingw.
+			Not even sure if the project would successfully compile on these.
+	
+	"{MOPROJECTPATH}\source\organizer\mainwindow.cpp:3995: warning: C4428: universal-character-name encountered in source"
+	
+		-> very pointless warning.
+			http://stackoverflow.com/questions/11589571
+			http://stackoverflow.com/questions/7078013
+			
+			the best solution I saw was to just disable the warning altogether...
+			#pragma warning( disable : 4428 )
+
+	"warning: LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library"
+	
+	-> You can always add a #pragma to ignore them :P
+		http://msdn.microsoft.com/en-us/library/2c8f766e%28v=vs.80%29.aspx
+	
+4) I got the following error while building...
+	"error: LNK1201: error writing to program database
+	'{MOPROJECTPATH}\{whatever-your-build-directory-name-is}\organizer\debug\ModOrganizer.pdb';
+	check for insufficient disk space, invalid path, or insufficient privilege"
+	
+	-> I had this happen after trying to look at something in memory via Process Explorer.
+	   To resolve, I killed and restarted PE. Alternatively, you could probably use the
+	   Unlocker utility. After unlocking, I manually deleted everything in the directory.
+
+	   Unlocker: http://www.filehippo.com/download_unlocker/ or http://www.emptyloop.com/unlocker/
+	   Warning: With Unlocker v1.9.2, you must select "Advanced" then uncheck everything to
+	   avoid having some Delta toolbar garbage installed...
