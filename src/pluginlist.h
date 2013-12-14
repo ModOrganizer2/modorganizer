@@ -131,7 +131,6 @@ public:
    */
   int enabledCount() const;
 
-
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
   bool isESPLocked(int index) const;
@@ -193,7 +192,7 @@ private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath);
+    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath, bool hasIni);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;
@@ -205,6 +204,7 @@ private:
     QString m_OriginName;
     bool m_IsMaster;
     bool m_IsDummy;
+    bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
   };

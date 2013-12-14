@@ -51,5 +51,6 @@
         <file alias="emblem_notes">resources/accessories-text-editor.png</file>
         <file alias="version_date">resources/x-office-calendar.png</file>
         <file alias="warning_16">resources/dialog-warning_16.png</file>
+        <file alias="attachment">resources/mail-attachment.png</file>
     </qresource>
 </RCC>

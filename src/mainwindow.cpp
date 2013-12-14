@@ -4031,7 +4031,7 @@ void MainWindow::on_actionNexus_triggered()
   ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
                   (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
 
-  ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage().c_str(), NULL, NULL, SW_SHOWNORMAL);
+  ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage(false).c_str(), NULL, NULL, SW_SHOWNORMAL);
   ui->tabWidget->setCurrentIndex(4);
 }
 

@@ -168,7 +168,7 @@ public:
   bool indexValid(FileEntry::Index index) const;
 
   FileEntry::Ptr createFile(const std::wstring &name, DirectoryEntry *parent);
-  FileEntry::Ptr getFile(FileEntry::Index index);
+  FileEntry::Ptr getFile(FileEntry::Index index) const;
 
   void removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
@@ -233,11 +233,10 @@ public:
     * @param name name of the file
     * @return fileentry object for the file or NULL if no file matches
     */
-  const FileEntry::Ptr findFile(const std::wstring &name);
+  const FileEntry::Ptr findFile(const std::wstring &name) const;
 
-  /** search through this directory and all subdirectories for a file by the specified name.
-      if directory is not NULL, the referenced variable will be set to true if the path refers to a directory.
-      the returned pointer is NULL in that case */
+  /** search through this directory and all subdirectories for a file by the specified name (relative path).
+      if directory is not NULL, the referenced variable will be set to the path containing the file */
   const FileEntry::Ptr searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);

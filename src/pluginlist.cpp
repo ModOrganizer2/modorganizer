@@ -146,7 +146,11 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
       bool archive = false;
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath())));
+
+        QString iniPath = QFileInfo(filename).baseName() + ".ini";
+        bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != NULL;
+
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath()), hasIni));
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
@@ -724,7 +728,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       return QIcon(":/MO/gui/warning");
     } else if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
       return QIcon(":/MO/gui/locked");
-    } else if (m_ESPs[index].m_IsDummy && m_ESPs[index].m_Enabled) {
+    } else if (m_ESPs[index].m_HasIni) {
+      return QIcon(":/MO/gui/attachment");
+    } else if (m_ESPs[index].m_IsDummy && m_ESPs[index].m_Enabled && !m_ESPs[index].m_HasIni) {
       return QIcon(":/MO/gui/edit_clear");
     } else {
       return QVariant();
@@ -759,7 +765,10 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
       text += "<br>" + tr("Enabled Masters") + ": " + SetJoin(enabledMasters, ", ");
-      if (m_ESPs[index].m_IsDummy) {
+      if (m_ESPs[index].m_HasIni) {
+        text += "<br>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting "
+                "in case of conflicts.";
+      } else if (m_ESPs[index].m_IsDummy) {
         text += "<br>This file is a dummy! It exists only so the bsa with the same name gets loaded. With MO you don't need this: "
                 "If you enable the archive with the same name in the \"Archive\" tab you can disable this plugin.";
       }
@@ -1021,9 +1030,11 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 }
 
 
-PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath)
-  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false), m_Priority(0),
-    m_LoadOrder(-1), m_Time(time), m_OriginName(originName)
+PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
+                             const QString &originName, const QString &fullPath,
+                             bool hasIni)
+  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false),
+    m_Priority(0), m_LoadOrder(-1), m_Time(time), m_OriginName(originName), m_HasIni(hasIni)
 {
   try {
     ESP::File file(ToWString(fullPath));

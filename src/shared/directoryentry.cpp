@@ -759,7 +759,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
 }
 
 
-const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name)
+const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
 {
   auto iter = m_Files.find(name);
   if (iter != m_Files.end()) {
@@ -840,7 +840,7 @@ FileEntry::Ptr FileRegister::createFile(const std::wstring &name, DirectoryEntry
 }
 
 
-FileEntry::Ptr FileRegister::getFile(FileEntry::Index index)
+FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
 {
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {
