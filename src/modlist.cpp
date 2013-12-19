@@ -171,7 +171,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         CategoryFactory &categoryFactory = CategoryFactory::instance();
         if (categoryFactory.categoryExists(category)) {
           try {
-            return categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(category));
+            int categoryIdx = categoryFactory.getCategoryIndex(category);
+            return categoryFactory.getCategoryName(categoryIdx);
           } catch (const std::exception &e) {
             qCritical("failed to retrieve category name: %s", e.what());
             return QString();

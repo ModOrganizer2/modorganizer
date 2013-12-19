@@ -103,6 +103,7 @@ CategoryFactory &CategoryFactory::instance()
 void CategoryFactory::reset()
 {
   m_Categories.clear();
+  m_IDMap.clear();
   addCategory(0, "None", MakeVector<int>(2, 28, 87), 0);
 }
 

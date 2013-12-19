@@ -2203,7 +2203,7 @@ std::vector<unsigned int> MainWindow::activeProblems() const
   if (m_UnloadedPlugins.size() != 0) {
     problems.push_back(PROBLEM_PLUGINSNOTLOADED);
   }
-  if (m_PluginList.enabledCount() > 256) {
+  if (m_PluginList.enabledCount() > 255) {
     problems.push_back(PROBLEM_TOOMANYPLUGINS);
   }
   return problems;
@@ -2236,7 +2236,7 @@ QString MainWindow::fullDescription(unsigned int key) const
       return result;
     } break;
     case PROBLEM_TOOMANYPLUGINS: {
-      return tr("The game doesn't allow more than 256 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or "
+      return tr("The game doesn't allow more than 255 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or "
                 "merge some plugins into one. You can find a guide here: <a href=\"http://wiki.step-project.com/Guide:Merging_Plugins\">http://wiki.step-project.com/Guide:Merging_Plugins</a>");
     } break;
     default: {

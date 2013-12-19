@@ -631,7 +631,7 @@ void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 
 void ModInfoDialog::linkClicked(const QUrl &url)
 {
-  if (url.toString().startsWith(ToQString(GameInfo::instance().getNexusPage()))) {
+  if (url.toString().startsWith(ToQString(GameInfo::instance().getNexusPage(false)))) {
     this->close();
     emit nexusLinkActivated(url.toString());
   } else {
