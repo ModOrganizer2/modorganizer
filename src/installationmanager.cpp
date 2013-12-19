@@ -440,7 +440,9 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           return false;
         }
       }
-      *merge = (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE);
+      if (merge != nullptr) {
+        *merge = (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE);
+      }
       if (overwriteDialog.action() == QueryOverwriteDialog::ACT_RENAME) {
         bool ok = false;
         QString name = QInputDialog::getText(m_ParentWidget, tr("Mod Name"), tr("Name"),

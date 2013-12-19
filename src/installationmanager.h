@@ -138,6 +138,7 @@ public:
   /**
    * @brief test if the specified mod name is free. If not, query the user how to proceed
    * @param modName current possible names for the mod
+   * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
    * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
    */
   virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = NULL) const;
