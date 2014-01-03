@@ -30,7 +30,7 @@ using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
   : TutorableDialog("EditExecutables", parent),
-  ui(new Ui::EditExecutablesDialog), m_ExecutablesList(executablesList)
+  ui(new Ui::EditExecutablesDialog), m_CurrentItem(NULL), m_ExecutablesList(executablesList)
 {
   ui->setupUi(this);
 
@@ -68,21 +68,15 @@ void EditExecutablesDialog::refreshExecutablesWidget()
     executablesWidget->addItem(newItem);
   }
 
-  QPushButton *addButton = findChild<QPushButton*>("addButton");
-  QPushButton *removeButton = findChild<QPushButton*>("removeButton");
-
-  addButton->setEnabled(false);
-  removeButton->setEnabled(false);
+  ui->addButton->setEnabled(false);
+  ui->removeButton->setEnabled(false);
 }
 
 
 void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &arg1)
 {
-  QPushButton *addButton = findChild<QPushButton*>("addButton");
-//  QPushButton *removeButton = findChild<QPushButton*>("removeButton");
-
   QFileInfo fileInfo(arg1);
-  addButton->setEnabled(fileInfo.exists() && fileInfo.isFile());
+  ui->addButton->setEnabled(fileInfo.exists() && fileInfo.isFile());
 }
 
 void EditExecutablesDialog::resetInput()
@@ -91,23 +85,35 @@ void EditExecutablesDialog::resetInput()
   ui->titleEdit->setText("");
   ui->workingDirEdit->clear();
   ui->argumentsEdit->setText("");
+  ui->appIDOverwriteEdit->clear();
+  ui->overwriteAppIDBox->setChecked(false);
   ui->closeCheckBox->setChecked(false);
+  m_CurrentItem = NULL;
+}
+
+
+void EditExecutablesDialog::saveExecutable()
+{
+  m_ExecutablesList.addExecutable(ui->titleEdit->text(), QDir::fromNativeSeparators(ui->binaryEdit->text()),
+        ui->argumentsEdit->text(), QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+        (ui->closeCheckBox->checkState() == Qt::Checked) ? DEFAULT_CLOSE : DEFAULT_STAY,
+        ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
+        true, false);
+}
+
+
+void EditExecutablesDialog::delayedRefresh()
+{
+  int index = ui->executablesListBox->currentIndex().row();
+  resetInput();
+  refreshExecutablesWidget();
+  ui->executablesListBox->setCurrentRow(index);
 }
 
 
 void EditExecutablesDialog::on_addButton_clicked()
 {
-  QLineEdit *titleEdit = findChild<QLineEdit*>("titleEdit");
-  QLineEdit *binaryEdit = findChild<QLineEdit*>("binaryEdit");
-  QLineEdit *argumentsEdit = findChild<QLineEdit*>("argumentsEdit");
-  QLineEdit *workingDirEdit = findChild<QLineEdit*>("workingDirEdit");
-  QCheckBox *closeCheckBox = findChild<QCheckBox*>("closeCheckBox");
-
-  m_ExecutablesList.addExecutable(titleEdit->text(), QDir::fromNativeSeparators(binaryEdit->text()),
-        argumentsEdit->text(), QDir::fromNativeSeparators(workingDirEdit->text()),
-        (closeCheckBox->checkState() == Qt::Checked) ? DEFAULT_CLOSE : DEFAULT_STAY,
-        ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
-        true, false);
+  saveExecutable();
 
   resetInput();
   refreshExecutablesWidget();
@@ -196,37 +202,88 @@ void EditExecutablesDialog::on_titleEdit_textChanged(const QString &arg1)
   }
 }
 
-void EditExecutablesDialog::on_executablesListBox_itemClicked(QListWidgetItem *item)
+
+bool EditExecutablesDialog::executableChanged()
 {
-  QLineEdit *titleEdit = findChild<QLineEdit*>("titleEdit");
-  QLineEdit *binaryEdit = findChild<QLineEdit*>("binaryEdit");
-  QLineEdit *argumentsEdit = findChild<QLineEdit*>("argumentsEdit");
-  QLineEdit *workingDirEdit = findChild<QLineEdit*>("workingDirEdit");
-  QPushButton *removeButton = findChild<QPushButton*>("removeButton");
-  QCheckBox *closeCheckBox = findChild<QCheckBox*>("closeCheckBox");
+  if (m_CurrentItem != NULL) {
+    const Executable &selectedExecutable = m_CurrentItem->data(Qt::UserRole).value<Executable>();
 
-  const Executable &selectedExecutable = item->data(Qt::UserRole).value<Executable>();
-
-  titleEdit->setText(selectedExecutable.m_Title);
-  binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
-  argumentsEdit->setText(selectedExecutable.m_Arguments);
-  workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
-  closeCheckBox->setChecked(selectedExecutable.m_CloseMO == DEFAULT_CLOSE);
-  if (selectedExecutable.m_CloseMO == NEVER_CLOSE) {
-    closeCheckBox->setEnabled(false);
-    closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
+    return selectedExecutable.m_Arguments != ui->argumentsEdit->text()
+        || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
+        || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
+        || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
+        || (selectedExecutable.m_CloseMO == DEFAULT_CLOSE) != ui->closeCheckBox->isChecked();
   } else {
-    closeCheckBox->setEnabled(true);
-    closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
+    return false;
   }
-  removeButton->setEnabled(selectedExecutable.m_Custom);
+}
+
+
+void EditExecutablesDialog::on_executablesListBox_currentItemChanged(QListWidgetItem *current, QListWidgetItem*)
+{
+  if (current == NULL) {
+    resetInput();
+    return;
+  }
+
+  if (executableChanged()) {
+    QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
+        tr("You made changes to the current executable, do you want to save them?"),
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    if (res == QMessageBox::Cancel) {
+      return;
+    } else if (res == QMessageBox::Yes) {
+      // this invalidates the item passed as a a parameter
+      saveExecutable();
+
+      QTimer::singleShot(50, this, SLOT(delayedRefresh()));
+      return;
+    }
+  }
+
+  m_CurrentItem = current;
+
+  const Executable &selectedExecutable = current->data(Qt::UserRole).value<Executable>();
+
+  ui->titleEdit->setText(selectedExecutable.m_Title);
+  ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
+  ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
+  ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
+  ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == DEFAULT_CLOSE);
+  if (selectedExecutable.m_CloseMO == NEVER_CLOSE) {
+    ui->closeCheckBox->setEnabled(false);
+    ui->closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
+  } else {
+    ui->closeCheckBox->setEnabled(true);
+    ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
+  }
+  ui->removeButton->setEnabled(selectedExecutable.m_Custom);
   ui->overwriteAppIDBox->setChecked(selectedExecutable.m_SteamAppID != 0);
   if (selectedExecutable.m_SteamAppID != 0) {
     ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
+  } else {
+    ui->appIDOverwriteEdit->clear();
   }
 }
+
 
 void EditExecutablesDialog::on_overwriteAppIDBox_toggled(bool checked)
 {
   ui->appIDOverwriteEdit->setEnabled(checked);
 }
+
+void EditExecutablesDialog::on_closeButton_clicked()
+{
+  if (executableChanged()) {
+    QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
+        tr("You made changes to the current executable, do you want to save them?"),
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    if (res == QMessageBox::Cancel) {
+      return;
+    } else if (res == QMessageBox::Yes) {
+      saveExecutable();
+    }
+  }
+  this->accept();
+}
+

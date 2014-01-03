@@ -100,6 +100,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkProxy>
 #include <QtConcurrentRun>
 #include <QCoreApplication>
+#include <scopeguard.h>
 
 
 #ifdef TEST_MODELS
@@ -1287,10 +1288,11 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
   }
 
   while (m_RefreshProgress->isVisible()) {
-    ::Sleep(1000);
+    ::Sleep(100);
     QCoreApplication::processEvents();
   }
 
+  // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
   } else {
@@ -1321,9 +1323,14 @@ void MainWindow::spawnProgram(const QString &fileName, const QString &argumentsA
 }
 */
 
+
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
 {
   storeSettings();
+
+  LockedDialog *dialog = new LockedDialog(this);
+  dialog->show();
+  ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); });
 
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->getName(), currentDirectory, steamAppID);
   if (processHandle != INVALID_HANDLE_VALUE) {
@@ -1332,12 +1339,9 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
     } else {
       this->setEnabled(false);
 
-      LockedDialog *dialog = new LockedDialog(this);
-      dialog->show();
-
       QCoreApplication::processEvents();
 
-      while ((::WaitForSingleObject(processHandle, 1000) == WAIT_TIMEOUT) &&
+      while ((::WaitForSingleObject(processHandle, 100) == WAIT_TIMEOUT) &&
               !dialog->unlockClicked()) {
         // keep processing events so the app doesn't appear dead
         QCoreApplication::processEvents();
@@ -1348,8 +1352,6 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
       if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
-      dialog->hide();
-      dialog->deleteLater();
     }
   }
 }
