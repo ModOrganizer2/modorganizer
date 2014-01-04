@@ -218,8 +218,8 @@ void DownloadManager::setOutputDirectory(const QString &outputDirectory)
     m_DirWatcher.removePaths(directories);
   }
   m_OutputDirectory = QDir::fromNativeSeparators(outputDirectory);
-  m_DirWatcher.addPath(m_OutputDirectory);
   refreshList();
+  m_DirWatcher.addPath(m_OutputDirectory);
 }
 
 
@@ -243,6 +243,8 @@ void DownloadManager::setShowHidden(bool showHidden)
 
 void DownloadManager::refreshList()
 {
+  int downloadsBefore = m_ActiveDownloads.size();
+
   // remove finished downloads
   for (QVector<DownloadInfo*>::iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end();) {
     if (((*Iter)->m_State == STATE_READY) || ((*Iter)->m_State == STATE_INSTALLED)) {
@@ -259,8 +261,21 @@ void DownloadManager::refreshList()
   }
 
   nameFilters.append(QString("*").append(UNFINISHED));
-
   QDir dir(QDir::fromNativeSeparators(m_OutputDirectory));
+
+  // find orphaned meta files and delete them (sounds cruel but it's better for everyone)
+  QStringList orphans;
+  QStringList metaFiles = dir.entryList(QStringList() << "*.meta");
+  foreach (const QString &metaFile, metaFiles) {
+    QString baseFile = metaFile.left(metaFile.length() - 5);
+    if (!QFile::exists(dir.absoluteFilePath(baseFile))) {
+      orphans.append(dir.absoluteFilePath(metaFile));
+    }
+  }
+  if (orphans.size() > 0) {
+    qDebug("%d orphaned meta files will be deleted", orphans.size());
+    shellDelete(orphans, true);
+  }
 
   // add existing downloads to list
   foreach (QString file, dir.entryList(nameFilters, QDir::Files, QDir::Time)) {
@@ -273,6 +288,7 @@ void DownloadManager::refreshList()
       }
     }
     if (Exists) {
+      qDebug("%s exists", qPrintable(file));
       continue;
     }
 
@@ -283,7 +299,10 @@ void DownloadManager::refreshList()
       m_ActiveDownloads.push_front(info);
     }
   }
-  qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+
+  if (m_ActiveDownloads.size() != downloadsBefore) {
+    qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+  }
   emit update(-1);
 }
 
