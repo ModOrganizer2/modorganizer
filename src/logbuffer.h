@@ -60,6 +60,8 @@ private:
 
   void write() const;
 
+  static char msgTypeID(QtMsgType type);
+
 private:
 
   static QScopedPointer<LogBuffer> s_Instance;

@@ -60,6 +60,9 @@ public:
   virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
   virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
+  void paintPendingDownload(int downloadIndex) const;
+  void paintRegularDownload(int downloadIndex) const;
+
 signals:
 
   void installDownload(int index);

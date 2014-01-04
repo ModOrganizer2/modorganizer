@@ -256,6 +256,13 @@ public:
    */
   std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
 
+  /**
+   * @brief register MO as the handler for nxm links
+   * @param force set to true to enforce the registration dialog to show up,
+   *              even if the user said earlier not to
+   */
+  void registerAsNXMHandler(bool force);
+
 private:
 
   QString obfuscate(const QString &password) const;
