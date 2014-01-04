@@ -231,9 +231,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
-
   connect(&m_DownloadManager, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
   connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString,int)), this, SLOT(downloadSpeed(QString,int)));
+  connect(&m_DownloadManager, SIGNAL(downloadAdded()), ui->downloadView, SLOT(scrollToBottom()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -781,6 +781,8 @@ void MainWindow::showEvent(QShowEvent *event)
   ui->groupCombo->setCurrentIndex(grouping);
 
   allowListResize();
+
+  m_Settings.registerAsNXMHandler(false);
 }
 
 
@@ -4026,15 +4028,10 @@ void MainWindow::on_actionSettings_triggered()
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
 }
 
+
 void MainWindow::on_actionNexus_triggered()
 {
-  std::wstring nxmPath = ToWString(QApplication::applicationDirPath() + "/nxmhandler.exe");
-  std::wstring executable = ToWString(QApplication::applicationFilePath());
-  ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
-                  (std::wstring(L"reg ") + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
-
   ::ShellExecuteW(NULL, L"open", GameInfo::instance().getNexusPage(false).c_str(), NULL, NULL, SW_SHOWNORMAL);
-  ui->tabWidget->setCurrentIndex(4);
 }
 
 
@@ -4054,6 +4051,7 @@ void MainWindow::linkClicked(const QString &url)
 void MainWindow::downloadRequestedNXM(const QString &url)
 {
   QString username, password;
+  qDebug("download requested: %s", qPrintable(url));
 
   if (!m_LoginAttempted && !NexusInterface::instance()->getAccessManager()->loggedIn() &&
       (m_Settings.getNexusLogin(username, password) ||

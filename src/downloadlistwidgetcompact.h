@@ -78,6 +78,8 @@ protected:
 private:
 
   void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
+  void paintPendingDownload(int downloadIndex) const;
+  void paintRegularDownload(int downloadIndex) const;
 
 private slots:
 

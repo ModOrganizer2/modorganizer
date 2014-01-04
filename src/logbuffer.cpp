@@ -112,13 +112,26 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
 
 #else
 
+
+char LogBuffer::msgTypeID(QtMsgType type)
+{
+  switch (type) {
+    case QtDebugMsg: return 'D';
+    case QtWarningMsg: return 'W';
+    case QtCriticalMsg: return 'C';
+    case QtFatalMsg: return 'F';
+  }
+}
+
+#include <QDateTime>
+
 void LogBuffer::log(QtMsgType type, const char *message)
 {
   QMutexLocker guard(&s_Mutex);
   if (!s_Instance.isNull()) {
     s_Instance->logMessage(type, message);
   }
-  fprintf(stdout, "%s\n", message);
+  fprintf(stdout, "[%c] %s: %s\n", msgTypeID(type), qPrintable(QTime::currentTime().toString()), message);
   fflush(stdout);
 }
 

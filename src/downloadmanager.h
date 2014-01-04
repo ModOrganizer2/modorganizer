@@ -206,6 +206,19 @@ public:
   int numTotalDownloads() const;
 
   /**
+   * @brief retrieve number of pending downloads (nexus downloads for which we don't know the name and url yet)
+   * @return  number of pending downloads
+   */
+  int numPendingDownloads() const;
+
+  /**
+   * @brief retrieve the info of a pending download
+   * @param index index of the pending download (index in the range [0, numPendingDownloads()[)
+   * @return pair of modid, fileid
+   */
+  std::pair<int, int> getPendingDownload(int index);
+
+  /**
    * @brief retrieve the full path to the download specified by index
    *
    * @param index the index to look up
@@ -357,6 +370,11 @@ signals:
    */
   void downloadSpeed(const QString &serverName, int bytesPerSecond);
 
+  /**
+   * @brief emitted whenever a new download is added to the list
+   */
+  void downloadAdded();
+
 public slots:
 
   /**
@@ -440,6 +458,8 @@ private:
 
   QDateTime matchDate(const QString &timeString);
 
+  void removePending(int modID, int fileID);
+
 private:
 
   static const int AUTOMATIC_RETRIES = 3;
@@ -447,6 +467,9 @@ private:
 private:
 
   NexusInterface *m_NexusInterface;
+
+  QVector<std::pair<int, int> > m_PendingDownloads;
+
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
@@ -464,5 +487,7 @@ private:
   QRegExp m_DateExpression;
 
 };
+
+
 
 #endif // DOWNLOADMANAGER_H

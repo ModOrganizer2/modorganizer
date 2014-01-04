@@ -75,6 +75,8 @@ private slots:
 
   void deleteBlacklistItem();
 
+  void on_associateButton_clicked();
+
 private:
     Ui::SettingsDialog *ui;
 };

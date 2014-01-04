@@ -102,6 +102,15 @@ bool Settings::pluginBlacklisted(const QString &fileName) const
   return m_PluginBlacklist.contains(fileName);
 }
 
+void Settings::registerAsNXMHandler(bool force)
+{
+  std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
+  std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
+  std::wstring mode = force ? L"forcereg" : L"reg";
+  ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
+                  (mode + L" " + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
+}
+
 void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);

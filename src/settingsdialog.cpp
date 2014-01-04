@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QShortcut>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "settings.h"
 
 
 using namespace MOBase;
@@ -164,4 +165,9 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
 void SettingsDialog::deleteBlacklistItem()
 {
   ui->pluginBlacklist->takeItem(ui->pluginBlacklist->currentIndex().row());
+}
+
+void SettingsDialog::on_associateButton_clicked()
+{
+  Settings::instance().registerAsNXMHandler(true);
 }

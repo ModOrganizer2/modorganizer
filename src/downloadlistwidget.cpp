@@ -82,6 +82,83 @@ void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOption
 }
 
 
+void DownloadListWidgetDelegate::paintPendingDownload(int downloadIndex) const
+{
+  std::pair<int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
+  m_NameLabel->setText(tr("< mod %1 file %2 >").arg(nexusids.first).arg(nexusids.second));
+  m_SizeLabel->setText("???");
+  m_InstallLabel->setVisible(true);
+  m_InstallLabel->setText(tr("Pending"));
+  m_Progress->setVisible(false);
+}
+
+
+void DownloadListWidgetDelegate::paintRegularDownload(int downloadIndex) const
+{
+  QString name = m_Manager->getFileName(downloadIndex);
+  if (name.length() > 53) {
+    name.truncate(50);
+    name.append("...");
+  }
+  m_NameLabel->setText(name);
+  m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1024));
+  DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
+  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+    QPalette labelPalette;
+    m_InstallLabel->setVisible(true);
+    m_Progress->setVisible(false);
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+    m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0));
+#else
+    m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0, QApplication::UnicodeUTF8));
+#endif
+    labelPalette.setColor(QPalette::WindowText, Qt::darkRed);
+    m_InstallLabel->setPalette(labelPalette);
+  } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
+    m_InstallLabel->setText(tr("Fetching Info 1"));
+    m_Progress->setVisible(false);
+  } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
+    m_InstallLabel->setText(tr("Fetching Info 2"));
+    m_Progress->setVisible(false);
+  } else if (state >= DownloadManager::STATE_READY) {
+    QPalette labelPalette;
+    m_InstallLabel->setVisible(true);
+    m_Progress->setVisible(false);
+    if (state == DownloadManager::STATE_INSTALLED) {
+      // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
+      // of DownloadListWidgetDelegate?
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0));
+#else
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0, QApplication::UnicodeUTF8));
+#endif
+      labelPalette.setColor(QPalette::WindowText, Qt::darkGray);
+    } else if (state == DownloadManager::STATE_UNINSTALLED) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0));
+#else
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0, QApplication::UnicodeUTF8));
+#endif
+      labelPalette.setColor(QPalette::WindowText, Qt::lightGray);
+    } else {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0));
+#else
+      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0, QApplication::UnicodeUTF8));
+#endif
+      labelPalette.setColor(QPalette::WindowText, Qt::darkGreen);
+    }
+    m_InstallLabel->setPalette(labelPalette);
+    if (m_Manager->isInfoIncomplete(downloadIndex)) {
+      m_NameLabel->setText("<img src=\":/MO/gui/warning_16\" /> " + m_NameLabel->text());
+    }
+  } else {
+    m_InstallLabel->setVisible(false);
+    m_Progress->setVisible(true);
+    m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+  }
+}
+
 void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   try {
@@ -95,67 +172,10 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
 
     int downloadIndex = index.data().toInt();
 
-    QString name = m_Manager->getFileName(downloadIndex);
-    if (name.length() > 53) {
-      name.truncate(50);
-      name.append("...");
-    }
-    m_NameLabel->setText(name);
-    m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1024));
-    DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-    if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
-      QPalette labelPalette;
-      m_InstallLabel->setVisible(true);
-      m_Progress->setVisible(false);
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0));
-#else
-      m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Paused - Double Click to resume", 0, QApplication::UnicodeUTF8));
-#endif
-      labelPalette.setColor(QPalette::WindowText, Qt::darkRed);
-      m_InstallLabel->setPalette(labelPalette);
-    } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
-      m_InstallLabel->setText(tr("Fetching Info 1"));
-      m_Progress->setVisible(false);
-    } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
-      m_InstallLabel->setText(tr("Fetching Info 2"));
-      m_Progress->setVisible(false);
-    } else if (state >= DownloadManager::STATE_READY) {
-      QPalette labelPalette;
-      m_InstallLabel->setVisible(true);
-      m_Progress->setVisible(false);
-      if (state == DownloadManager::STATE_INSTALLED) {
-        // the tr-macro doesn't work here, maybe because the translation is actually associated with DownloadListWidget instead
-        // of DownloadListWidgetDelegate?
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0));
-#else
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Installed - Double Click to re-install", 0, QApplication::UnicodeUTF8));
-#endif
-        labelPalette.setColor(QPalette::WindowText, Qt::darkGray);
-      } else if (state == DownloadManager::STATE_UNINSTALLED) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0));
-#else
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Uninstalled - Double Click to re-install", 0, QApplication::UnicodeUTF8));
-#endif
-        labelPalette.setColor(QPalette::WindowText, Qt::lightGray);
-      } else {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0));
-#else
-        m_InstallLabel->setText(QApplication::translate("DownloadListWidget", "Done - Double Click to install", 0, QApplication::UnicodeUTF8));
-#endif
-        labelPalette.setColor(QPalette::WindowText, Qt::darkGreen);
-      }
-      m_InstallLabel->setPalette(labelPalette);
-      if (m_Manager->isInfoIncomplete(downloadIndex)) {
-        m_NameLabel->setText("<img src=\":/MO/gui/warning_16\" /> " + m_NameLabel->text());
-      }
+    if (downloadIndex >= m_Manager->numTotalDownloads()) {
+      paintPendingDownload(downloadIndex - m_Manager->numTotalDownloads());
     } else {
-      m_InstallLabel->setVisible(false);
-      m_Progress->setVisible(true);
-      m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+      paintRegularDownload(downloadIndex);
     }
 
 #pragma message("caching disabled because changes in the list (including resorting) doesn't work correctly")
@@ -280,29 +300,32 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
       QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
       if (mouseEvent->button() == Qt::RightButton) {
         QMenu menu(m_View);
+        bool hidden = false;
         m_ContextRow = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index).row();
-        DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
-        bool hidden = m_Manager->isHidden(m_ContextRow);
-        if (state >= DownloadManager::STATE_READY) {
-          menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-          if (m_Manager->isInfoIncomplete(m_ContextRow)) {
-            menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+        if (m_ContextRow < m_Manager->numTotalDownloads()) {
+          DownloadManager::DownloadState state = m_Manager->getState(m_ContextRow);
+          hidden = m_Manager->isHidden(m_ContextRow);
+          if (state >= DownloadManager::STATE_READY) {
+            menu.addAction(tr("Install"), this, SLOT(issueInstall()));
+            if (m_Manager->isInfoIncomplete(m_ContextRow)) {
+              menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+            }
+            menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+            if (hidden) {
+              menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
+            } else {
+              menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+            }
+          } else if (state == DownloadManager::STATE_DOWNLOADING){
+            menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
+            menu.addAction(tr("Pause"), this, SLOT(issuePause()));
+          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+            menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
+            menu.addAction(tr("Resume"), this, SLOT(issueResume()));
           }
-          menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
-          if (hidden) {
-            menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
-          } else {
-            menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
-          }
-        } else if (state == DownloadManager::STATE_DOWNLOADING){
-          menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
-          menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-        } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
-          menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
-          menu.addAction(tr("Resume"), this, SLOT(issueResume()));
-        }
 
-        menu.addSeparator();
+          menu.addSeparator();
+        }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
         if (!hidden) {
