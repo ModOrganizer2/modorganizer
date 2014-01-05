@@ -71,6 +71,7 @@ public:
   const std::vector<int> &getAlternatives() const { return m_Alternatives; }
 
   const std::wstring &getName() const { return m_Name; }
+  int getOrigin() const { return m_Origin; }
   int getOrigin(bool &archive) const { archive = (m_Archive.length() != 0); return m_Origin; }
   const std::wstring &getArchive() const { return m_Archive; }
   bool isFromArchive() const { return m_Archive.length() != 0; }

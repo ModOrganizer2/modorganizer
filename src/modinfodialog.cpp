@@ -398,19 +398,10 @@ void ModInfoDialog::on_textFileList_currentItemChanged(QListWidgetItem *current,
 
 void ModInfoDialog::openTextFile(const QString &fileName)
 {
-  QFile textFile(fileName);
-  textFile.open(QIODevice::ReadOnly);
-  QByteArray buffer = textFile.readAll();
-  QTextCodec *codec = QTextCodec::codecForUtfText(buffer, m_UTF8Codec);
-  QString text = codec->toUnicode(buffer);
-  if (codec->fromUnicode(text) != buffer) {
-    qDebug("conversion failed assuming local encoding");
-    codec = QTextCodec::codecForLocale();
-    text = codec->toUnicode(buffer);
-  }
-  ui->textFileView->setText(text);
+  QString encoding;
+  ui->textFileView->setText(MOBase::readFileText(fileName, &encoding));
   ui->textFileView->setProperty("currentFile", fileName);
-  ui->textFileView->setProperty("encoding", codec->name());
+  ui->textFileView->setProperty("encoding", encoding);
   ui->saveTXTButton->setEnabled(false);
 }
 

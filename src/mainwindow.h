@@ -48,6 +48,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginlistsortproxy.h"
 #include "tutorialcontrol.h"
 #include "savegameinfowidgetgamebryo.h"
+#include "previewgenerator.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
 #include <boost/signals2.hpp>
@@ -367,6 +368,8 @@ private:
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
 
+  PreviewGenerator m_PreviewGenerator;
+
 private slots:
 
   void showMessage(const QString &message);
@@ -398,6 +401,7 @@ private slots:
   void writeDataToFile();
   void openDataFile();
   void addAsExecutable();
+  void previewDataFile();
   void hideFile();
   void unhideFile();
 

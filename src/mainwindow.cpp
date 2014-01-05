@@ -55,6 +55,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "gameinfoimpl.h"
 #include "savetextasdialog.h"
 #include "problemsdialog.h"
+#include "previewdialog.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -4372,6 +4373,44 @@ void MainWindow::unhideFile()
   }
 }
 
+void MainWindow::previewDataFile()
+{
+  QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
+
+  // what we have is an absolute path to the file in its actual location (for the primary origin)
+  // what we want is the path relative to the virtual data directory
+
+  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
+  int offset = m_Settings.getModDirectory().size() + 1;
+  offset = fileName.indexOf("/", offset);
+  fileName = fileName.mid(offset + 1);
+
+  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
+
+  if (file.get() == NULL) {
+    reportError(tr("file not found: %1").arg(fileName));
+    return;
+  }
+
+  // set up preview dialog
+  PreviewDialog preview(fileName);
+  auto addFunc = [&] (int originId) {
+      FilesOrigin &origin = m_DirectoryStructure->getOriginByID(originId);
+      QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
+      if (QFile::exists(filePath)) {
+        // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
+        preview.addVariant(ToQString(origin.getName()), m_PreviewGenerator.genPreview(filePath));
+      }
+    };
+
+  addFunc(file->getOrigin());
+  foreach (int i, file->getAlternatives()) {
+    addFunc(i);
+  }
+  if (preview.numVariants() > 0) {
+    preview.exec();
+  }
+}
 
 void MainWindow::openDataFile()
 {
@@ -4439,6 +4478,12 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   if ((m_ContextItem != NULL) && (m_ContextItem->childCount() == 0)) {
     menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
     menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
+
+    QString fileName = m_ContextItem->text(0);
+    if (m_PreviewGenerator.previewSupported(QFileInfo(fileName).completeSuffix())) {
+      menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+    }
+
     // offer to hide/unhide file, but not for files from archives
     if (!m_ContextItem->data(0, Qt::UserRole + 1).toBool()) {
       if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
@@ -4447,6 +4492,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
         menu.addAction(tr("Hide"), this, SLOT(hideFile()));
       }
     }
+
     menu.addSeparator();
   }
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
