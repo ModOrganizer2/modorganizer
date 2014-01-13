@@ -256,12 +256,15 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
   connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(bsaList_itemMoved()));
-
   connect(ui->bsaWarning, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
+
+  connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
 
   connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
   connect(&m_DirectoryRefresher, SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
   connect(&m_DirectoryRefresher, SIGNAL(error(QString)), this, SLOT(showError(QString)));
+
+  connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
 
   connect(&m_Settings, SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
   connect(&m_Settings, SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
@@ -1526,18 +1529,49 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
     std::vector<DirectoryEntry*>::const_iterator current, end;
     directoryEntry.getSubDirectories(current, end);
     for (; current != end; ++current) {
-      QStringList columns(ToQString((*current)->getName()));
+      QString pathName = ToQString((*current)->getName());
+      QStringList columns(pathName);
       columns.append("");
-      QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-      updateTo(directoryChild, temp.str(), **current, conflictsOnly);
-      if (directoryChild->childCount() != 0) {
+      if (!(*current)->isEmpty()) {
+        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+        QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
+        onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
+        onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
+        onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
+        directoryChild->addChild(onDemandLoad);
         subTree->addChild(directoryChild);
-      } else {
-        delete directoryChild;
+/*        updateTo(directoryChild, temp.str(), **current, conflictsOnly);
+        if (directoryChild->childCount() != 0) {
+          subTree->addChild(directoryChild);
+        } else {
+          delete directoryChild;
+        }*/
       }
     }
   }
+
   subTree->sortChildren(0, Qt::AscendingOrder);
+}
+
+
+void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
+{
+  if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
+    // read the data we need from the sub-item, then dispose of it
+    QTreeWidgetItem *onDemandDataItem = item->child(0);
+    std::wstring path = ToWString(onDemandDataItem->data(0, Qt::UserRole + 1).toString());
+    bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
+    item->removeChild(onDemandDataItem);
+
+    std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
+    DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(virtualPath);
+    if (dir != NULL) {
+      updateTo(item, path, *dir, conflictsOnly);
+    } else {
+      qWarning("failed to update view of %ls", path.c_str());
+    }
+
+  }
 }
 
 
@@ -1665,6 +1699,14 @@ void MainWindow::refreshDataTree()
 }
 
 
+void MainWindow::refreshSavesIfOpen()
+{
+  if (ui->tabWidget->currentIndex() == 3) {
+    refreshSaveList();
+  }
+}
+
+
 void MainWindow::refreshSaveList()
 {
   ui->savegameList->clear();
@@ -1679,6 +1721,8 @@ void MainWindow::refreshSaveList()
                                (ToWString(m_CurrentProfile->getPath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
     savesDir.setPath(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getDocumentsDir() + L"\\" + path)));
   }
+
+  m_SavesWatcher.addPath(savesDir.absolutePath());
 
   QStringList filters;
   filters << ToQString(GameInfo::instance().getSaveGameExtension());
@@ -4399,7 +4443,12 @@ void MainWindow::previewDataFile()
       QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
       if (QFile::exists(filePath)) {
         // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-        preview.addVariant(ToQString(origin.getName()), m_PreviewGenerator.genPreview(filePath));
+        QWidget *wid = m_PreviewGenerator.genPreview(filePath);
+        if (wid == NULL) {
+          reportError(tr("failed to generate preview for %1").arg(filePath));
+        } else {
+          preview.addVariant(ToQString(origin.getName()), wid);
+        }
       }
     };
 
@@ -4409,6 +4458,8 @@ void MainWindow::previewDataFile()
   }
   if (preview.numVariants() > 0) {
     preview.exec();
+  } else {
+    QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
   }
 }
 

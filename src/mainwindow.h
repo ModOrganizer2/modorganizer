@@ -370,6 +370,8 @@ private:
 
   PreviewGenerator m_PreviewGenerator;
 
+  QFileSystemWatcher m_SavesWatcher;
+
 private slots:
 
   void showMessage(const QString &message);
@@ -522,6 +524,9 @@ private slots:
   void changeVersioningScheme();
   void ignoreUpdate();
   void unignoreUpdate();
+
+  void refreshSavesIfOpen();
+  void expandDataTreeItem(QTreeWidgetItem *item);
 
 private slots: // ui slots
   // actions

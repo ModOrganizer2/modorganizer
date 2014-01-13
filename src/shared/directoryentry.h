@@ -205,6 +205,8 @@ public:
   void clear();
   bool isPopulated() const { return m_Populated; }
 
+  bool isEmpty() const { return (m_Files.size() == 0) && (m_SubDirectories.size() == 0); }
+
   const DirectoryEntry *getParent() const { return m_Parent; }
 
   // add files to this directory (and subdirectories) from the specified origin. That origin may exist or not

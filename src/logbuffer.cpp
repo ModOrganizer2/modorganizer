@@ -131,7 +131,7 @@ void LogBuffer::log(QtMsgType type, const char *message)
   if (!s_Instance.isNull()) {
     s_Instance->logMessage(type, message);
   }
-  fprintf(stdout, "[%c] %s: %s\n", msgTypeID(type), qPrintable(QTime::currentTime().toString()), message);
+  fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), message);
   fflush(stdout);
 }
 

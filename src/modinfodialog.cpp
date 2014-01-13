@@ -766,7 +766,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
   if (modID != 0) {
-    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(ToQString(GameInfo::instance().getNexusPage())).arg(modID);
+    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID);
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);

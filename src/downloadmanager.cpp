@@ -429,7 +429,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   emit update(-1);
   emit downloadAdded();
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.modId(), nxmInfo.fileId(), this, QVariant()));
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.modId(), nxmInfo.fileId(), this, nxmInfo.fileId()));
 }
 
 
@@ -1201,7 +1201,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
 }
 
 
-void DownloadManager::nxmRequestFailed(int modID, QVariant, int requestID, const QString &errorString)
+void DownloadManager::nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {
@@ -1225,6 +1225,8 @@ void DownloadManager::nxmRequestFailed(int modID, QVariant, int requestID, const
       break;
     }
   }
+
+  removePending(modID, userData.toInt());
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
 
