@@ -1017,6 +1017,12 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
       return true;
     }
   }
+  { // preview plugins
+    IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
+    if (verifyPlugin(preview)) {
+      m_PreviewGenerator.registerPlugin(preview);
+    }
+  }
   { // proxy plugins
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
     if (verifyPlugin(proxy)) {

@@ -24,11 +24,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <map>
 #include <functional>
+#include <ipluginpreview.h>
 
 class PreviewGenerator
 {
 public:
   PreviewGenerator();
+
+  void registerPlugin(MOBase::IPluginPreview *plugin);
 
   bool previewSupported(const QString &fileExtension) const;
 
@@ -38,11 +41,10 @@ private:
 
   QWidget *genImagePreview(const QString &fileName) const;
   QWidget *genTxtPreview(const QString &fileName) const;
-  QWidget *genDDSPreview(const QString &fileName) const;
 
 private:
 
-  std::map<QString, std::function<QWidget*(const QString&)> > m_PreviewGenerators;
+  std::map<QString, MOBase::IPluginPreview*> m_PreviewPlugins;
 
   QSize m_MaxSize;
 

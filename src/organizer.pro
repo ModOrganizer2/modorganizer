@@ -80,14 +80,7 @@ SOURCES += \
     ../esptk/subrecord.cpp \
     noeditdelegate.cpp \
     previewgenerator.cpp \
-    previewdialog.cpp \
-    gl/gltexloaders.cpp \
-    gl/dds/dds_api.cpp \
-    gl/dds/Image.cpp \
-    gl/dds/DirectDrawSurface.cpp \
-    gl/dds/Stream.cpp \
-    gl/dds/BlockDXT.cpp \
-    gl/dds/ColorBlock.cpp
+    previewdialog.cpp
 
 
 HEADERS  += \
