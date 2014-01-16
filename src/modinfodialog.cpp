@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "report.h"
 #include "utility.h"
-#include "json.h"
 #include "messagedialog.h"
 #include "bbcode.h"
 #include "questionboxmemory.h"
@@ -40,8 +39,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <QInputDialog>
 
-
-using QtJson::Json;
 
 using namespace MOBase;
 using namespace MOShared;

@@ -56,6 +56,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savetextasdialog.h"
 #include "problemsdialog.h"
 #include "previewdialog.h"
+#include "aboutdialog.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -547,6 +548,12 @@ bool MainWindow::checkForProblems()
   return false;
 }
 
+void MainWindow::about()
+{
+  AboutDialog dialog(m_Updater.getVersion().displayString(), this);
+  dialog.exec();
+}
+
 
 void MainWindow::createHelpWidget()
 {
@@ -604,6 +611,8 @@ void MainWindow::createHelpWidget()
   }
 
   buttonMenu->addMenu(tutorialMenu);
+  buttonMenu->addAction(tr("About"), this, SLOT(about()));
+  buttonMenu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
 

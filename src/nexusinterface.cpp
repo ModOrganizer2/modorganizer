@@ -20,14 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "utility.h"
-#include "json.h"
+#include <json.h>
 #include "selectiondialog.h"
 #include <QApplication>
 #include <utility.h>
 #include <regex>
 #include <util.h>
 
-using QtJson::Json;
 
 using namespace MOBase;
 using namespace MOShared;
@@ -458,7 +457,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
-      QVariant result = Json::parse(data, ok);
+      QVariant result = QtJson::parse(data, ok);
       if (result.isValid() && ok) {
         switch (iter->m_Type) {
           case NXMRequestInfo::TYPE_DESCRIPTION: {

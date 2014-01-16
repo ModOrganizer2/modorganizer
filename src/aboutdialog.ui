@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AboutDialog</class>
+ <widget class="QDialog" name="AboutDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>508</width>
+    <height>335</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>About</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <widget class="QLabel" name="iconLabel">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="pixmap">
+          <pixmap resource="resources.qrc">:/MO/gui/mo_icon.ico</pixmap>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTabWidget" name="tabWidget">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="about">
+        <attribute name="title">
+         <string>About</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QLabel" name="nameLabel">
+           <property name="text">
+            <string notr="true">Mod Organizer</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="revisionLabel">
+           <property name="text">
+            <string>Revision:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string notr="true">Copyright 2011-2014 Sebastian Herbord</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="software">
+        <attribute name="title">
+         <string>Used Software</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <item>
+          <widget class="QListWidget" name="creditsList"/>
+         </item>
+         <item>
+          <widget class="QTextBrowser" name="licenseText"/>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="credits">
+        <attribute name="title">
+         <string>Credits</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Translators</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QListWidget" name="listWidget_2">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">pndrev (German)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DaWul (Spanish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Fiama (Spanish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Alyndiar (French)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Jlkawaii (French)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Rigoletto (French)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Scythe1912 (Chinese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">yc0620shen (Chinese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">miraclefreak (Czech)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">tokcdk  (Russian)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>Others</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QListWidget" name="listWidget">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">blacksol</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DoubleYou</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">deathneko11</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Bridger</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">GSDFan</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Uhuru</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Wolverine2710</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">z929669</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="closeButton">
+       <property name="text">
+        <string>Close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>closeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>AboutDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>460</x>
+     <y>313</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>253</x>
+     <y>167</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

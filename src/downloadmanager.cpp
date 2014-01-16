@@ -37,7 +37,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 
 
-using QtJson::Json;
 using namespace MOBase;
 
 

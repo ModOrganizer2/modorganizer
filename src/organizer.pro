@@ -47,7 +47,6 @@ SOURCES += \
     logbuffer.cpp \
     lockeddialog.cpp \
     loadmechanism.cpp \
-    json.cpp \
     installationmanager.cpp \
     helper.cpp \
     filedialogmemory.cpp \
@@ -80,7 +79,9 @@ SOURCES += \
     ../esptk/subrecord.cpp \
     noeditdelegate.cpp \
     previewgenerator.cpp \
-    previewdialog.cpp
+    previewdialog.cpp \
+    aboutdialog.cpp \
+    json.cpp
 
 
 HEADERS  += \
@@ -116,7 +117,6 @@ HEADERS  += \
     logbuffer.h \
     lockeddialog.h \
     loadmechanism.h \
-    json.h \
     installationmanager.h \
     helper.h \
     filedialogmemory.h \
@@ -150,7 +150,9 @@ HEADERS  += \
     ../esptk/espexceptions.h \
     noeditdelegate.h \
     previewgenerator.h \
-    previewdialog.h
+    previewdialog.h \
+    aboutdialog.h \
+    json.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -180,7 +182,8 @@ FORMS    += \
     profileinputdialog.ui \
     savetextasdialog.ui \
     problemsdialog.ui \
-    previewdialog.ui
+    previewdialog.ui \
+    aboutdialog.ui
 
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
 
@@ -245,6 +248,9 @@ DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
 
 DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 #DEFINES += QMLJSDEBUGGER
+
+HGID = $$system(hg id -i)
+DEFINES += HGID=\\\"$${HGID}\\\"
 
 SRCDIR = $$PWD
 SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g

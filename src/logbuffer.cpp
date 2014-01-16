@@ -120,6 +120,7 @@ char LogBuffer::msgTypeID(QtMsgType type)
     case QtWarningMsg: return 'W';
     case QtCriticalMsg: return 'C';
     case QtFatalMsg: return 'F';
+    default: return '?';
   }
 }
 

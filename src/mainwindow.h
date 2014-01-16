@@ -527,6 +527,7 @@ private slots:
 
   void refreshSavesIfOpen();
   void expandDataTreeItem(QTreeWidgetItem *item);
+  void about();
 
 private slots: // ui slots
   // actions
