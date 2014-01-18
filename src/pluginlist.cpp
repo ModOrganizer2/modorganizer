@@ -312,7 +312,6 @@ bool PluginList::readLoadOrder(const QString &fileName)
 
 void PluginList::readEnabledFrom(const QString &fileName)
 {
-qDebug("read enabled from %s", qPrintable(fileName));
   for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     if (!iter->m_ForceEnabled) {
       iter->m_Enabled = false;

@@ -398,6 +398,7 @@ private slots:
   void openExplorer_clicked();
   void information_clicked();
   // savegame context menu
+  void deleteSavegame_clicked();
   void fixMods_clicked();
   // data-tree context menu
   void writeDataToFile();
@@ -464,7 +465,7 @@ private slots:
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
 //  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
   void nxmDownloadURLs(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
   void editCategories();
 

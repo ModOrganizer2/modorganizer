@@ -128,12 +128,12 @@ void NexusBridge::nxmEndorsementToggled(int modID, QVariant userData, QVariant r
   }
 }
 
-void NexusBridge::nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorMessage)
+void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit requestFailed(modID, userData, errorMessage);
+    emit requestFailed(modID, fileID, userData, errorMessage);
   }
 }
 
@@ -257,8 +257,8 @@ int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant us
   connect(this, SIGNAL(nxmDescriptionAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -273,8 +273,8 @@ int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *rece
   connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)),
           receiver, SLOT(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -307,8 +307,8 @@ int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData
   connect(this, SIGNAL(nxmFilesAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFilesAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
 //  QTimer::singleShot(1000, this, SLOT(fakeFiles()));
 //  static int fID = 42;
@@ -327,8 +327,8 @@ int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QV
   connect(this, SIGNAL(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -343,8 +343,8 @@ int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver,
   connect(this, SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)),
           receiver, SLOT(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -360,8 +360,8 @@ int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *r
   connect(this, SIGNAL(nxmEndorsementToggled(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmEndorsementToggled(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -437,7 +437,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 
   if (reply->error() != QNetworkReply::NoError) {
     qWarning("request failed: %s", reply->errorString().toUtf8().constData());
-    emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, reply->errorString());
+    emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->errorString());
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 301) {
@@ -454,7 +454,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-      emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, nexusError);
+      emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
       QVariant result = QtJson::parse(data, ok);
@@ -480,7 +480,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
         }
       } else {
-        emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, tr("invalid response"));
+        emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, tr("invalid response"));
       }
     }
   }

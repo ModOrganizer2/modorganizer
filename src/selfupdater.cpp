@@ -428,7 +428,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
 }
 
 
-void SelfUpdater::nxmRequestFailed(int, QVariant, int requestID, const QString &errorMessage)
+void SelfUpdater::nxmRequestFailed(int, int, QVariant, int requestID, const QString &errorMessage)
 {
   if (requestID == m_UpdateRequestID) {
     m_UpdateRequestID = -1;

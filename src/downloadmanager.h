@@ -412,7 +412,7 @@ public slots:
 
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
 private slots:
 

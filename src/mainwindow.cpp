@@ -66,6 +66,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 #include <util.h>
 #include <wchar.h>
+#include <utility.h>
 #include <QTime>
 #include <QInputDialog>
 #include <QSettings>
@@ -1737,6 +1738,9 @@ void MainWindow::refreshSaveList()
     savesDir.setPath(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getDocumentsDir() + L"\\" + path)));
   }
 
+  if (m_SavesWatcher.directories().length() > 0) {
+    m_SavesWatcher.removePaths(m_SavesWatcher.directories());
+  }
   m_SavesWatcher.addPath(savesDir.absolutePath());
 
   QStringList filters;
@@ -3868,6 +3872,22 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 }
 
 
+void MainWindow::deleteSavegame_clicked()
+{
+  QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
+  if (selectedItem == NULL) {
+    return;
+  }
+
+  QString fileName = selectedItem->data(Qt::UserRole).toString();
+
+  if (QMessageBox::question(this, tr("Confirm"), tr("Really delete \"%1\"?").arg(selectedItem->text()),
+                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    shellDelete(QStringList() << fileName);
+  }
+}
+
+
 void MainWindow::fixMods_clicked()
 {
   QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
@@ -3973,6 +3993,7 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
   QMenu menu;
   menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
+  menu.addAction(tr("Delete"), this, SLOT(deleteSavegame_clicked()));
 
   menu.exec(ui->savegameList->mapToGlobal(pos));
 }
@@ -4721,7 +4742,7 @@ void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
 }
 
 
-void MainWindow::nxmRequestFailed(int modID, QVariant, int, const QString &errorString)
+void MainWindow::nxmRequestFailed(int modID, int, QVariant, int, const QString &errorString)
 {
   if (modID == -1) {
     // must be the update-check that failed

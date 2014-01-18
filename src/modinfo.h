@@ -762,7 +762,7 @@ private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(int modID, QVariant userData, const QString &errorMessage);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, const QString &errorMessage);
 
 private:
 

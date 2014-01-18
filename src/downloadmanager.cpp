@@ -26,15 +26,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
+#include <utility.h>
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>
 #include <QDirIterator>
 #include <QInputDialog>
-#include <boost/bind.hpp>
-#include <regex>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <boost/bind.hpp>
+#include <regex>
 
 
 using namespace MOBase;
@@ -246,7 +247,7 @@ void DownloadManager::refreshList()
 
   // remove finished downloads
   for (QVector<DownloadInfo*>::iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end();) {
-    if (((*Iter)->m_State == STATE_READY) || ((*Iter)->m_State == STATE_INSTALLED)) {
+    if (((*Iter)->m_State == STATE_READY) || ((*Iter)->m_State == STATE_INSTALLED) || ((*Iter)->m_State == STATE_UNINSTALLED)) {
       delete *Iter;
       Iter = m_ActiveDownloads.erase(Iter);
     } else {
@@ -414,7 +415,7 @@ void DownloadManager::addNXMDownload(const QString &url)
   NXMUrl nxmInfo(url);
 
   QString managedGame = ToQString(MOShared::GameInfo::instance().getGameShortName());
-  qDebug("add nxm download", qPrintable(url));
+  qDebug("add nxm download: %s", qPrintable(url));
   if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(managedGame), qPrintable(nxmInfo.game()));
     QMessageBox::information(NULL, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
@@ -1089,11 +1090,7 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   info.m_FileName = result["uri"].toString();
   info.m_FileTime = matchDate(result["date"].toString());
 
-  if (userData.isValid()) {
-    m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info), userData.toString()));
-  } else {
-    m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info)));
-  }
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, QVariant::fromValue(info)));
 }
 
 
@@ -1176,8 +1173,6 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
     m_RequestIDs.erase(idIter);
   }
 
-  qDebug("download urls received (modid %d, fileid %d)", modID, fileID);
-
   NexusInfo info = userData.value<NexusInfo>();
   QVariantList resultList = resultData.toList();
   if (resultList.length() == 0) {
@@ -1200,7 +1195,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
 }
 
 
-void DownloadManager::nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString)
+void DownloadManager::nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {
@@ -1225,7 +1220,7 @@ void DownloadManager::nxmRequestFailed(int modID, QVariant userData, int request
     }
   }
 
-  removePending(modID, userData.toInt());
+  removePending(modID, fileID);
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
 
@@ -1243,14 +1238,18 @@ void DownloadManager::downloadFinished()
     TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
 
     bool error = false;
-
     if ((info->m_State != STATE_CANCELING) &&
         (info->m_State != STATE_PAUSING)) {
+      bool textData = reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("text", Qt::CaseInsensitive);
       if ((info->m_Output.size() == 0) ||
           ((reply->error() != QNetworkReply::NoError) && (reply->error() != QNetworkReply::OperationCanceledError)) ||
-          reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("text", Qt::CaseInsensitive)) {
+          textData) {
         if (info->m_Tries == 0) {
-          emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
+          if (textData && (reply->error() == QNetworkReply::NoError)) {
+            emit showMessage(tr("Download failed. Server reported: %1").arg(readFileText(info->m_Output.fileName())));
+          } else {
+            emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
+          }
         }
         error = true;
         setState(info, STATE_PAUSING);
@@ -1310,7 +1309,7 @@ void DownloadManager::downloadFinished()
 
     if ((info->m_Tries > 0) && error) {
       --info->m_Tries;
-      resumeDownload(index);
+      resumeDownloadInt(index);
     }
   } else {
     qWarning("no download index %d", index);

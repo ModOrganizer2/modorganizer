@@ -105,7 +105,7 @@ public slots:
   void nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorMessage);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage);
 
 private:
 
@@ -240,7 +240,7 @@ signals:
   void nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
 private slots:
 
@@ -276,13 +276,13 @@ private:
 
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &url)
       : m_ModID(modID), m_FileID(0), m_Reply(NULL), m_Type(type), m_UserData(userData),
-        m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
+    m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
     NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &url)
       : m_ModID(-1), m_ModIDList(modIDList), m_FileID(0), m_Reply(NULL), m_Type(type), m_UserData(userData),
         m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &url)
       : m_ModID(modID), m_FileID(fileID), m_Reply(NULL), m_Type(type), m_UserData(userData),
-        m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
+    m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
 
   private:
     static QAtomicInt s_NextID;

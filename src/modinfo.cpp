@@ -345,7 +345,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,QVariant,QString)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(int,int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,int,QVariant,QString)));
 }
 
 
@@ -439,7 +439,7 @@ void ModInfoRegular::nxmEndorsementToggled(int, QVariant, QVariant resultData)
 }
 
 
-void ModInfoRegular::nxmRequestFailed(int, QVariant userData, const QString &errorMessage)
+void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
