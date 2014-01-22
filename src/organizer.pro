@@ -81,7 +81,10 @@ SOURCES += \
     previewgenerator.cpp \
     previewdialog.cpp \
     aboutdialog.cpp \
-    json.cpp
+    json.cpp \
+    safewritefile.cpp \
+    modflagicondelegate.cpp \
+    pluginflagicondelegate.cpp
 
 
 HEADERS  += \
@@ -152,7 +155,11 @@ HEADERS  += \
     previewgenerator.h \
     previewdialog.h \
     aboutdialog.h \
-    json.h
+    json.h \
+    safewritefile.h\
+    pdll.h \
+    modflagicondelegate.h \
+    pluginflagicondelegate.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -185,24 +192,28 @@ FORMS    += \
     previewdialog.ui \
     aboutdialog.ui
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
 CONFIG(debug, debug|release) {
 	OUTDIR = $$OUT_PWD/debug
 	DSTDIR = $$PWD/../../outputd
-	LIBS += -L$$OUT_PWD/../shared/debug -L$$OUT_PWD/../bsatk/debug
-	LIBS += -L$$OUT_PWD/../uibase/debug
-	LIBS += -lDbgHelp
+  LIBS += -L$$OUT_PWD/../shared/debug
+  LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -L$$OUT_PWD/../uibase/debug
+  LIBS += -L$$OUT_PWD/../boss_modified/debug
+  LIBS += -lDbgHelp
 } else {
 	OUTDIR = $$OUT_PWD/release
 	DSTDIR = $$PWD/../../output
-	LIBS += -L$$OUT_PWD/../shared/release -L$$OUT_PWD/../bsatk/release
+  LIBS += -L$$OUT_PWD/../shared/release
+  LIBS += -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
-	QMAKE_CXXFLAGS += /Zi
+  LIBS += -L$$OUT_PWD/../boss_modified/release
+  QMAKE_CXXFLAGS += /Zi /GL
 #	QMAKE_CXXFLAGS -= -O2
-	QMAKE_LFLAGS += /DEBUG
+  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
 }
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
@@ -298,9 +309,6 @@ OTHER_FILES += \
     stylesheets/dark.qss \
     tutorials/tutorial_window_installer.js \
     tutorials/tutorials_installdialog.qml
-
-INCLUDEPATH += "$(ZLIBPATH)" "$(ZLIBPATH)/build" "$(BOOSTPATH)"
-LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
 
 
 # leak detection with vld

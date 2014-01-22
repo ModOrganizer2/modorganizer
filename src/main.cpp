@@ -119,7 +119,8 @@ bool bootstrap()
       QDir::fromNativeSeparators(ToQString(gameInfo.getDownloadDir())),
       QDir::fromNativeSeparators(ToQString(gameInfo.getOverwriteDir())),
       QDir::fromNativeSeparators(ToQString(gameInfo.getLogDir())),
-      QDir::fromNativeSeparators(ToQString(gameInfo.getTutorialDir()))
+      QDir::fromNativeSeparators(ToQString(gameInfo.getTutorialDir())),
+      QDir::fromNativeSeparators(ToQString(gameInfo.getOrganizerDirectory()) + "/boss")
     };
   static const int NUM_DIRECTORIES = sizeof(dirNames) / sizeof(QString);
 
@@ -284,7 +285,7 @@ int main(int argc, char *argv[])
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-  LogBuffer::init(20, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
+  LogBuffer::init(200, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));

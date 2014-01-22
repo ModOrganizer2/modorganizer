@@ -44,6 +44,8 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   addLicense("7-zip", LICENSE_LGPL3);
   addLicense("ZLib", LICENSE_ZLIB);
   addLicense("NIF File Format Library", LICENSE_BSD3);
+  addLicense("BOSS (modified)", LICENSE_GPL3);
+  addLicense("Alphanum Algorithm", LICENSE_ZLIB);
 
   ui->nameLabel->setText(QString("<span style=\"font-size:12pt; font-weight:600;\">%1 %2</span>").arg(ui->nameLabel->text()).arg(version));
 #ifdef HGID

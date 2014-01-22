@@ -48,7 +48,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "filedialogmemory.h"
 #include "questionboxmemory.h"
 #include "tutorialmanager.h"
-#include "icondelegate.h"
+#include "modflagicondelegate.h"
+#include "pluginflagicondelegate.h"
 #include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
@@ -104,6 +105,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtConcurrentRun>
 #include <QCoreApplication>
 #include <scopeguard.h>
+#include <boost/thread.hpp>
 
 
 #ifdef TEST_MODELS
@@ -186,7 +188,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->modList->setModel(m_ModListSortProxy);
 
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new IconDelegate(ui->modList));
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
   //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
   if (initSettings.contains("mod_list_state")) {
@@ -206,6 +208,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
+  ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new PluginFlagIconDelegate(ui->espList));
   if (initSettings.contains("plugin_list_state")) {
     ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   }
@@ -1314,6 +1317,8 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     QCoreApplication::processEvents();
   }
 
+  m_CurrentProfile->writeModlistNow(true);
+
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
@@ -1778,7 +1783,7 @@ void MainWindow::refreshESPList()
                          m_CurrentProfile->getLoadOrderFileName(),
                          m_CurrentProfile->getLockedOrderFileName());
   } catch (const std::exception &e) {
-    reportError(tr("Failed to refresh list of esps: %s").arg(e.what()));
+    reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
   }
 }
 
@@ -5123,3 +5128,18 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
   m_DownloadManager.setShowHidden(checked);
 }
 
+void MainWindow::on_bossButton_clicked()
+{
+  try {
+    LockedDialog dialog(this, tr("BOSS working"), false);
+    dialog.show();
+    qApp->processEvents();
+    m_PluginList.bossSort();
+
+    savePluginList();
+    dialog.hide();
+  } catch (const std::exception &e) {
+    reportError(tr("failed to run boss: %1").arg(e.what()));
+    ui->bossButton->setEnabled(false);
+  }
+}

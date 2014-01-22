@@ -39,7 +39,7 @@ class LockedDialog : public QDialog
     Q_OBJECT
 
 public:
-  explicit LockedDialog(QWidget *parent = 0);
+  explicit LockedDialog(QWidget *parent = 0, const QString &text = "", bool unlockButton = true);
   ~LockedDialog();
 
   /**

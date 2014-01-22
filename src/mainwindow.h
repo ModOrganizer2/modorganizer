@@ -564,6 +564,7 @@ private slots: // ui slots
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
+  void on_bossButton_clicked();
 };
 
 #endif // MAINWINDOW_H

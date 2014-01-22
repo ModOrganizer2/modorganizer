@@ -18,7 +18,7 @@
         <file alias="profiles">resources/contact-new.png</file>
         <file alias="settings">resources/preferences-system.png</file>
         <file alias="executable">resources/application-x-executable.png</file>
-        <file>resources/dialog-information.png</file>
+        <file alias="information">resources/dialog-information.png</file>
         <file alias="locked">resources/emblem-readonly.png</file>
         <file alias="next">resources/go-next_16.png</file>
         <file alias="previous">resources/go-previous_16.png</file>
