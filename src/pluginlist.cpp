@@ -699,7 +699,7 @@ void PluginList::convertPluginListForBoss(boost::ptr_vector<uint8_t> &inputPlugi
 
 void PluginList::applyBOSSSorting(uint8_t **pluginList, size_t size, int &priority, bool recognized, const char *extension)
 {
-  for (size_t i= 0; i < size; ++i) {
+  for (size_t i = 0; i < size; ++i) {
     QString name = QString::fromUtf8(reinterpret_cast<const char*>(pluginList[i])).toLower();
     if (name.endsWith(extension)) {
       auto iter = m_ESPsByName.find(name);
@@ -709,12 +709,13 @@ void PluginList::applyBOSSSorting(uint8_t **pluginList, size_t size, int &priori
       BossMessage *message;
       size_t numMessages = 0;
       m_BOSS->GetPluginMessages(m_BOSSDB, pluginList[i], &message, &numMessages);
-      m_ESPs[iter->second].m_BOSSMessages.clear();
+      BossInfo newInfo;
       for (size_t im = 0; im < numMessages; ++im) {
-        m_ESPs[iter->second].m_BOSSMessages.append(QString::fromUtf8(reinterpret_cast<const char*>(message[im].message)));
+        newInfo.m_BOSSMessages.append(QString::fromUtf8(reinterpret_cast<const char*>(message[im].message)));
       }
+      newInfo.m_BOSSUnrecognized = !recognized;
+      m_BossInfo[name] = newInfo;
       m_ESPs[iter->second].m_Priority = priority++;
-      m_ESPs[iter->second].m_BOSSUnrecognized = !recognized;
     }
   }
 }
@@ -735,7 +736,6 @@ void PluginList::bossSort()
   uint8_t **sortedPlugins;
   uint8_t **unrecognizedPlugins;
   size_t sizeSorted, sizeUnrecognized;
-
   if (m_BOSS->SortCustomMods(m_BOSSDB,
                              inputPlugins.c_array(), inputPlugins.size(),
                              &sortedPlugins, &sizeSorted,
@@ -917,12 +917,16 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       return QVariant(Qt::AlignHCenter | Qt::AlignVCenter);
     }
   } else if (role == Qt::ToolTipRole) {
+    QString name = m_ESPs[index].m_Name.toLower();
+    auto bossInfoIter = m_BossInfo.find(name);
     QString toolTip;
-    if (!m_ESPs[index].m_BOSSMessages.isEmpty()) {
-      toolTip += m_ESPs[index].m_BOSSMessages.join("<br>") + "<br><hr>";
-    }
-    if (m_ESPs[index].m_BOSSUnrecognized) {
-      toolTip += "Not recognized by BOSS<br><ht>";
+    if (bossInfoIter != m_BossInfo.end()) {
+      if (!bossInfoIter->second.m_BOSSMessages.isEmpty()) {
+        toolTip += bossInfoIter->second.m_BOSSMessages.join("<br>") + "<br><hr>";
+      }
+      if (bossInfoIter->second.m_BOSSUnrecognized) {
+        toolTip += "Not recognized by BOSS<br><ht>";
+      }
     }
     if (m_ESPs[index].m_ForceEnabled) {
       toolTip += tr("This plugin can't be disabled (enforced by the game)");
@@ -948,17 +952,21 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     return toolTip;
   } else if (role == Qt::UserRole + 1) {
     QVariantList result;
+    QString nameLower = m_ESPs[index].m_Name.toLower();
     if (m_ESPs[index].m_MasterUnset.size() > 0) {
       result.append(QIcon(":/MO/gui/warning"));
     }
-    if (m_LockedOrder.find(m_ESPs[index].m_Name.toLower()) != m_LockedOrder.end()) {
+    if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
       result.append(QIcon(":/MO/gui/locked"));
     }
-    if (!m_ESPs[index].m_BOSSMessages.isEmpty()) {
-      result.append(QIcon(":/MO/gui/information"));
-    }
-    if (m_ESPs[index].m_BOSSUnrecognized) {
-      result.append(QIcon(":/MO/gui/help"));
+    auto bossInfoIter = m_BossInfo.find(nameLower);
+    if (bossInfoIter != m_BossInfo.end()) {
+      if (!bossInfoIter->second.m_BOSSMessages.isEmpty()) {
+        result.append(QIcon(":/MO/gui/information"));
+      }
+      if (bossInfoIter->second.m_BOSSUnrecognized) {
+        result.append(QIcon(":/MO/gui/help"));
+      }
     }
     if (m_ESPs[index].m_HasIni) {
       result.append(QIcon(":/MO/gui/attachment"));
@@ -1227,8 +1235,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
   : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false),
-    m_Priority(0), m_LoadOrder(-1), m_Time(time), m_OriginName(originName), m_HasIni(hasIni),
-    m_BOSSUnrecognized(false)
+    m_Priority(0), m_LoadOrder(-1), m_Time(time), m_OriginName(originName), m_HasIni(hasIni)
 {
   try {
     ESP::File file(ToWString(fullPath));

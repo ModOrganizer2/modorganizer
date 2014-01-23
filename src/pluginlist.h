@@ -214,6 +214,9 @@ private:
     bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
+  };
+
+  struct BossInfo {
     QStringList m_BOSSMessages;
     bool m_BOSSUnrecognized;
   };
@@ -331,6 +334,8 @@ private:
   // capitalization that doesn't match the actual name
   std::map<QString, int> m_ESPLoadOrder;
   std::map<QString, int> m_LockedOrder;
+
+  std::map<QString, BossInfo> m_BossInfo; // maps esp names to boss information
 
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;
