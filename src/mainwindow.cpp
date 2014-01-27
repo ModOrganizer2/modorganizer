@@ -1317,7 +1317,9 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     QCoreApplication::processEvents();
   }
 
-  m_CurrentProfile->writeModlistNow(true);
+  if (m_CurrentProfile != nullptr) {
+    m_CurrentProfile->writeModlistNow(true);
+  }
 
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
@@ -1365,6 +1367,8 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
       close();
     } else {
       this->setEnabled(false);
+      // re-enable the locked dialog because what'd be the point otherwise?
+      dialog->setEnabled(true);
 
       QCoreApplication::processEvents();
 
