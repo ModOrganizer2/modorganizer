@@ -372,6 +372,8 @@ private:
 
   QFileSystemWatcher m_SavesWatcher;
 
+  std::vector<QTreeWidgetItem*> m_RemoveWidget;
+
 private slots:
 
   void showMessage(const QString &message);
@@ -529,6 +531,7 @@ private slots:
   void refreshSavesIfOpen();
   void expandDataTreeItem(QTreeWidgetItem *item);
   void about();
+  void delayedRemove();
 
 private slots: // ui slots
   // actions

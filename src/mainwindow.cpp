@@ -1578,6 +1578,13 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
   subTree->sortChildren(0, Qt::AscendingOrder);
 }
 
+void MainWindow::delayedRemove()
+{
+  foreach (QTreeWidgetItem *item, m_RemoveWidget) {
+    item->removeChild(item->child(0));
+  }
+  m_RemoveWidget.clear();
+}
 
 void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
 {
@@ -1586,7 +1593,6 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
     QTreeWidgetItem *onDemandDataItem = item->child(0);
     std::wstring path = ToWString(onDemandDataItem->data(0, Qt::UserRole + 1).toString());
     bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
-    item->removeChild(onDemandDataItem);
 
     std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
     DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(virtualPath);
@@ -1595,7 +1601,8 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
     } else {
       qWarning("failed to update view of %ls", path.c_str());
     }
-
+    m_RemoveWidget.push_back(item);
+    QTimer::singleShot(5, this, SLOT(delayedRemove()));
   }
 }
 
