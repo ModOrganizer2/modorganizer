@@ -1046,9 +1046,9 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
           if (proxiedPlugin != NULL) {
             if (registerPlugin(proxiedPlugin, pluginName)) {
-              qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
+              qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
             } else {
-              qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+              qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
             }
           }
         } catch (const std::exception &e) {
@@ -1121,13 +1121,13 @@ void MainWindow::loadPlugins()
       if (pluginLoader.instance() == NULL) {
         m_UnloadedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
-                  pluginName.toUtf8().constData(), pluginLoader.errorString().toUtf8().constData());
+                  qPrintable(pluginName), qPrintable(pluginLoader.errorString()));
       } else {
         if (registerPlugin(pluginLoader.instance(), pluginName)) {
-          qDebug("loaded plugin \"%s\"", QDir::toNativeSeparators(pluginName).toUtf8().constData());
+          qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
         } else {
           m_UnloadedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load", pluginName.toUtf8().constData());
+          qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
         }
       }
     }
@@ -1289,7 +1289,7 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
   storeSettings();
 
   if (!binary.exists()) {
-    reportError(tr("\"%1\" not found").arg(binary.fileName()));
+    reportError(tr("Executable \"%1\" not found").arg(binary.fileName()));
     return INVALID_HANDLE_VALUE;
   }
 

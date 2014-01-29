@@ -117,9 +117,10 @@ HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QStr
                                     "can be installed to work without elevation.\n\n"
                                     "Start elevated anyway? "
                                     "(you will be asked if you want to allow ModOrganizer.exe to make changes to the system)").arg(
-                                        QDir::toNativeSeparators(binary.absoluteFilePath()))) == QMessageBox::Yes) {
+                                        QDir::toNativeSeparators(binary.absoluteFilePath())),
+                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         ::ShellExecuteW(NULL, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
-                        (binaryName + L" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
+                        (std::wstring(L"\"") + binaryName + L"\" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
         return INVALID_HANDLE_VALUE;
       } else {
         return INVALID_HANDLE_VALUE;
