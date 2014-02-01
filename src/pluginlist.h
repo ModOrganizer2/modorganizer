@@ -33,13 +33,46 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <BOSS-API.h>
 
 
+
+template <class C>
+class ChangeBracket {
+public:
+  ChangeBracket(C *model)
+    : m_Model(nullptr)
+  {
+    QVariant var = model->property("__aboutToChange");
+    bool aboutToChange = var.isValid() && var.toBool();
+    if (!aboutToChange) {
+      model->layoutAboutToBeChanged();
+      model->setProperty("__aboutToChange", true);
+      m_Model = model;
+    }
+  }
+  ~ChangeBracket() {
+    finish();
+  }
+
+  void finish() {
+    if (m_Model != nullptr) {
+      m_Model->layoutChanged();
+      m_Model->setProperty("__aboutToChange", false);
+      m_Model = nullptr;
+    }
+  }
+
+private:
+  C *m_Model;
+};
+
+
+
 /**
  * @brief model representing the plugins (.esp/.esm) in the current virtual data folder
  **/
 class PluginList : public QAbstractTableModel, public MOBase::IPluginList
 {
   Q_OBJECT
-
+  friend class ChangeBracket<PluginList>;
 public:
 
   enum EColumn {
@@ -225,7 +258,6 @@ private:
   friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
   friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
 
-
   class BossDLL : public PDLL {
     DECLARE_CLASS(BossDLL)
 
@@ -352,5 +384,7 @@ private:
   QTemporaryFile m_TempFile;
 
 };
+
+
 
 #endif // PLUGINLIST_H

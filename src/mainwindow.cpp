@@ -2849,17 +2849,21 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
   const FileEntry::Ptr filePtr = m_DirectoryStructure->findFile(ToWString(filePath));
   if (filePtr.get() != NULL) {
     try {
-      FilesOrigin &oldOrigin = m_DirectoryStructure->getOriginByName(ToWString(oldOriginName));
-      FilesOrigin &newOrigin = m_DirectoryStructure->getOriginByName(ToWString(newOriginName));
+      if (m_DirectoryStructure->originExists(ToWString(newOriginName))) {
+        FilesOrigin &newOrigin = m_DirectoryStructure->getOriginByName(ToWString(newOriginName));
 
-      QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
-      WIN32_FIND_DATAW findData;
-      ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
+        QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
+        WIN32_FIND_DATAW findData;
+        ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
 
-      filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
-      filePtr->removeOrigin(oldOrigin.getID());
+        filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
+      }
+      if (m_DirectoryStructure->originExists(ToWString(oldOriginName))) {
+        FilesOrigin &oldOrigin = m_DirectoryStructure->getOriginByName(ToWString(oldOriginName));
+        filePtr->removeOrigin(oldOrigin.getID());
+      }
     } catch (const std::exception &e) {
-      reportError(tr("Failed to move \"%1\" from mod \"%2\" to \"%3\": %4").arg(filePath).arg(oldOriginName).arg(newOriginName).arg(e.what()));
+      reportError(tr("failed to move \"%1\" from mod \"%2\" to \"%3\": %4").arg(filePath).arg(oldOriginName).arg(newOriginName).arg(e.what()));
     }
   } else {
     // this is probably not an error, the specified path is likely a directory

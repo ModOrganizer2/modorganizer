@@ -132,7 +132,8 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
                          const QString &pluginsFile, const QString &loadOrderFile,
                          const QString &lockedOrderFile)
 {
-  emit layoutAboutToBeChanged();
+  ChangeBracket<PluginList> layoutChange(this);
+
   m_ESPsByName.clear();
   m_ESPsByPriority.clear();
   m_ESPs.clear();
@@ -213,7 +214,8 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
   readLockedOrderFrom(lockedOrderFile);
 
-  emit layoutChanged();
+  layoutChange.finish();
+
   refreshLoadOrder();
   emit dataChanged(this->index(0, 0), this->index(m_ESPs.size(), columnCount()));
 
@@ -557,7 +559,7 @@ void PluginList::syncLoadOrder()
 
 void PluginList::refreshLoadOrder()
 {
-  emit layoutAboutToBeChanged();
+  ChangeBracket<PluginList> layoutChange(this);
   syncLoadOrder();
   // set priorities according to locked load order
   std::map<int, QString> lockedLoadOrder;
@@ -593,7 +595,6 @@ void PluginList::refreshLoadOrder()
       }
     }
   }
-  emit layoutChanged();
 }
 
 
@@ -748,7 +749,7 @@ void PluginList::bossSort()
 
   qDebug("%d sorted, %d unrecognized", sizeSorted, sizeUnrecognized);
 
-  emit layoutAboutToBeChanged();
+  ChangeBracket<PluginList> layoutChange(this);
 
   int priority = 0;
   applyBOSSSorting(sortedPlugins, sizeSorted, priority, true, "esm");
@@ -758,7 +759,7 @@ void PluginList::bossSort()
 
   // inform view of the changed data
   updateIndices();
-  emit layoutChanged();
+  layoutChange.finish();
   syncLoadOrder();
 
   emit dataChanged(this->index(0, 0), this->index(m_ESPs.size(), columnCount()));
@@ -1089,7 +1090,7 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 
 void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
-  emit layoutAboutToBeChanged();
+  ChangeBracket<PluginList> layoutChange(this);
   // sort rows to insert by their old priority (ascending) and insert them move them in that order
   const std::vector<ESPInfo> &esp = m_ESPs;
   std::sort(rows.begin(), rows.end(),
@@ -1111,7 +1112,7 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
     setPluginPriority(*iter, newPriority);
   }
 
-  emit layoutChanged();
+  layoutChange.finish();
   refreshLoadOrder();
 
   startSaveTime();
