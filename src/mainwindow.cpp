@@ -5146,6 +5146,8 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
 void MainWindow::on_bossButton_clicked()
 {
   try {
+    this->setEnabled(false);
+    ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
     LockedDialog dialog(this, tr("BOSS working"), false);
     dialog.show();
     qApp->processEvents();
