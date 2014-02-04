@@ -69,7 +69,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
   this->setWindowModality(Qt::WindowModal);
-
   m_UTF8Codec = QTextCodec::codecForName("utf-8");
 
   QListWidget *textFileList = findChild<QListWidget*>("textFileList");
@@ -143,7 +142,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
   tabWidget->setTabEnabled(TAB_TEXTFILES, textFileList->count() != 0);
-  //tabWidget->setTabEnabled(TAB_INIFILES, (iniFileList->count() != 0) || (iniTweaksList->count() != 0));
   tabWidget->setTabEnabled(TAB_IMAGES, thumbnailArea->count() != 0);
   tabWidget->setTabEnabled(TAB_ESPS, (inactiveESPList->count() != 0) || (activeESPList->count() != 0));
   tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != NULL);
@@ -165,6 +163,63 @@ ModInfoDialog::~ModInfoDialog()
 
   delete ui;
   delete m_Settings;
+}
+
+
+int ModInfoDialog::tabIndex(const QString &tabId)
+{
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    if (ui->tabWidget->widget(i)->objectName() == tabId) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+void ModInfoDialog::restoreTabState(const QByteArray &state)
+{
+  QDataStream stream(state);
+  int count = 0;
+  stream >> count;
+
+  QStringList tabIds;
+
+  // first, only determine the new mapping
+  for (int newPos = 0; newPos < count; ++newPos) {
+    QString tabId;
+    stream >> tabId;
+    tabIds.append(tabId);
+    int oldPos = tabIndex(tabId);
+    if (oldPos != -1) {
+      m_RealTabPos[newPos] = oldPos;
+    } else {
+      m_RealTabPos[newPos] = newPos;
+    }
+  }
+  // then actually move the tabs
+  QTabBar *tabBar = ui->tabWidget->findChild<QTabBar*>("qt_tabwidget_tabbar"); // magic name = bad
+  ui->tabWidget->blockSignals(true);
+  for (int newPos = 0; newPos < count; ++newPos) {
+    QString tabId = tabIds.at(newPos);
+    int oldPos = tabIndex(tabId);
+    tabBar->moveTab(oldPos, newPos);
+  }
+  ui->tabWidget->blockSignals(false);
+}
+
+
+QByteArray ModInfoDialog::saveTabState() const
+{
+  QByteArray result;
+  QDataStream stream(&result, QIODevice::WriteOnly);
+  stream << ui->tabWidget->count();
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    stream << ui->tabWidget->widget(i)->objectName();
+
+  }
+
+  return result;
 }
 
 
@@ -330,7 +385,6 @@ void ModInfoDialog::openTab(int tab)
     tabWidget->setCurrentIndex(tab);
   }
 }
-
 
 void ModInfoDialog::thumbnailClicked(const QString &fileName)
 {
@@ -784,7 +838,7 @@ void ModInfoDialog::activateNexusTab()
 
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-  if (index == TAB_NEXUS) {
+  if (m_RealTabPos[index] == TAB_NEXUS) {
     activateNexusTab();
   }
 }

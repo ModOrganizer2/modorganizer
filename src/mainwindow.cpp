@@ -3160,7 +3160,10 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 
     dialog.openTab(tab);
+    dialog.restoreTabState(m_Settings.directInterface().value("mod_info_tabs").toByteArray());
     dialog.exec();
+    m_Settings.directInterface().setValue("mod_info_tabs", dialog.saveTabState());
+
     modInfo->saveMeta();
     emit modInfoDisplayed();
     m_ModList.modInfoChanged(modInfo);
