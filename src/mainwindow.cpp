@@ -58,6 +58,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "problemsdialog.h"
 #include "previewdialog.h"
 #include "aboutdialog.h"
+#include "safewritefile.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -623,22 +624,18 @@ void MainWindow::createHelpWidget()
 void MainWindow::saveArchiveList()
 {
   if (m_ArchivesInit) {
-    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-    if (archiveFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-      for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-        QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
-        for (int j = 0; j < tlItem->childCount(); ++j) {
-          QTreeWidgetItem *item = tlItem->child(j);
-          if (item->checkState(0) == Qt::Checked) {
-            archiveFile.write(item->text(0).toUtf8().append("\r\n"));
-          }
+    SafeWriteFile archiveFile(m_CurrentProfile->getArchivesFileName());
+    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
+      for (int j = 0; j < tlItem->childCount(); ++j) {
+        QTreeWidgetItem *item = tlItem->child(j);
+        if (item->checkState(0) == Qt::Checked) {
+          archiveFile->write(item->text(0).toUtf8().append("\r\n"));
         }
       }
-    } else {
-      reportError(tr("failed to save archives order, do you have write access "
-                     "to \"%1\"?").arg(m_CurrentProfile->getArchivesFileName()));
     }
-    archiveFile.close();
+    archiveFile.commit();
+    qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_CurrentProfile->getArchivesFileName())));
   } else {
     qWarning("archive list not initialised");
   }
@@ -701,16 +698,11 @@ bool MainWindow::saveCurrentLists()
     return false;
   }
 
-  // save plugin list
   try {
     savePluginList();
+    saveArchiveList();
   } catch (const std::exception &e) {
     reportError(tr("failed to save load order: %1").arg(e.what()));
-  }
-
-  // save only if the file doesn't exist at all, changes made in the ui are saved immediately
-  if (!QFile::exists(m_CurrentProfile->getArchivesFileName())) {
-    saveArchiveList();
   }
 
   return true;
@@ -2709,6 +2701,8 @@ void MainWindow::modorder_changed()
       m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority);
     }
   }
+  refreshBSAList();
+  saveArchiveList();
   m_DirectoryStructure->getFileRegister()->sortOrigins();
 }
 
@@ -3003,8 +2997,9 @@ void MainWindow::modlistChanged(const QModelIndex &index, int role)
         MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
       }
       m_PluginList.refreshLoadOrder();
-      // immediately save plugin list
+      // immediately save affected lists
       savePluginList();
+      saveArchiveList();
     }
   }
 }

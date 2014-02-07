@@ -202,7 +202,7 @@ public: // implementation of the QAbstractTableModel interface
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 
-  void applyBOSSSorting(uint8_t **pluginList, size_t size, int &priority, bool recognized, const char *extension);
+  void applyBOSSSorting(boss_db db, std::map<int, QString> &lockedLoadOrder, uint8_t **pluginList, size_t size, int &priority, int &loadOrder, bool recognized, const char *extension);
 public slots:
 
   /**
@@ -351,8 +351,8 @@ private:
 
   void testMasters();
 
-  void initBoss();
-  void convertPluginListForBoss(boost::ptr_vector<uint8_t> &inputPlugins, std::vector<uint8_t*> &activePlugins);
+  boss_db initBoss();
+  void convertPluginListForBoss(boss_db db, boost::ptr_vector<uint8_t> &inputPlugins, std::vector<uint8_t*> &activePlugins);
 
 private:
 
@@ -380,7 +380,6 @@ private:
   SignalRefreshed m_Refreshed;
 
   BossDLL *m_BOSS;
-  boss_db m_BOSSDB;
   QTemporaryFile m_TempFile;
 
 };

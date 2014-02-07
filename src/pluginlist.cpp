@@ -96,7 +96,6 @@ PluginList::PluginList(QObject *parent)
 PluginList::~PluginList()
 {
   if (m_BOSS != NULL) {
-    m_BOSS->DestroyBossDb(m_BOSSDB);
     m_BOSS->CleanUpAPI();
     delete m_BOSS;
     m_BOSS = NULL;
@@ -576,9 +575,7 @@ void PluginList::refreshLoadOrder()
       // find the location to insert at
       while ((targetPrio < static_cast<int>(m_ESPs.size() - 1)) &&
              (m_ESPs[m_ESPsByPriority[targetPrio]].m_LoadOrder < iter->first)) {
-//        if (QString::compare(m_ESPs[m_ESPsByPriority[targetPrio]].m_Name, iter->second) != 0) {
-          ++targetPrio;
-//        }
+        ++targetPrio;
       }
 
       if (static_cast<size_t>(targetPrio) >= m_ESPs.size()) {
@@ -636,23 +633,27 @@ void outputBossLog(const QString &filename)
 }
 
 
-void PluginList::initBoss()
+boss_db PluginList::initBoss()
 {
-  m_BOSS = new BossDLL(TEXT("dlls\\boss.dll"));
+  boss_db result;
+  bool firstRun = (m_BOSS == nullptr);
+  if (firstRun) {
+    m_BOSS = new BossDLL(TEXT("dlls\\boss.dll"));
 
-  if (!m_BOSS->IsCompatibleVersion(2,1,1)) {
-    throw MyException(tr("BOSS dll incompatible"));
+    if (!m_BOSS->IsCompatibleVersion(2,1,1)) {
+      throw MyException(tr("BOSS dll incompatible"));
+    }
+    uint8_t *versionString;
+    if (m_BOSS->GetVersionString(&versionString) != BossDLL::RESULT_OK) {
+      THROW_BOSS_ERROR(m_BOSS)
+    }
+    qDebug("using boss version %s", versionString);
+
+    m_TempFile.open(); m_TempFile.close(); // yeah, stupid, but open is required to generate the name
+    m_BOSS->SetLoggerOutput(m_TempFile.fileName().toLocal8Bit().constData(), 4);
   }
-  uint8_t *versionString;
-  if (m_BOSS->GetVersionString(&versionString) != BossDLL::RESULT_OK) {
-    THROW_BOSS_ERROR(m_BOSS)
-  }
-  qDebug("using boss version %s", versionString);
 
-  m_TempFile.open(); m_TempFile.close(); // yeah, stupid, but open is required to generate the name
-  m_BOSS->SetLoggerOutput(m_TempFile.fileName().toLocal8Bit().constData(), 4);
-
-  if (m_BOSS->CreateBossDb(&m_BOSSDB, BossDLL::SKYRIM, NULL) != BossDLL::RESULT_OK) {
+  if (m_BOSS->CreateBossDb(&result, BossDLL::SKYRIM, NULL) != BossDLL::RESULT_OK) {
     uint8_t *message;
     m_BOSS->GetLastErrorDetails(&message);
     std::string messageCopy(reinterpret_cast<const char*>(message));
@@ -664,23 +665,26 @@ void PluginList::initBoss()
 
   QString masterlistName = QDir::toNativeSeparators(qApp->applicationDirPath() + "/boss/masterlist.txt");
 
-  uint32_t res = m_BOSS->UpdateMasterlist(m_BOSSDB, U8(masterlistName.toUtf8().constData()));
-  qApp->processEvents();
-  if (res == BossDLL::RESULT_OK) {
-    qDebug("boss masterlist updated");
-  } else if (res == BossDLL::RESULT_NO_UPDATE_NECESSARY) {
-    qDebug("boss masterlist already up-to-date");
-  } else {
-    THROW_BOSS_ERROR(m_BOSS)
+  if (firstRun) {
+    uint32_t res = m_BOSS->UpdateMasterlist(result, U8(masterlistName.toUtf8().constData()));
+    qApp->processEvents();
+    if (res == BossDLL::RESULT_OK) {
+      qDebug("boss masterlist updated");
+    } else if (res == BossDLL::RESULT_NO_UPDATE_NECESSARY) {
+      qDebug("boss masterlist already up-to-date");
+    } else {
+      THROW_BOSS_ERROR(m_BOSS)
+    }
   }
-  if (m_BOSS->Load(m_BOSSDB,
+  if (m_BOSS->Load(result,
                    U8(masterlistName.toUtf8().constData()),
                    U8(QDir::toNativeSeparators(qApp->applicationDirPath() + "/boss/userlist.txt").toUtf8().constData())) != BossDLL::RESULT_OK) {
     THROW_BOSS_ERROR(m_BOSS)
   }
+  return result;
 }
 
-void PluginList::convertPluginListForBoss(boost::ptr_vector<uint8_t> &inputPlugins, std::vector<uint8_t*> &activePlugins)
+void PluginList::convertPluginListForBoss(boss_db db, boost::ptr_vector<uint8_t> &inputPlugins, std::vector<uint8_t*> &activePlugins)
 {
   foreach (int idx, m_ESPsByPriority) {
     QString fileName = m_ESPs[idx].m_Name;
@@ -693,51 +697,78 @@ void PluginList::convertPluginListForBoss(boost::ptr_vector<uint8_t> &inputPlugi
     }
     inputPlugins.push_back(nameU8);
   }
-  if (m_BOSS->SetActivePluginsDumb(m_BOSSDB, &activePlugins[0], activePlugins.size()) != BossDLL::RESULT_OK) {
+  if (m_BOSS->SetActivePluginsDumb(db, &activePlugins[0], activePlugins.size()) != BossDLL::RESULT_OK) {
     THROW_BOSS_ERROR(m_BOSS)
   }
 }
 
-void PluginList::applyBOSSSorting(uint8_t **pluginList, size_t size, int &priority, bool recognized, const char *extension)
+void PluginList::applyBOSSSorting(boss_db db, std::map<int, QString> &lockedLoadOrder, uint8_t **pluginList, size_t size,
+                                  int &priority, int &loadOrder, bool recognized, const char *extension)
 {
   for (size_t i = 0; i < size; ++i) {
     QString name = QString::fromUtf8(reinterpret_cast<const char*>(pluginList[i])).toLower();
     if (name.endsWith(extension)) {
       auto iter = m_ESPsByName.find(name);
       if (iter == m_ESPsByName.end()) {
-        throw MyException("boss returned invalid data");
+        // boss seems to report plugins from userlist as sorted that aren't even installed
+        continue;
       }
+
       BossMessage *message;
       size_t numMessages = 0;
-      m_BOSS->GetPluginMessages(m_BOSSDB, pluginList[i], &message, &numMessages);
+      m_BOSS->GetPluginMessages(db, pluginList[i], &message, &numMessages);
       BossInfo newInfo;
       for (size_t im = 0; im < numMessages; ++im) {
         newInfo.m_BOSSMessages.append(QString::fromUtf8(reinterpret_cast<const char*>(message[im].message)));
       }
       newInfo.m_BOSSUnrecognized = !recognized;
       m_BossInfo[name] = newInfo;
+
+      // locked order plugins are not inserted by boss sorting ...
+      if (m_LockedOrder.find(name) != m_LockedOrder.end()) {
+        continue;
+      }
+
+      // ... but by their enforced priority
+      while (lockedLoadOrder.find(loadOrder) != lockedLoadOrder.end()) {
+        auto lloIter = lockedLoadOrder.find(loadOrder);
+        auto nameIter = m_ESPsByName.find(lloIter->second);
+        if (nameIter != m_ESPsByName.end()) {
+          m_ESPs[nameIter->second].m_Priority = priority++;
+          if (m_ESPs[nameIter->second].m_Enabled) {
+            m_ESPs[nameIter->second].m_LoadOrder = loadOrder++;
+          } else {
+            m_ESPs[nameIter->second].m_LoadOrder = -1;
+          }
+        }
+        lockedLoadOrder.erase(lloIter);
+      }
+
       m_ESPs[iter->second].m_Priority = priority++;
+      if (m_ESPs[iter->second].m_Enabled) {
+        m_ESPs[iter->second].m_LoadOrder = loadOrder++;
+      } else {
+        m_ESPs[iter->second].m_LoadOrder = -1;
+      }
     }
   }
 }
 
 void PluginList::bossSort()
 {
-  if (m_BOSS == NULL) {
-    // first run, check boss compatibility and update
-    initBoss();
-  }
+  boss_db db = initBoss();
+  ON_BLOCK_EXIT([&] { m_BOSS->DestroyBossDb(db); });
 
   // create a boss-compatible representation of our current mod list.
   boost::ptr_vector<uint8_t> inputPlugins;
   std::vector<uint8_t*> activePlugins;
-  convertPluginListForBoss(inputPlugins, activePlugins);
+  convertPluginListForBoss(db, inputPlugins, activePlugins);
 
   // sort mods in-memory
   uint8_t **sortedPlugins;
   uint8_t **unrecognizedPlugins;
   size_t sizeSorted, sizeUnrecognized;
-  if (m_BOSS->SortCustomMods(m_BOSSDB,
+  if (m_BOSS->SortCustomMods(db,
                              inputPlugins.c_array(), inputPlugins.size(),
                              &sortedPlugins, &sizeSorted,
                              &unrecognizedPlugins, &sizeUnrecognized) != BossDLL::RESULT_OK) {
@@ -751,17 +782,36 @@ void PluginList::bossSort()
 
   ChangeBracket<PluginList> layoutChange(this);
 
+  std::map<int, QString> lockedLoadOrder;
+  std::for_each(m_LockedOrder.begin(), m_LockedOrder.end(),
+                [&lockedLoadOrder] (const std::pair<QString, int> &ele) { lockedLoadOrder[ele.second] = ele.first; });
+
   int priority = 0;
-  applyBOSSSorting(sortedPlugins, sizeSorted, priority, true, "esm");
-  applyBOSSSorting(unrecognizedPlugins, sizeUnrecognized, priority, false, "esm");
-  applyBOSSSorting(sortedPlugins, sizeSorted, priority, true, "esp");
-  applyBOSSSorting(unrecognizedPlugins, sizeUnrecognized, priority, false, "esp");
+  int loadOrder = 0;
+  applyBOSSSorting(db, lockedLoadOrder, sortedPlugins, sizeSorted, priority, loadOrder, true, "esm");
+  applyBOSSSorting(db, lockedLoadOrder, unrecognizedPlugins, sizeUnrecognized, priority, loadOrder, false, "esm");
+  applyBOSSSorting(db, lockedLoadOrder, sortedPlugins, sizeSorted, priority, loadOrder, true, "esp");
+  applyBOSSSorting(db, lockedLoadOrder, unrecognizedPlugins, sizeUnrecognized, priority, loadOrder, false, "esp");
+
+  // applyBOSSSorting removed entries from lockedLoadOrder when they were inserted so everything that's left is plugins
+  // locked to the end of the list. Now this inserts the rest in the ascending priority order. If the list is too short
+  // to place the plugins in their intended position then this guarantees plugins are kept in the correct relative order
+  // but it doesn't minimize the number of misplaced plugins.
+  for (auto iter = lockedLoadOrder.begin(); iter != lockedLoadOrder.end(); ++iter) {
+    auto nameIter = m_ESPsByName.find(iter->second);
+    if (nameIter != m_ESPsByName.end()) {
+      m_ESPs[nameIter->second].m_Priority = priority++;
+      if (m_ESPs[nameIter->second].m_Enabled) {
+        m_ESPs[nameIter->second].m_LoadOrder = loadOrder++;
+      } else {
+        m_ESPs[nameIter->second].m_LoadOrder = -1;
+      }
+    }
+  }
 
   // inform view of the changed data
   updateIndices();
   layoutChange.finish();
-  syncLoadOrder();
-
   emit dataChanged(this->index(0, 0), this->index(m_ESPs.size(), columnCount()));
   m_Refreshed();
 }
