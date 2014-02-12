@@ -602,7 +602,7 @@ p, li { white-space: pre-wrap; }
             </size>
            </property>
            <attribute name="title">
-            <string notr="true">Plugins</string>
+            <string>Plugins</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
@@ -738,7 +738,7 @@ p, li { white-space: pre-wrap; }
           </widget>
           <widget class="QWidget" name="bsaTab">
            <attribute name="title">
-            <string notr="true">Archives</string>
+            <string>Archives</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
             <property name="leftMargin">

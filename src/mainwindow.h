@@ -352,6 +352,7 @@ private:
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
   QTimer m_CheckBSATimer;
+  QTimer m_SaveMetaTimer;
 
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
@@ -495,6 +496,8 @@ private slots:
   void startExeAction();
 
   void checkBSAList();
+  void saveModMetas();
+
   void updateStyle(const QString &style);
 
   void modlistChanged(const QModelIndex &index, int role);

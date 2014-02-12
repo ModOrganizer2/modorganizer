@@ -373,26 +373,48 @@ void ModInfoRegular::saveMeta()
 {
   // only write meta data if the mod directory exists
   if (m_MetaInfoChanged && QFile::exists(absolutePath())) {
-    QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
-    if (metaFile.status() == QSettings::NoError) {
-      std::set<int> temp = m_Categories;
-      temp.erase(m_PrimaryCategory);
-      metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
-      metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
-      metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
-      metaFile.setValue("version", m_Version.canonicalString());
-      metaFile.setValue("modid", m_NexusID);
-      metaFile.setValue("notes", m_Notes);
-      metaFile.setValue("nexusDescription", m_NexusDescription);
-      metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
-      if (m_EndorsedState != ENDORSED_UNKNOWN) {
-        metaFile.setValue("endorsed", m_EndorsedState);
+    bool success = false;
+    {
+      QSettings metaFile(absolutePath().append("/meta.ini.new"), QSettings::IniFormat);
+      if (metaFile.status() == QSettings::NoError) {
+        std::set<int> temp = m_Categories;
+        temp.erase(m_PrimaryCategory);
+        metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
+        metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
+        metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
+        metaFile.setValue("version", m_Version.canonicalString());
+        if (m_NexusID != -1) {
+          metaFile.setValue("modid", m_NexusID);
+        }
+        metaFile.setValue("notes", m_Notes);
+        metaFile.setValue("nexusDescription", m_NexusDescription);
+        metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+        if (m_EndorsedState != ENDORSED_UNKNOWN) {
+          metaFile.setValue("endorsed", m_EndorsedState);
+        }
+        metaFile.sync(); // sync needs to be called to ensure the file is created
+
+        if (metaFile.status() == QSettings::NoError) {
+          success = true;
+          m_MetaInfoChanged = false;
+        } else {
+          reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
+        }
+      } else {
+        reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
       }
-      metaFile.sync(); // sync needs to be called to ensure the file is created
-    } else {
-      reportError(tr("failed to write %1/meta.ini: %2").arg(absolutePath()).arg(metaFile.status()));
     }
-    m_MetaInfoChanged = false;
+    if (success) {
+      if (!QFile::remove(absolutePath().append("/meta.ini"))) {
+        qCritical("failed to remove %s", qPrintable(absolutePath().append("/meta.ini")));
+        return;
+      }
+      if (QFile::rename(absolutePath().append("/meta.ini.new"), absolutePath().append("/meta.ini"))) {
+        qDebug("%s written", qPrintable(absolutePath().append("/meta.ini")));
+      } else {
+        qCritical("writing %s failed", qPrintable(absolutePath().append("/meta.ini")));
+      }
+    }
   }
 }
 
@@ -554,6 +576,10 @@ void ModInfoRegular::setVersion(const VersionInfo &version)
 {
   m_Version = version;
   m_MetaInfoChanged = true;
+}
+
+void ModInfoRegular::setNewestVersion(const VersionInfo &version) {
+  m_NewestVersion = version;
 }
 
 void ModInfoRegular::setNexusDescription(const QString &description)

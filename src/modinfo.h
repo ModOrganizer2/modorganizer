@@ -592,7 +592,7 @@ public:
    * @todo this function should be made obsolete. All queries for mod information should go through
    *       this class so no public function for this change is required
    **/
-  void setNewestVersion(const MOBase::VersionInfo &version) { m_NewestVersion = version; }
+  void setNewestVersion(const MOBase::VersionInfo &version);
 
   /**
    * @brief changes/updates the nexus description text

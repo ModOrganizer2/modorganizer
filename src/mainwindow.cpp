@@ -295,6 +295,10 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
+  m_SaveMetaTimer.setSingleShot(false);
+  connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
+  m_SaveMetaTimer.start(5000);
+
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
   m_RefresherThread.start();
 
@@ -1208,10 +1212,10 @@ IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
     QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
 
     settingsFile.setValue("modid", 0);
-    settingsFile.setValue("version", 0);
-    settingsFile.setValue("newestVersion", 0);
+    settingsFile.setValue("version", "");
+    settingsFile.setValue("newestVersion", "");
     settingsFile.setValue("category", 0);
-    settingsFile.setValue("installationFile", 0);
+    settingsFile.setValue("installationFile", "");
     return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
 //  }
 }
@@ -1954,6 +1958,15 @@ void MainWindow::checkBSAList()
 
   ui->bsaList->blockSignals(false);
 }
+
+
+void MainWindow::saveModMetas()
+{
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+    modInfo->saveMeta();
+  }
+  }
 
 
 void MainWindow::fixCategories()
