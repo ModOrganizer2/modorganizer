@@ -178,6 +178,11 @@ public:
   QString getIniFileName() const;
 
   /**
+   * @return the path of the tweak ini in this profile
+   */
+  QString getProfileTweaks() const;
+
+  /**
    * @return path to this profile
    **/
   QString getPath() const;

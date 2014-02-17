@@ -432,6 +432,11 @@ public:
   void testValid();
 
   /**
+   * @brief reads meta information from disk
+   */
+  virtual void readMeta() {}
+
+  /**
    * @brief stores meta information back to disk
    */
   virtual void saveMeta() {}
@@ -748,6 +753,7 @@ public:
    */
   virtual void saveMeta();
 
+  void readMeta();
 private:
 
   enum EConflictType {

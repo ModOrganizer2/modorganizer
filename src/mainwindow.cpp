@@ -217,6 +217,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->bsaList->setLocalMoveOnly(true);
 
+  ui->splitter->setStretchFactor(0, 3);
+  ui->splitter->setStretchFactor(1, 2);
+
   resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
 
   QMenu *linkMenu = new QMenu(this);
@@ -3158,6 +3161,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     dialog->activateWindow();
     connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
   } else {
+    modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), this, SLOT(downloadRequestedNXM(QString)));

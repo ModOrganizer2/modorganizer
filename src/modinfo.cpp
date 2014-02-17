@@ -300,48 +300,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
-  QString metaFileName = path.absoluteFilePath("meta.ini");
-  QSettings metaFile(metaFileName, QSettings::IniFormat);
-
-  m_Notes            = metaFile.value("notes", "").toString();
-  m_NexusID          = metaFile.value("modid", -1).toInt();
-  m_Version.parse(metaFile.value("version", "").toString());
-  m_NewestVersion    = metaFile.value("newestVersion", "").toString();
-  m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
-  m_InstallationFile = metaFile.value("installationFile", "").toString();
-  m_NexusDescription = metaFile.value("nexusDescription", "").toString();
-  m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
-  if (metaFile.contains("endorsed")) {
-    if (metaFile.value("endorsed").canConvert<int>()) {
-      switch (metaFile.value("endorsed").toInt()) {
-        case ENDORSED_FALSE: m_EndorsedState = ENDORSED_FALSE; break;
-        case ENDORSED_TRUE:  m_EndorsedState = ENDORSED_TRUE;  break;
-        case ENDORSED_NEVER: m_EndorsedState = ENDORSED_NEVER; break;
-        default: m_EndorsedState = ENDORSED_UNKNOWN; break;
-      }
-    } else {
-      m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
-    }
-  }
-
-
-  QString categoriesString = metaFile.value("category", "").toString();
-
-  QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
-  for (QStringList::iterator iter = categories.begin(); iter != categories.end(); ++iter) {
-    bool ok = false;
-    int categoryID = iter->toInt(&ok);
-    if (categoryID < 0) {
-      // ignore invalid id
-      continue;
-    }
-    if (ok && (categoryID != 0) && (CategoryFactory::instance().categoryExists(categoryID))) {
-      m_Categories.insert(categoryID);
-      if (iter == categories.begin()) {
-        m_PrimaryCategory = categoryID;
-      }
-    }
-  }
+  readMeta();
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
@@ -369,51 +328,82 @@ bool ModInfoRegular::isEmpty() const
 }
 
 
+void ModInfoRegular::readMeta()
+{
+  QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
+
+  m_Notes            = metaFile.value("notes", "").toString();
+  m_NexusID          = metaFile.value("modid", -1).toInt();
+  m_Version.parse(metaFile.value("version", "").toString());
+  m_NewestVersion    = metaFile.value("newestVersion", "").toString();
+  m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
+  m_InstallationFile = metaFile.value("installationFile", "").toString();
+  m_NexusDescription = metaFile.value("nexusDescription", "").toString();
+  m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  if (metaFile.contains("endorsed")) {
+    if (metaFile.value("endorsed").canConvert<int>()) {
+      switch (metaFile.value("endorsed").toInt()) {
+        case ENDORSED_FALSE: m_EndorsedState = ENDORSED_FALSE; break;
+        case ENDORSED_TRUE:  m_EndorsedState = ENDORSED_TRUE;  break;
+        case ENDORSED_NEVER: m_EndorsedState = ENDORSED_NEVER; break;
+        default: m_EndorsedState = ENDORSED_UNKNOWN; break;
+      }
+    } else {
+      m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+    }
+  }
+
+  QString categoriesString = metaFile.value("category", "").toString();
+
+  QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
+  for (QStringList::iterator iter = categories.begin(); iter != categories.end(); ++iter) {
+    bool ok = false;
+    int categoryID = iter->toInt(&ok);
+    if (categoryID < 0) {
+      // ignore invalid id
+      continue;
+    }
+    if (ok && (categoryID != 0) && (CategoryFactory::instance().categoryExists(categoryID))) {
+      m_Categories.insert(categoryID);
+      if (iter == categories.begin()) {
+        m_PrimaryCategory = categoryID;
+      }
+    }
+  }
+
+  m_MetaInfoChanged = false;
+}
+
 void ModInfoRegular::saveMeta()
 {
   // only write meta data if the mod directory exists
   if (m_MetaInfoChanged && QFile::exists(absolutePath())) {
-    bool success = false;
-    {
-      QSettings metaFile(absolutePath().append("/meta.ini.new"), QSettings::IniFormat);
-      if (metaFile.status() == QSettings::NoError) {
-        std::set<int> temp = m_Categories;
-        temp.erase(m_PrimaryCategory);
-        metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
-        metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
-        metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
-        metaFile.setValue("version", m_Version.canonicalString());
-        if (m_NexusID != -1) {
-          metaFile.setValue("modid", m_NexusID);
-        }
-        metaFile.setValue("notes", m_Notes);
-        metaFile.setValue("nexusDescription", m_NexusDescription);
-        metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
-        if (m_EndorsedState != ENDORSED_UNKNOWN) {
-          metaFile.setValue("endorsed", m_EndorsedState);
-        }
-        metaFile.sync(); // sync needs to be called to ensure the file is created
+    QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
+    if (metaFile.status() == QSettings::NoError) {
+      std::set<int> temp = m_Categories;
+      temp.erase(m_PrimaryCategory);
+      metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
+      metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
+      metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
+      metaFile.setValue("version", m_Version.canonicalString());
+      if (m_NexusID != -1) {
+        metaFile.setValue("modid", m_NexusID);
+      }
+      metaFile.setValue("notes", m_Notes);
+      metaFile.setValue("nexusDescription", m_NexusDescription);
+      metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      if (m_EndorsedState != ENDORSED_UNKNOWN) {
+        metaFile.setValue("endorsed", m_EndorsedState);
+      }
+      metaFile.sync(); // sync needs to be called to ensure the file is created
 
-        if (metaFile.status() == QSettings::NoError) {
-          success = true;
-          m_MetaInfoChanged = false;
-        } else {
-          reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
-        }
+      if (metaFile.status() == QSettings::NoError) {
+        m_MetaInfoChanged = false;
       } else {
         reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
       }
-    }
-    if (success) {
-      if (!QFile::remove(absolutePath().append("/meta.ini"))) {
-        qCritical("failed to remove %s", qPrintable(absolutePath().append("/meta.ini")));
-        return;
-      }
-      if (QFile::rename(absolutePath().append("/meta.ini.new"), absolutePath().append("/meta.ini"))) {
-        qDebug("%s written", qPrintable(absolutePath().append("/meta.ini")));
-      } else {
-        qCritical("writing %s failed", qPrintable(absolutePath().append("/meta.ini")));
-      }
+    } else {
+      reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
     }
   }
 }
@@ -717,12 +707,10 @@ QString ModInfoRegular::getNexusDescription() const
   return m_NexusDescription;
 }
 
-
 ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
 {
   return m_EndorsedState;
 }
-
 
 ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
 {

@@ -201,6 +201,7 @@ void Profile::createTweakedIniFile()
     }
   }
 
+  mergeTweak(getProfileTweaks(), tweakedIni);
 
   bool error = false;
   if (!::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", ToWString(tweakedIni).c_str())) {
@@ -738,6 +739,11 @@ QString Profile::getIniFileName() const
 {
   std::wstring primaryIniFile = *(GameInfo::instance().getIniFileNames().begin());
   return m_Directory.absoluteFilePath(ToQString(primaryIniFile));
+}
+
+QString Profile::getProfileTweaks() const
+{
+  return QDir::cleanPath(m_Directory.absoluteFilePath(ToQString(AppConfig::profileTweakIni())));
 }
 
 

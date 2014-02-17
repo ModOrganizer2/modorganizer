@@ -158,9 +158,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
-  saveIniTweaks();
   saveCategories(ui->categoriesTree->invisibleRootItem());
-
+  saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui;
   delete m_Settings;
 }
@@ -216,7 +215,6 @@ QByteArray ModInfoDialog::saveTabState() const
   stream << ui->tabWidget->count();
   for (int i = 0; i < ui->tabWidget->count(); ++i) {
     stream << ui->tabWidget->widget(i)->objectName();
-
   }
 
   return result;
@@ -475,18 +473,15 @@ void ModInfoDialog::openIniFile(const QString &fileName)
 
 void ModInfoDialog::saveIniTweaks()
 {
-  QListWidget *iniTweaksList = findChild<QListWidget*>("iniTweaksList");
-
   m_Settings->beginWriteArray("INI Tweaks");
 
   int countEnabled = 0;
-  for (int i = 0; i < iniTweaksList->count(); ++i) {
-    if (iniTweaksList->item(i)->checkState() == Qt::Checked) {
+  for (int i = 0; i < ui->iniTweaksList->count(); ++i) {
+    if (ui->iniTweaksList->item(i)->checkState() == Qt::Checked) {
       m_Settings->setArrayIndex(countEnabled++);
-      m_Settings->setValue("name", iniTweaksList->item(i)->text());
+      m_Settings->setValue("name", ui->iniTweaksList->item(i)->text());
     }
   }
-
   m_Settings->endArray();
 }
 
@@ -1229,8 +1224,10 @@ void ModInfoDialog::createTweak()
     return;
   }
 
-  QListWidgetItem *newTweak = new QListWidgetItem(name);
+  QListWidgetItem *newTweak = new QListWidgetItem(name + ".ini");
   newTweak->setData(Qt::UserRole, "INI Tweaks/" + name + ".ini");
+  newTweak->setFlags(newTweak->flags() | Qt::ItemIsUserCheckable);
+  newTweak->setCheckState(Qt::Unchecked);
   ui->iniTweaksList->addItem(newTweak);
 }
 
