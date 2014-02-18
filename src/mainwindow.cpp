@@ -1558,18 +1558,21 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       columns.append("");
       if (!(*current)->isEmpty()) {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
-        onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
-        onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
-        onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
-        directoryChild->addChild(onDemandLoad);
-        subTree->addChild(directoryChild);
-/*        updateTo(directoryChild, temp.str(), **current, conflictsOnly);
-        if (directoryChild->childCount() != 0) {
-          subTree->addChild(directoryChild);
+        if (conflictsOnly) {
+          updateTo(directoryChild, temp.str(), **current, conflictsOnly);
+          if (directoryChild->childCount() != 0) {
+            subTree->addChild(directoryChild);
+          } else {
+            delete directoryChild;
+          }
         } else {
-          delete directoryChild;
-        }*/
+          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
+          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
+          onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
+          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
+          directoryChild->addChild(onDemandLoad);
+          subTree->addChild(directoryChild);
+        }
       }
     }
   }
