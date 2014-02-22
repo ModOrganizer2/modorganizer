@@ -106,7 +106,7 @@ const Executable &ExecutablesList::find(const QString &title) const
 Executable &ExecutablesList::find(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Title == title) {
+    if (QString::compare(iter->m_Title, title, Qt::CaseInsensitive) == 0) {
       return *iter;
     }
   }

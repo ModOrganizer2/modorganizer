@@ -437,7 +437,7 @@ void SelfUpdater::nxmRequestFailed(int, int, QVariant, int requestID, const QStr
       --m_Attempts;
     } else {
       qWarning("Failed to retrieve update information: %s", qPrintable(errorMessage));
-      MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent);
+      MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent, false);
     }
   }
 }

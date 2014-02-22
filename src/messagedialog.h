@@ -52,8 +52,9 @@ public:
    *
    * @param text the text to display. The length of this text is used to determine how long the dialog is to be shown
    * @param reference the reference widget on top of which the message should be displayed
+   * @param true if the message should bring MO to front to ensure this message is visible
    **/
-  static void showMessage(const QString &text, QWidget *reference);
+  static void showMessage(const QString &text, QWidget *reference, bool bringToFront = true);
 
 protected:
 
