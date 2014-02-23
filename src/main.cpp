@@ -67,6 +67,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSplashScreen>
 #include <QDirIterator>
 #include <QDesktopServices>
+#include <ShellAPI.h>
 #include <eh.h>
 #include <windows_error.h>
 #include <boost/scoped_array.hpp>
@@ -277,6 +278,59 @@ void registerMetaTypes()
   registerExecutable();
 }
 
+
+
+bool HaveWriteAccess(const std::wstring &path)
+{
+  bool writable = false;
+
+  const static SECURITY_INFORMATION requestedFileInformation = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
+
+  DWORD length = 0;
+  if (!::GetFileSecurityW(path.c_str(), requestedFileInformation, NULL, NULL, &length)
+      && (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+    std::string tempBuffer;
+    tempBuffer.reserve(length);
+    PSECURITY_DESCRIPTOR security = (PSECURITY_DESCRIPTOR)tempBuffer.data();
+    if (security
+        && ::GetFileSecurity(path.c_str(), requestedFileInformation, security, length, &length)) {
+      HANDLE token = NULL;
+      const static DWORD tokenDesiredAccess = TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ;
+      if (!::OpenThreadToken(::GetCurrentThread(), tokenDesiredAccess, TRUE, &token)) {
+        if (!::OpenProcessToken(::GetCurrentProcess(), tokenDesiredAccess, &token)) {
+          throw std::runtime_error("Unable to get any thread or process token");
+        }
+      }
+
+      HANDLE impersonatedToken = NULL;
+      if (::DuplicateToken(token, SecurityImpersonation, &impersonatedToken)) {
+        GENERIC_MAPPING mapping = { 0xFFFFFFFF };
+        mapping.GenericRead = FILE_GENERIC_READ;
+        mapping.GenericWrite = FILE_GENERIC_WRITE;
+        mapping.GenericExecute = FILE_GENERIC_EXECUTE;
+        mapping.GenericAll = FILE_ALL_ACCESS;
+
+        DWORD genericAccessRights = FILE_GENERIC_WRITE;
+        ::MapGenericMask(&genericAccessRights, &mapping);
+
+        PRIVILEGE_SET privileges = { 0 };
+        DWORD grantedAccess = 0;
+        DWORD privilegesLength = sizeof(privileges);
+        BOOL result = 0;
+        if (::AccessCheck(security, impersonatedToken, genericAccessRights, &mapping, &privileges, &privilegesLength, &grantedAccess, &result)) {
+          writable = result != 0;
+        }
+        ::CloseHandle(impersonatedToken);
+      }
+
+      ::CloseHandle(token);
+    }
+  }
+  return writable;
+}
+
+
+
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
@@ -285,6 +339,16 @@ int main(int argc, char *argv[])
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
+  if (!HaveWriteAccess(ToWString(application.applicationDirPath()))) {
+    QStringList arguments = application.arguments();
+    arguments.pop_front();
+    ::ShellExecuteW( NULL
+                   , L"runas"
+                   , ToWString(QString("\"%1\"").arg(QCoreApplication::applicationFilePath())).c_str()
+                   , ToWString(arguments.join(" ")).c_str()
+                   , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
+    return 1;
+  }
   LogBuffer::init(200, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
