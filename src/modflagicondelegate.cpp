@@ -2,6 +2,11 @@
 #include <QList>
 
 
+ModInfo::EFlag ModFlagIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLICT_MIXED
+                                                       , ModInfo::FLAG_CONFLICT_OVERWRITE
+                                                       , ModInfo::FLAG_CONFLICT_OVERWRITTEN
+                                                       , ModInfo::FLAG_CONFLICT_REDUNDANT };
+
 ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent)
   : IconDelegate(parent)
 {
@@ -14,6 +19,16 @@ QList<QIcon> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
   if (modid.isValid()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
     std::vector<ModInfo::EFlag> flags = info->getFlags();
+
+    { // insert conflict icon first to provide nicer alignment
+      auto iter = std::find_first_of(flags.begin(), flags.end(), m_ConflictFlags, m_ConflictFlags + 4);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      } else {
+        result.append(QIcon());
+      }
+    }
 
     for (auto iter = flags.begin(); iter != flags.end(); ++iter) {
       result.append(getFlagIcon(*iter));
@@ -42,7 +57,12 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
   unsigned int modIdx = index.data(Qt::UserRole + 1).toInt();
   if (modIdx < ModInfo::getNumMods()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
-    return info->getFlags().size();
+    std::vector<ModInfo::EFlag> flags = info->getFlags();
+    int count = flags.size();
+    if (std::find_first_of(flags.begin(), flags.end(), m_ConflictFlags, m_ConflictFlags + 4) == flags.end()) {
+      ++count;
+    }
+    return count;
   } else {
     return 0;
   }

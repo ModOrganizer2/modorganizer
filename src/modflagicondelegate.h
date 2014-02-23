@@ -12,7 +12,8 @@ private:
   virtual size_t getNumIcons(const QModelIndex &index) const;
 
   QIcon getFlagIcon(ModInfo::EFlag flag) const;
-
+private:
+  static ModInfo::EFlag m_ConflictFlags[4];
 };
 
 #endif // MODFLAGICONDELEGATE_H

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPainter>
+#include <QDebug>
 
 
 IconDelegate::IconDelegate(QObject *parent)
@@ -37,25 +38,33 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 
   int x = 4;
   painter->save();
+
+  int iconWidth = icons.size() > 0 ? ((option.rect.width() / icons.size()) - 4) : 16;
+  iconWidth = std::min(16, iconWidth);
+
   painter->translate(option.rect.topLeft());
   for (auto iter = icons.begin(); iter != icons.end(); ++iter) {
-    painter->drawPixmap(x, 2, 16, 16, iter->pixmap(QSize(16, 16)));
-    x += 20;
+    painter->drawPixmap(x, 2, iconWidth, iconWidth, iter->pixmap(QSize(iconWidth, iconWidth)));
+    x += iconWidth + 4;
   }
 
   painter->restore();
 }
 
 
-QSize IconDelegate::sizeHint(const QStyleOptionViewItem&, const QModelIndex &modelIndex) const
+QSize IconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
 {
   int count = getNumIcons(modelIndex);
   unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
+  QSize result;
   if (index < ModInfo::getNumMods()) {
-    ModInfo::Ptr info = ModInfo::getByIndex(index);
-    return QSize(info->getFlags().size() * 20, 20);
+    result = QSize(count * 40, 20);
   } else {
-    return QSize(1, 20);
+    result = QSize(1, 20);
   }
+  if (option.rect.width() > 0) {
+    result.setWidth(std::min(option.rect.width(), result.width()));
+  }
+  return result;
 }
 

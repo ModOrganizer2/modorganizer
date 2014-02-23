@@ -637,12 +637,6 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result;
-  if (!isValid()) {
-    result.push_back(ModInfo::FLAG_INVALID);
-  }
-  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
-    result.push_back(ModInfo::FLAG_NOTENDORSED);
-  }
   switch (isConflicted()) {
     case CONFLICT_MIXED: {
       result.push_back(ModInfo::FLAG_CONFLICT_MIXED);
@@ -657,6 +651,12 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
       result.push_back(ModInfo::FLAG_CONFLICT_REDUNDANT);
     } break;
     default: { /* NOP */ }
+  }
+  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
+    result.push_back(ModInfo::FLAG_NOTENDORSED);
+  }
+  if (!isValid()) {
+    result.push_back(ModInfo::FLAG_INVALID);
   }
   if (m_Notes.length() != 0) {
     result.push_back(ModInfo::FLAG_NOTES);
