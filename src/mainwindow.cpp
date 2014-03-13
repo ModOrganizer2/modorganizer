@@ -3289,7 +3289,8 @@ void MainWindow::testExtractBSA(int modIndex)
       progress.show();
 
       archive.extractAll(modInfo->absolutePath().toLocal8Bit().constData(),
-                         boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
+                         boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2),
+                         false);
 
       if (result == BSA::ERROR_INVALIDHASHES) {
         reportError(tr("This archive contains invalid hashes. Some files may be broken."));
