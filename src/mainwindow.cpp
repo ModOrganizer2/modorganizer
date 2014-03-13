@@ -322,6 +322,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   m_Tutorial.expose("modList", &m_ModList);
   m_Tutorial.expose("espList", &m_PluginList);
+
+  // before we start loading plugins we, add the dll path to the dll search order
+  ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
   loadPlugins();
 }
 

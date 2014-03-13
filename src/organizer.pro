@@ -7,7 +7,7 @@
 contains(QT_VERSION, "^5.*") {
   QT       += core gui widgets network declarative script xml sql xmlpatterns
 } else {
-	QT       += core gui network xml declarative script sql xmlpatterns opengl
+  QT       += core gui network xml declarative script sql xmlpatterns
 }
 
 TARGET = ModOrganizer
@@ -95,7 +95,7 @@ HEADERS  += \
     settingsdialog.h \
     settings.h \
     selfupdater.h \
-		selectiondialog.h \
+    selectiondialog.h \
     savegameinfowidgetgamebryo.h \
     savegameinfowidget.h \
     savegamegamebyro.h \
@@ -166,7 +166,7 @@ FORMS    += \
     syncoverwritedialog.ui \
     simpleinstalldialog.ui \
     settingsdialog.ui \
-		selectiondialog.ui \
+    selectiondialog.ui \
     savegameinfowidget.ui \
     queryoverwritedialog.ui \
     profilesdialog.ui \
@@ -197,22 +197,22 @@ INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
 CONFIG(debug, debug|release) {
-	OUTDIR = $$OUT_PWD/debug
-	DSTDIR = $$PWD/../../outputd
+  OUTDIR = $$OUT_PWD/debug
+  DSTDIR = $$PWD/../../outputd
   LIBS += -L$$OUT_PWD/../shared/debug
   LIBS += -L$$OUT_PWD/../bsatk/debug
   LIBS += -L$$OUT_PWD/../uibase/debug
   LIBS += -L$$OUT_PWD/../boss_modified/debug
   LIBS += -lDbgHelp
 } else {
-	OUTDIR = $$OUT_PWD/release
-	DSTDIR = $$PWD/../../output
+  OUTDIR = $$OUT_PWD/release
+  DSTDIR = $$PWD/../../output
   LIBS += -L$$OUT_PWD/../shared/release
   LIBS += -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
   QMAKE_CXXFLAGS += /Zi /GL
-#	QMAKE_CXXFLAGS -= -O2
+#  QMAKE_CXXFLAGS -= -O2
   QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
 }
 
@@ -283,7 +283,7 @@ CONFIG(debug, debug|release) {
 }
 
 RESOURCES += \
-		resources.qrc \
+    resources.qrc \
     stylesheet_resource.qrc
 
 RC_FILE += \
@@ -303,7 +303,7 @@ OTHER_FILES += \
     tutorials/tutorials_modinfodialog.qml \
     tutorials/tutorial_firststeps_modinfo.js \
     tutorials/tutorial_conflictresolution_main.js \
-		tutorials/tutorial_conflictresolution_modinfo.js \
+    tutorials/tutorial_conflictresolution_modinfo.js \
     app_icon.rc \
     dark.qss \
     stylesheets/dark.qss \
