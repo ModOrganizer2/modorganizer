@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 
 static const int FRAMES_TO_SKIP = 3;     // StackData::StackData(), __TraceData::regTrace(), TraceAlloc()

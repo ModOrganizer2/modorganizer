@@ -436,8 +436,12 @@ void Settings::addLanguages(QComboBox *languageBox)
 void Settings::addStyles(QComboBox *styleBox)
 {
   styleBox->addItem("None", "");
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+  styleBox->addItem("Fusion", "Fusion");
+#else
   styleBox->addItem("Plastique", "Plastique");
   styleBox->addItem("Cleanlooks", "Cleanlooks");
+#endif
 
   QDirIterator langIter(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath()), QStringList("*.qss"), QDir::Files);
   while (langIter.hasNext()) {
