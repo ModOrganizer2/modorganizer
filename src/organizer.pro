@@ -4,8 +4,9 @@
 #
 #-------------------------------------------------
 
+
 contains(QT_VERSION, "^5.*") {
-  QT       += core gui widgets network declarative script xml sql xmlpatterns
+	QT       += core gui widgets network xml sql xmlpatterns qml quick script
 } else {
 	QT       += core gui network xml declarative script sql xmlpatterns opengl
 }
@@ -310,6 +311,38 @@ OTHER_FILES += \
     tutorials/tutorial_window_installer.js \
     tutorials/tutorials_installdialog.qml
 
+
+load(moc)
+
+# for each Boost header you include...
+QMAKE_MOC += \
+	-DBOOST_MPL_IF_HPP_INCLUDED \
+	-DBOOST_TT_TYPE_WITH_ALIGNMENT_INCLUDED \
+	-DBOOST_MPL_VOID_HPP_INCLUDED \
+	-DBOOST_MPL_NOT_HPP_INCLUDED \
+	-DBOOST_MPL_IDENTITY_HPP_INCLUDED \
+	-DBOOST_VARIANT_VARIANT_FWD_HPP \
+	-DBOOST_MPL_NEXT_PRIOR_HPP_INCLUDED \
+	-DBOOST_MPL_O1_SIZE_HPP_INCLUDED \
+	-DBOOST_MPL_DEREF_HPP_INCLUDED \
+	-DBOOST_MPL_PAIR_HPP_INCLUDED \
+	-DBOOST_MPL_ITER_FOLD_HPP_INCLUDED \
+	-DBOOST_MPL_PROTECT_HPP_INCLUDED \
+	-DBOOST_MPL_EVAL_IF_HPP_INCLUDED \
+	-DBOOST_MPL_SEQUENCE_TAG_HPP_INCLUDED \
+	-DBOOST_MPL_EMPTY_HPP_INCLUDED \
+	-DBOOST_MPL_ALWAYS_HPP_INCLUDED \
+	-DBOOST_MPL_TRANSFORM_HPP_INCLUDED \
+	-DBOOST_MPL_CLEAR_HPP_INCLUDED \
+	-DBOOST_MPL_BEGIN_END_HPP_INCLUDED \
+	-DBOOST_MPL_FOLD_HPP_INCLUDED \
+	-DBOOST_MPL_FRONT_HPP_INCLUDED \
+	-DBOOST_MPL_IS_SEQUENCE_HPP_INCLUDED \
+	-DBOOST_MPL_ITERATOR_RANGE_HPP_INCLUDED \
+	-DBOOST_MPL_MAX_ELEMENT_HPP_INCLUDED \
+	-DBOOST_MPL_PUSH_FRONT_HPP_INCLUDED \
+	-DBOOST_RESULT_OF_HPP \
+	-DBOOST_MPL_ITER_FOLD_IF_HPP_INCLUDED
 
 # leak detection with vld
 #INCLUDEPATH += "E:/Visual Leak Detector/include"

@@ -103,7 +103,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#include <QtConcurrent/QtConcurrentRun>
+#else
 #include <QtConcurrentRun>
+#endif
 #include <QCoreApplication>
 #include <scopeguard.h>
 #include <boost/thread.hpp>
