@@ -75,7 +75,7 @@ bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
 }
 
 PluginList::PluginList(QObject *parent)
-  : QAbstractTableModel(parent)
+  : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
   , m_SaveTimer(this)
   , m_BOSS(NULL)
@@ -951,7 +951,16 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       } break;
     }
   } else if ((role == Qt::CheckStateRole) && (modelIndex.column() == 0)) {
-    return m_ESPs[index].m_Enabled ? Qt::Checked : Qt::Unchecked;
+    if (m_ESPs[index].m_ForceEnabled) {
+      return QVariant();
+    } else {
+      return m_ESPs[index].m_Enabled ? Qt::Checked : Qt::Unchecked;
+    }
+  } else if (role == Qt::ForegroundRole) {
+    if ((modelIndex.column() == COL_NAME) &&
+        m_ESPs[index].m_ForceEnabled) {
+      return QBrush(Qt::gray);
+    }
   } else if (role == Qt::FontRole) {
     QFont result;
     if (m_ESPs[index].m_IsMaster) {
@@ -1070,13 +1079,12 @@ QVariant PluginList::headerData(int section, Qt::Orientation orientation,
 Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
 {
   int index = modelIndex.row();
-  Qt::ItemFlags result = QAbstractTableModel::flags(modelIndex);
+  Qt::ItemFlags result = QAbstractItemModel::flags(modelIndex);
 
   if (modelIndex.isValid())  {
-    if ((m_ESPs[index].m_ForceEnabled)) {
-      result &= ~Qt::ItemIsEnabled;
+    if (!m_ESPs[index].m_ForceEnabled) {
+      result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
     }
-    result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
   } else {
     result |= Qt::ItemIsDropEnabled;
   }
@@ -1216,6 +1224,19 @@ bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, 
   return false;
 }
 
+QModelIndex PluginList::index(int row, int column, const QModelIndex&) const
+{
+  if ((row < 0) || (row >= rowCount()) || (column < 0) || (column >= columnCount())) {
+    return QModelIndex();
+  }
+  return createIndex(row, column, row);
+}
+
+QModelIndex PluginList::parent(const QModelIndex&) const
+{
+  return QModelIndex();
+}
+
 
 bool PluginList::eventFilter(QObject *obj, QEvent *event)
 {
@@ -1227,7 +1248,6 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
     }
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-
     // ctrl+up and ctrl+down -> increase or decrease priority of selected plugins
     if ((keyEvent->modifiers() == Qt::ControlModifier) &&
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {

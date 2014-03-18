@@ -11,8 +11,10 @@ PluginFlagIconDelegate::PluginFlagIconDelegate(QObject *parent)
 QList<QIcon> PluginFlagIconDelegate::getIcons(const QModelIndex &index) const
 {
   QList<QIcon> result;
-  foreach (const QVariant &var, index.data(Qt::UserRole + 1).toList()) {
-    result.append(var.value<QIcon>());
+  if (index.isValid()) {
+    foreach (const QVariant &var, index.data(Qt::UserRole + 1).toList()) {
+      result.append(var.value<QIcon>());
+    }
   }
   return result;
 }

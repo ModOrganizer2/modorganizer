@@ -69,7 +69,7 @@ private:
 /**
  * @brief model representing the plugins (.esp/.esm) in the current virtual data folder
  **/
-class PluginList : public QAbstractTableModel, public MOBase::IPluginList
+class PluginList : public QAbstractItemModel, public MOBase::IPluginList
 {
   Q_OBJECT
   friend class ChangeBracket<PluginList>;
@@ -201,6 +201,8 @@ public: // implementation of the QAbstractTableModel interface
   virtual Qt::ItemFlags flags(const QModelIndex &index) const;
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+  virtual QModelIndex parent(const QModelIndex &child) const;
 
   void applyBOSSSorting(boss_db db, std::map<int, QString> &lockedLoadOrder, uint8_t **pluginList, size_t size, int &priority, int &loadOrder, bool recognized, const char *extension);
 public slots:
