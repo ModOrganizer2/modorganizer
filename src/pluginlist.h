@@ -29,7 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
-#include <pdll.h>
+#include "pdll.h"
 #include <BOSS-API.h>
 
 
