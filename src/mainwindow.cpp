@@ -3099,6 +3099,22 @@ void MainWindow::reinstallMod_clicked()
 }
 
 
+void MainWindow::resumeDownload(int downloadIndex)
+{
+  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+    m_DownloadManager.resumeDownload(downloadIndex);
+  } else {
+    QString username, password;
+    if (m_Settings.getNexusLogin(username, password)) {
+      m_PostLoginTasks.push_back(boost::bind(&MainWindow::resumeDownload, _1, downloadIndex));
+      NexusInterface::instance()->getAccessManager()->login(username, password);
+    } else {
+      MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
+    }
+  }
+}
+
+
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
   if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
@@ -4685,7 +4701,7 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), &m_DownloadManager, SLOT(restoreDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), &m_DownloadManager, SLOT(cancelDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), &m_DownloadManager, SLOT(pauseDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), &m_DownloadManager, SLOT(resumeDownload(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
 }
 
 

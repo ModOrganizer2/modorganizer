@@ -483,6 +483,7 @@ private slots:
 
   void hookUpWindowTutorials();
 
+  void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
   void cancelModListEditor();
 

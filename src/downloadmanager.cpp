@@ -1246,7 +1246,7 @@ void DownloadManager::downloadFinished()
           textData) {
         if (info->m_Tries == 0) {
           if (textData && (reply->error() == QNetworkReply::NoError)) {
-            emit showMessage(tr("Download failed. Server reported: %1").arg(readFileText(info->m_Output.fileName())));
+            emit showMessage(tr("Download failed. Server reported: %1").arg(QString(data)));
           } else {
             emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
           }
