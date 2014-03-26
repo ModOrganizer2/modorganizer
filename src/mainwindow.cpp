@@ -3494,13 +3494,13 @@ void MainWindow::replaceCategoriesFromMenu(QMenu *menu, int modRow)
   }
 }
 
-void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow)
+void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int referenceRow)
 {
-  if (m_ContextRow != -1 && m_ContextRow != modRow) {
-    ModInfo::Ptr editedModInfo = ModInfo::getByIndex(m_ContextRow);
+  if (referenceRow != -1 && referenceRow != modRow) {
+    ModInfo::Ptr editedModInfo = ModInfo::getByIndex(referenceRow);
     foreach (QAction* action, menu->actions()) {
       if (action->menu() != NULL) {
-        addRemoveCategoriesFromMenu(action->menu(), modRow);
+        addRemoveCategoriesFromMenu(action->menu(), modRow, referenceRow);
       } else {
         QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
         if (widgetAction != NULL) {
@@ -3517,7 +3517,6 @@ void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow)
       }
     }
   } else {
-    //This block shouldn't be reached, but if it is then fall back to replace (context row is invalid or replacing edited mod)
     replaceCategoriesFromMenu(menu, modRow);
   }
 }
@@ -3529,37 +3528,26 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     return;
   }
 
-  QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
+  QModelIndexList selectedTemp = ui->modList->selectionModel()->selectedRows();
+  QList<QPersistentModelIndex> selected;
+  foreach (const QModelIndex &idx, selectedTemp) {
+    selected.append(QPersistentModelIndex(idx));
+  }
 
   if (selected.size() > 0) {
-    int min = INT_MAX;
-    int max = INT_MIN;
-
-    QStringList selectedMods;
-    for (int i = 0; i < selected.size(); ++i) {
-      QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
-      selectedMods.append(temp.data().toString());
-      if (temp.row() < min) min = temp.row();
-      if (temp.row() > max) max = temp.row();
-      // save the currently selected mod for last... then we can use it as a pattern for what is changing...
-      int modRow =  m_ModListSortProxy->mapToSource(selected.at(i)).row();
-      if (modRow != m_ContextRow) {
-        addRemoveCategoriesFromMenu(menu,modRow);
+    foreach (const QPersistentModelIndex &idx, selected) {
+      qDebug("change categories on: %s (ref: %s)", qPrintable(idx.data().toString()), qPrintable(m_ContextIdx.data().toString()));
+      QModelIndex modIdx = mapToModel(&m_ModList, idx);
+      if (modIdx.row() != m_ContextIdx.row()) {
+        addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
       }
     }
-    //come back to the currently selected mod, after the others have been set
-    replaceCategoriesFromMenu(menu, m_ContextRow);
+    replaceCategoriesFromMenu(menu, m_ContextIdx.row());
 
     m_ModList.notifyChange(-1);
 
-    // find mods by their name because indices are invalidated
-    QAbstractItemModel *model = ui->modList->model();
-    Q_FOREACH(const QString &mod, selectedMods) {
-      QModelIndexList matches = model->match(model->index(0, 0), Qt::DisplayRole, mod, 1,
-                                             Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
-      if (matches.size() > 0) {
-        ui->modList->selectionModel()->select(matches.at(0), QItemSelectionModel::Select | QItemSelectionModel::Rows);
-      }
+    foreach (const QPersistentModelIndex &idx, selected) {
+      ui->modList->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
   } else {
     //For single mod selections, just do a replace
@@ -3580,15 +3568,10 @@ void MainWindow::replaceCategories_MenuHandler() {
   QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
 
   if (selected.size() > 0) {
-    int min = INT_MAX;
-    int max = INT_MIN;
-
     QStringList selectedMods;
     for (int i = 0; i < selected.size(); ++i) {
       QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
       selectedMods.append(temp.data().toString());
-      if (temp.row() < min) min = temp.row();
-      if (temp.row() > max) max = temp.row();
       replaceCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
     }
 
@@ -3810,8 +3793,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
   try {
     QTreeView *modList = findChild<QTreeView*>("modList");
 
-    QModelIndex index = mapToModel(&m_ModList, modList->indexAt(pos));
-    m_ContextRow = index.row();
+    m_ContextIdx = mapToModel(&m_ModList, modList->indexAt(pos));
+    m_ContextRow = m_ContextIdx.row();
 
     QMenu menu;
 
@@ -4771,19 +4754,6 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   }
 }
 
-/*
-void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
-{
-  if (resultData.toBool()) {
-    ui->actionEndorseMO->setVisible(false);
-    QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-  }
-
-  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(int, QVariant, QVariant, int)),
-             this, SLOT(nxmEndorsementToggled(int, QVariant, QVariant, int)))) {
-    qCritical("failed to disconnect endorsement slot");
-  }
-}*/
 
 void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
 {

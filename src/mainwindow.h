@@ -236,8 +236,9 @@ private:
    * the changes made in the menu (which is the delta between the current menu selection and the reference mod)
    * @param menu the menu after editing by the user
    * @param modRow index of the mod to edit
+   * @param referenceRow row of the reference mod
    */
-  void addRemoveCategoriesFromMenu(QMenu *menu, int modRow);
+  void addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int referenceRow);
 
   /**
    * Sets category selections from menu; for multiple mods, this will completely
@@ -324,6 +325,7 @@ private:
   QString m_GamePath;
 
   int m_ContextRow;
+  QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
