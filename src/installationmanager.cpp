@@ -69,7 +69,7 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager(QWidget *parent)
   : QObject(parent), m_ParentWidget(parent),
-    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod"))
+    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -659,7 +659,9 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   // open the archive and construct the directory tree the installers work on
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
-
+  if (!archiveOpen) {
+    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_CurrentArchive->getLastError());
+  }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
   QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : NULL);
@@ -676,8 +678,12 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     }
 
     // try only manual installers if that was requested
-    if ((installResult == IPluginInstaller::RESULT_MANUALREQUESTED) && !installer->isManualInstaller()) {
-      continue;
+    if (installResult == IPluginInstaller::RESULT_MANUALREQUESTED) {
+      if (!installer->isManualInstaller()) {
+        continue;
+      }
+    } else if (installResult != IPluginInstaller::RESULT_NOTATTEMPTED) {
+      break;
     }
 
     try {
@@ -719,7 +725,8 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       case IPluginInstaller::RESULT_FAILED: {
         return false;
       } break;
-      case IPluginInstaller::RESULT_SUCCESS: {
+      case IPluginInstaller::RESULT_SUCCESS:
+      case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != NULL) {
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&

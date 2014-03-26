@@ -93,7 +93,7 @@ Profile::Profile(const QDir& directory)
   GameInfo::instance().repairProfile(ToWString(m_Directory.absolutePath()));
 
   if (!QFile::exists(getIniFileName())) {
-    reportError(QObject::tr("\"%1\" is missing").arg(getIniFileName()));
+    reportError(QObject::tr("\"%1\" is missing or inaccessible").arg(getIniFileName()));
   }
   refreshModStatus();
 }
@@ -231,7 +231,7 @@ void Profile::refreshModStatus()
 {
   QFile file(getModlistFileName());
   if (!file.exists()) {
-    throw MyException(QObject::tr("failed to find \"%1\"").arg(getModlistFileName()));
+    throw MyException(tr("\"%1\" is missing or inaccessible").arg(getModlistFileName()));
   }
 
   bool modStatusModified = false;

@@ -1035,9 +1035,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       result.append(QIcon(":/MO/gui/edit_clear"));
     }
     return result;
-  } else {
-    return QVariant();
   }
+  return QVariant();
 }
 
 
