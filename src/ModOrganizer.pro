@@ -14,7 +14,8 @@ SUBDIRS = bsatk \
           BossDummy \
           pythonRunner \
           boss_modified \
-          esptk
+          esptk \
+          loot_cli
 
 plugins.depends = pythonRunner
 hookdll.depends = shared

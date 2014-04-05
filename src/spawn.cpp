@@ -36,10 +36,23 @@ using namespace MOShared;
 
 static const int BUFSIZE = 4096;
 
-bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended, HANDLE& processHandle, HANDLE& threadHandle)
+bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended,
+           HANDLE stdOut, HANDLE stdErr,
+           HANDLE& processHandle, HANDLE& threadHandle)
 {
+  BOOL inheritHandles = FALSE;
   STARTUPINFO si;
   ::ZeroMemory(&si, sizeof(si));
+  if (stdOut != INVALID_HANDLE_VALUE) {
+    si.hStdOutput = stdOut;
+    inheritHandles = TRUE;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+  }
+  if (stdErr != INVALID_HANDLE_VALUE) {
+    si.hStdError = stdErr;
+    inheritHandles = TRUE;
+    si.dwFlags |= STARTF_USESTDHANDLES;
+  }
   si.cb = sizeof(si);
   int length = wcslen(binary) + wcslen(arguments) + 4;
   wchar_t *commandLine = NULL;
@@ -74,7 +87,7 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
   BOOL success = ::CreateProcess(NULL,
                                  commandLine,
                                  NULL, NULL,       // no special process or thread attributes
-                                 FALSE,            // don't inherit handle
+                                 inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
                                  suspended ? CREATE_SUSPENDED : 0, // create suspended so I have time to inject the DLL
                                  NULL,             // same environment as parent
                                  currentDirectory, // current directory
@@ -95,14 +108,22 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
 }
 
 
-HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QString& profileName, int logLevel, const QDir &currentDirectory, bool hooked)
+HANDLE startBinary(const QFileInfo &binary,
+                   const QString &arguments,
+                   const QString& profileName,
+                   int logLevel,
+                   const QDir &currentDirectory,
+                   bool hooked,
+                   HANDLE stdOut,
+                   HANDLE stdErr)
 {
   HANDLE processHandle, threadHandle;
   std::wstring binaryName = ToWString(QDir::toNativeSeparators(binary.absoluteFilePath()));
   std::wstring currentDirectoryName = ToWString(QDir::toNativeSeparators(currentDirectory.absolutePath()));
 
   try {
-    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(), hooked, processHandle, threadHandle)) {
+    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(), hooked,
+               stdOut, stdErr, processHandle, threadHandle)) {
       reportError(QObject::tr("failed to spawn \"%1\"").arg(binary.fileName()));
       return INVALID_HANDLE_VALUE;
     }

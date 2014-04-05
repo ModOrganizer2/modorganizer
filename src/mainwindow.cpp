@@ -109,8 +109,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtConcurrentRun>
 #endif
 #include <QCoreApplication>
+#include <QProgressDialog>
 #include <scopeguard.h>
 #include <boost/thread.hpp>
+#include <boost/algorithm/string.hpp>
 
 
 #ifdef TEST_MODELS
@@ -2649,7 +2651,6 @@ void MainWindow::directory_refreshed()
     delete oldStructure;
 
     refreshDataTree();
-    refreshLists();
   } else {
     // TODO: don't know why this happens, this slot seems to get called twice with only one emit
     return;
@@ -5155,20 +5156,213 @@ void MainWindow::on_showHiddenBox_toggled(bool checked)
   m_DownloadManager.setShowHidden(checked);
 }
 
+
+void MainWindow::createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite)
+{
+  SECURITY_ATTRIBUTES secAttributes;
+  secAttributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+  secAttributes.bInheritHandle = TRUE;
+  secAttributes.lpSecurityDescriptor = NULL;
+
+  if (!::CreatePipe(stdOutRead, stdOutWrite, &secAttributes, 0)) {
+    qCritical("failed to create stdout reroute");
+  }
+
+  if (!::SetHandleInformation(*stdOutRead, HANDLE_FLAG_INHERIT, 0)) {
+    qCritical("failed to correctly set up the stdout reroute");
+    *stdOutWrite = *stdOutRead = INVALID_HANDLE_VALUE;
+  }
+}
+
+std::string MainWindow::readFromPipe(HANDLE stdOutRead)
+{
+  static const int chunkSize = 128;
+  std::string result;
+
+  char buffer[chunkSize + 1];
+  buffer[chunkSize] = '\0';
+
+  DWORD read = 1;
+  while (read > 0) {
+    if (!::ReadFile(stdOutRead, buffer, chunkSize, &read, NULL)) {
+      break;
+    }
+    if (read > 0) {
+      result.append(buffer, read);
+      if (read < chunkSize) {
+        break;
+      }
+    }
+  }
+  return result;
+}
+
 void MainWindow::on_bossButton_clicked()
 {
   try {
     this->setEnabled(false);
     ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
-    LockedDialog dialog(this, tr("BOSS working"), false);
+    QProgressDialog dialog(this);
+    dialog.setLabelText(tr("LOOT working"));
+    dialog.setMaximum(0);
     dialog.show();
-    qApp->processEvents();
-    m_PluginList.bossSort();
 
-    savePluginList();
+    QStringList parameters;
+    parameters << "--game" << ToQString(GameInfo::instance().getGameName())
+               << "--gamePath" << ToQString(GameInfo::instance().getGameDirectory());
+
+    HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
+    HANDLE stdOutRead = INVALID_HANDLE_VALUE;
+    createStdoutPipe(&stdOutRead, &stdOutWrite);
+
+    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/lootcli.exe"),
+                              parameters.join(" "),
+                              m_CurrentProfile->getName(),
+                              m_Settings.logLevel(),
+                              qApp->applicationDirPath(),
+                              true,
+                              stdOutWrite);
+
+    // we don't use the write end
+    ::CloseHandle(stdOutWrite);
+
+    if (loot != INVALID_HANDLE_VALUE) {
+      while (::WaitForSingleObject(loot, 100) == WAIT_TIMEOUT) {
+        // keep processing events so the app doesn't appear dead
+        QCoreApplication::processEvents();
+        if (dialog.wasCanceled()) {
+          ::TerminateProcess(loot, 1);
+        }
+        std::string lootOut = readFromPipe(stdOutRead);
+        std::vector<std::string> lines;
+        boost::split(lines, lootOut, boost::is_any_of("\r\n"));
+        foreach (const std::string &line, lines) {
+          if (line.length() > 0) {
+            size_t progidx = line.find("[progress]");
+            size_t reportidx = line.find("[report]");
+            if (progidx != std::string::npos) {
+              dialog.setLabelText(line.substr(progidx + 11).c_str());
+            } else if (reportidx != std::string::npos) {
+              qDebug("report at %s", line.substr(reportidx + 9).c_str());
+            } else {
+              qDebug("%s", line.c_str());
+            }
+          }
+        }
+      }
+      std::string remainder = readFromPipe(stdOutRead).c_str();
+      if (remainder.length() > 0) {
+        qDebug("%s", remainder.c_str());
+      }
+
+      refreshESPList();
+
+      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+        QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+      }
+    }
+
     dialog.hide();
   } catch (const std::exception &e) {
     reportError(tr("failed to run boss: %1").arg(e.what()));
     ui->bossButton->setEnabled(false);
   }
 }
+
+
+const char *MainWindow::PATTERN_BACKUP_GLOB = ".????_??_??_??_??_??";
+const char *MainWindow::PATTERN_BACKUP_REGEX = "\\.(\\d\\d\\d\\d_\\d\\d_\\d\\d_\\d\\d_\\d\\d_\\d\\d)";
+const char *MainWindow::PATTERN_BACKUP_DATE = "yyyy_MM_dd_hh_mm_ss";
+
+
+bool MainWindow::createBackup(const QString &filePath, const QDateTime &time)
+{
+  QString outPath = filePath + "." + time.toString(PATTERN_BACKUP_DATE);
+  if (shellCopy(QStringList(filePath), QStringList(outPath), this)) {
+    QFileInfo fileInfo(filePath);
+    removeOldFiles(fileInfo.absolutePath(), fileInfo.fileName() + PATTERN_BACKUP_GLOB, 3, QDir::Name);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+void MainWindow::on_saveButton_clicked()
+{
+  savePluginList();
+  QDateTime now = QDateTime::currentDateTime();
+  if (createBackup(m_CurrentProfile->getPluginsFileName(), now)
+      && createBackup(m_CurrentProfile->getLoadOrderFileName(), now)
+      && createBackup(m_CurrentProfile->getLockedOrderFileName(), now)) {
+    MessageDialog::showMessage(tr("Backup of load order created"), this);
+  }
+}
+
+QString MainWindow::queryRestore(const QString &filePath)
+{
+  QFileInfo pluginFileInfo(filePath);
+  QString pattern = pluginFileInfo.fileName() + ".*";
+  QFileInfoList files = pluginFileInfo.absoluteDir().entryInfoList(QStringList(pattern), QDir::Files, QDir::Name);
+
+  SelectionDialog dialog(tr("Choose backup to restore"), this);
+  QRegExp exp(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX);
+  QRegExp exp2(pluginFileInfo.fileName() + "\\.(.*)");
+  foreach(const QFileInfo &info, files) {
+    if (exp.exactMatch(info.fileName())) {
+      QDateTime time = QDateTime::fromString(exp.cap(1), PATTERN_BACKUP_DATE);
+      dialog.addChoice(time.toString(), "", exp.cap(1));
+    } else if (exp2.exactMatch(info.fileName())) {
+      dialog.addChoice(exp2.cap(1), "", exp2.cap(1));
+    }
+  }
+
+  if (dialog.numChoices() == 0) {
+    QMessageBox::information(this, tr("No Backups"), tr("There are no backups to restore"));
+    return QString();
+  }
+
+  if (dialog.exec() == QDialog::Accepted) {
+    return dialog.getChoiceData().toString();
+  } else {
+    return QString();
+  }
+}
+
+void MainWindow::on_restoreButton_clicked()
+{
+  QString pluginName = m_CurrentProfile->getPluginsFileName();
+  QString choice = queryRestore(pluginName);
+  if (!choice.isEmpty()) {
+    QString loadOrderName = m_CurrentProfile->getLoadOrderFileName();
+    QString lockedName = m_CurrentProfile->getLockedOrderFileName();
+    if (!shellCopy(pluginName    + "." + choice, pluginName, true, this) ||
+        !shellCopy(loadOrderName + "." + choice, loadOrderName, true, this) ||
+        !shellCopy(lockedName    + "." + choice, lockedName, true, this)) {
+      QMessageBox::critical(this, tr("Restore failed"),
+                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+    }
+    refreshESPList();
+  }
+}
+
+void MainWindow::on_saveModsButton_clicked()
+{
+  m_CurrentProfile->writeModlistNow(true);
+  QDateTime now = QDateTime::currentDateTime();
+  if (createBackup(m_CurrentProfile->getModlistFileName(), now)) {
+    MessageDialog::showMessage(tr("Backup of modlist created"), this);
+  }
+}
+void MainWindow::on_restoreModsButton_clicked()
+{
+  QString modlistName = m_CurrentProfile->getModlistFileName();
+  QString choice = queryRestore(modlistName);
+  if (!choice.isEmpty()) {
+    if (!shellCopy(modlistName + "." + choice, modlistName, true, this)) {
+      QMessageBox::critical(this, tr("Restore failed"),
+                            tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
+    }
+    refreshModList(false);
+  }
+}
+

@@ -154,6 +154,8 @@ public:
 
   void saveArchiveList();
 
+  void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
+  std::string readFromPipe(HANDLE stdOutRead);
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -206,8 +208,6 @@ private:
   void setExecutableIndex(int index);
 
   bool nexusLogin();
-
-  void saveCurrentESPList();
 
   bool testForSteam();
   void startSteam();
@@ -290,10 +290,17 @@ private:
   void activateProxy(bool activate);
   void installTranslator(const QString &name);
 
+  bool createBackup(const QString &filePath, const QDateTime &time);
+  QString queryRestore(const QString &filePath);
+
 private:
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
   static const unsigned int PROBLEM_TOOMANYPLUGINS = 2;
+
+  static const char *PATTERN_BACKUP_GLOB;
+  static const char *PATTERN_BACKUP_REGEX;
+  static const char *PATTERN_BACKUP_DATE;
 
 private:
 
@@ -574,6 +581,11 @@ private slots: // ui slots
   void on_showHiddenBox_toggled(bool checked);
   void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_bossButton_clicked();
+
+  void on_saveButton_clicked();
+  void on_restoreButton_clicked();
+  void on_restoreModsButton_clicked();
+  void on_saveModsButton_clicked();
 };
 
 #endif // MAINWINDOW_H

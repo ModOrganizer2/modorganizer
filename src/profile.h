@@ -160,6 +160,11 @@ public:
   QString getLockedOrderFileName() const;
 
   /**
+   * @return the path of the modlist file in this profile
+   */
+  QString getModlistFileName() const;
+
+  /**
    * @return path of the archives file in this profile
    */
   QString getArchivesFileName() const;
@@ -301,7 +306,6 @@ private:
 
   void updateIndices();
 
-  QString getModlistFileName() const;
   void copyFilesTo(QString &target) const;
 
   std::vector<std::wstring> splitDZString(const wchar_t *buffer) const;

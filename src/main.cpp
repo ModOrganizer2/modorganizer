@@ -80,24 +80,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-void removeOldLogfiles()
-{
-  QFileInfoList files = QDir(ToQString(GameInfo::instance().getLogDir())).entryInfoList(QStringList("ModOrganizer*.log"),
-                            QDir::Files, QDir::Name);
-
-  if (files.count() > 5) {
-    QStringList deleteFiles;
-    for (int i = 0; i < files.count() - 5; ++i) {
-      deleteFiles.append(files.at(i).absoluteFilePath());
-    }
-
-    if (!shellDelete(deleteFiles)) {
-      qWarning("failed to remove log files: %s", qPrintable(windowsErrorString(::GetLastError())));
-    }
-  }
-}
-
-
 // set up required folders (for a first install or after an update or to fix a broken installation)
 bool bootstrap()
 {
@@ -111,7 +93,7 @@ bool bootstrap()
   }
 
   // cycle logfile
-  removeOldLogfiles();
+  removeOldFiles(ToQString(GameInfo::instance().getLogDir()), "ModOrganizer*.log", 5, QDir::Name);
 
   // create organizer directories
   QString dirNames[] = {
@@ -120,8 +102,7 @@ bool bootstrap()
       QDir::fromNativeSeparators(ToQString(gameInfo.getDownloadDir())),
       QDir::fromNativeSeparators(ToQString(gameInfo.getOverwriteDir())),
       QDir::fromNativeSeparators(ToQString(gameInfo.getLogDir())),
-      QDir::fromNativeSeparators(ToQString(gameInfo.getTutorialDir())),
-      QDir::fromNativeSeparators(ToQString(gameInfo.getOrganizerDirectory()) + "/boss")
+      QDir::fromNativeSeparators(ToQString(gameInfo.getTutorialDir()))
     };
   static const int NUM_DIRECTORIES = sizeof(dirNames) / sizeof(QString);
 

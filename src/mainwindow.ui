@@ -115,7 +115,7 @@
          <number>2</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
           <item>
            <widget class="QLabel" name="label_3">
             <property name="sizePolicy">
@@ -167,6 +167,47 @@ p, li { white-space: pre-wrap; }
             <property name="icon">
              <iconset resource="resources.qrc">
               <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="restoreModsButton">
+            <property name="toolTip">
+             <string>Restore Backup...</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/MO/gui/restore</normaloff>:/MO/gui/restore</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="saveModsButton">
+            <property name="toolTip">
+             <string>Create Backup</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
             </property>
            </widget>
           </item>
@@ -618,6 +659,68 @@ p, li { white-space: pre-wrap; }
              <number>0</number>
             </property>
             <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="QPushButton" name="bossButton">
+                <property name="text">
+                 <string>Sort</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="restoreButton">
+                <property name="toolTip">
+                 <string>Restore Backup...</string>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/restore</normaloff>:/MO/gui/restore</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="saveButton">
+                <property name="toolTip">
+                 <string>Create Backup</string>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <widget class="QTreeView" name="espList">
               <property name="minimumSize">
                <size>
@@ -722,13 +825,6 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="placeholderText">
                  <string>Namefilter</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="bossButton">
-                <property name="text">
-                 <string>Sort</string>
                 </property>
                </widget>
               </item>

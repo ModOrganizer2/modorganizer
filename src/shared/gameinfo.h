@@ -113,6 +113,7 @@ public:
   virtual std::wstring getCacheDir() const;
   virtual std::wstring getOverwriteDir() const;
   virtual std::wstring getLogDir() const;
+  virtual std::wstring getLootDir() const;
   virtual std::wstring getTutorialDir() const;
 
   virtual bool requiresBSAInvalidation() const { return true; }

@@ -181,7 +181,7 @@ public:
 
   void refreshLoadOrder();
 
-  void bossSort();
+  void lootSort();
 
 public:
   virtual PluginState state(const QString &name) const;
@@ -204,7 +204,6 @@ public: // implementation of the QAbstractTableModel interface
   virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
   virtual QModelIndex parent(const QModelIndex &child) const;
 
-  void applyBOSSSorting(boss_db db, std::map<int, QString> &lockedLoadOrder, uint8_t **pluginList, size_t size, int &priority, int &loadOrder, bool recognized, const char *extension);
 public slots:
 
   /**
@@ -260,82 +259,6 @@ private:
   friend bool ByDate(const ESPInfo& LHS, const ESPInfo& RHS);
   friend bool ByPriority(const ESPInfo& LHS, const ESPInfo& RHS);
 
-  class BossDLL : public PDLL {
-    DECLARE_CLASS(BossDLL)
-
-    DECLARE_FUNCTION3(__cdecl, uint32_t, CreateBossDb, boss_db*, const uint32_t, const uint8_t*)
-    DECLARE_FUNCTION1(__cdecl, void, DestroyBossDb, boss_db)
-    DECLARE_FUNCTION0(__cdecl, void, CleanUpAPI)
-
-    DECLARE_FUNCTION7(__cdecl, uint32_t, SortCustomMods, boss_db, uint8_t**, size_t, uint8_t***, size_t*, uint8_t***, size_t*)
-    DECLARE_FUNCTION3(__cdecl, uint32_t, SetActivePluginsDumb, boss_db, uint8_t**, const size_t)
-
-    DECLARE_FUNCTION3(__cdecl, uint32_t, GetActivePluginsDumb , boss_db, uint8_t***, size_t*)
-
-    DECLARE_FUNCTION2(__cdecl, uint32_t, UpdateMasterlist, boss_db, const uint8_t*)
-    DECLARE_FUNCTION3(__cdecl, uint32_t, Load, boss_db, const uint8_t*, const uint8_t*)
-
-    DECLARE_FUNCTION2(__cdecl, void, SetLoggerOutput, const char*, uint8_t)
-    DECLARE_FUNCTION1(__cdecl, uint32_t, GetLastErrorDetails, uint8_t**)
-
-    DECLARE_FUNCTION1(__cdecl, uint32_t, GetVersionString, uint8_t**)
-    DECLARE_FUNCTION3(__cdecl, bool, IsCompatibleVersion, const uint32_t, const uint32_t, const uint32_t)
-
-    DECLARE_FUNCTION4(__cdecl, uint32_t, GetPluginMessages, boss_db, const uint8_t*, BossMessage**, size_t*)
-
-    enum ResultCode {
-      RESULT_OK                                   = 0,
-      RESULT_NO_MASTER_FILE                       = 1,
-      RESULT_FILE_READ_FAIL                       = 2,
-      RESULT_FILE_WRITE_FAIL                      = 3,
-      RESULT_FILE_NOT_UTF8                        = 4,
-      RESULT_FILE_NOT_FOUND                       = 5,
-      RESULT_FILE_PARSE_FAIL                      = 6,
-      RESULT_CONDITION_EVAL_FAIL                  = 7,
-      RESULT_REGEX_EVAL_FAIL                      = 8,
-      RESULT_NO_GAME_DETECTED                     = 9,
-      RESULT_ENCODING_CONVERSION_FAIL             = 10,
-      RESULT_FIND_ONLINE_MASTERLIST_REVISION_FAIL = 11,
-      RESULT_FIND_ONLINE_MASTERLIST_DATE_FAIL     = 12,
-      RESULT_READ_UPDATE_FILE_LIST_FAIL           = 13,
-      RESULT_FILE_CRC_MISMATCH                    = 14,
-      RESULT_FS_FILE_MOD_TIME_READ_FAIL           = 15,
-      RESULT_FS_FILE_MOD_TIME_WRITE_FAIL          = 16,
-      RESULT_FS_FILE_RENAME_FAIL                  = 17,
-      RESULT_FS_FILE_DELETE_FAIL                  = 18,
-      RESULT_FS_CREATE_DIRECTORY_FAIL             = 19,
-      RESULT_FS_ITER_DIRECTORY_FAIL               = 20,
-      RESULT_CURL_INIT_FAIL                       = 21,
-      RESULT_CURL_SET_ERRBUFF_FAIL                = 22,
-      RESULT_CURL_SET_OPTION_FAIL                 = 23,
-      RESULT_CURL_SET_PROXY_FAIL                  = 24,
-      RESULT_CURL_SET_PROXY_TYPE_FAIL             = 25,
-      RESULT_CURL_SET_PROXY_AUTH_FAIL             = 26,
-      RESULT_CURL_SET_PROXY_AUTH_TYPE_FAIL        = 27,
-      RESULT_CURL_PERFORM_FAIL                    = 28,
-      RESULT_CURL_USER_CANCEL                     = 29,
-      RESULT_GUI_WINDOW_INIT_FAIL                 = 30,
-      RESULT_NO_UPDATE_NECESSARY                  = 31,
-      RESULT_LO_MISMATCH                          = 32,
-      RESULT_NO_MEM                               = 33,
-      RESULT_INVALID_ARGS                         = 34,
-      RESULT_NETWORK_FAIL                         = 35,
-      RESULT_NO_INTERNET_CONNECTION               = 36,
-      RESULT_NO_TAG_MAP                           = 37,
-      RESULT_PLUGINS_FULL                         = 38,
-      RESULT_PLUGIN_BEFORE_MASTER                 = 39,
-      RESULT_INVALID_SYNTAX                       = 40
-    };
-
-    enum GameIDs {
-      AUTODETECT = 0,
-      OBLIVION   = 1,
-      SKYRIM     = 3,
-      FALLOUT3   = 4,
-      FALLOUTNV  = 5
-    };
-  };
-
 private:
 
   void syncLoadOrder();
@@ -352,9 +275,6 @@ private:
   void startSaveTime();
 
   void testMasters();
-
-  boss_db initBoss();
-  void convertPluginListForBoss(boss_db db, boost::ptr_vector<uint8_t> &inputPlugins, std::vector<uint8_t*> &activePlugins);
 
 private:
 
@@ -381,7 +301,6 @@ private:
 
   SignalRefreshed m_Refreshed;
 
-  BossDLL *m_BOSS;
   QTemporaryFile m_TempFile;
 
 };

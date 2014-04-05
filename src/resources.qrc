@@ -52,5 +52,8 @@
         <file alias="version_date">resources/x-office-calendar.png</file>
         <file alias="warning_16">resources/dialog-warning_16.png</file>
         <file alias="attachment">resources/mail-attachment.png</file>
+        <file alias="backup">resources/document-save_32.png</file>
+        <file alias="restore">resources/edit-undo.png</file>
+        <file alias="sort">resources/arrange-boxes.png</file>
     </qresource>
 </RCC>

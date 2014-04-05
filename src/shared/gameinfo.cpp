@@ -172,6 +172,14 @@ std::wstring GameInfo::getLogDir() const
 }
 
 
+std::wstring GameInfo::getLootDir() const
+{
+  std::wostringstream temp;
+  temp << m_OrganizerDirectory << "\\loot";
+  return temp.str();
+}
+
+
 std::wstring GameInfo::getTutorialDir() const
 {
   std::wostringstream temp;
