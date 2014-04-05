@@ -4288,7 +4288,7 @@ void MainWindow::downloadRequestedNXM(const QString &url)
 void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QString &fileName)
 {
   try {
-    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, new ModRepositoryFileInfo(modID))) {
+    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, modID, 0, new ModRepositoryFileInfo(modID))) {
       MessageDialog::showMessage(tr("Download started"), this);
     }
   } catch (const std::exception &e) {
@@ -5290,8 +5290,34 @@ std::string MainWindow::readFromPipe(HANDLE stdOutRead)
   return result;
 }
 
+void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog)
+{
+  std::vector<std::string> lines;
+  boost::split(lines, lootOut, boost::is_any_of("\r\n"));
+  foreach (const std::string &line, lines) {
+    if (line.length() > 0) {
+      size_t progidx   = line.find("[progress]");
+      size_t reportidx = line.find("[report]");
+      size_t erroridx  = line.find("[error]");
+      if (progidx != std::string::npos) {
+        dialog.setLabelText(line.substr(progidx + 11).c_str());
+      } else if (reportidx != std::string::npos) {
+        reportURL = line.substr(reportidx + 9);
+      } else if (erroridx != std::string::npos) {
+        qWarning("%s", line.c_str());
+        errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
+      } else {
+        qDebug("%s", line.c_str());
+      }
+    }
+  }
+}
+
 void MainWindow::on_bossButton_clicked()
 {
+  std::string reportURL;
+  std::string errorMessages;
+
   try {
     this->setEnabled(false);
     ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
@@ -5308,11 +5334,11 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
 
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/lootcli.exe"),
+    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
                               m_CurrentProfile->getName(),
                               m_Settings.logLevel(),
-                              qApp->applicationDirPath(),
+                              qApp->applicationDirPath() + "/loot",
                               true,
                               stdOutWrite);
 
@@ -5327,38 +5353,37 @@ void MainWindow::on_bossButton_clicked()
           ::TerminateProcess(loot, 1);
         }
         std::string lootOut = readFromPipe(stdOutRead);
-        std::vector<std::string> lines;
-        boost::split(lines, lootOut, boost::is_any_of("\r\n"));
-        foreach (const std::string &line, lines) {
-          if (line.length() > 0) {
-            size_t progidx = line.find("[progress]");
-            size_t reportidx = line.find("[report]");
-            if (progidx != std::string::npos) {
-              dialog.setLabelText(line.substr(progidx + 11).c_str());
-            } else if (reportidx != std::string::npos) {
-              qDebug("report at %s", line.substr(reportidx + 9).c_str());
-            } else {
-              qDebug("%s", line.c_str());
-            }
-          }
-        }
+        processLOOTOut(lootOut, reportURL, errorMessages, dialog);
       }
       std::string remainder = readFromPipe(stdOutRead).c_str();
       if (remainder.length() > 0) {
-        qDebug("%s", remainder.c_str());
-      }
-
-      refreshESPList();
-
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
-        QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+        processLOOTOut(remainder, reportURL, errorMessages, dialog);
       }
     }
-
-    dialog.hide();
   } catch (const std::exception &e) {
     reportError(tr("failed to run boss: %1").arg(e.what()));
-    ui->bossButton->setEnabled(false);
+  }
+
+  if (errorMessages.length() > 0) {
+    QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occured"), errorMessages.c_str(), QMessageBox::Ok, this);
+    warn->setModal(false);
+    warn->show();
+  }
+
+  if (reportURL.length() > 0) {
+    m_IntegratedBrowser.setWindowTitle("LOOT Report");
+    QString report(reportURL.c_str());
+    if (QFile::exists(report)) {
+      m_IntegratedBrowser.openUrl(QUrl::fromLocalFile(report));
+    } else {
+      qWarning("report file missing");
+    }
+  }
+
+  refreshESPList();
+
+  if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+    QFile::remove(m_CurrentProfile->getLoadOrderFileName());
   }
 }
 

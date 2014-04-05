@@ -72,12 +72,13 @@ private:
     QTime m_StartTime;
     qint64 m_PreResumeSize;
     int m_Progress;
+    int m_ModID;
+    int m_FileID;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
     qint64 m_ResumePos;
     qint64 m_TotalSize;
-
     QDateTime m_Created; // used as a cache in DownloadManager::getFileTime, may not be valid elsewhere
 
     int m_Tries;
@@ -177,7 +178,7 @@ public:
    * @param fileInfo information previously retrieved from the nexus network
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
 
   /**
    * @brief start a download using a nxm-link
@@ -428,7 +429,7 @@ private:
    * @param fileInfo information previously retrieved from the mod page
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QStringList &URLs, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(const QStringList &URLs, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = NULL) const;

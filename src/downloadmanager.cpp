@@ -106,10 +106,13 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   info->m_Urls = metaFile.value("url", "").toString().split(";");
   info->m_Tries = 0;
   info->m_TaskProgressId = TaskProgressManager::instance().getId();
+  int modID = metaFile.value("modID", 0).toInt();
+  int fileID = metaFile.value("fileID", 0).toInt();
+  info->m_FileInfo = new ModRepositoryFileInfo(modID, fileID);
   info->m_FileInfo->name     = metaFile.value("name", "").toString();
   info->m_FileInfo->modName  = metaFile.value("modName", "").toString();
-  info->m_FileInfo->modID  = metaFile.value("modID", 0).toInt();
-  info->m_FileInfo->fileID = metaFile.value("fileID", 0).toInt();
+  info->m_FileInfo->modID  = modID;
+  info->m_FileInfo->fileID = fileID;
   info->m_FileInfo->description = metaFile.value("description").toString();
   info->m_FileInfo->version.parse(metaFile.value("version", "0").toString());
   info->m_FileInfo->newestVersion.parse(metaFile.value("newestVersion", "0").toString());
@@ -309,7 +312,8 @@ void DownloadManager::refreshList()
 }
 
 
-bool DownloadManager::addDownload(const QStringList &URLs, const ModRepositoryFileInfo *fileInfo)
+bool DownloadManager::addDownload(const QStringList &URLs,
+                                  int modID, int fileID, const ModRepositoryFileInfo *fileInfo)
 {
   QString fileName = QFileInfo(URLs.first()).fileName();
   if (fileName.isEmpty()) {
@@ -317,7 +321,7 @@ bool DownloadManager::addDownload(const QStringList &URLs, const ModRepositoryFi
   }
 
   QNetworkRequest request(URLs.first());
-  return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, fileInfo);
+  return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, modID, fileID, fileInfo);
 }
 
 
@@ -328,11 +332,12 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const ModRepositoryFileI
     fileName = "unknown";
   }
 
-  return addDownload(reply, QStringList(reply->url().toString()), fileName, fileInfo);
+  return addDownload(reply, QStringList(reply->url().toString()), fileName, fileInfo->modID, fileInfo->fileID, fileInfo);
 }
 
 
-bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, const ModRepositoryFileInfo *fileInfo)
+bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName,
+                                  int modID, int fileID, const ModRepositoryFileInfo *fileInfo)
 {
   // download invoked from an already open network reply (i.e. download link in the browser)
   DownloadInfo *newDownload = DownloadInfo::createNew(fileInfo, URLs);
@@ -409,7 +414,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
   if (!resume) {
     newDownload->m_PreResumeSize = newDownload->m_Output.size();
 
-    removePending(newDownload->m_ModID, newDownload->m_FileID);
+    removePending(newDownload-> m_ModID, newDownload->m_FileID);
 
     emit aboutToUpdate();
 
@@ -916,6 +921,7 @@ DownloadManager::DownloadInfo *DownloadManager::findDownload(QObject *reply, int
 
 void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
+qDebug("progress: %ldd / %ldd", bytesReceived, bytesTotal);
   if (bytesTotal == 0) {
     return;
   }
@@ -961,7 +967,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
   metaFile.setValue("modName", info->m_FileInfo->modName);
   metaFile.setValue("version", info->m_FileInfo->version.canonicalString());
   metaFile.setValue("newestVersion", info->m_FileInfo->newestVersion.canonicalString());
-  metaFile.setValue("fileTime", info->m_FileInfo->m_FileTime);
+  metaFile.setValue("fileTime", info->m_FileInfo->fileTime);
   metaFile.setValue("fileCategory", info->m_FileInfo->fileCategory);
   metaFile.setValue("category", info->m_FileInfo->categoryID);
   metaFile.setValue("repository", info->m_FileInfo->repository);
@@ -1061,8 +1067,8 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
         (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
       info->m_FileInfo->name = fileInfo["name"].toString();
       info->m_FileInfo->version.parse(fileInfo["version"].toString());
-      if (info->m_FileInfo->version.isEmpty()) {
-        info->m_FileInfo->version = info->m_NexusInfo.m_NewestVersion;
+      if (!info->m_FileInfo->version.isValid()) {
+        info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
       info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
@@ -1117,10 +1123,10 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
 
   QVariantMap result = resultData.toMap();
   info->name = result["name"].toString();
-  qDebug("file info received for %s", qPrintable(info.m_Name));
+  qDebug("file info received for %s", qPrintable(info->name));
   info->version.parse(result["version"].toString());
-  if (info.m_Version.isEmpty()) {
-    info.m_Version = info.m_NewestVersion;
+  if (!info->version.isValid()) {
+    info->version = info->newestVersion;
   }
   info->fileName = result["uri"].toString();
   info->fileCategory = result["category_id"].toInt();
@@ -1132,7 +1138,7 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   info->fileID = fileID;
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(info)));
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test)));
 }
 
 
@@ -1180,7 +1186,7 @@ bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferred
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
 {
-  addDownload(urls, NULL);
+  addDownload(urls, -1, -1, nullptr);
   return m_ActiveDownloads.size() - 1;
 }
 
@@ -1233,7 +1239,7 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
     URLs.append(server.toMap()["URI"].toString());
   }
 
-  addDownload(URLs, info);
+  addDownload(URLs, modID, fileID, info);
 }
 
 

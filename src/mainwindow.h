@@ -158,6 +158,7 @@ public:
 
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
+  void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -384,6 +385,7 @@ private:
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
 
+  PreviewGenerator m_PreviewGenerator;
   BrowserDialog m_IntegratedBrowser;
 
   QFileSystemWatcher m_SavesWatcher;

@@ -161,8 +161,6 @@ NexusInterface::NexusInterface()
 
 void NexusInterface::cleanup()
 {
-  delete NexusInterface::s_Instance;
-  NexusInterface::s_Instance = NULL;
 }
 
 
@@ -178,9 +176,6 @@ NXMAccessManager *NexusInterface::getAccessManager()
 NexusInterface *NexusInterface::instance()
 {
   static NexusInterface s_Instance;
-/*  if (s_Instance == NULL) {
-    s_Instance = new NexusInterface;
-  }*/
   return &s_Instance;
 }
 

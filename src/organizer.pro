@@ -157,7 +157,7 @@ HEADERS  += \
     ../esptk/espexceptions.h \
     browserview.h \
     browserdialog.h \
-    persistentcookiejar.h
+    persistentcookiejar.h \
     noeditdelegate.h \
     previewgenerator.h \
     previewdialog.h \
