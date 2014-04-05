@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "report.h"
 #include "utility.h"
-#include "json.h"
 #include "messagedialog.h"
 #include "bbcode.h"
 #include "questionboxmemory.h"
@@ -40,8 +39,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <sstream>
 #include <QInputDialog>
 
-
-using QtJson::Json;
 
 using namespace MOBase;
 using namespace MOShared;
@@ -72,11 +69,9 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
   this->setWindowModality(Qt::WindowModal);
-
   m_UTF8Codec = QTextCodec::codecForName("utf-8");
 
   QListWidget *textFileList = findChild<QListWidget*>("textFileList");
-  QListWidget *iniFileList = findChild<QListWidget*>("iniFileList");
   QListWidget *iniTweaksList = findChild<QListWidget*>("iniTweaksList");
   QListWidget *activeESPList = findChild<QListWidget*>("activeESPList");
   QListWidget *inactiveESPList = findChild<QListWidget*>("inactiveESPList");
@@ -147,7 +142,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
   tabWidget->setTabEnabled(TAB_TEXTFILES, textFileList->count() != 0);
-  //tabWidget->setTabEnabled(TAB_INIFILES, (iniFileList->count() != 0) || (iniTweaksList->count() != 0));
   tabWidget->setTabEnabled(TAB_IMAGES, thumbnailArea->count() != 0);
   tabWidget->setTabEnabled(TAB_ESPS, (inactiveESPList->count() != 0) || (activeESPList->count() != 0));
   tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != NULL);
@@ -164,11 +158,66 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
-  saveIniTweaks();
   saveCategories(ui->categoriesTree->invisibleRootItem());
-
+  saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui;
   delete m_Settings;
+}
+
+
+int ModInfoDialog::tabIndex(const QString &tabId)
+{
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    if (ui->tabWidget->widget(i)->objectName() == tabId) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+void ModInfoDialog::restoreTabState(const QByteArray &state)
+{
+  QDataStream stream(state);
+  int count = 0;
+  stream >> count;
+
+  QStringList tabIds;
+
+  // first, only determine the new mapping
+  for (int newPos = 0; newPos < count; ++newPos) {
+    QString tabId;
+    stream >> tabId;
+    tabIds.append(tabId);
+    int oldPos = tabIndex(tabId);
+    if (oldPos != -1) {
+      m_RealTabPos[newPos] = oldPos;
+    } else {
+      m_RealTabPos[newPos] = newPos;
+    }
+  }
+  // then actually move the tabs
+  QTabBar *tabBar = ui->tabWidget->findChild<QTabBar*>("qt_tabwidget_tabbar"); // magic name = bad
+  ui->tabWidget->blockSignals(true);
+  for (int newPos = 0; newPos < count; ++newPos) {
+    QString tabId = tabIds.at(newPos);
+    int oldPos = tabIndex(tabId);
+    tabBar->moveTab(oldPos, newPos);
+  }
+  ui->tabWidget->blockSignals(false);
+}
+
+
+QByteArray ModInfoDialog::saveTabState() const
+{
+  QByteArray result;
+  QDataStream stream(&result, QIODevice::WriteOnly);
+  stream << ui->tabWidget->count();
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    stream << ui->tabWidget->widget(i)->objectName();
+  }
+
+  return result;
 }
 
 
@@ -255,17 +304,19 @@ void ModInfoDialog::refreshLists()
     } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
                (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
       QImage image = QImage(fileName);
-      if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-        image = image.scaledToWidth(128);
-      } else {
-        image = image.scaledToHeight(96);
-      }
+      if (!image.isNull()) {
+        if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
+          image = image.scaledToWidth(128);
+        } else {
+          image = image.scaledToHeight(96);
+        }
 
-      QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
-      thumbnailButton->setIconSize(QSize(image.width(), image.height()));
-      connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
-      m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
-      ui->thumbnailArea->addWidget(thumbnailButton);
+        QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
+        thumbnailButton->setIconSize(QSize(image.width(), image.height()));
+        connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
+        m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
+        ui->thumbnailArea->addWidget(thumbnailButton);
+      }
     }
   }
 
@@ -333,7 +384,6 @@ void ModInfoDialog::openTab(int tab)
   }
 }
 
-
 void ModInfoDialog::thumbnailClicked(const QString &fileName)
 {
   QLabel *imageLabel = findChild<QLabel*>("imageLabel");
@@ -397,13 +447,10 @@ void ModInfoDialog::on_textFileList_currentItemChanged(QListWidgetItem *current,
 
 void ModInfoDialog::openTextFile(const QString &fileName)
 {
-  QFile textFile(fileName);
-  textFile.open(QIODevice::ReadOnly);
-  QByteArray buffer = textFile.readAll();
-  QTextCodec *codec = QTextCodec::codecForUtfText(buffer, m_UTF8Codec);
-  ui->textFileView->setText(codec->toUnicode(buffer));
+  QString encoding;
+  ui->textFileView->setText(MOBase::readFileText(fileName, &encoding));
   ui->textFileView->setProperty("currentFile", fileName);
-  ui->textFileView->setProperty("encoding", codec->name());
+  ui->textFileView->setProperty("encoding", encoding);
   ui->saveTXTButton->setEnabled(false);
 }
 
@@ -426,18 +473,15 @@ void ModInfoDialog::openIniFile(const QString &fileName)
 
 void ModInfoDialog::saveIniTweaks()
 {
-  QListWidget *iniTweaksList = findChild<QListWidget*>("iniTweaksList");
-
   m_Settings->beginWriteArray("INI Tweaks");
 
   int countEnabled = 0;
-  for (int i = 0; i < iniTweaksList->count(); ++i) {
-    if (iniTweaksList->item(i)->checkState() == Qt::Checked) {
+  for (int i = 0; i < ui->iniTweaksList->count(); ++i) {
+    if (ui->iniTweaksList->item(i)->checkState() == Qt::Checked) {
       m_Settings->setArrayIndex(countEnabled++);
-      m_Settings->setValue("name", iniTweaksList->item(i)->text());
+      m_Settings->setValue("name", ui->iniTweaksList->item(i)->text());
     }
   }
-
   m_Settings->endArray();
 }
 
@@ -624,7 +668,7 @@ void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 
 void ModInfoDialog::linkClicked(const QUrl &url)
 {
-  if (url.toString().startsWith(ToQString(GameInfo::instance().getNexusPage()))) {
+  if (url.toString().startsWith(ToQString(GameInfo::instance().getNexusPage(false)))) {
     this->close();
     emit nexusLinkActivated(url.toString());
   } else {
@@ -707,7 +751,7 @@ QString ModInfoDialog::getFileCategory(int categoryID)
 void ModInfoDialog::updateVersionColor()
 {
 //  QPalette versionColor;
-  if (m_ModInfo->getVersion() < m_ModInfo->getNewestVersion()) {
+  if (m_ModInfo->getVersion() != m_ModInfo->getNewestVersion()) {
     ui->versionEdit->setStyleSheet("color: red");
 //    versionColor.setColor(QPalette::Text, Qt::red);
     ui->versionEdit->setToolTip(tr("Current Version: %1").arg(m_ModInfo->getNewestVersion().canonicalString()));
@@ -758,13 +802,7 @@ void ModInfoDialog::modDetailsUpdated(bool success)
       ui->descriptionView->setHtml(tr("(description incomplete, please visit nexus)"));
     }
 
-    QString version = m_ModInfo->getNewestVersion().canonicalString();
-
-    if (!version.isEmpty()) {
-      m_ModInfo->setNewestVersion(version);
-
-      updateVersionColor();
-    }
+    updateVersionColor();
   }
 }
 
@@ -774,7 +812,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
   if (modID != 0) {
-    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(ToQString(GameInfo::instance().getNexusPage())).arg(modID);
+    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID);
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);
@@ -795,7 +833,7 @@ void ModInfoDialog::activateNexusTab()
 
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-  if (index == TAB_NEXUS) {
+  if (m_RealTabPos[index] == TAB_NEXUS) {
     activateNexusTab();
   }
 }
@@ -1176,18 +1214,20 @@ void ModInfoDialog::on_prevButton_clicked()
 void ModInfoDialog::createTweak()
 {
   QString name = QInputDialog::getText(this, tr("Name"), tr("Please enter a name"));
-  if (!fixDirectoryName(name)) {
-    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
+  if (name.isNull()) {
     return;
-  } else if (name.isEmpty()) {
+  } else if (!fixDirectoryName(name)) {
+    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
     return;
   } else if (ui->iniTweaksList->findItems(name, Qt::MatchFixedString).count() != 0) {
     QMessageBox::critical(this, tr("Error"), tr("A tweak by that name exists"));
     return;
   }
 
-  QListWidgetItem *newTweak = new QListWidgetItem(name);
+  QListWidgetItem *newTweak = new QListWidgetItem(name + ".ini");
   newTweak->setData(Qt::UserRole, "INI Tweaks/" + name + ".ini");
+  newTweak->setFlags(newTweak->flags() | Qt::ItemIsUserCheckable);
+  newTweak->setCheckState(Qt::Unchecked);
   ui->iniTweaksList->addItem(newTweak);
 }
 

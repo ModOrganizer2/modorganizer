@@ -73,6 +73,10 @@ private slots:
 
   void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
+  void deleteBlacklistItem();
+
+  void on_associateButton_clicked();
+
 private:
     Ui::SettingsDialog *ui;
 };

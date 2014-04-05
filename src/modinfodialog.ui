@@ -22,6 +22,9 @@
      <property name="currentIndex">
       <number>0</number>
      </property>
+     <property name="movable">
+      <bool>true</bool>
+     </property>
      <widget class="QWidget" name="tabText">
       <attribute name="title">
        <string>Textfiles</string>
@@ -217,17 +220,22 @@
            <string>Images located in the mod.</string>
           </property>
           <property name="whatsThis">
-           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This lists all the images (.jpg and .png) in the mod directory, like screenshots and such. Click one to get a larger view.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>This lists all the images (.jpg and .png) in the mod directory, like screenshots and such. Click one to get a larger view.</string>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <property name="spacing">
             <number>0</number>
            </property>
-           <property name="margin">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
@@ -254,14 +262,10 @@ p, li { white-space: pre-wrap; }
           <string>List of esps and esms that can not be loaded by the game.</string>
          </property>
          <property name="whatsThis">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;List of esps and esms contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;They usually contain optional functionality, see the readme.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Most mods do not have optional esps, so chances are good you are looking at an empty list.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>List of esps and esms contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
+They usually contain optional functionality, see the readme.
+
+Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
          </property>
         </widget>
        </item>
@@ -403,6 +407,9 @@ p, li { white-space: pre-wrap; }
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
          <property name="animated">
           <bool>true</bool>
          </property>
@@ -413,13 +420,13 @@ p, li { white-space: pre-wrap; }
           <number>2</number>
          </property>
          <attribute name="headerDefaultSectionSize">
-          <number>500</number>
+          <number>365</number>
          </attribute>
          <attribute name="headerHighlightSections">
           <bool>false</bool>
          </attribute>
          <attribute name="headerMinimumSectionSize">
-          <number>300</number>
+          <number>200</number>
          </attribute>
          <column>
           <property name="text">
@@ -459,14 +466,17 @@ p, li { white-space: pre-wrap; }
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
          <property name="animated">
           <bool>true</bool>
          </property>
          <attribute name="headerDefaultSectionSize">
-          <number>500</number>
+          <number>365</number>
          </attribute>
          <attribute name="headerMinimumSectionSize">
-          <number>300</number>
+          <number>200</number>
          </attribute>
          <column>
           <property name="text">
@@ -524,9 +534,9 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <layout class="QHBoxLayout" name="horizontalLayout_12">
          <item>
-          <widget class="QLabel" name="label_9">
+          <widget class="QLabel" name="label_12">
            <property name="text">
             <string>Primary Category</string>
            </property>
@@ -539,7 +549,7 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabNexus_2">
+     <widget class="QWidget" name="tabNexus">
       <attribute name="icon">
        <iconset resource="resources.qrc">
         <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
@@ -660,7 +670,6 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="textInteractionFlags">

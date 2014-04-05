@@ -66,15 +66,17 @@ public:
   virtual std::wstring getReferenceDataFile();
   virtual std::wstring getOMODExt();
 
-  virtual std::wstring getSteamAPPId();
+  virtual std::vector<std::wstring> getSteamVariants() const;
+  virtual std::wstring getSteamAPPId(int variant = 0) const;
 
   virtual std::wstring getSEName();
 
-  virtual std::wstring getNexusPage();
+  virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return Fallout3Info::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return Fallout3Info::getNexusModIDStatic(); }
+  virtual int getNexusGameID() { return 120; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);

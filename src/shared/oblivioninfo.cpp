@@ -189,15 +189,19 @@ std::wstring OblivionInfo::getSEName()
 }
 
 
-std::wstring OblivionInfo::getNexusPage()
+std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
 {
-  return L"http://oblivion.nexusmods.com";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/oblivion";
+  } else {
+    return L"http://www.nexusmods.com/oblivion";
+  }
 }
 
 
 std::wstring OblivionInfo::getNexusInfoUrlStatic()
 {
-  return L"http://oblivion.nexusmods.com";
+  return L"http://nmm.nexusmods.com/oblivion";
 }
 
 
@@ -243,7 +247,7 @@ std::wstring OblivionInfo::getOMODExt()
 }
 
 
-std::wstring OblivionInfo::getSteamAPPId()
+std::wstring OblivionInfo::getSteamAPPId(int) const
 {
   return L"22330";
 }

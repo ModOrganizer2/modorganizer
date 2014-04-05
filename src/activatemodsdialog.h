@@ -62,7 +62,6 @@ public:
   std::set<QString> getESPsToActivate();
 
 private slots:
-  void on_buttonBox_accepted();
 
 private:
   Ui::ActivateModsDialog *ui;

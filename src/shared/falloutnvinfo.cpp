@@ -136,7 +136,7 @@ std::wstring FalloutNVInfo::getOMODExt()
 }
 
 
-std::wstring FalloutNVInfo::getSteamAPPId()
+std::wstring FalloutNVInfo::getSteamAPPId(int) const
 {
   return L"22380";
 }
@@ -207,15 +207,19 @@ std::wstring FalloutNVInfo::getSEName()
 }
 
 
-std::wstring FalloutNVInfo::getNexusPage()
+std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme)
 {
-  return L"http://newvegas.nexusmods.com";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/newvegas";
+  } else {
+    return L"http://www.nexusmods.com/newvegas";
+  }
 }
 
 
 std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
 {
-  return L"http://newvegas.nexusmods.com";
+  return L"http://nmm.nexusmods.com/newvegas";
 }
 
 

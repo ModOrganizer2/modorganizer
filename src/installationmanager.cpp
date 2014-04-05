@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QDirIterator>
 #include <boost/assign.hpp>
+#include <boost/scoped_ptr.hpp>
 
 
 using namespace MOBase;
@@ -68,7 +69,7 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager(QWidget *parent)
   : QObject(parent), m_ParentWidget(parent),
-    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod"))
+    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -183,11 +184,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 QString InstallationManager::extractFile(const QString &fileName)
 {
   if (unpackSingleFile(fileName)) {
-    QString tempFileName = QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
-
-    m_FilesToDelete.insert(tempFileName);
-
-    return tempFileName;
+    return QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
   } else {
     return QString();
   }
@@ -429,7 +426,7 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 }
 
 
-bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
+bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
 
@@ -442,6 +439,9 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName) const
           reportError(tr("failed to create backup"));
           return false;
         }
+      }
+      if (merge != nullptr) {
+        *merge = (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE);
       }
       if (overwriteDialog.action() == QueryOverwriteDialog::ACT_RENAME) {
         bool ok = false;
@@ -509,7 +509,6 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-
 bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
                                     const QString &version, const QString &newestVersion, int categoryID)
 {
@@ -517,8 +516,9 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     return false;
   }
 
+  bool merge = false;
   // determine target directory
-  if (!testOverwrite(modName)) {
+  if (!testOverwrite(modName, &merge)) {
     return false;
   }
 
@@ -531,7 +531,6 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress.setValue(0);
   m_InstallationProgress.setWindowModality(Qt::WindowModal);
   m_InstallationProgress.show();
-
   if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(targetDirectory)).c_str(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),
@@ -554,7 +553,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   }
   if (!settingsFile.contains("version") ||
       (!version.isEmpty() &&
-       (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString())))) {
+       (!merge || (VersionInfo(version) >= VersionInfo(settingsFile.value("version").toString()))))) {
     settingsFile.setValue("version", version);
   }
   if (!newestVersion.isEmpty() || !settingsFile.contains("newestVersion")) {
@@ -570,49 +569,36 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
 }
 
 
-void InstallationManager::openFile(const QString &fileName)
-{
-  unpackSingleFile(fileName);
-
-  QString tempFileName = QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
-
-  SHELLEXECUTEINFOW execInfo;
-  memset(&execInfo, 0, sizeof(SHELLEXECUTEINFOW));
-  execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-  execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.lpVerb = L"open";
-  std::wstring fileNameW = ToWString(tempFileName);
-  execInfo.lpFile = fileNameW.c_str();
-  execInfo.nShow = SW_SHOWNORMAL;
-  if (!::ShellExecuteExW(&execInfo)) {
-    qCritical("failed to spawn %s: %d", tempFileName.toUtf8().constData(), ::GetLastError());
-  }
-
-  m_FilesToDelete.insert(tempFileName);
-}
-
-
-// copy and pasted from mo_dll
-bool EndsWith(LPCWSTR string, LPCWSTR subString)
-{
-  size_t slen = wcslen(string);
-  size_t len = wcslen(subString);
-  if (slen < len) {
-    return false;
-  }
-
-  for (size_t i = 0; i < len; ++i) {
-    if (towlower(string[slen - len + i]) != towlower(subString[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-
 bool InstallationManager::wasCancelled()
 {
   return m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+}
+
+
+void InstallationManager::postInstallCleanup() const
+{
+  m_CurrentArchive->close();
+
+  // directories we may want to remove. sorted from longest to shortest to ensure we remove subdirectories first.
+  auto longestFirst = [](const QString &LHS, const QString &RHS) -> bool {
+                          if (LHS.size() != RHS.size()) return LHS.size() > RHS.size();
+                          else return LHS < RHS;
+                        };
+
+  std::set<QString, std::function<bool(const QString&, const QString&)>> directoriesToRemove(longestFirst);
+
+  // clean up temp files
+  // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
+  foreach (const QString &tempFile, m_TempFilesToDelete) {
+    QFileInfo fileInfo(QDir::tempPath() + "/" + tempFile);
+    QFile::remove(fileInfo.absoluteFilePath());
+    directoriesToRemove.insert(fileInfo.absolutePath());
+  }
+
+  // try to delete each directory we had temporary files in. the call fails for non-empty directories which is ok
+  foreach (const QString &dir, directoriesToRemove) {
+    QDir().rmdir(dir);
+  }
 }
 
 
@@ -665,7 +651,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   }
 
   m_CurrentFile = fileInfo.absoluteFilePath();
-  if (fileInfo.dir() == QDir(ToQString(GameInfo::instance().getDownloadDir()))) {
+  if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
   qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));
@@ -673,13 +659,12 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   // open the archive and construct the directory tree the installers work on
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
+  if (!archiveOpen) {
+    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_CurrentArchive->getLastError());
+  }
+  ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
-  ON_BLOCK_EXIT([this] {
-    this->m_CurrentArchive->close();
-  });
-
-  DirectoryTree *filesTree = archiveOpen ? createFilesTree() : NULL;
-
+  QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : NULL);
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -693,8 +678,12 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     }
 
     // try only manual installers if that was requested
-    if ((installResult == IPluginInstaller::RESULT_MANUALREQUESTED) && !installer->isManualInstaller()) {
-      continue;
+    if (installResult == IPluginInstaller::RESULT_MANUALREQUESTED) {
+      if (!installer->isManualInstaller()) {
+        continue;
+      }
+    } else if (installResult != IPluginInstaller::RESULT_NOTATTEMPTED) {
+      break;
     }
 
     try {
@@ -704,7 +693,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
             (filesTree != NULL) && (installer->isArchiveSupported(*filesTree))) {
           installResult = installerSimple->install(modName, *filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
-            mapToArchive(filesTree);
+            mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest works the same for all installers
             if (!doInstall(modName, modID, version, newestVersion, categoryID)) {
               installResult = IPluginInstaller::RESULT_FAILED;
@@ -729,13 +718,6 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
                 qPrintable(installer->name()), e.what());
     }
 
-    // clean up temp files
-    // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
-    foreach (const QString &tempFile, m_TempFilesToDelete) {
-      QFile::remove(QDir::tempPath() + "/" + tempFile);
-    }
-
-
     // act upon the installation result. at this point the files have already been
     // extracted to the correct location
     switch (installResult) {
@@ -743,7 +725,8 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       case IPluginInstaller::RESULT_FAILED: {
         return false;
       } break;
-      case IPluginInstaller::RESULT_SUCCESS: {
+      case IPluginInstaller::RESULT_SUCCESS:
+      case IPluginInstaller::RESULT_SUCCESSCANCEL: {
         if (filesTree != NULL) {
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&

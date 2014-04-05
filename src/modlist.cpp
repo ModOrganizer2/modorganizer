@@ -143,11 +143,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_NAME) {
       return modInfo->name();
     } else if (column == COL_VERSION) {
-      QString version = modInfo->getVersion().canonicalString();
-      if (version.isEmpty() && modInfo->canBeUpdated()) {
-        version = "?";
-      } else if (version[0] == 'd') {
-        version.remove(0, 1);
+      VersionInfo verInfo = modInfo->getVersion();
+      QString version = verInfo.displayString();
+      if (role != Qt::EditRole) {
+        if (version.isEmpty() && modInfo->canBeUpdated()) {
+          version = "?";
+        }
       }
       return version;
     } else if (column == COL_PRIORITY) {
@@ -168,10 +169,17 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int category = modInfo->getPrimaryCategory();
       if (category != -1) {
         CategoryFactory &categoryFactory = CategoryFactory::instance();
-        try {
-          return categoryFactory.getCategoryName(categoryFactory.getCategoryIndex(category));
-        } catch (const std::exception &e) {
-          qCritical("failed to retrieve category name: %s", e.what());
+        if (categoryFactory.categoryExists(category)) {
+          try {
+            int categoryIdx = categoryFactory.getCategoryIndex(category);
+            return categoryFactory.getCategoryName(categoryIdx);
+          } catch (const std::exception &e) {
+            qCritical("failed to retrieve category name: %s", e.what());
+            return QString();
+          }
+        } else {
+          qWarning("category %d doesn't exist (may have been removed)", category);
+          modInfo->setCategory(category, false);
           return QString();
         }
       } else {
@@ -179,7 +187,12 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QVariant();
       }
     } else if (column == COL_INSTALLTIME) {
-      return modInfo->creationTime();
+      // display installation time for mods that can be updated
+      if (modInfo->canBeUpdated()) {
+        return modInfo->creationTime();
+      } else {
+        return QVariant();
+      }
     } else {
       return tr("invalid");
     }
@@ -241,17 +254,18 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         result.setItalic(true);
       }
     } else if (column == COL_VERSION) {
-      if (modInfo->updateAvailable()) {
+      if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
       }
     }
     return result;
   } else if (role == Qt::DecorationRole) {
     if (column == COL_VERSION) {
-      if (modInfo->updateAvailable() &&
-          modInfo->getNewestVersion().isValid()) {
+      if (modInfo->updateAvailable()) {
         return QIcon(":/MO/gui/update_available");
-      } else if (modInfo->getVersion().isVersionDate()) {
+      } else if (modInfo->downgradeAvailable()) {
+        return QIcon(":/MO/gui/warning");
+      } else if (modInfo->getVersion().scheme() == VersionInfo::SCHEME_DATE) {
         return QIcon(":/MO/gui/version_date");
       }
     }
@@ -264,7 +278,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
-      } else if (modInfo->updateAvailable()) {
+      } else if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         return QBrush(Qt::red);
       } else {
         return QBrush(Qt::darkGreen);
@@ -291,7 +305,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QString();
       }
     } else if (column == COL_VERSION) {
-      return tr("installed version: %1, newest version: %2").arg(modInfo->getVersion().canonicalString()).arg(modInfo->getNewestVersion().canonicalString());
+      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString()).arg(modInfo->getNewestVersion().displayString());
+      if (modInfo->downgradeAvailable()) {
+        text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
+                          "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
+                          "Either way you may want to \"upgrade\".");
+      }
+      return text;
     } else if (column == COL_CATEGORY) {
       const std::set<int> &categories = modInfo->getCategories();
       std::wostringstream categoryString;
@@ -365,9 +385,10 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     }
     return true;
   } else if (role == Qt::EditRole) {
+    bool res = false;
     switch (index.column()) {
       case COL_NAME: {
-        return renameMod(modID, value.toString());
+        res = renameMod(modID, value.toString());
       } break;
       case COL_PRIORITY: {
         bool ok = false;
@@ -376,9 +397,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
           m_Profile->setModPriority(modID, newPriority);
 
           emit modlist_changed(index, role);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       case COL_MODID: {
@@ -388,27 +409,32 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         if (ok) {
           info->setNexusID(newID);
           emit modlist_changed(index, role);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       case COL_VERSION: {
         ModInfo::Ptr info = ModInfo::getByIndex(modID);
-        VersionInfo version(value.toString());
+        VersionInfo::VersionScheme scheme = info->getVersion().scheme();
+        VersionInfo version(value.toString(), scheme);
         if (version.isValid()) {
           info->setVersion(version);
-          return true;
+          res = true;
         } else {
-          return false;
+          res = false;
         }
       } break;
       default: {
         qWarning("edit on column \"%s\" not supported",
                  getColumnName(index.column()).toUtf8().constData());
-        return false;
+        res = false;
       } break;
     }
+    if (res) {
+      emit dataChanged(index, index);
+    }
+    return res;
   } else {
     return false;
   }
@@ -477,6 +503,7 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   return result;
 }
 
+
 QStringList ModList::mimeTypes() const
 {
   QStringList result = QAbstractItemModel::mimeTypes();
@@ -530,6 +557,86 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit modorder_changed();
 }
 
+void ModList::modInfoAboutToChange(ModInfo::Ptr info)
+{
+  m_ChangeInfo.name = info->name();
+  m_ChangeInfo.state = state(info->name());
+}
+
+void ModList::modInfoChanged(ModInfo::Ptr info)
+{
+  if (info->name() == m_ChangeInfo.name) {
+    IModList::ModStates newState = state(info->name());
+    if (m_ChangeInfo.state != newState) {
+      m_ModStateChanged(info->name(), newState);
+    }
+    int row = ModInfo::getIndex(info->name());
+    info->testValid();
+    emit dataChanged(index(row, 0), index(row, columnCount()));
+  } else {
+    qCritical("modInfoChanged not called after modInfoAboutToChange");
+  }
+}
+
+IModList::ModStates ModList::state(const QString &name) const
+{
+  ModStates result;
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex != UINT_MAX) {
+    result |= IModList::STATE_EXISTS;
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    if (modInfo->isEmpty()) {
+      result |= IModList::STATE_EMPTY;
+    }
+    if (modInfo->endorsedState() == ModInfo::ENDORSED_TRUE) {
+      result |= IModList::STATE_ENDORSED;
+    }
+    if (modInfo->isValid()) {
+      result |= IModList::STATE_VALID;
+    }
+    if (modInfo->canBeEnabled()) {
+      if (m_Profile->modEnabled(modIndex)) {
+        result |= IModList::STATE_ACTIVE;
+      }
+    } else {
+      result |= IModList::STATE_ESSENTIAL;
+    }
+  }
+  return result;
+}
+
+int ModList::priority(const QString &name) const
+{
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return -1;
+  } else {
+    return m_Profile->getModPriority(modIndex);
+  }
+}
+
+bool ModList::setPriority(const QString &name, int newPriority)
+{
+  if ((newPriority < 0) || (newPriority >= static_cast<int>(m_Profile->numRegularMods()))) {
+    return false;
+  }
+
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return false;
+  } else {
+    m_Profile->setModPriority(modIndex, newPriority);
+    notifyChange(modIndex);
+    return true;
+  }
+}
+
+
+bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
+{
+  auto conn = m_ModStateChanged.connect(func);
+  return conn.connected();
+}
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
@@ -544,6 +651,12 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QDir modDirectory(modInfo->absolutePath());
   QDir gameDirectory(QDir::fromNativeSeparators(ToQString(MOShared::GameInfo::instance().getOverwriteDir())));
 
+  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
+    std::vector<ModInfo::EFlag> flags = mod->getFlags();
+    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
+
+  QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
+
   foreach (const QUrl &url, mimeData->urls()) {
     QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
     if (relativePath.startsWith("..")) {
@@ -552,10 +665,11 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
     }
     source.append(url.toLocalFile());
     target.append(modDirectory.absoluteFilePath(relativePath));
+    emit fileMoved(relativePath, overwriteName, modInfo->name());
   }
 
   if (source.count() != 0) {
-    shellMove(source, target, NULL);
+    shellMove(source, target);
   }
 
   return true;

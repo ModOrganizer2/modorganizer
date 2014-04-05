@@ -65,6 +65,12 @@ public:
   void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
 
   /**
+   * @brief update the directory where downloads are stored
+   * @param downloadDirectory the download directory
+   */
+  void setDownloadDirectory(const QString &downloadDirectory) { m_DownloadsDirectory = downloadDirectory; }
+
+  /**
    * @brief install a mod from an archive
    *
    * @param fileName absolute file name of the archive to install
@@ -132,9 +138,10 @@ public:
   /**
    * @brief test if the specified mod name is free. If not, query the user how to proceed
    * @param modName current possible names for the mod
+   * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
    * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
    */
-  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName) const;
+  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = NULL) const;
 
 private:
 
@@ -159,7 +166,7 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName);
+  //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = NULL);
 
   bool doInstall(MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID);
@@ -168,9 +175,7 @@ private:
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
-private slots:
-
-  void openFile(const QString &fileName);
+  void postInstallCleanup() const;
 
 private:
 
@@ -193,6 +198,7 @@ private:
   QWidget *m_ParentWidget;
 
   QString m_ModsDirectory;
+  QString m_DownloadsDirectory;
 
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
@@ -202,7 +208,6 @@ private:
 
   QProgressDialog m_InstallationProgress;
 
-  std::set<QString> m_FilesToDelete;
   std::set<QString> m_TempFilesToDelete;
 
 };

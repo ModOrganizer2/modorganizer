@@ -26,11 +26,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "profile.h"
 
+#include <imodlist.h>
+
 #include <QFile>
 #include <QListWidget>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
-
+#include <boost/signals2.hpp>
 #include <set>
 #include <vector>
 #include <QVector>
@@ -41,7 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * This is used in a view in the main window of MO. It combines general information about
  * the mods from ModInfo with status information from the Profile
  **/
-class ModList : public QAbstractItemModel
+class ModList : public QAbstractItemModel, public MOBase::IModList
 {
   Q_OBJECT
 
@@ -58,6 +60,8 @@ public:
 
     COL_LASTCOLUMN = COL_PRIORITY
   };
+
+  typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
 
 public:
 
@@ -91,6 +95,23 @@ public:
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
+
+  void modInfoAboutToChange(ModInfo::Ptr info);
+  void modInfoChanged(ModInfo::Ptr info);
+
+public:
+
+  /// \copydoc MOBase::IModList::state
+  virtual ModStates state(const QString &name) const;
+
+  /// \copydoc MOBase::IModList::priority
+  virtual int priority(const QString &name) const;
+
+  /// \copydoc MOBase::IModList::setPriority
+  virtual bool setPriority(const QString &name, int newPriority);
+
+  /// \copydoc MOBase::IModList::onModStateChanged
+  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func);
 
 public: // implementation of virtual functions of QAbstractItemModel
 
@@ -182,6 +203,14 @@ signals:
    */
   void removeSelectedMods();
 
+  /**
+   * @brief fileMoved emitted when a file is moved from one mod to another
+   * @param relativePath relative path of the file moved
+   * @param oldOriginName name of the origin that previously contained the file
+   * @param newOriginName name of the origin that now contains the file
+   */
+  void fileMoved(const QString &relativePath, const QString &oldOriginName, const QString &newOriginName);
+
 protected:
 
   // event filter, handles event from the header and the tree view itself
@@ -224,6 +253,11 @@ private:
     unsigned int categoryOrder;
   };
 
+  struct TModInfoChange {
+    QString name;
+    QFlags<IModList::ModStates> state;
+  };
+
 private:
 
   Profile *m_Profile;
@@ -237,6 +271,14 @@ private:
 
   bool m_DropOnItems;
 
+  TModInfoChange m_ChangeInfo;
+
+  SignalModStateChanged m_ModStateChanged;
+
+
+  // QAbstractItemModel interface
+
+  // IModList interface
 };
 
 #endif // MODLIST_H

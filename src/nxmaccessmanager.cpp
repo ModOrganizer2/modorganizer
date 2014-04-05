@@ -48,6 +48,14 @@ NXMAccessManager::NXMAccessManager(QObject *parent)
       QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/nexus_cookies.dat", this));
 }
 
+NXMAccessManager::~NXMAccessManager()
+{
+  if (m_LoginReply != NULL) {
+    m_LoginReply->deleteLater();
+    m_LoginReply = NULL;
+  }
+}
+
 
 QNetworkReply *NXMAccessManager::createRequest(
     QNetworkAccessManager::Operation operation, const QNetworkRequest &request,

@@ -150,36 +150,55 @@ void ProfilesDialog::on_copyProfileButton_clicked()
 {
   bool okClicked;
   QString name = QInputDialog::getText(this, tr("Name"), tr("Please enter a name for the new profile"), QLineEdit::Normal, QString(), &okClicked);
-  if (okClicked && (name.size() > 0)) {
-    QListWidget *profilesList = findChild<QListWidget*>("profilesList");
+  fixDirectoryName(name);
+  if (okClicked) {
+    if (name.size() > 0) {
+      QListWidget *profilesList = findChild<QListWidget*>("profilesList");
 
-    try {
-      const Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
-      createProfile(name, *currentProfile);
-    } catch (const std::exception &e) {
-      reportError(tr("failed to copy profile: %1").arg(e.what()));
+      try {
+        const Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
+        createProfile(name, *currentProfile);
+      } catch (const std::exception &e) {
+        reportError(tr("failed to copy profile: %1").arg(e.what()));
+      }
+    } else {
+      QMessageBox::warning(this, tr("Invalid name"), tr("Invalid profile name"));
     }
   }
 }
 
 void ProfilesDialog::on_removeProfileButton_clicked()
 {
-  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile?"),
+  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile (including local savegames if any)?"),
                          QMessageBox::Yes | QMessageBox::No);
 
   if (confirmBox.exec() == QMessageBox::Yes) {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
 
     Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
-
-    // on destruction, the profile object would write the profile.ini file again, so
-    // we have to get rid of the it before deleting the directory
-    QString profilePath = currentProfile->getPath();
+    QString profilePath;
+    if (currentProfile.get() == NULL) {
+      profilePath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())) + "/" + profilesList->currentItem()->text();
+      if (QMessageBox::question(this, tr("Profile broken"),
+            tr("This profile you're about to delete seems to be broken or the path is invalid. "
+            "I'm about to delete the following folder: \"%1\". Proceed?").arg(profilePath), QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        return;
+      }
+    } else {
+      // on destruction, the profile object would write the profile.ini file again, so
+      // we have to get rid of the it before deleting the directory
+      profilePath = currentProfile->getPath();
+    }
     QListWidgetItem* item = profilesList->takeItem(profilesList->currentRow());
     if (item != NULL) {
       delete item;
     }
-    shellDelete(QStringList(profilePath));
+    if (!shellDelete(QStringList(profilePath))) {
+      qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qPrintable(profilePath), ::GetLastError());
+      if (!removeDir(profilePath)) {
+        qWarning("regular delete failed too");
+      }
+    }
   }
 }
 

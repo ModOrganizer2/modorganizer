@@ -137,10 +137,30 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   ModInfo::Ptr rightMod = ModInfo::getByIndex(rightIndex);
 
   bool lt = false;
+
+  {
+    QModelIndex leftPrioIdx = left.sibling(left.row(), ModList::COL_PRIORITY);
+    QVariant leftPrio = leftPrioIdx.data();
+    if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
+    QModelIndex rightPrioIdx = right.sibling(right.row(), ModList::COL_PRIORITY);
+    QVariant rightPrio = rightPrioIdx.data();
+    if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
+
+    lt = leftPrio.toInt() < rightPrio.toInt();
+  }
+
   switch (left.column()) {
-    case ModList::COL_FLAGS: lt = leftMod->getFlags().size() < rightMod->getFlags().size(); break;
-    case ModList::COL_NAME: lt = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive) < 0; break;
+    case ModList::COL_FLAGS: {
+      if (leftMod->getFlags().size() != rightMod->getFlags().size())
+        lt = leftMod->getFlags().size() < rightMod->getFlags().size();
+    } break;
+    case ModList::COL_NAME: {
+      int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
+      if (comp != 0)
+        lt = comp < 0;
+    } break;
     case ModList::COL_CATEGORY: {
+      if (leftMod->getPrimaryCategory() != rightMod->getPrimaryCategory()) {
         if (leftMod->getPrimaryCategory() < 0) lt = false;
         else if (rightMod->getPrimaryCategory() < 0) lt = true;
         else {
@@ -153,19 +173,24 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
             qCritical("failed to compare categories: %s", e.what());
           }
         }
-      } break;
-    case ModList::COL_MODID: lt = leftMod->getNexusID() < rightMod->getNexusID(); break;
-    case ModList::COL_VERSION: lt = leftMod->getVersion() < rightMod->getVersion(); break;
-    case ModList::COL_PRIORITY: {
-        QVariant leftPrio = left.data();
-        if (!leftPrio.isValid()) leftPrio = left.data(Qt::UserRole);
-        QVariant rightPrio = right.data();
-        if (!rightPrio.isValid()) rightPrio = right.data(Qt::UserRole);
-
-        return leftPrio.toInt() < rightPrio.toInt();
+      }
+    } break;
+    case ModList::COL_MODID: {
+      if (leftMod->getNexusID() != rightMod->getNexusID())
+        lt = leftMod->getNexusID() < rightMod->getNexusID();
+    } break;
+    case ModList::COL_VERSION: {
+      if (leftMod->getVersion() != rightMod->getVersion())
+        lt = leftMod->getVersion() < rightMod->getVersion();
     } break;
     case ModList::COL_INSTALLTIME: {
-      return left.data().toDateTime() < right.data().toDateTime();
+      QDateTime leftTime = left.data().toDateTime();
+      QDateTime rightTime = right.data().toDateTime();
+      if (leftTime != rightTime)
+        return leftTime < rightTime;
+    } break;
+    case ModList::COL_PRIORITY: {
+      // nop, already compared by priority
     } break;
   }
   return lt;
@@ -195,7 +220,7 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 }
 
 
-bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
+bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
   if (!m_CurrentFilter.isEmpty() &&
       !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
@@ -211,7 +236,7 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
         if (enabled) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
-        if (!info->updateAvailable()) return false;
+        if (!info->updateAvailable() && !info->downgradeAvailable()) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
         if (info->getCategories().size() > 0) return false;
@@ -233,7 +258,7 @@ bool ModListSortProxy::filterMatches(ModInfo::Ptr info, bool enabled) const
 }
 
 
-bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
+bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
   if (m_Profile == NULL) {
     return false;
@@ -243,9 +268,25 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
     qWarning("invalid row idx %d", row);
     return false;
   }
-  bool modEnabled = m_Profile->modEnabled(row);
 
-  return filterMatches(ModInfo::getByIndex(row), modEnabled);
+  QModelIndex idx = sourceModel()->index(row, 0, parent);
+  if (!idx.isValid()) {
+    qDebug("invalid index");
+    return false;
+  }
+  if (idx.isValid() && sourceModel()->hasChildren(idx)) {
+    for (int i = 0; i < sourceModel()->rowCount(idx); ++i) {
+      if (filterAcceptsRow(i, idx)) {
+        return true;
+      }
+    }
+
+    return false;
+  } else {
+    bool modEnabled = idx.sibling(row, 0).data(Qt::CheckStateRole).toInt() == Qt::Checked;
+    unsigned int index = idx.data(Qt::UserRole + 1).toInt();
+    return filterMatchesMod(ModInfo::getByIndex(index), modEnabled);
+  }
 }
 
 

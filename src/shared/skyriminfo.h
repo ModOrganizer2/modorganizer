@@ -71,16 +71,17 @@ public:
   virtual std::wstring getReferenceDataFile();
   virtual std::wstring getOMODExt();
 
-  virtual std::wstring getSteamAPPId();
+  virtual std::wstring getSteamAPPId(int variant = 0) const;
 
   virtual std::wstring getSEName();
 
-  virtual std::wstring getNexusPage();
+  virtual std::wstring getNexusPage(bool nmmScheme = true);
 
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return SkyrimInfo::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return SkyrimInfo::getNexusModIDStatic(); }
+  virtual int getNexusGameID() { return 110; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);
@@ -95,7 +96,7 @@ public:
 
 private:
 
-  SkyrimInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  SkyrimInfo(const std::wstring &moDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

@@ -492,6 +492,12 @@ static bool SupportOptimizedFind()
 }
 
 
+static bool DirCompareByName(const DirectoryEntry *lhs, const DirectoryEntry *rhs)
+{
+  return _wcsicmp(lhs->getName().c_str(), rhs->getName().c_str()) < 0;
+}
+
+
 void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset)
 {
   WIN32_FIND_DATAW findData;
@@ -523,6 +529,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
       result = ::FindNextFileW(searchHandle, &findData);
     }
   }
+  std::sort(m_SubDirectories.begin(), m_SubDirectories.end(), &DirCompareByName);
   ::FindClose(searchHandle);
 }
 
@@ -568,8 +575,9 @@ void DirectoryEntry::removeDirRecursive()
 
   for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
     (*iter)->removeDirRecursive();
+    delete *iter;
   }
-  m_SubDirectories.clear();
+    m_SubDirectories.clear();
 }
 
 void DirectoryEntry::removeDir(const std::wstring &path)
@@ -578,8 +586,10 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   if (pos == std::string::npos) {
     for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
       if (_wcsicmp((*iter)->getName().c_str(), path.c_str()) == 0) {
-        (*iter)->removeDirRecursive();
+        DirectoryEntry *entry = *iter;
+        entry->removeDirRecursive();
         m_SubDirectories.erase(iter);
+        delete entry;
         break;
       }
     }
@@ -743,7 +753,13 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 }
 
 
-const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name)
+DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &path)
+{
+  return getSubDirectoryRecursive(path, false, -1);
+}
+
+
+const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
 {
   auto iter = m_Files.find(name);
   if (iter != m_Files.end()) {
@@ -824,7 +840,7 @@ FileEntry::Ptr FileRegister::createFile(const std::wstring &name, DirectoryEntry
 }
 
 
-FileEntry::Ptr FileRegister::getFile(FileEntry::Index index)
+FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
 {
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {

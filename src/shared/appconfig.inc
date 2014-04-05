@@ -1,6 +1,7 @@
 APPPARAM(std::wstring, translationPrefix, L"organizer")
 APPPARAM(std::wstring, pluginPath, L"plugins")
 APPPARAM(std::wstring, stylesheetsPath, L"stylesheets")
+APPPARAM(std::wstring, profileTweakIni, L"profile_tweaks.ini")
 APPPARAM(std::wstring, logFile, L"ModOrganizer.log")
 APPPARAM(std::wstring, proxyDLLTarget, L"steam_api.dll")
 APPPARAM(std::wstring, proxyDLLOrig, L"steam_api_orig.dll") // needs to be identical to the value used in proxydll-project

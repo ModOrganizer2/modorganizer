@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include <QMutexLocker>
 #include <QFile>
+#include <QDateTime>
 #include <Windows.h>
 
 QScopedPointer<LogBuffer> LogBuffer::s_Instance;
@@ -112,13 +113,25 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
 
 #else
 
+
+char LogBuffer::msgTypeID(QtMsgType type)
+{
+  switch (type) {
+    case QtDebugMsg: return 'D';
+    case QtWarningMsg: return 'W';
+    case QtCriticalMsg: return 'C';
+    case QtFatalMsg: return 'F';
+    default: return '?';
+  }
+}
+
 void LogBuffer::log(QtMsgType type, const char *message)
 {
   QMutexLocker guard(&s_Mutex);
   if (!s_Instance.isNull()) {
     s_Instance->logMessage(type, message);
   }
-  fprintf(stdout, "%s\n", message);
+  fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), message);
   fflush(stdout);
 }
 

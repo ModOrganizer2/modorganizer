@@ -22,9 +22,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QResizeEvent>
 
 
-LockedDialog::LockedDialog(QWidget *parent) :
-    QDialog(parent),
-  ui(new Ui::LockedDialog), m_UnlockClicked(false)
+LockedDialog::LockedDialog(QWidget *parent, const QString &text, bool unlockButton)
+  : QDialog(parent)
+  , ui(new Ui::LockedDialog)
+  , m_UnlockClicked(false)
 {
   ui->setupUi(this);
 
@@ -35,6 +36,13 @@ LockedDialog::LockedDialog(QWidget *parent) :
     position.rx() -= this->width() / 2;
     position.ry() -= this->height() / 2;
     move(position);
+  }
+
+  if (text.length() > 0) {
+    ui->label->setText(text);
+  }
+  if (!unlockButton) {
+    ui->unlockButton->hide();
   }
 }
 

@@ -133,10 +133,17 @@ std::wstring Fallout3Info::getOMODExt()
   return L"fomod";
 }
 
-
-std::wstring Fallout3Info::getSteamAPPId()
+std::vector<std::wstring> Fallout3Info::getSteamVariants() const
 {
-  return L"22300";
+  return boost::assign::list_of(L"Regular")(L"Game Of The Year");
+}
+
+std::wstring Fallout3Info::getSteamAPPId(int variant) const
+{
+  switch (variant) {
+    case 1:  return L"22370";
+    default: return L"22300";
+  }
 }
 
 
@@ -146,15 +153,19 @@ std::wstring Fallout3Info::getSEName()
 }
 
 
-std::wstring Fallout3Info::getNexusPage()
+std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
 {
-  return L"http://fallout3.nexusmods.com";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/fallout3";
+  } else {
+    return L"http://www.nexusmods.com/fallout3";
+  }
 }
 
 
 std::wstring Fallout3Info::getNexusInfoUrlStatic()
 {
-  return L"http://fallout3.nexusmods.com";
+  return L"http://nmm.nexusmods.com/fallout3";
 }
 
 

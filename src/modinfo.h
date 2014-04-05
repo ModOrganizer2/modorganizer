@@ -80,23 +80,6 @@ public:
     ENDORSED_UNKNOWN,
     ENDORSED_NEVER
   };
-/*
-  struct NexusFileInfo {
-    NexusFileInfo(const QString &data);
-    NexusFileInfo(int id, const QString &name, const QString &url, const QString &version,
-                  const QString &description, int category, int size)
-      : id(id), name(name), url(url), version(version), description(description),
-        category(category), size(size) {}
-    int id;
-    QString name;
-    QString url;
-    QString version;
-    QString description;
-    int category;
-    int size;
-
-    QString toString() const;
-  };*/
 
 public:
 
@@ -193,6 +176,22 @@ public:
   virtual bool updateAvailable() const = 0;
 
   /**
+   * @return true if the update currently available is ignored
+   */
+  virtual bool updateIgnored() const = 0;
+
+  /**
+   * @brief test if the "newest" version of the mod is older than the installed version
+   *
+   * test if there is a newer version of the mod. This does NOT cause
+   * information to be retrieved from the nexus, it will only test version information already
+   * available locally. Use checkAllForUpdate() to update this version information
+   *
+   * @return true if the newest version is older than the installed one
+   **/
+  virtual bool downgradeAvailable() const = 0;
+
+  /**
    * @brief request an update of nexus description for this mod.
    *
    * This requests mod information from the nexus. This is an asynchronous request,
@@ -252,6 +251,13 @@ public:
   virtual void setNexusDescription(const QString &description) = 0;
 
   /**
+   * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
+   * @param categoryID the nexus category id
+   * @note if a mapping is not possible, the category is set to the default value
+   */
+  virtual void addNexusCategory(int categoryID) = 0;
+
+  /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
    * @param endorsed the new endorsement state
@@ -275,6 +281,11 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse) = 0;
+
+  /**
+   * @brief clear all caches held for this mod
+   */
+  virtual void clearCaches() {}
 
   /**
    * @brief getter for the mod name
@@ -308,6 +319,11 @@ public:
    * @return newest version of the mod
    **/
   virtual MOBase::VersionInfo getNewestVersion() const = 0;
+
+  /**
+   * @brief ignore the newest version for updates
+   */
+  virtual void ignoreUpdate(bool ignore) = 0;
 
   /**
    * @brief getter for the nexus mod id
@@ -416,6 +432,11 @@ public:
   void testValid();
 
   /**
+   * @brief reads meta information from disk
+   */
+  virtual void readMeta() {}
+
+  /**
    * @brief stores meta information back to disk
    */
   virtual void saveMeta() {}
@@ -495,6 +516,22 @@ public:
   bool updateAvailable() const;
 
   /**
+   * @return true if the current update is being ignored
+   */
+  virtual bool updateIgnored() const { return m_IgnoredVersion == m_NewestVersion; }
+
+  /**
+   * @brief test if there is a newer version of the mod
+   *
+   * test if there is a newer version of the mod. This does NOT cause
+   * information to be retrieved from the nexus, it will only test version information already
+   * available locally. Use checkAllForUpdate() to update this version information
+   *
+   * @return true if there is a newer version
+   **/
+  bool downgradeAvailable() const;
+
+  /**
    * @brief request an update of nexus description for this mod.
    * 
    * This requests mod information from the nexus. This is an asynchronous request,
@@ -538,7 +575,7 @@ public:
    *
    * @param modID the nexus mod id
    **/
-  void setNexusID(int modID) { m_NexusID = modID; }
+  void setNexusID(int modID);
 
   /**
    * @brief set the version of this mod
@@ -560,13 +597,20 @@ public:
    * @todo this function should be made obsolete. All queries for mod information should go through
    *       this class so no public function for this change is required
    **/
-  void setNewestVersion(const MOBase::VersionInfo &version) { m_NewestVersion = version; }
+  void setNewestVersion(const MOBase::VersionInfo &version);
 
   /**
    * @brief changes/updates the nexus description text
    * @param description the current description text
    */
   virtual void setNexusDescription(const QString &description);
+
+  /**
+   * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
+   * @param categoryID the nexus category id
+   * @note if a mapping is not possible, the category is set to the default value
+   */
+  virtual void addNexusCategory(int categoryID);
 
   /**
    * @brief sets the new primary category of the mod
@@ -600,6 +644,11 @@ public:
   virtual void endorse(bool doEndorse);
 
   /**
+   * @brief clear all caches held for this mod
+   */
+  virtual void clearCaches();
+
+  /**
    * @brief getter for the mod name
    *
    * @return the mod name
@@ -619,6 +668,11 @@ public:
    * @return newest version of the mod
    **/
   MOBase::VersionInfo getNewestVersion() const { return m_NewestVersion; }
+
+  /**
+   * @brief ignore the newest version for updates
+   */
+  void ignoreUpdate(bool ignore);
 
   /**
    * @brief getter for the installation file
@@ -699,6 +753,7 @@ public:
    */
   virtual void saveMeta();
 
+  void readMeta();
 private:
 
   enum EConflictType {
@@ -713,7 +768,7 @@ private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(int modID, QVariant userData, const QString &errorMessage);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, const QString &errorMessage);
 
 private:
 
@@ -746,6 +801,7 @@ private:
 
   bool m_MetaInfoChanged;
   MOBase::VersionInfo m_NewestVersion;
+  MOBase::VersionInfo m_IgnoredVersion;
 
   EEndorsedState m_EndorsedState;
 
@@ -767,10 +823,13 @@ class ModInfoBackup : public ModInfoRegular
 public:
 
   virtual bool updateAvailable() const { return false; }
+  virtual bool updateIgnored() const { return false; }
+  virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
   virtual void setNexusID(int) {}
   virtual void endorse(bool) {}
   virtual int getFixedPriority() const { return -1; }
+  virtual void ignoreUpdate(bool) {}
   virtual bool canBeUpdated() const { return false; }
   virtual bool canBeEnabled() const { return false; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
@@ -798,20 +857,25 @@ class ModInfoOverwrite : public ModInfo
 public:
 
   virtual bool updateAvailable() const { return false; }
+  virtual bool updateIgnored() const { return false; }
+  virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
   virtual void setCategory(int, bool) {}
   virtual bool setName(const QString&) { return false; }
   virtual void setNotes(const QString&) {}
   virtual void setNexusID(int) {}
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
+  virtual void ignoreUpdate(bool) {}
   virtual void setNexusDescription(const QString&) {}
+  virtual void addNexusCategory(int) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }
   virtual QString notes() const { return ""; }
-  virtual QDateTime creationTime() const { return QDateTime::currentDateTime(); }
+  virtual QDateTime creationTime() const { return m_StartupTime; }
   virtual QString absolutePath() const;
   virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
   virtual QString getInstallationFile() const { return ""; }
@@ -827,6 +891,10 @@ public:
 private:
 
   ModInfoOverwrite();
+
+private:
+
+  QDateTime m_StartupTime;
 
 };
 

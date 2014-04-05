@@ -4,14 +4,14 @@
 
 namespace LeakTrace {
 
-void TraceAlloc(void *ptr);
+void TraceAlloc(void *ptr, const char *functionName, int line);
 void TraceDealloc(void *ptr);
 
 };
 
 #ifdef TRACE_LEAKS
 
-#define LEAK_TRACE LeakTrace::TraceAlloc(this)
+#define LEAK_TRACE LeakTrace::TraceAlloc(this, __FUNCTION__, __LINE__)
 #define LEAK_UNTRACE LeakTrace::TraceDealloc(this)
 
 #else // TRACE_LEAKS

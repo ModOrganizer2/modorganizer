@@ -30,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <shlobj.h>
 #include <sstream>
 #include <cassert>
+#include <boost/assign.hpp>
 
 namespace MOShared {
 
@@ -40,6 +41,13 @@ GameInfo* GameInfo::s_Instance = NULL;
 GameInfo::GameInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
   : m_GameDirectory(gameDirectory), m_OrganizerDirectory(omoDirectory)
 {
+  atexit(&cleanup);
+}
+
+
+void GameInfo::cleanup() {
+  delete GameInfo::s_Instance;
+  GameInfo::s_Instance = NULL;
 }
 
 
@@ -62,36 +70,36 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
 }
 
 
-bool GameInfo::identifyGame(const std::wstring &omoDirectory, const std::wstring &searchPath)
+bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &searchPath)
 {
   if (OblivionInfo::identifyGame(searchPath)) {
-    s_Instance = new OblivionInfo(omoDirectory, searchPath);
+    s_Instance = new OblivionInfo(moDirectory, searchPath);
   } else if (Fallout3Info::identifyGame(searchPath)) {
-    s_Instance = new Fallout3Info(omoDirectory, searchPath);
+    s_Instance = new Fallout3Info(moDirectory, searchPath);
   } else if (FalloutNVInfo::identifyGame(searchPath)) {
-    s_Instance = new FalloutNVInfo(omoDirectory, searchPath);
+    s_Instance = new FalloutNVInfo(moDirectory, searchPath);
   } else if (SkyrimInfo::identifyGame(searchPath)) {
-    s_Instance = new SkyrimInfo(omoDirectory, searchPath);
+    s_Instance = new SkyrimInfo(moDirectory, searchPath);
   }
 
   return s_Instance != NULL;
 }
 
 
-bool GameInfo::init(const std::wstring &omoDirectory, const std::wstring &gamePath)
+bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &gamePath)
 {
   if (s_Instance == NULL) {
     if (gamePath.length() == 0) {
       // search upward in the directory until a recognized game-binary is found
-      std::wstring searchPath(omoDirectory);
-      while (!identifyGame(omoDirectory, searchPath)) {
+      std::wstring searchPath(moDirectory);
+      while (!identifyGame(moDirectory, searchPath)) {
         size_t lastSep = searchPath.find_last_of(L"/\\");
         if (lastSep == std::string::npos) {
           return false;
         }
         searchPath.erase(lastSep);
       }
-    } else if (!identifyGame(omoDirectory, gamePath)) {
+    } else if (!identifyGame(moDirectory, gamePath)) {
       return false;
     }
   }
@@ -164,6 +172,14 @@ std::wstring GameInfo::getLogDir() const
 }
 
 
+std::wstring GameInfo::getLootDir() const
+{
+  std::wostringstream temp;
+  temp << m_OrganizerDirectory << "\\loot";
+  return temp.str();
+}
+
+
 std::wstring GameInfo::getTutorialDir() const
 {
   std::wostringstream temp;
@@ -175,6 +191,11 @@ std::wstring GameInfo::getTutorialDir() const
 bool GameInfo::requiresSteam() const
 {
   return FileExists(getGameDirectory().append(L"\\steam_api.dll"));
+}
+
+std::vector<std::wstring> GameInfo::getSteamVariants() const
+{
+  return boost::assign::list_of(L"Regular");
 }
 
 

@@ -44,6 +44,11 @@ void SelectionDialog::addChoice(const QString &buttonText, const QString &descri
   if (data.isValid()) m_ValidateByData = true;
 }
 
+int SelectionDialog::numChoices() const
+{
+  return ui->buttonBox->findChildren<QCommandLinkButton*>(QString()).count();
+}
+
 
 QVariant SelectionDialog::getChoiceData()
 {

@@ -4,8 +4,9 @@
 #
 #-------------------------------------------------
 
+
 contains(QT_VERSION, "^5.*") {
-  QT       += core gui widgets network declarative script xml sql xmlpatterns webkit
+  QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
@@ -27,7 +28,6 @@ SOURCES += \
     savegamegamebryo.cpp \
     savegame.cpp \
     report.cpp \
-    questionboxmemory.cpp \
     queryoverwritedialog.cpp \
     profilesdialog.cpp \
     profile.cpp \
@@ -48,10 +48,8 @@ SOURCES += \
     logbuffer.cpp \
     lockeddialog.cpp \
     loadmechanism.cpp \
-    json.cpp \
     installationmanager.cpp \
     helper.cpp \
-    finddialog.cpp \
     filedialogmemory.cpp \
     executableslist.cpp \
     editexecutablesdialog.cpp \
@@ -66,7 +64,6 @@ SOURCES += \
     categoriesdialog.cpp \
     categories.cpp \
     bbcode.cpp \
-    archivetree.cpp \
     activatemodsdialog.cpp \
     moapplication.cpp \
     profileinputdialog.cpp \
@@ -83,7 +80,16 @@ SOURCES += \
     ../esptk/subrecord.cpp \
     browserview.cpp \
     browserdialog.cpp \
-    persistentcookiejar.cpp
+    persistentcookiejar.cpp \
+    noeditdelegate.cpp \
+    previewgenerator.cpp \
+    previewdialog.cpp \
+    aboutdialog.cpp \
+    json.cpp \
+    safewritefile.cpp \
+    modflagicondelegate.cpp \
+    pluginflagicondelegate.cpp
+
 
 HEADERS  += \
     transfersavesdialog.h \
@@ -93,13 +99,12 @@ HEADERS  += \
     settingsdialog.h \
     settings.h \
     selfupdater.h \
-		selectiondialog.h \
+    selectiondialog.h \
     savegameinfowidgetgamebryo.h \
     savegameinfowidget.h \
     savegamegamebyro.h \
     savegame.h \
     report.h \
-    questionboxmemory.h \
     queryoverwritedialog.h \
     profilesdialog.h \
     profile.h \
@@ -119,10 +124,8 @@ HEADERS  += \
     logbuffer.h \
     lockeddialog.h \
     loadmechanism.h \
-    json.h \
     installationmanager.h \
     helper.h \
-    finddialog.h \
     filedialogmemory.h \
     executableslist.h \
     editexecutablesdialog.h \
@@ -137,7 +140,6 @@ HEADERS  += \
     categoriesdialog.h \
     categories.h \
     bbcode.h \
-    archivetree.h \
     activatemodsdialog.h \
     moapplication.h \
     profileinputdialog.h \
@@ -152,18 +154,27 @@ HEADERS  += \
     ../esptk/record.h \
     ../esptk/espfile.h \
     ../esptk/subrecord.h \
+    ../esptk/espexceptions.h \
     browserview.h \
     browserdialog.h \
     persistentcookiejar.h
+    noeditdelegate.h \
+    previewgenerator.h \
+    previewdialog.h \
+    aboutdialog.h \
+    json.h \
+    safewritefile.h\
+    pdll.h \
+    modflagicondelegate.h \
+    pluginflagicondelegate.h
 
 FORMS    += \
     transfersavesdialog.ui \
     syncoverwritedialog.ui \
     simpleinstalldialog.ui \
     settingsdialog.ui \
-		selectiondialog.ui \
+    selectiondialog.ui \
     savegameinfowidget.ui \
-    questionboxmemory.ui \
     queryoverwritedialog.ui \
     profilesdialog.ui \
     overwriteinfodialog.ui \
@@ -185,31 +196,36 @@ FORMS    += \
     profileinputdialog.ui \
     savetextasdialog.ui \
     problemsdialog.ui \
-    browserdialog.ui
+    previewdialog.ui \
+    browserdialog.ui \
+    aboutdialog.ui
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$(BOOSTPATH)"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
-
 CONFIG(debug, debug|release) {
-	OUTDIR = $$OUT_PWD/debug
-	DSTDIR = $$PWD/../../outputd
-	LIBS += -L$$OUT_PWD/../shared/debug -L$$OUT_PWD/../bsatk/debug
-	LIBS += -L$$OUT_PWD/../uibase/debug
-	LIBS += -lDbgHelp
+  OUTDIR = $$OUT_PWD/debug
+  DSTDIR = $$PWD/../../outputd
+  LIBS += -L$$OUT_PWD/../shared/debug
+  LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -L$$OUT_PWD/../uibase/debug
+  LIBS += -L$$OUT_PWD/../boss_modified/debug
+  LIBS += -lDbgHelp
 } else {
-	OUTDIR = $$OUT_PWD/release
-	DSTDIR = $$PWD/../../output
-	LIBS += -L$$OUT_PWD/../shared/release -L$$OUT_PWD/../bsatk/release
+  OUTDIR = $$OUT_PWD/release
+  DSTDIR = $$PWD/../../output
+  LIBS += -L$$OUT_PWD/../shared/release
+  LIBS += -L$$OUT_PWD/../bsatk/release
 	LIBS += -L$$OUT_PWD/../uibase/release
-	QMAKE_CXXFLAGS += /Zi
-#	QMAKE_CXXFLAGS -= -O2
-	QMAKE_LFLAGS += /DEBUG
+  LIBS += -L$$OUT_PWD/../boss_modified/release
+  QMAKE_CXXFLAGS += /Zi /GL
+#  QMAKE_CXXFLAGS -= -O2
+  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
 }
 
-QMAKE_CXXFLAGS_WARN_ON -= -W3
-QMAKE_CXXFLAGS_WARN_ON += -W4
+#QMAKE_CXXFLAGS_WARN_ON -= -W3
+#QMAKE_CXXFLAGS_WARN_ON += -W4
 QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
 
 CONFIG += embed_manifest_exe
@@ -219,31 +235,31 @@ CONFIG += embed_manifest_exe
 # QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
 
 TRANSLATIONS = organizer_de.ts \
-							 organizer_es.ts \
-							 organizer_fr.ts \
-							 organizer_zh_TW.ts \
+               organizer_es.ts \
+               organizer_fr.ts \
+               organizer_zh_TW.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-               organizer_ru.ts \
-               organizer.en.ts
+               organizer_en.ts \
+               organizer_ru.ts
 
-!isEmpty(TRANSLATIONS) {
-  isEmpty(QMAKE_LRELEASE) {
-		win32:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease.exe
-    else:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
-  }
-
-  isEmpty(TS_DIR):TS_DIR = Translations
-
-  TSQM.name = lrelease ${QMAKE_FILE_IN}
-  TSQM.input = TRANSLATIONS
-  TSQM.output = $$TS_DIR/${QMAKE_FILE_BASE}.qm
-  TSQM.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN}
-  TSQM.CONFIG = no_link
-  QMAKE_EXTRA_COMPILERS += TSQM
-  PRE_TARGETDEPS += compiler_TSQM_make_all
-} else:message(No translation files in project)
+#!isEmpty(TRANSLATIONS) {
+#  isEmpty(QMAKE_LRELEASE) {
+#		win32:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease.exe
+#    else:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
+#  }
+#
+#  isEmpty(TS_DIR):TS_DIR = Translations
+#
+#  TSQM.name = lrelease ${QMAKE_FILE_IN}
+#  TSQM.input = TRANSLATIONS
+#  TSQM.output = $$TS_DIR/${QMAKE_FILE_BASE}.qm
+#  TSQM.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN}
+#  TSQM.CONFIG = no_link
+#  QMAKE_EXTRA_COMPILERS += TSQM
+#  PRE_TARGETDEPS += compiler_TSQM_make_all
+#} else:message(No translation files in project)
 
 LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
 
@@ -251,6 +267,9 @@ DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
 
 DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 #DEFINES += QMLJSDEBUGGER
+
+HGID = $$system(hg id -i)
+DEFINES += HGID=\\\"$${HGID}\\\"
 
 SRCDIR = $$PWD
 SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
@@ -272,7 +291,7 @@ CONFIG(debug, debug|release) {
 }
 
 RESOURCES += \
-		resources.qrc \
+    resources.qrc \
     stylesheet_resource.qrc
 
 RC_FILE += \
@@ -292,15 +311,50 @@ OTHER_FILES += \
     tutorials/tutorials_modinfodialog.qml \
     tutorials/tutorial_firststeps_modinfo.js \
     tutorials/tutorial_conflictresolution_main.js \
-		tutorials/tutorial_conflictresolution_modinfo.js \
+    tutorials/tutorial_conflictresolution_modinfo.js \
     app_icon.rc \
     dark.qss \
     stylesheets/dark.qss \
     tutorials/tutorial_window_installer.js \
     tutorials/tutorials_installdialog.qml
 
-INCLUDEPATH += "$(ZLIBPATH)" "$(ZLIBPATH)/build" "$(BOOSTPATH)"
-LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
+
+load(moc)
+
+# for each Boost header you include...
+QMAKE_MOC += \
+	-DBOOST_MPL_IF_HPP_INCLUDED \
+	-DBOOST_TT_TYPE_WITH_ALIGNMENT_INCLUDED \
+	-DBOOST_MPL_VOID_HPP_INCLUDED \
+	-DBOOST_MPL_NOT_HPP_INCLUDED \
+	-DBOOST_MPL_IDENTITY_HPP_INCLUDED \
+	-DBOOST_VARIANT_VARIANT_FWD_HPP \
+	-DBOOST_MPL_NEXT_PRIOR_HPP_INCLUDED \
+	-DBOOST_MPL_O1_SIZE_HPP_INCLUDED \
+	-DBOOST_MPL_DEREF_HPP_INCLUDED \
+	-DBOOST_MPL_PAIR_HPP_INCLUDED \
+	-DBOOST_MPL_ITER_FOLD_HPP_INCLUDED \
+	-DBOOST_MPL_PROTECT_HPP_INCLUDED \
+	-DBOOST_MPL_EVAL_IF_HPP_INCLUDED \
+	-DBOOST_MPL_SEQUENCE_TAG_HPP_INCLUDED \
+	-DBOOST_MPL_EMPTY_HPP_INCLUDED \
+	-DBOOST_MPL_ALWAYS_HPP_INCLUDED \
+	-DBOOST_MPL_TRANSFORM_HPP_INCLUDED \
+	-DBOOST_MPL_CLEAR_HPP_INCLUDED \
+	-DBOOST_MPL_BEGIN_END_HPP_INCLUDED \
+	-DBOOST_MPL_FOLD_HPP_INCLUDED \
+	-DBOOST_MPL_FRONT_HPP_INCLUDED \
+	-DBOOST_MPL_IS_SEQUENCE_HPP_INCLUDED \
+	-DBOOST_MPL_ITERATOR_RANGE_HPP_INCLUDED \
+	-DBOOST_MPL_MAX_ELEMENT_HPP_INCLUDED \
+	-DBOOST_MPL_PUSH_FRONT_HPP_INCLUDED \
+	-DBOOST_RESULT_OF_HPP \
+	-DBOOST_MPL_ITER_FOLD_IF_HPP_INCLUDED
+
+# leak detection with vld
+#INCLUDEPATH += "E:/Visual Leak Detector/include"
+#LIBS += -L"E:/Visual Leak Detector/lib/Win32"
+#DEFINES += LEAK_CHECK_WITH_VLD
 
 #SOURCES += modeltest.cpp
 #HEADERS += modeltest.h

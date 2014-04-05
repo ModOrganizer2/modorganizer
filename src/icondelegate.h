@@ -34,13 +34,16 @@ public:
 
   virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
   virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+
 signals:
   
 public slots:
 
 private:
 
-  QIcon getFlagIcon(ModInfo::EFlag flag) const;
+  virtual QList<QIcon> getIcons(const QModelIndex &index) const = 0;
+  virtual size_t getNumIcons(const QModelIndex &index) const = 0;
+
 
 private:
 

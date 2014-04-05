@@ -71,6 +71,7 @@ public:
   const std::vector<int> &getAlternatives() const { return m_Alternatives; }
 
   const std::wstring &getName() const { return m_Name; }
+  int getOrigin() const { return m_Origin; }
   int getOrigin(bool &archive) const { archive = (m_Archive.length() != 0); return m_Origin; }
   const std::wstring &getArchive() const { return m_Archive; }
   bool isFromArchive() const { return m_Archive.length() != 0; }
@@ -168,7 +169,7 @@ public:
   bool indexValid(FileEntry::Index index) const;
 
   FileEntry::Ptr createFile(const std::wstring &name, DirectoryEntry *parent);
-  FileEntry::Ptr getFile(FileEntry::Index index);
+  FileEntry::Ptr getFile(FileEntry::Index index) const;
 
   void removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
@@ -204,6 +205,8 @@ public:
   void clear();
   bool isPopulated() const { return m_Populated; }
 
+  bool isEmpty() const { return (m_Files.size() == 0) && (m_SubDirectories.size() == 0); }
+
   const DirectoryEntry *getParent() const { return m_Parent; }
 
   // add files to this directory (and subdirectories) from the specified origin. That origin may exist or not
@@ -227,16 +230,16 @@ public:
   }
 
   DirectoryEntry *findSubDirectory(const std::wstring &name) const;
+  DirectoryEntry *findSubDirectoryRecursive(const std::wstring &path);
 
   /** retrieve a file in this directory by name.
     * @param name name of the file
     * @return fileentry object for the file or NULL if no file matches
     */
-  const FileEntry::Ptr findFile(const std::wstring &name);
+  const FileEntry::Ptr findFile(const std::wstring &name) const;
 
-  /** search through this directory and all subdirectories for a file by the specified name.
-      if directory is not NULL, the referenced variable will be set to true if the path refers to a directory.
-      the returned pointer is NULL in that case */
+  /** search through this directory and all subdirectories for a file by the specified name (relative path).
+      if directory is not NULL, the referenced variable will be set to the path containing the file */
   const FileEntry::Ptr searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);

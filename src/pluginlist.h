@@ -20,29 +20,71 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef PLUGINLIST_H
 #define PLUGINLIST_H
 
+#include <directoryentry.h>
+#include <ipluginlist.h>
 #include <QString>
 #include <QListWidget>
 #include <QTimer>
+#include <QTemporaryFile>
+#include <boost/signals2.hpp>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
-#include <directoryentry.h>
+#include "pdll.h"
+#include <BOSS-API.h>
+
+
+
+template <class C>
+class ChangeBracket {
+public:
+  ChangeBracket(C *model)
+    : m_Model(nullptr)
+  {
+    QVariant var = model->property("__aboutToChange");
+    bool aboutToChange = var.isValid() && var.toBool();
+    if (!aboutToChange) {
+      model->layoutAboutToBeChanged();
+      model->setProperty("__aboutToChange", true);
+      m_Model = model;
+    }
+  }
+  ~ChangeBracket() {
+    finish();
+  }
+
+  void finish() {
+    if (m_Model != nullptr) {
+      m_Model->layoutChanged();
+      m_Model->setProperty("__aboutToChange", false);
+      m_Model = nullptr;
+    }
+  }
+
+private:
+  C *m_Model;
+};
+
 
 
 /**
  * @brief model representing the plugins (.esp/.esm) in the current virtual data folder
  **/
-class PluginList : public QAbstractTableModel
+class PluginList : public QAbstractItemModel, public MOBase::IPluginList
 {
   Q_OBJECT
-
+  friend class ChangeBracket<PluginList>;
 public:
 
   enum EColumn {
     COL_NAME,
+    COL_FLAGS,
     COL_PRIORITY,
     COL_MODINDEX,
 
     COL_LASTCOLUMN = COL_MODINDEX
   };
+
+  typedef boost::signals2::signal<void ()> SignalRefreshed;
 
 public:
 
@@ -52,6 +94,8 @@ public:
    * @param parent parent object
    **/
   PluginList(QObject *parent = NULL);
+
+  ~PluginList();
 
   /**
    * @brief does a complete refresh of the list
@@ -120,6 +164,11 @@ public:
    **/
   bool saveLoadOrder(MOShared::DirectoryEntry &directoryStructure);
 
+  /**
+   * @return number of enabled plugins in the list
+   */
+  int enabledCount() const;
+
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
   bool isESPLocked(int index) const;
@@ -132,6 +181,16 @@ public:
 
   void refreshLoadOrder();
 
+  void lootSort();
+
+public:
+  virtual PluginState state(const QString &name) const;
+  virtual int priority(const QString &name) const;
+  virtual int loadOrder(const QString &name) const;
+  virtual bool isMaster(const QString &name) const;
+  virtual QString origin(const QString &name) const;
+  virtual bool onRefreshed(const std::function<void()> &callback);
+
 public: // implementation of the QAbstractTableModel interface
 
   virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
@@ -142,6 +201,8 @@ public: // implementation of the QAbstractTableModel interface
   virtual Qt::ItemFlags flags(const QModelIndex &index) const;
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction; }
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+  virtual QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const;
+  virtual QModelIndex parent(const QModelIndex &child) const;
 
 public slots:
 
@@ -173,9 +234,8 @@ private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath);
+    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath, bool hasIni);
     QString m_Name;
-    QString m_FullPath;
     bool m_Enabled;
     bool m_ForceEnabled;
     bool m_Removed;
@@ -184,8 +244,15 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
+    bool m_IsDummy;
+    bool m_HasIni;
     std::set<QString> m_Masters;
-    mutable bool m_MasterUnset;
+    mutable std::set<QString> m_MasterUnset;
+  };
+
+  struct BossInfo {
+    QStringList m_BOSSMessages;
+    bool m_BOSSUnrecognized;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
@@ -222,6 +289,8 @@ private:
   std::map<QString, int> m_ESPLoadOrder;
   std::map<QString, int> m_LockedOrder;
 
+  std::map<QString, BossInfo> m_BossInfo; // maps esp names to boss information
+
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;
 
@@ -230,6 +299,12 @@ private:
 
   mutable QTimer m_SaveTimer;
 
+  SignalRefreshed m_Refreshed;
+
+  QTemporaryFile m_TempFile;
+
 };
+
+
 
 #endif // PLUGINLIST_H

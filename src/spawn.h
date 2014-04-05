@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * @brief a dirty little trick so we can issue a clean restart from startBinary
  * @note unused
  */
-class ExitProxy : public QObject {
+/*class ExitProxy : public QObject {
   Q_OBJECT
 public:
   static ExitProxy *instance();
@@ -42,7 +42,7 @@ private:
   ExitProxy() {}
 private:
   static ExitProxy *s_Instance;
-};
+};*/
 
 
 /**
@@ -52,11 +52,17 @@ private:
  * @param arguments arguments to pass to the binary
  * @param profileName name of the active profile
  * @param currentDirectory the directory to use as the working directory to run in
+ * @param logLevel log level to be used by the hook library. Ignored if hooked is false
  * @param hooked if set, the binary is started with mo injected
+ * @param stdout if not equal to INVALID_HANDLE_VALUE, this is used as stdout for the process
+ * @param stderr if not equal to INVALID_HANDLE_VALUE, this is used as stderr for the process
  * @return the process handle
  * @todo is the profile name even used any more?
  * @todo is the hooked parameter used?
  **/
-HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QString &profileName, int logLevel, const QDir &currentDirectory, bool hooked);
+HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QString &profileName, int logLevel,
+                   const QDir &currentDirectory, bool hooked,
+                   HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
 
 #endif // SPAWN_H
+

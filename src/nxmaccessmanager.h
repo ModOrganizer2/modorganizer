@@ -37,6 +37,8 @@ public:
 
   explicit NXMAccessManager(QObject *parent);
 
+  ~NXMAccessManager();
+
   bool loggedIn() const;
 
   void login(const QString &username, const QString &password);

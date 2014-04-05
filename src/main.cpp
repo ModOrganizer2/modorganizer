@@ -18,6 +18,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
+#ifdef LEAK_CHECK_WITH_VLD
+#include <wchar.h>
+#include <vld.h>
+#endif // LEAK_CHECK_WITH_VLD
+
 #include <QApplication>
 #include <QPushButton>
 #include <QListWidget>
@@ -55,7 +60,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "moapplication.h"
 #include "tutorialmanager.h"
-#include <QLibrary>
 #include <iostream>
 #include <QMessageBox>
 #include <QSharedMemory>
@@ -63,6 +67,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSplashScreen>
 #include <QDirIterator>
 #include <QDesktopServices>
+#include <ShellAPI.h>
 #include <eh.h>
 #include <windows_error.h>
 #include <boost/scoped_array.hpp>
@@ -73,24 +78,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 using namespace MOShared;
-
-
-void removeOldLogfiles()
-{
-  QFileInfoList files = QDir(ToQString(GameInfo::instance().getLogDir())).entryInfoList(QStringList("ModOrganizer*.log"),
-                            QDir::Files, QDir::Name);
-
-  if (files.count() > 5) {
-    QStringList deleteFiles;
-    for (int i = 0; i < files.count() - 5; ++i) {
-      deleteFiles.append(files.at(i).absoluteFilePath());
-    }
-
-    if (!shellDelete(deleteFiles)) {
-      qWarning("failed to remove log files: %s", qPrintable(windowsErrorString(::GetLastError())));
-    }
-  }
-}
 
 
 // set up required folders (for a first install or after an update or to fix a broken installation)
@@ -106,7 +93,7 @@ bool bootstrap()
   }
 
   // cycle logfile
-  removeOldLogfiles();
+  removeOldFiles(ToQString(GameInfo::instance().getLogDir()), "ModOrganizer*.log", 5, QDir::Name);
 
   // create organizer directories
   QString dirNames[] = {
@@ -135,7 +122,7 @@ bool bootstrap()
           QObject::tr("The current user account doesn't have the required access rights to run "
              "Mod Organizer. The neccessary changes can be made automatically (the MO directory "
              "will be made writable for the current user account). You will be asked to run "
-             "\"helper.exe\" with administrative rights)."),
+             "\"helper.exe\" with administrative rights."),
              QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
         if (!Helper::init(GameInfo::instance().getOrganizerDirectory())) {
           return false;
@@ -151,6 +138,7 @@ bool bootstrap()
 
   // verify the hook-dll exists
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
+
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
   if (dllMod == NULL) {
     throw windows_error("hook.dll is missing or invalid");
@@ -271,6 +259,59 @@ void registerMetaTypes()
   registerExecutable();
 }
 
+
+
+bool HaveWriteAccess(const std::wstring &path)
+{
+  bool writable = false;
+
+  const static SECURITY_INFORMATION requestedFileInformation = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
+
+  DWORD length = 0;
+  if (!::GetFileSecurityW(path.c_str(), requestedFileInformation, NULL, NULL, &length)
+      && (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+    std::string tempBuffer;
+    tempBuffer.reserve(length);
+    PSECURITY_DESCRIPTOR security = (PSECURITY_DESCRIPTOR)tempBuffer.data();
+    if (security
+        && ::GetFileSecurity(path.c_str(), requestedFileInformation, security, length, &length)) {
+      HANDLE token = NULL;
+      const static DWORD tokenDesiredAccess = TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ;
+      if (!::OpenThreadToken(::GetCurrentThread(), tokenDesiredAccess, TRUE, &token)) {
+        if (!::OpenProcessToken(::GetCurrentProcess(), tokenDesiredAccess, &token)) {
+          throw std::runtime_error("Unable to get any thread or process token");
+        }
+      }
+
+      HANDLE impersonatedToken = NULL;
+      if (::DuplicateToken(token, SecurityImpersonation, &impersonatedToken)) {
+        GENERIC_MAPPING mapping = { 0xFFFFFFFF };
+        mapping.GenericRead = FILE_GENERIC_READ;
+        mapping.GenericWrite = FILE_GENERIC_WRITE;
+        mapping.GenericExecute = FILE_GENERIC_EXECUTE;
+        mapping.GenericAll = FILE_ALL_ACCESS;
+
+        DWORD genericAccessRights = FILE_GENERIC_WRITE;
+        ::MapGenericMask(&genericAccessRights, &mapping);
+
+        PRIVILEGE_SET privileges = { 0 };
+        DWORD grantedAccess = 0;
+        DWORD privilegesLength = sizeof(privileges);
+        BOOL result = 0;
+        if (::AccessCheck(security, impersonatedToken, genericAccessRights, &mapping, &privileges, &privilegesLength, &grantedAccess, &result)) {
+          writable = result != 0;
+        }
+        ::CloseHandle(impersonatedToken);
+      }
+
+      ::CloseHandle(token);
+    }
+  }
+  return writable;
+}
+
+
+
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
@@ -279,7 +320,17 @@ int main(int argc, char *argv[])
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-  LogBuffer::init(20, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
+  if (!HaveWriteAccess(ToWString(application.applicationDirPath()))) {
+    QStringList arguments = application.arguments();
+    arguments.pop_front();
+    ::ShellExecuteW( NULL
+                   , L"runas"
+                   , ToWString(QString("\"%1\"").arg(QCoreApplication::applicationFilePath())).c_str()
+                   , ToWString(arguments.join(" ")).c_str()
+                   , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
+    return 1;
+  }
+  LogBuffer::init(200, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
@@ -343,7 +394,7 @@ int main(int argc, char *argv[])
 
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(moPath, ToWString(gamePath))) {
+      if (!GameInfo::init(moPath, ToWString(QDir::toNativeSeparators(gamePath)))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));
@@ -395,6 +446,27 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
+    int edition = 0;
+    if (settings.contains("game_edition")) {
+      edition = settings.value("game_edition").toInt();
+    } else {
+      std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
+      if (editions.size() < 2) {
+        edition = 0;
+      } else {
+        SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), NULL);
+        int index = 0;
+        for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
+          selection.addChoice(ToQString(*iter), "", index++);
+        }
+        if (selection.exec() == QDialog::Rejected) {
+          return -1;
+        } else {
+          settings.setValue("game_edition", selection.getChoiceData().toInt());
+        }
+      }
+    }
+
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
     ExecutablesList executablesList;
@@ -428,63 +500,70 @@ int main(int argc, char *argv[])
     qDebug("initializing tutorials");
     TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
 
-    application.setStyleFile(settings.value("Settings/style", "").toString());
+    if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
+      // disable invalid stylesheet
+      settings.setValue("Settings/style", "");
+    }
 
-    // set up main window and its data structures
-    MainWindow mainWindow(argv[0], settings);
-    QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-    QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
+    int res = 1;
+    { // scope to control lifetime of mainwindow
+      // set up main window and its data structures
+      MainWindow mainWindow(argv[0], settings);
+      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
+      QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
 
-    mainWindow.setExecutablesList(executablesList);
-    mainWindow.readSettings();
+      mainWindow.setExecutablesList(executablesList);
+      mainWindow.readSettings();
 
-    QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
+      QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
 
-    { // see if there is a profile on the command line
-      int profileIndex = arguments.indexOf("-p", 1);
-      if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
-        qDebug("profile overwritten on command line");
-        selectedProfileName = arguments.at(profileIndex + 1);
+      { // see if there is a profile on the command line
+        int profileIndex = arguments.indexOf("-p", 1);
+        if ((profileIndex != -1) && (profileIndex < arguments.size() - 1)) {
+          qDebug("profile overwritten on command line");
+          selectedProfileName = arguments.at(profileIndex + 1);
+        }
+        arguments.removeAt(profileIndex);
+        arguments.removeAt(profileIndex);
       }
-      arguments.removeAt(profileIndex);
-      arguments.removeAt(profileIndex);
-    }
-    qDebug("configured profile: %s", qPrintable(selectedProfileName));
+      qDebug("configured profile: %s", qPrintable(selectedProfileName));
 
-    // if we have a command line parameter, it is either a nxm link or
-    // a binary to start
-    if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
-      QString exeName = arguments.at(1);
-      qDebug("starting %s from command line", qPrintable(exeName));
-      arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-      arguments.removeFirst(); // remove binary name
-      // pass the remaining parameters to the binary
-      mainWindow.spawnProgram(exeName, arguments.join(" "), selectedProfileName, QDir());
-      return 0;
-    }
+      // if we have a command line parameter, it is either a nxm link or
+      // a binary to start
+      if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
+        QString exeName = arguments.at(1);
+        qDebug("starting %s from command line", qPrintable(exeName));
+        arguments.removeFirst(); // remove application name (ModOrganizer.exe)
+        arguments.removeFirst(); // remove binary name
+        // pass the remaining parameters to the binary
+        mainWindow.startApplication(exeName, arguments, QString(), selectedProfileName);
+        return 0;
+      }
 
-    mainWindow.createFirstProfile();
+      mainWindow.createFirstProfile();
 
-    if (selectedProfileName.length() != 0) {
-      if (!mainWindow.setCurrentProfile(selectedProfileName)) {
+      if (selectedProfileName.length() != 0) {
+        if (!mainWindow.setCurrentProfile(selectedProfileName)) {
+          mainWindow.setCurrentProfile(1);
+          qWarning("failed to set profile: %s",
+                   selectedProfileName.toUtf8().constData());
+        }
+      } else {
         mainWindow.setCurrentProfile(1);
-        qWarning("failed to set profile: %s",
-                 selectedProfileName.toUtf8().constData());
       }
-    } else {
-      mainWindow.setCurrentProfile(1);
-    }
 
-    qDebug("displaying main window");
-    mainWindow.show();
+      qDebug("displaying main window");
+      mainWindow.show();
 
-    if ((arguments.size() > 1) &&
-        (isNxmLink(arguments.at(1)))) {
-      qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
-      mainWindow.externalMessage(arguments.at(1));
+      if ((arguments.size() > 1) &&
+          (isNxmLink(arguments.at(1)))) {
+        qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
+        mainWindow.externalMessage(arguments.at(1));
+      }
+      splash.finish(&mainWindow);
+      res = application.exec();
     }
-    splash.finish(&mainWindow);
-    return application.exec();
+    return res;
   } catch (const std::exception &e) {
     reportError(e.what());
     return 1;

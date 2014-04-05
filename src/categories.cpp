@@ -43,6 +43,7 @@ QString CategoryFactory::categoriesFilePath()
 
 CategoryFactory::CategoryFactory()
 {
+  atexit(&cleanup);
   reset();
 
   QFile categoryFile(categoriesFilePath());
@@ -102,6 +103,7 @@ CategoryFactory &CategoryFactory::instance()
 void CategoryFactory::reset()
 {
   m_Categories.clear();
+  m_IDMap.clear();
   addCategory(0, "None", MakeVector<int>(2, 28, 87), 0);
 }
 
@@ -122,6 +124,12 @@ void CategoryFactory::setParents()
       }
     }
   }
+}
+
+void CategoryFactory::cleanup()
+{
+  delete s_Instance;
+  s_Instance = NULL;
 }
 
 

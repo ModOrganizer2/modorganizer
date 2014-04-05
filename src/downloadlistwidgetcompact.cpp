@@ -82,6 +82,66 @@ void DownloadListWidgetCompactDelegate::drawCache(QPainter *painter, const QStyl
 }
 
 
+void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) const
+{
+  std::pair<int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
+  m_NameLabel->setText(tr("< mod %1 file %2 >").arg(nexusids.first).arg(nexusids.second));
+  if (m_SizeLabel != NULL) {
+    m_SizeLabel->setText("???");
+  }
+  m_DoneLabel->setVisible(true);
+  m_DoneLabel->setText(tr("Pending"));
+  m_Progress->setVisible(false);
+}
+
+
+void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) const
+{
+  QString name = m_Manager->getFileName(downloadIndex);
+  if (name.length() > 53) {
+    name.truncate(50);
+    name.append("...");
+  }
+  m_NameLabel->setText(name);
+
+  DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
+
+  if ((m_SizeLabel != NULL) && (state >= DownloadManager::STATE_READY)) {
+    m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
+  }
+
+  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+    m_DoneLabel->setVisible(true);
+    m_Progress->setVisible(false);
+    m_DoneLabel->setText(tr("Paused"));
+    m_DoneLabel->setForegroundRole(QPalette::Link);
+  } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
+    m_DoneLabel->setText(tr("Fetching Info 1"));
+  } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
+    m_DoneLabel->setText(tr("Fetching Info 2"));
+  } else if (state >= DownloadManager::STATE_READY) {
+    m_DoneLabel->setVisible(true);
+    m_Progress->setVisible(false);
+    if (state == DownloadManager::STATE_INSTALLED) {
+      m_DoneLabel->setText(tr("Installed"));
+      m_DoneLabel->setForegroundRole(QPalette::Mid);
+    } else if (state == DownloadManager::STATE_UNINSTALLED) {
+      m_DoneLabel->setText(tr("Uninstalled"));
+      m_DoneLabel->setForegroundRole(QPalette::Dark);
+    } else {
+      m_DoneLabel->setText(tr("Done"));
+      m_DoneLabel->setForegroundRole(QPalette::WindowText);
+    }
+    if (m_Manager->isInfoIncomplete(downloadIndex)) {
+      m_NameLabel->setText("<img src=\":/MO/gui/warning_16\"/> " + m_NameLabel->text());
+    }
+  } else {
+    m_DoneLabel->setVisible(false);
+    m_Progress->setVisible(true);
+    m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+  }
+}
+
 void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
 #pragma message("This is quite costy - room for optimization?")
@@ -100,49 +160,10 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
     }
 
     int downloadIndex = index.data().toInt();
-
-    QString name = m_Manager->getFileName(downloadIndex);
-    if (name.length() > 53) {
-      name.truncate(50);
-      name.append("...");
-    }
-    m_NameLabel->setText(name);
-
-    DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-
-    if ((m_SizeLabel != NULL) && (state >= DownloadManager::STATE_READY)) {
-      m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
-    }
-
-    if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
-      m_DoneLabel->setVisible(true);
-      m_Progress->setVisible(false);
-      m_DoneLabel->setText(tr("Paused"));
-      m_DoneLabel->setForegroundRole(QPalette::Link);
-    } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
-      m_DoneLabel->setText(tr("Fetching Info 1"));
-    } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
-      m_DoneLabel->setText(tr("Fetching Info 2"));
-    } else if (state >= DownloadManager::STATE_READY) {
-      m_DoneLabel->setVisible(true);
-      m_Progress->setVisible(false);
-      if (state == DownloadManager::STATE_INSTALLED) {
-        m_DoneLabel->setText(tr("Installed"));
-        m_DoneLabel->setForegroundRole(QPalette::Mid);
-      } else if (state == DownloadManager::STATE_UNINSTALLED) {
-        m_DoneLabel->setText(tr("Uninstalled"));
-        m_DoneLabel->setForegroundRole(QPalette::Dark);
-      } else {
-        m_DoneLabel->setText(tr("Done"));
-        m_DoneLabel->setForegroundRole(QPalette::WindowText);
-      }
-      if (m_Manager->isInfoIncomplete(downloadIndex)) {
-        m_NameLabel->setText("<img src=\":/MO/gui/warning_16\"/> " + m_NameLabel->text());
-      }
+    if (downloadIndex >= m_Manager->numTotalDownloads()) {
+      paintPendingDownload(downloadIndex - m_Manager->numTotalDownloads());
     } else {
-      m_DoneLabel->setVisible(false);
-      m_Progress->setVisible(true);
-      m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+      paintRegularDownload(downloadIndex);
     }
 
 #pragma message("caching disabled because changes in the list (including resorting) doesn't work correctly")
@@ -193,6 +214,11 @@ void DownloadListWidgetCompactDelegate::issueDelete()
 void DownloadListWidgetCompactDelegate::issueRemoveFromView()
 {
   emit removeDownload(m_ContextIndex.row(), false);
+}
+
+void DownloadListWidgetCompactDelegate::issueRestoreToView()
+{
+  emit restoreDownload(m_ContextIndex.row());
 }
 
 void DownloadListWidgetCompactDelegate::issueCancel()
@@ -263,29 +289,39 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
       QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
       if (mouseEvent->button() == Qt::RightButton) {
         QMenu menu;
+        bool hidden = false;
         m_ContextIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
-        DownloadManager::DownloadState state = m_Manager->getState(m_ContextIndex.row());
-        if (state >= DownloadManager::STATE_READY) {
-          menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-          if (m_Manager->isInfoIncomplete(m_ContextIndex.row())) {
-            menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+        if (m_ContextIndex.row() < m_Manager->numTotalDownloads()) {
+          DownloadManager::DownloadState state = m_Manager->getState(m_ContextIndex.row());
+          hidden = m_Manager->isHidden(m_ContextIndex.row());
+          if (state >= DownloadManager::STATE_READY) {
+            menu.addAction(tr("Install"), this, SLOT(issueInstall()));
+            if (m_Manager->isInfoIncomplete(m_ContextIndex.row())) {
+              menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+            }
+            menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
+            if (hidden) {
+              menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
+            } else {
+              menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+            }
+          } else if (state == DownloadManager::STATE_DOWNLOADING){
+            menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
+            menu.addAction(tr("Pause"), this, SLOT(issuePause()));
+          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+            menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
+            menu.addAction(tr("Resume"), this, SLOT(issueResume()));
           }
-          menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
-          menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
-        } else if (state == DownloadManager::STATE_DOWNLOADING){
-          menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
-          menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-        } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
-          menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
-          menu.addAction(tr("Resume"), this, SLOT(issueResume()));
-        }
 
-        menu.addSeparator();
+          menu.addSeparator();
+        }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
-        menu.addSeparator();
-        menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-        menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+        if (!hidden) {
+          menu.addSeparator();
+          menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+        }
         menu.exec(mouseEvent->globalPos());
 
         event->accept();

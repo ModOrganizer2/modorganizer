@@ -300,13 +300,43 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
-  QString metaFileName = path.absoluteFilePath("meta.ini");
-  QSettings metaFile(metaFileName, QSettings::IniFormat);
+  readMeta();
 
-  m_Notes           = metaFile.value("notes", "").toString();
-  m_NexusID         = metaFile.value("modid", -1).toInt();
+  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(int,int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,int,QVariant,QString)));
+}
+
+
+ModInfoRegular::~ModInfoRegular()
+{
+  try {
+    saveMeta();
+  } catch (const std::exception &e) {
+    qCritical("failed to save meta information for \"%s\": %s",
+              m_Name.toUtf8().constData(), e.what());
+  }
+}
+
+bool ModInfoRegular::isEmpty() const
+{
+  QDirIterator iter(m_Path, QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+  if (!iter.hasNext()) return true;
+  iter.next();
+  if ((iter.fileName() == "meta.ini") && !iter.hasNext()) return true;
+  return false;
+}
+
+
+void ModInfoRegular::readMeta()
+{
+  QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
+
+  m_Notes            = metaFile.value("notes", "").toString();
+  m_NexusID          = metaFile.value("modid", -1).toInt();
   m_Version.parse(metaFile.value("version", "").toString());
-  m_NewestVersion = metaFile.value("newestVersion", "").toString();
+  m_NewestVersion    = metaFile.value("newestVersion", "").toString();
+  m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
@@ -341,67 +371,59 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
     }
   }
 
-  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,QVariant,QString)));
+  m_MetaInfoChanged = false;
 }
-
-
-ModInfoRegular::~ModInfoRegular()
-{
-  try {
-    //TODO this may cause the meta-file and the directory to be
-    // re-created after a remove
-    saveMeta();
-  } catch (const std::exception &e) {
-    qCritical("failed to save meta information for \"%s\": %s",
-              m_Name.toUtf8().constData(), e.what());
-  }
-}
-
-bool ModInfoRegular::isEmpty() const
-{
-  QDirIterator iter(m_Path, QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
-  if (!iter.hasNext()) return true;
-  iter.next();
-  if ((iter.fileName() == "meta.ini") && !iter.hasNext()) return true;
-  return false;
-}
-
 
 void ModInfoRegular::saveMeta()
 {
-  if (m_MetaInfoChanged) {
-    if (QFile::exists(absolutePath().append("/meta.ini"))) {
-      QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
-      if (metaFile.status() == QSettings::NoError) {
-        std::set<int> temp = m_Categories;
-        temp.erase(m_PrimaryCategory);
-        metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
-        metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
-        metaFile.setValue("version", m_Version.canonicalString());
+  // only write meta data if the mod directory exists
+  if (m_MetaInfoChanged && QFile::exists(absolutePath())) {
+    QSettings metaFile(absolutePath().append("/meta.ini"), QSettings::IniFormat);
+    if (metaFile.status() == QSettings::NoError) {
+      std::set<int> temp = m_Categories;
+      temp.erase(m_PrimaryCategory);
+      metaFile.setValue("category", QString("%1").arg(m_PrimaryCategory) + "," + SetJoin(temp, ","));
+      metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
+      metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
+      metaFile.setValue("version", m_Version.canonicalString());
+      if (m_NexusID != -1) {
         metaFile.setValue("modid", m_NexusID);
-        metaFile.setValue("notes", m_Notes);
-        metaFile.setValue("nexusDescription", m_NexusDescription);
-        metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
-        if (m_EndorsedState != ENDORSED_UNKNOWN) {
-          metaFile.setValue("endorsed", m_EndorsedState);
-        }
+      }
+      metaFile.setValue("notes", m_Notes);
+      metaFile.setValue("nexusDescription", m_NexusDescription);
+      metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      if (m_EndorsedState != ENDORSED_UNKNOWN) {
+        metaFile.setValue("endorsed", m_EndorsedState);
+      }
+      metaFile.sync(); // sync needs to be called to ensure the file is created
 
+      if (metaFile.status() == QSettings::NoError) {
+        m_MetaInfoChanged = false;
       } else {
-        reportError(tr("failed to write %1/meta.ini: %2").arg(absolutePath()).arg(metaFile.status()));
+        reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
       }
     } else {
-      qWarning("mod %s has no meta.ini at %s/meta.ini", m_Name.toUtf8().constData(), absolutePath().toUtf8().constData());
+      reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
     }
-    m_MetaInfoChanged = false;
   }
 }
 
 
 bool ModInfoRegular::updateAvailable() const
 {
+  if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
+    return false;
+  }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
+}
+
+
+bool ModInfoRegular::downgradeAvailable() const
+{
+  if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
+    return false;
+  }
+  return m_NewestVersion.isValid() && (m_NewestVersion < m_Version);
 }
 
 
@@ -429,7 +451,7 @@ void ModInfoRegular::nxmEndorsementToggled(int, QVariant, QVariant resultData)
 }
 
 
-void ModInfoRegular::nxmRequestFailed(int, QVariant userData, const QString &errorMessage)
+void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
@@ -531,6 +553,13 @@ bool ModInfoRegular::setName(const QString &name)
 void ModInfoRegular::setNotes(const QString &notes)
 {
   m_Notes = notes;
+  m_MetaInfoChanged = true;
+}
+
+void ModInfoRegular::setNexusID(int modID)
+{
+  m_NexusID = modID;
+  m_MetaInfoChanged = true;
 }
 
 void ModInfoRegular::setVersion(const VersionInfo &version)
@@ -539,12 +568,20 @@ void ModInfoRegular::setVersion(const VersionInfo &version)
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::setNewestVersion(const VersionInfo &version) {
+  m_NewestVersion = version;
+}
+
 void ModInfoRegular::setNexusDescription(const QString &description)
 {
   m_NexusDescription = description;
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::addNexusCategory(int categoryID)
+{
+  m_Categories.insert(CategoryFactory::instance().resolveNexusID(categoryID));
+}
 
 void ModInfoRegular::setIsEndorsed(bool endorsed)
 {
@@ -575,22 +612,31 @@ void ModInfoRegular::endorse(bool doEndorse)
   }
 }
 
+void ModInfoRegular::clearCaches()
+{
+  m_LastConflictCheck = QTime();
+}
+
 
 QString ModInfoRegular::absolutePath() const
 {
   return m_Path;
 }
 
+void ModInfoRegular::ignoreUpdate(bool ignore)
+{
+  if (ignore) {
+    m_IgnoredVersion = m_NewestVersion;
+  } else {
+    m_IgnoredVersion.clear();
+  }
+  m_MetaInfoChanged = true;
+}
+
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result;
-  if (!isValid()) {
-    result.push_back(ModInfo::FLAG_INVALID);
-  }
-  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
-    result.push_back(ModInfo::FLAG_NOTENDORSED);
-  }
   switch (isConflicted()) {
     case CONFLICT_MIXED: {
       result.push_back(ModInfo::FLAG_CONFLICT_MIXED);
@@ -605,6 +651,12 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
       result.push_back(ModInfo::FLAG_CONFLICT_REDUNDANT);
     } break;
     default: { /* NOP */ }
+  }
+  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
+    result.push_back(ModInfo::FLAG_NOTENDORSED);
+  }
+  if (!isValid()) {
+    result.push_back(ModInfo::FLAG_INVALID);
   }
   if (m_Notes.length() != 0) {
     result.push_back(ModInfo::FLAG_NOTES);
@@ -655,18 +707,16 @@ QString ModInfoRegular::getNexusDescription() const
   return m_NexusDescription;
 }
 
-
 ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
 {
   return m_EndorsedState;
 }
 
-
 ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
 {
   // this is costy so cache the result
   QTime now = QTime::currentTime();
-  if (abs(m_LastConflictCheck.secsTo(now)) > 10) {
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
     bool overwrite = false;
     bool overwritten = false;
     bool regular = false;
@@ -792,11 +842,20 @@ ModInfoBackup::ModInfoBackup(const QDir &path, DirectoryEntry **directoryStructu
 
 
 ModInfoOverwrite::ModInfoOverwrite()
+  : m_StartupTime(QDateTime::currentDateTime())
 {
   testValid();
-
 }
 
+
+bool ModInfoOverwrite::isEmpty() const
+{
+  QDirIterator iter(absolutePath(), QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
+  if (!iter.hasNext()) return true;
+  iter.next();
+  if ((iter.fileName() == "meta.ini") && !iter.hasNext()) return true;
+  return false;
+}
 
 QString ModInfoOverwrite::absolutePath() const
 {

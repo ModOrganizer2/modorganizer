@@ -275,32 +275,29 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
           <item>
-           <layout class="QFormLayout" name="formLayout">
-            <property name="fieldGrowthPolicy">
-             <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
-            </property>
-            <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout_10">
+            <item>
              <widget class="QLabel" name="label_2">
               <property name="text">
                <string>Username</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item>
              <widget class="QLineEdit" name="usernameEdit">
               <property name="enabled">
                <bool>false</bool>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
+            <item>
              <widget class="QLabel" name="label_3">
               <property name="text">
                <string>Password</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item>
              <widget class="QLineEdit" name="passwordEdit">
               <property name="enabled">
                <bool>false</bool>
@@ -342,13 +339,40 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
+         <item>
+          <widget class="QPushButton" name="associateButton">
+           <property name="text">
+            <string>Associate with &quot;Download with manager&quot; links</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="0,0">
+         <property name="spacing">
+          <number>4</number>
+         </property>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_6">
            <item>
             <widget class="QLabel" name="label_16">
              <property name="text">
-              <string>Known Servers (Dynamically updated every download)</string>
+              <string>Known Servers (updated on download)</string>
              </property>
             </widget>
            </item>
@@ -406,101 +430,115 @@ p, li { white-space: pre-wrap; }
       <attribute name="title">
        <string>Plugins</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="0,1">
+      <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0">
        <item>
-        <widget class="QListWidget" name="pluginsList">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1">
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
-          <layout class="QFormLayout" name="formLayout_2">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_13">
-             <property name="text">
-              <string>Author:</string>
-             </property>
-            </widget>
+          <widget class="QListWidget" name="pluginsList">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,1">
+           <item>
+            <layout class="QFormLayout" name="formLayout_2">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_13">
+               <property name="text">
+                <string>Author:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="authorLabel">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_15">
+               <property name="text">
+                <string>Version:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="versionLabel">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_14">
+               <property name="text">
+                <string>Description:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLabel" name="descriptionLabel">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="wordWrap">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="authorLabel">
-             <property name="text">
-              <string/>
+           <item>
+            <widget class="QTreeWidget" name="pluginSettingsList">
+             <property name="indentation">
+              <number>0</number>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_15">
-             <property name="text">
-              <string>Version:</string>
+             <property name="rootIsDecorated">
+              <bool>false</bool>
              </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLabel" name="versionLabel">
-             <property name="text">
-              <string/>
+             <property name="itemsExpandable">
+              <bool>false</bool>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_14">
-             <property name="text">
-              <string>Description:</string>
+             <property name="expandsOnDoubleClick">
+              <bool>false</bool>
              </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QLabel" name="descriptionLabel">
-             <property name="text">
-              <string/>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
+             <attribute name="headerVisible">
+              <bool>false</bool>
+             </attribute>
+             <attribute name="headerDefaultSectionSize">
+              <number>100</number>
+             </attribute>
+             <column>
+              <property name="text">
+               <string>Key</string>
+              </property>
+             </column>
+             <column>
+              <property name="text">
+               <string>Value</string>
+              </property>
+             </column>
             </widget>
            </item>
           </layout>
          </item>
-         <item>
-          <widget class="QTreeWidget" name="pluginSettingsList">
-           <property name="indentation">
-            <number>0</number>
-           </property>
-           <property name="rootIsDecorated">
-            <bool>false</bool>
-           </property>
-           <property name="itemsExpandable">
-            <bool>false</bool>
-           </property>
-           <property name="expandsOnDoubleClick">
-            <bool>false</bool>
-           </property>
-           <attribute name="headerVisible">
-            <bool>false</bool>
-           </attribute>
-           <attribute name="headerDefaultSectionSize">
-            <number>100</number>
-           </attribute>
-           <column>
-            <property name="text">
-             <string>Key</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Value</string>
-            </property>
-           </column>
-          </widget>
-         </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_18">
+         <property name="text">
+          <string>Blacklisted Plugins (use &lt;del&gt; to remove):</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QListWidget" name="pluginBlacklist"/>
        </item>
       </layout>
      </widget>

@@ -20,12 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "utility.h"
-#include "json.h"
+#include <json.h>
 #include "selectiondialog.h"
+#include <QApplication>
 #include <utility.h>
 #include <regex>
+#include <util.h>
 
-using QtJson::Json;
 
 using namespace MOBase;
 using namespace MOShared;
@@ -68,6 +69,7 @@ void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
+
     emit descriptionAvailable(modID, userData, resultData);
   }
 }
@@ -126,12 +128,12 @@ void NexusBridge::nxmEndorsementToggled(int modID, QVariant userData, QVariant r
   }
 }
 
-void NexusBridge::nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorMessage)
+void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit requestFailed(modID, userData, errorMessage);
+    emit requestFailed(modID, fileID, userData, errorMessage);
   }
 }
 
@@ -142,10 +144,25 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 NexusInterface::NexusInterface()
   : m_NMMVersion()
 {
+  atexit(&cleanup);
   m_AccessManager = new NXMAccessManager(this);
 
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+
+
+  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
+
+  m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
+                            version.dwFileVersionMS & 0xFFFF,
+                            version.dwFileVersionLS >> 16);
+}
+
+
+void NexusInterface::cleanup()
+{
+  delete NexusInterface::s_Instance;
+  NexusInterface::s_Instance = NULL;
 }
 
 
@@ -241,8 +258,8 @@ int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant us
   connect(this, SIGNAL(nxmDescriptionAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -257,8 +274,8 @@ int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *rece
   connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)),
           receiver, SLOT(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -291,8 +308,8 @@ int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData
   connect(this, SIGNAL(nxmFilesAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFilesAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
 //  QTimer::singleShot(1000, this, SLOT(fakeFiles()));
 //  static int fID = 42;
@@ -311,8 +328,8 @@ int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QV
   connect(this, SIGNAL(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -327,8 +344,8 @@ int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver,
   connect(this, SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)),
           receiver, SLOT(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -344,8 +361,8 @@ int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *r
   connect(this, SIGNAL(nxmEndorsementToggled(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmEndorsementToggled(int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -363,33 +380,42 @@ void NexusInterface::nextRequest()
   info.m_Timeout->setInterval(60000);
 
   QString url;
-  switch (info.m_Type) {
-    case NXMRequestInfo::TYPE_DESCRIPTION: {
-      url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
-    } break;
-    case NXMRequestInfo::TYPE_FILES: {
-      url = QString("%1/Files/indexfrommod/%2/").arg(info.m_URL).arg(info.m_ModID);
-    } break;
-    case NXMRequestInfo::TYPE_FILEINFO: {
-      url = QString("%1/Files/%2/").arg(info.m_URL).arg(info.m_FileID);
-    } break;
-    case NXMRequestInfo::TYPE_DOWNLOADURL: {
-      url = QString("%1/Files/download/%2").arg(info.m_URL).arg(info.m_FileID);
-    } break;
-    case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-      url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
-    } break;
-    case NXMRequestInfo::TYPE_GETUPDATES: {
-      QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
-      modIDList = "[" + modIDList + "]";
-      url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
-    } break;
+  if (!info.m_Reroute) {
+    bool hasParams = false;
+    switch (info.m_Type) {
+      case NXMRequestInfo::TYPE_DESCRIPTION: {
+        url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
+      } break;
+      case NXMRequestInfo::TYPE_FILES: {
+        url = QString("%1/Files/indexfrommod/%2/").arg(info.m_URL).arg(info.m_ModID);
+      } break;
+      case NXMRequestInfo::TYPE_FILEINFO: {
+        url = QString("%1/Files/%2/").arg(info.m_URL).arg(info.m_FileID);
+      } break;
+      case NXMRequestInfo::TYPE_DOWNLOADURL: {
+        url = QString("%1/Files/download/%2").arg(info.m_URL).arg(info.m_FileID);
+      } break;
+      case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
+        url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
+        hasParams = true;
+      } break;
+      case NXMRequestInfo::TYPE_GETUPDATES: {
+        QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
+        modIDList = "[" + modIDList + "]";
+        url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
+        hasParams = true;
+      } break;
+    }
+    url.append(QString("%1game_id=%2").arg(hasParams ? '&' : '?').arg(GameInfo::instance().getNexusGameID()));
+  } else {
+    url = info.m_URL;
   }
-
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-#pragma message("automatically insert the correct version number")
-  request.setRawHeader("User-Agent", QString("Mod Organizer v0.99.0 (compatible to Nexus Client v%1)").arg(m_NMMVersion).toUtf8());
+  request.setRawHeader("User-Agent",
+      QString("Mod Organizer v%1 (compatible to Nexus Client v%2)")
+         .arg(m_MOVersion.displayString())
+         .arg(m_NMMVersion).toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 
@@ -406,26 +432,33 @@ void NexusInterface::downloadRequestedNXM(const QString &url)
   emit requestNXMDownload(url);
 }
 
-
 void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 {
   QNetworkReply *reply = iter->m_Reply;
 
   if (reply->error() != QNetworkReply::NoError) {
     qWarning("request failed: %s", reply->errorString().toUtf8().constData());
-    emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, reply->errorString());
+    emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->errorString());
   } else {
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 301) {
+      // redirect request, return request to queue
+      iter->m_URL = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
+      iter->m_Reroute = true;
+      m_RequestQueue.enqueue(*iter);
+      nextRequest();
+      return;
+    }
     QByteArray data = reply->readAll();
     if (data.isNull() || data.isEmpty() || (strcmp(data.constData(), "null") == 0)) {
       QString nexusError(reply->rawHeader("NexusErrorInfo"));
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-
-      emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, nexusError);
+      emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
-      QVariant result = Json::parse(data, ok);
+      QVariant result = QtJson::parse(data, ok);
       if (result.isValid() && ok) {
         switch (iter->m_Type) {
           case NXMRequestInfo::TYPE_DESCRIPTION: {
@@ -448,7 +481,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
         }
       } else {
-        emit nxmRequestFailed(iter->m_ModID, iter->m_UserData, iter->m_ID, tr("invalid response"));
+        emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, tr("invalid response"));
       }
     }
   }
@@ -491,7 +524,6 @@ void NexusInterface::requestTimeout()
     qWarning("invalid sender type");
     return;
   }
-  qWarning("request timeout");
   for (std::list<NXMRequestInfo>::iterator iter = m_ActiveRequest.begin(); iter != m_ActiveRequest.end(); ++iter) {
     if (iter->m_Timeout == timer) {
       // this abort causes a "request failed" which cleans up the rest

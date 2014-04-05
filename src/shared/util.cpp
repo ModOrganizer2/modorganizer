@@ -69,7 +69,6 @@ std::string ToString(const std::wstring &source, bool utf8)
     ::WideCharToMultiByte(CP_UTF8, 0, source.c_str(), -1, buffer, MAX_PATH, NULL, NULL);
   } else {
     ::WideCharToMultiByte(GetACP(), 0, source.c_str(), -1, buffer, MAX_PATH, NULL, NULL);
-//    wcstombs(buffer, source.c_str(), MAX_PATH);
   }
   return std::string(buffer);
 }
@@ -80,9 +79,7 @@ std::wstring ToWString(const std::string &source, bool utf8)
   if (utf8) {
     ::MultiByteToWideChar(CP_UTF8, 0, source.c_str(), -1, buffer, MAX_PATH);
   } else {
-    // codepage encoding
     ::MultiByteToWideChar(GetACP(), 0, source.c_str(), -1, buffer, MAX_PATH);
-//    mbstowcs(buffer, source.c_str(), MAX_PATH);
   }
   return std::wstring(buffer);
 }

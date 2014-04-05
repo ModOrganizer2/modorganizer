@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>868</width>
-    <height>701</height>
+    <width>926</width>
+    <height>710</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,16 @@
     <property name="spacing">
      <number>4</number>
     </property>
-    <property name="margin">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
      <number>6</number>
     </property>
     <item>
@@ -106,7 +115,7 @@
          <number>2</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
           <item>
            <widget class="QLabel" name="label_3">
             <property name="sizePolicy">
@@ -158,6 +167,47 @@ p, li { white-space: pre-wrap; }
             <property name="icon">
              <iconset resource="resources.qrc">
               <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="restoreModsButton">
+            <property name="toolTip">
+             <string>Restore Backup...</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/MO/gui/restore</normaloff>:/MO/gui/restore</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="saveModsButton">
+            <property name="toolTip">
+             <string>Create Backup</string>
+            </property>
+            <property name="text">
+             <string notr="true"/>
+            </property>
+            <property name="icon">
+             <iconset resource="resources.qrc">
+              <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
             </property>
            </widget>
           </item>
@@ -593,7 +643,7 @@ p, li { white-space: pre-wrap; }
             </size>
            </property>
            <attribute name="title">
-            <string notr="true">Plugins</string>
+            <string>Plugins</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <property name="leftMargin">
@@ -608,6 +658,68 @@ p, li { white-space: pre-wrap; }
             <property name="bottomMargin">
              <number>0</number>
             </property>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_7">
+              <item>
+               <widget class="QPushButton" name="bossButton">
+                <property name="text">
+                 <string>Sort</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="restoreButton">
+                <property name="toolTip">
+                 <string>Restore Backup...</string>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/restore</normaloff>:/MO/gui/restore</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>16</width>
+                  <height>16</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="saveButton">
+                <property name="toolTip">
+                 <string>Create Backup</string>
+                </property>
+                <property name="text">
+                 <string notr="true"/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
             <item>
              <widget class="QTreeView" name="espList">
               <property name="minimumSize">
@@ -705,27 +817,40 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="MOBase::LineEditClear" name="espFilterEdit">
-              <property name="text">
-               <string/>
-              </property>
-              <property name="placeholderText">
-               <string>Namefilter</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="MOBase::LineEditClear" name="espFilterEdit">
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="placeholderText">
+                 <string>Namefilter</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
           <widget class="QWidget" name="bsaTab">
            <attribute name="title">
-            <string notr="true">Archives</string>
+            <string>Archives</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_9">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
-             <widget class="QTreeWidget" name="bsaList">
+             <widget class="MOBase::SortableTreeWidget" name="bsaList">
               <property name="contextMenuPolicy">
                <enum>Qt::CustomContextMenu</enum>
               </property>
@@ -742,7 +867,7 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="showDropIndicator" stdset="0">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <property name="dragEnabled">
                <bool>false</bool>
@@ -751,10 +876,10 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                <bool>false</bool>
               </property>
               <property name="dragDropMode">
-               <enum>QAbstractItemView::NoDragDrop</enum>
+               <enum>QAbstractItemView::DragDrop</enum>
               </property>
               <property name="defaultDropAction">
-               <enum>Qt::IgnoreAction</enum>
+               <enum>Qt::MoveAction</enum>
               </property>
               <property name="selectionMode">
                <enum>QAbstractItemView::SingleSelection</enum>
@@ -768,6 +893,12 @@ BSAs checked here are loaded in such a way that your installation order is obeye
               <property name="itemsExpandable">
                <bool>true</bool>
               </property>
+              <property name="columnCount">
+               <number>1</number>
+              </property>
+              <attribute name="headerVisible">
+               <bool>false</bool>
+              </attribute>
               <attribute name="headerDefaultSectionSize">
                <number>200</number>
               </attribute>
@@ -776,17 +907,12 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                 <string>File</string>
                </property>
               </column>
-              <column>
-               <property name="text">
-                <string>Mod</string>
-               </property>
-              </column>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="bsaWarning">
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/resources/dialog-warning_16.png&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/warning_16&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="wordWrap">
                <bool>true</bool>
@@ -800,7 +926,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Data</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_5">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -870,7 +1005,16 @@ BSAs checked here are loaded in such a way that your installation order is obeye
             <string>Saves</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
+            <property name="topMargin">
+             <number>6</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
              <number>6</number>
             </property>
             <item>
@@ -899,7 +1043,16 @@ p, li { white-space: pre-wrap; }
             <string>Downloads</string>
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_7">
-            <property name="margin">
+            <property name="leftMargin">
+             <number>2</number>
+            </property>
+            <property name="topMargin">
+             <number>2</number>
+            </property>
+            <property name="rightMargin">
+             <number>2</number>
+            </property>
+            <property name="bottomMargin">
              <number>2</number>
             </property>
             <item>
@@ -968,11 +1121,18 @@ p, li { white-space: pre-wrap; }
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,2">
               <item>
                <widget class="QCheckBox" name="compactBox">
                 <property name="text">
                  <string>Compact</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showHiddenBox">
+                <property name="text">
+                 <string>Show Hidden</string>
                 </property>
                </widget>
               </item>
@@ -1216,6 +1376,11 @@ Right now this has very limited functionality</string>
    <class>ModListView</class>
    <extends>QTreeView</extends>
    <header>modlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MOBase::SortableTreeWidget</class>
+   <extends>QTreeWidget</extends>
+   <header>sortabletreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

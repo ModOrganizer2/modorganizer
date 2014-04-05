@@ -125,11 +125,6 @@ bool PluginListSortProxy::lessThan(const QModelIndex &left,
       return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
     } break;
     default: {
-      static bool first = true;
-      if (first) {
-        qCritical("invalid sort column %d", left.column());
-        first = false;
-      }
       return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
     } break;
   }

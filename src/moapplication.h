@@ -34,7 +34,7 @@ public:
 
 public slots:
 
-  void setStyleFile(const QString &style);
+  bool setStyleFile(const QString &style);
 
 private slots:
 
@@ -43,6 +43,8 @@ private slots:
 private:
 
   QFileSystemWatcher m_StyleWatcher;
+  QString m_DefaultStyle;
+
 };
 
 

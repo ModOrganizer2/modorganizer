@@ -106,7 +106,7 @@ const Executable &ExecutablesList::find(const QString &title) const
 Executable &ExecutablesList::find(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Title == title) {
+    if (QString::compare(iter->m_Title, title, Qt::CaseInsensitive) == 0) {
       return *iter;
     }
   }
@@ -171,16 +171,6 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     m_Executables.push_back(newExe);
   }
 }
-
-/*void ExecutablesList::remove(const QString &executableName)
-{
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Custom && (iter->m_BinaryInfo.absoluteFilePath() == executableName)) {
-      m_Executables.erase(iter);
-      break;
-    }
-  }
-}*/
 
 
 void ExecutablesList::remove(const QString &title)

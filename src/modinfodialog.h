@@ -100,6 +100,10 @@ public:
    **/
   void openTab(int tab);
 
+  void restoreTabState(const QByteArray &state);
+
+  QByteArray saveTabState() const;
+
 signals:
 
   void thumbnailClickedSignal(const QString &filename);
@@ -141,6 +145,8 @@ private:
   bool unhideFile(const QString &oldName);
   void addCheckedCategories(QTreeWidgetItem *tree);
   void refreshPrimaryCategoriesBox();
+
+  int tabIndex(const QString &tabId);
 
 private slots:
 
@@ -220,6 +226,8 @@ private:
   const MOShared::DirectoryEntry *m_Directory;
   MOShared::FilesOrigin *m_Origin;
   QTextCodec *m_UTF8Codec;
+
+  std::map<int, int> m_RealTabPos;
 
 };
 

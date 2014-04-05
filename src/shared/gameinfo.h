@@ -113,6 +113,7 @@ public:
   virtual std::wstring getCacheDir() const;
   virtual std::wstring getOverwriteDir() const;
   virtual std::wstring getLogDir() const;
+  virtual std::wstring getLootDir() const;
   virtual std::wstring getTutorialDir() const;
 
   virtual bool requiresBSAInvalidation() const { return true; }
@@ -137,13 +138,15 @@ public:
 
   virtual std::wstring getOMODExt() = 0;
 
-  virtual std::wstring getSteamAPPId() = 0;
+  virtual std::vector<std::wstring> getSteamVariants() const;
+  virtual std::wstring getSteamAPPId(int variant = 0) const = 0;
 
   virtual std::wstring getSEName() = 0;
 
-  virtual std::wstring getNexusPage() = 0;
+  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
   virtual std::wstring getNexusInfoUrl() = 0;
   virtual int getNexusModID() = 0;
+  virtual int getNexusGameID() = 0;
 
   // clone relevant files to the specified directory
   virtual void createProfile(const std::wstring &directory, bool useDefaults) = 0;
@@ -176,9 +179,11 @@ private:
   static bool identifyGame(const std::wstring &omoDirectory, const std::wstring &searchPath);
   std::wstring getSpecialPath(LPCWSTR name) const;
 
+  static void cleanup();
+
 private:
 
-  static GameInfo* s_Instance;
+  static GameInfo *s_Instance;
 
   std::wstring m_MyGamesDirectory;
 

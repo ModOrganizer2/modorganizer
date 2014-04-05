@@ -33,8 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-SkyrimInfo::SkyrimInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : GameInfo(omoDirectory, gameDirectory)
+SkyrimInfo::SkyrimInfo(const std::wstring &moDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"skyrim");
 
@@ -169,7 +169,7 @@ std::wstring SkyrimInfo::getOMODExt()
 }
 
 
-std::wstring SkyrimInfo::getSteamAPPId()
+std::wstring SkyrimInfo::getSteamAPPId(int) const
 {
   return L"72850";
 }
@@ -181,15 +181,19 @@ std::wstring SkyrimInfo::getSEName()
 }
 
 
-std::wstring SkyrimInfo::getNexusPage()
+std::wstring SkyrimInfo::getNexusPage(bool nmmScheme)
 {
-  return L"http://skyrim.nexusmods.com";
+  if (nmmScheme) {
+    return L"http://nmm.nexusmods.com/skyrim";
+  } else {
+    return L"http://www.nexusmods.com/skyrim";
+  }
 }
 
 
 std::wstring SkyrimInfo::getNexusInfoUrlStatic()
 {
-  return L"http://skyrim.nexusmods.com";
+  return L"http://nmm.nexusmods.com/skyrim";
 }
 
 
@@ -295,6 +299,7 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
   result.push_back(ExecutableInfo(L"SKSE", L"skse_loader.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"SBW", L"SBW.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"Skyrim", L"TESV.exe", L"", L"", DEFAULT_CLOSE));
+  result.push_back(ExecutableInfo(L"Skyrim Launcher", L"SkyrimLauncher.exe", L"", L"", DEFAULT_CLOSE));
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", DEFAULT_STAY));
   result.push_back(ExecutableInfo(L"Creation Kit", L"CreationKit.exe", L"", L"", DEFAULT_STAY, L"202480"));
 

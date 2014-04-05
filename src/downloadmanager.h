@@ -83,10 +83,14 @@ private:
     int m_Tries;
     bool m_ReQueried;
 
+    quint32 m_TaskProgressId;
+
     MOBase::ModRepositoryFileInfo *m_FileInfo;
 
+    bool m_Hidden;
+
     static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(const QString &filePath);
+    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden);
 
     /**
      * @brief rename the file
@@ -106,7 +110,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_FileInfo(NULL) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false) {}
   };
 
 public:
@@ -152,6 +156,11 @@ public:
   void setSupportedExtensions(const QStringList &extensions);
 
   /**
+   * @brief sets whether hidden files are to be shown after all
+   */
+  void setShowHidden(bool showHidden);
+
+  /**
    * @brief download from an already open network connection
    *
    * @param reply the network reply to download from
@@ -186,6 +195,19 @@ public:
    * @return total number of downloads
    **/
   int numTotalDownloads() const;
+
+  /**
+   * @brief retrieve number of pending downloads (nexus downloads for which we don't know the name and url yet)
+   * @return  number of pending downloads
+   */
+  int numPendingDownloads() const;
+
+  /**
+   * @brief retrieve the info of a pending download
+   * @param index index of the pending download (index in the range [0, numPendingDownloads()[)
+   * @return pair of modid, fileid
+   */
+  std::pair<int, int> getPendingDownload(int index);
 
   /**
    * @brief retrieve the full path to the download specified by index
@@ -252,6 +274,13 @@ public:
    * @return the nexus mod id
    **/
   int getModID(int index) const;
+
+  /**
+   * @brief determine if the specified file is supposed to be hidden
+   * @param index index of the file to look up
+   * @return true if the specified file is supposed to be hidden
+   */
+  bool isHidden(int index) const;
 
   /**
    * @brief retrieve all nexus info of the download specified by index
@@ -332,6 +361,11 @@ signals:
    */
   void downloadSpeed(const QString &serverName, int bytesPerSecond);
 
+  /**
+   * @brief emitted whenever a new download is added to the list
+   */
+  void downloadAdded();
+
 public slots:
 
   /**
@@ -341,6 +375,12 @@ public slots:
    * @param deleteFile if true, the file will also be deleted from disc, otherwise it is only marked as hidden.
    **/
   void removeDownload(int index, bool deleteFile);
+
+  /**
+   * @brief restores the specified download to view (which was previously hidden
+   * @param index index of the download to restore
+   */
+  void restoreDownload(int index);
 
   /**
    * @brief cancel the specified download. This will lead to the corresponding file to be deleted
@@ -363,7 +403,7 @@ public slots:
 
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(int modID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
 private slots:
 
@@ -405,6 +445,10 @@ private:
 
   DownloadInfo *downloadInfoByID(unsigned int id);
 
+  QDateTime matchDate(const QString &timeString);
+
+  void removePending(int modID, int fileID);
+
 private:
 
   static const int AUTOMATIC_RETRIES = 3;
@@ -412,6 +456,9 @@ private:
 private:
 
   NexusInterface *m_NexusInterface;
+
+  QVector<std::pair<int, int> > m_PendingDownloads;
+
   QVector<DownloadInfo*> m_ActiveDownloads;
 
   QString m_OutputDirectory;
@@ -424,6 +471,12 @@ private:
 
   std::map<QString, int> m_DownloadFails;
 
+  bool m_ShowHidden;
+
+  QRegExp m_DateExpression;
+
 };
+
+
 
 #endif // DOWNLOADMANAGER_H

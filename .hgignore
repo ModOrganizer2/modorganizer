@@ -13,3 +13,10 @@ source - Copy/*
 ModOrganizer-build-*
 pdbs/*
 source/NCC/BossDummy.x/*
+*.ts
+staging_prepare/*
+staging_trans/*
+tools/python_zip/*
+Makefile
+syntax: regexp
+Makefile\.(Debug|Release)

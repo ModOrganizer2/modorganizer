@@ -10,11 +10,26 @@ using namespace MOBase;
 
 
 ProblemsDialog::ProblemsDialog(std::vector<MOBase::IPluginDiagnose *> diagnosePlugins, QWidget *parent)
-  : QDialog(parent), ui(new Ui::ProblemsDialog)
+  : QDialog(parent), ui(new Ui::ProblemsDialog), m_DiagnosePlugins(diagnosePlugins)
 {
   ui->setupUi(this);
 
-  foreach (IPluginDiagnose *diagnose, diagnosePlugins) {
+  runDiagnosis();
+
+  connect(ui->problemsWidget, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
+  connect(ui->descriptionText, SIGNAL(anchorClicked(QUrl)), this, SLOT(urlClicked(QUrl)));
+}
+
+
+ProblemsDialog::~ProblemsDialog()
+{
+  delete ui;
+}
+
+void ProblemsDialog::runDiagnosis()
+{
+  ui->problemsWidget->clear();
+  foreach (IPluginDiagnose *diagnose, m_DiagnosePlugins) {
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
     foreach (unsigned int key, activeProblems) {
       QTreeWidgetItem *newItem = new QTreeWidgetItem();
@@ -26,7 +41,7 @@ ProblemsDialog::ProblemsDialog(std::vector<MOBase::IPluginDiagnose *> diagnosePl
       ui->problemsWidget->addTopLevelItem(newItem);
 
       if (diagnose->hasGuidedFix(key)) {
-        newItem->setText(1, tr("fix"));
+        newItem->setText(1, tr("Fix"));
         QPushButton *fixButton = new QPushButton(tr("Fix"));
         connect(fixButton, SIGNAL(clicked()), this, SLOT(startFix()));
         ui->problemsWidget->setItemWidget(newItem, 1, fixButton);
@@ -35,16 +50,7 @@ ProblemsDialog::ProblemsDialog(std::vector<MOBase::IPluginDiagnose *> diagnosePl
       }
     }
   }
-  connect(ui->problemsWidget, SIGNAL(itemSelectionChanged()), this, SLOT(selectionChanged()));
-  connect(ui->descriptionText, SIGNAL(anchorClicked(QUrl)), this, SLOT(urlClicked(QUrl)));
 }
-
-
-ProblemsDialog::~ProblemsDialog()
-{
-  delete ui;
-}
-
 
 bool ProblemsDialog::hasProblems() const
 {
@@ -62,6 +68,7 @@ void ProblemsDialog::startFix()
 {
   IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(ui->problemsWidget->currentItem()->data(1, Qt::UserRole).value<void*>());
   plugin->startGuidedFix(ui->problemsWidget->currentItem()->data(1, Qt::UserRole + 1).toUInt());
+  runDiagnosis();
 }
 
 void ProblemsDialog::urlClicked(const QUrl &url)

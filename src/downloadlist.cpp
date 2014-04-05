@@ -34,8 +34,9 @@ DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
 
 int DownloadList::rowCount(const QModelIndex&) const
 {
-  return m_Manager->numTotalDownloads();
+  return m_Manager->numTotalDownloads() + m_Manager->numPendingDownloads();
 }
+
 
 int DownloadList::columnCount(const QModelIndex&) const
 {
@@ -75,11 +76,17 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
   if (role == Qt::DisplayRole) {
     return index.row();
   } else if (role == Qt::ToolTipRole) {
-    if (m_Manager->isInfoIncomplete(index.row())) {
-      return tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
-    } else {
+    if (index.row() < m_Manager->numTotalDownloads()) {
+      QString text = m_Manager->getFileName(index.row()) + "\n";
+      if (m_Manager->isInfoIncomplete(index.row())) {
+        text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
+      } else {
       const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
-      return QString("%1 (ID %2) %3\n%4").arg(info->modName).arg(m_Manager->getModID(index.row())).arg(info->version.canonicalString()).arg(info->description);
+      return QString("%1 (ID %2) %3").arg(info.m_ModName).arg(m_Manager->getModID(index.row())).arg(info.m_Version);
+      }
+      return text;
+    } else {
+      return tr("pending download");
     }
   } else {
     return QVariant();

@@ -126,7 +126,6 @@ void SelfUpdater::startUpdate()
 
 void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 {
-  qDebug("download: %s", downloadLink.toUtf8().constData());
   QNetworkAccessManager *accessManager = m_Interface->getAccessManager();
   QUrl dlUrl(downloadLink);
   QNetworkRequest request(dlUrl);
@@ -324,7 +323,6 @@ void SelfUpdater::nxmDescriptionAvailable(int, QVariant, QVariant resultData, in
     if (m_NewestVersion.isEmpty()) {
       QTimer::singleShot(5000, this, SLOT(testForUpdate()));
     }
-
     VersionInfo currentVersion(m_MOVersion);
     VersionInfo newestVersion(m_NewestVersion);
 
@@ -430,7 +428,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
 }
 
 
-void SelfUpdater::nxmRequestFailed(int, QVariant, int requestID, const QString &errorMessage)
+void SelfUpdater::nxmRequestFailed(int, int, QVariant, int requestID, const QString &errorMessage)
 {
   if (requestID == m_UpdateRequestID) {
     m_UpdateRequestID = -1;
@@ -438,7 +436,8 @@ void SelfUpdater::nxmRequestFailed(int, QVariant, int requestID, const QString &
       QTimer::singleShot(60000, this, SLOT(testForUpdate()));
       --m_Attempts;
     } else {
-      MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent);
+      qWarning("Failed to retrieve update information: %s", qPrintable(errorMessage));
+      MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent, false);
     }
   }
 }

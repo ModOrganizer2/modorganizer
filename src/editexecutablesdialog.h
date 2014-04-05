@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include <QListWidgetItem>
+#include <QTimer>
 #include "executableslist.h"
 
 namespace Ui {
@@ -54,6 +55,7 @@ public:
    **/
   ExecutablesList getExecutablesList() const;
 
+  void saveExecutable();
 private slots:
 
   void on_binaryEdit_textChanged(const QString &arg1);
@@ -66,11 +68,15 @@ private slots:
 
   void on_titleEdit_textChanged(const QString &arg1);
 
-  void on_executablesListBox_itemClicked(QListWidgetItem *item);
-
   void on_overwriteAppIDBox_toggled(bool checked);
 
   void on_browseDirButton_clicked();
+
+  void on_closeButton_clicked();
+
+  void on_executablesListBox_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+
+  void delayedRefresh();
 
 private:
 
@@ -78,9 +84,15 @@ private:
 
   void refreshExecutablesWidget();
 
+  bool executableChanged();
+
 private:
     Ui::EditExecutablesDialog *ui;
+
+    QListWidgetItem *m_CurrentItem;
+
     ExecutablesList m_ExecutablesList;
+
 };
 
 #endif // EDITEXECUTABLESDIALOG_H
