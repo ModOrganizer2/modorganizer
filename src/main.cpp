@@ -536,7 +536,12 @@ int main(int argc, char *argv[])
         arguments.removeFirst(); // remove application name (ModOrganizer.exe)
         arguments.removeFirst(); // remove binary name
         // pass the remaining parameters to the binary
-        mainWindow.startApplication(exeName, arguments, QString(), selectedProfileName);
+        try {
+          mainWindow.startApplication(exeName, arguments, QString(), selectedProfileName);
+        } catch (const std::exception &e) {
+          reportError(QObject::tr("failed to start application: %1").arg(e.what()));
+        }
+
         return 0;
       }
 

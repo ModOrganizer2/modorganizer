@@ -2355,7 +2355,14 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   QFileInfo binary;
   QString arguments = args.join(" ");
   QString currentDirectory = cwd;
-  QString profileName = (profile.length() > 0) ? profile : m_CurrentProfile->getName();
+  QString profileName = profile;
+  if (profile.length() == 0) {
+    if (m_CurrentProfile != NULL) {
+      profileName = m_CurrentProfile->getName();
+    } else {
+      throw MyException(tr("No profile set"));
+    }
+  }
   QString steamAppID;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path

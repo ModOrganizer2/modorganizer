@@ -41,11 +41,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 BrowserDialog::BrowserDialog(QWidget *parent)
-  : QDialog(parent), ui(new Ui::BrowserDialog)
+  : QDialog(parent)
+  , ui(new Ui::BrowserDialog)
+  , m_AccessManager(new QNetworkAccessManager)
 {
   ui->setupUi(this);
 
-  m_AccessManager.setCookieJar(new PersistentCookieJar(
+  m_AccessManager->setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/cookies.dat", this));
 
   Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
@@ -55,17 +57,12 @@ BrowserDialog::BrowserDialog(QWidget *parent)
 
   m_Tabs = this->findChild<QTabWidget*>("browserTabWidget");
 
-  m_View = new BrowserView(this);
-
-  initTab(m_View);
-
   connect(m_Tabs, SIGNAL(tabCloseRequested(int)), this, SLOT(tabCloseRequested(int)));
 }
 
 
 BrowserDialog::~BrowserDialog()
 {
-
   delete ui;
 }
 
@@ -77,7 +74,7 @@ void BrowserDialog::closeEvent(QCloseEvent *event)
 
 void BrowserDialog::initTab(BrowserView *newView)
 {
-  newView->page()->setNetworkAccessManager(&m_AccessManager);
+  newView->page()->setNetworkAccessManager(m_AccessManager);
   newView->page()->setForwardUnsupportedContent(true);
 
   connect(newView, SIGNAL(loadProgress(int)), this, SLOT(progress(int)));
@@ -87,22 +84,19 @@ void BrowserDialog::initTab(BrowserView *newView)
   connect(newView, SIGNAL(urlChanged(QUrl)), this, SLOT(urlChanged(QUrl)));
   connect(newView, SIGNAL(openUrlInNewTab(QUrl)), this, SLOT(openInNewTab(QUrl)));
   connect(newView->page(), SIGNAL(downloadRequested(QNetworkRequest)), this, SLOT(downloadRequested(QNetworkRequest)));
-
   connect(newView->page(), SIGNAL(unsupportedContent(QNetworkReply*)), this, SLOT(unsupportedContent(QNetworkReply*)));
 
   ui->backBtn->setEnabled(false);
   ui->fwdBtn->setEnabled(false);
   m_Tabs->addTab(newView, tr("new"));
-
-  m_View->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-  m_View->settings()->setAttribute(QWebSettings::AutoLoadImages, true);
+  newView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
+  newView->settings()->setAttribute(QWebSettings::AutoLoadImages, true);
 }
 
 
 void BrowserDialog::openInNewTab(const QUrl &url)
 {
   BrowserView *newView = new BrowserView(this);
-
   initTab(newView);
   newView->setUrl(url);
 }
@@ -129,16 +123,16 @@ void BrowserDialog::openUrl(const QUrl &url)
   if (isHidden()) {
     show();
   }
-  m_View->load(url);
+  openInNewTab(url);
 }
 
 
 void BrowserDialog::maximizeWidth()
 {
-  int viewportWidth = m_View->page()->viewportSize().width();
+  int viewportWidth = getCurrentView()->page()->viewportSize().width();
   int frameWidth = width() - viewportWidth;
 
-  int contentWidth = m_View->page()->mainFrame()->contentsSize().width();
+  int contentWidth = getCurrentView()->page()->mainFrame()->contentsSize().width();
 
   QDesktopWidget screen;
   int currentScreen = screen.screenNumber(this);

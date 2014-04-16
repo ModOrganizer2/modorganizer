@@ -115,10 +115,9 @@ private:
 
   Ui::BrowserDialog *ui;
 
-  QNetworkAccessManager m_AccessManager;
+  QNetworkAccessManager *m_AccessManager;
 
   QTabWidget *m_Tabs;
-  BrowserView *m_View;
 
 };
 
