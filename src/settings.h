@@ -143,6 +143,16 @@ public:
   bool offlineMode() const;
 
   /**
+   * @return true if the user chose compact downloads
+   */
+  bool compactDownloads() const;
+
+  /**
+   * @return true if the user chose meta downloads
+   */
+  bool metaDownloads() const;
+
+  /**
    * @return the configured log level
    */
   int logLevel() const;

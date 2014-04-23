@@ -242,6 +242,16 @@ bool Settings::getNexusLogin(QString &username, QString &password) const
   }
 }
 
+bool Settings::compactDownloads() const
+{
+  return m_Settings.value("Settings/compact_downloads", false).toBool();
+}
+
+bool Settings::metaDownloads() const
+{
+  return m_Settings.value("Settings/meta_downloads", false).toBool();
+}
+
 bool Settings::offlineMode() const
 {
   return m_Settings.value("Settings/offline_mode", false).toBool();
@@ -508,7 +518,8 @@ void Settings::query(QWidget *parent)
   QComboBox *languageBox = dialog.findChild<QComboBox*>("languageBox");
   QComboBox *styleBox = dialog.findChild<QComboBox*>("styleBox");
   QComboBox *logLevelBox = dialog.findChild<QComboBox*>("logLevelBox");
-//  QCheckBox *handleNXMBox = dialog.findChild<QCheckBox*>("handleNXMBox");
+  QCheckBox *compactBox = dialog.findChild<QCheckBox*>("compactBox");
+  QCheckBox *showMetaBox = dialog.findChild<QCheckBox*>("showMetaBox");
 
   QLineEdit *downloadDirEdit = dialog.findChild<QLineEdit*>("downloadDirEdit");
   QLineEdit *modDirEdit = dialog.findChild<QLineEdit*>("modDirEdit");
@@ -587,6 +598,9 @@ void Settings::query(QWidget *parent)
     }
   }
 
+  compactBox->setChecked(compactDownloads());
+  showMetaBox->setChecked(metaDownloads());
+
   hideUncheckedBox->setChecked(hideUncheckedPlugins());
   forceEnableBox->setChecked(forceEnableCoreFiles());
 
@@ -651,6 +665,8 @@ void Settings::query(QWidget *parent)
 
     m_Settings.setValue("Settings/hide_unchecked_plugins", hideUncheckedBox->checkState() ? true : false);
     m_Settings.setValue("Settings/force_enable_core_files", forceEnableBox->checkState() ? true : false);
+    m_Settings.setValue("Settings/compact_downloads", compactBox->isChecked());
+    m_Settings.setValue("Settings/meta_downloads", showMetaBox->isChecked());
     m_Settings.setValue("Settings/load_mechanism", mechanismBox->itemData(mechanismBox->currentIndex()).toInt());
     if (QDir(downloadDirEdit->text()).exists()) {
       m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));

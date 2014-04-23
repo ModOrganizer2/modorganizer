@@ -106,7 +106,6 @@ public:
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
-  void setCompactDownloads(bool compact);
 
   bool setCurrentProfile(int index);
   bool setCurrentProfile(const QString &name);
@@ -571,7 +570,6 @@ private slots: // ui slots
   void bsaList_itemMoved();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
-  void on_compactBox_toggled(bool checked);
   void on_conflictsCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);

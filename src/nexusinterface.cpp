@@ -508,7 +508,8 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
     return;
   }
 
-  qCritical("request error: %s", reply->errorString().toUtf8().constData());
+  qCritical("request (%s) error: %s",
+            qPrintable(reply->url().toString()), qPrintable(reply->errorString()));
 }
 
 

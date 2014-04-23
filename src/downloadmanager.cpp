@@ -110,6 +110,10 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   int fileID = metaFile.value("fileID", 0).toInt();
   info->m_FileInfo = new ModRepositoryFileInfo(modID, fileID);
   info->m_FileInfo->name     = metaFile.value("name", "").toString();
+  if (info->m_FileInfo->name == "0") {
+    // bug in earlier version
+    info->m_FileInfo->name = "";
+  }
   info->m_FileInfo->modName  = metaFile.value("modName", "").toString();
   info->m_FileInfo->modID  = modID;
   info->m_FileInfo->fileID = fileID;
@@ -413,8 +417,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
 
   if (!resume) {
     newDownload->m_PreResumeSize = newDownload->m_Output.size();
-
-    removePending(newDownload-> m_ModID, newDownload->m_FileID);
+    removePending(newDownload->m_FileInfo->modID, newDownload->m_FileInfo->fileID);
 
     emit aboutToUpdate();
 
@@ -440,7 +443,6 @@ void DownloadManager::addNXMDownload(const QString &url)
   }
 
   emit aboutToUpdate();
-
   m_PendingDownloads.append(std::make_pair(nxmInfo.modId(), nxmInfo.fileId()));
 
   emit update(-1);
@@ -683,7 +685,6 @@ void DownloadManager::queryInfo(int index)
   }
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO);
-//  m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_ModID, this, qVariantFromValue(static_cast<void*>(info))));
 }
 
 
@@ -715,6 +716,34 @@ QString DownloadManager::getFilePath(int index) const
   return m_OutputDirectory + "/" + m_ActiveDownloads.at(index)->m_FileName;
 }
 
+QString DownloadManager::getFileTypeString(int fileType)
+{
+  switch (fileType) {
+    case 1: return tr("Main");
+    case 2: return tr("Update");
+    case 3: return tr("Optional");
+    case 4: return tr("Old");
+    case 5: return tr("Misc");
+    default: return tr("Unknown");
+  }
+}
+
+QString DownloadManager::getDisplayName(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("invalid index"));
+  }
+
+  DownloadInfo *info = m_ActiveDownloads.at(index);
+
+  if (!info->m_FileInfo->name.isEmpty()) {
+    return QString("%1 (%2, v%3)").arg(info->m_FileInfo->name)
+                                  .arg(getFileTypeString(info->m_FileInfo->fileCategory))
+                                  .arg(info->m_FileInfo->version.displayString());
+  } else {
+    return info->m_FileName;
+  }
+}
 
 QString DownloadManager::getFileName(int index) const
 {
@@ -921,7 +950,6 @@ DownloadManager::DownloadInfo *DownloadManager::findDownload(QObject *reply, int
 
 void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-qDebug("progress: %ldd / %ldd", bytesReceived, bytesTotal);
   if (bytesTotal == 0) {
     return;
   }

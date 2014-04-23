@@ -194,6 +194,35 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>User interface</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_11">
+          <item>
+           <widget class="QCheckBox" name="compactBox">
+            <property name="toolTip">
+             <string>If checked, the download interface will be more compact.</string>
+            </property>
+            <property name="text">
+             <string>Compact Download Interface</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="showMetaBox">
+            <property name="toolTip">
+             <string>If checked, the download list will display meta information instead of file names.</string>
+            </property>
+            <property name="text">
+             <string>Download Meta Information</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="resetDialogsButton">
          <property name="maximumSize">
           <size>

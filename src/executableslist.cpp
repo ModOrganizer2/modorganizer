@@ -68,7 +68,6 @@ void ExecutablesList::init()
 {
   std::vector<ExecutableInfo> executables = GameInfo::instance().getExecutables();
   for (std::vector<ExecutableInfo>::const_iterator iter = executables.begin(); iter != executables.end(); ++iter) {
-    ExecutableInfo test = *iter;
     addExecutableInternal(ToQString(iter->title),
                           QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())).append("/").append(ToQString(iter->binary)),
                           ToQString(iter->arguments), ToQString(iter->workingDirectory),

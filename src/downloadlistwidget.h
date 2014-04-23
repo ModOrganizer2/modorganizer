@@ -54,7 +54,7 @@ class DownloadListWidgetDelegate : public QItemDelegate
 
 public:
 
-  DownloadListWidgetDelegate(DownloadManager *manager, QTreeView *view, QObject *parent = 0);
+  DownloadListWidgetDelegate(DownloadManager *manager, bool metaDisplay, QTreeView *view, QObject *parent = 0);
   ~DownloadListWidgetDelegate();
 
   virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
@@ -104,6 +104,8 @@ private:
 
   DownloadListWidget *m_ItemWidget;
   DownloadManager *m_Manager;
+
+  bool m_MetaDisplay;
 
   QLabel *m_NameLabel;
   QLabel *m_SizeLabel;

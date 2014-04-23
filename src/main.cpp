@@ -139,6 +139,10 @@ bool bootstrap()
   // verify the hook-dll exists
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
 
+  if (::GetModuleHandleW(ToWString(dllName).c_str()) != NULL) {
+    throw std::runtime_error("hook.dll already loaded! You can't start Mod Organizer from within itself (not even indirectly)");
+  }
+
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
   if (dllMod == NULL) {
     throw windows_error("hook.dll is missing or invalid");
@@ -309,7 +313,6 @@ bool HaveWriteAccess(const std::wstring &path)
   }
   return writable;
 }
-
 
 
 int main(int argc, char *argv[])

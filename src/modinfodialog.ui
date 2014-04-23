@@ -78,13 +78,20 @@
       </attribute>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0">
+        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0">
          <property name="spacing">
           <number>6</number>
          </property>
          <property name="sizeConstraint">
           <enum>QLayout::SetMinimumSize</enum>
          </property>
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Ini Files</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QListWidget" name="iniFileList">
            <property name="maximumSize">
@@ -102,6 +109,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Ini Tweaks</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QListWidget" name="iniTweaksList">
            <property name="maximumSize">
             <size>
@@ -111,6 +125,12 @@
            </property>
            <property name="contextMenuPolicy">
             <enum>Qt::CustomContextMenu</enum>
+           </property>
+           <property name="toolTip">
+            <string>This is a list of ini tweaks (ini modifications that can be toggled).</string>
+           </property>
+           <property name="whatsThis">
+            <string>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod wether the tweaks are really optional.</string>
            </property>
           </widget>
          </item>

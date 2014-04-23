@@ -1121,20 +1121,26 @@ p, li { white-space: pre-wrap; }
              </layout>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,2">
-              <item>
-               <widget class="QCheckBox" name="compactBox">
-                <property name="text">
-                 <string>Compact</string>
-                </property>
-               </widget>
-              </item>
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,2">
               <item>
                <widget class="QCheckBox" name="showHiddenBox">
                 <property name="text">
                  <string>Show Hidden</string>
                 </property>
                </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
               <item>
                <widget class="MOBase::LineEditClear" name="downloadFilterEdit">

@@ -314,7 +314,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
   m_RefresherThread.start();
 
-  setCompactDownloads(initSettings.value("compact_downloads", false).toBool());
   m_AskForNexusPW = initSettings.value("ask_for_nexuspw", true).toBool();
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -2154,53 +2153,71 @@ void MainWindow::storeSettings()
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
   m_Settings.setupLoadMechanism();
-  QSettings settings(ToQString(GameInfo::instance().getIniFilename()), QSettings::IniFormat);
-  if (m_CurrentProfile != NULL) {
-    settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
-  } else {
-    settings.remove("selected_profile");
-  }
 
-  settings.setValue("mod_list_state", ui->modList->header()->saveState());
-  settings.setValue("plugin_list_state", ui->espList->header()->saveState());
+  QString iniFile = ToQString(GameInfo::instance().getIniFilename());
+  shellCopy(iniFile, iniFile + ".new", true, this);
 
-  settings.setValue("group_state", ui->groupCombo->currentIndex());
-
-  settings.setValue("compact_downloads", ui->compactBox->isChecked());
-  settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
-
-  settings.setValue("window_geometry", saveGeometry());
-  settings.setValue("window_split", ui->splitter->saveState());
-
-  settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
-
-  settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
-
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-  std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
-  int count = 0;
-  for (; current != end; ++current) {
-    const Executable &item = *current;
-    if (item.m_Custom || item.m_Toolbar) {
-      settings.setArrayIndex(count++);
-      settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-      settings.setValue("title", item.m_Title);
-      settings.setValue("arguments", item.m_Arguments);
-      settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
-      settings.setValue("steamAppID", item.m_SteamAppID);
-      settings.setValue("custom", item.m_Custom);
-      settings.setValue("toolbar", item.m_Toolbar);
+  QSettings::Status result = QSettings::NoError;
+  {
+    QSettings settings(iniFile + ".new", QSettings::IniFormat);
+    if (m_CurrentProfile != NULL) {
+      settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
+    } else {
+      settings.remove("selected_profile");
     }
+
+    settings.setValue("mod_list_state", ui->modList->header()->saveState());
+    settings.setValue("plugin_list_state", ui->espList->header()->saveState());
+
+    settings.setValue("group_state", ui->groupCombo->currentIndex());
+
+    settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
+
+    settings.setValue("window_geometry", saveGeometry());
+    settings.setValue("window_split", ui->splitter->saveState());
+
+    settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
+
+    settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+
+    settings.remove("customExecutables");
+    settings.beginWriteArray("customExecutables");
+    std::vector<Executable>::const_iterator current, end;
+    m_ExecutablesList.getExecutables(current, end);
+    int count = 0;
+    for (; current != end; ++current) {
+      const Executable &item = *current;
+      if (item.m_Custom || item.m_Toolbar) {
+        settings.setArrayIndex(count++);
+        settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
+        settings.setValue("title", item.m_Title);
+        settings.setValue("arguments", item.m_Arguments);
+        settings.setValue("workingDirectory", item.m_WorkingDirectory);
+        settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
+        settings.setValue("steamAppID", item.m_SteamAppID);
+        settings.setValue("custom", item.m_Custom);
+        settings.setValue("toolbar", item.m_Toolbar);
+      }
+    }
+    settings.endArray();
+
+    QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
+    settings.setValue("selected_executable", executableBox->currentIndex());
+
+    FileDialogMemory::save(settings);
+
+    settings.sync();
+    result = settings.status();
   }
-  settings.endArray();
-
-  QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
-  settings.setValue("selected_executable", executableBox->currentIndex());
-
-  FileDialogMemory::save(m_Settings.directInterface());
+  if (result == QSettings::NoError) {
+    shellRename(iniFile + ".new", iniFile, true, this);
+  } else {
+    QString reason = result == QSettings::AccessError ? tr("File is write protected")
+                   : result == QSettings::FormatError ? tr("Invalid file format (probably a bug)")
+                   : tr("Unknown error %1").arg(result);
+    QMessageBox::critical(this, tr("Failed to write settings"),
+                          tr("An error occured trying to write back MO settings: %1").arg(reason));
+  }
 }
 
 
@@ -2679,12 +2696,6 @@ void MainWindow::setESPListSorting(int index)
       ui->espList->header()->setSortIndicator(0, Qt::DescendingOrder);
     } break;
   }
-}
-
-
-void MainWindow::setCompactDownloads(bool compact)
-{
-  ui->compactBox->setChecked(compact);
 }
 
 
@@ -4253,6 +4264,8 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
+
+  updateDownloadListDelegate();
 }
 
 
@@ -4768,10 +4781,12 @@ void MainWindow::on_actionEndorseMO_triggered()
 
 void MainWindow::updateDownloadListDelegate()
 {
-  if (ui->compactBox->isChecked()) {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetCompactDelegate(&m_DownloadManager, ui->downloadView, ui->downloadView));
+  if (m_Settings.compactDownloads()) {
+    ui->downloadView->setItemDelegate(new DownloadListWidgetCompactDelegate(&m_DownloadManager, m_Settings.metaDownloads(),
+                                                                            ui->downloadView, ui->downloadView));
   } else {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetDelegate(&m_DownloadManager, ui->downloadView, ui->downloadView));
+    ui->downloadView->setItemDelegate(new DownloadListWidgetDelegate(&m_DownloadManager, m_Settings.metaDownloads(),
+                                                                     ui->downloadView, ui->downloadView));
   }
 
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(&m_DownloadManager, ui->downloadView);
@@ -4790,12 +4805,6 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), &m_DownloadManager, SLOT(cancelDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), &m_DownloadManager, SLOT(pauseDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
-}
-
-
-void MainWindow::on_compactBox_toggled(bool)
-{
-  updateDownloadListDelegate();
 }
 
 
@@ -5490,4 +5499,3 @@ void MainWindow::on_restoreModsButton_clicked()
     refreshModList(false);
   }
 }
-

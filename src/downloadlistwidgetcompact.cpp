@@ -40,8 +40,12 @@ DownloadListWidgetCompact::~DownloadListWidgetCompact()
 }
 
 
-DownloadListWidgetCompactDelegate::DownloadListWidgetCompactDelegate(DownloadManager *manager, QTreeView *view, QObject *parent)
-  : QItemDelegate(parent), m_Manager(manager), m_ItemWidget(new DownloadListWidgetCompact), m_View(view)
+DownloadListWidgetCompactDelegate::DownloadListWidgetCompactDelegate(DownloadManager *manager, bool metaDisplay, QTreeView *view, QObject *parent)
+  : QItemDelegate(parent)
+  , m_Manager(manager)
+  , m_MetaDisplay(metaDisplay)
+  , m_ItemWidget(new DownloadListWidgetCompact)
+  , m_View(view)
 {
   m_NameLabel = m_ItemWidget->findChild<QLabel*>("nameLabel");
   m_SizeLabel = m_ItemWidget->findChild<QLabel*>("sizeLabel");
@@ -97,7 +101,7 @@ void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) 
 
 void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) const
 {
-  QString name = m_Manager->getFileName(downloadIndex);
+  QString name = m_MetaDisplay ? m_Manager->getDisplayName(downloadIndex) : m_Manager->getFileName(downloadIndex);
   if (name.length() > 53) {
     name.truncate(50);
     name.append("...");

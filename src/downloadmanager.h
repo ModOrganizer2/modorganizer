@@ -72,8 +72,6 @@ private:
     QTime m_StartTime;
     qint64 m_PreResumeSize;
     int m_Progress;
-    int m_ModID;
-    int m_FileID;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -217,6 +215,14 @@ public:
    * @return absolute path of the file
    **/
   QString getFilePath(int index) const;
+
+  /**
+   * @brief retrieve a descriptive name of the download specified by index
+   *
+   * @param index index of the file to look up
+   * @return display name of the file
+   **/
+  QString getDisplayName(int index) const;
 
   /**
    * @brief retrieve the filename of the download specified by index
@@ -449,6 +455,8 @@ private:
   QDateTime matchDate(const QString &timeString);
 
   void removePending(int modID, int fileID);
+
+  static QString getFileTypeString(int fileType);
 
 private:
 
