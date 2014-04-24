@@ -181,9 +181,8 @@ public:
 
   void refreshLoadOrder();
 
-  void lootSort();
-
 public:
+
   virtual PluginState state(const QString &name) const;
   virtual int priority(const QString &name) const;
   virtual int loadOrder(const QString &name) const;

@@ -589,10 +589,7 @@ void PluginList::refreshLoadOrder()
 }
 
 
-void PluginList::lootSort()
-{
 
-}
 
 IPluginList::PluginState PluginList::state(const QString &name) const
 {

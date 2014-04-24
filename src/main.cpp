@@ -529,7 +529,11 @@ int main(int argc, char *argv[])
         arguments.removeAt(profileIndex);
         arguments.removeAt(profileIndex);
       }
-      qDebug("configured profile: %s", qPrintable(selectedProfileName));
+      if (selectedProfileName.isEmpty()) {
+        qDebug("no configured profile");
+      } else {
+        qDebug("configured profile: %s", qPrintable(selectedProfileName));
+      }
 
       // if we have a command line parameter, it is either a nxm link or
       // a binary to start

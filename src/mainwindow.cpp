@@ -2347,7 +2347,7 @@ QList<IOrganizer::FileInfo> MainWindow::findFileInfos(const QString &path, const
       }
     }
   } else {
-    qWarning("directory %s not found", qPrintable(path));
+    qDebug("directory %s not found", qPrintable(path));
   }
   return result;
 }
@@ -4323,7 +4323,9 @@ void MainWindow::installTranslator(const QString &name)
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    qWarning("localization file %s not found", qPrintable(fileName));
+    if (m_CurrentLanguage != "en-US") {
+      qWarning("localization file %s not found", qPrintable(fileName));
+    } // we don't actually expect localization files for english
   }
   qApp->installTranslator(translator);
   m_Translators.push_back(translator);
@@ -5334,6 +5336,8 @@ void MainWindow::on_bossButton_clicked()
   std::string reportURL;
   std::string errorMessages;
 
+  m_CurrentProfile->writeModlistNow();
+
   try {
     this->setEnabled(false);
     ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
@@ -5343,8 +5347,8 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QStringList parameters;
-    parameters << "--game" << ToQString(GameInfo::instance().getGameName())
-               << "--gamePath" << ToQString(GameInfo::instance().getGameDirectory());
+    parameters << "--game" << ToQString(GameInfo::instance().getGameShortName())
+               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
 
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
@@ -5395,7 +5399,6 @@ void MainWindow::on_bossButton_clicked()
       qWarning("report file missing");
     }
   }
-
   refreshESPList();
 
   if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
