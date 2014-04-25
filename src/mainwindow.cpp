@@ -1938,7 +1938,6 @@ void MainWindow::refreshBSAList()
   for (int i = 0; i < m_DefaultArchives.count(); ++i) {
     m_DefaultArchives[i] = m_DefaultArchives[i].trimmed();
   }
-
   m_ActiveArchives.clear();
 
   QFile archiveFile(m_CurrentProfile->getArchivesFileName());
@@ -1970,6 +1969,9 @@ void MainWindow::refreshBSAList()
         continue;
       }
       int index = m_ActiveArchives.indexOf(filename);
+      if (index == -1) {
+        index = 0xFFFF;
+      }
       QStringList strings(filename);
       bool isArchive = false;
       int origin = current->getOrigin(isArchive);
@@ -1978,7 +1980,6 @@ void MainWindow::refreshBSAList()
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, origin);
       newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
-//      newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       if (m_Settings.forceEnableCoreFiles() && m_DefaultArchives.contains(filename)) {
         newItem->setCheckState(0, Qt::Checked);
