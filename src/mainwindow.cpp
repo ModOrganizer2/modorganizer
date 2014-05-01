@@ -2211,7 +2211,10 @@ void MainWindow::storeSettings()
     result = settings.status();
   }
   if (result == QSettings::NoError) {
-    shellRename(iniFile + ".new", iniFile, true, this);
+    if (!shellRename(iniFile + ".new", iniFile, true, this)) {
+      QMessageBox::critical(this, tr("Failed to write settings"),
+                            tr("An error occured trying to write back MO settings: %1").arg(windowsErrorString(::GetLastError())));
+    }
   } else {
     QString reason = result == QSettings::AccessError ? tr("File is write protected")
                    : result == QSettings::FormatError ? tr("Invalid file format (probably a bug)")

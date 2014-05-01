@@ -281,7 +281,7 @@ private:
       file = m_FileRegister->getFile(iter->second);
     } else {
       file = m_FileRegister->createFile(fileName, this);
-#pragma message("this has been observed to cause a crash, no clue why")
+      // TODO this has been observed to cause a crash, no clue why
       m_Files[fileName] = file->getIndex();
     }
     file->addOrigin(origin.getID(), fileTime, archive);
