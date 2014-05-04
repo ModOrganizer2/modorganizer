@@ -195,7 +195,6 @@ bool isNxmLink(const QString &link)
   return link.left(6).toLower() == "nxm://";
 }
 
-
 LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
   typedef BOOL (WINAPI *FuncMiniDumpWriteDump)(HANDLE process, DWORD pid, HANDLE file, MINIDUMP_TYPE dumpType,
@@ -257,13 +256,10 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
   return result;
 }
 
-
 void registerMetaTypes()
 {
   registerExecutable();
 }
-
-
 
 bool HaveWriteAccess(const std::wstring &path)
 {
@@ -313,7 +309,6 @@ bool HaveWriteAccess(const std::wstring &path)
   }
   return writable;
 }
-
 
 int main(int argc, char *argv[])
 {

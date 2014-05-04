@@ -239,6 +239,8 @@ private:
 
   bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
 
+  ModStates state(unsigned int modIndex) const;
+
 private slots:
 
 private:

@@ -85,7 +85,7 @@ void SingleInstance::sendMessage(const QString &message)
 
   socket.write(message.toUtf8());
   if (!socket.waitForBytesWritten(s_Timeout)) {
-    reportError(tr("failed to connect to running instance: %1").arg(socket.errorString()));
+    reportError(tr("failed to communicate with running instance: %1").arg(socket.errorString()));
     return;
   }
 

@@ -29,7 +29,7 @@ QMutex LogBuffer::s_Mutex;
 
 
 LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outputFileName)
-  : QObject(NULL), m_OutFileName(outputFileName), m_ShutDown(false),
+  : QAbstractItemModel(NULL), m_OutFileName(outputFileName), m_ShutDown(false),
     m_MinMsgType(minMsgType), m_NumMessages(0)
 {
   m_Messages.resize(messageCount);
@@ -51,7 +51,16 @@ LogBuffer::~LogBuffer()
 void LogBuffer::logMessage(QtMsgType type, const QString &message)
 {
   if (type >= m_MinMsgType) {
-    m_Messages.at(m_NumMessages % m_Messages.size()) = message;
+    Message msg = { type, QTime::currentTime(), message };
+    if (m_NumMessages < m_Messages.size()) {
+      beginInsertRows(QModelIndex(), m_NumMessages, m_NumMessages + 1);
+    }
+    m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
+    if (m_NumMessages < m_Messages.size()) {
+      endInsertRows();
+    } else {
+      emit dataChanged(createIndex(0, 0), createIndex(m_Messages.size(), 0));
+    }
     ++m_NumMessages;
     if (type >= QtCriticalMsg) {
       write();
@@ -77,7 +86,7 @@ void LogBuffer::write() const
   unsigned int i = (m_NumMessages > m_Messages.size()) ? m_NumMessages - m_Messages.size()
                                                        : 0U;
   for (; i < m_NumMessages; ++i) {
-    file.write(m_Messages.at(i % m_Messages.size()).toUtf8());
+    file.write(m_Messages.at(i % m_Messages.size()).toString().toUtf8());
     file.write("\r\n");
   }
   ::SetLastError(lastError);
@@ -123,6 +132,67 @@ char LogBuffer::msgTypeID(QtMsgType type)
     case QtFatalMsg: return 'F';
     default: return '?';
   }
+}
+
+QModelIndex LogBuffer::index(int row, int column, const QModelIndex&) const
+{
+  return createIndex(row, column, row);
+}
+
+QModelIndex LogBuffer::parent(const QModelIndex&) const
+{
+  return QModelIndex();
+}
+
+int LogBuffer::rowCount(const QModelIndex &parent) const
+{
+  if (parent.isValid())
+    return 0;
+  else
+    return std::min(m_NumMessages, m_Messages.size());
+}
+
+int LogBuffer::columnCount(const QModelIndex&) const
+{
+  return 2;
+}
+
+
+QVariant LogBuffer::data(const QModelIndex &index, int role) const
+{
+  unsigned offset = m_NumMessages < m_Messages.size() ? 0
+                                                      : m_NumMessages - m_Messages.size();
+  unsigned int msgIndex = (offset + index.row()) % m_Messages.size();
+  switch (role) {
+    case Qt::DisplayRole: {
+      if (index.column() == 0) {
+        return m_Messages.at(msgIndex).time;
+      } else if (index.column() == 1) {
+        return m_Messages.at(msgIndex).message;
+      }
+    } break;
+    case Qt::DecorationRole: {
+      if (index.column() == 1) {
+        switch (m_Messages.at(msgIndex).type) {
+          case QtDebugMsg: return QIcon(":/MO/gui/information");
+          case QtWarningMsg: return QIcon(":/MO/gui/warning");
+          case QtCriticalMsg: return QIcon(":/MO/gui/important");
+          case QtFatalMsg: return QIcon(":/MO/gui/problem");
+        }
+      }
+    } break;
+    case Qt::UserRole: {
+      if (index.column() == 1) {
+        switch (m_Messages.at(msgIndex).type) {
+          case QtDebugMsg: return "D";
+          case QtWarningMsg: return "W";
+          case QtCriticalMsg: return "C";
+          case QtFatalMsg: return "F";
+        }
+      }
+    } break;
+  }
+  return QVariant();
 }
 
 void LogBuffer::log(QtMsgType type, const char *message)
@@ -171,3 +241,9 @@ void log(const char *format, ...)
   va_end(argList);
 }
 
+
+
+QString LogBuffer::Message::toString() const
+{
+  return QString("%1 [%2] %3").arg(time.toString()).arg(msgTypeID(type)).arg(message);
+}

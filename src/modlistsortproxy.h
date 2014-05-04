@@ -52,8 +52,24 @@ public:
    **/
   void disableAllVisible();
 
+  /**
+   * @brief tests if a filtere matches for a mod
+   * @param info mod information
+   * @param enabled true if the mod is currently active
+   * @return true if current active filters match for the specified mod
+   */
   bool filterMatchesMod(ModInfo::Ptr info, bool enabled) const;
 
+  /**
+   * @return true if a filter is currently active
+   */
+  bool isFilterActive() const { return m_FilterActive; }
+
+  /**
+   * @brief tests if the specified index has child nodes
+   * @param parent the node to test
+   * @return true if there are child nodes
+   */
   virtual bool hasChildren ( const QModelIndex & parent = QModelIndex() ) const {
     return rowCount(parent) > 0;
   }
@@ -85,6 +101,8 @@ private:
   std::vector<int> m_CategoryFilter;
   std::bitset<ModList::COL_LASTCOLUMN + 1> m_EnabledColumns;
   QString m_CurrentFilter;
+
+  bool m_FilterActive;
 
 };
 

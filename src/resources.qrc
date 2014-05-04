@@ -24,13 +24,13 @@
         <file alias="previous">resources/go-previous_16.png</file>
         <file alias="refresh">resources/view-refresh_16.png</file>
         <file alias="update_available">resources/software-update-available.png</file>
-        <file>resources/emblem-important.png</file>
+        <file alias="important">resources/emblem-important.png</file>
         <file>resources/check.png</file>
         <file>mo_icon.ico</file>
         <file alias="warning">resources/dialog-warning.png</file>
         <file alias="emblem_backup">resources/symbol-backup.png</file>
         <file alias="icon_tools">resources/applications-accessories.png</file>
-        <file alias="emblem_problem">resources/emblem-unreadable.png</file>
+        <file alias="problem">resources/emblem-unreadable.png</file>
         <file>resources/internet-web-browser.png</file>
         <file alias="update">resources/system-software-update.png</file>
         <file alias="help">resources/help-browser_32.png</file>

@@ -522,9 +522,10 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     return false;
   }
 
-  QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
+  QString targetDirectoryNative = m_ModsDirectory.mid(0).append("\\").append(modName);
+  QString targetDirectory = QDir::fromNativeSeparators(targetDirectoryNative);
 
-  qDebug("installing to \"%s\"", targetDirectory.toUtf8().constData());
+  qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
 
   m_InstallationProgress.setWindowTitle(tr("Extracting files"));
   m_InstallationProgress.setLabelText(QString());

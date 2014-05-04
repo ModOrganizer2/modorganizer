@@ -95,6 +95,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDesktopWidget>
 #include <QtPlugin>
 #include <QIdentityProxyModel>
+#include <QClipboard>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
@@ -166,6 +167,16 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
+
+  ui->logList->setModel(LogBuffer::instance());
+  ui->logList->setColumnWidth(0, 100);
+  ui->logList->setAutoScroll(true);
+  ui->logList->scrollToBottom();
+  ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
+  int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
+  ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
+  connect(ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)), ui->logList, SLOT(scrollToBottom()));
+  connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)), ui->logList, SLOT(scrollToBottom()));
 
   m_RefreshProgress = new QProgressBar(statusBar());
   m_RefreshProgress->setTextVisible(true);
@@ -670,10 +681,12 @@ void MainWindow::savePluginList()
   m_PluginList.saveLoadOrder(*m_DirectoryStructure);
 }
 
-void MainWindow::modFilterActive(bool active)
+void MainWindow::modFilterActive(bool filterActive)
 {
-  if (active) {
+  if (filterActive) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
+  } else if (ui->groupCombo->currentIndex() != 0) {
+    ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
   } else {
     ui->modList->setStyleSheet("");
   }
@@ -1415,9 +1428,11 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     QCoreApplication::processEvents();
   }
 
+  // need to make sure all data is saved before we start the application
   if (m_CurrentProfile != nullptr) {
     m_CurrentProfile->writeModlistNow(true);
   }
+  savePluginList();
 
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
@@ -2250,10 +2265,10 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 }
 
 
-void MainWindow::installMod(const QString &fileName)
+IModInterface *MainWindow::installMod(const QString &fileName)
 {
   if (m_CurrentProfile == NULL) {
-    return;
+    return NULL;
   }
 
   bool hasIniTweaks = false;
@@ -2278,12 +2293,14 @@ void MainWindow::installMod(const QString &fileName)
         displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
       }
       testExtractBSA(modIndex);
+      return modInfo.data();
     } else {
       reportError(tr("mod \"%1\" not found").arg(modName));
     }
   } else if (m_InstallationManager.wasCancelled()) {
     QMessageBox::information(this, tr("Installation cancelled"), tr("The mod was not installed completely."), QMessageBox::Ok);
   }
+  return NULL;
 }
 
 QString MainWindow::resolvePath(const QString &fileName) const
@@ -5245,10 +5262,10 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(expanded(QModelIndex)),newModel, SLOT(expanded(QModelIndex)));
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
-
   } else {
     m_ModListSortProxy->setSourceModel(&m_ModList);
   }
+  modFilterActive(m_ModListSortProxy->isFilterActive());
 }
 
 void MainWindow::on_linkButton_pressed()
@@ -5342,6 +5359,8 @@ void MainWindow::on_bossButton_clicked()
 
   m_CurrentProfile->writeModlistNow();
 
+  bool success = false;
+
   try {
     this->setEnabled(false);
     ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
@@ -5383,30 +5402,39 @@ void MainWindow::on_bossButton_clicked()
       if (remainder.length() > 0) {
         processLOOTOut(remainder, reportURL, errorMessages, dialog);
       }
+      DWORD exitCode = 0UL;
+      ::GetExitCodeProcess(loot, &exitCode);
+      if (exitCode != 0UL) {
+        reportError(tr("loot failed. Exit code was: %1").arg(exitCode));
+        return;
+      } else {
+        success = true;
+      }
     }
   } catch (const std::exception &e) {
-    reportError(tr("failed to run boss: %1").arg(e.what()));
+    reportError(tr("failed to run loot: %1").arg(e.what()));
   }
-
   if (errorMessages.length() > 0) {
     QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occured"), errorMessages.c_str(), QMessageBox::Ok, this);
     warn->setModal(false);
     warn->show();
   }
 
-  if (reportURL.length() > 0) {
-    m_IntegratedBrowser.setWindowTitle("LOOT Report");
-    QString report(reportURL.c_str());
-    if (QFile::exists(report)) {
-      m_IntegratedBrowser.openUrl(QUrl::fromLocalFile(report));
-    } else {
-      qWarning("report file missing");
+  if (success) {
+    if (reportURL.length() > 0) {
+      m_IntegratedBrowser.setWindowTitle("LOOT Report");
+      QString report(reportURL.c_str());
+      if (QFile::exists(report)) {
+        m_IntegratedBrowser.openUrl(QUrl::fromLocalFile(report));
+      } else {
+        qWarning("report file missing");
+      }
     }
-  }
-  refreshESPList();
+    refreshESPList();
 
-  if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
-    QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+    }
   }
 }
 
@@ -5505,4 +5533,16 @@ void MainWindow::on_restoreModsButton_clicked()
     }
     refreshModList(false);
   }
+}
+
+void MainWindow::on_actionCopy_Log_to_Clipboard_triggered()
+{
+  QStringList lines;
+  QAbstractItemModel *model = ui->logList->model();
+  for (int i = 0; i < model->rowCount(); ++i) {
+    lines.append(QString("%1 [%2] %3").arg(model->index(i, 0).data().toString())
+                                      .arg(model->index(i, 1).data(Qt::UserRole).toString())
+                                      .arg(model->index(i, 1).data().toString()));
+  }
+  QApplication::clipboard()->setText(lines.join("\n"));
 }

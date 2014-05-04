@@ -132,7 +132,7 @@ public:
   virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def = QVariant()) const;
   virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync = true);
   virtual QString pluginDataPath() const;
-  virtual void installMod(const QString &fileName);
+  virtual MOBase::IModInterface *installMod(const QString &fileName);
   virtual QString resolvePath(const QString &fileName) const;
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
@@ -594,6 +594,7 @@ private slots: // ui slots
   void on_restoreButton_clicked();
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
+  void on_actionCopy_Log_to_Clipboard_triggered();
 };
 
 #endif // MAINWINDOW_H

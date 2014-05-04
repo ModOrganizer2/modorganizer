@@ -375,20 +375,23 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 
   int modID = index.row();
 
+  ModInfo::Ptr info = ModInfo::getByIndex(modID);
+  IModList::ModStates oldState = state(modID);
+
+  bool result = false;
+
   if (role == Qt::CheckStateRole) {
     bool enabled = value.toInt() == Qt::Checked;
     if (m_Profile->modEnabled(modID) != enabled) {
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
-
       emit modlist_changed(index, role);
     }
-    return true;
+    result = true;
   } else if (role == Qt::EditRole) {
-    bool res = false;
     switch (index.column()) {
       case COL_NAME: {
-        res = renameMod(modID, value.toString());
+        result = renameMod(modID, value.toString());
       } break;
       case COL_PRIORITY: {
         bool ok = false;
@@ -397,47 +400,55 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
           m_Profile->setModPriority(modID, newPriority);
 
           emit modlist_changed(index, role);
-          res = true;
+          result = true;
         } else {
-          res = false;
+          result = false;
         }
       } break;
       case COL_MODID: {
-        ModInfo::Ptr info = ModInfo::getByIndex(modID);
         bool ok = false;
         int newID = value.toInt(&ok);
         if (ok) {
           info->setNexusID(newID);
           emit modlist_changed(index, role);
-          res = true;
+          result = true;
         } else {
-          res = false;
+          result = false;
         }
       } break;
       case COL_VERSION: {
-        ModInfo::Ptr info = ModInfo::getByIndex(modID);
         VersionInfo::VersionScheme scheme = info->getVersion().scheme();
         VersionInfo version(value.toString(), scheme);
         if (version.isValid()) {
           info->setVersion(version);
-          res = true;
+          result = true;
         } else {
-          res = false;
+          result = false;
         }
       } break;
       default: {
         qWarning("edit on column \"%s\" not supported",
                  getColumnName(index.column()).toUtf8().constData());
-        res = false;
+        result = false;
       } break;
     }
-    if (res) {
+    if (result) {
       emit dataChanged(index, index);
     }
-    return res;
-  } else {
-    return false;
   }
+
+  IModList::ModStates newState = state(modID);
+  if (oldState != newState) {
+    try {
+      m_ModStateChanged(info->name(), newState);
+    } catch (const std::exception &e) {
+      qCritical("failed to invoke state changed notification: %s", e.what());
+    } catch (...) {
+      qCritical("failed to invoke state changed notification: unknown exception");
+    }
+  }
+
+  return result;
 }
 
 
@@ -578,10 +589,9 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
   }
 }
 
-IModList::ModStates ModList::state(const QString &name) const
+IModList::ModStates ModList::state(unsigned int modIndex) const
 {
-  ModStates result;
-  unsigned int modIndex = ModInfo::getIndex(name);
+  IModList::ModStates result;
   if (modIndex != UINT_MAX) {
     result |= IModList::STATE_EXISTS;
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
@@ -603,6 +613,13 @@ IModList::ModStates ModList::state(const QString &name) const
     }
   }
   return result;
+}
+
+IModList::ModStates ModList::state(const QString &name) const
+{
+  unsigned int modIndex = ModInfo::getIndex(name);
+
+  return state(modIndex);
 }
 
 int ModList::priority(const QString &name) const
@@ -744,6 +761,8 @@ void ModList::removeRowForce(int row)
   }
   if (m_Profile == NULL) return;
 
+  m_Profile->setModEnabled(row, false);
+
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
 
   bool wasEnabled = m_Profile->modEnabled(row);
@@ -769,6 +788,8 @@ void ModList::removeRow(int row, const QModelIndex&)
     return;
   }
   if (m_Profile == NULL) return;
+
+  m_Profile->setModEnabled(row, false);
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   if (!modInfo->isRegular()) return;

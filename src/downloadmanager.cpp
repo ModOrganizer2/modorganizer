@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "json.h"
 #include "selectiondialog.h"
 #include <utility.h>
+#include <bbcode.h>
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>
@@ -1159,7 +1160,7 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   info->fileName = result["uri"].toString();
   info->fileCategory = result["category_id"].toInt();
   info->fileTime = matchDate(result["date"].toString());
-  info->description = result["description"].toString();
+  info->description = BBCode::convertToHTML(result["description"].toString());
 
   info->repository = "Nexus";
   info->modID = modID;

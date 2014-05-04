@@ -28,8 +28,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
-  : QSortFilterProxyModel(parent), m_Profile(profile),
-    m_CategoryFilter(), m_CurrentFilter()
+  : QSortFilterProxyModel(parent)
+  , m_Profile(profile)
+  , m_CategoryFilter()
+  , m_CurrentFilter()
+  , m_FilterActive(false)
 {
   m_EnabledColumns.set(ModList::COL_FLAGS);
   m_EnabledColumns.set(ModList::COL_NAME);
@@ -47,7 +50,8 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  emit filterActive((m_CategoryFilter.size() > 0) || !m_CurrentFilter.isEmpty());
+  m_FilterActive = (m_CategoryFilter.size() > 0) || !m_CurrentFilter.isEmpty();
+  emit filterActive(m_FilterActive);
 }
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)

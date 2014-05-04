@@ -23,10 +23,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QObject>
 #include <QMutex>
 #include <QScopedPointer>
+#include <QStringListModel>
+#include <QTime>
 #include <vector>
 
 
-class LogBuffer : public QObject
+class LogBuffer : public QAbstractItemModel
 {
   Q_OBJECT
 
@@ -42,11 +44,21 @@ public:
   static void writeNow();
   static void cleanQuit();
 
+  static LogBuffer *instance() { return s_Instance.data(); }
+
 public:
 
   virtual ~LogBuffer();
 
   void logMessage(QtMsgType type, const QString &message);
+
+  // QAbstractItemModel interface
+public:
+  QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex parent(const QModelIndex &child) const;
+  int rowCount(const QModelIndex &parent) const;
+  int columnCount(const QModelIndex &parent) const;
+  QVariant data(const QModelIndex &index, int role) const;
 
 signals:
 
@@ -64,6 +76,15 @@ private:
 
 private:
 
+  struct Message {
+    QtMsgType type;
+    QTime time;
+    QString message;
+    QString toString() const;
+  };
+
+private:
+
   static QScopedPointer<LogBuffer> s_Instance;
   static QMutex s_Mutex;
 
@@ -71,7 +92,7 @@ private:
   bool m_ShutDown;
   QtMsgType m_MinMsgType;
   unsigned int m_NumMessages;
-  std::vector<QString> m_Messages;
+  std::vector<Message> m_Messages;
   
 };
 

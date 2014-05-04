@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegExp>
 #include <map>
 #include <algorithm>
+#include <boost/assign.hpp>
 
 
 namespace BBCode {
@@ -43,7 +44,6 @@ public:
     // extract the tag name
     m_TagNameExp.indexIn(input, 1, QRegExp::CaretAtOffset);
     QString tagName = m_TagNameExp.cap(0).toLower();
-    //qDebug("tag name %s", tagName.toUtf8().constData());
     TagMap::iterator tagIter = m_TagMap.find(tagName);
     if (tagIter != m_TagMap.end()) {
       // recognized tag
@@ -60,7 +60,21 @@ public:
         length = closeTagPos + closeTag.length();
         QString temp = input.mid(0, length);
         if (tagIter->second.first.indexIn(temp) == 0) {
-          return temp.replace(tagIter->second.first, tagIter->second.second);
+          if (tagIter->second.second.isEmpty()) {
+            if (tagName == "color") {
+              QString color = tagIter->second.first.cap(1);
+              QString content = tagIter->second.first.cap(2);
+              auto colIter = m_ColorMap.find(color.toLower());
+              if (colIter != m_ColorMap.end()) {
+                color = colIter->second;
+              }
+              return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
+            } else {
+              qWarning("don't know how to deal with tag %s", qPrintable(tagName));
+            }
+          } else {
+            return temp.replace(tagIter->second.first, tagIter->second.second);
+          }
         } else {
           // expression doesn't match. either the input string is invalid
           // or the expression is
@@ -96,7 +110,7 @@ private:
     m_TagMap["size="]  = std::make_pair(QRegExp("\\[size=([^\\]]*)\\](.*)\\[/size\\]"),
                                         "<font size=\"\\1\">\\2</font>");
     m_TagMap["color="] = std::make_pair(QRegExp("\\[color=([^\\]]*)\\](.*)\\[/color\\]"),
-                                        "<font style=\"color: #\\1;\">\\2</font>");
+                                        "");
     m_TagMap["font="]  = std::make_pair(QRegExp("\\[font=([^\\]]*)\\](.*)\\[/font\\]"),
                                         "<font face=\\1>\\2</font>");
     m_TagMap["center"] = std::make_pair(QRegExp("\\[center\\](.*)\\[/center\\]"),
@@ -139,16 +153,17 @@ private:
                                          "<a href=\"\\1\">\\1</a>");
     m_TagMap["url="]    = std::make_pair(QRegExp("\\[url=([^\\]]*)\\](.*)\\[/url\\]"),
                                          "<a href=\"\\1\">\\2</a>");
-/*    m_TagMap["img"]     = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"),
-                                         "<img src=\"\\1\"/>");
-    m_TagMap["img="]     = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"),
-                                         "<img src=\"\\2\" align=\"\\1\" />");*/
     m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"), "");
     m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"), "");
     m_TagMap["email="]  = std::make_pair(QRegExp("\\[email=\"?([^\\]]*)\"?\\](.*)\\[/email\\]"),
                                          "<a href=\"mailto:\\1\">\\2</a>");
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),
                                          "<a href=\"http://www.youtube.com/v/\\1\">http://www.youtube.com/v/\\1</a>");
+
+    m_ColorMap = boost::assign::map_list_of("red", "FF0000")("green", "00FF00")("blue", "0000FF")
+                                           ("black", "000000")("gray", "7F7F7F")("white", "FFFFFF")
+                                           ("yellow", "FFFF00")("cyan", "00FFFF")("magenta", "FF00FF")
+                                           ("brown", "A52A2A")("orange", "FFCC00");
 
     // make all patterns non-greedy and case-insensitive
     for (TagMap::iterator iter = m_TagMap.begin(); iter != m_TagMap.end(); ++iter) {
@@ -157,10 +172,11 @@ private:
     }
   }
 
-
 private:
+
   QRegExp m_TagNameExp;
   TagMap m_TagMap;
+  std::map<QString, QString> m_ColorMap;
 };
 
 
