@@ -2781,7 +2781,6 @@ void MainWindow::directory_refreshed()
     DirectoryEntry *oldStructure = m_DirectoryStructure;
     m_DirectoryStructure = newStructure;
     delete oldStructure;
-
     refreshDataTree();
   } else {
     // TODO: don't know why this happens, this slot seems to get called twice with only one emit
