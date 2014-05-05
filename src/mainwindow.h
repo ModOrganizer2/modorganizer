@@ -391,6 +391,8 @@ private:
 
   std::vector<QTreeWidgetItem*> m_RemoveWidget;
 
+  uint m_ArchiveListHash;
+
 private slots:
 
   void showMessage(const QString &message);

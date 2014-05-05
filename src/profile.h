@@ -316,6 +316,7 @@ private:
 
   QDir m_Directory;
 
+  mutable uint m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
   std::vector<unsigned int> m_ModIndexByPriority;
   unsigned int m_NumRegularMods;

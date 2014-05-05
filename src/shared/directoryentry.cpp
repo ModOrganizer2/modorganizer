@@ -235,6 +235,9 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 
 void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &archive)
 {
+  if (m_Parent != NULL) {
+    m_Parent->propagateOrigin(origin);
+  }
   if (m_Origin == -1) {
     m_Origin = origin;
     m_FileTime = fileTime;
@@ -385,29 +388,25 @@ std::wstring FileEntry::getRelativePath() const
 //
 DirectoryEntry::DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID)
   : m_OriginConnection(new OriginConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID), m_TopLevel(true)
+    m_Name(name), m_Parent(parent), m_Populated(false), m_TopLevel(true)
 {
   m_FileRegister.reset(new FileRegister(m_OriginConnection));
+  m_Origins.insert(originID);
   LEAK_TRACE;
 }
 
 DirectoryEntry::DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID,
                boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection)
   : m_FileRegister(fileRegister), m_OriginConnection(originConnection),
-    m_Name(name), m_Parent(parent), m_Populated(false), m_Origin(originID), m_TopLevel(false)
+    m_Name(name), m_Parent(parent), m_Populated(false), m_TopLevel(false)
 {
   LEAK_TRACE;
+  m_Origins.insert(originID);
 }
 
 
 DirectoryEntry::~DirectoryEntry()
 {
-/*  if (m_TopLevel) {
-    if (m_FileRegister.use_count() > 1) {
-log("this should not happen");
-      delete m_FileRegister.get();
-    }
-  }*/
   LEAK_UNTRACE;
   clear();
 }
@@ -477,6 +476,14 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
 
   addFiles(origin, archive.getRoot(), fileData.ftLastWriteTime, fileName.substr(namePos));
   m_Populated = true;
+}
+
+void DirectoryEntry::propagateOrigin(int origin)
+{
+  m_Origins.insert(origin);
+  if (m_Parent != NULL) {
+    m_Parent->propagateOrigin(origin);
+  }
 }
 
 
@@ -603,6 +610,10 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   }
 }
 
+bool DirectoryEntry::hasContentsFromOrigin(int originID) const
+{
+  return m_Origins.find(originID) != m_Origins.end();
+}
 
 void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime)
 {
@@ -656,7 +667,7 @@ int DirectoryEntry::anyOrigin() const
       return res;
     }
   }
-  return m_Origin;
+  return *(m_Origins.begin());
 }
 
 

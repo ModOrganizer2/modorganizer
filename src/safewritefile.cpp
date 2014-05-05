@@ -46,3 +46,23 @@ void SafeWriteFile::commit() {
   m_TempFile.setAutoRemove(false);
   m_TempFile.close();
 }
+
+bool SafeWriteFile::commitIfDifferent(uint &inHash) {
+  uint newHash = hash();
+  if (newHash != inHash) {
+    commit();
+    inHash = newHash;
+    return true;
+  } else {
+    return false;
+  }
+}
+
+uint SafeWriteFile::hash()
+{
+  qint64 pos = m_TempFile.pos();
+  m_TempFile.seek(0);
+  QByteArray data = m_TempFile.readAll();
+  m_TempFile.seek(pos);
+  return qHash(data);
+}

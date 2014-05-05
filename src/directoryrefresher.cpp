@@ -93,7 +93,6 @@ void DirectoryRefresher::refresh()
   //TODO i is the priority here, where higher = more important. the input vector is also sorted by priority but inverted!
   for (int i = 1; iter != m_Mods.end(); ++iter, ++i) {
     QString modName = std::get<0>(*iter);
-qDebug("load files for mod %s", qPrintable(modName));
     try {
       addModToStructure(m_DirectoryStructure, modName, i, std::get<1>(*iter));
     } catch (const std::exception &e) {
@@ -103,14 +102,11 @@ qDebug("load files for mod %s", qPrintable(modName));
   }
 
   std::wstring dataDirectory = GameInfo::instance().getGameDirectory() + L"\\data";
-qDebug("load files for data folder");
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
 
   emit progress(100);
 
-qDebug("cleanup structure");
   cleanStructure(m_DirectoryStructure);
-qDebug("all done");
 
   emit refreshed();
 }

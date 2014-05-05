@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
+#include <map>
 #include "pdll.h"
 #include <BOSS-API.h>
 
@@ -278,6 +279,7 @@ private:
 private:
 
   std::vector<ESPInfo> m_ESPs;
+  mutable std::map<QString, uint> m_LastSaveHash;
 
   std::map<QString, int> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;

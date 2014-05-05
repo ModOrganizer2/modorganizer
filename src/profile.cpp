@@ -147,7 +147,6 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
 
   m_SaveTimer->stop();
   if (!m_Directory.exists()) return;
-#pragma message("right now, this is doing unnecessary saves. Need a flag that says that mod priority, enabled-state or name of a mod has changed")
 
   try {
     QString fileName = getModlistFileName();
@@ -175,9 +174,9 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
       }
     }
 
-    file.commit();
-
-    qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+    if (file.commitIfDifferent(m_LastModlistHash)) {
+      qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+    }
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
     return;

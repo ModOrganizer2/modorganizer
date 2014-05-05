@@ -213,6 +213,8 @@ public:
   void addFromOrigin(const std::wstring &originName, const std::wstring &directory, int priority);
   void addFromBSA(const std::wstring &originName, std::wstring &directory, const std::wstring &fileName, int priority);
 
+  void propagateOrigin(int origin);
+
   const std::wstring &getName() const;
 
   boost::shared_ptr<FileRegister> getFileRegister() { return m_FileRegister; }
@@ -269,6 +271,8 @@ public:
     }
   }
 
+  bool hasContentsFromOrigin(int originID) const;
+
 private:
 
   DirectoryEntry(const DirectoryEntry &reference);
@@ -319,7 +323,7 @@ private:
   std::vector<DirectoryEntry*> m_SubDirectories;
 
   DirectoryEntry *m_Parent;
-  int m_Origin;
+  std::set<int> m_Origins;
 
   bool m_Populated;
 

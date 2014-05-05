@@ -664,8 +664,9 @@ void MainWindow::saveArchiveList()
         }
       }
     }
-    archiveFile.commit();
-    qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_CurrentProfile->getArchivesFileName())));
+    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
+      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_CurrentProfile->getArchivesFileName())));
+    }
   } else {
     qWarning("archive list not initialised");
   }
@@ -1423,7 +1424,7 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     }
   }
 
-  while (m_RefreshProgress->isVisible()) {
+  while (m_DirectoryUpdate) {
     ::Sleep(100);
     QCoreApplication::processEvents();
   }
@@ -1432,7 +1433,6 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
   if (m_CurrentProfile != nullptr) {
     m_CurrentProfile->writeModlistNow(true);
   }
-  savePluginList();
 
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
@@ -1442,28 +1442,6 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
     return INVALID_HANDLE_VALUE;
   }
 }
-
-/*
-void MainWindow::spawnProgram(const QString &fileName, const QString &argumentsArg,
-                              const QString &profileName, const QDir &currentDirectory)
-{
-  QFileInfo binary;
-  QString arguments = argumentsArg;
-  QString steamAppID;
-  try {
-    const Executable &exe = m_ExecutablesList.find(fileName);
-    steamAppID = exe.m_SteamAppID;
-    if (arguments == "") {
-      arguments = exe.m_Arguments;
-    }
-    binary = exe.m_BinaryInfo;
-  } catch (const std::runtime_error&) {
-    qWarning("\"%s\" not set up as executable", fileName.toUtf8().constData());
-    binary = QFileInfo(fileName);
-  }
-  spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
-}
-*/
 
 
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
@@ -2774,8 +2752,6 @@ void MainWindow::refresher_progress(int percent)
 
 void MainWindow::directory_refreshed()
 {
-  statusBar()->hide();
-
   DirectoryEntry *newStructure = m_DirectoryRefresher.getDirectoryStructure();
   if (newStructure != NULL) {
     DirectoryEntry *oldStructure = m_DirectoryStructure;
@@ -2800,6 +2776,7 @@ void MainWindow::directory_refreshed()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->clearCaches();
   }
+  statusBar()->hide();
 }
 
 
@@ -5375,7 +5352,6 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
-
     HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
                               m_CurrentProfile->getName(),

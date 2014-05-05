@@ -37,6 +37,10 @@ public:
 
   void commit();
 
+  bool commitIfDifferent(uint &hash);
+
+  uint hash();
+
 private:
   QString m_FileName;
   QTemporaryFile m_TempFile;
