@@ -42,7 +42,10 @@ using namespace MOShared;
 
 
 NXMAccessManager::NXMAccessManager(QObject *parent)
-  : QNetworkAccessManager(parent), m_LoginReply(NULL), m_ProgressDialog()
+  : QNetworkAccessManager(parent)
+  , m_LoginReply(NULL)
+  , m_ProgressDialog()
+  , m_LoginAttempted(false)
 {
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/nexus_cookies.dat", this));
@@ -92,6 +95,11 @@ bool NXMAccessManager::loggedIn() const
   return hasLoginCookies();
 }
 
+bool NXMAccessManager::loginWaiting() const
+{
+  return m_LoginReply != NULL;
+}
+
 
 void NXMAccessManager::login(const QString &username, const QString &password)
 {
@@ -103,6 +111,8 @@ void NXMAccessManager::login(const QString &username, const QString &password)
     emit loginSuccessful(false);
     return;
   }
+
+  m_LoginAttempted = true;
 
   m_Username = username;
   m_Password = password;
@@ -149,6 +159,7 @@ void NXMAccessManager::loginTimeout()
   emit loginFailed(tr("timeout"));
   m_LoginReply->deleteLater();
   m_LoginReply = NULL;
+  m_LoginAttempted = false; // this usually means we might have usccess later
   m_LoginTimeout.stop();
   m_Username.clear();
   m_Password.clear();

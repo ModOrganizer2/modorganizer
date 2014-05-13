@@ -75,6 +75,9 @@
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
                </property>
+               <property name="indentation">
+                <number>0</number>
+               </property>
                <attribute name="headerVisible">
                 <bool>false</bool>
                </attribute>
@@ -83,6 +86,54 @@
                  <string notr="true">1</string>
                 </property>
                </column>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="clickBlankLabel">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="text">
+                <string>Click blank area to deselect</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QGroupBox" name="groupBox">
+               <property name="title">
+                <string/>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+               <property name="checkable">
+                <bool>false</bool>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_11">
+                <item>
+                 <widget class="QRadioButton" name="categoriesAndBtn">
+                  <property name="toolTip">
+                   <string>If checked, only mods that match all selected categories are displayed.</string>
+                  </property>
+                  <property name="text">
+                   <string>And</string>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="categoriesOrBtn">
+                  <property name="toolTip">
+                   <string>If checked, all mods that match one of the selected categories are displayed.</string>
+                  </property>
+                  <property name="text">
+                   <string>Or</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
               </widget>
              </item>
             </layout>
@@ -140,10 +191,23 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="profileRefreshBtn">
+               <spacer name="horizontalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="listOptionsBtn">
                 <property name="maximumSize">
                  <size>
-                  <width>24</width>
+                  <width>16777215</width>
                   <height>16777215</height>
                  </size>
                 </property>
@@ -158,22 +222,15 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <property name="icon">
                  <iconset resource="resources.qrc">
-                  <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+                  <normaloff>:/MO/gui/settings</normaloff>:/MO/gui/settings</iconset>
                 </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
+                <property name="iconSize">
                  <size>
-                  <width>40</width>
-                  <height>20</height>
+                  <width>16</width>
+                  <height>16</height>
                  </size>
                 </property>
-               </spacer>
+               </widget>
               </item>
               <item>
                <widget class="QPushButton" name="restoreModsButton">

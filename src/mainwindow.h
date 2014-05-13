@@ -64,10 +64,12 @@ class ModListSortProxy;
 class ModListGroupCategoriesProxy;
 
 
-class MainWindow : public QMainWindow, public MOBase::IOrganizer, public MOBase::IPluginDiagnose
+class MainWindow : public QMainWindow, public MOBase::IPluginDiagnose
 {
   Q_OBJECT
   Q_INTERFACES(MOBase::IPluginDiagnose)
+
+  friend class OrganizerProxy;
 
 private:
 
@@ -97,7 +99,6 @@ public:
 
   bool addProfile();
   void refreshLists();
-  void refreshESPList();
   void refreshBSAList();
   void refreshDataTree();
   void refreshSaveList();
@@ -117,34 +118,6 @@ public:
 
   void loadPlugins();
 
-  virtual MOBase::IGameInfo &gameInfo() const;
-  virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
-  virtual QString profileName() const;
-  virtual QString profilePath() const;
-  virtual QString downloadsPath() const;
-  virtual MOBase::VersionInfo appVersion() const;
-  virtual MOBase::IModInterface *getMod(const QString &name);
-  virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  virtual bool removeMod(MOBase::IModInterface *mod);
-  virtual void modDataChanged(MOBase::IModInterface *mod);
-  virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
-  virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
-  virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def = QVariant()) const;
-  virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync = true);
-  virtual QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName);
-  virtual QString resolvePath(const QString &fileName) const;
-  virtual QStringList listDirectories(const QString &directoryName) const;
-  virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
-  virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
-
-  virtual MOBase::IDownloadManager *downloadManager();
-  virtual MOBase::IPluginList *pluginList();
-  virtual MOBase::IModList *modList();
-  virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
-  virtual void refreshModList(bool saveChanges = true);
-
   virtual std::vector<unsigned int> activeProblems() const;
   virtual QString shortDescription(unsigned int key) const;
   virtual QString fullDescription(unsigned int key) const;
@@ -158,6 +131,9 @@ public:
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
   void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
+
+  HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -200,6 +176,9 @@ protected:
 
 private:
 
+  void refreshESPList();
+  void refreshModList(bool saveChanges = true);
+
   void actionToToolButton(QAction *&sourceAction);
   bool verifyPlugin(MOBase::IPlugin *plugin);
   void registerPluginTool(MOBase::IPluginTool *tool);
@@ -210,8 +189,6 @@ private:
   void activateSelectedProfile();
 
   void setExecutableIndex(int index);
-
-  bool nexusLogin();
 
   bool testForSteam();
   void startSteam();
@@ -224,6 +201,13 @@ private:
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod();
+  MOBase::IModInterface *installMod(const QString &fileName);
+  MOBase::IModInterface *getMod(const QString &name);
+  MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
+  bool removeMod(MOBase::IModInterface *mod);
+
+  QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
+
   bool modifyExecutablesDialog();
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
   void displayModInformation(int row, int tab = 0);
@@ -297,6 +281,8 @@ private:
 
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
+
+  QMenu *modListContextMenu();
 
 private:
 
@@ -458,6 +444,8 @@ private slots:
 
   void linkClicked(const QString &url);
 
+  bool nexusLogin();
+
   void loginSuccessful(bool necessary);
   void loginSuccessfulUpdate(bool necessary);
   void loginFailed(const QString &message);
@@ -489,6 +477,7 @@ private slots:
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
   void editCategories();
+  void deselectFilters();
 
   void displayModInformation(const QString &modName, int tab);
   void modOpenNext();
@@ -556,6 +545,7 @@ private slots:
   void delayedRemove();
 
   void requestDownload(const QUrl &url, QNetworkReply *reply);
+  void profileRefresh();
 
 private slots: // ui slots
   // actions
@@ -578,7 +568,6 @@ private slots: // ui slots
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
-  void on_profileRefreshBtn_clicked();
   void on_savegameList_customContextMenuRequested(const QPoint &pos);
   void on_startButton_clicked();
   void on_tabWidget_currentChanged(int index);
@@ -597,6 +586,10 @@ private slots: // ui slots
   void on_restoreModsButton_clicked();
   void on_saveModsButton_clicked();
   void on_actionCopy_Log_to_Clipboard_triggered();
+  void on_categoriesAndBtn_toggled(bool checked);
+  void on_categoriesOrBtn_toggled(bool checked);
 };
+
+
 
 #endif // MAINWINDOW_H

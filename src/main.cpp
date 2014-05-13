@@ -310,6 +310,7 @@ bool HaveWriteAccess(const std::wstring &path)
   return writable;
 }
 
+
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
@@ -328,7 +329,7 @@ int main(int argc, char *argv[])
                    , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
     return 1;
   }
-  LogBuffer::init(200, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
+  LogBuffer::init(100, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));

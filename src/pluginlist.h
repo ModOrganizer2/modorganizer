@@ -238,7 +238,6 @@ private:
     QString m_Name;
     bool m_Enabled;
     bool m_ForceEnabled;
-    bool m_Removed;
     int m_Priority;
     int m_LoadOrder;
     FILETIME m_Time;

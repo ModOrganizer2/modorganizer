@@ -397,7 +397,7 @@ void PluginList::writePlugins(const QString &fileName, bool writeUnchecked) cons
   int writtenCount = 0;
   for (size_t i = 0; i < m_ESPs.size(); ++i) {
     int priority = m_ESPsByPriority[i];
-    if ((m_ESPs[priority].m_Enabled || writeUnchecked) && !m_ESPs[priority].m_Removed) {
+    if (m_ESPs[priority].m_Enabled || writeUnchecked) {
       //file.write(m_ESPs[priority].m_Name.toUtf8());
       if (!textCodec->canEncode(m_ESPs[priority].m_Name)) {
         invalidFileNames = true;
@@ -435,7 +435,11 @@ void PluginList::writeLockedOrder(const QString &fileName) const
 }
 
 
-void PluginList::saveTo(const QString &pluginFileName, const QString &loadOrderFileName, const QString &lockedOrderFileName, const QString& deleterFileName, bool hideUnchecked) const
+void PluginList::saveTo(const QString &pluginFileName
+                        , const QString &loadOrderFileName
+                        , const QString &lockedOrderFileName
+                        , const QString& deleterFileName
+                        , bool hideUnchecked) const
 {
   writePlugins(pluginFileName, false);
   writePlugins(loadOrderFileName, true);
@@ -449,7 +453,7 @@ void PluginList::saveTo(const QString &pluginFileName, const QString &loadOrderF
 
     for (size_t i = 0; i < m_ESPs.size(); ++i) {
       int priority = m_ESPsByPriority[i];
-      if (m_ESPs[priority].m_Removed) {
+      if (!m_ESPs[priority].m_Enabled) {
         deleterFile.write(m_ESPs[priority].m_Name.toUtf8());
         deleterFile.write("\r\n");
       }
@@ -1082,7 +1086,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
-  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled), m_Removed(false),
+  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled),
     m_Priority(0), m_LoadOrder(-1), m_Time(time), m_OriginName(originName), m_HasIni(hasIni)
 {
   try {

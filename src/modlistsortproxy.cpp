@@ -33,6 +33,7 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_CategoryFilter()
   , m_CurrentFilter()
   , m_FilterActive(false)
+  , m_FilterMode(FILTER_AND)
 {
   m_EnabledColumns.set(ModList::COL_FLAGS);
   m_EnabledColumns.set(ModList::COL_NAME);
@@ -224,13 +225,8 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 }
 
 
-bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
+bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
-  if (!m_CurrentFilter.isEmpty() &&
-      !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
-    return false;
-  }
-
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     switch (*iter) {
       case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
@@ -250,15 +246,69 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
-        return (state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER);
+        if (state != ModInfo::ENDORSED_FALSE) return false;
       } break;
       default: {
         if (!info->categorySet(*iter)) return false;
       } break;
     }
   }
-
   return true;
+}
+
+bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
+{
+  for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
+    switch (*iter) {
+      case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
+        if (enabled) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
+        if (!enabled) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
+        if (info->updateAvailable() || info->downgradeAvailable()) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY: {
+        if (info->getCategories().size() == 0) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_CONFLICT: {
+        if (hasConflictFlag(info->getFlags())) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
+        ModInfo::EEndorsedState state = info->endorsedState();
+        if ((state == ModInfo::ENDORSED_FALSE) && (state != ModInfo::ENDORSED_NEVER)) return true;
+      } break;
+      default: {
+        if (info->categorySet(*iter)) return true;
+      } break;
+    }
+  }
+  return false;
+}
+
+
+
+bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
+{
+  if (!m_CurrentFilter.isEmpty() &&
+      !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+    return false;
+  }
+
+  if (m_FilterMode == FILTER_AND) {
+    return filterMatchesModAnd(info, enabled);
+  } else {
+    return (m_CategoryFilter.size() == 0) || filterMatchesModOr(info, enabled);
+  }
+}
+
+void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
+{
+  if (m_FilterMode != mode) {
+    m_FilterMode = mode;
+    this->invalidate();
+  }
 }
 
 

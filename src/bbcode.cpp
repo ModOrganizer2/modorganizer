@@ -153,8 +153,8 @@ private:
                                          "<a href=\"\\1\">\\1</a>");
     m_TagMap["url="]    = std::make_pair(QRegExp("\\[url=([^\\]]*)\\](.*)\\[/url\\]"),
                                          "<a href=\"\\1\">\\2</a>");
-    m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"), "");
-    m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"), "");
+    m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"), " ");
+    m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"), " ");
     m_TagMap["email="]  = std::make_pair(QRegExp("\\[email=\"?([^\\]]*)\"?\\](.*)\\[/email\\]"),
                                          "<a href=\"mailto:\\1\">\\2</a>");
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),

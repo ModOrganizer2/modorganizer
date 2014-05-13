@@ -168,7 +168,12 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
       if (index.column() == 0) {
         return m_Messages.at(msgIndex).time;
       } else if (index.column() == 1) {
-        return m_Messages.at(msgIndex).message;
+        const QString &msg = m_Messages.at(msgIndex).message;
+        if (msg.length() < 200) {
+          return msg;
+        } else {
+          return msg.mid(0, 200) + "...";
+        }
       }
     } break;
     case Qt::DecorationRole: {

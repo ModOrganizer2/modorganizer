@@ -41,6 +41,9 @@ public:
 
   bool loggedIn() const;
 
+  bool loginAttempted() const { return m_LoginAttempted; }
+  bool loginWaiting() const;
+
   void login(const QString &username, const QString &password);
 
   void showCookies();
@@ -92,6 +95,8 @@ private:
 
   QString m_Username;
   QString m_Password;
+
+  bool m_LoginAttempted;
 
 };
 

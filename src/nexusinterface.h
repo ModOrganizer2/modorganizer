@@ -54,7 +54,7 @@ class NexusBridge : public MOBase::IModRepositoryBridge
 
 public:
 
-  NexusBridge();
+  NexusBridge(const QString &subModule = "");
 
   /**
    * @brief request description for a mod
@@ -111,6 +111,7 @@ private:
 
   NexusInterface *m_Interface;
   QString m_Url;
+  QString m_SubModule;
   std::set<int> m_RequestIDs;
 
 };
@@ -145,7 +146,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    **/
-  int requestDescription(int modID, QObject *receiver, QVariant userData,
+  int requestDescription(int modID, QObject *receiver, QVariant userData, const QString &subModule,
                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -156,7 +157,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    */
-  int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData,
+  int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData, const QString &subModule,
                      const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -168,7 +169,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    **/
-  int requestFiles(int modID, QObject *receiver, QVariant userData,
+  int requestFiles(int modID, QObject *receiver, QVariant userData, const QString &subModule,
                    const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -181,7 +182,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    **/
-  int requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData,
+  int requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
                       const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -194,7 +195,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    **/
-  int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData,
+  int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
                          const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -206,7 +207,7 @@ public:
    * @param url the url to request from
    * @return int an id to identify the request
    */
-  int requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData,
+  int requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData, const QString &subModule,
                                const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
 
   /**
@@ -219,6 +220,11 @@ public:
    * @param nmmVersion the version of nmm to impersonate
    **/
   void setNMMVersion(const QString &nmmVersion);
+
+  /**
+   * @brief called when the log-in completes. This was, requests waiting for the log-in can be run
+   */
+  void loginCompleted();
 
 public:
 
@@ -233,6 +239,8 @@ public:
 signals:
 
   void requestNXMDownload(const QString &url);
+
+  void needLogin();
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
@@ -270,19 +278,14 @@ private:
     QVariant m_UserData;
     QTimer *m_Timeout;
     QString m_URL;
+    QString m_SubModule;
     bool m_Reroute;
     int m_ID;
     int m_Endorse;
 
-    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &url)
-      : m_ModID(modID), m_FileID(0), m_Reply(NULL), m_Type(type), m_UserData(userData),
-    m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
-    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &url)
-      : m_ModID(-1), m_ModIDList(modIDList), m_FileID(0), m_Reply(NULL), m_Type(type), m_UserData(userData),
-        m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
-    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &url)
-      : m_ModID(modID), m_FileID(fileID), m_Reply(NULL), m_Type(type), m_UserData(userData),
-    m_Timeout(NULL), m_Reroute(false), m_ID(s_NextID.fetchAndAddAcquire(1)), m_URL(url) {}
+    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, const QString &url);
+    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, const QString &url);
+    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, const QString &url);
 
   private:
     static QAtomicInt s_NextID;
@@ -295,6 +298,7 @@ private:
   NexusInterface();
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
+  bool requiresLogin(const NXMRequestInfo &info);
   static void cleanup();
 
 private:

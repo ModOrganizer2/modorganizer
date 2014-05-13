@@ -32,36 +32,37 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-NexusBridge::NexusBridge()
+NexusBridge::NexusBridge(const QString &subModule)
   : m_Interface(NexusInterface::instance())
   , m_Url(MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()))
+  , m_SubModule(subModule)
 {
 }
 
 
 void NexusBridge::requestDescription(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule, m_Url));
 }
 
 void NexusBridge::requestFiles(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule, m_Url));
 }
 
 void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule, m_Url));
 }
 
 void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule, m_Url));
 }
 
 void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_Url));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule, m_Url));
 }
 
 void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
@@ -170,9 +171,6 @@ NXMAccessManager *NexusInterface::getAccessManager()
 }
 
 
-//NexusInterface *NexusInterface::s_Instance = NULL;
-
-
 NexusInterface *NexusInterface::instance()
 {
   static NexusInterface s_Instance;
@@ -192,13 +190,17 @@ void NexusInterface::setNMMVersion(const QString &nmmVersion)
   m_NMMVersion = nmmVersion;
 }
 
+void NexusInterface::loginCompleted()
+{
+  nextRequest();
+}
+
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
   static std::tr1::regex exp("^([a-zA-Z0-9_\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
   static std::tr1::regex simpleexp("^([a-zA-Z0-9_]+)");
 
-//  std::tr1::match_results<std::string::const_iterator> result;
   QByteArray fileNameUTF8 = fileName.toUtf8();
   std::tr1::cmatch result;
   if (std::tr1::regex_search(fileNameUTF8.constData(), result, exp)) {
@@ -245,9 +247,10 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
 }
 
 
-int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,
+                                       const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, subModule, url);
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmDescriptionAvailable(int,QVariant,QVariant,int)),
@@ -261,9 +264,10 @@ int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant us
 }
 
 
-int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData,
+                                   const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, url);
+  NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, url);
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)),
@@ -296,9 +300,10 @@ void NexusInterface::fakeFiles()
 }
 
 
-int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData,
+                                 const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, subModule, url);
   m_RequestQueue.enqueue(requestInfo);
   connect(this, SIGNAL(nxmFilesAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFilesAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
@@ -315,9 +320,10 @@ int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData
 }
 
 
-int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
+                                    const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, url);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, url);
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)),
@@ -331,9 +337,10 @@ int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QV
 }
 
 
-int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData,
+                                       const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_DOWNLOADURL, userData, url);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_DOWNLOADURL, userData, subModule, url);
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)),
@@ -347,9 +354,10 @@ int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver,
 }
 
 
-int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData, const QString &url)
+int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData,
+                                             const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, url);
   requestInfo.m_Endorse = endorse;
   m_RequestQueue.enqueue(requestInfo);
 
@@ -363,11 +371,27 @@ int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *r
   return requestInfo.m_ID;
 }
 
+bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
+{
+  return (info.m_Type == NXMRequestInfo::TYPE_TOGGLEENDORSEMENT)
+      || (info.m_Type == NXMRequestInfo::TYPE_DOWNLOADURL);
+}
 
 void NexusInterface::nextRequest()
 {
-  if ((m_ActiveRequest.size() >= MAX_ACTIVE_DOWNLOADS) || (m_RequestQueue.isEmpty())) {
+  if ((m_ActiveRequest.size() >= MAX_ACTIVE_DOWNLOADS)
+      || m_RequestQueue.isEmpty()) {
     return;
+  }
+
+  if (!getAccessManager()->loggedIn()
+      && requiresLogin(m_RequestQueue.head())) {
+    if (!getAccessManager()->loginAttempted()) {
+      emit needLogin();
+      return;
+    } else if (getAccessManager()->loginWaiting()) {
+      return;
+    }
   }
 
   NXMRequestInfo info = m_RequestQueue.dequeue();
@@ -407,10 +431,16 @@ void NexusInterface::nextRequest()
   }
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-  request.setRawHeader("User-Agent",
-      QString("Mod Organizer v%1 (compatible to Nexus Client v%2)")
-         .arg(m_MOVersion.displayString())
-         .arg(m_NMMVersion).toUtf8());
+  QStringList comments;
+  comments << "compatible to Nexus Client v" + m_NMMVersion;
+  if (!info.m_SubModule.isEmpty()) {
+    comments << "module: " + info.m_SubModule;
+  }
+
+  QString userAgent = QString("Mod Organizer v%1 (%2)")
+                          .arg(m_MOVersion.displayString())
+                          .arg(comments.join("; "));
+  request.setRawHeader("User-Agent", userAgent.toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 
@@ -450,6 +480,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
+      qDebug("nexus error: %s", qPrintable(nexusError));
       emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
@@ -528,3 +559,57 @@ void NexusInterface::requestTimeout()
     }
   }
 }
+
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
+                                               , NexusInterface::NXMRequestInfo::Type type
+                                               , QVariant userData
+                                               , const QString &subModule
+                                               , const QString &url)
+  : m_ModID(modID)
+  , m_FileID(0)
+  , m_Reply(NULL)
+  , m_Type(type)
+  , m_UserData(userData)
+  , m_Timeout(NULL)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(url)
+  , m_SubModule(subModule)
+{}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
+                                               , NexusInterface::NXMRequestInfo::Type type
+                                               , QVariant userData
+                                               , const QString &subModule
+                                               , const QString &url)
+  : m_ModID(-1)
+  , m_ModIDList(modIDList)
+  , m_FileID(0)
+  , m_Reply(NULL)
+  , m_Type(type)
+  , m_UserData(userData)
+  , m_Timeout(NULL)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(url)
+  , m_SubModule(subModule)
+{}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
+                                               , int fileID
+                                               , NexusInterface::NXMRequestInfo::Type type
+                                               , QVariant userData
+                                               , const QString &subModule
+                                               , const QString &url)
+  : m_ModID(modID)
+  , m_FileID(fileID)
+  , m_Reply(NULL)
+  , m_Type(type)
+  , m_UserData(userData)
+  , m_Timeout(NULL)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(url)
+  , m_SubModule(subModule)
+{}

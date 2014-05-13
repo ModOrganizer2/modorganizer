@@ -219,7 +219,7 @@ ModInfo::ModInfo()
 void ModInfo::checkChunkForUpdate(const std::vector<int> &modIDs, QObject *receiver)
 {
   if (modIDs.size() != 0) {
-    NexusInterface::instance()->requestUpdates(modIDs, receiver, QVariant());
+    NexusInterface::instance()->requestUpdates(modIDs, receiver, QVariant(), QString());
   }
 }
 

@@ -88,7 +88,8 @@ SOURCES += \
     json.cpp \
     safewritefile.cpp \
     modflagicondelegate.cpp \
-    pluginflagicondelegate.cpp
+    pluginflagicondelegate.cpp \
+    organizerproxy.cpp
 
 
 HEADERS  += \
@@ -166,7 +167,8 @@ HEADERS  += \
     safewritefile.h\
     pdll.h \
     modflagicondelegate.h \
-    pluginflagicondelegate.h
+    pluginflagicondelegate.h \
+    organizerproxy.h
 
 FORMS    += \
     transfersavesdialog.ui \

@@ -448,7 +448,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   emit update(-1);
   emit downloadAdded();
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.modId(), nxmInfo.fileId(), this, nxmInfo.fileId()));
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.modId(), nxmInfo.fileId(), this, nxmInfo.fileId(), ""));
 }
 
 
@@ -919,10 +919,10 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       info->m_Reply->abort();
     } break;
     case STATE_FETCHINGMODINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_FileInfo->modID, this, info->m_DownloadID));
+      m_RequestIDs.insert(m_NexusInterface->requestDescription(info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
     case STATE_FETCHINGFILEINFO: {
-      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->modID, this, info->m_DownloadID));
+      m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
     case STATE_READY: {
       createMetaFile(info);
@@ -1167,7 +1167,7 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   info->fileID = fileID;
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test)));
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test), QString()));
 }
 
 

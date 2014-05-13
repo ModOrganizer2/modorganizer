@@ -32,6 +32,13 @@ class ModListSortProxy : public QSortFilterProxyModel
 
 public:
 
+  enum FilterMode {
+    FILTER_AND,
+    FILTER_OR
+  };
+
+public:
+
   explicit ModListSortProxy(Profile *profile, QObject *parent = 0);
 
   void setProfile(Profile *profile);
@@ -65,6 +72,8 @@ public:
    */
   bool isFilterActive() const { return m_FilterActive; }
 
+  void setFilterMode(FilterMode mode);
+
   /**
    * @brief tests if the specified index has child nodes
    * @param parent the node to test
@@ -93,6 +102,8 @@ private:
 
   bool hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const;
   void updateFilterActive();
+  bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
+  bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
 
 private:
 
@@ -103,6 +114,7 @@ private:
   QString m_CurrentFilter;
 
   bool m_FilterActive;
+  FilterMode m_FilterMode;
 
 };
 
