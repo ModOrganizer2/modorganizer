@@ -106,7 +106,7 @@ GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
       return TYPE_FILETIME;
     }
   } catch (const std::exception &e) {
-    reportError("TESV.exe is invalid: %s", e.what());
+    log("TESV.exe is invalid: %s", e.what());
     return TYPE_FILETIME;
   }
 }

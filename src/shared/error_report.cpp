@@ -36,7 +36,6 @@ void reportError(LPCSTR format, ...)
   va_end(argList);
 
   MessageBoxA(NULL, buffer, "Error", MB_OK | MB_ICONERROR);
-  LocalFree(buffer);
 }
 
 void reportError(LPCWSTR format, ...)
@@ -52,7 +51,6 @@ void reportError(LPCWSTR format, ...)
   va_end(argList);
 
   MessageBoxW(NULL, buffer, L"Error", MB_OK | MB_ICONERROR);
-  LocalFree(buffer);
 }
 
 
