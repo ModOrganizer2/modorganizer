@@ -90,6 +90,7 @@ private:
   };
 
   typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
+  typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
   explicit MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent = 0);
@@ -251,7 +252,7 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  bool checkForProblems();
+  int checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);
@@ -283,6 +284,8 @@ private:
   QString queryRestore(const QString &filePath);
 
   QMenu *modListContextMenu();
+
+  std::set<QString> managedArchives();
 
 private:
 
@@ -366,6 +369,7 @@ private:
   QFile m_PluginsCheck;
 
   SignalAboutToRunApplication m_AboutToRun;
+  SignalModInstalled m_ModInstalled;
 
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
@@ -588,6 +592,7 @@ private slots: // ui slots
   void on_actionCopy_Log_to_Clipboard_triggered();
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
+  void on_managedArchiveLabel_linkHovered(const QString &link);
 };
 
 

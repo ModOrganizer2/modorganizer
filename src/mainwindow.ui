@@ -899,6 +899,19 @@ p, li { white-space: pre-wrap; }
                  <number>6</number>
                 </property>
                 <item>
+                 <widget class="QLabel" name="managedArchiveLabel">
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Managed&lt;/span&gt; Archives are always loaded and the priority of their mod (left pane) applies to them. MO will also provide conflict information for managed archives.&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Unmanaged&lt;/span&gt; Archives are only loaded if there is a plugin of the same name (&amp;quot;Plugins&amp;quot; tab) with the same priority as that plugin!&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;If you don't understand this it's safest to leave all archives unchecked except the grayed out ones.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check an archive to have MO manage it. (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;read more&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="MOBase::SortableTreeWidget" name="bsaList">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
@@ -956,16 +969,6 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                     <string>File</string>
                    </property>
                   </column>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="bsaWarning">
-                  <property name="text">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/warning_16&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                  </property>
-                  <property name="wordWrap">
-                   <bool>true</bool>
-                  </property>
                  </widget>
                 </item>
                </layout>

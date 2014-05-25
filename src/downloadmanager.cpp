@@ -148,7 +148,10 @@ void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
       metaFile.rename(newName.mid(0).append(".meta"));
     }
   }
-  m_Output.setFileName(newName);
+  if (!m_Output.isOpen()) {
+    // can't set file name if it's open
+    m_Output.setFileName(newName);
+  }
 }
 
 bool DownloadManager::DownloadInfo::isPausedState()
@@ -253,67 +256,70 @@ void DownloadManager::setShowHidden(bool showHidden)
 
 void DownloadManager::refreshList()
 {
-  int downloadsBefore = m_ActiveDownloads.size();
+  try {
+    int downloadsBefore = m_ActiveDownloads.size();
 
-  // remove finished downloads
-  for (QVector<DownloadInfo*>::iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end();) {
-    if (((*Iter)->m_State == STATE_READY) || ((*Iter)->m_State == STATE_INSTALLED) || ((*Iter)->m_State == STATE_UNINSTALLED)) {
-      delete *Iter;
-      Iter = m_ActiveDownloads.erase(Iter);
-    } else {
-      ++Iter;
-    }
-  }
-
-  QStringList nameFilters(m_SupportedExtensions);
-  foreach (const QString &extension, m_SupportedExtensions) {
-    nameFilters.append("*." + extension);
-  }
-
-  nameFilters.append(QString("*").append(UNFINISHED));
-  QDir dir(QDir::fromNativeSeparators(m_OutputDirectory));
-
-  // find orphaned meta files and delete them (sounds cruel but it's better for everyone)
-  QStringList orphans;
-  QStringList metaFiles = dir.entryList(QStringList() << "*.meta");
-  foreach (const QString &metaFile, metaFiles) {
-    QString baseFile = metaFile.left(metaFile.length() - 5);
-    if (!QFile::exists(dir.absoluteFilePath(baseFile))) {
-      orphans.append(dir.absoluteFilePath(metaFile));
-    }
-  }
-  if (orphans.size() > 0) {
-    qDebug("%d orphaned meta files will be deleted", orphans.size());
-    shellDelete(orphans, true);
-  }
-
-  // add existing downloads to list
-  foreach (QString file, dir.entryList(nameFilters, QDir::Files, QDir::Time)) {
-    bool Exists = false;
-    for (QVector<DownloadInfo*>::const_iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end() && !Exists; ++Iter) {
-      if (QString::compare((*Iter)->m_FileName, file, Qt::CaseInsensitive) == 0) {
-        Exists = true;
-      } else if (QString::compare(QFileInfo((*Iter)->m_Output.fileName()).fileName(), file, Qt::CaseInsensitive) == 0) {
-        Exists = true;
+    // remove finished downloads
+    for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
+      if (((*iter)->m_State == STATE_READY) || ((*iter)->m_State == STATE_INSTALLED) || ((*iter)->m_State == STATE_UNINSTALLED)) {
+        delete *iter;
+        iter = m_ActiveDownloads.erase(iter);
+      } else {
+        ++iter;
       }
     }
-    if (Exists) {
-      qDebug("%s exists", qPrintable(file));
-      continue;
+
+    QStringList nameFilters(m_SupportedExtensions);
+    foreach (const QString &extension, m_SupportedExtensions) {
+      nameFilters.append("*." + extension);
     }
 
-    QString fileName = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + file;
+    nameFilters.append(QString("*").append(UNFINISHED));
+    QDir dir(QDir::fromNativeSeparators(m_OutputDirectory));
 
-    DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden);
-    if (info != NULL) {
-      m_ActiveDownloads.push_front(info);
+    // find orphaned meta files and delete them (sounds cruel but it's better for everyone)
+    QStringList orphans;
+    QStringList metaFiles = dir.entryList(QStringList() << "*.meta");
+    foreach (const QString &metaFile, metaFiles) {
+      QString baseFile = metaFile.left(metaFile.length() - 5);
+      if (!QFile::exists(dir.absoluteFilePath(baseFile))) {
+        orphans.append(dir.absoluteFilePath(metaFile));
+      }
     }
-  }
+    if (orphans.size() > 0) {
+      qDebug("%d orphaned meta files will be deleted", orphans.size());
+      shellDelete(orphans, true);
+    }
 
-  if (m_ActiveDownloads.size() != downloadsBefore) {
-    qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+    // add existing downloads to list
+    foreach (QString file, dir.entryList(nameFilters, QDir::Files, QDir::Time)) {
+      bool Exists = false;
+      for (QVector<DownloadInfo*>::const_iterator Iter = m_ActiveDownloads.begin(); Iter != m_ActiveDownloads.end() && !Exists; ++Iter) {
+        if (QString::compare((*Iter)->m_FileName, file, Qt::CaseInsensitive) == 0) {
+          Exists = true;
+        } else if (QString::compare(QFileInfo((*Iter)->m_Output.fileName()).fileName(), file, Qt::CaseInsensitive) == 0) {
+          Exists = true;
+        }
+      }
+      if (Exists) {
+        continue;
+      }
+
+      QString fileName = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + file;
+
+      DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden);
+      if (info != NULL) {
+        m_ActiveDownloads.push_front(info);
+      }
+    }
+
+    if (m_ActiveDownloads.size() != downloadsBefore) {
+      qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+    }
+    emit update(-1);
+  } catch (const std::bad_alloc&) {
+    reportError(tr("Memory allocation error (in refreshing directory)."));
   }
-  emit update(-1);
 }
 
 
@@ -344,6 +350,9 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const ModRepositoryFileI
 bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName,
                                   int modID, int fileID, const ModRepositoryFileInfo *fileInfo)
 {
+  if (!reply->isRunning()) {
+    qDebug("this is not a running download! %d", reply->isFinished());
+  }
   // download invoked from an already open network reply (i.e. download link in the browser)
   DownloadInfo *newDownload = DownloadInfo::createNew(fileInfo, URLs);
 
@@ -404,6 +413,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
   }
 
   newDownload->m_StartTime.start();
+  createMetaFile(newDownload);
 
   if (!newDownload->m_Output.open(mode)) {
     reportError(tr("failed to download %1: could not open output file: %2")
@@ -413,6 +423,7 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
 
   connect(newDownload->m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
   connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+  connect(newDownload->m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
   connect(newDownload->m_Reply, SIGNAL(readyRead()), this, SLOT(downloadReadyRead()));
   connect(newDownload->m_Reply, SIGNAL(metaDataChanged()), this, SLOT(metaDataChanged()));
 
@@ -421,11 +432,15 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     removePending(newDownload->m_FileInfo->modID, newDownload->m_FileInfo->fileID);
 
     emit aboutToUpdate();
-
     m_ActiveDownloads.append(newDownload);
 
     emit update(-1);
     emit downloadAdded();
+
+    if (reply->isFinished()) {
+      // it's possible the download has already finished before this function ran
+      downloadFinished();
+    }
   }
 }
 
@@ -593,8 +608,11 @@ void DownloadManager::pauseDownload(int index)
   DownloadInfo *info = m_ActiveDownloads.at(index);
 
   if (info->m_State == STATE_DOWNLOADING) {
-    setState(info, STATE_PAUSING);
-    qDebug("pausing %d - %s", index, info->m_FileName.toUtf8().constData());
+    if (info->m_Reply->isRunning()) {
+      setState(info, STATE_PAUSING);
+    } else {
+      setState(info, STATE_PAUSED);
+    }
   } else if ((info->m_State == STATE_FETCHINGMODINFO) || (info->m_State == STATE_FETCHINGFILEINFO)) {
     setState(info, STATE_READY);
   }
@@ -619,6 +637,11 @@ void DownloadManager::resumeDownloadInt(int index)
   }
   DownloadInfo *info = m_ActiveDownloads[index];
   if (info->isPausedState()) {
+    if ((info->m_Urls.size() == 0)
+        || ((info->m_Urls.size() == 1) && (info->m_Urls[0].size() == 0))) {
+      emit showMessage(tr("No known download urls. Sorry, this download can't be resumed."));
+      return;
+    }
     if (info->m_State == STATE_ERROR) {
       info->m_CurrentUrl = (info->m_CurrentUrl + 1) % info->m_Urls.count();
     }
@@ -955,32 +978,40 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
     return;
   }
   int index = 0;
-  DownloadInfo *info = findDownload(this->sender(), &index);
-  if (info != NULL) {
-    if (info->m_State == STATE_CANCELING) {
-      setState(info, STATE_CANCELED);
-    } else if (info->m_State == STATE_PAUSING) {
-      setState(info, STATE_PAUSED);
-    } else {
-      if (bytesTotal > info->m_TotalSize) {
-        info->m_TotalSize = bytesTotal;
-      }
-      int oldProgress = info->m_Progress;
-      info->m_Progress = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
-      TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
-      if (oldProgress != info->m_Progress) {
-        emit update(index);
+  try {
+    DownloadInfo *info = findDownload(this->sender(), &index);
+    if (info != NULL) {
+      if (info->m_State == STATE_CANCELING) {
+        setState(info, STATE_CANCELED);
+      } else if (info->m_State == STATE_PAUSING) {
+        setState(info, STATE_PAUSED);
+      } else {
+        if (bytesTotal > info->m_TotalSize) {
+          info->m_TotalSize = bytesTotal;
+        }
+        int oldProgress = info->m_Progress;
+        info->m_Progress = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
+        TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
+        if (oldProgress != info->m_Progress) {
+          emit update(index);
+        }
       }
     }
+  } catch (const std::bad_alloc&) {
+    reportError(tr("Memory allocation error (in processing progress event)."));
   }
 }
 
 
 void DownloadManager::downloadReadyRead()
 {
-  DownloadInfo *info = findDownload(this->sender());
-  if (info != NULL) {
-    info->m_Output.write(info->m_Reply->readAll());
+  try {
+    DownloadInfo *info = findDownload(this->sender());
+    if (info != NULL) {
+      info->m_Output.write(info->m_Reply->readAll());
+    }
+  } catch (const std::bad_alloc&) {
+    reportError(tr("Memory allocation error (in processing downloaded data)."));
   }
 }
 
@@ -1267,7 +1298,6 @@ void DownloadManager::nxmDownloadURLsAvailable(int modID, int fileID, QVariant u
   foreach (const QVariant &server, resultList) {
     URLs.append(server.toMap()["URI"].toString());
   }
-
   addDownload(URLs, modID, fileID, info);
 }
 
@@ -1356,7 +1386,6 @@ void DownloadManager::downloadFinished()
       createMetaFile(info);
       emit update(index);
     } else {
-
       QString url = info->m_Urls[info->m_CurrentUrl];
       if (info->m_FileInfo->userData.contains("downloadMap")) {
         foreach (const QVariant &server, info->m_FileInfo->userData["downloadMap"].toList()) {
@@ -1406,6 +1435,14 @@ void DownloadManager::downloadFinished()
 }
 
 
+void DownloadManager::downloadError(QNetworkReply::NetworkError error)
+{
+  if (error != QNetworkReply::OperationCanceledError) {
+    qWarning("Download error occured: %d", error);
+  }
+}
+
+
 void DownloadManager::metaDataChanged()
 {
   int index = 0;
@@ -1416,7 +1453,7 @@ void DownloadManager::metaDataChanged()
     if (!newName.isEmpty() && (newName != info->m_FileName)) {
       info->setName(getDownloadFileName(newName), true);
       refreshAlphabeticalTranslation();
-      if (!info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
+      if (!info->m_Output.isOpen() && !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
         reportError(tr("failed to re-open %1").arg(info->m_FileName));
         setState(info, STATE_CANCELING);
       }

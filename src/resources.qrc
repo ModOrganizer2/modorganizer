@@ -55,5 +55,15 @@
         <file alias="backup">resources/document-save_32.png</file>
         <file alias="restore">resources/edit-undo.png</file>
         <file alias="sort">resources/arrange-boxes.png</file>
+        <file alias="badge_1">resources/badge_1.png</file>
+        <file alias="badge_2">resources/badge_2.png</file>
+        <file alias="badge_3">resources/badge_3.png</file>
+        <file alias="badge_4">resources/badge_4.png</file>
+        <file alias="badge_5">resources/badge_5.png</file>
+        <file alias="badge_6">resources/badge_6.png</file>
+        <file alias="badge_7">resources/badge_7.png</file>
+        <file alias="badge_8">resources/badge_8.png</file>
+        <file alias="badge_9">resources/badge_9.png</file>
+        <file alias="badge_more">resources/badge_more.png</file>
     </qresource>
 </RCC>

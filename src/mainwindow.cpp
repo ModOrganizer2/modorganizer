@@ -164,7 +164,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false),
     m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
-    m_GameInfo(new GameInfoImpl()), m_AboutToRun()
+    m_GameInfo(new GameInfoImpl()), m_AboutToRun(), m_ModInstalled()
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
@@ -285,7 +285,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
   connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(bsaList_itemMoved()));
-  connect(ui->bsaWarning, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
 
   connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
 
@@ -533,14 +532,26 @@ void MainWindow::updateToolBar()
 
 void MainWindow::updateProblemsButton()
 {
-  if (checkForProblems()) {
+  int numProblems = checkForProblems();
+  if (numProblems > 0) {
     ui->actionProblems->setEnabled(true);
     ui->actionProblems->setIconText(tr("Problems"));
     ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
+
+//    QPixmap mergedIcon(64, 64);
+    QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
+    {
+      QPainter painter(&mergedIcon);
+//      painter.setBrush(QBrush(Qt::transparent));
+      std::string badgeName = std::string(":/MO/gui/badge_") + (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
+      painter.drawPixmap(32, 32, 32, 32, QPixmap(badgeName.c_str()));
+    }
+    ui->actionProblems->setIcon(QIcon(mergedIcon));
   } else {
     ui->actionProblems->setEnabled(false);
     ui->actionProblems->setIconText(tr("No Problems"));
     ui->actionProblems->setToolTip(tr("Everything seems to be in order"));
+    ui->actionProblems->setIcon(QIcon(":/MO/gui/warning"));
   }
 }
 
@@ -575,15 +586,13 @@ bool MainWindow::errorReported(QString &logFile)
 }
 
 
-bool MainWindow::checkForProblems()
+int MainWindow::checkForProblems()
 {
   foreach (IPluginDiagnose *diagnose, m_DiagnosisPlugins) {
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
-    if (activeProblems.size() > 0) {
-      return true;
-    }
+    return activeProblems.size();
   }
-  return false;
+  return 0;
 }
 
 void MainWindow::about()
@@ -1616,11 +1625,27 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 }
 
 
+std::set<QString> MainWindow::managedArchives()
+{
+  std::set<QString> result;
+
+  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+  if (archiveFile.open(QIODevice::ReadOnly)) {
+    while (!archiveFile.atEnd()) {
+      result.insert(QString::fromUtf8(archiveFile.readLine()).trimmed());
+    }
+    archiveFile.close();
+  }
+  return result;
+}
+
+
 void MainWindow::refreshDirectoryStructure()
 {
   m_DirectoryUpdate = true;
   std::vector<std::tuple<QString, QString, int> > activeModList = m_CurrentProfile->getActiveMods();
-  m_DirectoryRefresher.setMods(activeModList);
+
+  m_DirectoryRefresher.setMods(activeModList, managedArchives());
 
   statusBar()->show();
   m_RefreshProgress->setRange(0, 100);
@@ -1776,6 +1801,17 @@ static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const st
 }
 
 
+template <typename InputIterator>
+QStringList toStringList(InputIterator current, InputIterator end)
+{
+  QStringList result;
+  for (; current != end; ++current) {
+    result.append(*current);
+  }
+  return result;
+}
+
+
 void MainWindow::refreshBSAList()
 {
   m_ArchivesInit = false;
@@ -1811,17 +1847,9 @@ void MainWindow::refreshBSAList()
 
   m_ActiveArchives.clear();
 
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      m_ActiveArchives.append(QString::fromUtf8(archiveFile.readLine()));
-    }
-    archiveFile.close();
-
-    for (int i = 0; i < m_ActiveArchives.count(); ++i) {
-      m_ActiveArchives[i] = m_ActiveArchives[i].trimmed();
-    }
-  } else {
+  auto iter = managedArchives();
+  m_ActiveArchives = toStringList(iter.begin(), iter.end());
+  if (m_ActiveArchives.isEmpty()) {
     m_ActiveArchives = m_DefaultArchives;
   }
 
@@ -1908,7 +1936,7 @@ void MainWindow::checkBSAList()
           item->setIcon(0, QIcon(":/MO/gui/warning"));
           item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
           modWarning = true;
-        } else {
+/*        } else {
           QString espName = filename.mid(0, filename.length() - 3).append("esp").toLower();
           QString esmName = filename.mid(0, filename.length() - 3).append("esm").toLower();
           if (m_PluginList.isEnabled(espName) || m_PluginList.isEnabled(esmName)) {
@@ -1916,7 +1944,7 @@ void MainWindow::checkBSAList()
             item->setToolTip(0, tr("This archive will still be loaded since there is a plugin of the same name but "
                                       "its files will not follow installation order!"));
             modWarning = true;
-          }
+          }*/
         }
       }
     }
@@ -2224,7 +2252,7 @@ IModInterface *MainWindow::installMod(const QString &fileName)
               QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
         displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
       }
-      testExtractBSA(modIndex);
+      m_ModInstalled(modName);
       return modInfo.data();
     } else {
       reportError(tr("mod \"%1\" not found").arg(modName));
@@ -2599,7 +2627,10 @@ void MainWindow::modStatusChanged(unsigned int index)
   try {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
     if (m_CurrentProfile->modEnabled(index)) {
-      DirectoryRefresher::addModToStructure(m_DirectoryStructure, modInfo->name(), m_CurrentProfile->getModPriority(index), modInfo->absolutePath());
+      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure
+                                             , modInfo->name()
+                                             , m_CurrentProfile->getModPriority(index)
+                                             , modInfo->absolutePath());
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
     } else {
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
@@ -3128,9 +3159,9 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
       FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
 
-      DirectoryRefresher::addModToStructure(m_DirectoryStructure,
-                                            modInfo->name(), m_CurrentProfile->getModPriority(index),
-                                            modInfo->absolutePath());
+      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure,
+                                             modInfo->name(), m_CurrentProfile->getModPriority(index),
+                                             modInfo->absolutePath());
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
       refreshLists();
     }
@@ -3192,54 +3223,6 @@ void MainWindow::displayModInformation(int row, int tab)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   displayModInformation(modInfo, row, tab);
-}
-
-
-void MainWindow::testExtractBSA(int modIndex)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-  QDir dir(modInfo->absolutePath());
-
-  QFileInfoList archives = dir.entryInfoList(QStringList("*.bsa"));
-  if (archives.length() != 0 &&
-      (QuestionBoxMemory::query(this, "unpackBSA", tr("Extract BSA"),
-                             tr("This mod contains at least one BSA. Do you want to unpack it?\n"
-                                "(This removes the BSA after completion. If you don't know about BSAs, just select no)"),
-                             QDialogButtonBox::Yes | QDialogButtonBox::No, QDialogButtonBox::No) == QMessageBox::Yes)) {
-
-
-    foreach (QFileInfo archiveInfo, archives) {
-      BSA::Archive archive;
-      BSA::EErrorCode result = archive.read(archiveInfo.absoluteFilePath().toLocal8Bit().constData());
-      if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
-        reportError(tr("failed to read %1: %2").arg(archiveInfo.fileName()).arg(result));
-        return;
-      }
-
-      QProgressDialog progress(this);
-      progress.setMaximum(100);
-      progress.setValue(0);
-      progress.show();
-
-      archive.extractAll(modInfo->absolutePath().toLocal8Bit().constData(),
-                         boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2),
-                         false);
-
-      if (result == BSA::ERROR_INVALIDHASHES) {
-        reportError(tr("This archive contains invalid hashes. Some files may be broken."));
-      }
-
-      archive.close();
-
-      if (!QFile::remove(archiveInfo.absoluteFilePath())) {
-        qCritical("failed to remove archive %s", archiveInfo.absoluteFilePath().toUtf8().constData());
-      } else {
-        m_DirectoryStructure->removeFile(ToWString(archiveInfo.fileName()));
-      }
-    }
-
-    refreshBSAList();
-  }
 }
 
 
@@ -4233,7 +4216,8 @@ void MainWindow::installDownload(int index)
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
           displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
         }
-        testExtractBSA(modIndex);
+
+        m_ModInstalled(modName);
       } else {
         reportError(tr("mod \"%1\" not found").arg(modName));
       }
@@ -5001,11 +4985,13 @@ void MainWindow::removeFromToolbar()
 void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
 {
   QAction *action = ui->toolBar->actionAt(point);
-  if (action->objectName().startsWith("custom_")) {
-    m_ContextAction = action;
-    QMenu menu;
-    menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
-    menu.exec(ui->toolBar->mapToGlobal(point));
+  if (action != NULL) {
+    if (action->objectName().startsWith("custom_")) {
+      m_ContextAction = action;
+      QMenu menu;
+      menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
+      menu.exec(ui->toolBar->mapToGlobal(point));
+    }
   }
 }
 
@@ -5417,4 +5403,10 @@ void MainWindow::on_categoriesOrBtn_toggled(bool checked)
   if (checked) {
     m_ModListSortProxy->setFilterMode(ModListSortProxy::FILTER_OR);
   }
+}
+
+void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
+{
+  QToolTip::showText(QCursor::pos(),
+                     ui->managedArchiveLabel->toolTip());
 }

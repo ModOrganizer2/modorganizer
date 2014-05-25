@@ -110,6 +110,12 @@ bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &f
   return conn.connected();
 }
 
+bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
+{
+  auto conn = m_Proxied->m_ModInstalled.connect(func);
+  return conn.connected();
+}
+
 void OrganizerProxy::refreshModList(bool saveChanges)
 {
   m_Proxied->refreshModList(saveChanges);

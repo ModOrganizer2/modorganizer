@@ -46,10 +46,12 @@ DirectoryEntry *DirectoryRefresher::getDirectoryStructure()
   return result;
 }
 
-void DirectoryRefresher::setMods(const std::vector<std::tuple<QString, QString, int> > &mods)
+void DirectoryRefresher::setMods(const std::vector<std::tuple<QString, QString, int> > &mods
+                                 , const std::set<QString> &managedArchives)
 {
   QMutexLocker locker(&m_RefreshLock);
   m_Mods = mods;
+  m_ManagedArchives = managedArchives;
 }
 
 
@@ -74,8 +76,10 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure, c
   QDir dir(directory);
   QFileInfoList bsaFiles = dir.entryInfoList(QStringList("*.bsa"), QDir::Files);
   foreach (QFileInfo file, bsaFiles) {
-    directoryStructure->addFromBSA(ToWString(modName), directoryW,
-                                   ToWString(QDir::toNativeSeparators(file.absoluteFilePath())), priority);
+    if (m_ManagedArchives.find(file.fileName()) != m_ManagedArchives.end()) {
+      directoryStructure->addFromBSA(ToWString(modName), directoryW,
+                                     ToWString(QDir::toNativeSeparators(file.absoluteFilePath())), priority);
+    }
   }
 }
 

@@ -20,11 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DIRECTORYREFRESHER_H
 #define DIRECTORYREFRESHER_H
 
-#include <QObject>
-#include <vector>
-#include <QMutex>
-#include <tuple>
 #include <directoryentry.h>
+#include <QObject>
+#include <QMutex>
+#include <vector>
+#include <set>
+#include <tuple>
 
 
 /**
@@ -60,7 +61,7 @@ public:
    *
    * @param mods list of the mods to include
    **/
-  void setMods(const std::vector<std::tuple<QString, QString, int> > &mods);
+  void setMods(const std::vector<std::tuple<QString, QString, int> > &mods, const std::set<QString> &managedArchives);
 
   /**
    * @brief sets up the directory where mods are stored
@@ -82,7 +83,7 @@ public:
    * @param directory
    * @param priorityDir
    */
-  static void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory);
+  void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory);
 
 public slots:
 
@@ -100,6 +101,7 @@ signals:
 private:
 
   std::vector<std::tuple<QString, QString, int> > m_Mods;
+  std::set<QString> m_ManagedArchives;
   MOShared::DirectoryEntry *m_DirectoryStructure;
   QMutex m_RefreshLock;
 

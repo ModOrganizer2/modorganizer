@@ -417,6 +417,7 @@ private slots:
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
   void downloadFinished();
+  void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString &dirctory);
 

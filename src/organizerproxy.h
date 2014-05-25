@@ -35,8 +35,10 @@ public:
   virtual MOBase::IPluginList *pluginList();
   virtual MOBase::IModList *modList();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
   virtual void refreshModList(bool saveChanges);
+
+  virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
+  virtual bool onModInstalled(const std::function<void (const QString &)> &func);
 
 private:
   MainWindow *m_Proxied;
