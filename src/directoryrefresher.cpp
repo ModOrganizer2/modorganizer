@@ -63,8 +63,8 @@ void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
   }
 
   static wchar_t *dirs[] = { L"fomod" };
-  for (int i = 0; i < sizeof(files) / sizeof(wchar_t*); ++i) {
-    structure->removeDir(dirs[i]);
+  for (int i = 0; i < sizeof(dirs) / sizeof(wchar_t*); ++i) {
+    structure->removeDir(std::wstring(dirs[i]));
   }
 }
 
