@@ -255,7 +255,7 @@ private:
 
   struct TModInfoChange {
     QString name;
-    QFlags<IModList::ModStates> state;
+    QFlags<IModList::ModState> state;
   };
 
 private:
