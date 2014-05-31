@@ -354,10 +354,10 @@ bool ModList::renameMod(int index, const QString &newName)
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  modInfo->setName(nameFixed);
-  // this just broke all profiles! The recipient of modRenamed has to do some magic
-  // to can't write the currently active profile back
-  emit modRenamed(oldName, nameFixed);
+  if (modInfo->setName(nameFixed)) {
+    // this just disabled the mod in all profiles. The recipient of modRenamed must fix that
+    emit modRenamed(oldName, nameFixed);
+  }
 
   // invalidate the currently displayed state of this list
   notifyChange(-1);
