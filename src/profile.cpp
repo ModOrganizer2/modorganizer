@@ -162,8 +162,11 @@ void Profile::writeModlistNow(bool onlyOnTimer) const
       unsigned int index = m_ModIndexByPriority[i];
       if (index != UINT_MAX) {
         ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-        if (modInfo->getFixedPriority() == INT_MIN) {
-          if (m_ModStatus[index].m_Enabled) {
+        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+        if ((modInfo->getFixedPriority() == INT_MIN)) {
+          if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
+            file->write("*");
+          } else if (m_ModStatus[index].m_Enabled) {
             file->write("+");
           } else {
             file->write("-");
@@ -255,7 +258,8 @@ void Profile::refreshModStatus()
     } else if (line.at(0) == '-') {
       enabled = false;
       modName = QString::fromUtf8(line.mid(1).trimmed().constData());
-    } else if (line.at(0) == '+') {
+    } else if ((line.at(0) == '+')
+               || (line.at(0) == '*')) {
       modName = QString::fromUtf8(line.mid(1).trimmed().constData());
     } else {
       modName = QString::fromUtf8(line.trimmed().constData());
@@ -269,8 +273,9 @@ void Profile::refreshModStatus()
       unsigned int modindex = ModInfo::getIndex(modName);
       if (modindex != UINT_MAX) {
         ModInfo::Ptr info = ModInfo::getByIndex(modindex);
-        if ((modindex < m_ModStatus.size()) && (info->getFixedPriority() == INT_MIN)) {
-          m_ModStatus[modindex].m_Enabled = enabled;
+        if ((modindex < m_ModStatus.size())
+            && (info->getFixedPriority() == INT_MIN)) {
+          m_ModStatus[modindex].m_Enabled = enabled || info->alwaysEnabled();
           if (m_ModStatus[modindex].m_Priority == -1) {
             if (static_cast<size_t>(index) >= m_ModStatus.size()) {
               throw MyException(tr("invalid index %1").arg(index));
@@ -295,9 +300,10 @@ void Profile::refreshModStatus()
   // give priorities to mods not referenced in the profile
   for (size_t i = 0; i < m_ModStatus.size(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-    if (!modInfo->canBeEnabled()) {
+    if (modInfo->getFixedPriority() == INT_MAX) {
       continue;
     }
+
     if (m_ModStatus[i].m_Priority != -1) {
       m_ModStatus[i].m_Priority = numKnownMods - m_ModStatus[i].m_Priority - 1;
     } else {

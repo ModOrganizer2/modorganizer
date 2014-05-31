@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <directoryentry.h>
 #include <QObject>
 #include <QMutex>
+#include <QStringList>
 #include <vector>
 #include <set>
 #include <tuple>
@@ -83,7 +84,7 @@ public:
    * @param directory
    * @param priorityDir
    */
-  void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory);
+  void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles, const QStringList &archives);
 
 public slots:
 
@@ -100,8 +101,22 @@ signals:
 
 private:
 
-  std::vector<std::tuple<QString, QString, int> > m_Mods;
-  std::set<QString> m_ManagedArchives;
+  struct EntryInfo {
+    EntryInfo(const QString &modName, const QString &absolutePath,
+              const QStringList &stealFiles, const QStringList &archives, int priority)
+      : modName(modName), absolutePath(absolutePath), stealFiles(stealFiles)
+      , archives(archives), priority(priority) {}
+    QString modName;
+    QString absolutePath;
+    QStringList stealFiles;
+    QStringList archives;
+    int priority;
+  };
+
+private:
+
+  std::vector<EntryInfo> m_Mods;
+  std::set<QString> m_EnabledArchives;
   MOShared::DirectoryEntry *m_DirectoryStructure;
   QMutex m_RefreshLock;
 

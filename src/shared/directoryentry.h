@@ -273,6 +273,8 @@ public:
 
   bool hasContentsFromOrigin(int originID) const;
 
+  FilesOrigin &createOrigin(const std::wstring &originName, const std::wstring &directory, int priority);
+
 private:
 
   DirectoryEntry(const DirectoryEntry &reference);
@@ -292,7 +294,6 @@ private:
     origin.addFile(file->getIndex());
   }
 
-  FilesOrigin &createOrigin(const std::wstring &originName, const std::wstring &directory, int priority);
   void addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
   void addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName);
 

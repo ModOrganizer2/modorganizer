@@ -1,5 +1,7 @@
 #include "persistentcookiejar.h"
 #include <QTemporaryFile>
+#include <QDataStream>
+#include <QNetworkCookie>
 
 
 PersistentCookieJar::PersistentCookieJar(const QString &fileName, QObject *parent)

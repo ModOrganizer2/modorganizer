@@ -255,16 +255,16 @@ void BrowserDialog::on_searchEdit_returnPressed()
   }
 }
 
-void BrowserDialog::on_browserTabWidget_currentChanged(QWidget *current)
+void BrowserDialog::on_refreshBtn_clicked()
 {
-  BrowserView *currentView = qobject_cast<BrowserView*>(current);
+  getCurrentView()->reload();
+}
+
+void BrowserDialog::on_browserTabWidget_currentChanged(int index)
+{
+  BrowserView *currentView = qobject_cast<BrowserView*>(ui->browserTabWidget->widget(index));
   if (currentView != NULL) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
   }
-}
-
-void BrowserDialog::on_refreshBtn_clicked()
-{
-  getCurrentView()->reload();
 }

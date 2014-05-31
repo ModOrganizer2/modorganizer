@@ -99,9 +99,9 @@ private slots:
 
   void startSearch();
 
-  void on_browserTabWidget_currentChanged(QWidget *arg1);
-
   void on_refreshBtn_clicked();
+
+  void on_browserTabWidget_currentChanged(int index);
 
 private:
 

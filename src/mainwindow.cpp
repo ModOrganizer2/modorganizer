@@ -538,11 +538,9 @@ void MainWindow::updateProblemsButton()
     ui->actionProblems->setIconText(tr("Problems"));
     ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
 
-//    QPixmap mergedIcon(64, 64);
     QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
     {
       QPainter painter(&mergedIcon);
-//      painter.setBrush(QBrush(Qt::transparent));
       std::string badgeName = std::string(":/MO/gui/badge_") + (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
       painter.drawPixmap(32, 32, 32, 32, QPixmap(badgeName.c_str()));
     }
@@ -588,11 +586,11 @@ bool MainWindow::errorReported(QString &logFile)
 
 int MainWindow::checkForProblems()
 {
+  int numProblems = 0;
   foreach (IPluginDiagnose *diagnose, m_DiagnosisPlugins) {
-    std::vector<unsigned int> activeProblems = diagnose->activeProblems();
-    return activeProblems.size();
+    numProblems += diagnose->activeProblems().size();
   }
-  return 0;
+  return numProblems;
 }
 
 void MainWindow::about()
@@ -672,7 +670,11 @@ void MainWindow::saveArchiveList()
       for (int j = 0; j < tlItem->childCount(); ++j) {
         QTreeWidgetItem *item = tlItem->child(j);
         if (item->checkState(0) == Qt::Checked) {
-          archiveFile->write(item->text(0).toUtf8().append("\r\n"));
+          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
+          if (ui->manageArchivesBox->isChecked()
+              || item->data(0, Qt::UserRole).toBool()) {
+            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
+          }
         }
       }
     }
@@ -1624,10 +1626,10 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   }
 }
 
-
-std::set<QString> MainWindow::managedArchives()
+std::set<QString> MainWindow::enabledArchives()
 {
   std::set<QString> result;
+
 
   QFile archiveFile(m_CurrentProfile->getArchivesFileName());
   if (archiveFile.open(QIODevice::ReadOnly)) {
@@ -1645,7 +1647,7 @@ void MainWindow::refreshDirectoryStructure()
   m_DirectoryUpdate = true;
   std::vector<std::tuple<QString, QString, int> > activeModList = m_CurrentProfile->getActiveMods();
 
-  m_DirectoryRefresher.setMods(activeModList, managedArchives());
+  m_DirectoryRefresher.setMods(activeModList, enabledArchives());
 
   statusBar()->show();
   m_RefreshProgress->setRange(0, 100);
@@ -1847,7 +1849,7 @@ void MainWindow::refreshBSAList()
 
   m_ActiveArchives.clear();
 
-  auto iter = managedArchives();
+  auto iter = enabledArchives();
   m_ActiveArchives = toStringList(iter.begin(), iter.end());
   if (m_ActiveArchives.isEmpty()) {
     m_ActiveArchives = m_DefaultArchives;
@@ -1871,6 +1873,7 @@ void MainWindow::refreshBSAList()
       if (index == -1) {
         index = 0xFFFF;
       }
+      QString basename = filename.left(filename.indexOf("."));
       QStringList strings(filename);
       bool isArchive = false;
       int origin = current->getOrigin(isArchive);
@@ -1880,11 +1883,23 @@ void MainWindow::refreshBSAList()
       newItem->setData(1, Qt::UserRole, origin);
       newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
-      if (m_Settings.forceEnableCoreFiles() && m_DefaultArchives.contains(filename)) {
+      newItem->setData(0, Qt::UserRole, false);
+      if (m_Settings.forceEnableCoreFiles()
+          && m_DefaultArchives.contains(filename)) {
+        newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+        newItem->setData(0, Qt::UserRole, true);
+      } else if ((m_PluginList.state(basename + ".esp") == IPluginList::STATE_ACTIVE)
+                 || (m_PluginList.state(basename + ".esm") == IPluginList::STATE_ACTIVE)) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
       } else {
-        newItem->setCheckState(0, (index != 0xFFFF) ? Qt::Checked : Qt::Unchecked);
+        if (ui->manageArchivesBox->isChecked()) {
+          newItem->setCheckState(0, (index != 0xFFFF) ? Qt::Checked : Qt::Unchecked);
+        } else {
+          newItem->setCheckState(0, Qt::Unchecked);
+          newItem->setDisabled(true);
+        }
       }
 
       if (index < 0) index = 0;
@@ -1909,6 +1924,7 @@ void MainWindow::refreshBSAList()
       ui->bsaList->addTopLevelItem(subItem);
     }
     subItem->addChild(iter->second);
+    subItem->setExpanded(true);
   }
 
   checkBSAList();
@@ -2630,7 +2646,9 @@ void MainWindow::modStatusChanged(unsigned int index)
       m_DirectoryRefresher.addModToStructure(m_DirectoryStructure
                                              , modInfo->name()
                                              , m_CurrentProfile->getModPriority(index)
-                                             , modInfo->absolutePath());
+                                             , modInfo->absolutePath()
+                                             , modInfo->stealFiles()
+                                             , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
     } else {
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
@@ -2728,34 +2746,31 @@ void MainWindow::renameModInList(QFile &modList, const QString &oldName, const Q
 
   while (!modList.atEnd()) {
     QByteArray line = modList.readLine();
+
     if (line.length() == 0) {
-      break;
+      // ignore empty lines
+      qWarning("mod list contained invalid data: empty line");
+      continue;
     }
-    if (line.at(0) == '#') {
+
+    char spec = line.at(0);
+    if (spec == '#') {
+      // don't touch comments
       outBuffer.write(line);
       continue;
     }
-    QString modName = QString::fromUtf8(line.constData()).trimmed();
+
+    QString modName = QString::fromUtf8(line).mid(1).trimmed();
+
     if (modName.isEmpty()) {
-      break;
+      // file broken?
+      qWarning("mod list contained invalid data: missing mod name");
+      continue;
     }
 
-    bool disabled = false;
-    if (modName.at(0) == '-') {
-      disabled = true;
-      modName = modName.mid(1);
-    } else if (modName.at(0) == '+') {
-      modName = modName.mid(1);
-    }
-
+    outBuffer.write(QByteArray(1, spec));
     if (modName == oldName) {
       modName = newName;
-    }
-
-    if (disabled) {
-      outBuffer.write("-");
-    } else {
-      outBuffer.write("+");
     }
     outBuffer.write(modName.toUtf8().constData());
     outBuffer.write("\r\n");
@@ -3130,6 +3145,9 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     dialog->raise();
     dialog->activateWindow();
     connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
+  } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
+    // nop - no menu for this file type
+    return;
   } else {
     modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, this);
@@ -3159,9 +3177,12 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
       FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
 
-      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure,
-                                             modInfo->name(), m_CurrentProfile->getModPriority(index),
-                                             modInfo->absolutePath());
+      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure
+                                             , modInfo->name()
+                                             , m_CurrentProfile->getModPriority(index)
+                                             , modInfo->absolutePath()
+                                             , modInfo->stealFiles()
+                                             , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_DirectoryStructure);
       refreshLists();
     }
@@ -3728,6 +3749,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
+      } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
+        // nop, nothing to do with this mod
       } else {
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Add/Remove Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
@@ -3786,8 +3809,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
       }
 
-      QAction *infoAction = menu->addAction(tr("Information..."), this, SLOT(information_clicked()));
-      menu->setDefaultAction(infoAction);
+      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
+        QAction *infoAction = menu->addAction(tr("Information..."), this, SLOT(information_clicked()));
+        menu->setDefaultAction(infoAction);
+      }
     }
 
     menu->exec(modList->mapToGlobal(pos));
@@ -4818,7 +4843,7 @@ void MainWindow::extractBSATriggered()
     QString originPath = QDir::fromNativeSeparators(ToQString(m_DirectoryStructure->getOriginByName(ToWString(item->text(1))).getPath()));
     QString archivePath =  QString("%1\\%2").arg(originPath).arg(item->text(0));
 
-    BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData());
+    BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
     if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
       reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
       return;
@@ -4902,6 +4927,7 @@ void MainWindow::on_actionProblems_triggered()
   ProblemsDialog problems(m_DiagnosisPlugins, this);
   if (problems.hasProblems()) {
     problems.exec();
+    updateProblemsButton();
   }
 }
 
@@ -5409,4 +5435,9 @@ void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
 {
   QToolTip::showText(QCursor::pos(),
                      ui->managedArchiveLabel->toolTip());
+}
+
+void MainWindow::on_manageArchivesBox_toggled(bool)
+{
+  refreshBSAList();
 }

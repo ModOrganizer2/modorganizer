@@ -443,10 +443,12 @@ FilesOrigin &DirectoryEntry::createOrigin(const std::wstring &originName, const 
 void DirectoryEntry::addFromOrigin(const std::wstring &originName, const std::wstring &directory, int priority)
 {
   FilesOrigin &origin = createOrigin(originName, directory, priority);
-  boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
-  memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
-  int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
-  addFiles(origin, buffer.get(), offset);
+  if (directory.length() != 0) {
+    boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
+    memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
+    int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
+    addFiles(origin, buffer.get(), offset);
+  }
   m_Populated = true;
 }
 
@@ -461,7 +463,7 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
   }
 
   BSA::Archive archive;
-  BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str());
+  BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str(), false);
   if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
     std::ostringstream stream;
     stream << "invalid bsa file: " << ToString(fileName, false) << " errorcode " << res << " - " << ::GetLastError();

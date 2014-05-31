@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include <QMutexLocker>
 #include <QFile>
+#include <QIcon>
 #include <QDateTime>
 #include <Windows.h>
 
@@ -108,21 +109,6 @@ void LogBuffer::init(int messageCount, QtMsgType minMsgType, const QString &outp
 #endif
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-
-void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
-{
-  QMutexLocker guard(&s_Mutex);
-  if (!s_Instance.isNull()) {
-    s_Instance->logMessage(type, message);
-  }
-  fprintf(stdout, "(%s:%u) %s\n", context.file, context.line, qPrintable(message));
-  fflush(stdout);
-}
-
-#else
-
-
 char LogBuffer::msgTypeID(QtMsgType type)
 {
   switch (type) {
@@ -133,6 +119,39 @@ char LogBuffer::msgTypeID(QtMsgType type)
     default: return '?';
   }
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+
+void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+  QMutexLocker guard(&s_Mutex);
+  if (!s_Instance.isNull()) {
+    s_Instance->logMessage(type, message);
+  }
+//  fprintf(stdout, "(%s:%u) %s\n", context.file, context.line, qPrintable(message));
+  if (type == QtDebugMsg) {
+    fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
+  } else {
+    fprintf(stdout, "%s [%c] (%s:%u) %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type),
+            context.file, context.line, qPrintable(message));
+  }
+  fflush(stdout);
+}
+
+#else
+
+void LogBuffer::log(QtMsgType type, const char *message)
+{
+  QMutexLocker guard(&s_Mutex);
+  if (!s_Instance.isNull()) {
+    s_Instance->logMessage(type, message);
+  }
+  fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), message);
+  fflush(stdout);
+}
+
+#endif
+
 
 QModelIndex LogBuffer::index(int row, int column, const QModelIndex&) const
 {
@@ -162,7 +181,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
 {
   unsigned offset = m_NumMessages < m_Messages.size() ? 0
                                                       : m_NumMessages - m_Messages.size();
-  unsigned int msgIndex = (offset + index.row()) % m_Messages.size();
+  unsigned int msgIndex = (offset + index.row() + 1) % m_Messages.size();
   switch (role) {
     case Qt::DisplayRole: {
       if (index.column() == 0) {
@@ -199,18 +218,6 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
   }
   return QVariant();
 }
-
-void LogBuffer::log(QtMsgType type, const char *message)
-{
-  QMutexLocker guard(&s_Mutex);
-  if (!s_Instance.isNull()) {
-    s_Instance->logMessage(type, message);
-  }
-  fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), message);
-  fflush(stdout);
-}
-
-#endif
 
 void LogBuffer::writeNow()
 {

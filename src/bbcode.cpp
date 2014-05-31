@@ -160,10 +160,17 @@ private:
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),
                                          "<a href=\"http://www.youtube.com/v/\\1\">http://www.youtube.com/v/\\1</a>");
 
-    m_ColorMap = boost::assign::map_list_of("red", "FF0000")("green", "00FF00")("blue", "0000FF")
-                                           ("black", "000000")("gray", "7F7F7F")("white", "FFFFFF")
-                                           ("yellow", "FFFF00")("cyan", "00FFFF")("magenta", "FF00FF")
-                                           ("brown", "A52A2A")("orange", "FFCC00");
+    m_ColorMap.insert(std::make_pair<QString, QString>("red", "FF0000"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("green", "00FF00"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("blue", "0000FF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("black", "000000"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("gray", "7F7F7F"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("white", "FFFFFF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("yellow", "FFFF00"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("cyan", "00FFFF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("magenta", "FF00FF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("brown", "A52A2A"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("orange", "FFCC00"));
 
     // make all patterns non-greedy and case-insensitive
     for (TagMap::iterator iter = m_TagMap.begin(); iter != m_TagMap.end(); ++iter) {

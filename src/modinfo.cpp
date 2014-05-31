@@ -73,6 +73,16 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
 }
 
 
+ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList &bsaNames
+                                       , DirectoryEntry ** directoryStructure)
+{
+  QMutexLocker locker(&s_Mutex);
+  ModInfo::Ptr result = ModInfo::Ptr(new ModInfoForeign(espName, bsaNames, directoryStructure));
+  s_Collection.push_back(result);
+  return result;
+}
+
+
 void ModInfo::createFromOverwrite()
 {
   QMutexLocker locker(&s_Mutex);
@@ -179,12 +189,29 @@ void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **direc
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
   s_NextID = 0;
-  // list all directories in the mod directory and make a mod out of each
-  QDir mods(QDir::fromNativeSeparators(modDirectory));
-  mods.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
-  QDirIterator modIter(mods);
-  while (modIter.hasNext()) {
-    createFrom(QDir(modIter.next()), directoryStructure);
+
+  { // list all directories in the mod directory and make a mod out of each
+    QDir mods(QDir::fromNativeSeparators(modDirectory));
+    mods.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+    QDirIterator modIter(mods);
+    while (modIter.hasNext()) {
+      createFrom(QDir(modIter.next()), directoryStructure);
+    }
+  }
+
+  { // list plugins in the data directory and make a foreign-managed mod out of each
+    QDir dataDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data");
+    foreach (const QFileInfo &file, dataDir.entryInfoList(QStringList() << "*.esp" << "*.esm")) {
+      if ((file.baseName() != "Update")
+          && (file.baseName() != ToQString(GameInfo::instance().getGameName()))) {
+        QStringList archives;
+        foreach (const QString archiveName, dataDir.entryList(QStringList() << file.baseName() + "*.bsa")) {
+          archives.append(dataDir.absoluteFilePath(archiveName));
+        }
+
+        createFromPlugin(file.fileName(), archives, directoryStructure);
+      }
+    }
   }
 
   createFromOverwrite();
@@ -293,18 +320,136 @@ void ModInfo::testValid()
 }
 
 
+ModInfoWithConflictInfo::ModInfoWithConflictInfo(DirectoryEntry **directoryStructure)
+  : m_DirectoryStructure(directoryStructure) {}
+
+void ModInfoWithConflictInfo::clearCaches()
+{
+  m_LastConflictCheck = QTime();
+}
+
+std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
+{
+  std::vector<ModInfo::EFlag> result;
+  switch (isConflicted()) {
+    case CONFLICT_MIXED: {
+      result.push_back(ModInfo::FLAG_CONFLICT_MIXED);
+    } break;
+    case CONFLICT_OVERWRITE: {
+      result.push_back(ModInfo::FLAG_CONFLICT_OVERWRITE);
+    } break;
+    case CONFLICT_OVERWRITTEN: {
+      result.push_back(ModInfo::FLAG_CONFLICT_OVERWRITTEN);
+    } break;
+    case CONFLICT_REDUNDANT: {
+      result.push_back(ModInfo::FLAG_CONFLICT_REDUNDANT);
+    } break;
+    default: { /* NOP */ }
+  }
+  return result;
+}
+
+
+ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
+{
+  // this is costy so cache the result
+  QTime now = QTime::currentTime();
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
+    bool overwrite = false;
+    bool overwritten = false;
+    bool regular = false;
+
+    int dataID = 0;
+    if ((*m_DirectoryStructure)->originExists(L"data")) {
+      dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+    }
+
+    std::wstring name = ToWString(this->name());
+    if ((*m_DirectoryStructure)->originExists(name)) {
+      FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+      std::vector<FileEntry::Ptr> files = origin.getFiles();
+      for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
+        const std::vector<int> &alternatives = (*iter)->getAlternatives();
+        if (alternatives.size() == 0) {
+          // no alternatives -> no conflict
+          regular = true;
+        } else {
+          for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
+            // don't treat files overwritten in data as "conflict"
+            if (*altIter != dataID) {
+              bool ignore = false;
+              if ((*iter)->getOrigin(ignore) == origin.getID()) {
+                overwrite = true;
+                break;
+              } else {
+                overwritten = true;
+                break;
+              }
+            } else if (alternatives.size() == 1) {
+              // only alternative is data -> no conflict
+              regular = true;
+            }
+          }
+        }
+      }
+    }
+
+    m_LastConflictCheck = QTime::currentTime();
+
+    if (overwrite && overwritten) m_CurrentConflictState = CONFLICT_MIXED;
+    else if (overwrite) m_CurrentConflictState = CONFLICT_OVERWRITE;
+    else if (overwritten) {
+      if (!regular) {
+        m_CurrentConflictState = CONFLICT_REDUNDANT;
+      } else {
+        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+      }
+    }
+    else m_CurrentConflictState = CONFLICT_NONE;
+  }
+
+  return m_CurrentConflictState;
+}
+
+
+bool ModInfoWithConflictInfo::isRedundant() const
+{
+  std::wstring name = ToWString(this->name());
+  if ((*m_DirectoryStructure)->originExists(name)) {
+    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+    std::vector<FileEntry::Ptr> files = origin.getFiles();
+    bool ignore = false;
+    for (auto iter = files.begin(); iter != files.end(); ++iter) {
+      if ((*iter)->getOrigin(ignore) == origin.getID()) {
+        return false;
+      }
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
 ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStructure)
-  : ModInfo(), m_Name(path.dirName()), m_Path(path.absolutePath()), m_MetaInfoChanged(false),
-    m_EndorsedState(ENDORSED_UNKNOWN), m_DirectoryStructure(directoryStructure)
+  : ModInfoWithConflictInfo(directoryStructure)
+  , m_Name(path.dirName())
+  , m_Path(path.absolutePath())
+  , m_MetaInfoChanged(false)
+  , m_EndorsedState(ENDORSED_UNKNOWN)
 {
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
   readMeta();
 
-  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant)), this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant)), this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(int,int,QVariant,QString)), this, SLOT(nxmRequestFailed(int,int,QVariant,QString)));
+  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant))
+          , this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant))
+          , this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(int,int,QVariant,QString))
+          , this, SLOT(nxmRequestFailed(int,int,QVariant,QString)));
 }
 
 
@@ -612,11 +757,6 @@ void ModInfoRegular::endorse(bool doEndorse)
   }
 }
 
-void ModInfoRegular::clearCaches()
-{
-  m_LastConflictCheck = QTime();
-}
-
 
 QString ModInfoRegular::absolutePath() const
 {
@@ -636,22 +776,7 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
-  std::vector<ModInfo::EFlag> result;
-  switch (isConflicted()) {
-    case CONFLICT_MIXED: {
-      result.push_back(ModInfo::FLAG_CONFLICT_MIXED);
-    } break;
-    case CONFLICT_OVERWRITE: {
-      result.push_back(ModInfo::FLAG_CONFLICT_OVERWRITE);
-    } break;
-    case CONFLICT_OVERWRITTEN: {
-      result.push_back(ModInfo::FLAG_CONFLICT_OVERWRITTEN);
-    } break;
-    case CONFLICT_REDUNDANT: {
-      result.push_back(ModInfo::FLAG_CONFLICT_REDUNDANT);
-    } break;
-    default: { /* NOP */ }
-  }
+  std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
@@ -712,90 +837,20 @@ ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
   return m_EndorsedState;
 }
 
-ModInfoRegular::EConflictType ModInfoRegular::isConflicted() const
-{
-  // this is costy so cache the result
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    bool overwrite = false;
-    bool overwritten = false;
-    bool regular = false;
-
-    int dataID = 0;
-    if ((*m_DirectoryStructure)->originExists(L"data")) {
-      dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
-    }
-
-    std::wstring name = ToWString(m_Name);
-    if ((*m_DirectoryStructure)->originExists(name)) {
-      FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-      std::vector<FileEntry::Ptr> files = origin.getFiles();
-      for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
-        const std::vector<int> &alternatives = (*iter)->getAlternatives();
-        if (alternatives.size() == 0) {
-          // no alternatives -> no conflict
-          regular = true;
-        } else {
-          for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-            // don't treat files overwritten in data as "conflict"
-            if (*altIter != dataID) {
-              bool ignore = false;
-              if ((*iter)->getOrigin(ignore) == origin.getID()) {
-                overwrite = true;
-                break;
-              } else {
-                overwritten = true;
-                break;
-              }
-            } else if (alternatives.size() == 1) {
-              // only alternative is data -> no conflict
-              regular = true;
-            }
-          }
-        }
-      }
-    }
-
-    m_LastConflictCheck = QTime::currentTime();
-
-    if (overwrite && overwritten) m_CurrentConflictState = CONFLICT_MIXED;
-    else if (overwrite) m_CurrentConflictState = CONFLICT_OVERWRITE;
-    else if (overwritten) {
-      if (!regular) {
-        m_CurrentConflictState = CONFLICT_REDUNDANT;
-      } else {
-        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
-      }
-    }
-    else m_CurrentConflictState = CONFLICT_NONE;
-  }
-
-  return m_CurrentConflictState;
-}
-
-
-bool ModInfoRegular::isRedundant() const
-{
-  std::wstring name = ToWString(m_Name);
-  if ((*m_DirectoryStructure)->originExists(name)) {
-    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-    std::vector<FileEntry::Ptr> files = origin.getFiles();
-    bool ignore = false;
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      if ((*iter)->getOrigin(ignore) == origin.getID()) {
-        return false;
-      }
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-
 QDateTime ModInfoRegular::getLastNexusQuery() const
 {
   return m_LastNexusQuery;
+}
+
+
+QStringList ModInfoRegular::archives() const
+{
+  QStringList result;
+  QDir dir(this->absolutePath());
+  foreach (const QString &archive, dir.entryList(QStringList("*.bsa"))) {
+    result.append(this->absolutePath() + "/" + archive);
+  }
+  return result;
 }
 
 std::vector<QString> ModInfoRegular::getIniTweaks() const
@@ -874,9 +929,61 @@ int ModInfoOverwrite::getHighlight() const
   return (isValid() ? HIGHLIGHT_IMPORTANT : HIGHLIGHT_INVALID) | HIGHLIGHT_CENTER;
 }
 
-
 QString ModInfoOverwrite::getDescription() const
 {
   return tr("This pseudo mod contains files from the virtual data tree that got "
             "modified (i.e. by the construction kit)");
+}
+
+QStringList ModInfoOverwrite::archives() const
+{
+  QStringList result;
+  QDir dir(this->absolutePath());
+  foreach (const QString &archive, dir.entryList(QStringList("*.bsa"))) {
+    result.append(this->absolutePath() + "/" + archive);
+  }
+  return result;
+}
+
+QString ModInfoForeign::name() const
+{
+  return m_Name;
+}
+
+QDateTime ModInfoForeign::creationTime() const
+{
+  return m_CreationTime;
+}
+
+QString ModInfoForeign::absolutePath() const
+{
+  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data";
+}
+
+std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const
+{
+  std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
+  result.push_back(FLAG_FOREIGN);
+
+  return result;
+}
+
+int ModInfoForeign::getHighlight() const
+{
+  return 0;
+}
+
+QString ModInfoForeign::getDescription() const
+{
+  return tr("This pseudo mod represents content managed outside MO. It isn't modified by MO.");
+}
+
+ModInfoForeign::ModInfoForeign(const QString &referenceFile, const QStringList &archives,
+                               DirectoryEntry **directoryStructure)
+  : ModInfoWithConflictInfo(directoryStructure)
+  , m_ReferenceFile(referenceFile)
+  , m_Archives(archives)
+{
+  m_CreationTime = QFileInfo(referenceFile).created();
+  m_Name = QFileInfo(m_ReferenceFile).baseName();
 }

@@ -773,15 +773,21 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_ForceEnabled) {
       toolTip += tr("This plugin can't be disabled (enforced by the game)");
     } else {
-      QString text = tr("Origin: %1").arg(m_ESPs[index].m_OriginName);
+      QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
+      if (m_ESPs[index].m_Author.size() > 0) {
+        text += "<br><b>" + tr("Author") + "</b>: " + m_ESPs[index].m_Author;
+      }
+      if (m_ESPs[index].m_Description.size() > 0) {
+        text += "<br><b>" + tr("Description") + "</b>: " + m_ESPs[index].m_Description;
+      }
       if (m_ESPs[index].m_MasterUnset.size() > 0) {
-        text += "<br>" + tr("Missing Masters") + ": <b>" + SetJoin(m_ESPs[index].m_MasterUnset, ", ") + "</b>";
+        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + SetJoin(m_ESPs[index].m_MasterUnset, ", ") + "</b>";
       }
       std::set<QString> enabledMasters;
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
-      text += "<br>" + tr("Enabled Masters") + ": " + SetJoin(enabledMasters, ", ");
+      text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
       if (m_ESPs[index].m_HasIni) {
         text += "<br>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting "
                 "in case of conflicts.";
@@ -1093,6 +1099,8 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
     ESP::File file(ToWString(fullPath));
     m_IsMaster = file.isMaster();
     m_IsDummy = file.isDummy();
+    m_Author = QString::fromLatin1(file.author().c_str());
+    m_Description = QString::fromLatin1(file.description().c_str());
     std::set<std::string> masters = file.masters();
     for (auto iter = masters.begin(); iter != masters.end(); ++iter) {
       m_Masters.insert(QString(iter->c_str()));

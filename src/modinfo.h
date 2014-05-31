@@ -59,6 +59,7 @@ public:
     FLAG_INVALID,
     FLAG_BACKUP,
     FLAG_OVERWRITE,
+    FLAG_FOREIGN,
     FLAG_NOTENDORSED,
     FLAG_NOTES,
     FLAG_CONFLICT_OVERWRITE,
@@ -159,6 +160,14 @@ public:
    * @return pointer to the info-structure of the newly created/added mod
    */
   static ModInfo::Ptr createFrom(const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
+
+  /**
+   * @brief create a new "foreign-managed" mod from a tuple of plugin and archives
+   * @param espName name of the plugin
+   * @param bsaNames names of archives
+   * @return a new mod
+   */
+  static ModInfo::Ptr createFromPlugin(const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
 
   virtual bool isRegular() const { return false; }
 
@@ -340,6 +349,11 @@ public:
   virtual int getFixedPriority() const = 0;
 
   /**
+   * @return true if the mod is always enabled
+   */
+  virtual bool alwaysEnabled() const { return false; }
+
+  /**
    * @return true if the mod can be updated
    */
   virtual bool canBeUpdated() const { return false; }
@@ -388,6 +402,16 @@ public:
    * @return last time nexus was queried for infos on this mod
    */
   virtual QDateTime getLastNexusQuery() const = 0;
+
+  /**
+   * @return a list of files that, if they exist in the data directory are treated as files in THIS mod
+   */
+  virtual QStringList stealFiles() const { return QStringList(); }
+
+  /**
+   * @return a list of archives belonging to this mod (as absolute file paths)
+   */
+  virtual QStringList archives() const = 0;
 
   /**
    * @brief test if the mod belongs to the specified category
@@ -481,6 +505,50 @@ private:
 };
 
 
+class ModInfoWithConflictInfo : public ModInfo
+{
+
+public:
+
+  ModInfoWithConflictInfo(MOShared::DirectoryEntry **directoryStructure);
+
+  std::vector<ModInfo::EFlag> getFlags() const;
+
+  /**
+   * @brief clear all caches held for this mod
+   */
+  virtual void clearCaches();
+private:
+
+  enum EConflictType {
+    CONFLICT_NONE,
+    CONFLICT_OVERWRITE,
+    CONFLICT_OVERWRITTEN,
+    CONFLICT_MIXED,
+    CONFLICT_REDUNDANT
+  };
+
+private:
+
+  /**
+   * @return true if there is a conflict for files in this mod
+   */
+  EConflictType isConflicted() const;
+
+  /**
+   * @return true if this mod is completely replaced by others
+   */
+  bool isRedundant() const;
+
+private:
+
+  MOShared::DirectoryEntry **m_DirectoryStructure;
+
+  mutable EConflictType m_CurrentConflictState;
+  mutable QTime m_LastConflictCheck;
+
+};
+
 
 /**
  * @brief Represents meta information about a single mod.
@@ -489,7 +557,7 @@ private:
  * to manage the mod collection
  *
  **/
-class ModInfoRegular : public ModInfo
+class ModInfoRegular : public ModInfoWithConflictInfo
 {
 
   Q_OBJECT
@@ -644,11 +712,6 @@ public:
   virtual void endorse(bool doEndorse);
 
   /**
-   * @brief clear all caches held for this mod
-   */
-  virtual void clearCaches();
-
-  /**
    * @brief getter for the mod name
    *
    * @return the mod name
@@ -746,7 +809,9 @@ public:
   /**
    * @return last time nexus was queried for infos on this mod
    */
-  QDateTime getLastNexusQuery() const;
+  virtual QDateTime getLastNexusQuery() const;
+
+  virtual QStringList archives() const;
 
   /**
    * @brief stores meta information back to disk
@@ -754,33 +819,12 @@ public:
   virtual void saveMeta();
 
   void readMeta();
-private:
-
-  enum EConflictType {
-    CONFLICT_NONE,
-    CONFLICT_OVERWRITE,
-    CONFLICT_OVERWRITTEN,
-    CONFLICT_MIXED,
-    CONFLICT_REDUNDANT
-  };
 
 private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
   void nxmRequestFailed(int modID, int fileID, QVariant userData, const QString &errorMessage);
-
-private:
-
-  /**
-   * @return true if there is a conflict for files in this mod
-   */
-  EConflictType isConflicted() const;
-
-  /**
-   * @return true if this mod is completely replaced by others
-   */
-  bool isRedundant() const;
 
 protected:
 
@@ -806,11 +850,6 @@ private:
   EEndorsedState m_EndorsedState;
 
   NexusBridge m_NexusBridge;
-
-  MOShared::DirectoryEntry **m_DirectoryStructure;
-
-  mutable EConflictType m_CurrentConflictState;
-  mutable QTime m_LastConflictCheck;
 
 };
 
@@ -887,6 +926,7 @@ public:
   virtual QString getDescription() const;
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual QString getNexusDescription() const { return QString(); }
+  virtual QStringList archives() const;
 
 private:
 
@@ -895,6 +935,65 @@ private:
 private:
 
   QDateTime m_StartupTime;
+
+};
+
+
+class ModInfoForeign : public ModInfoWithConflictInfo
+{
+
+  Q_OBJECT
+
+  friend class ModInfo;
+
+public:
+
+  virtual bool updateAvailable() const { return false; }
+  virtual bool updateIgnored() const { return false; }
+  virtual bool downgradeAvailable() const { return false; }
+  virtual bool updateNXMInfo() { return false; }
+  virtual void setCategory(int, bool) {}
+  virtual bool setName(const QString&) { return false; }
+  virtual void setNotes(const QString&) {}
+  virtual void setNexusID(int) {}
+  virtual void setNewestVersion(const MOBase::VersionInfo&) {}
+  virtual void ignoreUpdate(bool) {}
+  virtual void setNexusDescription(const QString&) {}
+  virtual void addNexusCategory(int) {}
+  virtual void setIsEndorsed(bool) {}
+  virtual void setNeverEndorse() {}
+  virtual bool remove() { return false; }
+  virtual void endorse(bool) {}
+  virtual bool isEmpty() const { return false; }
+  virtual QString name() const;
+  virtual QString notes() const { return ""; }
+  virtual QDateTime creationTime() const;
+  virtual QString absolutePath() const;
+  virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
+  virtual QString getInstallationFile() const { return ""; }
+  virtual int getNexusID() const { return -1; }
+  virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
+  virtual std::vector<ModInfo::EFlag> getFlags() const;
+  virtual int getHighlight() const;
+  virtual QString getDescription() const;
+  virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
+  virtual QString getNexusDescription() const { return QString(); }
+  virtual int getFixedPriority() const { return INT_MIN; }
+  virtual QStringList archives() const { return m_Archives; }
+  virtual QStringList stealFiles() const { return m_Archives + QStringList(m_ReferenceFile); }
+  virtual bool alwaysEnabled() const { return true; }
+
+protected:
+
+  ModInfoForeign(const QString &referenceFile, const QStringList &archives, MOShared::DirectoryEntry **directoryStructure);
+
+private:
+
+  QString m_Name;
+  QString m_ReferenceFile;
+  QStringList m_Archives;
+  QDateTime m_CreationTime;
+  int m_Priority;
 
 };
 

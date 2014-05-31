@@ -26,8 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
+#include "bbcode.h"
 #include <utility.h>
-#include <bbcode.h>
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>

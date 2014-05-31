@@ -3,7 +3,8 @@ function getTutorialSteps()
 {
   return [
     function() {
-        tutorial.text = qsTr("Welcome to the ModOrganizer Tutorial! This will guide you through the most important features of the program.")
+        tutorial.text = qsTr("Welcome to the ModOrganizer Tutorial! This will guide you through the most common features of MO."
+                           + "\nPlease go along with the tutorial because some things can't be demonstrated if you skip something.")
         waitForClick()
     },
 
@@ -37,13 +38,26 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("This list displays all mods installed through MO. The first point in our agenda will be adding some stuff to it.")
+        tutorial.text = qsTr("This list displays all mods installed through MO. It also displays installed DLCs and some mods "
+                           + "installed outside MO but you have limited control over those in MO.")
         highlightItem("modList", false)
         waitForClick()
     },
 
     function() {
-        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. You can use your regular browser to send download from nexusmods to MO."
+        tutorial.text = qsTr("Before we start installing mods, let's have a quick look at the settings.")
+        highlightAction("actionSettings", true)
+        tutorialControl.waitForAction("actionSettings")
+    },
+
+    function() {
+         tutorial.text = qsTr("Now it's time to install a few mods!"
+                            + "Please go along with this because we need a few mods installed to demonstrate other features")
+        waitForClick()
+    },
+
+    function() {
+        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. You can use your regular browser to send download from Nexus to MO. "
                            + "Click on \"Nexus\" to open the appropriate nexusmods page. This will also register ModOrganizer as the downloader "
                            + "for \"nxm links\" for the game MO is managing. \"nxm links\" are the green buttons on Nexus saying \"Download with Manager\".")
         highlightAction("actionNexus", true)
@@ -51,7 +65,7 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("Downloads will appear here. Double click one to install it.")
+        tutorial.text = qsTr("Downloads will appear here. Please download at least one mod, then double click it to install.")
         applicationWindow.modInstalled.connect(nextStep)
         highlightItem("downloadView", true)
     },

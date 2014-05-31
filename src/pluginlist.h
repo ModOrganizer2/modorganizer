@@ -244,6 +244,8 @@ private:
     QString m_OriginName;
     bool m_IsMaster;
     bool m_IsDummy;
+    QString m_Author;
+    QString m_Description;
     bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
