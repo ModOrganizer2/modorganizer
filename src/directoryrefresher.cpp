@@ -141,7 +141,6 @@ void DirectoryRefresher::refresh()
 
   //TODO i is the priority here, where higher = more important. the input vector is also sorted by priority but inverted!
   for (int i = 1; iter != m_Mods.end(); ++iter, ++i) {
-qDebug("%s - %d", qPrintable(iter->modName), i);
     try {
       addModToStructure(m_DirectoryStructure, iter->modName, i, iter->absolutePath, iter->stealFiles, iter->archives);
     } catch (const std::exception &e) {

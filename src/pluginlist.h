@@ -123,6 +123,24 @@ public:
   bool isEnabled(const QString &name);
 
   /**
+   * @brief clear all additional information we stored on plugins
+   */
+  void clearAdditionalInformation();
+
+  /**
+   * @brief reset additional information on a mod
+   * @param name name of the plugin to clear the information of
+   */
+  void clearInformation(const QString &name);
+
+  /**
+   * @brief add additional information on a mod (i.e. from loot)
+   * @param name name of the plugin to add information about
+   * @param message the message to add to the plugin
+   */
+  void addInformation(const QString &name, const QString &message);
+
+  /**
    * @brief test if a plugin is enabled
    *
    * @param index index of the plugin to look up
@@ -251,9 +269,8 @@ private:
     mutable std::set<QString> m_MasterUnset;
   };
 
-  struct BossInfo {
-    QStringList m_BOSSMessages;
-    bool m_BOSSUnrecognized;
+  struct AdditionalInfo {
+    QStringList m_Messages;
   };
 
   friend bool ByName(const ESPInfo& LHS, const ESPInfo& RHS);
@@ -291,7 +308,7 @@ private:
   std::map<QString, int> m_ESPLoadOrder;
   std::map<QString, int> m_LockedOrder;
 
-  std::map<QString, BossInfo> m_BossInfo; // maps esp names to boss information
+  std::map<QString, AdditionalInfo> m_AdditionalInfo; // maps esp names to boss information
 
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;

@@ -266,6 +266,29 @@ bool PluginList::isEnabled(const QString &name)
   }
 }
 
+void PluginList::clearInformation(const QString &name)
+{
+  std::map<QString, int>::iterator iter = m_ESPsByName.find(name.toLower());
+
+  if (iter != m_ESPsByName.end()) {
+    m_AdditionalInfo[name.toLower()].m_Messages.clear();
+  }
+}
+
+void PluginList::clearAdditionalInformation()
+{
+  m_AdditionalInfo.clear();
+}
+
+void PluginList::addInformation(const QString &name, const QString &message)
+{
+  std::map<QString, int>::iterator iter = m_ESPsByName.find(name.toLower());
+
+  if (iter != m_ESPsByName.end()) {
+    m_AdditionalInfo[name.toLower()].m_Messages.append(message);
+  }
+}
+
 
 bool PluginList::isEnabled(int index)
 {
@@ -760,14 +783,11 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     }
   } else if (role == Qt::ToolTipRole) {
     QString name = m_ESPs[index].m_Name.toLower();
-    auto bossInfoIter = m_BossInfo.find(name);
+    auto addInfoIter = m_AdditionalInfo.find(name);
     QString toolTip;
-    if (bossInfoIter != m_BossInfo.end()) {
-      if (!bossInfoIter->second.m_BOSSMessages.isEmpty()) {
-        toolTip += bossInfoIter->second.m_BOSSMessages.join("<br>") + "<br><hr>";
-      }
-      if (bossInfoIter->second.m_BOSSUnrecognized) {
-        toolTip += "Not recognized by BOSS<br><ht>";
+    if (addInfoIter != m_AdditionalInfo.end()) {
+      if (!addInfoIter->second.m_Messages.isEmpty()) {
+        toolTip += addInfoIter->second.m_Messages.join("<br>") + "<br><hr>";
       }
     }
     if (m_ESPs[index].m_ForceEnabled) {
@@ -787,7 +807,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
-      text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
+      if (enabledMasters.size() > 0) {
+        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
+      }
       if (m_ESPs[index].m_HasIni) {
         text += "<br>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting "
                 "in case of conflicts.";
@@ -807,14 +829,14 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
       result.append(QIcon(":/MO/gui/locked"));
     }
-    auto bossInfoIter = m_BossInfo.find(nameLower);
-    if (bossInfoIter != m_BossInfo.end()) {
-      if (!bossInfoIter->second.m_BOSSMessages.isEmpty()) {
+    auto bossInfoIter = m_AdditionalInfo.find(nameLower);
+    if (bossInfoIter != m_AdditionalInfo.end()) {
+      if (!bossInfoIter->second.m_Messages.isEmpty()) {
         result.append(QIcon(":/MO/gui/information"));
       }
-      if (bossInfoIter->second.m_BOSSUnrecognized) {
+      /*if (bossInfoIter->second.m_LOOTUnrecognized) {
         result.append(QIcon(":/MO/gui/help"));
-      }
+      }*/
     }
     if (m_ESPs[index].m_HasIni) {
       result.append(QIcon(":/MO/gui/attachment"));

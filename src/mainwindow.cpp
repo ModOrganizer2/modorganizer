@@ -116,7 +116,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scopeguard.h>
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
-
+#include <regex>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -5158,6 +5158,9 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
 {
   std::vector<std::string> lines;
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
+
+  std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+
   foreach (const std::string &line, lines) {
     if (line.length() > 0) {
       size_t progidx   = line.find("[progress]");
@@ -5171,7 +5174,14 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
       } else {
-        qDebug("%s", line.c_str());
+        std::tr1::smatch match;
+        if (std::tr1::regex_match(line, match, exRequires)) {
+          std::string modName(match[1].first, match[1].second);
+          std::string dependency(match[2].first, match[2].second);
+          m_PluginList.addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
+        } else {
+          qDebug("%s", line.c_str());
+        }
       }
     }
   }
@@ -5257,6 +5267,8 @@ void MainWindow::on_bossButton_clicked()
 
     // we don't use the write end
     ::CloseHandle(stdOutWrite);
+
+    m_PluginList.clearAdditionalInformation();
 
     if (loot != INVALID_HANDLE_VALUE) {
       while (::WaitForSingleObject(loot, 100) == WAIT_TIMEOUT) {
