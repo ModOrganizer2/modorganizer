@@ -176,14 +176,14 @@ public:
   void setupLoadMechanism();
 
   /**
-   * @return true if the user has enabled the quick installer (default true)
-   **/
-  bool enableQuickInstaller();
-
-  /**
    * @return true if the user configured the use of a network proxy
    */
   bool useProxy();
+
+  /**
+   * @return true if the user wants to see non-official plugins installed outside MO in his mod list
+   */
+  bool displayForeign();
 
   /**
    * @brief sets the new motd hash

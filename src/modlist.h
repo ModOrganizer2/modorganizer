@@ -62,6 +62,7 @@ public:
   };
 
   typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;
+  typedef boost::signals2::signal<void (const QString &, int, int)> SignalModMoved;
 
 public:
 
@@ -112,6 +113,9 @@ public:
 
   /// \copydoc MOBase::IModList::onModStateChanged
   virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func);
+
+  /// \copydoc MOBase::IModList::onModMoved
+  virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func);
 
 public: // implementation of virtual functions of QAbstractItemModel
 
@@ -276,11 +280,8 @@ private:
   TModInfoChange m_ChangeInfo;
 
   SignalModStateChanged m_ModStateChanged;
+  SignalModMoved m_ModMoved;
 
-
-  // QAbstractItemModel interface
-
-  // IModList interface
 };
 
 #endif // MODLIST_H

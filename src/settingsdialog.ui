@@ -749,6 +749,25 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="displayForeignBox">
+         <property name="toolTip">
+          <string>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</string>
+         </property>
+         <property name="whatsThis">
+          <string>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
+However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
+
+If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps and esms) displayed in the right pane are completely unaffected by this feature.</string>
+         </property>
+         <property name="text">
+          <string>Display mods installed outside MO</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="bsaDateBtn">
          <property name="toolTip">
           <string>For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.

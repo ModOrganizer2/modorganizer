@@ -222,7 +222,13 @@ std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
     throw windows_error("failed to look up special folder", errorcode);
   }
 
-  return temp;
+  WCHAR temp2[MAX_PATH];
+  // try to expand variables in the path, if any
+  if (::ExpandEnvironmentStringsW(temp, temp2, MAX_PATH) != 0) {
+    return temp2;
+  } else {
+    return temp;
+  }
 }
 
 } // namespace MOShared

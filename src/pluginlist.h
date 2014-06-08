@@ -103,9 +103,16 @@ public:
    *
    * @param profileName name of the current profile
    * @param baseDirectory the root directory structure representing the virtual data directory
+   * @param pluginsFile file that stores the list of enabled plugins
+   * @param loadOrderFile file that stored the load order (not an official file but used by many tools for skyrim)
+   * @param lockedOrderFile list of plugins that shouldn't change load order
    * @todo the profile is not used? If it was, we should pass the Profile-object instead
    **/
-  void refresh(const QString &profileName, const MOShared::DirectoryEntry &baseDirectory, const QString &pluginsFile, const QString &loadOrderFile, const QString &lockedOrderFile);
+  void refresh(const QString &profileName
+               , const MOShared::DirectoryEntry &baseDirectory
+               , const QString &pluginsFile
+               , const QString &loadOrderFile
+               , const QString &lockedOrderFile);
 
   /**
    * @brief enable a plugin based on its name
@@ -166,8 +173,11 @@ public:
    * @param deleterFileName file to receive a list of files to hide from the virtual data tree. This is used to hide unchecked plugins if "hideUnchecked" is true
    * @param hideUnchecked if true, plugins that aren't enabled will be hidden from the virtual data directory
    **/
-  void saveTo(const QString &pluginFileName, const QString &loadOrderFileName, const QString &lockedOrderFileName,
-              const QString &deleterFileName, bool hideUnchecked) const;
+  void saveTo(const QString &pluginFileName
+              , const QString &loadOrderFileName
+              , const QString &lockedOrderFileName
+              , const QString &deleterFileName
+              , bool hideUnchecked) const;
 
   /**
    * @brief save the current load order

@@ -112,6 +112,16 @@ std::vector<std::wstring> Fallout3Info::getVanillaBSAs()
                                 (L"Fallout - Misc.bsa");
 }
 
+std::vector<std::wstring> Fallout3Info::getDLCPlugins()
+{
+  return boost::assign::list_of (L"ThePitt.esm")
+                                (L"Anchorage.esm")
+                                (L"BrokenSteel.esm")
+                                (L"PointLookout.esm")
+                                (L"Zeta.esm")
+      ;
+}
+
 std::vector<std::wstring> Fallout3Info::getIniFileNames()
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");

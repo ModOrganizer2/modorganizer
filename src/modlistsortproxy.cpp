@@ -230,10 +230,10 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     switch (*iter) {
       case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (!enabled) return false;
+        if (!enabled && !info->alwaysEnabled()) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (enabled) return false;
+        if (enabled || info->alwaysEnabled()) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
         if (!info->updateAvailable() && !info->downgradeAvailable()) return false;
@@ -261,10 +261,10 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     switch (*iter) {
       case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (enabled) return true;
+        if (enabled || info->alwaysEnabled()) return true;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
-        if (!enabled) return true;
+        if (!enabled && !info->alwaysEnabled()) return true;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE: {
         if (info->updateAvailable() || info->downgradeAvailable()) return true;

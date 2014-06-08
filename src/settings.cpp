@@ -288,16 +288,15 @@ void Settings::setupLoadMechanism()
 }
 
 
-bool Settings::enableQuickInstaller()
-{
-  return m_Settings.value("Settings/enable_quick_installer").toBool();
-}
-
 bool Settings::useProxy()
 {
   return m_Settings.value("Settings/use_proxy", false).toBool();
 }
 
+bool Settings::displayForeign()
+{
+  return m_Settings.value("Settings/display_foreign", true).toBool();
+}
 
 void Settings::setMotDHash(uint hash)
 {
@@ -545,6 +544,7 @@ void Settings::query(QWidget *parent)
   QLineEdit *appIDEdit = dialog.findChild<QLineEdit*>("appIDEdit");
   QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
   QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
+  QCheckBox *displayForeignBox = dialog.findChild<QCheckBox*>("displayForeignBox");
 
 
   //
@@ -602,6 +602,7 @@ void Settings::query(QWidget *parent)
   showMetaBox->setChecked(metaDownloads());
 
   hideUncheckedBox->setChecked(hideUncheckedPlugins());
+  displayForeignBox->setChecked(displayForeign());
   forceEnableBox->setChecked(forceEnableCoreFiles());
 
   appIDEdit->setText(getSteamAppID());
@@ -716,6 +717,7 @@ void Settings::query(QWidget *parent)
     }
     m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
     m_Settings.setValue("Settings/use_proxy", proxyBox->isChecked());
+    m_Settings.setValue("Settings/display_foreign", displayForeignBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
 

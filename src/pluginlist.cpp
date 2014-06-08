@@ -814,8 +814,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         text += "<br>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting "
                 "in case of conflicts.";
       } else if (m_ESPs[index].m_IsDummy) {
-        text += "<br>This file is a dummy! It exists only so the bsa with the same name gets loaded. With MO you don't need this: "
-                "If you enable the archive with the same name in the \"Archive\" tab you can disable this plugin.";
+        text += "<br>This file is a dummy! It exists only so the bsa with the same name gets loaded. If you let MO manage archives you "
+                "don't need this: Enable the archive with the same name in the \"Archive\" tab and disable this plugin.";
       }
       toolTip += text;
     }

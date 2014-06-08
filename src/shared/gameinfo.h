@@ -130,6 +130,9 @@ public:
 
   virtual std::vector<std::wstring> getVanillaBSAs() = 0;
 
+  // get a set of esp/esm files that are part of known dlcs
+  virtual std::vector<std::wstring> getDLCPlugins() = 0;
+
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;
 

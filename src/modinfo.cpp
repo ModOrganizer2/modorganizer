@@ -184,7 +184,7 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 }
 
 
-void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **directoryStructure)
+void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **directoryStructure, bool displayForeign)
 {
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
@@ -200,10 +200,13 @@ void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **direc
   }
 
   { // list plugins in the data directory and make a foreign-managed mod out of each
+    std::vector<std::wstring> dlcPlugins = GameInfo::instance().getDLCPlugins();
     QDir dataDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data");
     foreach (const QFileInfo &file, dataDir.entryInfoList(QStringList() << "*.esp" << "*.esm")) {
-      if ((file.baseName() != "Update")
-          && (file.baseName() != ToQString(GameInfo::instance().getGameName()))) {
+      if ((file.baseName() != "Update") // hide update
+          && (file.baseName() != ToQString(GameInfo::instance().getGameName())) // hide the game esp
+          && (displayForeign // show non-dlc bundles only if the user wants them
+              || std::find(dlcPlugins.begin(), dlcPlugins.end(), ToWString(file.fileName())) != dlcPlugins.end())) {
         QStringList archives;
         foreach (const QString archiveName, dataDir.entryList(QStringList() << file.baseName() + "*.bsa")) {
           archives.append(dataDir.absoluteFilePath(archiveName));
@@ -277,6 +280,12 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
 void ModInfo::setVersion(const VersionInfo &version)
 {
   m_Version = version;
+}
+
+bool ModInfo::hasFlag(ModInfo::EFlag flag) const
+{
+  std::vector<EFlag> flags = getFlags();
+  return std::find(flags.begin(), flags.end(), flag) != flags.end();
 }
 
 

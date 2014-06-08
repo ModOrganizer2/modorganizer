@@ -144,7 +144,18 @@ std::vector<std::wstring> SkyrimInfo::getVanillaBSAs()
                                (L"Skyrim - Meshes.bsa")
                                (L"Skyrim - Sounds.bsa")
                                (L"Skyrim - Voices.bsa")
-                               (L"Skyrim - VoicesExtra.bsa");
+      (L"Skyrim - VoicesExtra.bsa");
+}
+
+std::vector<std::wstring> SkyrimInfo::getDLCPlugins()
+{
+  return boost::assign::list_of (L"Dawnguard.esm")
+                                (L"Dragonborn.esm")
+                                (L"HearthFires.esm")
+                                (L"HighResTexturePack01.esp")
+                                (L"HighResTexturePack02.esp")
+                                (L"HighResTexturePack03.esp")
+      ;
 }
 
 std::vector<std::wstring> SkyrimInfo::getIniFileNames()
@@ -210,7 +221,9 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
     if (!FileExists(target)) {
       std::wostringstream source;
       source << getLocalAppFolder() << "\\Skyrim\\plugins.txt";
+printf("copy %ls -> %ls\n", source.str().c_str(), target.c_str());
       if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+printf("failed to copy plugins.txt!");
         HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
         ::CloseHandle(file);
       }
@@ -305,4 +318,5 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
 
   return result;
 }
+
 } // namespace MOShared

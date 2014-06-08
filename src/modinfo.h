@@ -87,7 +87,7 @@ public:
   /**
    * @brief read the mod directory and Mod ModInfo objects for all subdirectories
    **/
-  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure);
+  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure, bool displayForeign);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 
@@ -367,6 +367,13 @@ public:
    * @return a list of flags for this mod
    */
   virtual std::vector<EFlag> getFlags() const = 0;
+
+  /**
+   * @brief test if the specified flag is set for this mod
+   * @param flag the flag to test
+   * @return true if the flag is set, false otherwise
+   */
+  bool hasFlag(EFlag flag) const;
 
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
@@ -911,6 +918,7 @@ public:
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual bool alwaysEnabled() const { return true; }
   virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }
   virtual QString notes() const { return ""; }

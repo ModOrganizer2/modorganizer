@@ -383,6 +383,8 @@ private:
 
   uint m_ArchiveListHash;
 
+  bool m_DidUpdateMasterList;
+
 private slots:
 
   void showMessage(const QString &message);

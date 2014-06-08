@@ -56,6 +56,7 @@ public:
   virtual std::vector<std::wstring> getPrimaryPlugins();
 
   virtual std::vector<std::wstring> getVanillaBSAs();
+  virtual std::vector<std::wstring> getDLCPlugins();
 
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();

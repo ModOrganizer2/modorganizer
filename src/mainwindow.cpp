@@ -164,7 +164,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false),
     m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
-    m_GameInfo(new GameInfoImpl()), m_AboutToRun(), m_ModInstalled()
+    m_GameInfo(new GameInfoImpl()), m_AboutToRun(), m_ModInstalled(), m_DidUpdateMasterList(false)
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
@@ -193,7 +193,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   updateToolBar();
 
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
 
   // set up mod list
   m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
@@ -1034,31 +1034,48 @@ void MainWindow::toolPluginInvoke()
 void MainWindow::requestDownload(const QUrl &url, QNetworkReply *reply)
 {
   QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-
-  QList<QAction*> browserActions = browserBtn->menu()->actions();
-  foreach (QAction *action, browserActions) {
-    // the nexus action doesn't have a plugin connected currently
-    if (action->data().isValid()) {
-      IPluginModPage *plugin = qobject_cast<IPluginModPage*>(qvariant_cast<QObject*>(action->data()));
-      if (plugin == NULL) {
-        qCritical("invalid mod page. This is a bug");
-        continue;
-      }
-      ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
-      if (plugin->handlesDownload(url, reply->url(), *fileInfo)) {
-        fileInfo->repository = plugin->name();
-        m_DownloadManager.addDownload(reply, fileInfo);
-        return;
+  if (browserBtn->menu() != NULL) {
+    // go through modpage plugins, find one to handle the download.
+    QList<QAction*> browserActions = browserBtn->menu()->actions();
+    foreach (QAction *action, browserActions) {
+      // the nexus action doesn't have a plugin connected currently
+      if (action->data().isValid()) {
+        IPluginModPage *plugin = qobject_cast<IPluginModPage*>(qvariant_cast<QObject*>(action->data()));
+        if (plugin == NULL) {
+          qCritical("invalid mod page. This is a bug");
+          continue;
+        }
+        ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
+        if (plugin->handlesDownload(url, reply->url(), *fileInfo)) {
+          fileInfo->repository = plugin->name();
+          m_DownloadManager.addDownload(reply, fileInfo);
+          return;
+        }
       }
     }
   }
 
-  if (QMessageBox::question(this, tr("Download?"),
-        tr("A download has been started but no installed page plugin recognizes it.\n"
-           "If you download anyway no information (i.e. version) will be associated with the download.\n"
-           "Continue?"),
-        QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo());
+  // no mod found that could handle the download. Is it a nexus mod?
+  if (url.host() == "www.nexusmods.com") {
+    int modID = 0;
+    int fileID = 0;
+    QRegExp modExp("mods/(\\d+)");
+    if (modExp.indexIn(url.toString()) != -1) {
+      modID = modExp.cap(1).toInt();
+    }
+    QRegExp fileExp("fid=(\\d+)");
+    if (fileExp.indexIn(reply->url().toString()) != -1) {
+      fileID = fileExp.cap(1).toInt();
+    }
+    m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo(modID, fileID));
+  } else {
+    if (QMessageBox::question(this, tr("Download?"),
+          tr("A download has been started but no installed page plugin recognizes it.\n"
+             "If you download anyway no information (i.e. version) will be associated with the download.\n"
+             "Continue?"),
+          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo());
+    }
   }
 }
 
@@ -1788,7 +1805,7 @@ void MainWindow::refreshModList(bool saveChanges)
   if (saveChanges) {
     m_CurrentProfile->writeModlistNow(true);
   }
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure);
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
   m_CurrentProfile->refreshModStatus();
 
   m_ModList.notifyChange(-1);
@@ -3707,7 +3724,7 @@ void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 
 QMenu *MainWindow::modListContextMenu()
 {
-  QMenu *menu = new QMenu();
+  QMenu *menu = new QMenu(this);
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
@@ -3734,7 +3751,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     if (m_ContextRow == -1) {
       // no selection
       menu = allMods;
-      menu->setParent(this);
     } else {
       menu = new QMenu(this);
       allMods->setTitle(tr("All Mods"));
@@ -4057,6 +4073,7 @@ void MainWindow::on_actionSettings_triggered()
 {
   QString oldModDirectory(m_Settings.getModDirectory());
   QString oldCacheDirectory(m_Settings.getCacheDirectory());
+  bool oldDisplayForeign(m_Settings.displayForeign());
   bool proxy = m_Settings.useProxy();
   m_Settings.query(this);
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
@@ -4072,7 +4089,8 @@ void MainWindow::on_actionSettings_triggered()
   }
   m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
 
-  if (m_Settings.getModDirectory() != oldModDirectory) {
+  if ((m_Settings.getModDirectory() != oldModDirectory)
+      || (m_Settings.displayForeign() != oldDisplayForeign)) {
     refreshModList();
     refreshLists();
   }
@@ -5253,6 +5271,11 @@ void MainWindow::on_bossButton_clicked()
     QStringList parameters;
     parameters << "--game" << ToQString(GameInfo::instance().getGameShortName())
                << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
+
+    if (!m_DidUpdateMasterList) {
+      parameters << "--updateMasterlist";
+      m_DidUpdateMasterList = true;
+    }
 
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;

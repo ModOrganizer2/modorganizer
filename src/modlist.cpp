@@ -547,7 +547,9 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
        iter != sourceIndices.end(); ++iter) {
+    int oldPriority = m_Profile->getModPriority(*iter);
     m_Profile->setModPriority(*iter, newPriority);
+    m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
   }
 
   emit layoutChanged();
@@ -652,6 +654,12 @@ bool ModList::setPriority(const QString &name, int newPriority)
 bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
 {
   auto conn = m_ModStateChanged.connect(func);
+  return conn.connected();
+}
+
+bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &func)
+{
+  auto conn = m_ModMoved.connect(func);
   return conn.connected();
 }
 

@@ -296,6 +296,8 @@ void Profile::refreshModStatus()
 
   int numKnownMods = index;
 
+  int topInsert = 0;
+
   // invert priority order to match that of the pluginlist. Also
   // give priorities to mods not referenced in the profile
   for (size_t i = 0; i < m_ModStatus.size(); ++i) {
@@ -310,9 +312,26 @@ void Profile::refreshModStatus()
       if (static_cast<size_t>(index) >= m_ModStatus.size()) {
         throw MyException(tr("invalid index %1").arg(index));
       }
-      m_ModStatus[i].m_Priority = index++;
+      if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
+        m_ModStatus[i].m_Priority = --topInsert;
+      } else {
+        m_ModStatus[i].m_Priority = index++;
+      }
       // also, mark the mod-list as changed
       modStatusModified = true;
+    }
+  }
+  // to support insertion of new mods at the top we may now have mods with negative priority. shift them all up
+  // to align priority with 0
+  if (topInsert < 0) {
+    int offset = topInsert * -1;
+    for (size_t i = 0; i < m_ModStatus.size(); ++i) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      if (modInfo->getFixedPriority() == INT_MAX) {
+        continue;
+      }
+
+      m_ModStatus[i].m_Priority += offset;
     }
   }
 
