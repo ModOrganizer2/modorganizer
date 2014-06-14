@@ -680,7 +680,7 @@ void Settings::query(QWidget *parent)
           (QMessageBox::question(NULL, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
                                                          "Mods not present (or named differently) in the new location will be disabled in all profiles. "
                                                          "There is no way to undo this unless you backed up your profiles manually. Proceed?"),
-                                 QMessageBox::Yes | QMessageBox::No))) {
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
         m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
       }
     }
