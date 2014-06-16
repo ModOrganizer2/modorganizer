@@ -63,7 +63,6 @@ void DirectoryRefresher::setMods(const std::vector<std::tuple<QString, QString, 
   m_EnabledArchives = managedArchives;
 }
 
-
 void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
 {
   static wchar_t *files[] = { L"meta.ini", L"readme.txt" };
@@ -77,21 +76,27 @@ void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
   }
 }
 
-void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
-                                           , const QString &modName
-                                           , int priority
-                                           , const QString &directory
-                                           , const QStringList &stealFiles
-                                           , const QStringList &archives)
+void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &archives)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
-  std::wstring modNameW = ToWString(modName);
 
+  foreach (const QString &archive, archives) {
+    QFileInfo fileInfo(archive);
+    if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
+      directoryStructure->addFromBSA(ToWString(modName), directoryW,
+                                     ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
+    }
+  }
+}
+
+void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles)
+{
+  std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
 
   if (stealFiles.length() > 0) {
     // instead of adding all the files of the target directory, we just change the root of the specified
     // files to this mod
-    directoryStructure->createOrigin(modNameW, directoryW, priority);
+    FilesOrigin origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
     foreach (const QString &filename, stealFiles) {
       QFileInfo fileInfo(filename);
       FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
@@ -99,30 +104,24 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
         if (file->getOrigin() == 0) {
           // replace data as the origin on this bsa
           file->removeOrigin(0);
-          file->addOrigin(directoryStructure->getOriginByName(modNameW).getID(),
-                          file->getFileTime(), L"");
+          file->addOrigin(origin.getID(), file->getFileTime(), L"");
         }
       }
     }
   } else {
-    directoryStructure->addFromOrigin(modNameW, directoryW, priority);
+    directoryStructure->addFromOrigin(ToWString(modName), directoryW, priority);
   }
-/*  QDir dir(directory);
-  QFileInfoList bsaFiles = dir.entryInfoList(QStringList("*.bsa"), QDir::Files);
-  foreach (QFileInfo file, bsaFiles) {
-    if (m_EnabledArchives.find(file.fileName()) != m_EnabledArchives.end()) {
-      directoryStructure->addFromBSA(ToWString(modName), directoryW,
-                                     ToWString(QDir::toNativeSeparators(file.absoluteFilePath())), priority);
-    }
-  }*/
+}
 
-  foreach (const QString &archive, archives) {
-    QFileInfo fileInfo(archive);
-    if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
-      directoryStructure->addFromBSA(modNameW, directoryW,
-                                     ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
-    }
-  }
+void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
+                                           , const QString &modName
+                                           , int priority
+                                           , const QString &directory
+                                           , const QStringList &stealFiles
+                                           , const QStringList &archives)
+{
+  addModFilesToStructure(directoryStructure, modName, priority, directory, stealFiles);
+  addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
 }
 
 void DirectoryRefresher::refresh()

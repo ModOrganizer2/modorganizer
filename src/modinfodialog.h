@@ -65,6 +65,7 @@ public:
     TAB_CONFLICTS,
     TAB_CATEGORIES,
     TAB_NEXUS,
+    TAB_NOTES,
     TAB_FILETREE
   };
 
@@ -76,7 +77,7 @@ public:
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
- explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, QWidget *parent = 0);
+ explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, QWidget *parent = 0);
   ~ModInfoDialog();
 
   /**
@@ -120,6 +121,9 @@ public slots:
   void modDetailsUpdated(bool success);
 
 private:
+
+  void initFiletree(ModInfo::Ptr modInfo);
+  void initINITweaks();
 
   void refreshLists();
 
@@ -225,7 +229,6 @@ private:
 
   const MOShared::DirectoryEntry *m_Directory;
   MOShared::FilesOrigin *m_Origin;
-  QTextCodec *m_UTF8Codec;
 
   std::map<int, int> m_RealTabPos;
 

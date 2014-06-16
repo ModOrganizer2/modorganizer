@@ -248,6 +248,12 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
         ModInfo::EEndorsedState state = info->endorsedState();
         if (state != ModInfo::ENDORSED_FALSE) return false;
       } break;
+      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
+        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
+        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
+      } break;
       default: {
         if (!info->categorySet(*iter)) return false;
       } break;
@@ -278,6 +284,12 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
         if ((state == ModInfo::ENDORSED_FALSE) && (state != ModInfo::ENDORSED_NEVER)) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
+        if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
+      } break;
+      case CategoryFactory::CATEGORY_SPECIAL_UNMANAGED: {
+        if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;
       } break;
       default: {
         if (info->categorySet(*iter)) return true;

@@ -320,6 +320,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
+  m_UpdateProblemsTimer.setSingleShot(true);
+  connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
+
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
@@ -530,6 +533,14 @@ void MainWindow::updateToolBar()
 }
 
 
+void MainWindow::scheduleUpdateButton()
+{
+  if (!m_UpdateProblemsTimer.isActive()) {
+    m_UpdateProblemsTimer.start(1000);
+  }
+}
+
+
 void MainWindow::updateProblemsButton()
 {
   int numProblems = checkForProblems();
@@ -661,7 +672,7 @@ void MainWindow::createHelpWidget()
 }
 
 
-void MainWindow::saveArchiveList()
+bool MainWindow::saveArchiveList()
 {
   if (m_ArchivesInit) {
     SafeWriteFile archiveFile(m_CurrentProfile->getArchivesFileName());
@@ -680,10 +691,12 @@ void MainWindow::saveArchiveList()
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
       qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_CurrentProfile->getArchivesFileName())));
+      return true;
     }
   } else {
     qWarning("archive list not initialised");
   }
+  return false;
 }
 
 void MainWindow::savePluginList()
@@ -1148,7 +1161,7 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
-      diagnose->onInvalidated([&] () { this->updateProblemsButton(); });
+      diagnose->onInvalidated([&] () { this->scheduleUpdateButton(); });
     }
   }
   { // mod page plugin
@@ -1418,9 +1431,7 @@ void MainWindow::setExecutableIndex(int index)
   } else {
     executableBox->setCurrentIndex(1);
   }
-
 }
-
 
 void MainWindow::activateSelectedProfile()
 {
@@ -1439,7 +1450,6 @@ void MainWindow::activateSelectedProfile()
   refreshSaveList();
   refreshModList();
 }
-
 
 void MainWindow::on_profileBox_currentIndexChanged(int index)
 {
@@ -1646,8 +1656,6 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 std::set<QString> MainWindow::enabledArchives()
 {
   std::set<QString> result;
-
-
   QFile archiveFile(m_CurrentProfile->getArchivesFileName());
   if (archiveFile.open(QIODevice::ReadOnly)) {
     while (!archiveFile.atEnd()) {
@@ -1657,7 +1665,6 @@ std::set<QString> MainWindow::enabledArchives()
   }
   return result;
 }
-
 
 void MainWindow::refreshDirectoryStructure()
 {
@@ -1671,7 +1678,6 @@ void MainWindow::refreshDirectoryStructure()
 
   QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
 }
-
 
 #if QT_VERSION >= 0x050000
 extern QPixmap qt_pixmapFromWinHICON(HICON icon);
@@ -1691,7 +1697,6 @@ QIcon MainWindow::iconForExecutable(const QString &filePath)
     return QIcon(":/MO/gui/executable");
   }
 }
-
 
 void MainWindow::refreshExecutablesList()
 {
@@ -1806,6 +1811,7 @@ void MainWindow::refreshModList(bool saveChanges)
     m_CurrentProfile->writeModlistNow(true);
   }
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+
   m_CurrentProfile->refreshModStatus();
 
   m_ModList.notifyChange(-1);
@@ -1969,15 +1975,6 @@ void MainWindow::checkBSAList()
           item->setIcon(0, QIcon(":/MO/gui/warning"));
           item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
           modWarning = true;
-/*        } else {
-          QString espName = filename.mid(0, filename.length() - 3).append("esp").toLower();
-          QString esmName = filename.mid(0, filename.length() - 3).append("esm").toLower();
-          if (m_PluginList.isEnabled(espName) || m_PluginList.isEnabled(esmName)) {
-            item->setIcon(0, QIcon(":/MO/gui/warning"));
-            item->setToolTip(0, tr("This archive will still be loaded since there is a plugin of the same name but "
-                                      "its files will not follow installation order!"));
-            modWarning = true;
-          }*/
         }
       }
     }
@@ -2632,7 +2629,6 @@ void MainWindow::directory_refreshed()
   if (m_CurrentProfile != NULL) {
     refreshLists();
   }
-//  m_RefreshProgress->setVisible(false);
 
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
@@ -2645,7 +2641,6 @@ void MainWindow::directory_refreshed()
   statusBar()->hide();
 }
 
-
 void MainWindow::externalMessage(const QString &message)
 {
   if (message.left(6).toLower() == "nxm://") {
@@ -2654,31 +2649,54 @@ void MainWindow::externalMessage(const QString &message)
   }
 }
 
+void MainWindow::updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo)
+{
+  // add files of the bsa to the directory structure
+  m_DirectoryRefresher.addModFilesToStructure(m_DirectoryStructure
+                                              , modInfo->name()
+                                              , m_CurrentProfile->getModPriority(index)
+                                              , modInfo->absolutePath()
+                                              , modInfo->stealFiles()
+                                              );
+  DirectoryRefresher::cleanStructure(m_DirectoryStructure);
+  // need to refresh plugin list now so we can activate esps
+  refreshESPList();
+  // activate all esps of the specified mod so the bsas get activated along with it
+  updateModActiveState(index, true);
+  // now we need to refresh the bsa list and save it so there is no confusion about what archives are avaiable and active
+  refreshBSAList();
+  saveArchiveList();
+  m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(), enabledArchives());
+
+  // finally also add files from bsas to the directory structure
+  m_DirectoryRefresher.addModBSAToStructure(m_DirectoryStructure
+                                            , modInfo->name()
+                                            , m_CurrentProfile->getModPriority(index)
+                                            , modInfo->absolutePath()
+                                            , modInfo->archives()
+                                            );
+}
 
 void MainWindow::modStatusChanged(unsigned int index)
 {
   try {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
     if (m_CurrentProfile->modEnabled(index)) {
-      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure
-                                             , modInfo->name()
-                                             , m_CurrentProfile->getModPriority(index)
-                                             , modInfo->absolutePath()
-                                             , modInfo->stealFiles()
-                                             , modInfo->archives());
-      DirectoryRefresher::cleanStructure(m_DirectoryStructure);
+      updateModInDirectoryStructure(index, modInfo);
     } else {
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
         FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
       }
     }
+    modInfo->clearCaches();
 
     for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
       int priority = m_CurrentProfile->getModPriority(i);
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
-        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority);
+        // priorities in the directory structure are one higher because data is 0
+        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority + 1);
       }
     }
     m_DirectoryStructure->getFileRegister()->sortOrigins();
@@ -2704,7 +2722,8 @@ void MainWindow::modorder_changed()
     int priority = m_CurrentProfile->getModPriority(i);
     if (m_CurrentProfile->modEnabled(i)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-      m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority);
+      // priorities in the directory structure are one higher because data is 0
+      m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority + 1);
     }
   }
   refreshBSAList();
@@ -2723,32 +2742,29 @@ void MainWindow::procFinished(int, QProcess::ExitStatus)
   this->sender()->deleteLater();
 }
 
-
 void MainWindow::profileRefresh()
 {
-  m_CurrentProfile->writeModlist();
+  // have to refresh mods twice (again in refreshModList), otherwise the refresh isn't complete. Not sure why
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  m_CurrentProfile->refreshModStatus();
 
   refreshModList();
 }
-
 
 void MainWindow::showMessage(const QString &message)
 {
   MessageDialog::showMessage(message, this);
 }
 
-
 void MainWindow::showError(const QString &message)
 {
   reportError(message);
 }
 
-
 void MainWindow::installMod_clicked()
 {
   installMod();
 }
-
 
 void MainWindow::renameModInList(QFile &modList, const QString &oldName, const QString &newName)
 {
@@ -2911,6 +2927,8 @@ void MainWindow::refreshFilters()
   addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
   addFilterItem(NULL, tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED);
   addFilterItem(NULL, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
+  addFilterItem(NULL, tr("<Managed by MO>"), CategoryFactory::CATEGORY_SPECIAL_MANAGED);
+  addFilterItem(NULL, tr("<Managed outside MO>"), CategoryFactory::CATEGORY_SPECIAL_UNMANAGED);
   addFilterItem(NULL, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY);
   addFilterItem(NULL, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT);
   addFilterItem(NULL, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED);
@@ -2975,37 +2993,37 @@ void MainWindow::restoreBackup_clicked()
   }
 }
 
-
-void MainWindow::modlistChanged(const QModelIndex &index, int role)
+void MainWindow::updateModActiveState(int index, bool active)
 {
-  if (role == Qt::CheckStateRole) {
-    if (index.data(Qt::CheckStateRole).toBool()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(index.row());
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
 
-      QDir dir(modInfo->absolutePath());
-      foreach (const QString &esm, dir.entryList(QStringList("*.esm"), QDir::Files)) {
-        m_PluginList.enableESP(esm);
-      }
-
-      int enabled = 0;
-      QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
-      foreach (const QString &esp, esps) {
-        if (!m_PluginList.isEnabled(esp)) {
-          m_PluginList.enableESP(esp);
-          ++enabled;
-        }
-      }
-      if (enabled > 1) {
-        MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
-      }
-      m_PluginList.refreshLoadOrder();
-      // immediately save affected lists
-      savePluginList();
-      saveArchiveList();
+  QDir dir(modInfo->absolutePath());
+  foreach (const QString &esm, dir.entryList(QStringList("*.esm"), QDir::Files)) {
+    m_PluginList.enableESP(esm, active);
+  }
+  int enabled = 0;
+  QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
+  foreach (const QString &esp, esps) {
+    if (active && !m_PluginList.isEnabled(esp)) {
+      m_PluginList.enableESP(esp, active);
+      ++enabled;
     }
   }
+  if (active && (enabled > 1)) {
+    MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
+  }
+  m_PluginList.refreshLoadOrder();
+  // immediately save affected lists
+  savePluginList();
+//  refreshBSAList();
 }
 
+void MainWindow::modlistChanged(const QModelIndex&, int)
+{
+/*  if (role == Qt::CheckStateRole) {
+    updateModActiveState(index.row(), index.data(Qt::CheckStateRole).toBool());
+  }*/
+}
 
 void MainWindow::removeMod_clicked()
 {
@@ -3162,12 +3180,9 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     dialog->raise();
     dialog->activateWindow();
     connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
-  } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-    // nop - no menu for this file type
-    return;
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_DirectoryStructure, this);
+    ModInfoDialog dialog(modInfo, m_DirectoryStructure, modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), this, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
@@ -4091,8 +4106,7 @@ void MainWindow::on_actionSettings_triggered()
 
   if ((m_Settings.getModDirectory() != oldModDirectory)
       || (m_Settings.displayForeign() != oldDisplayForeign)) {
-    refreshModList();
-    refreshLists();
+    profileRefresh();
   }
 
   if (m_Settings.getCacheDirectory() != oldCacheDirectory) {
@@ -4243,7 +4257,6 @@ void MainWindow::installDownload(int index)
     if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
       MessageDialog::showMessage(tr("Installation successful"), this);
       refreshModList();
-
 
       QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
       if (posList.count() == 1) {

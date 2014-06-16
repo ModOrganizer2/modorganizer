@@ -221,9 +221,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
     if (!FileExists(target)) {
       std::wostringstream source;
       source << getLocalAppFolder() << "\\Skyrim\\plugins.txt";
-printf("copy %ls -> %ls\n", source.str().c_str(), target.c_str());
       if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
-printf("failed to copy plugins.txt!");
         HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
         ::CloseHandle(file);
       }

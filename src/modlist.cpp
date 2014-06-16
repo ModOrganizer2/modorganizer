@@ -166,25 +166,29 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QVariant();
       }
     } else if (column == COL_CATEGORY) {
-      int category = modInfo->getPrimaryCategory();
-      if (category != -1) {
-        CategoryFactory &categoryFactory = CategoryFactory::instance();
-        if (categoryFactory.categoryExists(category)) {
-          try {
-            int categoryIdx = categoryFactory.getCategoryIndex(category);
-            return categoryFactory.getCategoryName(categoryIdx);
-          } catch (const std::exception &e) {
-            qCritical("failed to retrieve category name: %s", e.what());
+      if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
+        return tr("Non-MO");
+      } else {
+        int category = modInfo->getPrimaryCategory();
+        if (category != -1) {
+          CategoryFactory &categoryFactory = CategoryFactory::instance();
+          if (categoryFactory.categoryExists(category)) {
+            try {
+              int categoryIdx = categoryFactory.getCategoryIndex(category);
+              return categoryFactory.getCategoryName(categoryIdx);
+            } catch (const std::exception &e) {
+              qCritical("failed to retrieve category name: %s", e.what());
+              return QString();
+            }
+          } else {
+            qWarning("category %d doesn't exist (may have been removed)", category);
+            modInfo->setCategory(category, false);
             return QString();
           }
         } else {
-          qWarning("category %d doesn't exist (may have been removed)", category);
-          modInfo->setCategory(category, false);
-          return QString();
+          //return tr("None");
+          return QVariant();
         }
-      } else {
-        //return tr("None");
-        return QVariant();
       }
     } else if (column == COL_INSTALLTIME) {
       // display installation time for mods that can be updated
@@ -253,6 +257,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_INVALID) {
         result.setItalic(true);
       }
+    } else if ((column == COL_CATEGORY) && (modInfo->hasFlag(ModInfo::FLAG_FOREIGN))) {
+      result.setItalic(true);
     } else if (column == COL_VERSION) {
       if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
@@ -649,7 +655,6 @@ bool ModList::setPriority(const QString &name, int newPriority)
     return true;
   }
 }
-
 
 bool ModList::onModStateChanged(const std::function<void (const QString &, IModList::ModStates)> &func)
 {

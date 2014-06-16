@@ -79,12 +79,34 @@ public:
 
   /**
    * @brief add files for a mod to the directory structure, including bsas
+   * @param directoryStructure
    * @param modName
-   * @param priorityBSA
+   * @param priority
    * @param directory
-   * @param priorityDir
+   * @param stealFiles
+   * @param archives
    */
   void addModToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles, const QStringList &archives);
+
+  /**
+   * @brief add only the bsas of a mod to the directory structure
+   * @param directoryStructure
+   * @param modName
+   * @param priority
+   * @param directory
+   * @param archives
+   */
+  void addModBSAToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &archives);
+
+  /**
+   * @brief add only regular files ofr a mod to the directory structure
+   * @param directoryStructure
+   * @param modName
+   * @param priority
+   * @param directory
+   * @param stealFiles
+   */
+  void addModFilesToStructure(MOShared::DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles);
 
 public slots:
 

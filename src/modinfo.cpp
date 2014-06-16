@@ -756,7 +756,7 @@ void ModInfoRegular::setNeverEndorse()
 bool ModInfoRegular::remove()
 {
   m_MetaInfoChanged = false;
-  return shellDelete(QStringList(absolutePath()));
+  return shellDelete(QStringList(absolutePath()), true);
 }
 
 void ModInfoRegular::endorse(bool doEndorse)

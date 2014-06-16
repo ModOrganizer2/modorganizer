@@ -18,5 +18,18 @@ staging_prepare/*
 staging_trans/*
 tools/python_zip/*
 Makefile
+html
+*.vcxproj
+*.pdb
+*.dll
+*.exp
+*.tlog
+*.user
+*.obj
+*.suo
+*.sln
+*.log
+*.filters
+*.lib
 syntax: regexp
 Makefile\.(Debug|Release)

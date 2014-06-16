@@ -86,6 +86,7 @@ public:
   };
 
   typedef boost::signals2::signal<void ()> SignalRefreshed;
+  typedef boost::signals2::signal<void (const QString &, int, int)> SignalPluginMoved;
 
 public:
 
@@ -118,8 +119,9 @@ public:
    * @brief enable a plugin based on its name
    *
    * @param name name of the plugin to enable
+   * @param enable set to true to enable the esp, false to disable it
    **/
-  void enableESP(const QString &name);
+  void enableESP(const QString &name, bool enable = true);
 
   /**
    * @brief test if a plugin is enabled
@@ -218,6 +220,7 @@ public:
   virtual bool isMaster(const QString &name) const;
   virtual QString origin(const QString &name) const;
   virtual bool onRefreshed(const std::function<void()> &callback);
+  virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func);
 
 public: // implementation of the QAbstractTableModel interface
 
@@ -331,6 +334,8 @@ private:
   SignalRefreshed m_Refreshed;
 
   QTemporaryFile m_TempFile;
+
+  SignalPluginMoved m_PluginMoved;
 
 };
 

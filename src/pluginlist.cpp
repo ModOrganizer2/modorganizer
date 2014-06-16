@@ -216,12 +216,12 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 }
 
 
-void PluginList::enableESP(const QString &name)
+void PluginList::enableESP(const QString &name, bool enable)
 {
   std::map<QString, int>::iterator iter = m_ESPsByName.find(name.toLower());
 
   if (iter != m_ESPsByName.end()) {
-    m_ESPs[iter->second].m_Enabled = true;
+    m_ESPs[iter->second].m_Enabled = enable;
     startSaveTime();
   } else {
     reportError(tr("esp not found: %1").arg(name));
@@ -677,6 +677,14 @@ bool PluginList::onRefreshed(const std::function<void ()> &callback)
   return conn.connected();
 }
 
+
+bool PluginList::onPluginMoved(const std::function<void (const QString &, int, int)> &func)
+{
+  auto conn = m_PluginMoved.connect(func);
+  return conn.connected();
+}
+
+
 void PluginList::updateIndices()
 {
   m_ESPsByName.clear();
@@ -947,6 +955,7 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 
     m_ESPs.at(row).m_Priority = newPriorityTemp;
     emit dataChanged(index(row, 0), index(row, columnCount()));
+    m_PluginMoved(m_ESPs[row].m_Name, oldPriority, newPriorityTemp);
   } catch (const std::out_of_range&) {
     reportError(tr("failed to restore load order for %1").arg(m_ESPs[row].m_Name));
   }

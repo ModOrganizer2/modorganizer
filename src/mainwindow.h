@@ -99,7 +99,6 @@ public:
   void readSettings();
 
   bool addProfile();
-  void refreshLists();
   void refreshBSAList();
   void refreshDataTree();
   void refreshSaveList();
@@ -127,7 +126,7 @@ public:
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
-  void saveArchiveList();
+  bool saveArchiveList();
 
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
@@ -135,7 +134,11 @@ public:
 
   HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
 
+  void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
+
 public slots:
+
+  void refreshLists();
 
   void displayColumnSelection(const QPoint &pos);
 
@@ -260,8 +263,6 @@ private:
 
   void setCategoryListVisible(bool visible);
 
-  void updateProblemsButton();
-
   SaveGameGamebryo *getSaveGame(const QString &name);
   SaveGameGamebryo *getSaveGame(QListWidgetItem *item);
 
@@ -286,6 +287,10 @@ private:
   QMenu *modListContextMenu();
 
   std::set<QString> enabledArchives();
+
+  void scheduleUpdateButton();
+
+  void updateModActiveState(int index, bool active);
 
 private:
 
@@ -356,6 +361,7 @@ private:
   bool m_ArchivesInit;
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
+  QTimer m_UpdateProblemsTimer;
 
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
@@ -478,7 +484,6 @@ private slots:
   void modlistChanged(int row);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
-//  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
   void nxmDownloadURLs(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
@@ -510,6 +515,9 @@ private slots:
   void startExeAction();
 
   void checkBSAList();
+
+  void updateProblemsButton();
+
   void saveModMetas();
 
   void updateStyle(const QString &style);
@@ -551,9 +559,9 @@ private slots:
   void delayedRemove();
 
   void requestDownload(const QUrl &url, QNetworkReply *reply);
-  void profileRefresh();
 
 private slots: // ui slots
+  void profileRefresh();
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();

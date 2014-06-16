@@ -419,7 +419,6 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
     // overwrite is always enabled
     return;
   }
-
   if (enabled != m_ModStatus[index].m_Enabled) {
     m_ModStatus[index].m_Enabled = enabled;
     emit modStatusChanged(index);
