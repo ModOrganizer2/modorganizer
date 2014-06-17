@@ -350,9 +350,6 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const ModRepositoryFileI
 bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName,
                                   int modID, int fileID, const ModRepositoryFileInfo *fileInfo)
 {
-  if (!reply->isRunning()) {
-    qDebug("this is not a running download! %d", reply->isFinished());
-  }
   // download invoked from an already open network reply (i.e. download link in the browser)
   DownloadInfo *newDownload = DownloadInfo::createNew(fileInfo, URLs);
 
@@ -401,6 +398,7 @@ void DownloadManager::removePending(int modID, int fileID)
 
 void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume)
 {
+  reply->setReadBufferSize(1024 * 1024); // don't read more than 1MB at once to avoid memory troubles
   newDownload->m_Reply = reply;
   setState(newDownload, STATE_DOWNLOADING);
   if (newDownload->m_Urls.count() == 0) {

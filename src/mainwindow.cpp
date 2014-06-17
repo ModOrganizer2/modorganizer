@@ -2684,6 +2684,8 @@ void MainWindow::modStatusChanged(unsigned int index)
     if (m_CurrentProfile->modEnabled(index)) {
       updateModInDirectoryStructure(index, modInfo);
     } else {
+      updateModActiveState(index, false);
+      refreshESPList();
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
         FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
@@ -3004,7 +3006,7 @@ void MainWindow::updateModActiveState(int index, bool active)
   int enabled = 0;
   QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
   foreach (const QString &esp, esps) {
-    if (active && !m_PluginList.isEnabled(esp)) {
+    if (active != m_PluginList.isEnabled(esp)) {
       m_PluginList.enableESP(esp, active);
       ++enabled;
     }
@@ -3020,9 +3022,6 @@ void MainWindow::updateModActiveState(int index, bool active)
 
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
-/*  if (role == Qt::CheckStateRole) {
-    updateModActiveState(index.row(), index.data(Qt::CheckStateRole).toBool());
-  }*/
 }
 
 void MainWindow::removeMod_clicked()
