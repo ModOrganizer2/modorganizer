@@ -1339,8 +1339,11 @@ void DownloadManager::downloadFinished()
   DownloadInfo *info = findDownload(this->sender(), &index);
   if (info != NULL) {
     QNetworkReply *reply = info->m_Reply;
-    QByteArray data = info->m_Reply->readAll();
-    info->m_Output.write(data);
+    QByteArray data;
+    if (reply->isOpen()) {
+      data = reply->readAll();
+      info->m_Output.write(data);
+    }
     info->m_Output.close();
     TaskProgressManager::instance().forgetMe(info->m_TaskProgressId);
 
