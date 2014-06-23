@@ -4009,6 +4009,7 @@ void MainWindow::linkToolbar()
   const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
   Executable &exe = m_ExecutablesList.find(selectedExecutable.m_Title);
   exe.m_Toolbar = !exe.m_Toolbar;
+  ui->linkButton->menu()->actions().at(2)->setIcon(exe.m_Toolbar ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
 }
 

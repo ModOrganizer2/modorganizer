@@ -46,6 +46,7 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("Before we start installing mods, let's have a quick look at the settings.")
+        manager.activateTutorial("SettingsDialog", "tutorial_firststeps_settings.js")
         highlightAction("actionSettings", true)
         tutorialControl.waitForAction("actionSettings")
     },
@@ -57,15 +58,21 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. You can use your regular browser to send download from Nexus to MO. "
-                           + "Click on \"Nexus\" to open the appropriate nexusmods page. This will also register ModOrganizer as the downloader "
-                           + "for \"nxm links\" for the game MO is managing. \"nxm links\" are the green buttons on Nexus saying \"Download with Manager\".")
+        tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. "
+                           + "If you associated MO with NXM links in the settings you can now use your regular browser to send download from Nexus to MO. "
+                           + "Click on \"Nexus\" to open nexus, find a mod and click the green download buttons on Nexus saying \"Download with Manager\".")
         highlightAction("actionNexus", true)
         tutorialControl.waitForAction("actionNexus")
     },
 
     function() {
-        tutorial.text = qsTr("Downloads will appear here. Please download at least one mod, then double click it to install.")
+        tutorial.text = qsTr("You can also install mods from disk using the \"Install Mod\" button.")
+        highlightAction("actionInstallMod", false)
+        waitForClick()
+    },
+
+    function() {
+        tutorial.text = qsTr("Downloads will appear here. You have to download at least one mod to proceed.")
         applicationWindow.modInstalled.connect(nextStep)
         highlightItem("downloadView", true)
     },
@@ -74,13 +81,6 @@ function getTutorialSteps()
         unhighlight()
         applicationWindow.modInstalled.disconnect(nextStep)
         tutorial.text = qsTr("Great, you just installed your first mod. Please note that the installation procedure may differ based on how a mod was packaged.")
-        waitForClick()
-    },
-
-    function() {
-        tutorial.text = qsTr("This is how to get mods from Nexus.\n"
-                             + "You can also install mods from disk using the \"Install Mod\" button.")
-        highlightAction("actionInstallMod", false)
         waitForClick()
     },
 

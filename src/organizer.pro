@@ -321,7 +321,8 @@ OTHER_FILES += \
     dark.qss \
     stylesheets/dark.qss \
     tutorials/tutorial_window_installer.js \
-    tutorials/tutorials_installdialog.qml
+    tutorials/tutorials_installdialog.qml \
+    tutorials/tutorial_firststeps_settings.js
 
 
 # leak detection with vld
