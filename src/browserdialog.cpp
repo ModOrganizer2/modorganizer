@@ -43,7 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 BrowserDialog::BrowserDialog(QWidget *parent)
   : QDialog(parent)
   , ui(new Ui::BrowserDialog)
-  , m_AccessManager(new QNetworkAccessManager)
+  , m_AccessManager(new QNetworkAccessManager(this))
 {
   ui->setupUi(this);
 
