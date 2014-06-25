@@ -174,7 +174,9 @@ void cleanupDir()
     "QtXml4.dll",
     "QtWebKit4.dll",
     "qjpeg4.dll",
-    "NCC/GamebryoBase.dll"
+    "NCC/GamebryoBase.dll",
+    "plugins/helloWorld.dll",
+    "plugins/testnexus.py"
   };
 
   static const int NUM_FILES = sizeof(fileNames) / sizeof(QString);

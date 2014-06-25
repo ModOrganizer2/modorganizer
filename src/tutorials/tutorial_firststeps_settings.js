@@ -4,13 +4,13 @@ function getTutorialSteps()
         function() {
             highlightItem("tabWidget", true)
             tutorial.text = qsTr("You can use your regular browser to download from Nexus.\nPlease open the \"Nexus\"-tab")
-            tutorialControl.waitForTabOpen("tabWidget", 2)
+            tutorialControl.waitForTabOpen("tabWidget", 1)
         },
 
         function() {
-            highlightItem("handleNXMBox", false)
-            tutorial.text = qsTr("If this box is checked the \"DOWNLOAD WITH MANAGER\"-buttons "
-                                +"in your regular browser will also download with Mod Organizer.")
+            highlightItem("associateButton", false)
+            tutorial.text = qsTr("Click this button so that \"DOWNLOAD WITH MANAGER\"-buttons "
+                                +"are download with Mod Organizer.")
             waitForClick()
         },
 

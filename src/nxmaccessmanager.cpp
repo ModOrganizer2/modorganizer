@@ -122,7 +122,7 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 
 void NXMAccessManager::pageLogin()
 {
-  QString requestString = (ToQString(GameInfo::instance().getNexusPage(false)) + "/sessions/?Login&uri=%1")
+  QString requestString = (ToQString(GameInfo::instance().getNexusPage()) + "/sessions/?Login&uri=%1")
                              .arg(QString(QUrl::toPercentEncoding(ToQString(GameInfo::instance().getNexusPage()))));
 
   QNetworkRequest request(requestString);

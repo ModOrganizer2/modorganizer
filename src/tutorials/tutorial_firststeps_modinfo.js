@@ -11,8 +11,7 @@ function getTutorialSteps()
         },
         function() {
             tutorial.text = qsTr("If you installed the mod from Nexus, the corresponding tab should give you direct "
-                                +"access to the mod page. That tab can also be used to download optional packages "
-                                +"or updates for the mod.")
+                                +"access to the mod page.")
             waitForClick()
         },
         function() {

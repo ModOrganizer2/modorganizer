@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "safewritefile.h"
 #include <QStringList>
+#include <QCryptographicHash>
 
 
 using namespace MOBase;
@@ -47,8 +48,8 @@ void SafeWriteFile::commit() {
   m_TempFile.close();
 }
 
-bool SafeWriteFile::commitIfDifferent(uint &inHash) {
-  uint newHash = hash();
+bool SafeWriteFile::commitIfDifferent(QByteArray &inHash) {
+  QByteArray newHash = hash();
   if (newHash != inHash) {
     commit();
     inHash = newHash;
@@ -58,11 +59,12 @@ bool SafeWriteFile::commitIfDifferent(uint &inHash) {
   }
 }
 
-uint SafeWriteFile::hash()
+QByteArray SafeWriteFile::hash()
 {
+
   qint64 pos = m_TempFile.pos();
   m_TempFile.seek(0);
   QByteArray data = m_TempFile.readAll();
   m_TempFile.seek(pos);
-  return qHash(data);
+  return QCryptographicHash::hash(data, QCryptographicHash::Md5);
 }

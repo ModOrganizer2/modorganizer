@@ -59,7 +59,7 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. "
-                           + "If you associated MO with NXM links in the settings you can now use your regular browser to send download from Nexus to MO. "
+                           + "If you associated MO with NXM links in the settings you can now use your regular browser to send downloads from Nexus to MO. "
                            + "Click on \"Nexus\" to open nexus, find a mod and click the green download buttons on Nexus saying \"Download with Manager\".")
         highlightAction("actionNexus", true)
         tutorialControl.waitForAction("actionNexus")
@@ -72,9 +72,9 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("Downloads will appear here. You have to download at least one mod to proceed.")
+        tutorial.text = qsTr("Downloads will appear on the \"Downloads\"-tab here. You have to download and install at least one mod to proceed.")
         applicationWindow.modInstalled.connect(nextStep)
-        highlightItem("downloadView", true)
+        highlightItem("tabWidget", true)
     },
 
     function() {
@@ -149,8 +149,20 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("MO applies some \"magic\" to make all BSAs that are checked in this list load in "
-                           + "the correct order interleaved with the non-bundled resources. Usually it's best "
-                           + "to check all bsas that have an exclamation mark at the side.")
+                           + "the correct order interleaved with the non-bundled resources.")
+        waitForClick()
+    },
+
+    function() {
+        tutorial.text = qsTr("You can disable this magic to make MO behave more like other tools. In this case "
+                           + "their load order follows that of the corresponding plugin (.esp).")
+        highlightItem("managedArchiveLabel", false)
+        waitForClick()
+    },
+
+    function() {
+        tutorial.text = qsTr("Many BSAs will appear grayed out and enabled. These mods are loaded by the game engine "
+                           + "automatically so they can't be disabled here.")
         waitForClick()
     },
 

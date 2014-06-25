@@ -37,9 +37,11 @@ public:
 
   void commit();
 
-  bool commitIfDifferent(uint &hash);
+  bool commitIfDifferent(QByteArray &hash);
 
-  uint hash();
+private:
+
+  QByteArray hash();
 
 private:
   QString m_FileName;

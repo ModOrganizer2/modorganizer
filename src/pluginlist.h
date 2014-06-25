@@ -310,7 +310,7 @@ private:
 private:
 
   std::vector<ESPInfo> m_ESPs;
-  mutable std::map<QString, uint> m_LastSaveHash;
+  mutable std::map<QString, QByteArray> m_LastSaveHash;
 
   std::map<QString, int> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;

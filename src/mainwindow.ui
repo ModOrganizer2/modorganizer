@@ -212,7 +212,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="toolTip">
-                 <string>Refresh list</string>
+                 <string>Open list options...</string>
                 </property>
                 <property name="whatsThis">
                  <string>Refresh list. This is usually not necessary unless you modified data outside the program.</string>

@@ -415,10 +415,13 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
     throw MyException(tr("invalid index %1").arg(index));
   }
 
-  if (m_ModStatus[index].m_Overwrite) {
-    // overwrite is always enabled
-    return;
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+  // we could quit in the following case, this shouldn't be a change anyway,
+  // but at least this allows the situation to be fixed in case of an error
+  if (modInfo->alwaysEnabled()) {
+    enabled = true;
   }
+
   if (enabled != m_ModStatus[index].m_Enabled) {
     m_ModStatus[index].m_Enabled = enabled;
     emit modStatusChanged(index);
@@ -740,12 +743,10 @@ QString Profile::getLoadOrderFileName() const
   return QDir::cleanPath(m_Directory.absoluteFilePath("loadorder.txt"));
 }
 
-
 QString Profile::getLockedOrderFileName() const
 {
   return QDir::cleanPath(m_Directory.absoluteFilePath("lockedorder.txt"));
 }
-
 
 QString Profile::getArchivesFileName() const
 {
@@ -757,7 +758,6 @@ QString Profile::getDeleterFileName() const
   return QDir::cleanPath(m_Directory.absoluteFilePath("hide_plugins.txt"));
 }
 
-
 QString Profile::getIniFileName() const
 {
   std::wstring primaryIniFile = *(GameInfo::instance().getIniFileNames().begin());
@@ -768,7 +768,6 @@ QString Profile::getProfileTweaks() const
 {
   return QDir::cleanPath(m_Directory.absoluteFilePath(ToQString(AppConfig::profileTweakIni())));
 }
-
 
 QString Profile::getPath() const
 {

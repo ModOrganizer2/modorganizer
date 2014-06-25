@@ -163,7 +163,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     m_DownloadManager(NexusInterface::instance(), this), m_InstallationManager(this),
     m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
     m_CurrentProfile(NULL), m_AskForNexusPW(false),
-    m_ArchivesInit(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
+    m_ArchivesInit(false), m_DirectoryUpdate(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
     m_GameInfo(new GameInfoImpl()), m_AboutToRun(), m_ModInstalled(), m_DidUpdateMasterList(false)
 {
   ui->setupUi(this);
@@ -2729,6 +2729,7 @@ void MainWindow::modorder_changed()
     }
   }
   refreshBSAList();
+  m_CurrentProfile->writeModlist();
   saveArchiveList();
   m_DirectoryStructure->getFileRegister()->sortOrigins();
 }
@@ -3022,6 +3023,7 @@ void MainWindow::updateModActiveState(int index, bool active)
 
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
+  m_CurrentProfile->writeModlist();
 }
 
 void MainWindow::removeMod_clicked()

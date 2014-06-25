@@ -387,7 +387,7 @@ private:
 
   std::vector<QTreeWidgetItem*> m_RemoveWidget;
 
-  uint m_ArchiveListHash;
+  QByteArray m_ArchiveListHash;
 
   bool m_DidUpdateMasterList;
 
