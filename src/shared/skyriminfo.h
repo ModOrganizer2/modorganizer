@@ -82,7 +82,8 @@ public:
   virtual std::wstring getNexusInfoUrl() { return SkyrimInfo::getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return SkyrimInfo::getNexusModIDStatic(); }
-  virtual int getNexusGameID() { return 110; }
+  static int getNexusGameIDStatic() { return 110; }
+  virtual int getNexusGameID() { return SkyrimInfo::getNexusGameIDStatic(); }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);

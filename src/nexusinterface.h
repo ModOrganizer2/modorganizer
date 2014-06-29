@@ -147,7 +147,8 @@ public:
    * @return int an id to identify the request
    **/
   int requestDescription(int modID, QObject *receiver, QVariant userData, const QString &subModule,
-                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()),
+                         int nexusGameId = -1);
 
   /**
    * @brief request nexus descriptions for multiple mods at once
@@ -279,13 +280,14 @@ private:
     QTimer *m_Timeout;
     QString m_URL;
     QString m_SubModule;
+    int m_NexusGameID;
     bool m_Reroute;
     int m_ID;
     int m_Endorse;
 
-    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, const QString &url);
-    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, const QString &url);
-    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, const QString &url);
+    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
+    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
+    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
 
   private:
     static QAtomicInt s_NextID;

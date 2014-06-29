@@ -484,6 +484,7 @@ private slots:
   void modlistChanged(int row);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
+  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
   void nxmDownloadURLs(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 

@@ -2059,6 +2059,10 @@ void MainWindow::readSettings()
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
 
+  if (settings.contains("log_split")) {
+    ui->topLevelSplitter->restoreState(settings.value("log_split").toByteArray());
+  }
+
   bool filtersVisible = settings.value("filters_visible", false).toBool();
   setCategoryListVisible(filtersVisible);
   ui->displayCategoriesBtn->setChecked(filtersVisible);
@@ -2104,6 +2108,7 @@ void MainWindow::storeSettings()
 
     settings.setValue("window_geometry", saveGeometry());
     settings.setValue("window_split", ui->splitter->saveState());
+    settings.setValue("log_split", ui->topLevelSplitter->saveState());
 
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
 
@@ -2353,8 +2358,6 @@ QList<IOrganizer::FileInfo> MainWindow::findFileInfos(const QString &path, const
         result.append(info);
       }
     }
-  } else {
-    qDebug("directory %s not found", qPrintable(path));
   }
   return result;
 }
@@ -4729,6 +4732,18 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   }
 }
 
+void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
+{
+  if (resultData.toBool()) {
+    ui->actionEndorseMO->setVisible(false);
+    QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+  }
+
+  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(int, QVariant, QVariant, int)),
+             this, SLOT(nxmEndorsementToggled(int, QVariant, QVariant, int)))) {
+    qCritical("failed to disconnect endorsement slot");
+  }
+}
 
 void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
 {

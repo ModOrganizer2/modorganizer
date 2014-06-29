@@ -70,6 +70,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   this->setWindowTitle(modInfo->name());
   this->setWindowModality(Qt::WindowModal);
 
+  m_RootPath = modInfo->absolutePath();
+
   QString metaFileName = m_RootPath.mid(0).append("/meta.ini");
   m_Settings = new QSettings(metaFileName, QSettings::IniFormat);
 
@@ -152,7 +154,6 @@ void ModInfoDialog::initINITweaks()
 
 void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
 {
-  m_RootPath = modInfo->absolutePath();
   ui->fileTree = findChild<QTreeView*>("fileTree");
 
   m_FileSystemModel = new QFileSystemModel(this);

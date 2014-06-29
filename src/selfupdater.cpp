@@ -99,7 +99,8 @@ void SelfUpdater::testForUpdate()
   if (m_UpdateRequestID == -1) {
     m_UpdateRequestID = m_Interface->requestDescription(
               SkyrimInfo::getNexusModIDStatic(), this, QVariant(),
-              QString(), ToQString(SkyrimInfo::getNexusInfoUrlStatic()));
+              QString(), ToQString(SkyrimInfo::getNexusInfoUrlStatic()),
+              SkyrimInfo::getNexusGameIDStatic());
   }
 }
 

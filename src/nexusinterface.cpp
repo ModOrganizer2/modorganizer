@@ -248,9 +248,10 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
 
 
 int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,
-                                       const QString &subModule, const QString &url)
+                                       const QString &subModule, const QString &url, int nexusGameId)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, subModule, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, subModule, url,
+                             nexusGameId == -1 ? GameInfo::instance().getNexusGameID() : nexusGameId);
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmDescriptionAvailable(int,QVariant,QVariant,int)),
@@ -267,7 +268,7 @@ int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant us
 int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData,
                                    const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, url);
+  NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, url, GameInfo::instance().getNexusGameID());
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)),
@@ -303,7 +304,7 @@ void NexusInterface::fakeFiles()
 int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData,
                                  const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, subModule, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, subModule, url, GameInfo::instance().getNexusGameID());
   m_RequestQueue.enqueue(requestInfo);
   connect(this, SIGNAL(nxmFilesAvailable(int,QVariant,QVariant,int)),
           receiver, SLOT(nxmFilesAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
@@ -323,7 +324,7 @@ int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData
 int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
                                     const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, url);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, url, GameInfo::instance().getNexusGameID());
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)),
@@ -340,7 +341,7 @@ int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QV
 int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData,
                                        const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_DOWNLOADURL, userData, subModule, url);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_DOWNLOADURL, userData, subModule, url, GameInfo::instance().getNexusGameID());
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)),
@@ -357,7 +358,7 @@ int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver,
 int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, const QString &url)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, url);
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, url, GameInfo::instance().getNexusGameID());
   requestInfo.m_Endorse = endorse;
   m_RequestQueue.enqueue(requestInfo);
 
@@ -425,7 +426,7 @@ void NexusInterface::nextRequest()
         hasParams = true;
       } break;
     }
-    url.append(QString("%1game_id=%2").arg(hasParams ? '&' : '?').arg(GameInfo::instance().getNexusGameID()));
+    url.append(QString("%1game_id=%2").arg(hasParams ? '&' : '?').arg(info.m_NexusGameID));
   } else {
     url = info.m_URL;
   }
@@ -565,7 +566,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , NexusInterface::NXMRequestInfo::Type type
                                                , QVariant userData
                                                , const QString &subModule
-                                               , const QString &url)
+                                               , const QString &url
+                                               , int nexusGameId)
   : m_ModID(modID)
   , m_FileID(0)
   , m_Reply(NULL)
@@ -576,13 +578,15 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)
   , m_SubModule(subModule)
+  , m_NexusGameID(nexusGameId)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
                                                , NexusInterface::NXMRequestInfo::Type type
                                                , QVariant userData
                                                , const QString &subModule
-                                               , const QString &url)
+                                               , const QString &url
+                                               , int nexusGameId)
   : m_ModID(-1)
   , m_ModIDList(modIDList)
   , m_FileID(0)
@@ -594,6 +598,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)
   , m_SubModule(subModule)
+  , m_NexusGameID(nexusGameId)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
@@ -601,7 +606,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , NexusInterface::NXMRequestInfo::Type type
                                                , QVariant userData
                                                , const QString &subModule
-                                               , const QString &url)
+                                               , const QString &url
+                                               , int nexusGameId)
   : m_ModID(modID)
   , m_FileID(fileID)
   , m_Reply(NULL)
@@ -612,4 +618,5 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)
   , m_SubModule(subModule)
+  , m_NexusGameID(nexusGameId)
 {}
