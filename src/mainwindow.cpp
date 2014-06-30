@@ -1365,8 +1365,6 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
 
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
 {
-  storeSettings();
-
   LockedDialog *dialog = new LockedDialog(this);
   dialog->show();
   ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); });
@@ -1888,10 +1886,6 @@ void MainWindow::refreshBSAList()
     QString extension = filename.right(3).toLower();
 
     if (extension == "bsa") {
-      if (filename.compare("update.bsa", Qt::CaseInsensitive) == 0) {
-        // hack: ignore update.bsa because it confuses people
-        continue;
-      }
       int index = m_ActiveArchives.indexOf(filename);
       if (index == -1) {
         index = 0xFFFF;
@@ -2074,6 +2068,10 @@ void MainWindow::readSettings()
   if (settings.value("Settings/use_proxy", false).toBool()) {
     activateProxy(true);
   }
+
+  ui->manageArchivesBox->blockSignals(true);
+  ui->manageArchivesBox->setChecked(settings.value("manage_bsas", true).toBool());
+  ui->manageArchivesBox->blockSignals(false);
 }
 
 
@@ -2113,6 +2111,7 @@ void MainWindow::storeSettings()
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
 
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+    settings.setValue("manage_bsas", ui->manageArchivesBox->isChecked());
 
     settings.remove("customExecutables");
     settings.beginWriteArray("customExecutables");
