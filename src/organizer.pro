@@ -5,14 +5,14 @@
 #-------------------------------------------------
 
 
-equals(QT_MAJOR_VERSION, 5) {
+TARGET = ModOrganizer
+TEMPLATE = app
+
+greaterThan(QT_MAJOR_VERSION, 4) {
   QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
-
-TARGET = ModOrganizer
-TEMPLATE = app
 
 SOURCES += \
     transfersavesdialog.cpp \
@@ -202,24 +202,60 @@ FORMS    += \
     browserdialog.ui \
     aboutdialog.ui
 
+RESOURCES += \
+    resources.qrc \
+    stylesheet_resource.qrc
+
+RC_FILE += \
+    app_icon.rc
+
+OTHER_FILES += \
+    version.rc \
+    tutorials/firststeps.qml \
+    tutorials/tutorials.js \
+    tutorials/tutorial_firststeps_main.js \
+    tutorials/tutorials_settingsdialog.qml \
+    tutorials/tutorials_mainwindow.qml \
+    tutorials/Highlight.qml \
+    tutorials/TutorialDescription.qml \
+    tutorials/TutorialOverlay.qml \
+    tutorials/tutorials_nexusdialog.qml \
+    tutorials/tutorials_modinfodialog.qml \
+    tutorials/tutorial_firststeps_modinfo.js \
+    tutorials/tutorial_conflictresolution_main.js \
+    tutorials/tutorial_conflictresolution_modinfo.js \
+    app_icon.rc \
+    dark.qss \
+    stylesheets/dark.qss \
+    tutorials/tutorial_window_installer.js \
+    tutorials/tutorials_installdialog.qml \
+    tutorials/tutorial_firststeps_settings.js
+
+
+# leak detection with vld
+#INCLUDEPATH += "E:/Visual Leak Detector/include"
+#LIBS += -L"E:/Visual Leak Detector/lib/Win32"
+#DEFINES += LEAK_CHECK_WITH_VLD
+
+#SOURCES += modeltest.cpp
+#HEADERS += modeltest.h
+#DEFINES += TEST_MODELS
+
+
 INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
 
 LIBS += -L"$(BOOSTPATH)/stage/lib"
 
 CONFIG(debug, debug|release) {
-  OUTDIR = $$OUT_PWD/debug
-  DSTDIR = $$PWD/../../outputd
   LIBS += -L$$OUT_PWD/../shared/debug
   LIBS += -L$$OUT_PWD/../bsatk/debug
   LIBS += -L$$OUT_PWD/../uibase/debug
   LIBS += -L$$OUT_PWD/../boss_modified/debug
   LIBS += -lDbgHelp
 } else {
-  OUTDIR = $$OUT_PWD/release
-  DSTDIR = $$PWD/../../output
   LIBS += -L$$OUT_PWD/../shared/release
   LIBS += -L$$OUT_PWD/../bsatk/release
-	LIBS += -L$$OUT_PWD/../uibase/release
+  LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
   QMAKE_CXXFLAGS += /Zi /GL
 #  QMAKE_CXXFLAGS -= -O2
@@ -275,6 +311,13 @@ DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 HGID = $$system(hg id -i)
 DEFINES += HGID=\\\"$${HGID}\\\"
 
+CONFIG(debug, debug|release) {
+  OUTDIR = $$OUT_PWD/debug
+  DSTDIR = $$PWD/../../outputd
+} else {
+  OUTDIR = $$OUT_PWD/release
+  DSTDIR = $$PWD/../../output
+}
 
 SRCDIR = $$PWD
 SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
@@ -294,42 +337,3 @@ CONFIG(debug, debug|release) {
 } else {
   QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
 }
-
-RESOURCES += \
-    resources.qrc \
-    stylesheet_resource.qrc
-
-RC_FILE += \
-    app_icon.rc
-
-OTHER_FILES += \
-    version.rc \
-    tutorials/firststeps.qml \
-    tutorials/tutorials.js \
-    tutorials/tutorial_firststeps_main.js \
-    tutorials/tutorials_settingsdialog.qml \
-    tutorials/tutorials_mainwindow.qml \
-    tutorials/Highlight.qml \
-    tutorials/TutorialDescription.qml \
-    tutorials/TutorialOverlay.qml \
-    tutorials/tutorials_nexusdialog.qml \
-    tutorials/tutorials_modinfodialog.qml \
-    tutorials/tutorial_firststeps_modinfo.js \
-    tutorials/tutorial_conflictresolution_main.js \
-    tutorials/tutorial_conflictresolution_modinfo.js \
-    app_icon.rc \
-    dark.qss \
-    stylesheets/dark.qss \
-    tutorials/tutorial_window_installer.js \
-    tutorials/tutorials_installdialog.qml \
-    tutorials/tutorial_firststeps_settings.js
-
-
-# leak detection with vld
-#INCLUDEPATH += "E:/Visual Leak Detector/include"
-#LIBS += -L"E:/Visual Leak Detector/lib/Win32"
-#DEFINES += LEAK_CHECK_WITH_VLD
-
-#SOURCES += modeltest.cpp
-#HEADERS += modeltest.h
-#DEFINES += TEST_MODELS
