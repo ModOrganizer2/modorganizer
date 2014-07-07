@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 
-contains(QT_VERSION, "^5.*") {
+equals(QT_MAJOR_VERSION, 5) {
   QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
