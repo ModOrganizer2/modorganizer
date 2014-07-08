@@ -30,11 +30,12 @@ STATICDATAPATH = $${DESTDIR}\\..\\tools\\static_data\\dlls
 DLLSPATH = $${DESTDIR}\\dlls
 
 otherlibs.path = $$DLLSPATH
-otherlibs.files += $${STATICDATAPATH}\\7z.dll
+otherlibs.files += $${STATICDATAPATH}\\7z.dll \
+    $$(BOOSTPATH)\\stage\\lib\\boost_python-vc*-mt-1*.dll
 
 qtlibs.path = $$DLLSPATH
 
-equals(QT_MAJOR_VERSION, 5) {
+greaterThan(QT_MAJOR_VERSION, 4) {
   QTLIBNAMES += Core Gui Network OpenGL Script Sql Svg Qml Quick Webkit Widgets Xml XmlPatterns
 } else {
   QTLIBNAMES += Core Declarative Gui Network OpenGL Script Sql Svg Webkit Xml XmlPatterns
