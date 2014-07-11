@@ -335,7 +335,7 @@ private:
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
-  int m_SelectedSaveGame;
+  //int m_SelectedSaveGame;
 
   Settings m_Settings;
 
