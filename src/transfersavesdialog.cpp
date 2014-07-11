@@ -151,13 +151,6 @@ bool TransferSavesDialog::testOverwrite(OverwriteMode &overwriteMode, const QStr
   return res == QMessageBox::Yes;
 }
 
-QStringList TransferSavesDialog::getFilesToProcess(const SaveGame *save)
-{
-  QStringList result = save->attachedFiles();
-  result.append(save->fileName());
-  return result;
-}
-
 void TransferSavesDialog::on_moveToLocalBtn_clicked()
 {
   QString selectedCharacter = ui->globalCharacterList->currentItem()->text();
@@ -170,7 +163,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
     for (std::vector<SaveGame*>::const_iterator iter = m_GlobalSaves.begin();
          iter != m_GlobalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
-        QStringList files = getFilesToProcess(*iter);
+        QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
@@ -207,7 +200,7 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
     for (std::vector<SaveGame*>::const_iterator iter = m_GlobalSaves.begin();
          iter != m_GlobalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
-        QStringList files = getFilesToProcess(*iter);
+        QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
@@ -244,7 +237,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
     for (std::vector<SaveGame*>::const_iterator iter = m_LocalSaves.begin();
          iter != m_LocalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
-        QStringList files = getFilesToProcess(*iter);
+        QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
@@ -283,7 +276,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
     for (std::vector<SaveGame*>::const_iterator iter = m_LocalSaves.begin();
          iter != m_LocalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
-        QStringList files = getFilesToProcess(*iter);
+        QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
