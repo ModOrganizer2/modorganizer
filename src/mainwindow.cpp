@@ -3889,22 +3889,23 @@ void MainWindow::deleteSavegame_clicked()
   if (!selection->hasSelection())
     return;
 
-  int selectedCount = selection->selectedRows().count();
   QString savesMsgLabel;
   QRegExp saveSuffix(".ess$");
   QStringList deleteFiles;
 
-  foreach (QModelIndex idx, selection->selectedRows()) {
+  foreach (QModelIndex idx, selection->selectedIndexes()) {
     QString name = idx.data().toString();
-    QString filename = idx.data(Qt::UserRole).toString();
+    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
-    SaveGame *save = new SaveGame(this, filename);
     savesMsgLabel += "<li>" + name.replace(saveSuffix, "") + "</li>";
+
     deleteFiles << save->saveFiles();
   }
 
+  bool multipleRows = (selection->selectedIndexes().count() > 1);
+
   if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following save%1?<br><ul>%2</ul><br>Removed saves will be sent to the Recycle Bin.")
-                            .arg((selectedCount > 1) ? "s" : "")
+                            .arg((multipleRows) ? "s" : "")
                             .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
@@ -3914,12 +3915,10 @@ void MainWindow::deleteSavegame_clicked()
 
 void MainWindow::fixMods_clicked()
 {
-  QItemSelectionModel *selection = ui->savegameList->selectionModel();
+  QListWidgetItem *selectedItem = ui->savegameList->currentItem();
 
-  if (!selection->hasSelection() || selection->selectedRows().count() > 1)
-    return; // Count should never be > 1 because of condition on context menu; check again just for safety.
-
-  QListWidgetItem *selectedItem = ui->savegameList->item(selection->selectedRows().first().row());
+  if (selectedItem == NULL)
+    return;
 
   // if required, parse the save game
   if (selectedItem->data(Qt::UserRole).isNull()) {
@@ -4017,7 +4016,7 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
   if ( selectedCount == 0) {
     return;
-  } else if (currentSelection.count() == 1)
+  } else if (selectedCount == 1)
     enableFixMods = true;
 
   QMenu menu;
