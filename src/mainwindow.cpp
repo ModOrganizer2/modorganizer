@@ -3884,16 +3884,13 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
 void MainWindow::deleteSavegame_clicked()
 {
-  QItemSelectionModel *selection = ui->savegameList->selectionModel();
-
-  if (!selection->hasSelection())
-    return;
+  QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
 
   QString savesMsgLabel;
   QRegExp saveSuffix(".ess$");
   QStringList deleteFiles;
 
-  foreach (QModelIndex idx, selection->selectedIndexes()) {
+  foreach (QModelIndex idx, selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
@@ -3902,7 +3899,7 @@ void MainWindow::deleteSavegame_clicked()
     deleteFiles << save->saveFiles();
   }
 
-  bool multipleRows = (selection->selectedIndexes().count() > 1);
+  bool multipleRows = (selectedIndexes.count() > 1);
 
   if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following save%1?<br><ul>%2</ul><br>Removed saves will be sent to the Recycle Bin.")
                             .arg((multipleRows) ? "s" : "")
@@ -4009,22 +4006,23 @@ void MainWindow::fixMods_clicked()
 
 void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
-  QItemSelection currentSelection = ui->savegameList->selectionModel()->selection();
+  QItemSelectionModel *selection = ui->savegameList->selectionModel();
+  QModelIndexList selectedIndexes = selection->selectedIndexes();
 
-  bool enableFixMods = false;
-  int selectedCount = currentSelection.count();
+  bool multipleSelected = false;
+  int selectedCount = selectedIndexes.count();
 
-  if ( selectedCount == 0) {
+  if ( !selection->hasSelection()) {
     return;
-  } else if (selectedCount == 1)
-    enableFixMods = true;
+  } else if (selectedCount > 1)
+    multipleSelected = true;
 
   QMenu menu;
 
-  if (enableFixMods)
+  if (!multipleSelected)
     menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
 
-  QString deleteMenuLabel = tr("Delete save%1").arg((selectedCount > 1) ? "s" : "");
+  QString deleteMenuLabel = tr("Delete save%1").arg((multipleSelected) ? "s" : "");
 
   menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
