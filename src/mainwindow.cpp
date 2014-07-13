@@ -3890,7 +3890,7 @@ void MainWindow::deleteSavegame_clicked()
   QRegExp saveSuffix(".ess$");
   QStringList deleteFiles;
 
-  foreach (QModelIndex idx, selectedIndexes) {
+  foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
@@ -4007,15 +4007,11 @@ void MainWindow::fixMods_clicked()
 void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
   QItemSelectionModel *selection = ui->savegameList->selectionModel();
-  QModelIndexList selectedIndexes = selection->selectedIndexes();
 
-  bool multipleSelected = false;
-  int selectedCount = selectedIndexes.count();
-
-  if ( !selection->hasSelection()) {
+  if (!selection->hasSelection())
     return;
-  } else if (selectedCount > 1)
-    multipleSelected = true;
+
+  bool multipleSelected = (selection->selectedIndexes().count() > 1);
 
   QMenu menu;
 
