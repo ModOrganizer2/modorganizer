@@ -3901,7 +3901,8 @@ void MainWindow::deleteSavegame_clicked()
 
   bool multipleRows = (selectedIndexes.count() > 1);
 
-  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following save%1?<br><ul>%2</ul><br>Removed saves will be sent to the Recycle Bin.")
+  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %1save%2?<br><ul>%3</ul><br>Removed saves will be sent to the Recycle Bin.")
+                            .arg((multipleRows) ? QString::number(selectedIndexes.count()) + " " : "")
                             .arg((multipleRows) ? "s" : "")
                             .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
