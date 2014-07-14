@@ -472,6 +472,18 @@ public:
    */
   virtual void saveMeta() {}
 
+  /**
+   * @brief retrieve list of mods (as mod index) that are overwritten by this one. Updates may be delayed
+   * @return
+   */
+  virtual std::set<unsigned int> getModOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+   * @brief retrieve list of mods (as mod index) that overwrite this one. Updates may be delayed
+   * @return
+   */
+  virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
+
 signals:
 
   /**
@@ -525,6 +537,11 @@ public:
    * @brief clear all caches held for this mod
    */
   virtual void clearCaches();
+
+  virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
+
+  virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
+
 private:
 
   enum EConflictType {
@@ -553,6 +570,9 @@ private:
 
   mutable EConflictType m_CurrentConflictState;
   mutable QTime m_LastConflictCheck;
+
+  mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
+  mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
 
 };
 

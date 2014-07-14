@@ -89,7 +89,8 @@ SOURCES += \
     safewritefile.cpp \
     modflagicondelegate.cpp \
     pluginflagicondelegate.cpp \
-    organizerproxy.cpp
+    organizerproxy.cpp \
+    viewmarkingscrollbar.cpp
 
 
 HEADERS  += \
@@ -168,7 +169,8 @@ HEADERS  += \
     pdll.h \
     modflagicondelegate.h \
     pluginflagicondelegate.h \
-    organizerproxy.h
+    organizerproxy.h \
+    viewmarkingscrollbar.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -244,6 +246,7 @@ TRANSLATIONS = organizer_de.ts \
                organizer_cs.ts \
                organizer_tr.ts \
                organizer_en.ts \
+               organizer_ko.ts \
                organizer_ru.ts
 
 #!isEmpty(TRANSLATIONS) {

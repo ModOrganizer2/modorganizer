@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "installationtester.h"
 #include "qtgroupingproxy.h"
+#include "viewmarkingscrollbar.h"
 #include <gameinfo.h>
 #include <utility.h>
 #include <QFileInfo>
@@ -291,6 +292,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return QVariant();
+  } else if ((role == Qt::BackgroundRole)
+             || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
+      return QColor(0, 255, 0, 64);
+    } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
+      return QColor(255, 0, 0, 64);
+    } else {
+      return QVariant();
+    }
   } else if (role == Qt::ToolTipRole) {
     if (column == COL_FLAGS) {
       QString result;
@@ -574,6 +584,13 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit layoutChanged();
 
   emit modorder_changed();
+}
+
+void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_Overwrite = overwrite;
+  m_Overwritten = overwritten;
+  notifyChange(0, rowCount());
 }
 
 void ModList::modInfoAboutToChange(ModInfo::Ptr info)
@@ -903,9 +920,10 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   } else if ((event->type() == QEvent::KeyPress) && (m_Profile != NULL)) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if ((itemView != NULL) &&
-        (keyEvent->modifiers() == Qt::ControlModifier) &&
-        ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
+    if ((itemView != NULL)
+        && (keyEvent->modifiers() == Qt::ControlModifier)
+        && ((keyEvent->key() == Qt::Key_Up)
+            || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
       const QSortFilterProxyModel *filterModel = NULL;

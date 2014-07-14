@@ -136,6 +136,7 @@ public:
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
+  void waitForProcessOrJob(HANDLE processHandle);
 public slots:
 
   void refreshLists();
@@ -560,6 +561,8 @@ private slots:
   void delayedRemove();
 
   void requestDownload(const QUrl &url, QNetworkReply *reply);
+  void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
+  void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 
 private slots: // ui slots
   void profileRefresh();
