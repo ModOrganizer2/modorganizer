@@ -10,7 +10,7 @@ Please note that if you only want to work on and build a plugin you can save you
 Overview:
 ---------
 
-As of December 2013 MO consists of the following subprojects:
+As of Juli 2014 MO consists of the following subprojects:
 - organizer: The main userinterface. heavy usage of various libraries
 - hookdll: core library of the virtual file system
 - uibase: interop between plugins and the main application as well as some reusable functionality
@@ -24,13 +24,14 @@ As of December 2013 MO consists of the following subprojects:
 - NCC: extension to NMM to provide a binary with command line interface for fomod installation. This is c# code and does not build with the rest of the project. Requires the rest of NMM
 - bossdummy: dummy dll that looks like the boss.dll. This is used instead of the real boss dlls in NCC to save some disk space
 - pythonrunner: library for embedding python code. Requires boost_python, python 2.7 and pyqt4
+- loot_cli: this is a command line client of loot. This can be better integrated with MO than the official loot client.
 
 And various plugins:
+- bsaExtractor: offers to extract bsas after a mod has been installed
 - checkFNIS: Activates each time an application is started from MO and runs fnis if necessary
 - diagnoseBasic: Various diagnostic checks on the game
 - inieditor: minimalistic file editor for ini files
 - installerBain: handles non-scripted bain installers
-- installerBCF: no functionality. Supposed to eventually allow installations using bcfs (bain conversion file). python code
 - installerBundle: handles installation of archives wrapped in archives
 - installerFomod: handles installation of xml fomods
 - installerManual: handles installations of archives that aren't supported by any other plugin (or if the user chooses to do the installation manually)
@@ -39,7 +40,13 @@ And various plugins:
 - NMMImport: importer from existing nmm installation
 - proxyPython: integrates pythonrunner as a plugin into MO
 - pyniEdit: more user-friendly ini editor. python code
+- previewBase: used for file previews. this plugin covers image formats supported by the qt installation (usually at least jpg, gif, png) and text files
+- previewDDS: used to preview dds textures. uses code from the nif file format library
 
+There are a few more plugins that are either broken or samples
+- installerBCF: this was intended to use .bcf (bain conversion file) files as installation instructions but currently it is completely function-less
+- helloWorldCpp: sample for cpp plugins. This should compile even without fulfilling most dependencies below
+- pageTESAlliance: integrates the tes alliance page into MO. This integration is not nearly as tight as that of nexus.
 
 Requirements:
 -------------
@@ -50,13 +57,20 @@ Visual C++ compiler 2010 (VC 10.0) or up
 Note: If you're having trouble installing the windows sdk, you may be affected by this bug: http://support.microsoft.com/kb/2717426
 
 Qt Libraries 4.8.x (http://qt-project.org/downloads)
-- i.e. "Qt libraries 4.8.5 for Windows (VS 2010, 235 MB)"
-- tested: 4.8.5
-- Qt5 is not yet supported but WIP. You will see a few conditional qt5 pathes
+- i.e. "Qt libraries 4.8.6 for Windows (VS 2010, 235 MB)"
+- tested: 4.8.6
 - Install according to instruction
 
+Qt 5 Compatibility:
+MO compiles and mostly runs correctly built with Qt 5.3 and VC++ 2013 but
+- python plugins haven't been rewritten to use qt5 yet
+- pyqt5 isn't distributed as binaries for python 2.7 so this needs to be set up and built first
+- tutorial doesn't work because it seems to be impossible to create a transparent Qt Quick control...
+- the previewdds plugin only compiles with the opengl variant of the qt 5 distribution
+- Qt5 is a bi*** to distribute
+
 boost libraries (http://www.boost.org/)
-- tested: 1.49
+- tested: 1.55
 - Build according to their instructions (using vc++): http://www.boost.org/doc/libs/1_54_0/more/getting_started/windows.html
 - A few of the boost libraries need to be built (the rest is header-only). The only compiled libs MO needs (at the time of writing) are
   boost_thread (for everything that links agains bsatk) and boost_python (for pythonrunner). You can disable the others to save yourself compile time (even on a modern system compiling boost can easily take an hour)
@@ -105,8 +119,8 @@ Set up (using Qt Creator):
 2. Open the "Projects" tab, open the "Details" for "Build Environment"
 3a. Click "Add" to add a variable called "BOOSTPATH" with the path of your boost installation as the value (i.e. C:\code\boost_1_49_0)
 3b. Click "Add" to add a variable called "ZLIBPATH" with the path of your zlib installation as the value (i.e. C:\code\zlib-1.2.7)
-3c. Click "Add" to add a variable called "7ZIPPATH" with the path of your zlib installation as the value (i.e. C:\code\7zip)
-3d. Click "Add" to add a variable called "PYTHONPATH" with the path of your zlib installation as the value (i.e. C:\code\python)
+3c. Click "Add" to add a variable called "SEVENZIPPATH" with the path of your 7zip installation as the value (i.e. C:\code\7zip)
+3d. Click "Add" to add a variable called "PYTHONPATH" with the path of your python installation as the value (i.e. C:\code\python)
 4. Switch the build configuration at the very top of the same page from "debug" to "release" (or vice versa) and repeat step 3
 5. Compile the configuration(s) you want to use (debug and/or release) (Build All). This should compile correctly.
 6. <reserved for future use. Maybe grab a coffee?>

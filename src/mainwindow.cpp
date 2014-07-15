@@ -978,7 +978,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
       ((event->type() == QEvent::Leave) || (event->type() == QEvent::WindowDeactivate))) {
     hideSaveGameInfo();
   }
-
   return false;
 }
 
