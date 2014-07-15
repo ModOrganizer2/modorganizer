@@ -7,6 +7,7 @@
     <file name="Qt5Core.dll"/>
     <file name="Qt5Declarative.dll"/>
     <file name="Qt5Gui.dll"/>
+    <file name="Qt5Quick.dll"/>
     <file name="Qt5Network.dll"/>
     <file name="Qt5Script.dll"/>
     <file name="Qt5Sql.dll"/>

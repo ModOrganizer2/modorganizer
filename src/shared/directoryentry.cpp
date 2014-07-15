@@ -489,13 +489,18 @@ void DirectoryEntry::propagateOrigin(int origin)
 
 static bool SupportOptimizedFind()
 {
-  OSVERSIONINFO versionInfo;
-  versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-  GetVersionEx(&versionInfo);
-
   // large fetch and basic info for FindFirstFileEx is supported on win server 2008 r2, win 7 and newer
-  return (versionInfo.dwMajorVersion > 6) ||
-         ((versionInfo.dwMajorVersion == 6) && (versionInfo.dwMinorVersion >= 1));
+
+  OSVERSIONINFOEX versionInfo;
+  versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+  versionInfo.dwMajorVersion = 6;
+  versionInfo.dwMinorVersion = 1;
+  ULONGLONG mask = ::VerSetConditionMask(
+                     ::VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+                     VER_MINORVERSION, VER_GREATER_EQUAL);
+
+  bool res = ::VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, mask);
+  return res;
 }
 
 
