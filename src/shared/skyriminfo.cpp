@@ -158,6 +158,11 @@ std::vector<std::wstring> SkyrimInfo::getDLCPlugins()
       ;
 }
 
+std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions()
+{
+  return boost::assign::list_of(L"skse");
+}
+
 std::vector<std::wstring> SkyrimInfo::getIniFileNames()
 {
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");

@@ -136,6 +136,7 @@ public:
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
+  void waitForProcessOrJob(HANDLE processHandle);
 public slots:
 
   void refreshLists();
@@ -335,7 +336,7 @@ private:
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
-  int m_SelectedSaveGame;
+  //int m_SelectedSaveGame;
 
   Settings m_Settings;
 
@@ -560,6 +561,8 @@ private slots:
   void delayedRemove();
 
   void requestDownload(const QUrl &url, QNetworkReply *reply);
+  void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
+  void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 
 private slots: // ui slots
   void profileRefresh();

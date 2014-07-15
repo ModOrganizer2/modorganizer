@@ -5,14 +5,14 @@
 #-------------------------------------------------
 
 
-contains(QT_VERSION, "^5.*") {
-	QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit webkitwidgets
+TARGET = ModOrganizer
+TEMPLATE = app
+
+greaterThan(QT_MAJOR_VERSION, 4) {
+  QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
-
-TARGET = ModOrganizer
-TEMPLATE = app
 
 SOURCES += \
     transfersavesdialog.cpp \
@@ -89,7 +89,8 @@ SOURCES += \
     safewritefile.cpp \
     modflagicondelegate.cpp \
     pluginflagicondelegate.cpp \
-    organizerproxy.cpp
+    organizerproxy.cpp \
+    viewmarkingscrollbar.cpp
 
 
 HEADERS  += \
@@ -168,7 +169,8 @@ HEADERS  += \
     pdll.h \
     modflagicondelegate.h \
     pluginflagicondelegate.h \
-    organizerproxy.h
+    organizerproxy.h \
+    viewmarkingscrollbar.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -201,111 +203,6 @@ FORMS    += \
     previewdialog.ui \
     browserdialog.ui \
     aboutdialog.ui
-
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
-
-LIBS += -L"$(BOOSTPATH)/stage/lib"
-
-CONFIG(debug, debug|release) {
-  OUTDIR = $$OUT_PWD/debug
-  DSTDIR = $$PWD/../../outputd
-  LIBS += -L$$OUT_PWD/../shared/debug
-  LIBS += -L$$OUT_PWD/../bsatk/debug
-  LIBS += -L$$OUT_PWD/../uibase/debug
-  LIBS += -L$$OUT_PWD/../boss_modified/debug
-  LIBS += -lDbgHelp
-} else {
-  OUTDIR = $$OUT_PWD/release
-  DSTDIR = $$PWD/../../output
-  LIBS += -L$$OUT_PWD/../shared/release
-  LIBS += -L$$OUT_PWD/../bsatk/release
-	LIBS += -L$$OUT_PWD/../uibase/release
-  LIBS += -L$$OUT_PWD/../boss_modified/release
-  QMAKE_CXXFLAGS += /Zi /GL
-#  QMAKE_CXXFLAGS -= -O2
-  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
-}
-
-#QMAKE_CXXFLAGS_WARN_ON -= -W3
-#QMAKE_CXXFLAGS_WARN_ON += -W4
-QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
-
-CONFIG += embed_manifest_exe
-
-# QMAKE_CXXFLAGS += /analyze
-
-# QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
-
-TRANSLATIONS = organizer_de.ts \
-               organizer_es.ts \
-               organizer_fr.ts \
-               organizer_zh_TW.ts \
-               organizer_zh_CN.ts \
-               organizer_cs.ts \
-               organizer_tr.ts \
-               organizer_en.ts \
-               organizer_ru.ts
-
-#!isEmpty(TRANSLATIONS) {
-#  isEmpty(QMAKE_LRELEASE) {
-#		win32:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease.exe
-#    else:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
-#  }
-#
-#  isEmpty(TS_DIR):TS_DIR = Translations
-#
-#  TSQM.name = lrelease ${QMAKE_FILE_IN}
-#  TSQM.input = TRANSLATIONS
-#  TSQM.output = $$TS_DIR/${QMAKE_FILE_BASE}.qm
-#  TSQM.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN}
-#  TSQM.CONFIG = no_link
-#  QMAKE_EXTRA_COMPILERS += TSQM
-#  PRE_TARGETDEPS += compiler_TSQM_make_all
-#} else:message(No translation files in project)
-
-LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
-
-LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
-
-DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
-
-DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
-#DEFINES += QMLJSDEBUGGER
-
-HGID = $$system(hg id -i)
-DEFINES += HGID=\\\"$${HGID}\\\"
-
-
-SRCDIR = $$PWD
-SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
-OUTDIR ~= s,/,$$QMAKE_DIR_SEP,g
-DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
-
-QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
-
-CONFIG(debug, debug|release) {
-	contains(QT_VERSION, "^5.*") {
-		QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
-		QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.debug.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
-		QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug.qt5 $$escape_expand(\\n)
-	} else {
-		QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
-		QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
-		QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
-	}
-} else {
-	contains(QT_VERSION, "^5.*") {
-		QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
-		QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
-		QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.qt5 $$escape_expand(\\n)
-	} else {
-		QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
-	}
-}
 
 RESOURCES += \
     resources.qrc \
@@ -345,3 +242,117 @@ OTHER_FILES += \
 #SOURCES += modeltest.cpp
 #HEADERS += modeltest.h
 #DEFINES += TEST_MODELS
+
+
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
+
+LIBS += -L"$(BOOSTPATH)/stage/lib"
+
+CONFIG(debug, debug|release) {
+  LIBS += -L$$OUT_PWD/../shared/debug
+  LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -L$$OUT_PWD/../uibase/debug
+  LIBS += -L$$OUT_PWD/../boss_modified/debug
+  LIBS += -lDbgHelp
+  PRE_TARGETDEPS += $$OUT_PWD/../shared/debug/mo_shared.lib \
+    $$OUT_PWD/../bsatk/debug/bsatk.lib
+} else {
+  LIBS += -L$$OUT_PWD/../shared/release
+  LIBS += -L$$OUT_PWD/../bsatk/release
+  LIBS += -L$$OUT_PWD/../uibase/release
+  LIBS += -L$$OUT_PWD/../boss_modified/release
+  QMAKE_CXXFLAGS += /Zi# /GL
+#  QMAKE_CXXFLAGS -= -O2
+  QMAKE_LFLAGS += /DEBUG# /LTCG /OPT:REF /OPT:ICF
+  PRE_TARGETDEPS += $$OUT_PWD/../shared/release/mo_shared.lib \
+    $$OUT_PWD/../bsatk/release/bsatk.lib
+}
+
+#QMAKE_CXXFLAGS_WARN_ON -= -W3
+#QMAKE_CXXFLAGS_WARN_ON += -W4
+QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
+
+CONFIG += embed_manifest_exe
+
+# QMAKE_CXXFLAGS += /analyze
+
+# QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
+
+TRANSLATIONS = organizer_de.ts \
+               organizer_es.ts \
+               organizer_fr.ts \
+               organizer_zh_TW.ts \
+               organizer_zh_CN.ts \
+               organizer_cs.ts \
+               organizer_tr.ts \
+               organizer_en_US.ts \
+               organizer_ko.ts \
+               organizer_ru.ts
+
+#!isEmpty(TRANSLATIONS) {
+#  isEmpty(QMAKE_LRELEASE) {
+#		win32:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease.exe
+#    else:QMAKE_LRELEASE = $$[QT_INSTALL_BINS]/lrelease
+#  }
+#
+#  isEmpty(TS_DIR):TS_DIR = Translations
+#
+#  TSQM.name = lrelease ${QMAKE_FILE_IN}
+#  TSQM.input = TRANSLATIONS
+#  TSQM.output = $$TS_DIR/${QMAKE_FILE_BASE}.qm
+#  TSQM.commands = $$QMAKE_LRELEASE ${QMAKE_FILE_IN}
+#  TSQM.CONFIG = no_link
+#  QMAKE_EXTRA_COMPILERS += TSQM
+#  PRE_TARGETDEPS += compiler_TSQM_make_all
+#} else:message(No translation files in project)
+
+LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
+
+LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
+
+DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
+
+DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
+#DEFINES += QMLJSDEBUGGER
+
+HGID = $$system(hg id -i)
+DEFINES += HGID=\\\"$${HGID}\\\"
+
+CONFIG(debug, debug|release) {
+  OUTDIR = $$OUT_PWD/debug
+  DSTDIR = $$PWD/../../outputd
+} else {
+  OUTDIR = $$OUT_PWD/release
+  DSTDIR = $$PWD/../../output
+}
+
+SRCDIR = $$PWD
+SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
+OUTDIR ~= s,/,$$QMAKE_DIR_SEP,g
+DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
+
+QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
+
+CONFIG(debug, debug|release) {
+  greaterThan(QT_MAJOR_VERSION, 4) {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.debug.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug.qt5 $$escape_expand(\\n)
+  } else {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
+  }
+} else {
+  greaterThan(QT_MAJOR_VERSION, 4) {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.qt5 $$escape_expand(\\n)
+  } else {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  }
+}

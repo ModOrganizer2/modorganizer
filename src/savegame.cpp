@@ -21,10 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QBuffer>
 #include <set>
-#include "gameinfo.h"
 #include <QFileInfo>
 #include <QDateTime>
+#include <utility.h>
 #include <limits>
+#include "gameinfo.h"
 
 
 SaveGame::SaveGame(QObject *parent)
@@ -63,6 +64,27 @@ SaveGame& SaveGame::operator=(const SaveGame &reference)
 
 SaveGame::~SaveGame()
 {
+}
+
+QStringList SaveGame::attachedFiles() const
+{
+  QStringList result;
+  foreach (const std::wstring &ext, MOShared::GameInfo::instance().getSavegameAttachmentExtensions()) {
+    QFileInfo fi(fileName());
+    fi.setFile(fi.canonicalPath() + "/" + fi.completeBaseName() + "." + MOBase::ToQString(ext));
+    if (fi.exists()) {
+      result.append(fi.filePath());
+    }
+  }
+
+  return result;
+}
+
+QStringList SaveGame::saveFiles() const
+{
+  QStringList result = attachedFiles();
+  result.append(fileName());
+  return result;
 }
 
 

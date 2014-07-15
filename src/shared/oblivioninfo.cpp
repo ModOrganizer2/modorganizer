@@ -133,6 +133,12 @@ std::vector<std::wstring> OblivionInfo::getDLCPlugins()
 }
 
 
+std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions()
+{
+  return boost::assign::list_of(L"obse");
+}
+
+
 std::vector<std::wstring> OblivionInfo::getIniFileNames()
 {
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");

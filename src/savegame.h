@@ -64,7 +64,7 @@ public:
    *
    * @param fileName absolute path of the save game file
    **/
-  virtual void readFile(const QString &fileName) = 0;
+  virtual void readFile(const QString) { }
 
   /**
    * @return filename of this savegame
@@ -74,7 +74,12 @@ public:
   /**
    * @return a list of additional files that belong to this savegame
    */
-  virtual QStringList attachedFiles() const { return QStringList(); }
+  virtual QStringList attachedFiles() const;
+
+  /**
+   * @return a list of all files that belong to this savegame
+   */
+  virtual QStringList saveFiles() const;
 
   /**
    * @return name of the player character

@@ -21,11 +21,13 @@ INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
 CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../bsatk/debug
-	LIBS += -lDbgHelp
+  LIBS += -lDbgHelp
   QMAKE_CXXFLAGS_DEBUG -= -Zi
   QMAKE_CXXFLAGS += -Z7
+  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
 } else {
-		LIBS += -L$$OUT_PWD/../bsatk/release
+  LIBS += -L$$OUT_PWD/../bsatk/release
+  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
 }
 
 LIBS += -lbsatk

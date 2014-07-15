@@ -168,6 +168,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
+
+  languageChange(m_Settings.language());
+
   ui->logList->setModel(LogBuffer::instance());
   ui->logList->setColumnWidth(0, 100);
   ui->logList->setAutoScroll(true);
@@ -277,6 +280,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
   connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), this, SLOT(fileMoved(QString, QString, QString)));
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
+  connect(ui->modList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(modlistSelectionChanged(QModelIndex,QModelIndex)));
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
 
@@ -310,7 +314,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(NexusInterface::instance(), SIGNAL(needLogin()), this, SLOT(nexusLogin()));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
-
+  connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
 
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), this, SLOT(requestDownload(QUrl,QNetworkReply*)));
@@ -615,6 +619,10 @@ void MainWindow::createHelpWidget()
 {
   QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionHelp));
   QMenu *buttonMenu = toolBtn->menu();
+  if (buttonMenu == NULL) {
+    return;
+  }
+  buttonMenu->clear();
 
   QAction *helpAction = new QAction(tr("Help on UI"), buttonMenu);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
@@ -1154,6 +1162,7 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
     }
     plugin->setProperty("filename", fileName);
     m_Settings.registerPlugin(pluginObj);
+    installTranslator(QFileInfo(fileName).baseName());
   }
 
   { // diagnosis plugins
@@ -1379,11 +1388,35 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
 
       QCoreApplication::processEvents();
 
-      while ((::WaitForSingleObject(processHandle, 100) == WAIT_TIMEOUT) &&
-              !dialog->unlockClicked()) {
+      DWORD retLen;
+      JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+
+      bool isJobHandle = true;
+
+      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
+        if (isJobHandle) {
+          if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+            if (info.NumberOfProcessIdsInList == 0) {
+              break;
+            }
+          } else {
+            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+            // the right to break out.
+            if (::GetLastError() != ERROR_MORE_DATA) {
+              isJobHandle = false;
+            }
+          }
+        }
+
         // keep processing events so the app doesn't appear dead
         QCoreApplication::processEvents();
+
+        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
       }
+      ::CloseHandle(processHandle);
 
       this->setEnabled(true);
       refreshDirectoryStructure();
@@ -2060,7 +2093,6 @@ void MainWindow::readSettings()
   setCategoryListVisible(filtersVisible);
   ui->displayCategoriesBtn->setChecked(filtersVisible);
 
-  languageChange(m_Settings.language());
   int selectedExecutable = settings.value("selected_executable").toInt();
   setExecutableIndex(selectedExecutable);
 
@@ -3027,6 +3059,21 @@ void MainWindow::modlistChanged(const QModelIndex&, int)
   m_CurrentProfile->writeModlist();
 }
 
+void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
+{
+  ModInfo::Ptr selectedMod = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
+  m_ModList.setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+  if (m_ModListSortProxy != NULL) {
+    m_ModListSortProxy->invalidate();
+  }
+  ui->modList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::modListSortIndicatorChanged(int, Qt::SortOrder)
+{
+  ui->modList->verticalScrollBar()->repaint();
+}
+
 void MainWindow::removeMod_clicked()
 {
   try {
@@ -3883,26 +3930,34 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
 void MainWindow::deleteSavegame_clicked()
 {
-  QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
-  if (selectedItem == NULL) {
-    return;
+  QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
+
+  QString savesMsgLabel;
+  QStringList deleteFiles;
+
+  foreach (const QModelIndex &idx, selectedIndexes) {
+    QString name = idx.data().toString();
+    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
+
+    savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+
+    deleteFiles << save->saveFiles();
   }
 
-  QString fileName = selectedItem->data(Qt::UserRole).toString();
-
-  if (QMessageBox::question(this, tr("Confirm"), tr("Really delete \"%1\"?").arg(selectedItem->text()),
+  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
+                            .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    shellDelete(QStringList() << fileName);
+    shellDelete(deleteFiles, true); // recycle bin delete.
   }
 }
 
 
 void MainWindow::fixMods_clicked()
 {
-  QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
-  if (selectedItem == NULL) {
+  QListWidgetItem *selectedItem = ui->savegameList->currentItem();
+
+  if (selectedItem == NULL)
     return;
-  }
 
   // if required, parse the save game
   if (selectedItem->data(Qt::UserRole).isNull()) {
@@ -3993,16 +4048,19 @@ void MainWindow::fixMods_clicked()
 
 void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
-  QListWidgetItem *selectedItem = ui->savegameList->itemAt(pos);
-  if (selectedItem == NULL) {
-    return;
-  }
+  QItemSelectionModel *selection = ui->savegameList->selectionModel();
 
-  m_SelectedSaveGame = ui->savegameList->row(selectedItem);
+  if (!selection->hasSelection())
+    return;
 
   QMenu menu;
-  menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
-  menu.addAction(tr("Delete"), this, SLOT(deleteSavegame_clicked()));
+
+  if (!(selection->selectedIndexes().count() > 1))
+    menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
+
+  QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
+
+  menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
   menu.exec(ui->savegameList->mapToGlobal(pos));
 }
@@ -4190,10 +4248,13 @@ void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QStrin
 
 void MainWindow::installTranslator(const QString &name)
 {
+/*  if (m_CurrentLanguage == "en_US") {
+    return;
+  }*/
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage != "en-US") {
+    if (m_CurrentLanguage != "en_US") {
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
@@ -4211,26 +4272,19 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   m_CurrentLanguage = newLanguage;
 
-  if (newLanguage != "en_US") {
-    installTranslator("qt");
-    installTranslator(ToQString(AppConfig::translationPrefix()));
-    foreach(IPlugin *plugin, m_Settings.plugins()) {
-      QObject *pluginObj = dynamic_cast<QObject*>(plugin);
-      if (pluginObj != NULL) {
-        QVariant fileNameVariant = pluginObj->property("filename");
-        if (fileNameVariant.isValid()) {
-          QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
-          installTranslator(fileName);
-        }
-      }
-    }
-  }
+  installTranslator("qt");
+  installTranslator(ToQString(AppConfig::translationPrefix()));
   ui->retranslateUi(this);
+  qDebug("loaded language %s", qPrintable(newLanguage));
+
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
-//  ui->toolBar->addWidget(createHelpWidget(ui->toolBar));
+
+  createHelpWidget();
 
   updateDownloadListDelegate();
   updateProblemsButton();
+
+  ui->listOptionsBtn->setMenu(modListContextMenu());
 }
 
 
@@ -5109,6 +5163,9 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_groupCombo_currentIndexChanged(int index)
 {
+  if (m_ModListSortProxy == NULL) {
+    return;
+  }
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
     case 1: {
@@ -5321,16 +5378,46 @@ void MainWindow::on_bossButton_clicked()
 
     m_PluginList.clearAdditionalInformation();
 
+    DWORD retLen;
+    JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+    bool isJobHandle = true;
+
     if (loot != INVALID_HANDLE_VALUE) {
-      while (::WaitForSingleObject(loot, 100) == WAIT_TIMEOUT) {
+      DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
+      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
+        if (isJobHandle) {
+          if (::QueryInformationJobObject(loot, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+            if (info.NumberOfProcessIdsInList == 0) {
+              qDebug("no more processes in job");
+              break;
+            }
+          } else {
+            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+            // the right to break out.
+            if (::GetLastError() != ERROR_MORE_DATA) {
+              isJobHandle = false;
+            }
+          }
+        }
+
+        if (dialog.wasCanceled()) {
+          if (isJobHandle) {
+            ::TerminateJobObject(loot, 1);
+          } else {
+            ::TerminateProcess(loot, 1);
+          }
+        }
+
         // keep processing events so the app doesn't appear dead
         QCoreApplication::processEvents();
-        if (dialog.wasCanceled()) {
-          ::TerminateProcess(loot, 1);
-        }
         std::string lootOut = readFromPipe(stdOutRead);
         processLOOTOut(lootOut, reportURL, errorMessages, dialog);
+
+        res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
       }
+
       std::string remainder = readFromPipe(stdOutRead).c_str();
       if (remainder.length() > 0) {
         processLOOTOut(remainder, reportURL, errorMessages, dialog);
@@ -5343,6 +5430,8 @@ void MainWindow::on_bossButton_clicked()
       } else {
         success = true;
       }
+    } else {
+      reportError(tr("failed to start loot"));
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to run loot: %1").arg(e.what()));
