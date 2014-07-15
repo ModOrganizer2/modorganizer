@@ -259,9 +259,9 @@ CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../bsatk/release
   LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
-  QMAKE_CXXFLAGS += /Zi /GL
+  QMAKE_CXXFLAGS += /Zi# /GL
 #  QMAKE_CXXFLAGS -= -O2
-  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
+  QMAKE_LFLAGS += /DEBUG# /LTCG /OPT:REF /OPT:ICF
   PRE_TARGETDEPS += $$OUT_PWD/../shared/release/mo_shared.lib \
     $$OUT_PWD/../bsatk/release/bsatk.lib
 }
@@ -283,7 +283,8 @@ TRANSLATIONS = organizer_de.ts \
                organizer_zh_CN.ts \
                organizer_cs.ts \
                organizer_tr.ts \
-               organizer_en.ts \
+               organizer_en_US.ts \
+               organizer_ko.ts \
                organizer_ru.ts
 
 #!isEmpty(TRANSLATIONS) {
