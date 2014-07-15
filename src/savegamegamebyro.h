@@ -62,11 +62,6 @@ public:
   ~SaveGameGamebryo();
 
   /**
-   * @return a list of additional files that belong to this savegame
-   */
-  virtual QStringList attachedFiles() const;
-
-  /**
    * @brief read out information from a savegame
    *
    * @param fileName absolute path of the save game file

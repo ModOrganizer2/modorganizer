@@ -67,7 +67,6 @@ private:
   void refreshGlobalSaves();
   void refreshLocalSaves();
   bool testOverwrite(OverwriteMode &overwriteMode, const QString &destinationFile);
-  QStringList getFilesToProcess(const SaveGame *save);
 
 private:
 

@@ -3932,26 +3932,39 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
 void MainWindow::deleteSavegame_clicked()
 {
-  QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
-  if (selectedItem == NULL) {
-    return;
+  QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
+
+  QString savesMsgLabel;
+  QRegExp saveSuffix(".ess$");
+  QStringList deleteFiles;
+
+  foreach (const QModelIndex &idx, selectedIndexes) {
+    QString name = idx.data().toString();
+    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
+
+    savesMsgLabel += "<li>" + name.replace(saveSuffix, "") + "</li>";
+
+    deleteFiles << save->saveFiles();
   }
 
-  QString fileName = selectedItem->data(Qt::UserRole).toString();
+  bool multipleRows = (selectedIndexes.count() > 1);
 
-  if (QMessageBox::question(this, tr("Confirm"), tr("Really delete \"%1\"?").arg(selectedItem->text()),
+  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %1save%2?<br><ul>%3</ul><br>Removed saves will be sent to the Recycle Bin.")
+                            .arg((multipleRows) ? QString::number(selectedIndexes.count()) + " " : "")
+                            .arg((multipleRows) ? "s" : "")
+                            .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    shellDelete(QStringList() << fileName);
+    shellDelete(deleteFiles, true); // recycle bin delete.
   }
 }
 
 
 void MainWindow::fixMods_clicked()
 {
-  QListWidgetItem *selectedItem = ui->savegameList->item(m_SelectedSaveGame);
-  if (selectedItem == NULL) {
+  QListWidgetItem *selectedItem = ui->savegameList->currentItem();
+
+  if (selectedItem == NULL)
     return;
-  }
 
   // if required, parse the save game
   if (selectedItem->data(Qt::UserRole).isNull()) {
@@ -4042,16 +4055,21 @@ void MainWindow::fixMods_clicked()
 
 void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
-  QListWidgetItem *selectedItem = ui->savegameList->itemAt(pos);
-  if (selectedItem == NULL) {
-    return;
-  }
+  QItemSelectionModel *selection = ui->savegameList->selectionModel();
 
-  m_SelectedSaveGame = ui->savegameList->row(selectedItem);
+  if (!selection->hasSelection())
+    return;
+
+  bool multipleSelected = (selection->selectedIndexes().count() > 1);
 
   QMenu menu;
-  menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
-  menu.addAction(tr("Delete"), this, SLOT(deleteSavegame_clicked()));
+
+  if (!multipleSelected)
+    menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
+
+  QString deleteMenuLabel = tr("Delete save%1").arg((multipleSelected) ? "s" : "");
+
+  menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
   menu.exec(ui->savegameList->mapToGlobal(pos));
 }

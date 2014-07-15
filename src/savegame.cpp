@@ -65,6 +65,24 @@ SaveGame::~SaveGame()
 {
 }
 
+QStringList SaveGame::attachedFiles() const
+{
+  QStringList result;
+  QString seFileFile = fileName().mid(0).replace(".ess", ".skse");
+  QFileInfo seFile(seFileFile);
+  if (seFile.exists()) {
+    result.append(seFile.absoluteFilePath());
+  }
+  return result;
+}
+
+QStringList SaveGame::saveFiles() const
+{
+  QStringList result = attachedFiles();
+  result.append(fileName());
+  return result;
+}
+
 
 void SaveGame::setCreationTime(const QString &fileName)
 {
