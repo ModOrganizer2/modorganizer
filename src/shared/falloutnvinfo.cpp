@@ -127,12 +127,15 @@ std::vector<std::wstring> FalloutNVInfo::getDLCPlugins()
       ;
 }
 
+std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions()
+{
+  return std::vector<std::wstring>();
+}
 
 std::vector<std::wstring> FalloutNVInfo::getIniFileNames()
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
 }
-
 
 std::wstring FalloutNVInfo::getSaveGameExtension()
 {

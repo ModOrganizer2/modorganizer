@@ -61,6 +61,7 @@ public:
 
   virtual std::vector<std::wstring> getVanillaBSAs();
   virtual std::vector<std::wstring> getDLCPlugins();
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();

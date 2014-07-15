@@ -122,6 +122,11 @@ std::vector<std::wstring> Fallout3Info::getDLCPlugins()
       ;
 }
 
+std::vector<std::wstring> Fallout3Info::getSavegameAttachmentExtensions()
+{
+  return std::vector<std::wstring>();
+}
+
 std::vector<std::wstring> Fallout3Info::getIniFileNames()
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");

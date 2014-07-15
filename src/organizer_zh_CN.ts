@@ -1404,7 +1404,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="495"/>
         <location filename="mainwindow.ui" line="876"/>
-        <location filename="mainwindow.ui" line="1214"/>
+        <location filename="mainwindow.ui" line="1220"/>
         <source>Namefilter</source>
         <translation>名称过滤器</translation>
     </message>
@@ -1531,8 +1531,8 @@ BSAs checked here are loaded in such a way that your installation order is obeye
     </message>
     <message>
         <location filename="mainwindow.ui" line="1016"/>
-        <location filename="mainwindow.cpp" line="3754"/>
-        <location filename="mainwindow.cpp" line="4619"/>
+        <location filename="mainwindow.cpp" line="3800"/>
+        <location filename="mainwindow.cpp" line="4672"/>
         <source>Refresh</source>
         <translation>刷新</translation>
     </message>
@@ -1580,12 +1580,12 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:9pt;&quot;&gt;如果您在右键菜单中点击“修复 Mod”，那么 MO 便会尝试激活所有 Mod 和 esp 来修复那些缺失的 esp，它并不会禁用任何东西！&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1109"/>
+        <location filename="mainwindow.ui" line="1115"/>
         <source>Downloads</source>
         <translation>下载</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1141"/>
+        <location filename="mainwindow.ui" line="1147"/>
         <source>This is a list of mods you downloaded from Nexus. Double click one to install it.</source>
         <translation>这是从Nexus已下载的模组的列表，双击进行安装。</translation>
     </message>
@@ -1636,145 +1636,145 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1194"/>
+        <location filename="mainwindow.ui" line="1200"/>
         <source>Show Hidden</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1256"/>
+        <location filename="mainwindow.ui" line="1262"/>
         <source>Tool Bar</source>
         <translation>工具栏</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1298"/>
+        <location filename="mainwindow.ui" line="1304"/>
         <source>Install Mod</source>
         <translation>安装模组</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1301"/>
+        <location filename="mainwindow.ui" line="1307"/>
         <source>Install &amp;Mod</source>
         <translation type="unfinished">安装 &amp;Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1304"/>
+        <location filename="mainwindow.ui" line="1310"/>
         <source>Install a new mod from an archive</source>
         <translation>通过压缩包来安装一个新 Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1307"/>
+        <location filename="mainwindow.ui" line="1313"/>
         <source>Ctrl+M</source>
         <translation>Ctrl+M</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1316"/>
+        <location filename="mainwindow.ui" line="1322"/>
         <source>Profiles</source>
         <translation>配置文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1319"/>
+        <location filename="mainwindow.ui" line="1325"/>
         <source>&amp;Profiles</source>
         <translation type="unfinished">&amp;配置文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1322"/>
+        <location filename="mainwindow.ui" line="1328"/>
         <source>Configure Profiles</source>
         <translation type="unfinished">设置配置文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1325"/>
+        <location filename="mainwindow.ui" line="1331"/>
         <source>Ctrl+P</source>
         <translation>Ctrl+P</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1334"/>
+        <location filename="mainwindow.ui" line="1340"/>
         <source>Executables</source>
         <translation>可执行程序</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1337"/>
+        <location filename="mainwindow.ui" line="1343"/>
         <source>&amp;Executables</source>
         <translation type="unfinished">&amp;可执行程序</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1340"/>
+        <location filename="mainwindow.ui" line="1346"/>
         <source>Configure the executables that can be started through Mod Organizer</source>
         <translation>配置可通过 MO 来启动的程序</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1343"/>
+        <location filename="mainwindow.ui" line="1349"/>
         <source>Ctrl+E</source>
         <translation>Ctrl+E</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1352"/>
         <location filename="mainwindow.ui" line="1358"/>
+        <location filename="mainwindow.ui" line="1364"/>
         <source>Tools</source>
         <translation>工具</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1355"/>
+        <location filename="mainwindow.ui" line="1361"/>
         <source>&amp;Tools</source>
         <translation type="unfinished">工具(&amp;T)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1361"/>
+        <location filename="mainwindow.ui" line="1367"/>
         <source>Ctrl+I</source>
         <translation>Ctrl+I</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1370"/>
+        <location filename="mainwindow.ui" line="1376"/>
         <source>Settings</source>
         <translation>设置</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1373"/>
+        <location filename="mainwindow.ui" line="1379"/>
         <source>&amp;Settings</source>
         <translation type="unfinished">&amp;设置</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1376"/>
+        <location filename="mainwindow.ui" line="1382"/>
         <source>Configure settings and workarounds</source>
         <translation type="unfinished">配置设定和解决方案</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1379"/>
+        <location filename="mainwindow.ui" line="1385"/>
         <source>Ctrl+S</source>
         <translation>Ctrl+S</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1388"/>
+        <location filename="mainwindow.ui" line="1394"/>
         <source>Nexus</source>
         <translation>Nexus</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1391"/>
+        <location filename="mainwindow.ui" line="1397"/>
         <source>Search nexus network for more mods</source>
         <translation>搜索nexus网以获取更多 Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1394"/>
+        <location filename="mainwindow.ui" line="1400"/>
         <source>Ctrl+N</source>
         <translation>Ctrl+N</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1406"/>
-        <location filename="mainwindow.cpp" line="4560"/>
+        <location filename="mainwindow.ui" line="1412"/>
+        <location filename="mainwindow.cpp" line="4613"/>
         <source>Update</source>
         <translation type="unfinished">更新</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1409"/>
+        <location filename="mainwindow.ui" line="1415"/>
         <source>Mod Organizer is up-to-date</source>
         <translation>Mod Organizer 现在是最新版本</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1421"/>
-        <location filename="mainwindow.cpp" line="561"/>
+        <location filename="mainwindow.ui" line="1427"/>
+        <location filename="mainwindow.cpp" line="565"/>
         <source>No Problems</source>
         <translation type="unfinished">没有问题</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1424"/>
+        <location filename="mainwindow.ui" line="1430"/>
         <source>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.
 
 !Work in progress!
@@ -1785,84 +1785,84 @@ Right now this has very limited functionality</source>
 当前此项所能提供的功能非常有限</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1436"/>
-        <location filename="mainwindow.ui" line="1439"/>
+        <location filename="mainwindow.ui" line="1442"/>
+        <location filename="mainwindow.ui" line="1445"/>
         <source>Help</source>
         <translation>帮助</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1442"/>
+        <location filename="mainwindow.ui" line="1448"/>
         <source>Ctrl+H</source>
         <translation>Ctrl+H</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1451"/>
+        <location filename="mainwindow.ui" line="1457"/>
         <source>Endorse MO</source>
         <translation>称赞 MO</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1454"/>
-        <location filename="mainwindow.cpp" line="4642"/>
+        <location filename="mainwindow.ui" line="1460"/>
+        <location filename="mainwindow.cpp" line="4695"/>
         <source>Endorse Mod Organizer</source>
         <translation>称赞 Mod Organizer</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1459"/>
+        <location filename="mainwindow.ui" line="1465"/>
         <source>Copy Log to Clipboard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1462"/>
+        <location filename="mainwindow.ui" line="1468"/>
         <source>Ctrl+C</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="244"/>
+        <location filename="mainwindow.cpp" line="247"/>
         <source>Toolbar</source>
         <translation>工具栏</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="245"/>
+        <location filename="mainwindow.cpp" line="248"/>
         <source>Desktop</source>
         <translation>桌面</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="246"/>
+        <location filename="mainwindow.cpp" line="249"/>
         <source>Start Menu</source>
         <translation>开始菜单</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="549"/>
+        <location filename="mainwindow.cpp" line="553"/>
         <source>Problems</source>
         <translation type="unfinished">问题</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="550"/>
+        <location filename="mainwindow.cpp" line="554"/>
         <source>There are potential problems with your setup</source>
         <translation>您的安装中存在潜在的问题</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="562"/>
+        <location filename="mainwindow.cpp" line="566"/>
         <source>Everything seems to be in order</source>
         <translation type="unfinished">一切井然有序</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="620"/>
+        <location filename="mainwindow.cpp" line="627"/>
         <source>Help on UI</source>
         <translation type="unfinished">界面帮助</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="624"/>
+        <location filename="mainwindow.cpp" line="631"/>
         <source>Documentation Wiki</source>
         <translation type="unfinished">说明文档 (维基)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="628"/>
+        <location filename="mainwindow.cpp" line="635"/>
         <source>Report Issue</source>
         <translation>报告问题</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="632"/>
+        <location filename="mainwindow.cpp" line="639"/>
         <source>Tutorials</source>
         <translation>教程</translation>
     </message>
@@ -1871,88 +1871,88 @@ Right now this has very limited functionality</source>
         <translation type="obsolete">无法保存档案顺序，您确定您有权限更改 &quot;%1&quot;？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="766"/>
+        <location filename="mainwindow.cpp" line="773"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished">无法保存加载顺序: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="778"/>
+        <location filename="mainwindow.cpp" line="785"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="779"/>
+        <location filename="mainwindow.cpp" line="786"/>
         <source>Please enter a name for the new profile</source>
         <translation>请为新配置文件输入一个名称</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="787"/>
+        <location filename="mainwindow.cpp" line="794"/>
         <source>failed to create profile: %1</source>
         <translation type="unfinished">无法创建配置文件: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="830"/>
+        <location filename="mainwindow.cpp" line="837"/>
         <source>Show tutorial?</source>
         <translation>显示教程？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="831"/>
+        <location filename="mainwindow.cpp" line="838"/>
         <source>You are starting Mod Organizer for the first time. Do you want to show a tutorial of its basic features? If you choose no you can always start the tutorial from the &quot;Help&quot;-menu.</source>
         <translation>你正在第一次使用 Mod Organizer。是否希望显示教程以了解它的基本特性？如果选择否你也可以从“帮助”菜单中开始教程。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="862"/>
+        <location filename="mainwindow.cpp" line="869"/>
         <source>Downloads in progress</source>
         <translation>正在下载</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="863"/>
+        <location filename="mainwindow.cpp" line="870"/>
         <source>There are still downloads in progress, do you really want to quit?</source>
         <translation>仍有正在进行中的下载，您确定要退出吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="917"/>
+        <location filename="mainwindow.cpp" line="924"/>
         <source>failed to read savegame: %1</source>
         <translation type="unfinished">无法读取存档: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1041"/>
+        <location filename="mainwindow.cpp" line="1048"/>
         <source>Plugin &quot;%1&quot; failed: %2</source>
         <translation type="unfinished">插件 &quot;%1&quot; 失败: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1043"/>
+        <location filename="mainwindow.cpp" line="1050"/>
         <source>Plugin &quot;%1&quot; failed</source>
         <translation type="unfinished">插件 &quot;%1&quot; 失败</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1212"/>
+        <location filename="mainwindow.cpp" line="1220"/>
         <source>failed to init plugin %1: %2</source>
         <translation type="unfinished">插件初始化失败 %1: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1250"/>
+        <location filename="mainwindow.cpp" line="1258"/>
         <source>Plugin error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1251"/>
+        <location filename="mainwindow.cpp" line="1259"/>
         <source>It appears the plugin &quot;%1&quot; failed to load last startup and caused MO to crash. Do you want to disable it?
 (Please note: If this is the first time you see this message for this plugin you may want to give it another try. The plugin may be able to recover from the problem)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1310"/>
+        <location filename="mainwindow.cpp" line="1318"/>
         <source>Failed to start &quot;%1&quot;</source>
         <translation type="unfinished">无法启动 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1312"/>
+        <location filename="mainwindow.cpp" line="1320"/>
         <source>Waiting</source>
         <translation type="unfinished">稍等</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1312"/>
+        <location filename="mainwindow.cpp" line="1320"/>
         <source>Please press OK once you&apos;re logged into steam.</source>
         <translation>当您登录 Steam 时请点击确定。</translation>
     </message>
@@ -1961,32 +1961,32 @@ Right now this has very limited functionality</source>
         <translation type="obsolete">&quot;%1&quot; 未找到</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1338"/>
+        <location filename="mainwindow.cpp" line="1346"/>
         <source>Start Steam?</source>
         <translation>启动 Steam？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1339"/>
+        <location filename="mainwindow.cpp" line="1347"/>
         <source>Steam is required to be running already to correctly start the game. Should MO try to start steam now?</source>
         <translation>想要正确地启动游戏，Steam 必须处于运行状态。需要MO尝试启动 Steam 吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1525"/>
+        <location filename="mainwindow.cpp" line="1557"/>
         <source>Also in: &lt;br&gt;</source>
         <translation type="unfinished">也在: &lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1536"/>
+        <location filename="mainwindow.cpp" line="1568"/>
         <source>No conflict</source>
         <translation>没有冲突</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1705"/>
+        <location filename="mainwindow.cpp" line="1737"/>
         <source>&lt;Edit...&gt;</source>
         <translation type="unfinished">&lt;编辑...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1971"/>
+        <location filename="mainwindow.cpp" line="2003"/>
         <source>This bsa is enabled in the ini file so it may be required!</source>
         <translation>该 BSA 已在 ini 文件中启用，因此它可能是必需的。</translation>
     </message>
@@ -1995,222 +1995,229 @@ Right now this has very limited functionality</source>
         <translation type="obsolete">此档案还是会被加载，因为存在同名插件。不过它所包含的的文件不会遵循安装顺序！</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2033"/>
+        <location filename="mainwindow.cpp" line="2065"/>
         <source>Activating Network Proxy</source>
         <translation>激活网络代理</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2274"/>
-        <location filename="mainwindow.cpp" line="4263"/>
+        <location filename="mainwindow.cpp" line="2305"/>
+        <location filename="mainwindow.cpp" line="4316"/>
         <source>Installation successful</source>
         <translation>安装成功</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2285"/>
-        <location filename="mainwindow.cpp" line="4275"/>
+        <location filename="mainwindow.cpp" line="2316"/>
+        <location filename="mainwindow.cpp" line="4328"/>
         <source>Configure Mod</source>
         <translation>配置 Mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2286"/>
-        <location filename="mainwindow.cpp" line="4276"/>
+        <location filename="mainwindow.cpp" line="2317"/>
+        <location filename="mainwindow.cpp" line="4329"/>
         <source>This mod contains ini tweaks. Do you want to configure them now?</source>
         <translation>此 Mod 中包含 ini 设定文件，您想现在就对它们进行配置吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2293"/>
-        <location filename="mainwindow.cpp" line="4283"/>
+        <location filename="mainwindow.cpp" line="2324"/>
+        <location filename="mainwindow.cpp" line="4336"/>
         <source>mod &quot;%1&quot; not found</source>
         <translation type="unfinished">Mod &quot;%1&quot; 未找到</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2296"/>
-        <location filename="mainwindow.cpp" line="4289"/>
+        <location filename="mainwindow.cpp" line="2327"/>
+        <location filename="mainwindow.cpp" line="4342"/>
         <source>Installation cancelled</source>
         <translation>安装已取消</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2296"/>
-        <location filename="mainwindow.cpp" line="4289"/>
+        <location filename="mainwindow.cpp" line="2327"/>
+        <location filename="mainwindow.cpp" line="4342"/>
         <source>The mod was not installed completely.</source>
         <translation>该模组没有完全安装。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2201"/>
+        <location filename="mainwindow.cpp" line="2232"/>
         <source>Some plugins could not be loaded</source>
         <translation>一些插件无法载入</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2204"/>
+        <location filename="mainwindow.cpp" line="2235"/>
         <source>Too many esps and esms enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2207"/>
-        <location filename="mainwindow.cpp" line="2228"/>
+        <location filename="mainwindow.cpp" line="2238"/>
+        <location filename="mainwindow.cpp" line="2259"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2216"/>
+        <location filename="mainwindow.cpp" line="2247"/>
         <source>The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2224"/>
+        <location filename="mainwindow.cpp" line="2255"/>
         <source>The game doesn&apos;t allow more than 255 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or merge some plugins into one. You can find a guide here: &lt;a href=&quot;http://wiki.step-project.com/Guide:Merging_Plugins&quot;&gt;http://wiki.step-project.com/Guide:Merging_Plugins&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2250"/>
+        <location filename="mainwindow.cpp" line="2281"/>
         <source>Choose Mod</source>
         <translation>选择模组</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2251"/>
+        <location filename="mainwindow.cpp" line="2282"/>
         <source>Mod Archive</source>
         <translation type="unfinished">Mod 压缩包</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2505"/>
+        <location filename="mainwindow.cpp" line="2536"/>
         <source>Start Tutorial?</source>
         <translation>开始教程？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2506"/>
+        <location filename="mainwindow.cpp" line="2537"/>
         <source>You&apos;re about to start a tutorial. For technical reasons it&apos;s not possible to end the tutorial early. Continue?</source>
         <translation>即将开始帮助教程。因为技术原因可能无法随时中断。是否继续？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2650"/>
-        <location filename="mainwindow.cpp" line="4184"/>
+        <location filename="mainwindow.cpp" line="2681"/>
+        <location filename="mainwindow.cpp" line="4241"/>
         <source>Download started</source>
         <translation>开始下载</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2711"/>
+        <location filename="mainwindow.cpp" line="2742"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished">无法更新 Mod 列表: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2742"/>
+        <location filename="mainwindow.cpp" line="2773"/>
         <source>failed to spawn notepad.exe: %1</source>
         <translation type="unfinished">无法生成 notepad.exe: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2779"/>
+        <location filename="mainwindow.cpp" line="2810"/>
         <source>failed to open %1</source>
         <translation type="unfinished">无法打开 %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2854"/>
+        <location filename="mainwindow.cpp" line="2885"/>
         <source>failed to change origin name: %1</source>
         <translation type="unfinished">无法更改原始文件名: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2933"/>
+        <location filename="mainwindow.cpp" line="2964"/>
         <source>&lt;Checked&gt;</source>
         <translation type="unfinished">&lt;已勾选&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2934"/>
+        <location filename="mainwindow.cpp" line="2965"/>
         <source>&lt;Unchecked&gt;</source>
         <translation type="unfinished">&lt;未勾选&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2935"/>
+        <location filename="mainwindow.cpp" line="2966"/>
         <source>&lt;Update&gt;</source>
         <translation type="unfinished">&lt;有更新&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2938"/>
+        <location filename="mainwindow.cpp" line="2969"/>
         <source>&lt;No category&gt;</source>
         <translation type="unfinished">&lt;无类别&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2939"/>
+        <location filename="mainwindow.cpp" line="2970"/>
         <source>&lt;Conflicted&gt;</source>
         <translation type="unfinished">&lt;有冲突&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2940"/>
+        <location filename="mainwindow.cpp" line="2971"/>
         <source>&lt;Not Endorsed&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2973"/>
+        <location filename="mainwindow.cpp" line="3004"/>
         <source>failed to rename mod: %1</source>
         <translation type="unfinished">无法重命名 Mod: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2986"/>
+        <location filename="mainwindow.cpp" line="3017"/>
         <source>Overwrite?</source>
         <translation>覆盖</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2987"/>
+        <location filename="mainwindow.cpp" line="3018"/>
         <source>This will replace the existing mod &quot;%1&quot;. Continue?</source>
         <translation type="unfinished">这将会覆盖已存在的mod &quot;%1&quot;。是否继续？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2990"/>
+        <location filename="mainwindow.cpp" line="3021"/>
         <source>failed to remove mod &quot;%1&quot;</source>
         <translation type="unfinished">无法移动 Mod: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2994"/>
-        <location filename="mainwindow.cpp" line="4461"/>
-        <location filename="mainwindow.cpp" line="4485"/>
+        <location filename="mainwindow.cpp" line="3025"/>
+        <location filename="mainwindow.cpp" line="4514"/>
+        <location filename="mainwindow.cpp" line="4538"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation>重命名 &quot;%1 &quot;为 &quot;%2&quot; 时出错</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3019"/>
+        <location filename="mainwindow.cpp" line="3050"/>
         <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
         <translation>多个esp已激活，请检查以确保不冲突。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3048"/>
-        <location filename="mainwindow.cpp" line="3667"/>
-        <location filename="mainwindow.cpp" line="3675"/>
-        <location filename="mainwindow.cpp" line="3895"/>
+        <location filename="mainwindow.cpp" line="3094"/>
+        <location filename="mainwindow.cpp" line="3713"/>
+        <location filename="mainwindow.cpp" line="3721"/>
+        <location filename="mainwindow.cpp" line="3948"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3049"/>
+        <location filename="mainwindow.cpp" line="3095"/>
         <source>Remove the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
         <translation type="unfinished">是否删除下列mod？&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3060"/>
+        <location filename="mainwindow.cpp" line="3106"/>
         <source>failed to remove mod: %1</source>
         <translation type="unfinished">无法移动 Mod: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3095"/>
-        <location filename="mainwindow.cpp" line="3098"/>
+        <location filename="mainwindow.cpp" line="3141"/>
+        <location filename="mainwindow.cpp" line="3144"/>
         <source>Failed</source>
         <translation type="unfinished">失败</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3095"/>
+        <location filename="mainwindow.cpp" line="3141"/>
         <source>Installation file no longer exists</source>
         <translation type="unfinished">安装文件不复存在</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3099"/>
+        <location filename="mainwindow.cpp" line="3145"/>
         <source>Mods installed with old versions of MO can&apos;t be reinstalled in this way.</source>
         <translation type="unfinished">旧版 MO 安装的 Mod 无法使用此方法重新安装。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3130"/>
-        <location filename="mainwindow.cpp" line="3157"/>
+        <location filename="mainwindow.cpp" line="3176"/>
+        <location filename="mainwindow.cpp" line="3203"/>
         <source>You need to be logged in with Nexus to endorse</source>
         <translation>你必须登录 Nexus 才能点“称赞”</translation>
     </message>
+    <message numerus="yes">
+        <location filename="mainwindow.cpp" line="3948"/>
+        <source>Are you sure you want to remove the following %n save(s)?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;&lt;br&gt;Removed saves will be sent to the Recycle Bin.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <location filename="mainwindow.cpp" line="4888"/>
+        <location filename="mainwindow.cpp" line="4941"/>
         <source>Extract BSA</source>
         <translation>解压 BSA</translation>
     </message>
@@ -2221,657 +2228,660 @@ Right now this has very limited functionality</source>
 (解压完成后，BSA 文件将会被删除。如果您不了解 BSA 的话，请选择“否”)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4845"/>
-        <location filename="mainwindow.cpp" line="4896"/>
+        <location filename="mainwindow.cpp" line="4898"/>
+        <location filename="mainwindow.cpp" line="4949"/>
         <source>failed to read %1: %2</source>
         <translation type="unfinished">无法读取 %1: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4907"/>
+        <location filename="mainwindow.cpp" line="4960"/>
         <source>This archive contains invalid hashes. Some files may be broken.</source>
         <translation type="unfinished">压缩包 Hash 值错误。部分文件可能已经损坏。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3303"/>
+        <location filename="mainwindow.cpp" line="3349"/>
         <source>Nexus ID for this Mod is unknown</source>
         <translation>此模组的Nexus ID未知</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="671"/>
+        <location filename="mainwindow.cpp" line="678"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="672"/>
+        <location filename="mainwindow.cpp" line="679"/>
         <source>About Qt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1086"/>
+        <location filename="mainwindow.cpp" line="1093"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1087"/>
+        <location filename="mainwindow.cpp" line="1094"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1128"/>
+        <location filename="mainwindow.cpp" line="1135"/>
         <source>Browse Mod Page</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1324"/>
+        <location filename="mainwindow.cpp" line="1332"/>
         <source>Executable &quot;%1&quot; not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1802"/>
+        <location filename="mainwindow.cpp" line="1834"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2148"/>
-        <location filename="mainwindow.cpp" line="2155"/>
+        <location filename="mainwindow.cpp" line="2179"/>
+        <location filename="mainwindow.cpp" line="2186"/>
         <source>Failed to write settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2149"/>
-        <location filename="mainwindow.cpp" line="2156"/>
+        <location filename="mainwindow.cpp" line="2180"/>
+        <location filename="mainwindow.cpp" line="2187"/>
         <source>An error occured trying to write back MO settings: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2152"/>
+        <location filename="mainwindow.cpp" line="2183"/>
         <source>File is write protected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2153"/>
+        <location filename="mainwindow.cpp" line="2184"/>
         <source>Invalid file format (probably a bug)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2154"/>
+        <location filename="mainwindow.cpp" line="2185"/>
         <source>Unknown error %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2884"/>
+        <location filename="mainwindow.cpp" line="2915"/>
         <source>failed to move &quot;%1&quot; from mod &quot;%2&quot; to &quot;%3&quot;: %4</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2936"/>
+        <location filename="mainwindow.cpp" line="2967"/>
         <source>&lt;Managed by MO&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2937"/>
+        <location filename="mainwindow.cpp" line="2968"/>
         <source>&lt;Managed outside MO&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3114"/>
+        <location filename="mainwindow.cpp" line="3160"/>
         <source>You need to be logged in with Nexus to resume a download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3342"/>
-        <location filename="mainwindow.cpp" line="3782"/>
+        <location filename="mainwindow.cpp" line="3388"/>
+        <location filename="mainwindow.cpp" line="3828"/>
         <source>Create Mod...</source>
         <translation>创建Mod...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3343"/>
+        <location filename="mainwindow.cpp" line="3389"/>
         <source>This will move all files from overwrite into a new, regular mod.
 Please enter a name:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3352"/>
+        <location filename="mainwindow.cpp" line="3398"/>
         <source>A mod with this name already exists</source>
         <translation>同名模组已存在。</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3593"/>
+        <location filename="mainwindow.cpp" line="3639"/>
         <source>Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3594"/>
+        <location filename="mainwindow.cpp" line="3640"/>
         <source>The versioning scheme decides which version is considered newer than another.
 This function will guess the versioning scheme under the assumption that the installed version is outdated.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3614"/>
-        <location filename="mainwindow.cpp" line="4531"/>
+        <location filename="mainwindow.cpp" line="3660"/>
+        <location filename="mainwindow.cpp" line="4584"/>
         <source>Sorry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3615"/>
+        <location filename="mainwindow.cpp" line="3661"/>
         <source>I don&apos;t know a versioning scheme where %1 is newer than %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3667"/>
+        <location filename="mainwindow.cpp" line="3713"/>
         <source>Really enable all visible mods?</source>
         <translation>确定要启用全部可见的模组吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3675"/>
+        <location filename="mainwindow.cpp" line="3721"/>
         <source>Really disable all visible mods?</source>
         <translation>确定要禁用全部可见的模组吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3683"/>
+        <location filename="mainwindow.cpp" line="3729"/>
         <source>Choose what to export</source>
         <translation>选择要导出的内容</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3685"/>
+        <location filename="mainwindow.cpp" line="3731"/>
         <source>Everything</source>
         <translation type="unfinished">全部</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3685"/>
+        <location filename="mainwindow.cpp" line="3731"/>
         <source>All installed mods are included in the list</source>
         <translation type="unfinished">所有包含在列表的已安装mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3686"/>
+        <location filename="mainwindow.cpp" line="3732"/>
         <source>Active Mods</source>
         <translation>激活模组</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3686"/>
+        <location filename="mainwindow.cpp" line="3732"/>
         <source>Only active (checked) mods from your current profile are included</source>
         <translation>仅包含当前配置文件中已激活（打勾）的mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3687"/>
+        <location filename="mainwindow.cpp" line="3733"/>
         <source>Visible</source>
         <translation type="unfinished">可见的</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3687"/>
+        <location filename="mainwindow.cpp" line="3733"/>
         <source>All mods visible in the mod list are included</source>
         <translation type="unfinished">包含列表中所有可见的mod</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3730"/>
+        <location filename="mainwindow.cpp" line="3776"/>
         <source>export failed: %1</source>
         <translation type="unfinished">导出失败: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3747"/>
+        <location filename="mainwindow.cpp" line="3793"/>
         <source>Install Mod...</source>
         <translation>安装模组...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3749"/>
+        <location filename="mainwindow.cpp" line="3795"/>
         <source>Enable all visible</source>
         <translation>启用所有可见项目</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3750"/>
+        <location filename="mainwindow.cpp" line="3796"/>
         <source>Disable all visible</source>
         <translation>禁用所有可见项目</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3752"/>
+        <location filename="mainwindow.cpp" line="3798"/>
         <source>Check all for update</source>
         <translation>检查所有更新</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3756"/>
+        <location filename="mainwindow.cpp" line="3802"/>
         <source>Export to csv...</source>
         <translation>导出为 CSV...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3775"/>
+        <location filename="mainwindow.cpp" line="3821"/>
         <source>All Mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3781"/>
+        <location filename="mainwindow.cpp" line="3827"/>
         <source>Sync to Mods...</source>
         <translation type="unfinished">同步到 Mod...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3785"/>
+        <location filename="mainwindow.cpp" line="3831"/>
         <source>Restore Backup</source>
         <translation>还原备份</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3786"/>
+        <location filename="mainwindow.cpp" line="3832"/>
         <source>Remove Backup...</source>
         <translation type="unfinished">还原备份...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3790"/>
+        <location filename="mainwindow.cpp" line="3836"/>
         <source>Add/Remove Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3795"/>
+        <location filename="mainwindow.cpp" line="3841"/>
         <source>Replace Categories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3800"/>
+        <location filename="mainwindow.cpp" line="3846"/>
         <source>Primary Category</source>
         <translation>主分类</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3807"/>
+        <location filename="mainwindow.cpp" line="3853"/>
         <source>Change versioning scheme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3811"/>
+        <location filename="mainwindow.cpp" line="3857"/>
         <source>Un-ignore update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3813"/>
+        <location filename="mainwindow.cpp" line="3859"/>
         <source>Ignore update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3818"/>
+        <location filename="mainwindow.cpp" line="3864"/>
         <source>Rename Mod...</source>
         <translation>重命名模组...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3819"/>
+        <location filename="mainwindow.cpp" line="3865"/>
         <source>Remove Mod...</source>
         <translation>移除模组...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3820"/>
+        <location filename="mainwindow.cpp" line="3866"/>
         <source>Reinstall Mod</source>
         <translation>重新安装模组</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3823"/>
+        <location filename="mainwindow.cpp" line="3869"/>
         <source>Un-Endorse</source>
         <translation>取消称赞</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3826"/>
-        <location filename="mainwindow.cpp" line="3830"/>
+        <location filename="mainwindow.cpp" line="3872"/>
+        <location filename="mainwindow.cpp" line="3876"/>
         <source>Endorse</source>
         <translation>称赞</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3827"/>
+        <location filename="mainwindow.cpp" line="3873"/>
         <source>Won&apos;t endorse</source>
         <translation>不想称赞</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3833"/>
+        <location filename="mainwindow.cpp" line="3879"/>
         <source>Endorsement state unknown</source>
         <translation>称赞状态不明</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3840"/>
+        <location filename="mainwindow.cpp" line="3886"/>
         <source>Ignore missing data</source>
         <translation>忽略丢失的数据</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3843"/>
+        <location filename="mainwindow.cpp" line="3889"/>
         <source>Visit on Nexus</source>
         <translation>在Nexus上浏览</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3844"/>
+        <location filename="mainwindow.cpp" line="3890"/>
         <source>Open in explorer</source>
         <translation>在资源管理器中打开</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3848"/>
+        <location filename="mainwindow.cpp" line="3894"/>
         <source>Information...</source>
         <translation type="unfinished">信息...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3855"/>
-        <location filename="mainwindow.cpp" line="5106"/>
+        <location filename="mainwindow.cpp" line="3901"/>
+        <location filename="mainwindow.cpp" line="5159"/>
         <source>Exception: </source>
         <translation type="unfinished">例外: </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3857"/>
-        <location filename="mainwindow.cpp" line="5108"/>
+        <location filename="mainwindow.cpp" line="3903"/>
+        <location filename="mainwindow.cpp" line="5161"/>
         <source>Unknown exception</source>
         <translation type="unfinished">未知的例外</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3876"/>
+        <location filename="mainwindow.cpp" line="3922"/>
         <source>&lt;All&gt;</source>
         <translation type="unfinished">&lt;全部&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3878"/>
+        <location filename="mainwindow.cpp" line="3924"/>
         <source>&lt;Multiple&gt;</source>
         <translation type="unfinished">XX</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3895"/>
-        <source>Really delete &quot;%1&quot;?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4006"/>
+        <location filename="mainwindow.cpp" line="4060"/>
         <source>Fix Mods...</source>
         <translation>修复模组...</translation>
     </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4007"/>
-        <source>Delete</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <location filename="mainwindow.cpp" line="4062"/>
+        <source>Delete %n save(s)</source>
+        <oldsource>Delete save(s)</oldsource>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4032"/>
-        <location filename="mainwindow.cpp" line="4065"/>
+        <location filename="mainwindow.cpp" line="4089"/>
+        <location filename="mainwindow.cpp" line="4122"/>
         <source>failed to remove %1</source>
         <translation type="unfinished">无法删除 %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4049"/>
-        <location filename="mainwindow.cpp" line="4081"/>
+        <location filename="mainwindow.cpp" line="4106"/>
+        <location filename="mainwindow.cpp" line="4138"/>
         <source>failed to create %1</source>
         <translation type="unfinished">无法创建 %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4105"/>
+        <location filename="mainwindow.cpp" line="4162"/>
         <source>Can&apos;t change download directory while downloads are in progress!</source>
         <translation>下载文件时不能修改下载目录！</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4187"/>
+        <location filename="mainwindow.cpp" line="4244"/>
         <source>Download failed</source>
         <translation>下载失败</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4338"/>
+        <location filename="mainwindow.cpp" line="4391"/>
         <source>failed to write to file %1</source>
         <translation type="unfinished">无法写入文件 %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4344"/>
+        <location filename="mainwindow.cpp" line="4397"/>
         <source>%1 written</source>
         <translation type="unfinished">已写入 %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4383"/>
+        <location filename="mainwindow.cpp" line="4436"/>
         <source>Select binary</source>
         <translation type="unfinished">选择可执行文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4383"/>
+        <location filename="mainwindow.cpp" line="4436"/>
         <source>Binary</source>
         <translation>程序</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4409"/>
+        <location filename="mainwindow.cpp" line="4462"/>
         <source>Enter Name</source>
         <translation>输入名称</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4410"/>
+        <location filename="mainwindow.cpp" line="4463"/>
         <source>Please enter a name for the executable</source>
         <translation>请为该可执行程序输入一个名称</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4421"/>
+        <location filename="mainwindow.cpp" line="4474"/>
         <source>Not an executable</source>
         <translation type="unfinished">不是可执行程序</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4421"/>
+        <location filename="mainwindow.cpp" line="4474"/>
         <source>This is not a recognized executable.</source>
         <translation type="unfinished">无法识别的可执行文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4446"/>
-        <location filename="mainwindow.cpp" line="4471"/>
+        <location filename="mainwindow.cpp" line="4499"/>
+        <location filename="mainwindow.cpp" line="4524"/>
         <source>Replace file?</source>
         <translation type="unfinished">替换文件？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4446"/>
+        <location filename="mainwindow.cpp" line="4499"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation>已存在同名文件，但该文件被隐藏了。确定要覆盖吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4449"/>
-        <location filename="mainwindow.cpp" line="4474"/>
+        <location filename="mainwindow.cpp" line="4502"/>
+        <location filename="mainwindow.cpp" line="4527"/>
         <source>File operation failed</source>
         <translation>文件操作错误</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4449"/>
-        <location filename="mainwindow.cpp" line="4474"/>
+        <location filename="mainwindow.cpp" line="4502"/>
+        <location filename="mainwindow.cpp" line="4527"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation>无法移除 &quot;%1&quot;。也许您需要足够的文件权限？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4471"/>
+        <location filename="mainwindow.cpp" line="4524"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation>已存在同名文件。确定要覆盖吗？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4504"/>
+        <location filename="mainwindow.cpp" line="4557"/>
         <source>file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4517"/>
+        <location filename="mainwindow.cpp" line="4570"/>
         <source>failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4531"/>
+        <location filename="mainwindow.cpp" line="4584"/>
         <source>Sorry, can&apos;t preview anything. This function currently does not support extracting from bsas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4562"/>
+        <location filename="mainwindow.cpp" line="4615"/>
         <source>Update available</source>
         <translation>更新可用</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4599"/>
+        <location filename="mainwindow.cpp" line="4652"/>
         <source>Open/Execute</source>
         <translation>打开/执行</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4600"/>
+        <location filename="mainwindow.cpp" line="4653"/>
         <source>Add as Executable</source>
         <translation>添加为可执行文件</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4604"/>
+        <location filename="mainwindow.cpp" line="4657"/>
         <source>Preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4610"/>
+        <location filename="mainwindow.cpp" line="4663"/>
         <source>Un-Hide</source>
         <translation>取消隐藏</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4612"/>
+        <location filename="mainwindow.cpp" line="4665"/>
         <source>Hide</source>
         <translation>隐藏</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4618"/>
+        <location filename="mainwindow.cpp" line="4671"/>
         <source>Write To File...</source>
         <translation type="unfinished">写入文件...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4643"/>
+        <location filename="mainwindow.cpp" line="4696"/>
         <source>Do you want to endorse Mod Organizer on %1 now?</source>
         <translation type="unfinished">是否现在就在 %1 点赞支持  Mod Organizer？</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4739"/>
+        <location filename="mainwindow.cpp" line="4792"/>
         <source>Thank you!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4739"/>
+        <location filename="mainwindow.cpp" line="4792"/>
         <source>Thank you for your endorsement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4774"/>
+        <location filename="mainwindow.cpp" line="4827"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished">发往 Nexus 的请求失败: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4781"/>
-        <location filename="mainwindow.cpp" line="4799"/>
+        <location filename="mainwindow.cpp" line="4834"/>
+        <location filename="mainwindow.cpp" line="4852"/>
         <source>login successful</source>
         <translation>登录成功</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4808"/>
+        <location filename="mainwindow.cpp" line="4861"/>
         <source>login failed: %1. Trying to download anyway</source>
         <translation type="unfinished">登录失败: %1，请尝试使用别的方法下载</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4814"/>
+        <location filename="mainwindow.cpp" line="4867"/>
         <source>login failed: %1</source>
         <translation>无法登录: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4824"/>
+        <location filename="mainwindow.cpp" line="4877"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished">登录失败: %1。您需要登录到N网才能更新 MO</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4857"/>
+        <location filename="mainwindow.cpp" line="4910"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4857"/>
+        <location filename="mainwindow.cpp" line="4910"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation type="unfinished">无法解压 %1 (错误代码 %2)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4952"/>
+        <location filename="mainwindow.cpp" line="5005"/>
         <source>Extract...</source>
         <translation>解压...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5014"/>
+        <location filename="mainwindow.cpp" line="5067"/>
         <source>Edit Categories...</source>
         <translation>编辑类别...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5015"/>
+        <location filename="mainwindow.cpp" line="5068"/>
         <source>Deselect filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5066"/>
+        <location filename="mainwindow.cpp" line="5119"/>
         <source>Remove</source>
         <translation>移除</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5077"/>
+        <location filename="mainwindow.cpp" line="5130"/>
         <source>Enable all</source>
         <translation>全部启用</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5078"/>
+        <location filename="mainwindow.cpp" line="5131"/>
         <source>Disable all</source>
         <translation>全部禁用</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5097"/>
+        <location filename="mainwindow.cpp" line="5150"/>
         <source>Unlock load order</source>
         <translation>解锁加载顺序</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5100"/>
+        <location filename="mainwindow.cpp" line="5153"/>
         <source>Lock load order</source>
         <translation>锁定加载顺序</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5229"/>
+        <location filename="mainwindow.cpp" line="5285"/>
         <source>depends on missing &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5249"/>
+        <location filename="mainwindow.cpp" line="5305"/>
         <source>No profile set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5297"/>
+        <location filename="mainwindow.cpp" line="5353"/>
         <source>LOOT working</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5343"/>
+        <location filename="mainwindow.cpp" line="5429"/>
         <source>loot failed. Exit code was: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5350"/>
+        <location filename="mainwindow.cpp" line="5435"/>
+        <source>failed to start loot</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="5438"/>
         <source>failed to run loot: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5353"/>
+        <location filename="mainwindow.cpp" line="5441"/>
         <source>Errors occured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5401"/>
+        <location filename="mainwindow.cpp" line="5489"/>
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5411"/>
+        <location filename="mainwindow.cpp" line="5499"/>
         <source>Choose backup to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5424"/>
+        <location filename="mainwindow.cpp" line="5512"/>
         <source>No Backups</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5424"/>
+        <location filename="mainwindow.cpp" line="5512"/>
         <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5445"/>
-        <location filename="mainwindow.cpp" line="5466"/>
+        <location filename="mainwindow.cpp" line="5533"/>
+        <location filename="mainwindow.cpp" line="5554"/>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5446"/>
-        <location filename="mainwindow.cpp" line="5467"/>
+        <location filename="mainwindow.cpp" line="5534"/>
+        <location filename="mainwindow.cpp" line="5555"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5457"/>
+        <location filename="mainwindow.cpp" line="5545"/>
         <source>Backup of modlist created</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2897,7 +2907,7 @@ This function will guess the versioning scheme under the assumption that the ins
 <context>
     <name>ModInfoBackup</name>
     <message>
-        <location filename="modinfo.cpp" line="898"/>
+        <location filename="modinfo.cpp" line="903"/>
         <source>This is the backup of a mod</source>
         <translation>这是模组的备份</translation>
     </message>
@@ -3211,227 +3221,227 @@ p, li { white-space: pre-wrap; }
         <translation>关闭</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="166"/>
+        <location filename="modinfodialog.cpp" line="169"/>
         <source>&amp;Delete</source>
         <translation>&amp;删除</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="167"/>
+        <location filename="modinfodialog.cpp" line="170"/>
         <source>&amp;Rename</source>
         <translation>&amp;重命名</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="168"/>
+        <location filename="modinfodialog.cpp" line="171"/>
         <source>&amp;Hide</source>
         <translation>&amp;隐藏</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="169"/>
+        <location filename="modinfodialog.cpp" line="172"/>
         <source>&amp;Unhide</source>
         <translation>&amp;取消隐藏</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="170"/>
+        <location filename="modinfodialog.cpp" line="173"/>
         <source>&amp;Open</source>
         <translation>&amp;打开</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="171"/>
+        <location filename="modinfodialog.cpp" line="174"/>
         <source>&amp;New Folder</source>
         <translation>&amp;新建文件夹</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="417"/>
-        <location filename="modinfodialog.cpp" line="432"/>
+        <location filename="modinfodialog.cpp" line="420"/>
+        <location filename="modinfodialog.cpp" line="435"/>
         <source>Save changes?</source>
         <translation>保存更改吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="417"/>
-        <location filename="modinfodialog.cpp" line="432"/>
+        <location filename="modinfodialog.cpp" line="420"/>
+        <location filename="modinfodialog.cpp" line="435"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished">将更改保存到“%1%”吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="622"/>
+        <location filename="modinfodialog.cpp" line="625"/>
         <source>File Exists</source>
         <translation>文件已存在</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="622"/>
+        <location filename="modinfodialog.cpp" line="625"/>
         <source>A file with that name exists, please enter a new one</source>
         <translation>文件名已存在，请输入其它名称</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="639"/>
+        <location filename="modinfodialog.cpp" line="642"/>
         <source>failed to move file</source>
         <translation>无法移动文件</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="664"/>
+        <location filename="modinfodialog.cpp" line="667"/>
         <source>failed to create directory &quot;optional&quot;</source>
         <translation>无法创建 &quot;optional&quot; 目录</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="702"/>
-        <location filename="modinfodialog.cpp" line="1207"/>
+        <location filename="modinfodialog.cpp" line="705"/>
+        <location filename="modinfodialog.cpp" line="1210"/>
         <source>Info requested, please wait</source>
         <translation>请求信息已发出，请稍后</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="756"/>
+        <location filename="modinfodialog.cpp" line="759"/>
         <source>Main</source>
         <translation>主要文件</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="757"/>
+        <location filename="modinfodialog.cpp" line="760"/>
         <source>Update</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="758"/>
+        <location filename="modinfodialog.cpp" line="761"/>
         <source>Optional</source>
         <translation>可选文件</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="759"/>
+        <location filename="modinfodialog.cpp" line="762"/>
         <source>Old</source>
         <translation>旧档</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="760"/>
+        <location filename="modinfodialog.cpp" line="763"/>
         <source>Misc</source>
         <translation>杂项</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="761"/>
+        <location filename="modinfodialog.cpp" line="764"/>
         <source>Unknown</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="772"/>
+        <location filename="modinfodialog.cpp" line="775"/>
         <source>Current Version: %1</source>
         <translation>当前版本: %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="776"/>
+        <location filename="modinfodialog.cpp" line="779"/>
         <source>No update available</source>
         <translation>没有可用的更新</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="817"/>
+        <location filename="modinfodialog.cpp" line="820"/>
         <source>(description incomplete, please visit nexus)</source>
         <translation>(描述信息不完整，请访问N网)</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="832"/>
+        <location filename="modinfodialog.cpp" line="835"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
         <translation>&lt;a href=&quot;%1&quot;&gt;访问N网&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="911"/>
+        <location filename="modinfodialog.cpp" line="914"/>
         <source>Failed to delete %1</source>
         <translation>无法删除 %1</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="922"/>
-        <location filename="modinfodialog.cpp" line="927"/>
+        <location filename="modinfodialog.cpp" line="925"/>
+        <location filename="modinfodialog.cpp" line="930"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="922"/>
+        <location filename="modinfodialog.cpp" line="925"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation>确定要删除 &quot;%1&quot; 吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="927"/>
+        <location filename="modinfodialog.cpp" line="930"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation>确定要删除所选的文件吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1001"/>
-        <location filename="modinfodialog.cpp" line="1007"/>
+        <location filename="modinfodialog.cpp" line="1004"/>
+        <location filename="modinfodialog.cpp" line="1010"/>
         <source>New Folder</source>
         <translation>新建文件夹</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1013"/>
+        <location filename="modinfodialog.cpp" line="1016"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation>无法创建 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1117"/>
-        <location filename="modinfodialog.cpp" line="1141"/>
+        <location filename="modinfodialog.cpp" line="1120"/>
+        <location filename="modinfodialog.cpp" line="1144"/>
         <source>Replace file?</source>
         <translation>替换文件？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1117"/>
+        <location filename="modinfodialog.cpp" line="1120"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation>已存在同名文件，但该文件被隐藏了。确定要覆盖吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1120"/>
-        <location filename="modinfodialog.cpp" line="1144"/>
+        <location filename="modinfodialog.cpp" line="1123"/>
+        <location filename="modinfodialog.cpp" line="1147"/>
         <source>File operation failed</source>
         <translation>文件操作错误</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1120"/>
-        <location filename="modinfodialog.cpp" line="1144"/>
+        <location filename="modinfodialog.cpp" line="1123"/>
+        <location filename="modinfodialog.cpp" line="1147"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation>无法移除 &quot;%1&quot;。也许您需要足够的文件权限？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1131"/>
-        <location filename="modinfodialog.cpp" line="1154"/>
+        <location filename="modinfodialog.cpp" line="1134"/>
+        <location filename="modinfodialog.cpp" line="1157"/>
         <source>failed to rename %1 to %2</source>
         <translation>无法重命名 %1 为 %2</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1141"/>
+        <location filename="modinfodialog.cpp" line="1144"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation>已存在同名文件。确定要覆盖吗？</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1187"/>
+        <location filename="modinfodialog.cpp" line="1190"/>
         <source>Un-Hide</source>
         <translation>取消隐藏</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1189"/>
+        <location filename="modinfodialog.cpp" line="1192"/>
         <source>Hide</source>
         <translation>隐藏</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1230"/>
+        <location filename="modinfodialog.cpp" line="1233"/>
         <source>Name</source>
         <translation>名称</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1230"/>
+        <location filename="modinfodialog.cpp" line="1233"/>
         <source>Please enter a name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1234"/>
         <location filename="modinfodialog.cpp" line="1237"/>
+        <location filename="modinfodialog.cpp" line="1240"/>
         <source>Error</source>
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1234"/>
+        <location filename="modinfodialog.cpp" line="1237"/>
         <source>Invalid name. Must be a valid file name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1237"/>
+        <location filename="modinfodialog.cpp" line="1240"/>
         <source>A tweak by that name exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1251"/>
+        <location filename="modinfodialog.cpp" line="1254"/>
         <source>Create Tweak</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3439,7 +3449,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoForeign</name>
     <message>
-        <location filename="modinfo.cpp" line="987"/>
+        <location filename="modinfo.cpp" line="992"/>
         <source>This pseudo mod represents content managed outside MO. It isn&apos;t modified by MO.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3447,7 +3457,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfo.cpp" line="943"/>
+        <location filename="modinfo.cpp" line="948"/>
         <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation type="unfinished">此虚拟安装包内包含来自虚拟 Data 树的文件，但文件发生了变化 (例: 被CK修改了)</translation>
     </message>
@@ -3459,18 +3469,18 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">无法写入 %1/meta.ini: %2</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="557"/>
-        <location filename="modinfo.cpp" line="560"/>
+        <location filename="modinfo.cpp" line="562"/>
+        <location filename="modinfo.cpp" line="565"/>
         <source>failed to write %1/meta.ini: error %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="811"/>
+        <location filename="modinfo.cpp" line="816"/>
         <source>%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory</source>
         <translation type="unfinished">%1 中未包含 esp 或 esm 和有效的目录 (textures, meshes, interface, ...)</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="815"/>
+        <location filename="modinfo.cpp" line="820"/>
         <source>Categories: &lt;br&gt;</source>
         <translation type="unfinished">种类: &lt;br&gt;</translation>
     </message>
@@ -3478,52 +3488,52 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModList</name>
     <message>
-        <location filename="modlist.cpp" line="109"/>
+        <location filename="modlist.cpp" line="110"/>
         <source>This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)</source>
         <translation>此项目内检测到了虚拟 Data 树的文件发生了变化 (例如: 被 CK 修改了)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="118"/>
+        <location filename="modlist.cpp" line="119"/>
         <source>Backup</source>
         <translation>备份</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="119"/>
+        <location filename="modlist.cpp" line="120"/>
         <source>No valid game data</source>
         <translation>无效游戏数据</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="120"/>
+        <location filename="modlist.cpp" line="121"/>
         <source>Not endorsed yet</source>
         <translation>尚未点赞支持</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="122"/>
+        <location filename="modlist.cpp" line="123"/>
         <source>Overwrites files</source>
         <translation type="unfinished">Overwrites文件</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="123"/>
+        <location filename="modlist.cpp" line="124"/>
         <source>Overwritten files</source>
         <translation type="unfinished">覆盖的 Mod</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="124"/>
+        <location filename="modlist.cpp" line="125"/>
         <source>Overwrites &amp; Overwritten</source>
         <translation>覆盖 &amp; 被覆盖</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="125"/>
+        <location filename="modlist.cpp" line="126"/>
         <source>Redundant</source>
         <translation type="unfinished">冗余</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="170"/>
+        <location filename="modlist.cpp" line="171"/>
         <source>Non-MO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="201"/>
+        <location filename="modlist.cpp" line="202"/>
         <source>invalid</source>
         <translation>无效</translation>
     </message>
@@ -3532,113 +3542,113 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">当前版本: %1，最新版本: %2</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="314"/>
+        <location filename="modlist.cpp" line="324"/>
         <source>installed version: &quot;%1&quot;, newest version: &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="316"/>
+        <location filename="modlist.cpp" line="326"/>
         <source>The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn (i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. Either way you may want to &quot;upgrade&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="324"/>
+        <location filename="modlist.cpp" line="334"/>
         <source>Categories: &lt;br&gt;</source>
         <translation>种类: &lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="353"/>
+        <location filename="modlist.cpp" line="363"/>
         <source>Invalid name</source>
         <translation>无效的名称</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="747"/>
+        <location filename="modlist.cpp" line="764"/>
         <source>drag&amp;drop failed: %1</source>
         <translation type="unfinished">拖拽失败: %1</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="810"/>
+        <location filename="modlist.cpp" line="827"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="810"/>
+        <location filename="modlist.cpp" line="827"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation>确定要移除 &quot;%1&quot; 吗？</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="865"/>
+        <location filename="modlist.cpp" line="882"/>
         <source>Flags</source>
         <translation type="unfinished">标志</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="866"/>
+        <location filename="modlist.cpp" line="883"/>
         <source>Mod Name</source>
         <translation>Mod 名称</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="867"/>
+        <location filename="modlist.cpp" line="884"/>
         <source>Version</source>
         <translation>版本</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="868"/>
+        <location filename="modlist.cpp" line="885"/>
         <source>Priority</source>
         <translation>优先级</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="869"/>
+        <location filename="modlist.cpp" line="886"/>
         <source>Category</source>
         <translation>分类</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="870"/>
+        <location filename="modlist.cpp" line="887"/>
         <source>Nexus ID</source>
         <translation>Nexus网 ID</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="871"/>
+        <location filename="modlist.cpp" line="888"/>
         <source>Installation</source>
         <translation type="unfinished">安装</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="872"/>
-        <location filename="modlist.cpp" line="888"/>
+        <location filename="modlist.cpp" line="889"/>
+        <location filename="modlist.cpp" line="905"/>
         <source>unknown</source>
         <translation>未知</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="880"/>
+        <location filename="modlist.cpp" line="897"/>
         <source>Name of your mods</source>
         <translation>你的mod名称</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="881"/>
+        <location filename="modlist.cpp" line="898"/>
         <source>Version of the mod (if available)</source>
         <translation>Mod 版本 (如果可用)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="882"/>
+        <location filename="modlist.cpp" line="899"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation>Mod 的安装优先级。越高就表示越“重要”，从而覆盖掉低优先级的 Mod 文件。</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="884"/>
+        <location filename="modlist.cpp" line="901"/>
         <source>Category of the mod.</source>
         <translation>mod的分类</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="885"/>
+        <location filename="modlist.cpp" line="902"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation>mod在 Nexus 网上的ID编号</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="886"/>
+        <location filename="modlist.cpp" line="903"/>
         <source>Emblemes to highlight things that might require attention.</source>
         <translation type="unfinished">需要注意被标记为高亮的</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="887"/>
+        <location filename="modlist.cpp" line="904"/>
         <source>Time this mod was installed</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3850,17 +3860,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="805"/>
+        <location filename="pluginlist.cpp" line="806"/>
         <source>&lt;b&gt;Origin&lt;/b&gt;: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="807"/>
+        <location filename="pluginlist.cpp" line="808"/>
         <source>Author</source>
         <translation type="unfinished">作者</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="810"/>
+        <location filename="pluginlist.cpp" line="811"/>
         <source>Description</source>
         <translation type="unfinished">描述</translation>
     </message>
@@ -3874,7 +3884,7 @@ p, li { white-space: pre-wrap; }
         <translation>您的一些插件名称无效！这些插件无法被游戏载入。请查看 mo_interface.log 来确认那些受影响的插件并重命名它们。</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="803"/>
+        <location filename="pluginlist.cpp" line="804"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation>这个插件不能被禁用 (由游戏执行)</translation>
     </message>
@@ -3883,17 +3893,17 @@ p, li { white-space: pre-wrap; }
         <translation type="obsolete">隶属于: %1</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="813"/>
+        <location filename="pluginlist.cpp" line="814"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="820"/>
+        <location filename="pluginlist.cpp" line="821"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="961"/>
+        <location filename="pluginlist.cpp" line="975"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished">恢复 %1 加载顺序失败</translation>
     </message>
@@ -4459,18 +4469,18 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="843"/>
+        <location filename="mainwindow.cpp" line="850"/>
         <source>Please use &quot;Help&quot; from the toolbar to get usage instructions to all elements</source>
         <translation>请使用工具栏上的“帮助”来获得所有元素的使用说明</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1612"/>
-        <location filename="mainwindow.cpp" line="4231"/>
+        <location filename="mainwindow.cpp" line="1644"/>
+        <location filename="mainwindow.cpp" line="4281"/>
         <source>&lt;Manage...&gt;</source>
         <translation>&lt;管理...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1630"/>
+        <location filename="mainwindow.cpp" line="1662"/>
         <source>failed to parse profile %1: %2</source>
         <translation>无法解析配置文件 %1: %2</translation>
     </message>
@@ -4515,14 +4525,14 @@ p, li { white-space: pre-wrap; }
         <translation>错误</translation>
     </message>
     <message>
-        <location filename="savegamegamebryo.cpp" line="139"/>
-        <location filename="savegamegamebryo.cpp" line="198"/>
-        <location filename="savegamegamebryo.cpp" line="240"/>
+        <location filename="savegamegamebryo.cpp" line="130"/>
+        <location filename="savegamegamebryo.cpp" line="189"/>
+        <location filename="savegamegamebryo.cpp" line="231"/>
         <source>wrong file format</source>
         <translation>错误的文件格式</translation>
     </message>
     <message>
-        <location filename="savegamegamebryo.cpp" line="326"/>
+        <location filename="savegamegamebryo.cpp" line="317"/>
         <source>failed to open %1</source>
         <translation>无法打开 %1</translation>
     </message>
@@ -4537,17 +4547,17 @@ p, li { white-space: pre-wrap; }
         <translation>代理DLL</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="127"/>
+        <location filename="spawn.cpp" line="133"/>
         <source>failed to spawn &quot;%1&quot;</source>
         <translation>无法生成 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="134"/>
+        <location filename="spawn.cpp" line="140"/>
         <source>Elevation required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="135"/>
+        <location filename="spawn.cpp" line="141"/>
         <source>This process requires elevation to run.
 This is a potential security risk so I highly advice you to investigate if
 &quot;%1&quot;
@@ -4557,22 +4567,22 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="150"/>
+        <location filename="spawn.cpp" line="156"/>
         <source>failed to spawn &quot;%1&quot;: %2</source>
         <translation>无法生成 &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="159"/>
+        <location filename="spawn.cpp" line="165"/>
         <source>&quot;%1&quot; doesn&apos;t exist</source>
         <translation>&quot;%1&quot; 不存在</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="166"/>
+        <location filename="spawn.cpp" line="172"/>
         <source>failed to inject dll into &quot;%1&quot;: %2</source>
         <translation>无法注入 dll 到 &quot;%1&quot;: %2</translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="174"/>
+        <location filename="spawn.cpp" line="190"/>
         <source>failed to run &quot;%1&quot;</source>
         <translation>无法运行 &quot;%1&quot;</translation>
     </message>
@@ -4802,12 +4812,12 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="681"/>
+        <location filename="settings.cpp" line="676"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="681"/>
+        <location filename="settings.cpp" line="676"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
         <translation>修改 Mod 目录将会影响您的配置！新目录中不存在 (或者名称不同) 的 Mod 将在所有配置中被禁止掉。此操作无法撤销，所以执行此操作前建议先备份下自己的配置。立即执行？</translation>
     </message>
@@ -5462,26 +5472,26 @@ On Windows XP:
         <translation type="unfinished">覆盖文件 &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="transfersavesdialog.cpp" line="164"/>
-        <location filename="transfersavesdialog.cpp" line="202"/>
-        <location filename="transfersavesdialog.cpp" line="237"/>
-        <location filename="transfersavesdialog.cpp" line="276"/>
+        <location filename="transfersavesdialog.cpp" line="157"/>
+        <location filename="transfersavesdialog.cpp" line="195"/>
+        <location filename="transfersavesdialog.cpp" line="230"/>
+        <location filename="transfersavesdialog.cpp" line="269"/>
         <source>Confirm</source>
         <translation>确认</translation>
     </message>
     <message>
-        <location filename="transfersavesdialog.cpp" line="165"/>
-        <location filename="transfersavesdialog.cpp" line="203"/>
+        <location filename="transfersavesdialog.cpp" line="158"/>
+        <location filename="transfersavesdialog.cpp" line="196"/>
         <source>Copy all save games of character &quot;%1&quot; to the profile?</source>
         <translation type="unfinished">是否复制角色 &quot;%1&quot; 的所有游戏存档到这个配置中？</translation>
     </message>
     <message>
-        <location filename="transfersavesdialog.cpp" line="238"/>
+        <location filename="transfersavesdialog.cpp" line="231"/>
         <source>Move all save games of character &quot;%1&quot; to the global location? Please be aware that this will mess up the running number of save games.</source>
         <translation type="unfinished">是否移动角色 &quot;%1&quot; 的所有游戏存档到全局路径？请注意这将使游戏存档的运行编号变得混乱。</translation>
     </message>
     <message>
-        <location filename="transfersavesdialog.cpp" line="277"/>
+        <location filename="transfersavesdialog.cpp" line="270"/>
         <source>Copy all save games of character &quot;%1&quot; to the global location? Please be aware that this will mess up the running number of save games.</source>
         <translation type="unfinished">是否拷贝角色 &quot;%1&quot; 的所有游戏存档到全局路径？请注意这将使游戏存档的运行编号变得混乱。</translation>
     </message>

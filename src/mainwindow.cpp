@@ -3232,7 +3232,6 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
   } else {
     modInfo->saveMeta();
-qDebug("%s - %d", qPrintable(modInfo->name()), modInfo->hasFlag(ModInfo::FLAG_FOREIGN));
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), this, SLOT(downloadRequestedNXM(QString)));
@@ -3935,23 +3934,18 @@ void MainWindow::deleteSavegame_clicked()
   QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
 
   QString savesMsgLabel;
-  QRegExp saveSuffix(".ess$");
   QStringList deleteFiles;
 
   foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
-    savesMsgLabel += "<li>" + name.replace(saveSuffix, "") + "</li>";
+    savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
 
     deleteFiles << save->saveFiles();
   }
 
-  bool multipleRows = (selectedIndexes.count() > 1);
-
-  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %1save%2?<br><ul>%3</ul><br>Removed saves will be sent to the Recycle Bin.")
-                            .arg((multipleRows) ? QString::number(selectedIndexes.count()) + " " : "")
-                            .arg((multipleRows) ? "s" : "")
+  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
                             .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
@@ -4060,14 +4054,12 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
   if (!selection->hasSelection())
     return;
 
-  bool multipleSelected = (selection->selectedIndexes().count() > 1);
-
   QMenu menu;
 
-  if (!multipleSelected)
+  if (!(selection->selectedIndexes().count() > 1))
     menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
 
-  QString deleteMenuLabel = tr("Delete save%1").arg((multipleSelected) ? "s" : "");
+  QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
 
   menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
@@ -4257,13 +4249,13 @@ void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QStrin
 
 void MainWindow::installTranslator(const QString &name)
 {
-  if (m_CurrentLanguage == "en_US") {
+/*  if (m_CurrentLanguage == "en_US") {
     return;
-  }
+  }*/
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage != "en-US") {
+    if (m_CurrentLanguage != "en_US") {
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
