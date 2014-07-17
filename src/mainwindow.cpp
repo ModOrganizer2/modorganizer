@@ -3174,14 +3174,20 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
     QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
-    if (dialog == NULL) {
-      dialog = new OverwriteInfoDialog(modInfo, this);
-      dialog->setObjectName("__overwriteDialog");
+    try {
+      if (dialog == NULL) {
+        dialog = new OverwriteInfoDialog(modInfo, this);
+        dialog->setObjectName("__overwriteDialog");
+      } else {
+        qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
+      }
+      dialog->show();
+      dialog->raise();
+      dialog->activateWindow();
+      connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
+    } catch (const std::exception &e) {
+      reportError(tr("Failed to display overwrite dialog: %1").arg(e.what()));
     }
-    dialog->show();
-    dialog->raise();
-    dialog->activateWindow();
-    connect(dialog, SIGNAL(finished(int)), this, SLOT(overwriteClosed(int)));
   } else {
     modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_DirectoryStructure, modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);

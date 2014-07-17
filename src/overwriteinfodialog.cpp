@@ -72,19 +72,17 @@ private:
 
 OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(NULL),
-    m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL),
-    m_ModInfo(modInfo)
+    m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL)
 {
   ui->setupUi(this);
 
   this->setWindowModality(Qt::NonModal);
 
-  QString path = modInfo->absolutePath();
   m_FileSystemModel = new MyFileSystemModel(this);
   m_FileSystemModel->setReadOnly(false);
-  m_FileSystemModel->setRootPath(path);
+  setModInfo(modInfo);
   ui->filesView->setModel(m_FileSystemModel);
-  ui->filesView->setRootIndex(m_FileSystemModel->index(path));
+  ui->filesView->setRootIndex(m_FileSystemModel->index(modInfo->absolutePath()));
   ui->filesView->setColumnWidth(0, 250);
 
   m_DeleteAction = new QAction(tr("&Delete"), ui->filesView);
@@ -100,6 +98,16 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
 OverwriteInfoDialog::~OverwriteInfoDialog()
 {
   delete ui;
+}
+
+void OverwriteInfoDialog::setModInfo(ModInfo::Ptr modInfo)
+{
+  m_ModInfo = modInfo;
+  if (QDir(modInfo->absolutePath()).exists()) {
+    m_FileSystemModel->setRootPath(modInfo->absolutePath());
+  } else {
+    throw MyException(tr("%1 not found").arg(modInfo->absolutePath()));
+  }
 }
 
 bool OverwriteInfoDialog::recursiveDelete(const QModelIndex &index)

@@ -101,11 +101,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
   } else {
     initFiletree(modInfo);
-    initINITweaks();
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
   }
   refreshLists();
+  initINITweaks();
 
   ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
   ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);

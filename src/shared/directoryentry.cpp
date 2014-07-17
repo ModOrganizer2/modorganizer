@@ -499,7 +499,7 @@ static bool SupportOptimizedFind()
                      ::VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL),
                      VER_MINORVERSION, VER_GREATER_EQUAL);
 
-  bool res = ::VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, mask);
+  bool res = ::VerifyVersionInfo(&versionInfo, VER_MAJORVERSION | VER_MINORVERSION, mask) == TRUE;
   return res;
 }
 
