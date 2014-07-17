@@ -39,6 +39,8 @@ public:
 
   ModInfo::Ptr modInfo() const { return m_ModInfo; }
 
+  void setModInfo(ModInfo::Ptr modInfo);
+
 private:
 
   void openFile(const QModelIndex &index);
