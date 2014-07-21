@@ -232,7 +232,7 @@ void ModInfo::updateIndices()
   QRegExp backupRegEx(".*backup[0-9]*$");
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
-    QString modName = s_Collection[i]->name();
+    QString modName = s_Collection[i]->internalName();
     int modID = s_Collection[i]->getNexusID();
     s_ModsByName[modName] = i;
     s_ModsByModID[modID].push_back(i);
@@ -804,6 +804,28 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 }
 
 
+std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
+{
+  std::vector<EContent> result;
+  QDir dir(absolutePath());
+  if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+    result.push_back(CONTENT_PLUGIN);
+  }
+  QString sePluginPath = ToQString(GameInfo::instance().getSEName()) + "/plugins";
+  if (dir.exists("textures"))   result.push_back(CONTENT_TEXTURE);
+  if (dir.exists("meshes"))     result.push_back(CONTENT_MESH);
+  if (dir.exists("interface")
+      || dir.exists("menus"))   result.push_back(CONTENT_INTERFACE);
+  if (dir.exists("music"))      result.push_back(CONTENT_MUSIC);
+  if (dir.exists("sound"))      result.push_back(CONTENT_SOUND);
+  if (dir.exists("scripts"))    result.push_back(CONTENT_SCRIPT);
+  if (dir.exists(sePluginPath)) result.push_back(CONTENT_SKSE);
+  if (dir.exists("strings"))    result.push_back(CONTENT_STRING);
+  if (dir.exists("SkyProc Patchers"))  result.push_back(CONTENT_SKYPROC);
+  return result;
+}
+
+
 int ModInfoRegular::getHighlight() const
 {
   return isValid() ? HIGHLIGHT_NONE: HIGHLIGHT_INVALID;
@@ -958,6 +980,8 @@ QStringList ModInfoOverwrite::archives() const
   }
   return result;
 }
+
+const char ModInfoForeign::INT_IDENTIFIER[] = "__int__foreign";
 
 QString ModInfoForeign::name() const
 {

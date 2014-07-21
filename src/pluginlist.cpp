@@ -844,9 +844,6 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       if (!bossInfoIter->second.m_Messages.isEmpty()) {
         result.append(QIcon(":/MO/gui/information"));
       }
-      /*if (bossInfoIter->second.m_LOOTUnrecognized) {
-        result.append(QIcon(":/MO/gui/help"));
-      }*/
     }
     if (m_ESPs[index].m_HasIni) {
       result.append(QIcon(":/MO/gui/attachment"));

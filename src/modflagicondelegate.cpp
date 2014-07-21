@@ -68,3 +68,20 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
   }
 }
 
+
+QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
+{
+  int count = getNumIcons(modelIndex);
+  unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
+  QSize result;
+  if (index < ModInfo::getNumMods()) {
+    result = QSize(count * 40, 20);
+  } else {
+    result = QSize(1, 20);
+  }
+  if (option.rect.width() > 0) {
+    result.setWidth(std::min(option.rect.width(), result.width()));
+  }
+  return result;
+}
+
