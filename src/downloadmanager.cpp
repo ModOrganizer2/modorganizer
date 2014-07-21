@@ -831,7 +831,7 @@ bool DownloadManager::isInfoIncomplete(int index) const
     // other repositories currently don't support re-querying info anyway
     return false;
   }
-  return (info->m_FileInfo->fileID == 0) || (info->m_FileInfo->modID == 0) || !info->m_FileInfo->version.isValid();
+  return (info->m_FileInfo->fileID == 0) || (info->m_FileInfo->modID == 0);
 }
 
 
@@ -1181,7 +1181,6 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
 
   QVariantMap result = resultData.toMap();
   info->name = result["name"].toString();
-  qDebug("file info received for %s", qPrintable(info->name));
   info->version.parse(result["version"].toString());
   if (!info->version.isValid()) {
     info->version = info->newestVersion;

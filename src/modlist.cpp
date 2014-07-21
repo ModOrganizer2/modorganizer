@@ -51,14 +51,22 @@ ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent), m_Profile(NULL), m_Modified(false),
     m_FontMetrics(QFont()), m_DropOnItems(false)
 {
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(QIcon(":/MO/gui/content/plugin"), ":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
+  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(QIcon(":/MO/gui/content/interface"), ":/MO/gui/content/interface", tr("Interface"));
+  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(QIcon(":/MO/gui/content/mesh"), ":/MO/gui/content/mesh", tr("Meshes"));
+  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(QIcon(":/MO/gui/content/music"), ":/MO/gui/content/music", tr("Music"));
+  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(QIcon(":/MO/gui/content/script"), ":/MO/gui/content/script", tr("Scripts (Papyrus)"));
+  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(QIcon(":/MO/gui/content/skse"), ":/MO/gui/content/skse", tr("Script Extender Plugin"));
+  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(QIcon(":/MO/gui/content/skyproc"), ":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(QIcon(":/MO/gui/content/sound"), ":/MO/gui/content/sound", tr("Sound"));
+  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(QIcon(":/MO/gui/content/string"), ":/MO/gui/content/string", tr("Strings"));
+  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(QIcon(":/MO/gui/content/texture"), ":/MO/gui/content/texture", tr("Textures"));
 }
-
 
 void ModList::setProfile(Profile *profile)
 {
   m_Profile = profile;
 }
-
 
 int ModList::rowCount(const QModelIndex &parent) const
 {
@@ -68,7 +76,6 @@ int ModList::rowCount(const QModelIndex &parent) const
     return 0;
   }
 }
-
 
 bool ModList::hasChildren(const QModelIndex &parent) const
 {
@@ -128,6 +135,35 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
 }
 
 
+QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &contents) const
+{
+  QVariantList result;
+  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
+  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
+    if (contentsSet.find(iter->first) != contentsSet.end()) {
+      result.append(std::get<0>(iter->second));
+    } else {
+      result.append(QIcon());
+    }
+  }
+  return result;
+}
+
+QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const
+{
+  QString result("<table>");
+
+  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
+  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
+    if (contentsSet.find(iter->first) != contentsSet.end()) {
+      result.append(QString("<tr><td><img src=\"%1\" width=32/></td><td valign=\"middle\">%2</td></tr>").arg(std::get<1>(iter->second)).arg(std::get<2>(iter->second)));
+    }
+  }
+  result.append("</table>");
+  return result;
+}
+
+
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
   if (m_Profile == NULL) return QVariant();
@@ -138,7 +174,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
   if ((role == Qt::DisplayRole) ||
       (role == Qt::EditRole)) {
-    if (column == COL_FLAGS) {
+    if ((column == COL_FLAGS)
+        || (column == COL_CONTENT)) {
       return QVariant();
     } else if (column == COL_NAME) {
       return modInfo->name();
@@ -251,6 +288,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       case COL_PRIORITY: return QtGroupingProxy::AGGR_MIN;
       default: return QtGroupingProxy::AGGR_NONE;
     }
+  } else if (role == Qt::UserRole + 3) {
+    return contentsToIcons(modInfo->getContents());
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -303,6 +342,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
+    } else if (column == COL_CONTENT) {
+      return contentsToToolTip(modInfo->getContents());
     } else if (column == COL_NAME) {
       try {
         return modInfo->getDescription();
@@ -550,7 +591,6 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
       break;
     }
   }
-
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
        iter != sourceIndices.end(); ++iter) {
     int oldPriority = m_Profile->getModPriority(*iter);
@@ -621,6 +661,17 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
     }
   }
   return result;
+}
+
+QString ModList::displayName(const QString &internalName) const
+{
+  unsigned int modIndex = ModInfo::getIndex(internalName);
+  if (modIndex == UINT_MAX) {
+    // might be better to throw an exception?
+    return internalName;
+  } else {
+    return ModInfo::getByIndex(modIndex)->name();
+  }
 }
 
 IModList::ModStates ModList::state(const QString &name) const
@@ -863,6 +914,7 @@ QString ModList::getColumnName(int column)
 {
   switch (column) {
     case COL_FLAGS:    return tr("Flags");
+    case COL_CONTENT:  return tr("Content");
     case COL_NAME:     return tr("Mod Name");
     case COL_VERSION:  return tr("Version");
     case COL_PRIORITY: return tr("Priority");
@@ -884,6 +936,18 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
+    case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
+                                 "<img src=\":/MO/gui/content/plugin\" width=32/>Game plugins (esp/esm)<br>"
+                                 "<img src=\":/MO/gui/content/interface\" width=32/>interface<br>"
+                                 "<img src=\":/MO/gui/content/mesh\" width=32/>Meshes<br>"
+                                 "<img src=\":/MO/gui/content/texture\" width=32/>Textures<br>"
+                                 "<img src=\":/MO/gui/content/sound\" width=32/>Sounds<br>"
+                                 "<img src=\":/MO/gui/content/music\" width=32/>Music<br>"
+                                 "<img src=\":/MO/gui/content/string\" width=32/>Strings<br>"
+                                 "<img src=\":/MO/gui/content/script\" width=32/>Scripts (Papyrus)<br>"
+                                 "<img src=\":/MO/gui/content/skse\" width=32/>Script Extender plugins<br>"
+                                 "<img src=\":/MO/gui/content/skyproc\" width=32/>SkyProc Patcher<br>"
+                                 );
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");
   }

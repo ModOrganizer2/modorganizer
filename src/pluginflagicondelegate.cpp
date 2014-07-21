@@ -3,24 +3,37 @@
 #include <QList>
 
 
-PluginFlagIconDelegate::PluginFlagIconDelegate(QObject *parent)
+GenericIconDelegate::GenericIconDelegate(QObject *parent, int role, int logicalIndex, int compactSize)
   : IconDelegate(parent)
+  , m_Role(role)
+  , m_LogicalIndex(logicalIndex)
+  , m_CompactSize(compactSize)
+  , m_Compact(false)
 {
 }
 
-QList<QIcon> PluginFlagIconDelegate::getIcons(const QModelIndex &index) const
+void GenericIconDelegate::columnResized(int logicalIndex, int, int newSize)
+{
+  if (logicalIndex == m_LogicalIndex) {
+    m_Compact = newSize < m_CompactSize;
+  }
+}
+
+QList<QIcon> GenericIconDelegate::getIcons(const QModelIndex &index) const
 {
   QList<QIcon> result;
   if (index.isValid()) {
-    foreach (const QVariant &var, index.data(Qt::UserRole + 1).toList()) {
-      result.append(var.value<QIcon>());
+    foreach (const QVariant &var, index.data(m_Role).toList()) {
+      QIcon icon = var.value<QIcon>();
+      if (!m_Compact || !icon.isNull()) {
+        result.append(icon);
+      }
     }
   }
   return result;
 }
 
-size_t PluginFlagIconDelegate::getNumIcons(const QModelIndex &index) const
+size_t GenericIconDelegate::getNumIcons(const QModelIndex &index) const
 {
-  return index.data(Qt::UserRole + 1).toList().count();
+  return index.data(m_Role).toList().count();
 }
-

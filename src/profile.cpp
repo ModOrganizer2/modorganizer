@@ -265,22 +265,23 @@ void Profile::refreshModStatus()
       modName = QString::fromUtf8(line.trimmed().constData());
     }
     if (modName.size() > 0) {
-      if (namesRead.find(modName) != namesRead.end()) {
+      QString lookupName = modName + (line.at(0) == '*' ? ModInfoForeign::INT_IDENTIFIER : "");
+      if (namesRead.find(lookupName) != namesRead.end()) {
         continue;
       } else {
-        namesRead.insert(modName);
+        namesRead.insert(lookupName);
       }
-      unsigned int modindex = ModInfo::getIndex(modName);
-      if (modindex != UINT_MAX) {
-        ModInfo::Ptr info = ModInfo::getByIndex(modindex);
-        if ((modindex < m_ModStatus.size())
+      unsigned int modIndex = ModInfo::getIndex(lookupName);
+      if (modIndex != UINT_MAX) {
+        ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
+        if ((modIndex < m_ModStatus.size())
             && (info->getFixedPriority() == INT_MIN)) {
-          m_ModStatus[modindex].m_Enabled = enabled || info->alwaysEnabled();
-          if (m_ModStatus[modindex].m_Priority == -1) {
+          m_ModStatus[modIndex].m_Enabled = enabled || info->alwaysEnabled();
+          if (m_ModStatus[modIndex].m_Priority == -1) {
             if (static_cast<size_t>(index) >= m_ModStatus.size()) {
               throw MyException(tr("invalid index %1").arg(index));
             }
-            m_ModStatus[modindex].m_Priority = index++;
+            m_ModStatus[modIndex].m_Priority = index++;
           }
         } else {
           qDebug("mod \"%s\" (profile \"%s\") not found",
@@ -381,7 +382,7 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
        iter != m_ModIndexByPriority.end(); ++iter) {
     if ((*iter != UINT_MAX) && m_ModStatus[*iter].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(*iter);
-      result.push_back(std::make_tuple(modInfo->name(), modInfo->absolutePath(), m_ModStatus[*iter].m_Priority));
+      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[*iter].m_Priority));
     }
   }
 

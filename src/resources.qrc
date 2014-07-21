@@ -66,4 +66,16 @@
         <file alias="badge_9">resources/badge_9.png</file>
         <file alias="badge_more">resources/badge_more.png</file>
     </qresource>
+    <qresource prefix="/MO/gui/content">
+        <file alias="plugin">resources/contents/jigsaw-piece.png</file>
+        <file alias="skyproc">resources/contents/hand-of-god.png</file>
+        <file alias="texture">resources/contents/empty-chessboard.png</file>
+        <file alias="music">resources/contents/double-quaver.png</file>
+        <file alias="sound">resources/contents/lyre.png</file>
+        <file alias="interface">resources/contents/usable.png</file>
+        <file alias="skse">resources/contents/checkbox-tree.png</file>
+        <file alias="script">resources/contents/tinker.png</file>
+        <file alias="mesh">resources/contents/breastplate.png</file>
+        <file alias="string">resources/contents/conversation.png</file>
+    </qresource>
 </RCC>

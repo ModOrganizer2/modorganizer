@@ -206,14 +206,22 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->modList->setModel(m_ModListSortProxy);
 
+  GenericIconDelegate *contentDelegate = new GenericIconDelegate(ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
+  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), contentDelegate, SLOT(columnResized(int,int,int)));
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
+  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
   if (initSettings.contains("mod_list_state")) {
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
+
+    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) + 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) - 1);
   } else {
     // hide these columns by default
+    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
   }
@@ -227,7 +235,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new PluginFlagIconDelegate(ui->espList));
+  ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
   if (initSettings.contains("plugin_list_state")) {
     ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   }
@@ -2726,7 +2734,7 @@ void MainWindow::modorder_changed()
     if (m_CurrentProfile->modEnabled(i)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
       // priorities in the directory structure are one higher because data is 0
-      m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority + 1);
+      m_DirectoryStructure->getOriginByName(ToWString(modInfo->internalName())).setPriority(priority + 1);
     }
   }
   refreshBSAList();

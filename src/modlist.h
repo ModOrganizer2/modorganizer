@@ -52,6 +52,7 @@ public:
   enum EColumn {
     COL_NAME,
     COL_FLAGS,
+    COL_CONTENT,
     COL_CATEGORY,
     COL_MODID,
     COL_VERSION,
@@ -101,6 +102,9 @@ public:
   void modInfoChanged(ModInfo::Ptr info);
 
 public:
+
+  /// \copydoc MOBase::IModList::displayName
+  virtual QString displayName(const QString &internalName) const;
 
   /// \copydoc MOBase::IModList::state
   virtual ModStates state(const QString &name) const;
@@ -232,6 +236,10 @@ private:
 
   static QString getColumnToolTip(int column);
 
+  QVariantList contentsToIcons(const std::vector<ModInfo::EContent> &content) const;
+
+  QString contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const;
+
   ModList::EColumn getEnabledColumn(int index) const;
 
   QVariant categoryData(int categoryID, int column, int role) const;
@@ -281,6 +289,8 @@ private:
 
   SignalModStateChanged m_ModStateChanged;
   SignalModMoved m_ModMoved;
+
+  std::map<ModInfo::EContent, std::tuple<QIcon, QString, QString> > m_ContentIcons;
 
 };
 

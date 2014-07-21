@@ -68,6 +68,19 @@ public:
     FLAG_CONFLICT_REDUNDANT
   };
 
+  enum EContent {
+    CONTENT_PLUGIN,
+    CONTENT_TEXTURE,
+    CONTENT_MESH,
+    CONTENT_INTERFACE,
+    CONTENT_MUSIC,
+    CONTENT_SOUND,
+    CONTENT_SCRIPT,
+    CONTENT_SKSE,
+    CONTENT_SKYPROC,
+    CONTENT_STRING
+  };
+
   enum EHighlight {
     HIGHLIGHT_NONE = 0,
     HIGHLIGHT_INVALID = 1,
@@ -304,6 +317,13 @@ public:
   virtual QString name() const = 0;
 
   /**
+   * @brief getter for an internal name. This is usually the same as the regular name, but with special mod types it might be
+   *        this is used to distinguish between mods that have the same visible name
+   * @return internal mod name
+   */
+  virtual QString internalName() const { return name(); }
+
+  /**
    * @brief getter for the mod path
    *
    * @return the (absolute) path to the mod
@@ -367,6 +387,11 @@ public:
    * @return a list of flags for this mod
    */
   virtual std::vector<EFlag> getFlags() const = 0;
+
+  /**
+   * @return a list of content types contained in a mod
+   */
+  virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
 
   /**
    * @brief test if the specified flag is set for this mod
@@ -778,6 +803,8 @@ public:
    */
   virtual std::vector<EFlag> getFlags() const;
 
+  virtual std::vector<EContent> getContents() const;
+
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
    */
@@ -956,6 +983,10 @@ class ModInfoForeign : public ModInfoWithConflictInfo
 
 public:
 
+  static const char INT_IDENTIFIER[];
+
+public:
+
   virtual bool updateAvailable() const { return false; }
   virtual bool updateIgnored() const { return false; }
   virtual bool downgradeAvailable() const { return false; }
@@ -974,6 +1005,7 @@ public:
   virtual void endorse(bool) {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;
+  virtual QString internalName() const { return name() + INT_IDENTIFIER; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
   virtual QString absolutePath() const;
