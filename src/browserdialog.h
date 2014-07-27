@@ -63,6 +63,7 @@ public:
    **/
   void openUrl(const QUrl &url);
 
+  virtual bool eventFilter(QObject *object, QEvent *event);
 signals:
 
   /**
@@ -103,6 +104,8 @@ private slots:
 
   void on_browserTabWidget_currentChanged(int index);
 
+  void on_urlEdit_returnPressed();
+
 private:
 
   QString guessFileName(const QString &url);
@@ -118,6 +121,7 @@ private:
   QNetworkAccessManager *m_AccessManager;
 
   QTabWidget *m_Tabs;
+
 
 };
 

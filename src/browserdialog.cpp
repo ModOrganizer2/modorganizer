@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 #include <QWebFrame>
 #include <QDesktopWidget>
+#include <QKeyEvent>
 
 
 
@@ -57,9 +58,12 @@ BrowserDialog::BrowserDialog(QWidget *parent)
 
   m_Tabs = this->findChild<QTabWidget*>("browserTabWidget");
 
-  connect(m_Tabs, SIGNAL(tabCloseRequested(int)), this, SLOT(tabCloseRequested(int)));
-}
+  installEventFilter(this);
 
+  connect(m_Tabs, SIGNAL(tabCloseRequested(int)), this, SLOT(tabCloseRequested(int)));
+
+  ui->urlEdit->setVisible(false);
+}
 
 BrowserDialog::~BrowserDialog()
 {
@@ -108,13 +112,14 @@ BrowserView *BrowserDialog::getCurrentView()
 }
 
 
-void BrowserDialog::urlChanged(const QUrl&)
+void BrowserDialog::urlChanged(const QUrl &url)
 {
   BrowserView *currentView = getCurrentView();
   if (currentView != NULL) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
   }
+  ui->urlEdit->setText(url.toString());
 }
 
 
@@ -267,4 +272,25 @@ void BrowserDialog::on_browserTabWidget_currentChanged(int index)
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
   }
+}
+
+void BrowserDialog::on_urlEdit_returnPressed()
+{
+  QWebView *currentView = getCurrentView();
+  if (currentView != NULL) {
+    currentView->setUrl(QUrl(ui->urlEdit->text()));
+  }
+}
+
+bool BrowserDialog::eventFilter(QObject *object, QEvent *event)
+{
+  if (event->type() == QEvent::KeyPress) {
+    QKeyEvent *keyEvent = reinterpret_cast<QKeyEvent*>(event);
+    if ((keyEvent->modifiers() & Qt::ControlModifier)
+        && (keyEvent->key() == Qt::Key_U)) {
+      ui->urlEdit->setVisible(!ui->urlEdit->isVisible());
+      return true;
+    }
+  }
+  return QDialog::eventFilter(object, event);
 }

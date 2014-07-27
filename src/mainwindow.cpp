@@ -49,7 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "questionboxmemory.h"
 #include "tutorialmanager.h"
 #include "modflagicondelegate.h"
-#include "pluginflagicondelegate.h"
+#include "genericicondelegate.h"
 #include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
@@ -720,6 +720,7 @@ void MainWindow::savePluginList()
 void MainWindow::modFilterActive(bool filterActive)
 {
   if (filterActive) {
+    m_ModList.setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
   } else if (ui->groupCombo->currentIndex() != 0) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
@@ -776,7 +777,6 @@ bool MainWindow::saveCurrentLists()
   return true;
 }
 
-
 bool MainWindow::addProfile()
 {
   QComboBox *profileBox = findChild<QComboBox*>("profileBox");
@@ -799,7 +799,6 @@ bool MainWindow::addProfile()
   }
 }
 
-
 void MainWindow::hookUpWindowTutorials()
 {
   QDirIterator dirIter(QApplication::applicationDirPath() + "/tutorials", QStringList("*.js"), QDir::Files);
@@ -820,7 +819,6 @@ void MainWindow::hookUpWindowTutorials()
     }
   }
 }
-
 
 void MainWindow::showEvent(QShowEvent *event)
 {
@@ -2741,6 +2739,19 @@ void MainWindow::modorder_changed()
   m_CurrentProfile->writeModlist();
   saveArchiveList();
   m_DirectoryStructure->getFileRegister()->sortOrigins();
+
+  { // refresh selection
+    QModelIndex current = ui->modList->currentIndex();
+    if (current.isValid()) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
+      modInfo->doConflictCheck();
+      m_ModList.setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
+      if (m_ModListSortProxy != NULL) {
+        m_ModListSortProxy->invalidate();
+      }
+      ui->modList->verticalScrollBar()->repaint();
+    }
+  }
 }
 
 void MainWindow::procError(QProcess::ProcessError error)
@@ -2928,6 +2939,7 @@ void MainWindow::refreshFilters()
 {
   QItemSelection currentSelection = ui->modList->selectionModel()->selection();
 
+  QVariant currentIndexName = ui->modList->currentIndex().data();
   ui->modList->setCurrentIndex(QModelIndex());
 
   QStringList selectedItems;
@@ -2966,8 +2978,11 @@ void MainWindow::refreshFilters()
       matches.at(0)->setSelected(true);
     }
   }
-
   ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
+  QModelIndexList matchList = ui->modList->model()->match(ui->modList->model()->index(0, 0), Qt::DisplayRole, currentIndexName);
+  if (matchList.size() > 0) {
+    ui->modList->setCurrentIndex(matchList.at(0));
+  }
 }
 
 
@@ -5231,11 +5246,12 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
 
   std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+  std::tr1::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
   foreach (const std::string &line, lines) {
     if (line.length() > 0) {
       size_t progidx   = line.find("[progress]");
-      size_t reportidx = line.find("[report]");
+      size_t reportidx = line.find("[Report]");
       size_t erroridx  = line.find("[error]");
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
@@ -5250,8 +5266,12 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_PluginList.addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
+        } else if (std::tr1::regex_match(line, match, exIncompatible)) {
+          std::string modName(match[1].first, match[1].second);
+          std::string dependency(match[2].first, match[2].second);
+          m_PluginList.addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          qDebug("%s", line.c_str());
+          qDebug("[loot] %s", line.c_str());
         }
       }
     }
@@ -5304,6 +5324,65 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
 
+
+bool MainWindow::waitForProcessOrJob(HANDLE handle, LPDWORD exitCode)
+{
+  LockedDialog *dialog = new LockedDialog(this);
+  dialog->show();
+  setEnabled(false);
+  ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); this->setEnabled(true); });
+
+  DWORD retLen;
+  JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+
+  bool isJobHandle = true;
+
+  ULONG lastProcessID = ULONG_MAX;
+  HANDLE processHandle = handle;
+
+  DWORD res = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
+  while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
+    if (isJobHandle) {
+      if (::QueryInformationJobObject(handle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+        if (info.NumberOfProcessIdsInList == 0) {
+          // fake signaled state
+          res = WAIT_OBJECT_0;
+          break;
+        } else {
+          // this is indeed a job handle. Figure out one of the process handles as well.
+          if (lastProcessID != info.ProcessIdList[0]) {
+            lastProcessID = info.ProcessIdList[0];
+            if (processHandle != handle) {
+              ::CloseHandle(processHandle);
+            }
+            processHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, lastProcessID);
+          }
+        }
+      } else {
+        // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+        // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+        // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+        // the right to break out.
+        if (::GetLastError() != ERROR_MORE_DATA) {
+          isJobHandle = false;
+        }
+      }
+    }
+
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::processEvents();
+
+    res = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
+  }
+
+  if (exitCode != NULL) {
+    ::GetExitCodeProcess(processHandle, exitCode);
+  }
+  ::CloseHandle(processHandle);
+
+  return res == WAIT_OBJECT_0;
+}
+
 void MainWindow::on_bossButton_clicked()
 {
   std::string reportURL;
@@ -5322,18 +5401,21 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QStringList parameters;
-    parameters << "--game" << ToQString(GameInfo::instance().getGameShortName())
+    parameters << "--unattended"
+               << "--stdout"
+               << "--noreport"
+               << "--game" << ToQString(GameInfo::instance().getGameShortName())
                << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
 
-    if (!m_DidUpdateMasterList) {
-      parameters << "--updateMasterlist";
+    if (m_DidUpdateMasterList) {
+      parameters << "--skipUpdateMasterlist";
+    } else {
       m_DidUpdateMasterList = true;
     }
-
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
+    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/LOOT.exe"),
                               parameters.join(" "),
                               m_CurrentProfile->getName(),
                               m_Settings.logLevel(),
@@ -5361,7 +5443,8 @@ void MainWindow::on_bossButton_clicked()
         processLOOTOut(remainder, reportURL, errorMessages, dialog);
       }
       DWORD exitCode = 0UL;
-      ::GetExitCodeProcess(loot, &exitCode);
+      ::GetExitCodeProcess(processHandle, &exitCode);
+      ::CloseHandle(processHandle);
       if (exitCode != 0UL) {
         reportError(tr("loot failed. Exit code was: %1").arg(exitCode));
         return;
@@ -5382,11 +5465,12 @@ void MainWindow::on_bossButton_clicked()
     if (reportURL.length() > 0) {
       m_IntegratedBrowser.setWindowTitle("LOOT Report");
       QString report(reportURL.c_str());
-      if (QFile::exists(report)) {
-        m_IntegratedBrowser.openUrl(QUrl::fromLocalFile(report));
-      } else {
-        qWarning("report file missing");
+      QStringList temp = report.split("?");
+      QUrl url = QUrl::fromLocalFile(temp.at(0));
+      if (temp.size() > 1) {
+        url.setEncodedQuery(temp.at(1).toUtf8());
       }
+      m_IntegratedBrowser.openUrl(url);
     }
     refreshESPList();
 

@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shlwapi.h>
 #include "utility.h"
 
+
 BrowserView::BrowserView(QWidget *parent)
   : QWebView(parent)
 {
@@ -36,14 +37,12 @@ BrowserView::BrowserView(QWidget *parent)
   page()->settings()->setMaximumPagesInCache(10);
 }
 
-
 QWebView *BrowserView::createWindow(QWebPage::WebWindowType)
 {
   BrowserView *newView = new BrowserView(parentWidget());
   emit initTab(newView);
   return newView;
 }
-
 
 bool BrowserView::eventFilter(QObject *obj, QEvent *event)
 {

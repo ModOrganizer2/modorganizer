@@ -1,4 +1,4 @@
-#include "pluginflagicondelegate.h"
+#include "genericicondelegate.h"
 #include "pluginlist.h"
 #include <QList>
 

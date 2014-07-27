@@ -83,6 +83,7 @@ public:
     return rowCount(parent) > 0;
   }
 
+  bool beingInvalidated() const { return m_BeingInvalidated; }
 
 public slots:
 
@@ -115,6 +116,8 @@ private:
 
   bool m_FilterActive;
   FilterMode m_FilterMode;
+
+  bool m_BeingInvalidated;
 
 };
 

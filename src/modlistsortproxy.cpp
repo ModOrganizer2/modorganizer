@@ -34,6 +34,7 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_CurrentFilter()
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
+  , m_BeingInvalidated(false)
 {
   m_EnabledColumns.set(ModList::COL_FLAGS);
   m_EnabledColumns.set(ModList::COL_NAME);
@@ -42,7 +43,6 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
 }
-
 
 void ModListSortProxy::setProfile(Profile *profile)
 {
@@ -71,7 +71,6 @@ Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 
   return flags;
 }
-
 
 void ModListSortProxy::displayColumnSelection(const QPoint &pos)
 {
@@ -103,7 +102,6 @@ void ModListSortProxy::displayColumnSelection(const QPoint &pos)
   emit layoutChanged();
 }
 
-
 void ModListSortProxy::enableAllVisible()
 {
   if (m_Profile == NULL) return;
@@ -115,7 +113,6 @@ void ModListSortProxy::enableAllVisible()
   invalidate();
 }
 
-
 void ModListSortProxy::disableAllVisible()
 {
   if (m_Profile == NULL) return;
@@ -126,7 +123,6 @@ void ModListSortProxy::disableAllVisible()
   }
   invalidate();
 }
-
 
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
@@ -208,14 +204,15 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
   return lt;
 }
 
-
 void ModListSortProxy::updateFilter(const QString &filter)
 {
   m_CurrentFilter = filter;
   updateFilterActive();
+  // workaround because qt throws a fit if, as a result of this invalidation, another invalidate is called
+  m_BeingInvalidated = true;
   invalidateFilter();
+  m_BeingInvalidated = false;
 }
-
 
 bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const
 {
@@ -230,7 +227,6 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 
   return false;
 }
-
 
 bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const
 {
@@ -306,8 +302,6 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
   return false;
 }
 
-
-
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
   if (!m_CurrentFilter.isEmpty() &&
@@ -329,7 +323,6 @@ void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
     this->invalidate();
   }
 }
-
 
 bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
@@ -361,7 +354,6 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
     return filterMatchesMod(ModInfo::getByIndex(index), modEnabled);
   }
 }
-
 
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
