@@ -104,6 +104,11 @@ HANDLE OrganizerProxy::startApplication(const QString &executable, const QString
   return m_Proxied->startApplication(executable, args, cwd, profile);
 }
 
+bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
+{
+  return m_Proxied->waitForProcessOrJob(handle, exitCode);
+}
+
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)
 {
   auto conn = m_Proxied->m_AboutToRun.connect(func);

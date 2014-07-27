@@ -38,7 +38,6 @@ ModListView::ModListView(QWidget *parent)
   : QTreeView(parent)
   , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
-//  setStyle(new ModListViewStyle(style(), indentation()));
   setVerticalScrollBar(m_Scrollbar);
 }
 

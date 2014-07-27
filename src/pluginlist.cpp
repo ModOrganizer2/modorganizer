@@ -1089,6 +1089,13 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         diff = 1;
       }
       QModelIndexList rows = selectionModel->selectedRows();
+      // remove elements that aren't supposed to be movable
+      QMutableListIterator<QModelIndex> iter(rows);
+      while (iter.hasNext()) {
+        if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
+          iter.remove();
+        }
+      }
       if (keyEvent->key() == Qt::Key_Down) {
         for (int i = 0; i < rows.size() / 2; ++i) {
           rows.swap(i, rows.size() - i - 1);

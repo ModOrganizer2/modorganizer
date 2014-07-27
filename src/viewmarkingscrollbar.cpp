@@ -14,6 +14,9 @@ ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *p
 
 void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
 {
+  if (m_Model == NULL) {
+    return;
+  }
   QScrollBar::paintEvent(event);
 
   QStyleOptionSlider styleOption;

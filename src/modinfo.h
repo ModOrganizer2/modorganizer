@@ -498,16 +498,19 @@ public:
   virtual void saveMeta() {}
 
   /**
-   * @brief retrieve list of mods (as mod index) that are overwritten by this one. Updates may be delayed
-   * @return
+   * @return retrieve list of mods (as mod index) that are overwritten by this one. Updates may be delayed
    */
   virtual std::set<unsigned int> getModOverwrite() { return std::set<unsigned int>(); }
 
   /**
-   * @brief retrieve list of mods (as mod index) that overwrite this one. Updates may be delayed
-   * @return
+   * @return list of mods (as mod index) that overwrite this one. Updates may be delayed
    */
   virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
+
+  /**
+   * @brief update conflict information
+   */
+  virtual void doConflictCheck() const {}
 
 signals:
 
@@ -566,6 +569,8 @@ public:
   virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
 
   virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
+
+  virtual void doConflictCheck() const;
 
 private:
 

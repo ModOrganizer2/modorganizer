@@ -134,9 +134,11 @@ public:
 
   HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
 
+  bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL);
+
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
-  void waitForProcessOrJob(HANDLE processHandle);
+
 public slots:
 
   void refreshLists();

@@ -224,7 +224,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
             return QString();
           }
         } else {
-          //return tr("None");
           return QVariant();
         }
       }
@@ -887,6 +886,8 @@ void ModList::removeRow(int row, const QModelIndex&)
 void ModList::notifyChange(int rowStart, int rowEnd)
 {
   if (rowStart < 0) {
+    m_Overwrite.clear();
+    m_Overwritten.clear();
     beginResetModel();
     endResetModel();
   } else {
@@ -1021,6 +1022,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
           notifyChange(idx.row());
         }
       }
+      emit modorder_changed();
       return true;
     } else if (keyEvent->key() == Qt::Key_Delete) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();

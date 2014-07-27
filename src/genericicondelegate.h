@@ -1,5 +1,5 @@
-#ifndef PLUGINFLAGICONDELEGATE_H
-#define PLUGINFLAGICONDELEGATE_H
+#ifndef GENERICICONDELEGATE_H
+#define GENERICICONDELEGATE_H
 
 #include "icondelegate.h"
 
@@ -33,4 +33,4 @@ private:
   bool m_Compact;
 };
 
-#endif // PLUGINFLAGICONDELEGATE_H
+#endif // GENERICICONDELEGATE_H

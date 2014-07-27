@@ -88,7 +88,7 @@ SOURCES += \
     json.cpp \
     safewritefile.cpp \
     modflagicondelegate.cpp \
-    pluginflagicondelegate.cpp \
+    genericicondelegate.cpp \
     organizerproxy.cpp \
     viewmarkingscrollbar.cpp
 
@@ -168,7 +168,7 @@ HEADERS  += \
     safewritefile.h\
     pdll.h \
     modflagicondelegate.h \
-    pluginflagicondelegate.h \
+    genericicondelegate.h \
     organizerproxy.h \
     viewmarkingscrollbar.h
 

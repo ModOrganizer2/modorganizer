@@ -359,67 +359,72 @@ std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
 }
 
 
-ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
+void ModInfoWithConflictInfo::doConflictCheck() const
 {
-  // this is costy so cache the result
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    m_OverwriteList.clear();
-    m_OverwrittenList.clear();
-    bool regular = false;
+  m_OverwriteList.clear();
+  m_OverwrittenList.clear();
+  bool regular = false;
 
-    int dataID = 0;
-    if ((*m_DirectoryStructure)->originExists(L"data")) {
-      dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
-    }
+  int dataID = 0;
+  if ((*m_DirectoryStructure)->originExists(L"data")) {
+    dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+  }
 
-    std::wstring name = ToWString(this->name());
-    if ((*m_DirectoryStructure)->originExists(name)) {
-      FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-      std::vector<FileEntry::Ptr> files = origin.getFiles();
-      // for all files in this origin
-      for (auto iter = files.begin(); iter != files.end(); ++iter) {
-        const std::vector<int> &alternatives = (*iter)->getAlternatives();
-        if ((alternatives.size() == 0)
-            || (alternatives[0] == dataID)) {
-          // no alternatives -> no conflict
-          regular = true;
-        } else {
-          if ((*iter)->getOrigin() != origin.getID()) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID((*iter)->getOrigin());
+  std::wstring name = ToWString(this->name());
+  if ((*m_DirectoryStructure)->originExists(name)) {
+    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+    std::vector<FileEntry::Ptr> files = origin.getFiles();
+    // for all files in this origin
+    for (auto iter = files.begin(); iter != files.end(); ++iter) {
+      const std::vector<int> &alternatives = (*iter)->getAlternatives();
+      if ((alternatives.size() == 0)
+          || (alternatives[0] == dataID)) {
+        // no alternatives -> no conflict
+        regular = true;
+      } else {
+        if ((*iter)->getOrigin() != origin.getID()) {
+          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID((*iter)->getOrigin());
+          unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
+          m_OverwrittenList.insert(altIndex);
+        }
+        // for all non-providing alternative origins
+        for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
+          if ((*altIter != dataID) && (*altIter != origin.getID())) {
+            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(*altIter);
             unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
-            m_OverwrittenList.insert(altIndex);
-          }
-          // for all non-providing alternative origins
-          for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-            if ((*altIter != dataID) && (*altIter != origin.getID())) {
-              FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(*altIter);
-              unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
-              if (origin.getPriority() > altOrigin.getPriority()) {
-                m_OverwriteList.insert(altIndex);
-              } else {
-                m_OverwrittenList.insert(altIndex);
-              }
+            if (origin.getPriority() > altOrigin.getPriority()) {
+              m_OverwriteList.insert(altIndex);
+            } else {
+              m_OverwrittenList.insert(altIndex);
             }
           }
         }
       }
     }
+  }
 
-    m_LastConflictCheck = QTime::currentTime();
+  m_LastConflictCheck = QTime::currentTime();
 
-    if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
-      m_CurrentConflictState = CONFLICT_MIXED;
-    else if (!m_OverwriteList.empty())
-      m_CurrentConflictState = CONFLICT_OVERWRITE;
-    else if (!m_OverwrittenList.empty()) {
-      if (!regular) {
-        m_CurrentConflictState = CONFLICT_REDUNDANT;
-      } else {
-        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
-      }
+  if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
+    m_CurrentConflictState = CONFLICT_MIXED;
+  else if (!m_OverwriteList.empty())
+    m_CurrentConflictState = CONFLICT_OVERWRITE;
+  else if (!m_OverwrittenList.empty()) {
+    if (!regular) {
+      m_CurrentConflictState = CONFLICT_REDUNDANT;
+    } else {
+      m_CurrentConflictState = CONFLICT_OVERWRITTEN;
     }
-    else m_CurrentConflictState = CONFLICT_NONE;
+  }
+  else m_CurrentConflictState = CONFLICT_NONE;
+}
+
+ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
+{
+  // this is costy so cache the result
+  QTime now = QTime::currentTime();
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
+    doConflictCheck();
   }
 
   return m_CurrentConflictState;
