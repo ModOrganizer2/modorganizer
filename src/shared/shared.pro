@@ -15,8 +15,8 @@ INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
 
 # only for custom leak detection
-#DEFINES += TRACE_LEAKS
-#LIBS += -lDbgHelp
+DEFINES += TRACE_LEAKS
+LIBS += -lDbgHelp
 
 
 CONFIG(debug, debug|release) {

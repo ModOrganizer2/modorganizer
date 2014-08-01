@@ -34,6 +34,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "util.h"
 
 
+
+#include "error_report.h"
+
+
+
 namespace MOShared {
 
 
@@ -59,6 +64,8 @@ public:
   ~FileEntry();
 
   Index getIndex() const { return m_Index; }
+
+  time_t lastAccessed() const { return m_LastAccessed; }
 
   void addOrigin(int origin, FILETIME fileTime, const std::wstring &archive);
   // remove the specified origin from the list of origins that contain this file. if no origin is left,
@@ -98,6 +105,8 @@ private:
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
 
+  time_t m_LastAccessed;
+
   friend bool operator<(const FileEntry &lhs, const FileEntry &rhs) {
     return _wcsicmp(lhs.m_Name.c_str(), rhs.m_Name.c_str()) < 0;
   }
@@ -130,7 +139,7 @@ public:
 
   std::vector<FileEntry::Ptr> getFiles() const;
 
-  void enable(bool enabled);
+  void enable(bool enabled, time_t notAfter = LONG_MAX);
   bool isDisabled() const { return m_Disabled; }
 
   void addFile(FileEntry::Index index) { m_Files.insert(index); }
@@ -171,8 +180,11 @@ public:
   FileEntry::Ptr createFile(const std::wstring &name, DirectoryEntry *parent);
   FileEntry::Ptr getFile(FileEntry::Index index) const;
 
+  size_t size() const { return m_Files.size(); }
+
   void removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
+  void removeOriginMulti(std::set<FileEntry::Index> indices, int originID, time_t notAfter);
 
   void sortOrigins();
 
@@ -258,7 +270,7 @@ public:
   void removeDir(const std::wstring &path);
 
   void remove(const std::wstring &fileName, int *origin) {
-    auto iter = m_Files.find(fileName);
+    auto iter = m_Files.find(ToLower(fileName));
     if (iter != m_Files.end()) {
       if (origin != NULL) {
         FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
@@ -268,6 +280,8 @@ public:
         }
       }
       m_FileRegister->removeFile(iter->second);
+    } else {
+      log ("failed to remove %ls from %ls", fileName.c_str(), m_Name.c_str());
     }
   }
 
@@ -275,20 +289,23 @@ public:
 
   FilesOrigin &createOrigin(const std::wstring &originName, const std::wstring &directory, int priority);
 
+  void removeFiles(const std::set<FileEntry::Index> &indices);
+
 private:
 
   DirectoryEntry(const DirectoryEntry &reference);
   DirectoryEntry &operator=(const DirectoryEntry &reference);
 
   void insert(const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime, const std::wstring &archive) {
-    auto iter = m_Files.find(fileName);
+    std::wstring fileNameLower = ToLower(fileName);
+    auto iter = m_Files.find(fileNameLower);
     FileEntry::Ptr file;
     if (iter != m_Files.end()) {
       file = m_FileRegister->getFile(iter->second);
     } else {
       file = m_FileRegister->createFile(fileName, this);
       // TODO this has been observed to cause a crash, no clue why
-      m_Files[fileName] = file->getIndex();
+      m_Files[fileNameLower] = file->getIndex();
     }
     file->addOrigin(origin.getID(), fileTime, archive);
     origin.addFile(file->getIndex());
@@ -307,20 +324,11 @@ private:
 
 private:
 
-  struct WStrLess {
-    bool operator()(const std::wstring &LHS, const std::wstring &RHS) const {
-      return _wcsicmp(LHS.c_str(), RHS.c_str()) < 0;
-    }
-  };
-
-
-private:
-
   boost::shared_ptr<FileRegister> m_FileRegister;
   boost::shared_ptr<OriginConnection> m_OriginConnection;
 
   std::wstring m_Name;
-  std::map<std::wstring, FileEntry::Index, WStrLess> m_Files;
+  std::map<std::wstring, FileEntry::Index> m_Files;
   std::vector<DirectoryEntry*> m_SubDirectories;
 
   DirectoryEntry *m_Parent;

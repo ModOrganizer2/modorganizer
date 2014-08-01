@@ -273,7 +273,9 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
       std::wostringstream source;
       source << getMyGamesDirectory() << L"\\Skyrim\\skyrimprefs.ini";
       if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
-        if (::GetLastError() != ERROR_FILE_EXISTS) {
+        log("failed to copy ini file %ls", source.str().c_str());
+        // create empty
+        if (::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) == INVALID_HANDLE_VALUE) {
           std::ostringstream stream;
           stream << "failed to copy ini file: " << ToString(source.str(), false);
           throw windows_error(stream.str());

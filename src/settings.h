@@ -272,7 +272,6 @@ public:
    *              even if the user said earlier not to
    */
   void registerAsNXMHandler(bool force);
-
 private:
 
   QString obfuscate(const QString &password) const;
@@ -280,8 +279,6 @@ private:
 
   void addLanguages(QComboBox *languageBox);
   void addStyles(QComboBox *styleBox);
-  bool isNXMHandler(bool *modifyable);
-  void setNXMHandlerActive(bool active, bool writable);
   void readPluginBlacklist();
   void writePluginBlacklist();
 
