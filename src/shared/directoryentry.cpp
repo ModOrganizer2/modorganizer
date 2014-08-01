@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <sstream>
+#include <ctime>
 #include <algorithm>
 #include <bsatk.h>
 #include "error_report.h"
@@ -28,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
+#include <boost/foreach.hpp>
 #include "util.h"
 #include "leaktrace.h"
 
@@ -133,13 +135,11 @@ private:
 //
 
 
-void FilesOrigin::enable(bool enabled)
+void FilesOrigin::enable(bool enabled, time_t notAfter)
 {
   if (!enabled) {
     std::set<FileEntry::Index> copy = m_Files;
-    for (auto iter = copy.begin(); iter != copy.end(); ++iter) {
-      m_FileRegister.lock()->removeOrigin(*iter, m_ID);
-    }
+    m_FileRegister.lock()->removeOriginMulti(copy, m_ID, notAfter);
     m_Files.clear();
   }
   m_Disabled = !enabled;
@@ -233,6 +233,7 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 
 void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &archive)
 {
+  m_LastAccessed = time(NULL);
   if (m_Parent != NULL) {
     m_Parent->propagateOrigin(origin);
   }
@@ -324,13 +325,13 @@ static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 
 
 FileEntry::FileEntry()
-  : m_Index(UINT_MAX), m_Name(), m_Parent(NULL)
+  : m_Index(UINT_MAX), m_Name(), m_Parent(NULL), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Parent(parent), m_Origin(-1), m_Archive(L"")
+  : m_Index(index), m_Name(name), m_Parent(parent), m_Origin(-1), m_Archive(L""), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
@@ -654,6 +655,18 @@ void DirectoryEntry::removeFile(FileEntry::Index index)
 }
 
 
+void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
+{
+  for (auto iter = m_Files.begin(); iter != m_Files.end();) {
+    if (indices.find(iter->second) != indices.end()) {
+      m_Files.erase(iter++);
+    } else {
+      ++iter;
+    }
+  }
+}
+
+
 int DirectoryEntry::anyOrigin() const
 {
   bool ignore;
@@ -737,7 +750,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
 
   if (len == std::string::npos) {
     // no more path components
-    auto iter = m_Files.find(path);
+    auto iter = m_Files.find(ToLower(path));
     if (iter != m_Files.end()) {
       return m_FileRegister->getFile(iter->second);
     } else if (directory != NULL) {
@@ -777,7 +790,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectoryRecursive(const std::wstring &pa
 
 const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
 {
-  auto iter = m_Files.find(name);
+  auto iter = m_Files.find(ToLower(name));
   if (iter != m_Files.end()) {
     return m_FileRegister->getFile(iter->second);
   } else {
@@ -865,7 +878,6 @@ FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
   return FileEntry::Ptr();
 }
 
-
 void FileRegister::unregisterFile(FileEntry::Ptr file)
 {
   bool ignore;
@@ -890,6 +902,8 @@ void FileRegister::removeFile(FileEntry::Index index)
   if (iter != m_Files.end()) {
     unregisterFile(iter->second);
     m_Files.erase(index);
+  } else {
+    log("invalid file index for remove: %lu", index);
   }
 }
 
@@ -899,7 +913,49 @@ void FileRegister::removeOrigin(FileEntry::Index index, int originID)
   if (iter != m_Files.end()) {
     if (iter->second->removeOrigin(originID)) {
       unregisterFile(iter->second);
+      m_Files.erase(iter);
     }
+  } else {
+    log("invalid file index for remove (for origin): %lu", index);
+  }
+}
+
+void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int originID, time_t notAfter)
+{
+  std::vector<FileEntry::Ptr> removedFiles;
+  for (auto iter = indices.begin(); iter != indices.end();) {
+    auto pos = m_Files.find(*iter);
+    if (pos != m_Files.end()
+        && (pos->second->lastAccessed() < notAfter)
+        && pos->second->removeOrigin(originID)) {
+      removedFiles.push_back(pos->second);
+      m_Files.erase(pos);
+      ++iter;
+    } else {
+      indices.erase(iter++);
+    }
+  }
+
+  if (removedFiles.size() > 0) {
+    log("%d files actually removed", removedFiles.size());
+  }
+
+  // optimization: this is only called when disabling an origin and in this case we don't have
+  // to remove the file from the origin
+
+  // need to remove files from their parent directories. multiple ways to go about this:
+  // a) for each file, search its parents file-list (preferably by name) and remove what is found
+  // b) gather the parent directories, go through the file list for each once and remove all files that have been removed
+  // the latter should be faster when there are many files in few directories. since this is called
+  // only when disabling an origin that is probably frequently the case
+  std::set<DirectoryEntry*> parents;
+  BOOST_FOREACH (const FileEntry::Ptr &file, removedFiles) {
+    if (file->getParent() != NULL) {
+      parents.insert(file->getParent());
+    }
+  }
+  BOOST_FOREACH (DirectoryEntry *parent, parents) {
+    parent->removeFiles(indices);
   }
 }
 

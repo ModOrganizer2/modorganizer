@@ -86,30 +86,28 @@ std::wstring ToWString(const std::string &source, bool utf8)
 
 std::string &ToLower(std::string &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), tolower);
+  std::transform(text.begin(), text.end(), text.begin(), ::tolower);
   return text;
 }
 
 std::string ToLower(const std::string &text)
 {
-  std::string temp = text;
-
-  std::transform(temp.begin(), temp.end(), temp.begin(), tolower);
-  return temp;
+  std::string result = text;
+  std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+  return result;
 }
 
 std::wstring &ToLower(std::wstring &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), towlower);
+  std::transform(text.begin(), text.end(), text.begin(), ::towlower);
   return text;
 }
 
 std::wstring ToLower(const std::wstring &text)
 {
-  std::wstring temp = text;
-
-  std::transform(temp.begin(), temp.end(), temp.begin(), towlower);
-  return temp;
+  std::wstring result = text;
+  std::transform(result.begin(), result.end(), result.begin(), ::towlower);
+  return result;
 }
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)

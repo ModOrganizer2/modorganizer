@@ -235,10 +235,14 @@ OTHER_FILES += \
 
 
 # leak detection with vld
-#INCLUDEPATH += "E:/Visual Leak Detector/include"
-#LIBS += -L"E:/Visual Leak Detector/lib/Win32"
+INCLUDEPATH += "E:/Visual Leak Detector/include"
+LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
 
+# custom leak detection
+LIBS += -lDbgHelp
+
+# model tests
 #SOURCES += modeltest.cpp
 #HEADERS += modeltest.h
 #DEFINES += TEST_MODELS

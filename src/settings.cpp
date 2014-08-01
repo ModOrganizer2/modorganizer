@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
+#include <json.h>
 
 #include <QCheckBox>
 #include <QLineEdit>
@@ -32,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QRegExp>
 #include <QCoreApplication>
 #include <QMessageBox>
+#include <QDesktopServices>
 
 
 using namespace MOBase;
@@ -107,8 +109,12 @@ void Settings::registerAsNXMHandler(bool force)
   std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
   std::wstring mode = force ? L"forcereg" : L"reg";
-  ::ShellExecuteW(NULL, L"open", nxmPath.c_str(),
-                  (mode + L" " + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"").c_str(), NULL, SW_SHOWNORMAL);
+  std::wstring parameters = mode + L" " + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"";
+  HINSTANCE res = ::ShellExecuteW(NULL, L"open", nxmPath.c_str(), parameters.c_str(), NULL, SW_SHOWNORMAL);
+  if ((int)res <= 32) {
+    QMessageBox::critical(NULL, tr("Failed"),
+                          tr("Sorry, failed to start the helper application"));
+  }
 }
 
 void Settings::registerPlugin(IPlugin *plugin)
@@ -459,41 +465,6 @@ void Settings::addStyles(QComboBox *styleBox)
     styleBox->addItem(style, style);
   }
 }
-
-bool Settings::isNXMHandler(bool *modifyable)
-{
-  QSettings handlerReg("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\shell\\open\\command",
-                       QSettings::NativeFormat);
-
-  QString currentExe = handlerReg.value("Default", "").toString().toUtf8().constData();
-  QString myExe = QString("\"%1\" ").arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())).append("\"%1\"");
-  if (modifyable != NULL) {
-    handlerReg.setValue("Default", currentExe);
-    handlerReg.sync();
-
-    *modifyable = handlerReg.status() == QSettings::NoError;
-    // QSettings::isWritable returns wrong results...
-  }
-  return currentExe == myExe;
-}
-
-
-void Settings::setNXMHandlerActive(bool active, bool writable)
-{
-//  QSettings handlerReg("HKEY_CLASSES_ROOT\\nxm\\", QSettings::NativeFormat);
-  QSettings handlerReg("HKEY_CURRENT_USER\\Software\\Classes\\nxm\\", QSettings::NativeFormat);
-
-  if (writable) {
-    QString myExe = QString("\"%1\" ").arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath())).append("\"%1\"");
-    handlerReg.setValue("Default", "URL:NXM Protocol");
-    handlerReg.setValue("URL Protocol", "");
-    handlerReg.setValue("shell/open/command/Default", active ? myExe : "");
-    handlerReg.sync();
-  } else {
-    Helper::setNXMHandler(GameInfo::instance().getOrganizerDirectory(), active);
-  }
-}
-
 
 void Settings::resetDialogs()
 {
