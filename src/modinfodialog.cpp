@@ -93,6 +93,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
+  refreshLists();
+
   if (unmanaged) {
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
@@ -104,7 +106,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
   }
-  refreshLists();
   initINITweaks();
 
   ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
