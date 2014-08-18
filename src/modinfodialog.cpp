@@ -93,6 +93,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
+  refreshLists();
+
   if (unmanaged) {
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
@@ -110,7 +112,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
     ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
   }
-  refreshLists();
   initINITweaks();
 
   ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != NULL);
