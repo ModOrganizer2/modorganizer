@@ -175,6 +175,22 @@ QStringList OrganizerProxy::findFiles(const QString &path, const std::function<b
   return result;
 }
 
+QStringList OrganizerProxy::getFileOrigins(const QString &fileName) const
+{
+  QStringList result;
+  const FileEntry::Ptr file = m_Proxied->m_DirectoryStructure->searchFile(ToWString(QFileInfo(fileName).fileName()), NULL);
+
+  if (file.get() != NULL) {
+    result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
+    foreach (int i, file->getAlternatives()) {
+      result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(i).getName()));
+    }
+  } else {
+    qDebug("%s not found", qPrintable(fileName));
+  }
+  return result;
+}
+
 QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const
 {
   return m_Proxied->findFileInfos(path, filter);

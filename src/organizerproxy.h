@@ -29,6 +29,7 @@ public:
   virtual QString resolvePath(const QString &fileName) const;
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
+  virtual QStringList getFileOrigins(const QString &fileName) const;
   virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
 
   virtual MOBase::IDownloadManager *downloadManager();
