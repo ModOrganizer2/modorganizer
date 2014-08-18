@@ -41,10 +41,11 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-NXMAccessManager::NXMAccessManager(QObject *parent)
+NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
   , m_LoginReply(NULL)
   , m_ProgressDialog()
+  , m_MOVersion(moVersion)
   , m_LoginAttempted(false)
 {
   setCookieJar(new PersistentCookieJar(
@@ -59,6 +60,10 @@ NXMAccessManager::~NXMAccessManager()
   }
 }
 
+void NXMAccessManager::setNMMVersion(const QString &nmmVersion)
+{
+  m_NMMVersion = nmmVersion;
+}
 
 QNetworkReply *NXMAccessManager::createRequest(
     QNetworkAccessManager::Operation operation, const QNetworkRequest &request,
@@ -122,7 +127,7 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 
 void NXMAccessManager::pageLogin()
 {
-  QString requestString = (ToQString(GameInfo::instance().getNexusPage()) + "/sessions/?Login&uri=%1")
+  QString requestString = (ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Login&uri=%1")
                              .arg(QString(QUrl::toPercentEncoding(ToQString(GameInfo::instance().getNexusPage()))));
 
   QNetworkRequest request(requestString);
@@ -140,6 +145,9 @@ void NXMAccessManager::pageLogin()
   postData.addQueryItem("password", m_Password);
   postDataQuery = postData.encodedQuery();
 #endif
+
+  QString userAgent = QString("Mod Organizer v%1 (compatible to Nexus Client v%2)").arg(m_MOVersion).arg(m_NMMVersion);
+  request.setRawHeader("User-Agent", userAgent.toUtf8());
 
   m_ProgressDialog.setLabelText(tr("Logging into Nexus"));
   QList<QPushButton*> buttons = m_ProgressDialog.findChildren<QPushButton*>();

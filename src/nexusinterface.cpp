@@ -146,17 +146,16 @@ NexusInterface::NexusInterface()
   : m_NMMVersion()
 {
   atexit(&cleanup);
-  m_AccessManager = new NXMAccessManager(this);
-
-  m_DiskCache = new QNetworkDiskCache(this);
-  connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
-
 
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
-
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
                             version.dwFileVersionMS & 0xFFFF,
                             version.dwFileVersionLS >> 16);
+
+  m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString());
+
+  m_DiskCache = new QNetworkDiskCache(this);
+  connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
 }
 
 
@@ -188,6 +187,7 @@ void NexusInterface::setCacheDirectory(const QString &directory)
 void NexusInterface::setNMMVersion(const QString &nmmVersion)
 {
   m_NMMVersion = nmmVersion;
+  m_AccessManager->setNMMVersion(nmmVersion);
 }
 
 void NexusInterface::loginCompleted()

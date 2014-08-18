@@ -305,8 +305,6 @@ private:
 
 private:
 
-//  static NexusInterface *s_Instance;
-
   QNetworkDiskCache *m_DiskCache;
 
   NXMAccessManager *m_AccessManager;
