@@ -51,13 +51,20 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  m_FilterActive = (m_CategoryFilter.size() > 0) || !m_CurrentFilter.isEmpty();
+  m_FilterActive = (m_CategoryFilter.size() > 0) || (m_ContentFilter.size() > 0) || !m_CurrentFilter.isEmpty();
   emit filterActive(m_FilterActive);
 }
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
   m_CategoryFilter = categories;
+  updateFilterActive();
+  this->invalidate();
+}
+
+void ModListSortProxy::setContentFilter(const std::vector<int> &content)
+{
+  m_ContentFilter = content;
   updateFilterActive();
   this->invalidate();
 }
@@ -262,6 +269,11 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
       } break;
     }
   }
+
+  foreach (int content, m_ContentFilter) {
+    if (!info->hasContent(static_cast<ModInfo::EContent>(content))) return false;
+  }
+
   return true;
 }
 
@@ -299,6 +311,11 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       } break;
     }
   }
+
+  foreach (int content, m_ContentFilter) {
+    if (info->hasContent(static_cast<ModInfo::EContent>(content))) return true;
+  }
+
   return false;
 }
 
@@ -312,7 +329,7 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
   if (m_FilterMode == FILTER_AND) {
     return filterMatchesModAnd(info, enabled);
   } else {
-    return (m_CategoryFilter.size() == 0) || filterMatchesModOr(info, enabled);
+    return filterMatchesModOr(info, enabled);
   }
 }
 

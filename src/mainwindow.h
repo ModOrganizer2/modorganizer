@@ -261,7 +261,8 @@ private:
   int checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
-  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);
+  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type);
+  void addContentFilters();
   void addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
 
   void setCategoryListVisible(bool visible);

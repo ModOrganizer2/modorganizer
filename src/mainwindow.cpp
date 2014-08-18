@@ -1253,7 +1253,7 @@ void MainWindow::loadPlugins()
     registerPlugin(plugin, "");
   }
 
-  QFile loadCheck(QCoreApplication::applicationDirPath() + "/plugin_loadcheck.tmp");
+  QFile loadCheck(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
   if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
     // oh, there was a failed plugin load last time. Find out which plugin was loaded last
     QString fileName;
@@ -1968,6 +1968,7 @@ void MainWindow::refreshBSAList()
 
   for (std::vector<std::pair<UINT32, QTreeWidgetItem*> >::iterator iter = items.begin(); iter != items.end(); ++iter) {
     int originID = iter->second->data(1, Qt::UserRole).toInt();
+
     FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
     QList<QTreeWidgetItem*> items = ui->bsaList->findItems(ToQString(origin.getName()), Qt::MatchFixedString);
     QTreeWidgetItem *subItem = NULL;
@@ -2937,11 +2938,11 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
   }
 }
 
-
-QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID)
+QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
   item->setData(0, Qt::UserRole, categoryID);
+  item->setData(0, Qt::UserRole + 1, type);
   if (root != NULL) {
     root->addChild(item);
   } else {
@@ -2950,6 +2951,12 @@ QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString 
   return item;
 }
 
+void MainWindow::addContentFilters()
+{
+  for (unsigned i = 0; i < ModInfo::NUM_CONTENT_TYPES; ++i) {
+    addFilterItem(NULL, tr("<Contains %1>").arg(ModInfo::getContentTypeName(i)), i, ModListSortProxy::TYPE_CONTENT);
+  }
+}
 
 void MainWindow::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
 {
@@ -2957,7 +2964,7 @@ void MainWindow::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &
     if ((m_CategoryFactory.getParentID(i) == targetID)) {
       int categoryID = m_CategoryFactory.getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
-        QTreeWidgetItem *item = addFilterItem(root, m_CategoryFactory.getCategoryName(i), categoryID);
+        QTreeWidgetItem *item = addFilterItem(root, m_CategoryFactory.getCategoryName(i), categoryID, ModListSortProxy::TYPE_CATEGORY);
         if (m_CategoryFactory.hasChildren(i)) {
           addCategoryFilters(item, categoriesUsed, categoryID);
         }
@@ -2980,14 +2987,16 @@ void MainWindow::refreshFilters()
   }
 
   ui->categoriesList->clear();
-  addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED);
-  addFilterItem(NULL, tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED);
-  addFilterItem(NULL, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE);
-  addFilterItem(NULL, tr("<Managed by MO>"), CategoryFactory::CATEGORY_SPECIAL_MANAGED);
-  addFilterItem(NULL, tr("<Managed outside MO>"), CategoryFactory::CATEGORY_SPECIAL_UNMANAGED);
-  addFilterItem(NULL, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY);
-  addFilterItem(NULL, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT);
-  addFilterItem(NULL, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED);
+  addFilterItem(NULL, tr("<Checked>"), CategoryFactory::CATEGORY_SPECIAL_CHECKED, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Unchecked>"), CategoryFactory::CATEGORY_SPECIAL_UNCHECKED, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Update>"), CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Managed by MO>"), CategoryFactory::CATEGORY_SPECIAL_MANAGED, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Managed outside MO>"), CategoryFactory::CATEGORY_SPECIAL_UNMANAGED, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<No category>"), CategoryFactory::CATEGORY_SPECIAL_NOCATEGORY, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Conflicted>"), CategoryFactory::CATEGORY_SPECIAL_CONFLICT, ModListSortProxy::TYPE_SPECIAL);
+  addFilterItem(NULL, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED, ModListSortProxy::TYPE_SPECIAL);
+
+  addContentFilters();
 
   std::set<int> categoriesUsed;
   for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
@@ -3942,14 +3951,22 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 {
   QModelIndexList indices = ui->categoriesList->selectionModel()->selectedRows();
   std::vector<int> categories;
+  std::vector<int> content;
   foreach (const QModelIndex &index, indices) {
-    int categoryId = index.data(Qt::UserRole).toInt();
-    if (categoryId != CategoryFactory::CATEGORY_NONE) {
-      categories.push_back(categoryId);
+    int filterType = index.data(Qt::UserRole + 1).toInt();
+    if (filterType == ModListSortProxy::TYPE_CATEGORY) {
+      int categoryId = index.data(Qt::UserRole).toInt();
+      if (categoryId != CategoryFactory::CATEGORY_NONE) {
+        categories.push_back(categoryId);
+      }
+    } else if (filterType == ModListSortProxy::TYPE_CONTENT) {
+      int contentId = index.data(Qt::UserRole).toInt();
+      content.push_back(contentId);
     }
   }
 
   m_ModListSortProxy->setCategoryFilter(categories);
+  m_ModListSortProxy->setContentFilter(content);
   ui->clickBlankLabel->setEnabled(categories.size() > 0);
   if (indices.count() == 0) {
     ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<All>")));
@@ -4288,7 +4305,7 @@ void MainWindow::installTranslator(const QString &name)
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage != "en_US") {
+    if (m_CurrentLanguage != "en-US") {
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
@@ -5447,7 +5464,7 @@ void MainWindow::on_bossButton_clicked()
     this->setEnabled(false);
     ON_BLOCK_EXIT([&] () { this->setEnabled(true); });
     QProgressDialog dialog(this);
-    dialog.setLabelText(tr("LOOT working"));
+    dialog.setLabelText(tr("Please wait while LOOT is running"));
     dialog.setMaximum(0);
     dialog.show();
 

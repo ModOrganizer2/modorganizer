@@ -40,7 +40,7 @@
         <translation>Закрыть</translation>
     </message>
     <message>
-        <location filename="aboutdialog.cpp" line="81"/>
+        <location filename="aboutdialog.cpp" line="80"/>
         <source>No license</source>
         <translation>Лицензия отсутствует</translation>
     </message>
@@ -159,22 +159,22 @@ If there is a component called &quot;00 Core&quot; it is usually required. Optio
     <message>
         <location filename="browserdialog.ui" line="14"/>
         <source>Some Page</source>
-        <translation type="unfinished"></translation>
+        <translation>Домашняя страница</translation>
     </message>
     <message>
-        <location filename="browserdialog.ui" line="256"/>
+        <location filename="browserdialog.ui" line="281"/>
         <source>Search</source>
-        <translation type="unfinished"></translation>
+        <translation>Поиск</translation>
     </message>
     <message>
-        <location filename="browserdialog.cpp" line="91"/>
+        <location filename="browserdialog.cpp" line="95"/>
         <source>new</source>
-        <translation type="unfinished"></translation>
+        <translation>создать</translation>
     </message>
     <message>
-        <location filename="browserdialog.cpp" line="204"/>
+        <location filename="browserdialog.cpp" line="209"/>
         <source>failed to start download</source>
-        <translation type="unfinished"></translation>
+        <translation>не удалось начать загрузку</translation>
     </message>
 </context>
 <context>
@@ -637,7 +637,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadmanager.cpp" line="321"/>
         <source>Memory allocation error (in refreshing directory).</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка распределения памяти (при обновлении папки).</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="369"/>
@@ -707,7 +707,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadmanager.cpp" line="640"/>
         <source>No known download urls. Sorry, this download can&apos;t be resumed.</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет известных url для загрузки, эта загрузка не может быть продолжена.</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="695"/>
@@ -722,42 +722,42 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadmanager.cpp" line="744"/>
         <source>Main</source>
-        <translation type="unfinished">Главное</translation>
+        <translation>Главное</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="745"/>
         <source>Update</source>
-        <translation type="unfinished">Обновление</translation>
+        <translation>Обновление</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="746"/>
         <source>Optional</source>
-        <translation type="unfinished">Опционально</translation>
+        <translation>Опционально</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="747"/>
         <source>Old</source>
-        <translation type="unfinished">Старые</translation>
+        <translation>Старые</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="748"/>
         <source>Misc</source>
-        <translation type="unfinished">Разное</translation>
+        <translation>Разное</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="749"/>
         <source>Unknown</source>
-        <translation type="unfinished">Неизвестно</translation>
+        <translation>Неизвестно</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="999"/>
         <source>Memory allocation error (in processing progress event).</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка распределения памяти (в ходе процесса).</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1012"/>
         <source>Memory allocation error (in processing downloaded data).</source>
-        <translation type="unfinished"></translation>
+        <translation>Ошибка распределения памяти (в процессе загрузки данных).</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1141"/>
@@ -776,27 +776,27 @@ p, li { white-space: pre-wrap; }
         <translation>Нет соответствующих фалов на Nexus. Выберите файл вручную.</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1286"/>
+        <location filename="downloadmanager.cpp" line="1285"/>
         <source>No download server available. Please try again later.</source>
         <translation>Нет доступных серверов для загрузки. Попробуйте позже.</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1329"/>
+        <location filename="downloadmanager.cpp" line="1328"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation>Не удалось получить информацию о файле: %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1357"/>
+        <location filename="downloadmanager.cpp" line="1356"/>
         <source>Download failed. Server reported: %1</source>
         <translation>Загрузка не удалась. Сервер сообщил: %1</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1359"/>
+        <location filename="downloadmanager.cpp" line="1358"/>
         <source>Download failed: %1 (%2)</source>
         <translation>Загрузка не удалась: %1 (%2)</translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1458"/>
+        <location filename="downloadmanager.cpp" line="1457"/>
         <source>failed to re-open %1</source>
         <translation>не удалось повторно открыть %1</translation>
     </message>
@@ -1317,6 +1317,31 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished">Категории</translation>
     </message>
     <message>
+        <location filename="mainwindow.ui" line="97"/>
+        <source>Click blank area to deselect</source>
+        <translation>Для отмены выбора нажмите на свободное место</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="116"/>
+        <source>If checked, only mods that match all selected categories are displayed.</source>
+        <translation>Если выбрано, будут отображены только моды, совпадающие с выбранными категориями.</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="119"/>
+        <source>And</source>
+        <translation>И</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="129"/>
+        <source>If checked, all mods that match at least one of the selected categories are displayed.</source>
+        <translation>Если выбрано, будут отображены все моды, совпадающие по крайней мере с одной из выбранных категорий.</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="132"/>
+        <source>Or</source>
+        <translation>Или</translation>
+    </message>
+    <message>
         <location filename="mainwindow.ui" line="171"/>
         <source>Profile</source>
         <translation>Профиль</translation>
@@ -1342,10 +1367,6 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Обратите внимание, что порядок загрузки esp одинаков для всех профилей.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Refresh list</source>
-        <translation type="obsolete">Обновить список</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="218"/>
         <source>Refresh list. This is usually not necessary unless you modified data outside the program.</source>
         <translation>Обновить список. Обычно в этом нет необходимости, пока вы не измените данные вне программы.</translation>
@@ -1354,13 +1375,13 @@ p, li { white-space: pre-wrap; }
         <location filename="mainwindow.ui" line="238"/>
         <location filename="mainwindow.ui" line="739"/>
         <source>Restore Backup...</source>
-        <translation type="unfinished"></translation>
+        <translation>Восстановить из резервной копии...</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="252"/>
         <location filename="mainwindow.ui" line="759"/>
         <source>Create Backup</source>
-        <translation type="unfinished"></translation>
+        <translation>Создать резервную копию</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="368"/>
@@ -1489,34 +1510,9 @@ p, li { white-space: pre-wrap; }
         <translation>Сортировать</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="97"/>
-        <source>Click blank area to deselect</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="116"/>
-        <source>If checked, only mods that match all selected categories are displayed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="119"/>
-        <source>And</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="129"/>
-        <source>If checked, all mods that match at least one of the selected categories are displayed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="132"/>
-        <source>Or</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="215"/>
         <source>Open list options...</source>
-        <translation type="unfinished"></translation>
+        <translation>Открыть список вариантов...</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="886"/>
@@ -1526,12 +1522,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="916"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs are bundles of game assets (textures, scripts, ...). By default, the engine loads these bundles in a separate step from loose files. MO can manage those archives to align their load order with that of loose files:&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;managed&lt;/span&gt;, their load order is specified by the priority of the corresponding mod (left pane), the same as the loose files. You can manually enable any BSA that has no corresponding plugin active.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;not managed&lt;/span&gt; their load order is specified by the priority of the corresponding plugin (right pane, plugins tab). You can then not manually enable BSAs where the plugin isn&apos;t active.&lt;/p&gt;&lt;p&gt;In either case you can not disable archives if there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSA это пакет ресурсов игры (textures, scripts, ...). По умолчанию движок грузит эти пакеты отдельно от свободных файлов. MO может управлять этими архивами, чтобы совместить их порядок загрузки этими свободными файлами:&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;управляются&lt;/span&gt;, их порядок загрузки определяется приоритетом соответствующего мода (левая панель), также, как и свободные файлы. Вы можете вручную подключить любой BSA, который не имеет соответствующего активного плагина.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;не управляются/span&gt;, их порядок загрузки определяется соответствующим активным файлом мода (правая панель, вкладка плагинов). В таком случае вы не сможете вручную подключить BSA, для которых нет активного плагина.&lt;/p&gt;&lt;p&gt;В обоих вариантах вы не сможете отключить архивы имеющие соответствующий активный плагин, игра все равно загрузит их.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="919"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Have MO manage archives (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;read more&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Не имеет управляемых в MO архивов(&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;читать далее&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="934"/>
@@ -1556,10 +1552,6 @@ BSA, отмеченные здесь, загружаются так, чтобы 
         <translation type="unfinished">Файл</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Marked Archives (&lt;img src=&quot;:/MO/gui/warning_16&quot;/&gt;) are still loaded on Skyrim but the &lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;regular file override&lt;/span&gt;&lt;/a&gt; mechanism will apply: Loose files override BSAs, no matter the mod/plugin priority.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="obsolete">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Помеченные архивы (&lt;img src=&quot;:/MO/gui/warning_16&quot;/&gt;) всё ещё загружаются в Skyrim, но был применён&lt;a href=&quot;http://forums.bethsoft.com/topic/1354395-update-bsas-and-you/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;стандартный механизм перезаписи файлов&lt;/span&gt;&lt;/a&gt;: отдельные файлы перезаписывают файлы в BSA, вне зависимости от приоритета мода/плагина.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="992"/>
         <source>Data</source>
         <translation>Данные</translation>
@@ -1576,8 +1568,8 @@ BSA, отмеченные здесь, загружаются так, чтобы 
     </message>
     <message>
         <location filename="mainwindow.ui" line="1016"/>
-        <location filename="mainwindow.cpp" line="3800"/>
-        <location filename="mainwindow.cpp" line="4672"/>
+        <location filename="mainwindow.cpp" line="3833"/>
+        <location filename="mainwindow.cpp" line="4705"/>
         <source>Refresh</source>
         <translation>Обновить</translation>
     </message>
@@ -1633,10 +1625,6 @@ p, li { white-space: pre-wrap; }
         <location filename="mainwindow.ui" line="1147"/>
         <source>This is a list of mods you downloaded from Nexus. Double click one to install it.</source>
         <translation>Список модов, загруженных с Nexus. Двойной клик для установки.</translation>
-    </message>
-    <message>
-        <source>Compact</source>
-        <translation type="obsolete">Компактно</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1200"/>
@@ -1761,7 +1749,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="mainwindow.ui" line="1412"/>
-        <location filename="mainwindow.cpp" line="4613"/>
+        <location filename="mainwindow.cpp" line="4646"/>
         <source>Update</source>
         <translation>Обновление</translation>
     </message>
@@ -1772,7 +1760,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="mainwindow.ui" line="1427"/>
-        <location filename="mainwindow.cpp" line="565"/>
+        <location filename="mainwindow.cpp" line="573"/>
         <source>No Problems</source>
         <translation>Проблем не обнаружено</translation>
     </message>
@@ -1805,433 +1793,429 @@ Right now this has very limited functionality</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1460"/>
-        <location filename="mainwindow.cpp" line="4695"/>
+        <location filename="mainwindow.cpp" line="4728"/>
         <source>Endorse Mod Organizer</source>
         <translation>Одобрить Mod Organizer</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1465"/>
         <source>Copy Log to Clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>Копировать лог в буфер обмена</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1468"/>
         <source>Ctrl+C</source>
-        <translation type="unfinished"></translation>
+        <translation>Ctrl+C</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="247"/>
+        <location filename="mainwindow.cpp" line="255"/>
         <source>Toolbar</source>
         <translation>Панель инструментов</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="248"/>
+        <location filename="mainwindow.cpp" line="256"/>
         <source>Desktop</source>
         <translation>Рабочий стол</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="249"/>
+        <location filename="mainwindow.cpp" line="257"/>
         <source>Start Menu</source>
         <translation>Меню Пуск</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="553"/>
+        <location filename="mainwindow.cpp" line="561"/>
         <source>Problems</source>
         <translation>Проблемы</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="554"/>
+        <location filename="mainwindow.cpp" line="562"/>
         <source>There are potential problems with your setup</source>
         <translation>Есть возможные проблемы с вашей установкой</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="566"/>
+        <location filename="mainwindow.cpp" line="574"/>
         <source>Everything seems to be in order</source>
         <translation>Кажется всё в порядке</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="627"/>
+        <location filename="mainwindow.cpp" line="635"/>
         <source>Help on UI</source>
         <translation>Справка по интерфейсу</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="631"/>
+        <location filename="mainwindow.cpp" line="639"/>
         <source>Documentation Wiki</source>
         <translation>Wiki-документация</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="635"/>
+        <location filename="mainwindow.cpp" line="643"/>
         <source>Report Issue</source>
         <translation>Сообщить о проблеме</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="639"/>
+        <location filename="mainwindow.cpp" line="647"/>
         <source>Tutorials</source>
         <translation>Уроки</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="678"/>
+        <location filename="mainwindow.cpp" line="686"/>
         <source>About</source>
         <translation>О программе</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="679"/>
+        <location filename="mainwindow.cpp" line="687"/>
         <source>About Qt</source>
         <translation>О библиотеке Qt</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="773"/>
+        <location filename="mainwindow.cpp" line="782"/>
         <source>failed to save load order: %1</source>
         <translation>не удалось сохранить порядок загрузки: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="785"/>
+        <location filename="mainwindow.cpp" line="793"/>
         <source>Name</source>
         <translation type="unfinished">Имя</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="786"/>
+        <location filename="mainwindow.cpp" line="794"/>
         <source>Please enter a name for the new profile</source>
         <translation>Введите имя нового профиля</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="794"/>
+        <location filename="mainwindow.cpp" line="802"/>
         <source>failed to create profile: %1</source>
         <translation>не удалось создать профиль: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="837"/>
+        <location filename="mainwindow.cpp" line="843"/>
         <source>Show tutorial?</source>
         <translation>Показать урок?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="838"/>
+        <location filename="mainwindow.cpp" line="844"/>
         <source>You are starting Mod Organizer for the first time. Do you want to show a tutorial of its basic features? If you choose no you can always start the tutorial from the &quot;Help&quot;-menu.</source>
         <translation>Вы запустили Mod Organizer в первый раз. Вы хотите просмотреть уроки по основным возможностям? В случае отказа вы всегда можете открыть уроки из меню &quot;Помощь&quot;.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="869"/>
+        <location filename="mainwindow.cpp" line="875"/>
         <source>Downloads in progress</source>
         <translation>Загрузки в процессе</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="870"/>
+        <location filename="mainwindow.cpp" line="876"/>
         <source>There are still downloads in progress, do you really want to quit?</source>
         <translation>Загрузки всё ещё в процессе, вы правда хотите выйти?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="924"/>
+        <location filename="mainwindow.cpp" line="930"/>
         <source>failed to read savegame: %1</source>
         <translation>не удалось прочесть сохранение: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1048"/>
+        <location filename="mainwindow.cpp" line="1053"/>
         <source>Plugin &quot;%1&quot; failed: %2</source>
         <translation>Плагин &quot;%1&quot; не удалось: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1050"/>
+        <location filename="mainwindow.cpp" line="1055"/>
         <source>Plugin &quot;%1&quot; failed</source>
         <translation>Плагин &quot;%1&quot; не удалось</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1220"/>
+        <location filename="mainwindow.cpp" line="1225"/>
         <source>failed to init plugin %1: %2</source>
         <translation>не удалось инициализировать плагин %1: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1258"/>
+        <location filename="mainwindow.cpp" line="1263"/>
         <source>Plugin error</source>
         <translation>Ошибка плагина</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1259"/>
+        <location filename="mainwindow.cpp" line="1264"/>
         <source>It appears the plugin &quot;%1&quot; failed to load last startup and caused MO to crash. Do you want to disable it?
 (Please note: If this is the first time you see this message for this plugin you may want to give it another try. The plugin may be able to recover from the problem)</source>
         <translation>Кажется, что при последнем запуске не удалось загрузить плагин &quot;%1&quot; и это привело к падению MO. Вы хотите отключить его?
 (Замечание: Если это первый раз, когда вы видите такое сообщение для этого плагина, вероятно вы захотите сделать ещё одну попытка. Плагин может восстановиться после проблемы)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1318"/>
+        <location filename="mainwindow.cpp" line="1323"/>
         <source>Failed to start &quot;%1&quot;</source>
         <translation>Не удалось запустить &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1320"/>
+        <location filename="mainwindow.cpp" line="1325"/>
         <source>Waiting</source>
         <translation>Ожидание</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1320"/>
+        <location filename="mainwindow.cpp" line="1325"/>
         <source>Please press OK once you&apos;re logged into steam.</source>
         <translation>Нажмите OK как только вы войдете в Steam.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1346"/>
+        <location filename="mainwindow.cpp" line="1351"/>
         <source>Start Steam?</source>
         <translation>Запустить Steam?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1347"/>
+        <location filename="mainwindow.cpp" line="1352"/>
         <source>Steam is required to be running already to correctly start the game. Should MO try to start steam now?</source>
         <translation>Требуется запущенный Steam, для корректного запуска игры. Должен ли MO попытаться запустить Steam сейчас?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1557"/>
+        <location filename="mainwindow.cpp" line="1562"/>
         <source>Also in: &lt;br&gt;</source>
         <translation>Также в: &lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1568"/>
+        <location filename="mainwindow.cpp" line="1573"/>
         <source>No conflict</source>
         <translation>Конфликтов нет</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1737"/>
+        <location filename="mainwindow.cpp" line="1742"/>
         <source>&lt;Edit...&gt;</source>
         <translation>&lt;Правка...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2003"/>
+        <location filename="mainwindow.cpp" line="2008"/>
         <source>This bsa is enabled in the ini file so it may be required!</source>
         <translation>Этот bsa подключен через ini, так что он может быть необходим!</translation>
     </message>
     <message>
-        <source>This archive will still be loaded since there is a plugin of the same name but its files will not follow installation order!</source>
-        <translation type="obsolete">Этот архив все равно будет загружен, так как есть плагин с одноименным названием, но его файлы не будут следовать порядку установки!</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2065"/>
+        <location filename="mainwindow.cpp" line="2070"/>
         <source>Activating Network Proxy</source>
         <translation>Подключение сетевого прокси</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2305"/>
-        <location filename="mainwindow.cpp" line="4316"/>
+        <location filename="mainwindow.cpp" line="2310"/>
+        <location filename="mainwindow.cpp" line="4349"/>
         <source>Installation successful</source>
         <translation>Установка завершена</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2316"/>
-        <location filename="mainwindow.cpp" line="4328"/>
+        <location filename="mainwindow.cpp" line="2321"/>
+        <location filename="mainwindow.cpp" line="4361"/>
         <source>Configure Mod</source>
         <translation>Настройка мода</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2317"/>
-        <location filename="mainwindow.cpp" line="4329"/>
+        <location filename="mainwindow.cpp" line="2322"/>
+        <location filename="mainwindow.cpp" line="4362"/>
         <source>This mod contains ini tweaks. Do you want to configure them now?</source>
         <translation>Этот мод включает настройки ini. Вы хотите настроить их сейчас?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2324"/>
-        <location filename="mainwindow.cpp" line="4336"/>
+        <location filename="mainwindow.cpp" line="2329"/>
+        <location filename="mainwindow.cpp" line="4369"/>
         <source>mod &quot;%1&quot; not found</source>
         <translation>мод &quot;%1&quot; не найден</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2327"/>
-        <location filename="mainwindow.cpp" line="4342"/>
+        <location filename="mainwindow.cpp" line="2332"/>
+        <location filename="mainwindow.cpp" line="4375"/>
         <source>Installation cancelled</source>
         <translation>Установка отменена</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2327"/>
-        <location filename="mainwindow.cpp" line="4342"/>
+        <location filename="mainwindow.cpp" line="2332"/>
+        <location filename="mainwindow.cpp" line="4375"/>
         <source>The mod was not installed completely.</source>
         <translation>Мод не был установлен полностью.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2232"/>
+        <location filename="mainwindow.cpp" line="2237"/>
         <source>Some plugins could not be loaded</source>
         <translation>Некоторые плагины не могут быть загружены</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2235"/>
+        <location filename="mainwindow.cpp" line="2240"/>
         <source>Too many esps and esms enabled</source>
         <translation>Подключено слишком много esp и esm</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2238"/>
-        <location filename="mainwindow.cpp" line="2259"/>
+        <location filename="mainwindow.cpp" line="2243"/>
+        <location filename="mainwindow.cpp" line="2264"/>
         <source>Description missing</source>
         <translation>Описание отсутствует</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2247"/>
+        <location filename="mainwindow.cpp" line="2252"/>
         <source>The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:</source>
         <translation>Следующие плагины не могут быть загружены. Причина возможно в отсутствующих зависимостях (таких как python) или в устаревшей версии:</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2255"/>
+        <location filename="mainwindow.cpp" line="2260"/>
         <source>The game doesn&apos;t allow more than 255 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or merge some plugins into one. You can find a guide here: &lt;a href=&quot;http://wiki.step-project.com/Guide:Merging_Plugins&quot;&gt;http://wiki.step-project.com/Guide:Merging_Plugins&lt;/a&gt;</source>
         <translation>Игра не позволяет загрузить больше 255 активных плагинов (включая официальные). Вам нужно отключить некоторые ненужные плагины или объединить несколько небольших плагинов в один. Инструкция может быть найдена здесь: &lt;a href=&quot;http://wiki.step-project.com/Guide:Merging_Plugins&quot;&gt;http://wiki.step-project.com/Guide:Merging_Plugins&lt;/a&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2281"/>
+        <location filename="mainwindow.cpp" line="2286"/>
         <source>Choose Mod</source>
         <translation>Выберете мод</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2282"/>
+        <location filename="mainwindow.cpp" line="2287"/>
         <source>Mod Archive</source>
         <translation>Архив мода</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2536"/>
+        <location filename="mainwindow.cpp" line="2541"/>
         <source>Start Tutorial?</source>
         <translation>Начать урок?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2537"/>
+        <location filename="mainwindow.cpp" line="2542"/>
         <source>You&apos;re about to start a tutorial. For technical reasons it&apos;s not possible to end the tutorial early. Continue?</source>
         <translation>Вы собираетесь открыть урок. По техническим причинам будет невозможно закончить его досрочно. Продолжить?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2681"/>
-        <location filename="mainwindow.cpp" line="4241"/>
+        <location filename="mainwindow.cpp" line="2686"/>
+        <location filename="mainwindow.cpp" line="4274"/>
         <source>Download started</source>
         <translation>Загрузка начата</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2742"/>
+        <location filename="mainwindow.cpp" line="2747"/>
         <source>failed to update mod list: %1</source>
         <translation>не удалось обновить список модов: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2773"/>
+        <location filename="mainwindow.cpp" line="2791"/>
         <source>failed to spawn notepad.exe: %1</source>
         <translation>не удалось вызвать notepad.exe: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2810"/>
+        <location filename="mainwindow.cpp" line="2828"/>
         <source>failed to open %1</source>
         <translation>не удалось открыть %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2885"/>
+        <location filename="mainwindow.cpp" line="2903"/>
         <source>failed to change origin name: %1</source>
         <translation>не удалось изменить оригинальное имя: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1332"/>
+        <location filename="mainwindow.cpp" line="1337"/>
         <source>Executable &quot;%1&quot; not found</source>
         <translation>Исполняемый файл &quot;%1&quot; не найден</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1834"/>
+        <location filename="mainwindow.cpp" line="1839"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation>Не удалось обновить список esp: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2915"/>
+        <location filename="mainwindow.cpp" line="2933"/>
         <source>failed to move &quot;%1&quot; from mod &quot;%2&quot; to &quot;%3&quot;: %4</source>
         <translation>не удалось переместить &quot;%1&quot; из мода &quot;%2&quot; в &quot;%3&quot;: %4</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2964"/>
+        <location filename="mainwindow.cpp" line="2983"/>
         <source>&lt;Checked&gt;</source>
         <translation>&lt;Подключен&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2965"/>
+        <location filename="mainwindow.cpp" line="2984"/>
         <source>&lt;Unchecked&gt;</source>
         <translation>&lt;Отключен&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2966"/>
+        <location filename="mainwindow.cpp" line="2985"/>
         <source>&lt;Update&gt;</source>
         <translation>&lt;Обновлен&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2969"/>
+        <location filename="mainwindow.cpp" line="2988"/>
         <source>&lt;No category&gt;</source>
         <translation>&lt;Без категории&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2970"/>
+        <location filename="mainwindow.cpp" line="2989"/>
         <source>&lt;Conflicted&gt;</source>
         <translation>&lt;Конфликтует&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2971"/>
+        <location filename="mainwindow.cpp" line="2990"/>
         <source>&lt;Not Endorsed&gt;</source>
         <translation>&lt;Не одобрено&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3004"/>
+        <location filename="mainwindow.cpp" line="3026"/>
         <source>failed to rename mod: %1</source>
         <translation>не удалось переименовать мод: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3017"/>
+        <location filename="mainwindow.cpp" line="3039"/>
         <source>Overwrite?</source>
         <translation>Перезаписать?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3018"/>
+        <location filename="mainwindow.cpp" line="3040"/>
         <source>This will replace the existing mod &quot;%1&quot;. Continue?</source>
         <translation>Это заменит существующий мод &quot;%1&quot;. Продолжить?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3021"/>
+        <location filename="mainwindow.cpp" line="3043"/>
         <source>failed to remove mod &quot;%1&quot;</source>
         <translation>не удалось удалить мод &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3025"/>
-        <location filename="mainwindow.cpp" line="4514"/>
-        <location filename="mainwindow.cpp" line="4538"/>
+        <location filename="mainwindow.cpp" line="3047"/>
+        <location filename="mainwindow.cpp" line="4547"/>
+        <location filename="mainwindow.cpp" line="4571"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation>не удалось переименовать &quot;%1&quot; в &quot;%2&quot;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3050"/>
+        <location filename="mainwindow.cpp" line="3072"/>
         <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
         <translation>Подключено несколько esp, выберете из них не конфликтующие.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3094"/>
-        <location filename="mainwindow.cpp" line="3713"/>
-        <location filename="mainwindow.cpp" line="3721"/>
-        <location filename="mainwindow.cpp" line="3948"/>
+        <location filename="mainwindow.cpp" line="3121"/>
+        <location filename="mainwindow.cpp" line="3746"/>
+        <location filename="mainwindow.cpp" line="3754"/>
+        <location filename="mainwindow.cpp" line="3981"/>
         <source>Confirm</source>
         <translation>Подтверждение</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3095"/>
+        <location filename="mainwindow.cpp" line="3122"/>
         <source>Remove the following mods?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</source>
         <translation>Удалить следующие моды?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3106"/>
+        <location filename="mainwindow.cpp" line="3133"/>
         <source>failed to remove mod: %1</source>
         <translation>не удалось удалить мод: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3141"/>
-        <location filename="mainwindow.cpp" line="3144"/>
+        <location filename="mainwindow.cpp" line="3168"/>
+        <location filename="mainwindow.cpp" line="3171"/>
         <source>Failed</source>
         <translation>Неудача</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3141"/>
+        <location filename="mainwindow.cpp" line="3168"/>
         <source>Installation file no longer exists</source>
         <translation>Установочный файл больше не существует</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3145"/>
+        <location filename="mainwindow.cpp" line="3172"/>
         <source>Mods installed with old versions of MO can&apos;t be reinstalled in this way.</source>
         <translation>Моды, установленные с использованием старых версий MO не могут быть переустановленны таким образом.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3176"/>
         <location filename="mainwindow.cpp" line="3203"/>
+        <location filename="mainwindow.cpp" line="3230"/>
         <source>You need to be logged in with Nexus to endorse</source>
         <translation>Вы должны быть авторизированы на Nexus, чтобы одобрять.</translation>
     </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="3948"/>
+        <location filename="mainwindow.cpp" line="3981"/>
         <source>Are you sure you want to remove the following %n save(s)?&lt;br&gt;&lt;ul&gt;%1&lt;/ul&gt;&lt;br&gt;Removed saves will be sent to the Recycle Bin.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
@@ -2239,340 +2223,9 @@ Right now this has very limited functionality</source>
             <numerusform></numerusform>
         </translation>
     </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4941"/>
-        <source>Extract BSA</source>
-        <translation>Распаковать BSA</translation>
-    </message>
-    <message>
-        <source>This mod contains at least one BSA. Do you want to unpack it?
-(This removes the BSA after completion. If you don&apos;t know about BSAs, just select no)</source>
-        <translation type="obsolete">Этот мод включает как минимум один BSA. Вы хотите распаковать их?
-(Это удалит BSA после завершения. Если вы не знаете ничего о BSAs, просто откажитесь)</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4898"/>
-        <location filename="mainwindow.cpp" line="4949"/>
-        <source>failed to read %1: %2</source>
-        <translation>не удалось прочесть %1: %2</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="4960"/>
-        <source>This archive contains invalid hashes. Some files may be broken.</source>
-        <translation>Архив содержит неверные хеш-суммы. Некоторые файлы могут быть испорчены.</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3349"/>
-        <source>Nexus ID for this Mod is unknown</source>
-        <translation>Nexus ID для этого мода неизвестен</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="1093"/>
-        <source>Download?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="1094"/>
-        <source>A download has been started but no installed page plugin recognizes it.
-If you download anyway no information (i.e. version) will be associated with the download.
-Continue?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="1135"/>
-        <source>Browse Mod Page</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2179"/>
-        <location filename="mainwindow.cpp" line="2186"/>
-        <source>Failed to write settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2180"/>
-        <location filename="mainwindow.cpp" line="2187"/>
-        <source>An error occured trying to write back MO settings: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2183"/>
-        <source>File is write protected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2184"/>
-        <source>Invalid file format (probably a bug)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2185"/>
-        <source>Unknown error %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2967"/>
-        <source>&lt;Managed by MO&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="2968"/>
-        <source>&lt;Managed outside MO&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3160"/>
-        <source>You need to be logged in with Nexus to resume a download</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3388"/>
-        <location filename="mainwindow.cpp" line="3828"/>
-        <source>Create Mod...</source>
-        <translation>Создать мод...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3389"/>
-        <source>This will move all files from overwrite into a new, regular mod.
-Please enter a name:</source>
-        <translation>Это переместит все файлы из перезаписи в новый, стандартный мод.
-Пожалуйста введите имя:</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3398"/>
-        <source>A mod with this name already exists</source>
-        <translation>Мод с таким именем уже существует</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3639"/>
-        <source>Continue?</source>
-        <translation>Продолжить?</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3640"/>
-        <source>The versioning scheme decides which version is considered newer than another.
-This function will guess the versioning scheme under the assumption that the installed version is outdated.</source>
-        <translation>Схема управления версиями принимает решение, какая версия считается новее другой.
-Функция может попробовать угадать схему управления версиями, при условии, что установленная версия является устаревшей.</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3660"/>
-        <location filename="mainwindow.cpp" line="4584"/>
-        <source>Sorry</source>
-        <translation>Извините</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3661"/>
-        <source>I don&apos;t know a versioning scheme where %1 is newer than %2.</source>
-        <translation>Мне неизвестна схема управления версиями, где %1 новее %2.</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3713"/>
-        <source>Really enable all visible mods?</source>
-        <translation>Действительно подключить все видимые моды?</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3721"/>
-        <source>Really disable all visible mods?</source>
-        <translation>Действительно отключить все видимые моды?</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3729"/>
-        <source>Choose what to export</source>
-        <translation>Выберете, что экспортировать</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3731"/>
-        <source>Everything</source>
-        <translation>Всё</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3731"/>
-        <source>All installed mods are included in the list</source>
-        <translation>Все установленные моды, включенные в список</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3732"/>
-        <source>Active Mods</source>
-        <translation>Активные моды</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3732"/>
-        <source>Only active (checked) mods from your current profile are included</source>
-        <translation>Включены все активные (подключенные) моды вашего текущего профиля</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3733"/>
-        <source>Visible</source>
-        <translation>Видимые</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3733"/>
-        <source>All mods visible in the mod list are included</source>
-        <translation>Включены все моды, видимые в списке модов</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3776"/>
-        <source>export failed: %1</source>
-        <translation>экспорт не удался: %1</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3793"/>
-        <source>Install Mod...</source>
-        <translation>Установить мод...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3795"/>
-        <source>Enable all visible</source>
-        <translation>Включить все видимые</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3796"/>
-        <source>Disable all visible</source>
-        <translation>Отключить все видимые</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3798"/>
-        <source>Check all for update</source>
-        <translation>Проверить все на обновления</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3802"/>
-        <source>Export to csv...</source>
-        <translation>Экспорт в csv...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3821"/>
-        <source>All Mods</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3827"/>
-        <source>Sync to Mods...</source>
-        <translation>Синхронизировать с модами...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3831"/>
-        <source>Restore Backup</source>
-        <translation>Восстановить из резервной копии</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3832"/>
-        <source>Remove Backup...</source>
-        <translation>Удалить резервную копию...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3836"/>
-        <source>Add/Remove Categories</source>
-        <translation>Добавить/Удалить категории</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3841"/>
-        <source>Replace Categories</source>
-        <translation>Заменить категории</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3846"/>
-        <source>Primary Category</source>
-        <translation>Основная категория</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3853"/>
-        <source>Change versioning scheme</source>
-        <translation>Изменить схему управления версиями</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3857"/>
-        <source>Un-ignore update</source>
-        <translation>Снять игнорирование обновления</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3859"/>
-        <source>Ignore update</source>
-        <translation>Игнорировать обновление</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3864"/>
-        <source>Rename Mod...</source>
-        <translation>Переименовать мод...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3865"/>
-        <source>Remove Mod...</source>
-        <translation>Удалить мод...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3866"/>
-        <source>Reinstall Mod</source>
-        <translation>Переустановить мод</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3869"/>
-        <source>Un-Endorse</source>
-        <translation>Отменить одобрение</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3872"/>
-        <location filename="mainwindow.cpp" line="3876"/>
-        <source>Endorse</source>
-        <translation>Одобрить</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3873"/>
-        <source>Won&apos;t endorse</source>
-        <translation>Не одобрять</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3879"/>
-        <source>Endorsement state unknown</source>
-        <translation>Статус одобрения неизвестен</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3886"/>
-        <source>Ignore missing data</source>
-        <translation>Игнорировать отсутствующие данные</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3889"/>
-        <source>Visit on Nexus</source>
-        <translation>Перейти на Nexus</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3890"/>
-        <source>Open in explorer</source>
-        <translation>Открыть в проводнике</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3894"/>
-        <source>Information...</source>
-        <translation>Информация...</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3901"/>
-        <location filename="mainwindow.cpp" line="5159"/>
-        <source>Exception: </source>
-        <translation>Исключение: </translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3903"/>
-        <location filename="mainwindow.cpp" line="5161"/>
-        <source>Unknown exception</source>
-        <translation>Неизвестное исключение</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3922"/>
-        <source>&lt;All&gt;</source>
-        <translation>&lt;Все&gt;</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3924"/>
-        <source>&lt;Multiple&gt;</source>
-        <translation>&lt;Несколько&gt;</translation>
-    </message>
     <message numerus="yes">
-        <location filename="mainwindow.cpp" line="4062"/>
+        <location filename="mainwindow.cpp" line="4095"/>
         <source>Delete %n save(s)</source>
-        <oldsource>Delete save(s)</oldsource>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -2580,11 +2233,347 @@ This function will guess the versioning scheme under the assumption that the ins
         </translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="4974"/>
+        <source>Extract BSA</source>
+        <translation>Распаковать BSA</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="4931"/>
+        <location filename="mainwindow.cpp" line="4982"/>
+        <source>failed to read %1: %2</source>
+        <translation>не удалось прочесть %1: %2</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="4993"/>
+        <source>This archive contains invalid hashes. Some files may be broken.</source>
+        <translation>Архив содержит неверные хеш-суммы. Некоторые файлы могут быть испорчены.</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3382"/>
+        <source>Nexus ID for this Mod is unknown</source>
+        <translation>Nexus ID для этого мода неизвестен</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1098"/>
+        <source>Download?</source>
+        <translation>Загрузить?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1099"/>
+        <source>A download has been started but no installed page plugin recognizes it.
+If you download anyway no information (i.e. version) will be associated with the download.
+Continue?</source>
+        <translation>Загрузка началась, но не была установлена страница плагина.
+Если вы все равно загрузите, то никакой информации (т.е. версия) не будет ассоциировано с загрузкой.
+Продолжить?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="1140"/>
+        <source>Browse Mod Page</source>
+        <translation>Смотреть страницу мода</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2184"/>
+        <location filename="mainwindow.cpp" line="2191"/>
+        <source>Failed to write settings</source>
+        <translation>Не удалось записать настройки</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2185"/>
+        <location filename="mainwindow.cpp" line="2192"/>
+        <source>An error occured trying to write back MO settings: %1</source>
+        <translation>Ошибка при попытке записать обратно настройки MO: %1</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2188"/>
+        <source>File is write protected</source>
+        <translation>Файл защищён от записи</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2189"/>
+        <source>Invalid file format (probably a bug)</source>
+        <translation>Неверный формат файла (возможно баг)</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2190"/>
+        <source>Unknown error %1</source>
+        <translation>Неизвестная ошибка %1</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2986"/>
+        <source>&lt;Managed by MO&gt;</source>
+        <translation>&lt;Управляется в MO&gt;</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="2987"/>
+        <source>&lt;Managed outside MO&gt;</source>
+        <translation>&lt;Управляется вне MO&gt;</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3187"/>
+        <source>You need to be logged in with Nexus to resume a download</source>
+        <translation>Вы должны быть авторизированы на Nexus, чтобы продолжить загрузку</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3264"/>
+        <source>Failed to display overwrite dialog: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3421"/>
+        <location filename="mainwindow.cpp" line="3861"/>
+        <source>Create Mod...</source>
+        <translation>Создать мод...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3422"/>
+        <source>This will move all files from overwrite into a new, regular mod.
+Please enter a name:</source>
+        <translation>Это переместит все файлы из перезаписи в новый, стандартный мод.
+Пожалуйста введите имя:</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3431"/>
+        <source>A mod with this name already exists</source>
+        <translation>Мод с таким именем уже существует</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3672"/>
+        <source>Continue?</source>
+        <translation>Продолжить?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3673"/>
+        <source>The versioning scheme decides which version is considered newer than another.
+This function will guess the versioning scheme under the assumption that the installed version is outdated.</source>
+        <translation>Схема управления версиями принимает решение, какая версия считается новее другой.
+Функция может попробовать угадать схему управления версиями, при условии, что установленная версия является устаревшей.</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3693"/>
+        <location filename="mainwindow.cpp" line="4617"/>
+        <source>Sorry</source>
+        <translation>Извините</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3694"/>
+        <source>I don&apos;t know a versioning scheme where %1 is newer than %2.</source>
+        <translation>Мне неизвестна схема управления версиями, где %1 новее %2.</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3746"/>
+        <source>Really enable all visible mods?</source>
+        <translation>Действительно подключить все видимые моды?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3754"/>
+        <source>Really disable all visible mods?</source>
+        <translation>Действительно отключить все видимые моды?</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3762"/>
+        <source>Choose what to export</source>
+        <translation>Выберете, что экспортировать</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3764"/>
+        <source>Everything</source>
+        <translation>Всё</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3764"/>
+        <source>All installed mods are included in the list</source>
+        <translation>Все установленные моды, включенные в список</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3765"/>
+        <source>Active Mods</source>
+        <translation>Активные моды</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3765"/>
+        <source>Only active (checked) mods from your current profile are included</source>
+        <translation>Включены все активные (подключенные) моды вашего текущего профиля</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3766"/>
+        <source>Visible</source>
+        <translation>Видимые</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3766"/>
+        <source>All mods visible in the mod list are included</source>
+        <translation>Включены все моды, видимые в списке модов</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3809"/>
+        <source>export failed: %1</source>
+        <translation>экспорт не удался: %1</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3826"/>
+        <source>Install Mod...</source>
+        <translation>Установить мод...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3828"/>
+        <source>Enable all visible</source>
+        <translation>Включить все видимые</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3829"/>
+        <source>Disable all visible</source>
+        <translation>Отключить все видимые</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3831"/>
+        <source>Check all for update</source>
+        <translation>Проверить все на обновления</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3835"/>
+        <source>Export to csv...</source>
+        <translation>Экспорт в csv...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3854"/>
+        <source>All Mods</source>
+        <translation>Все моды</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3860"/>
+        <source>Sync to Mods...</source>
+        <translation>Синхронизировать с модами...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3864"/>
+        <source>Restore Backup</source>
+        <translation>Восстановить из резервной копии</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3865"/>
+        <source>Remove Backup...</source>
+        <translation>Удалить резервную копию...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3869"/>
+        <source>Add/Remove Categories</source>
+        <translation>Добавить/Удалить категории</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3874"/>
+        <source>Replace Categories</source>
+        <translation>Заменить категории</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3879"/>
+        <source>Primary Category</source>
+        <translation>Основная категория</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3886"/>
+        <source>Change versioning scheme</source>
+        <translation>Изменить схему управления версиями</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3890"/>
+        <source>Un-ignore update</source>
+        <translation>Снять игнорирование обновления</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3892"/>
+        <source>Ignore update</source>
+        <translation>Игнорировать обновление</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3897"/>
+        <source>Rename Mod...</source>
+        <translation>Переименовать мод...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3898"/>
+        <source>Remove Mod...</source>
+        <translation>Удалить мод...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3899"/>
+        <source>Reinstall Mod</source>
+        <translation>Переустановить мод</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3902"/>
+        <source>Un-Endorse</source>
+        <translation>Отменить одобрение</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3905"/>
+        <location filename="mainwindow.cpp" line="3909"/>
+        <source>Endorse</source>
+        <translation>Одобрить</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3906"/>
+        <source>Won&apos;t endorse</source>
+        <translation>Не одобрять</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3912"/>
+        <source>Endorsement state unknown</source>
+        <translation>Статус одобрения неизвестен</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3919"/>
+        <source>Ignore missing data</source>
+        <translation>Игнорировать отсутствующие данные</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3922"/>
+        <source>Visit on Nexus</source>
+        <translation>Перейти на Nexus</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3923"/>
+        <source>Open in explorer</source>
+        <translation>Открыть в проводнике</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3927"/>
+        <source>Information...</source>
+        <translation>Информация...</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3934"/>
+        <location filename="mainwindow.cpp" line="5192"/>
+        <source>Exception: </source>
+        <translation>Исключение: </translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3936"/>
+        <location filename="mainwindow.cpp" line="5194"/>
+        <source>Unknown exception</source>
+        <translation>Неизвестное исключение</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3955"/>
+        <source>&lt;All&gt;</source>
+        <translation>&lt;Все&gt;</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3957"/>
+        <source>&lt;Multiple&gt;</source>
+        <translation>&lt;Несколько&gt;</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="5450"/>
+        <source>Please wait while LOOT is running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Really delete &quot;%1&quot;?</source>
         <translation type="obsolete">Действительно удалить &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4060"/>
+        <location filename="mainwindow.cpp" line="4093"/>
         <source>Fix Mods...</source>
         <translation>Исправить моды...</translation>
     </message>
@@ -2593,315 +2582,311 @@ This function will guess the versioning scheme under the assumption that the ins
         <translation type="obsolete">Удалить</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4089"/>
         <location filename="mainwindow.cpp" line="4122"/>
+        <location filename="mainwindow.cpp" line="4155"/>
         <source>failed to remove %1</source>
         <translation>не удалось удалить %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4106"/>
-        <location filename="mainwindow.cpp" line="4138"/>
+        <location filename="mainwindow.cpp" line="4139"/>
+        <location filename="mainwindow.cpp" line="4171"/>
         <source>failed to create %1</source>
         <translation>не удалось создать %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4162"/>
+        <location filename="mainwindow.cpp" line="4195"/>
         <source>Can&apos;t change download directory while downloads are in progress!</source>
         <translation>Нельзя изменить каталог для загрузок, когда загрузки ещё не завершены!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4244"/>
+        <location filename="mainwindow.cpp" line="4277"/>
         <source>Download failed</source>
         <translation>Загрузка не удалась</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4391"/>
+        <location filename="mainwindow.cpp" line="4424"/>
         <source>failed to write to file %1</source>
         <translation>ошибка записи в файл %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4397"/>
+        <location filename="mainwindow.cpp" line="4430"/>
         <source>%1 written</source>
         <translation>%1 записан</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4436"/>
+        <location filename="mainwindow.cpp" line="4469"/>
         <source>Select binary</source>
         <translation>Выберете исполняемый файл</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4436"/>
+        <location filename="mainwindow.cpp" line="4469"/>
         <source>Binary</source>
         <translation>Исполняемый файл</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4462"/>
+        <location filename="mainwindow.cpp" line="4495"/>
         <source>Enter Name</source>
         <translation>Введите имя</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4463"/>
+        <location filename="mainwindow.cpp" line="4496"/>
         <source>Please enter a name for the executable</source>
         <translation>Введите название для программы</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4474"/>
+        <location filename="mainwindow.cpp" line="4507"/>
         <source>Not an executable</source>
         <translation>Не является исполняемым</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4474"/>
+        <location filename="mainwindow.cpp" line="4507"/>
         <source>This is not a recognized executable.</source>
         <translation>Это неверный исполняемый файл.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4499"/>
-        <location filename="mainwindow.cpp" line="4524"/>
+        <location filename="mainwindow.cpp" line="4532"/>
+        <location filename="mainwindow.cpp" line="4557"/>
         <source>Replace file?</source>
         <translation>Заменить файл?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4499"/>
+        <location filename="mainwindow.cpp" line="4532"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation>Уже существует скрытая версия этого файла. Заменить?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4502"/>
-        <location filename="mainwindow.cpp" line="4527"/>
+        <location filename="mainwindow.cpp" line="4535"/>
+        <location filename="mainwindow.cpp" line="4560"/>
         <source>File operation failed</source>
         <translation>Операция с файлом не удалась</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4502"/>
-        <location filename="mainwindow.cpp" line="4527"/>
+        <location filename="mainwindow.cpp" line="4535"/>
+        <location filename="mainwindow.cpp" line="4560"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation>Не удалось удалить &quot;%1&quot;. Может быть, вам не хватает необходимых прав доступа к файлу?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4524"/>
+        <location filename="mainwindow.cpp" line="4557"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation>Видимая версия этого файла уже существует. Заменить?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4557"/>
+        <location filename="mainwindow.cpp" line="4590"/>
         <source>file not found: %1</source>
         <translation>файл не найден: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4570"/>
+        <location filename="mainwindow.cpp" line="4603"/>
         <source>failed to generate preview for %1</source>
         <translation>не удалось получить предосмотр для %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4584"/>
+        <location filename="mainwindow.cpp" line="4617"/>
         <source>Sorry, can&apos;t preview anything. This function currently does not support extracting from bsas.</source>
         <translation>Невозможно получить предосмотр чего-либо. Функция на данный момент не поддерживает извлечение из bsa.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4615"/>
+        <location filename="mainwindow.cpp" line="4648"/>
         <source>Update available</source>
         <translation>Доступно обновление</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4652"/>
+        <location filename="mainwindow.cpp" line="4685"/>
         <source>Open/Execute</source>
         <translation>Открыть/Выполнить</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4653"/>
+        <location filename="mainwindow.cpp" line="4686"/>
         <source>Add as Executable</source>
         <translation>Добавить как исполняемый</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4657"/>
+        <location filename="mainwindow.cpp" line="4690"/>
         <source>Preview</source>
         <translation>Предосмотр</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4663"/>
+        <location filename="mainwindow.cpp" line="4696"/>
         <source>Un-Hide</source>
         <translation>Показать</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4665"/>
+        <location filename="mainwindow.cpp" line="4698"/>
         <source>Hide</source>
         <translation>Скрыть</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4671"/>
+        <location filename="mainwindow.cpp" line="4704"/>
         <source>Write To File...</source>
         <translation>Записать в файл...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4696"/>
+        <location filename="mainwindow.cpp" line="4729"/>
         <source>Do you want to endorse Mod Organizer on %1 now?</source>
         <translation>Вы хотите одобрить Mod Organizer на %1 сейчас?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4792"/>
+        <location filename="mainwindow.cpp" line="4825"/>
         <source>Thank you!</source>
-        <translation type="unfinished"></translation>
+        <translation>Спасибо Вам!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4792"/>
+        <location filename="mainwindow.cpp" line="4825"/>
         <source>Thank you for your endorsement!</source>
-        <translation type="unfinished"></translation>
+        <translation>Спасибо Вам за одобрение!</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4827"/>
+        <location filename="mainwindow.cpp" line="4860"/>
         <source>Request to Nexus failed: %1</source>
         <translation>Запрос на Nexus не удался: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4834"/>
-        <location filename="mainwindow.cpp" line="4852"/>
+        <location filename="mainwindow.cpp" line="4867"/>
+        <location filename="mainwindow.cpp" line="4885"/>
         <source>login successful</source>
         <translation>успешный вход</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4861"/>
+        <location filename="mainwindow.cpp" line="4894"/>
         <source>login failed: %1. Trying to download anyway</source>
         <translation>вход не удался: %1. Пытаюсь загрузить всё равно</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4867"/>
+        <location filename="mainwindow.cpp" line="4900"/>
         <source>login failed: %1</source>
         <translation>войти не удалось: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4877"/>
+        <location filename="mainwindow.cpp" line="4910"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation>войти не удалось: %1. Вам нужно войти на Nexus, чтобы обновить MO.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4910"/>
+        <location filename="mainwindow.cpp" line="4943"/>
         <source>Error</source>
         <translation>Ошибка</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="4910"/>
+        <location filename="mainwindow.cpp" line="4943"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation>не удалось распаковать %1 (код ошибки %2)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5005"/>
+        <location filename="mainwindow.cpp" line="5038"/>
         <source>Extract...</source>
         <translation>Распаковать...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5067"/>
+        <location filename="mainwindow.cpp" line="5100"/>
         <source>Edit Categories...</source>
         <translation>Изменить категории...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5068"/>
+        <location filename="mainwindow.cpp" line="5101"/>
         <source>Deselect filter</source>
-        <translation type="unfinished"></translation>
+        <translation>Снять выбор с фильтра</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5119"/>
+        <location filename="mainwindow.cpp" line="5152"/>
         <source>Remove</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5130"/>
+        <location filename="mainwindow.cpp" line="5163"/>
         <source>Enable all</source>
         <translation>Включить все</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5131"/>
+        <location filename="mainwindow.cpp" line="5164"/>
         <source>Disable all</source>
         <translation>Отключить все</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5150"/>
+        <location filename="mainwindow.cpp" line="5183"/>
         <source>Unlock load order</source>
         <translation>Снять фиксацию порядка загрузки</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5153"/>
+        <location filename="mainwindow.cpp" line="5186"/>
         <source>Lock load order</source>
         <translation>Зафиксировать порядок загрузки</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5285"/>
+        <location filename="mainwindow.cpp" line="5319"/>
         <source>depends on missing &quot;%1&quot;</source>
+        <translation>зависит от отсутствующего &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="5323"/>
+        <source>incompatible with &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5305"/>
+        <location filename="mainwindow.cpp" line="5343"/>
         <source>No profile set</source>
-        <translation type="unfinished"></translation>
+        <translation>Нет установленного профиля</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5353"/>
         <source>LOOT working</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">LOOT работает</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5429"/>
+        <location filename="mainwindow.cpp" line="5540"/>
         <source>loot failed. Exit code was: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Запуск LOOT не удался. Код завершения: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5435"/>
+        <location filename="mainwindow.cpp" line="5546"/>
         <source>failed to start loot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5438"/>
+        <location filename="mainwindow.cpp" line="5549"/>
         <source>failed to run loot: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>не удалось запустить LOOT: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5441"/>
+        <location filename="mainwindow.cpp" line="5552"/>
         <source>Errors occured</source>
-        <translation type="unfinished"></translation>
+        <translation>Возникли ошибки</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5489"/>
+        <location filename="mainwindow.cpp" line="5601"/>
         <source>Backup of load order created</source>
-        <translation type="unfinished"></translation>
+        <translation>Резервная копия порядка загрузки создана</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5499"/>
+        <location filename="mainwindow.cpp" line="5611"/>
         <source>Choose backup to restore</source>
-        <translation type="unfinished"></translation>
+        <translation>Выберите резервную копию для восстановления</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5512"/>
+        <location filename="mainwindow.cpp" line="5624"/>
         <source>No Backups</source>
-        <translation type="unfinished"></translation>
+        <translation>Резервных копий нет</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5512"/>
+        <location filename="mainwindow.cpp" line="5624"/>
         <source>There are no backups to restore</source>
-        <translation type="unfinished"></translation>
+        <translation>Резервные копии для восстановления отсутствуют</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5533"/>
-        <location filename="mainwindow.cpp" line="5554"/>
+        <location filename="mainwindow.cpp" line="5645"/>
+        <location filename="mainwindow.cpp" line="5666"/>
         <source>Restore failed</source>
-        <translation type="unfinished"></translation>
+        <translation>Восстановление не удалось</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5534"/>
-        <location filename="mainwindow.cpp" line="5555"/>
+        <location filename="mainwindow.cpp" line="5646"/>
+        <location filename="mainwindow.cpp" line="5667"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось восстановить резервную копию. Код ошибки: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5545"/>
+        <location filename="mainwindow.cpp" line="5657"/>
         <source>Backup of modlist created</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>BOSS working</source>
-        <translation type="obsolete">BOSS: работает</translation>
-    </message>
-    <message>
-        <source>failed to run boss: %1</source>
-        <translation type="obsolete">не удалось запустить BOSS: %1</translation>
+        <translation>Резервная копия списка модов создана</translation>
     </message>
 </context>
 <context>
@@ -2925,7 +2910,7 @@ This function will guess the versioning scheme under the assumption that the ins
 <context>
     <name>ModInfoBackup</name>
     <message>
-        <location filename="modinfo.cpp" line="903"/>
+        <location filename="modinfo.cpp" line="930"/>
         <source>This is the backup of a mod</source>
         <translation>Это резервная копия мода</translation>
     </message>
@@ -2966,7 +2951,7 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="modinfodialog.ui" line="91"/>
         <source>Ini Files</source>
-        <translation type="unfinished"></translation>
+        <translation>Файлы INI</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="104"/>
@@ -2981,17 +2966,17 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="modinfodialog.ui" line="114"/>
         <source>Ini Tweaks</source>
-        <translation type="unfinished"></translation>
+        <translation>Правки INI</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="130"/>
         <source>This is a list of ini tweaks (ini modifications that can be toggled).</source>
-        <translation type="unfinished"></translation>
+        <translation>Это список правок ini (модификации ini, которые могут быть установлены).</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="133"/>
         <source>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod wether the tweaks are really optional.</source>
-        <translation type="unfinished"></translation>
+        <translation>Это список правок ini. Правки ini (обычно небольшие) это фрагменты ini-файлов, которые могут быть применены поверх настроек в skyrim.ini/skyrimprefs.ini. Каждая правка может быть установлена отдельно. Вам необходимо проверить документацию мода на предмет опциональности этих правок ini.</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="169"/>
@@ -3474,15 +3459,15 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoForeign</name>
     <message>
-        <location filename="modinfo.cpp" line="992"/>
+        <location filename="modinfo.cpp" line="1021"/>
         <source>This pseudo mod represents content managed outside MO. It isn&apos;t modified by MO.</source>
-        <translation type="unfinished"></translation>
+        <translation>Этот псевдо-мод отображает содержимое, управляемое из вне MO. Оно не модифицировано в MO.</translation>
     </message>
 </context>
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfo.cpp" line="948"/>
+        <location filename="modinfo.cpp" line="975"/>
         <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation>Этот псевдо-мод содержит файлы из виртуального древа данных, которые были изменены (в Construction Kit и других программах)</translation>
     </message>
@@ -3490,22 +3475,18 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoRegular</name>
     <message>
-        <source>failed to write %1/meta.ini: %2</source>
-        <translation type="obsolete">не удалось записать %1/meta.ini: %2</translation>
-    </message>
-    <message>
-        <location filename="modinfo.cpp" line="562"/>
-        <location filename="modinfo.cpp" line="565"/>
+        <location filename="modinfo.cpp" line="567"/>
+        <location filename="modinfo.cpp" line="570"/>
         <source>failed to write %1/meta.ini: error %2</source>
-        <translation type="unfinished"></translation>
+        <translation>не удалось записать %1/meta.ini: ошибка %2</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="816"/>
+        <location filename="modinfo.cpp" line="843"/>
         <source>%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory</source>
         <translation>%1 не содержит ни esp/esm, ни папок ресурсов (textures, meshes, interface, ...)</translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="820"/>
+        <location filename="modinfo.cpp" line="847"/>
         <source>Categories: &lt;br&gt;</source>
         <translation>Категории: &lt;br&gt;</translation>
     </message>
@@ -3513,164 +3494,224 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModList</name>
     <message>
-        <location filename="modlist.cpp" line="110"/>
+        <location filename="modlist.cpp" line="55"/>
+        <source>Game plugins (esp/esm)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="56"/>
+        <source>Interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="57"/>
+        <source>Meshes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="58"/>
+        <source>Music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="59"/>
+        <source>Scripts (Papyrus)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="60"/>
+        <source>Script Extender Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="61"/>
+        <source>SkyProc Patcher</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="62"/>
+        <source>Sound</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="63"/>
+        <source>Strings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="64"/>
+        <source>Textures</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="117"/>
         <source>This entry contains files that have been created inside the virtual data tree (i.e. by the construction kit)</source>
         <translation>Эта запись включает файлы, которые были созданы внутри виртуального древа (с помощью Construction Kit и др. программ)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="119"/>
+        <location filename="modlist.cpp" line="126"/>
         <source>Backup</source>
         <translation>Резервная копия</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="120"/>
+        <location filename="modlist.cpp" line="127"/>
         <source>No valid game data</source>
         <translation>Неверные игровые данные</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="121"/>
+        <location filename="modlist.cpp" line="128"/>
         <source>Not endorsed yet</source>
         <translation>Еще не одобрено</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="123"/>
+        <location filename="modlist.cpp" line="130"/>
         <source>Overwrites files</source>
         <translation>Заменяет файлы</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="124"/>
+        <location filename="modlist.cpp" line="131"/>
         <source>Overwritten files</source>
         <translation>Замененные файлы</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="125"/>
+        <location filename="modlist.cpp" line="132"/>
         <source>Overwrites &amp; Overwritten</source>
         <translation>Заменяет и заменяется</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="126"/>
+        <location filename="modlist.cpp" line="133"/>
         <source>Redundant</source>
         <translation>Избыточные</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="171"/>
+        <location filename="modlist.cpp" line="208"/>
         <source>Non-MO</source>
-        <translation type="unfinished"></translation>
+        <translation>Не-MO</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="202"/>
+        <location filename="modlist.cpp" line="238"/>
         <source>invalid</source>
         <translation>неверные</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="324"/>
+        <location filename="modlist.cpp" line="364"/>
         <source>installed version: &quot;%1&quot;, newest version: &quot;%2&quot;</source>
         <oldsource>installed version: %1, newest version: %2</oldsource>
         <translation>установлена версия: %1, новейшая версия: %2</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="326"/>
+        <location filename="modlist.cpp" line="366"/>
         <source>The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn (i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. Either way you may want to &quot;upgrade&quot;.</source>
         <translation>Новейшая версия на Nexus кажется старее той, что установлена у вас. Это может означать, что ваша версия была снята (в связи с ошибкой и т.п.) или автор использует нестандартную схему версий, а новейшая версия на самом деле выше. В любом случае, вы можете &quot;обновить&quot;.</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="334"/>
+        <location filename="modlist.cpp" line="374"/>
         <source>Categories: &lt;br&gt;</source>
         <translation>Категории: &lt;br&gt;</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="363"/>
+        <location filename="modlist.cpp" line="403"/>
         <source>Invalid name</source>
         <translation>Недопустимое имя</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="764"/>
+        <location filename="modlist.cpp" line="814"/>
         <source>drag&amp;drop failed: %1</source>
         <translation>перетаскивание не удалось: %1</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="827"/>
+        <location filename="modlist.cpp" line="877"/>
         <source>Confirm</source>
         <translation>Подтверждение</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="827"/>
+        <location filename="modlist.cpp" line="877"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation>Вы действительно хотите удалить &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="882"/>
+        <location filename="modlist.cpp" line="934"/>
         <source>Flags</source>
         <translation>Флаги</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="883"/>
+        <location filename="modlist.cpp" line="935"/>
+        <source>Content</source>
+        <translation type="unfinished">Содержание</translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="936"/>
         <source>Mod Name</source>
         <translation>Имя мода</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="884"/>
+        <location filename="modlist.cpp" line="937"/>
         <source>Version</source>
         <translation type="unfinished">Версия</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="885"/>
+        <location filename="modlist.cpp" line="938"/>
         <source>Priority</source>
         <translation>Приоритет</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="886"/>
+        <location filename="modlist.cpp" line="939"/>
         <source>Category</source>
         <translation>Категория</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="887"/>
+        <location filename="modlist.cpp" line="940"/>
         <source>Nexus ID</source>
         <translation>Nexus ID</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="888"/>
+        <location filename="modlist.cpp" line="941"/>
         <source>Installation</source>
         <translation>Установка</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="889"/>
-        <location filename="modlist.cpp" line="905"/>
+        <location filename="modlist.cpp" line="942"/>
+        <location filename="modlist.cpp" line="970"/>
         <source>unknown</source>
         <translation>неизвестный</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="897"/>
+        <location filename="modlist.cpp" line="950"/>
         <source>Name of your mods</source>
         <translation>Имя ваших модов</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="898"/>
+        <location filename="modlist.cpp" line="951"/>
         <source>Version of the mod (if available)</source>
         <translation>Версия мода (если доступно)</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="899"/>
+        <location filename="modlist.cpp" line="952"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation>Приоритет установки для ваших модов. Файлы модов с большим приоритетом перезапишут файлы модов с меньшим.</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="901"/>
+        <location filename="modlist.cpp" line="954"/>
         <source>Category of the mod.</source>
         <translation>Категория мода.</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="902"/>
+        <location filename="modlist.cpp" line="955"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation>ID мода, используемый на Nexus.</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="903"/>
+        <location filename="modlist.cpp" line="956"/>
         <source>Emblemes to highlight things that might require attention.</source>
         <translation>Выделяет подсветкой вещи, которые могут потребовать внимания.</translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="904"/>
+        <location filename="modlist.cpp" line="957"/>
+        <source>Depicts the content of the mod:&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;Game plugins (esp/esm)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;interface&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;Meshes&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;Textures&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;Sounds&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;Music&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;Strings&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;Scripts (Papyrus)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;Script Extender plugins&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;SkyProc Patcher&lt;br&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modlist.cpp" line="969"/>
         <source>Time this mod was installed</source>
         <translation>Время, когда мод был установлен.</translation>
     </message>
@@ -3716,7 +3757,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="nxmaccessmanager.cpp" line="178"/>
         <source>Unknown error</source>
-        <translation type="unfinished"></translation>
+        <translation>Неизвестная ошибка</translation>
     </message>
     <message>
         <location filename="nxmaccessmanager.cpp" line="204"/>
@@ -3755,54 +3796,59 @@ p, li { white-space: pre-wrap; }
         <translation>Вы можете использовать перетаскивание, для перемещения папок и файлов в распакованные моды.</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="90"/>
+        <location filename="overwriteinfodialog.cpp" line="88"/>
         <source>&amp;Delete</source>
         <translation>&amp;Удалить</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="91"/>
+        <location filename="overwriteinfodialog.cpp" line="89"/>
         <source>&amp;Rename</source>
         <translation>&amp;Переименовать</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="92"/>
+        <location filename="overwriteinfodialog.cpp" line="90"/>
         <source>&amp;Open</source>
         <translation type="unfinished">&amp;Открыть</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="93"/>
+        <location filename="overwriteinfodialog.cpp" line="91"/>
         <source>&amp;New Folder</source>
         <translation>&amp;Новая папка</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="136"/>
+        <location filename="overwriteinfodialog.cpp" line="109"/>
+        <source>%1 not found</source>
+        <translation type="unfinished">%1 не найден</translation>
+    </message>
+    <message>
+        <location filename="overwriteinfodialog.cpp" line="144"/>
         <source>Failed to delete &quot;%1&quot;</source>
         <translation>Не удалось удалить &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="147"/>
-        <location filename="overwriteinfodialog.cpp" line="152"/>
+        <location filename="overwriteinfodialog.cpp" line="155"/>
+        <location filename="overwriteinfodialog.cpp" line="160"/>
         <source>Confirm</source>
         <translation>Подтверждение</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="147"/>
+        <location filename="overwriteinfodialog.cpp" line="155"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation>Вы уверены, что хотите удалить &quot;%1&quot;?</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="152"/>
+        <location filename="overwriteinfodialog.cpp" line="160"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation>Вы действительно хотите удалить выбранные файлы?</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="202"/>
-        <location filename="overwriteinfodialog.cpp" line="208"/>
+        <location filename="overwriteinfodialog.cpp" line="210"/>
+        <location filename="overwriteinfodialog.cpp" line="216"/>
         <source>New Folder</source>
         <translation>Новая папка</translation>
     </message>
     <message>
-        <location filename="overwriteinfodialog.cpp" line="214"/>
+        <location filename="overwriteinfodialog.cpp" line="222"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation>Не удалось создать &quot;%1&quot;</translation>
     </message>
@@ -3889,30 +3935,22 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="pluginlist.cpp" line="806"/>
         <source>&lt;b&gt;Origin&lt;/b&gt;: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Источник&lt;/b&gt;: %1</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="808"/>
         <source>Author</source>
-        <translation type="unfinished">Автор</translation>
+        <translation>Автор</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="811"/>
         <source>Description</source>
-        <translation type="unfinished">Описание</translation>
-    </message>
-    <message>
-        <source>BOSS dll incompatible</source>
-        <translation type="obsolete">BOSS dll несовместим</translation>
+        <translation>Описание</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="804"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation>Этот плагин не может быть отключен (грузится игрой принудительно)</translation>
-    </message>
-    <message>
-        <source>Origin: %1</source>
-        <translation type="obsolete">Источник: %1</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="814"/>
@@ -3925,7 +3963,7 @@ p, li { white-space: pre-wrap; }
         <translation>Подключенные мастерфайлы</translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="975"/>
+        <location filename="pluginlist.cpp" line="972"/>
         <source>failed to restore load order for %1</source>
         <translation>не удалось восстановить порядок загрузки для %1</translation>
     </message>
@@ -4010,50 +4048,50 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profile.cpp" line="236"/>
         <source>&quot;%1&quot; is missing or inaccessible</source>
-        <translation type="unfinished">&quot;%1&quot; отсутствует</translation>
+        <translation>&quot;%1&quot; отсутствует или недоступен</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="281"/>
-        <location filename="profile.cpp" line="313"/>
-        <location filename="profile.cpp" line="415"/>
-        <location filename="profile.cpp" line="435"/>
-        <location filename="profile.cpp" line="445"/>
+        <location filename="profile.cpp" line="282"/>
+        <location filename="profile.cpp" line="314"/>
+        <location filename="profile.cpp" line="416"/>
+        <location filename="profile.cpp" line="436"/>
+        <location filename="profile.cpp" line="446"/>
         <source>invalid index %1</source>
         <translation>неверный индекс %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="396"/>
+        <location filename="profile.cpp" line="397"/>
         <source>Overwrite directory couldn&apos;t be parsed</source>
         <translation>Замена каталога не может быть обработана</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="405"/>
+        <location filename="profile.cpp" line="406"/>
         <source>invalid priority %1</source>
         <translation>неверный приоритет %1</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="595"/>
+        <location filename="profile.cpp" line="596"/>
         <source>failed to parse ini file (%1)</source>
         <translation>не удалось обработать ini файл (%1)</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="623"/>
+        <location filename="profile.cpp" line="624"/>
         <source>failed to parse ini file (%1): %2</source>
         <translation>не удалось обработать ini файл (%1): %2</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="647"/>
-        <location filename="profile.cpp" line="684"/>
+        <location filename="profile.cpp" line="648"/>
+        <location filename="profile.cpp" line="685"/>
         <source>failed to modify &quot;%1&quot;</source>
         <translation>не удалось изменить &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="712"/>
+        <location filename="profile.cpp" line="713"/>
         <source>Delete savegames?</source>
         <translation>Удалить сохранения?</translation>
     </message>
     <message>
-        <location filename="profile.cpp" line="713"/>
+        <location filename="profile.cpp" line="714"/>
         <source>Do you want to delete local savegames? (If you select &quot;No&quot;, the save games will show up again if you re-enable local savegames)</source>
         <translation>Вы хотите удалить локальные сохранения? (При отрицательном выборе сохранения отобразятся снова, если повторно включить локальные сохранения)</translation>
     </message>
@@ -4464,7 +4502,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="main.cpp" line="378"/>
-        <location filename="settings.cpp" line="557"/>
+        <location filename="settings.cpp" line="528"/>
         <source>Mod Organizer</source>
         <translation>Mod Organizer</translation>
     </message>
@@ -4492,21 +4530,21 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="547"/>
         <source>failed to start application: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>не удалось запустить приложение: %1</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="850"/>
+        <location filename="mainwindow.cpp" line="856"/>
         <source>Please use &quot;Help&quot; from the toolbar to get usage instructions to all elements</source>
         <translation>Используйте пункт &quot;Справка&quot; на панели инструментов, чтобы получить инструкции по использованию всех элементов.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1644"/>
-        <location filename="mainwindow.cpp" line="4281"/>
+        <location filename="mainwindow.cpp" line="1649"/>
+        <location filename="mainwindow.cpp" line="4314"/>
         <source>&lt;Manage...&gt;</source>
         <translation>&lt;Управлять...&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1662"/>
+        <location filename="mainwindow.cpp" line="1667"/>
         <source>failed to parse profile %1: %2</source>
         <translation>не удалось обработать профиль %1: %2</translation>
     </message>
@@ -4534,7 +4572,7 @@ p, li { white-space: pre-wrap; }
         <location filename="profile.cpp" line="96"/>
         <source>&quot;%1&quot; is missing or inaccessible</source>
         <oldsource>&quot;%1&quot; is missing</oldsource>
-        <translation type="unfinished">&quot;%1&quot; отсутствует</translation>
+        <translation>&quot;%1&quot; отсутствует или недоступен</translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="80"/>
@@ -4560,12 +4598,12 @@ p, li { white-space: pre-wrap; }
         <translation>не удалось открыть %1</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="564"/>
+        <location filename="settings.cpp" line="535"/>
         <source>Script Extender</source>
         <translation>Script Extender</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="571"/>
+        <location filename="settings.cpp" line="542"/>
         <source>Proxy DLL</source>
         <translation>Proxy DLL</translation>
     </message>
@@ -4834,18 +4872,28 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
 <context>
     <name>Settings</name>
     <message>
-        <location filename="settings.cpp" line="329"/>
-        <location filename="settings.cpp" line="348"/>
+        <location filename="settings.cpp" line="115"/>
+        <source>Failed</source>
+        <translation type="unfinished">Неудача</translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="116"/>
+        <source>Sorry, failed to start the helper application</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="335"/>
+        <location filename="settings.cpp" line="354"/>
         <source>attempt to store setting for unknown plugin &quot;%1&quot;</source>
         <translation>попытка сохранить настройку для неизвестного плагина &quot;%1&quot;</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="676"/>
+        <location filename="settings.cpp" line="647"/>
         <source>Confirm</source>
         <translation>Подтверждение</translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="676"/>
+        <location filename="settings.cpp" line="647"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
         <translation>Изменение каталога для модов отразится на всех ваших профилях. Нельзя будет отменить это, если только вы не сохранили резервные копии ваших профилей вручную. Продолжить?</translation>
     </message>
@@ -4971,27 +5019,27 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="199"/>
         <source>User interface</source>
-        <translation type="unfinished"></translation>
+        <translation>Пользовательский интерфейс</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="205"/>
         <source>If checked, the download interface will be more compact.</source>
-        <translation type="unfinished"></translation>
+        <translation> Если отмечено, интерфейс загрузки будет компактней.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="208"/>
         <source>Compact Download Interface</source>
-        <translation type="unfinished"></translation>
+        <translation>Компактный интерфейс загрузки</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="215"/>
         <source>If checked, the download list will display meta information instead of file names.</source>
-        <translation type="unfinished"></translation>
+        <translation>Если отмечено, список загрузок будет отображать мета-информацию вместо имен файлов.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="218"/>
         <source>Download Meta Information</source>
-        <translation type="unfinished"></translation>
+        <translation>Загрузка мета-информации</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="234"/>
@@ -5272,7 +5320,7 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
     <message>
         <location filename="settingsdialog.ui" line="754"/>
         <source>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</source>
-        <translation type="unfinished"></translation>
+        <translation>Отключите это, чтобы больше не отображать в левом списке моды, установленные вне MO. Ресурсы из этих модов будут тогда иметь наименьший приоритет, как и оригинальное содержимое игры.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="757"/>
@@ -5280,12 +5328,15 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
 However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can&apos;t be resolved correctly.
 
 If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps and esms) displayed in the right pane are completely unaffected by this feature.</source>
-        <translation type="unfinished"></translation>
+        <translation>По умолчанию Mod Organizer отобразит пакеты esp+bsa, установленные из других инструментов, как моды (левая панель). Это позволяет вам контроллировать их приоритет по отношению к другим модам. Это особенно полезно, если вы используете Steam Workshop, для установки модов.
+Однако, если вы установили из вне MO моды с свободными файлами, конфликтующими с BSA, также установленными из вне MO, то такие конфликты не могут быть решены правильно.
+
+Если вы отключите эту возможность, MO будет отображать только официальные DLC. Имейте ввиду, что отображенные в правой панели влагины (esps и esm), полностью не затрагиваются этой возможностью.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="763"/>
         <source>Display mods installed outside MO</source>
-        <translation type="unfinished"></translation>
+        <translation>Отображать установленные из вне MO моды</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="773"/>
@@ -5380,7 +5431,7 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="singleinstance.cpp" line="88"/>
         <source>failed to communicate with running instance: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">не удалось подключиться к запущенному экземпляру: %1</translation>
     </message>
     <message>
         <location filename="singleinstance.cpp" line="100"/>

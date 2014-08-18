@@ -280,8 +280,6 @@ public:
         }
       }
       m_FileRegister->removeFile(iter->second);
-    } else {
-      log ("failed to remove %ls from %ls", fileName.c_str(), m_Name.c_str());
     }
   }
 

@@ -90,7 +90,7 @@ public:
 
 private:
 
-  OblivionInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  OblivionInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

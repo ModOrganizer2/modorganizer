@@ -37,6 +37,12 @@ public:
     FILTER_OR
   };
 
+  enum FilterType {
+    TYPE_SPECIAL,
+    TYPE_CATEGORY,
+    TYPE_CONTENT
+  };
+
 public:
 
   explicit ModListSortProxy(Profile *profile, QObject *parent = 0);
@@ -44,6 +50,8 @@ public:
   void setProfile(Profile *profile);
 
   void setCategoryFilter(const std::vector<int> &categories);
+
+  void setContentFilter(const std::vector<int> &content);
 
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
@@ -111,6 +119,7 @@ private:
   Profile *m_Profile;
 
   std::vector<int> m_CategoryFilter;
+  std::vector<int> m_ContentFilter;
   std::bitset<ModList::COL_LASTCOLUMN + 1> m_EnabledColumns;
   QString m_CurrentFilter;
 

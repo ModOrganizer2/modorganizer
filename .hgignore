@@ -31,5 +31,6 @@ html
 *.log
 *.filters
 *.lib
+source/organizer/resources/contents/icons
 syntax: regexp
 Makefile\.(Debug|Release)

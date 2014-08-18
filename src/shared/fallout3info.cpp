@@ -30,8 +30,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-Fallout3Info::Fallout3Info(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : GameInfo(omoDirectory, gameDirectory)
+Fallout3Info::Fallout3Info(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"fallout3");
 }

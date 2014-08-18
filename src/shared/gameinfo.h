@@ -168,13 +168,13 @@ public:
 
   // initialise with the path to the omo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
-  static bool init(const std::wstring &omoDirectory, const std::wstring &gamePath = L"");
+  static bool init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath = L"");
 
   static GameInfo& instance();
 
 protected:
 
-  GameInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   std::wstring getLocalAppFolder() const;
   const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
@@ -182,7 +182,7 @@ protected:
 
 private:
 
-  static bool identifyGame(const std::wstring &omoDirectory, const std::wstring &searchPath);
+  static bool identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath);
   std::wstring getSpecialPath(LPCWSTR name) const;
 
   static void cleanup();
@@ -195,6 +195,7 @@ private:
 
   std::wstring m_GameDirectory;
   std::wstring m_OrganizerDirectory;
+  std::wstring m_OrganizerDataDirectory;
 
 };
 

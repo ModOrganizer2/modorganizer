@@ -12,7 +12,7 @@ SUBDIRS = bsatk \
           proxydll \
           nxmhandler \
           BossDummy \
-#          pythonRunner \
+          pythonRunner \
           esptk
 
 plugins.depends = pythonRunner

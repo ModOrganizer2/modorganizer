@@ -193,19 +193,3 @@ HANDLE startBinary(const QFileInfo &binary,
   ::CloseHandle(threadHandle);
   return jobObject;
 }
-
-/*
-ExitProxy *ExitProxy::s_Instance = NULL;
-
-ExitProxy *ExitProxy::instance()
-{
-  if (s_Instance == NULL) {
-    s_Instance = new ExitProxy();
-  }
-  return s_Instance;
-}
-
-void ExitProxy::emitExit()
-{
-  emit exit();
-}*/

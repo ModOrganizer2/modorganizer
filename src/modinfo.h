@@ -81,6 +81,8 @@ public:
     CONTENT_STRING
   };
 
+  static const int NUM_CONTENT_TYPES = CONTENT_STRING + 1;
+
   enum EHighlight {
     HIGHLIGHT_NONE = 0,
     HIGHLIGHT_INVALID = 1,
@@ -181,6 +183,13 @@ public:
    * @return a new mod
    */
   static ModInfo::Ptr createFromPlugin(const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
+
+  /**
+   * @brief retieve a name for one of the CONTENT_ enums
+   * @param contentType the content value
+   * @return a display string
+   */
+  static QString getContentTypeName(int contentType);
 
   virtual bool isRegular() const { return false; }
 
@@ -399,6 +408,13 @@ public:
    * @return true if the flag is set, false otherwise
    */
   bool hasFlag(EFlag flag) const;
+
+  /**
+   * @brief test if the mods contains the specified content
+   * @param content the content to test
+   * @return true if the content is there, false otherwise
+   */
+  bool hasContent(ModInfo::EContent content) const;
 
   /**
    * @return an indicator if and how this mod should be highlighted by the UI

@@ -72,7 +72,6 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
   return result;
 }
 
-
 ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList &bsaNames
                                        , DirectoryEntry ** directoryStructure)
 {
@@ -82,6 +81,22 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList
   return result;
 }
 
+QString ModInfo::getContentTypeName(int contentType)
+{
+  switch (contentType) {
+    case CONTENT_PLUGIN:    return tr("Plugins");
+    case CONTENT_TEXTURE:   return tr("Textures");
+    case CONTENT_MESH:      return tr("Meshes");
+    case CONTENT_INTERFACE: return tr("UI Changes");
+    case CONTENT_MUSIC:     return tr("Music");
+    case CONTENT_SOUND:     return tr("Sound Effects");
+    case CONTENT_SCRIPT:    return tr("Scripts");
+    case CONTENT_SKSE:      return tr("SKSE Plugins");
+    case CONTENT_SKYPROC:   return tr("SkyProc Tools");
+    case CONTENT_STRING:    return tr("Strings");
+    default: throw MyException(tr("invalid content type %1").arg(contentType));
+  }
+}
 
 void ModInfo::createFromOverwrite()
 {
@@ -89,7 +104,6 @@ void ModInfo::createFromOverwrite()
 
   s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite));
 }
-
 
 unsigned int ModInfo::getNumMods()
 {
@@ -288,6 +302,11 @@ bool ModInfo::hasFlag(ModInfo::EFlag flag) const
   return std::find(flags.begin(), flags.end(), flag) != flags.end();
 }
 
+bool ModInfo::hasContent(ModInfo::EContent content) const
+{
+  std::vector<EContent> contents = getContents();
+  return std::find(contents.begin(), contents.end(), content) != contents.end();
+}
 
 bool ModInfo::categorySet(int categoryID) const
 {

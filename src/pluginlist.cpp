@@ -455,6 +455,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
+  qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
 }
 
 

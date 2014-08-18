@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 #include <QToolBar>
 #include <QFileDialog>
+#include <QDesktopServices>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <DbgHelp.h>
@@ -158,22 +159,6 @@ void cleanupDir()
   // files from previous versions of MO that are no longer
   // required (in that location)
   QString fileNames[] = {
-    "ModOrganiser.exe",
-    "ModOrganizer.log",
-    "ModOrganizer.log.old",
-    "7z.dll",
-    "mo1.dll",
-    "mo_archive.dll",
-    "mo_helper.exe",
-    "msvcp90.dll",
-    "msvcr90.dll",
-    "phonon4.dll",
-    "QtCore4.dll",
-    "QtGui4.dll",
-    "QtNetwork4.dll",
-    "QtXml4.dll",
-    "QtWebKit4.dll",
-    "qjpeg4.dll",
     "NCC/GamebryoBase.dll",
     "plugins/helloWorld.dll",
     "plugins/testnexus.py"
@@ -190,7 +175,6 @@ void cleanupDir()
     }
   }
 }
-
 
 bool isNxmLink(const QString &link)
 {
@@ -233,6 +217,7 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
 
           BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, NULL, NULL);
 
+          ::FlushFileBuffers(dumpFile);
           ::CloseHandle(dumpFile);
           if (success) {
             return EXCEPTION_EXECUTE_HANDLER;
@@ -317,6 +302,26 @@ int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
 
+  qDebug("application name: %s", qPrintable(application.applicationName()));
+
+  QString instanceID;
+  QFile instanceFile(application.applicationDirPath() + "/INSTANCE");
+  if (instanceFile.open(QIODevice::ReadOnly)) {
+    instanceID = instanceFile.readAll().trimmed();
+  }
+
+  QString dataPath = instanceID.isEmpty() ? application.applicationDirPath()
+                                          : QDir::fromNativeSeparators(QDesktopServices::storageLocation(QDesktopServices::DataLocation)) + "/" + instanceID;
+  application.setProperty("dataPath", dataPath);
+
+  qDebug("data path: %s", qPrintable(dataPath));
+  if (!QDir(dataPath).exists()) {
+    if (!QDir().mkpath(dataPath)) {
+      qCritical("failed to create %s", qPrintable(dataPath));
+      return 1;
+    }
+  }
+
   application.addLibraryPath(application.applicationDirPath() + "/dlls");
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
@@ -331,7 +336,7 @@ int main(int argc, char *argv[])
                    , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
     return 1;
   }
-  LogBuffer::init(100, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
+  LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
@@ -381,21 +386,13 @@ int main(int argc, char *argv[])
     } // we continue for the primary instance OR if MO has been called with parameters
 
 
-    // TODO: this should be MAX_PATH_UNICODE!
-    wchar_t moPath[MAX_PATH];
-    memset(moPath, 0, sizeof(TCHAR) * MAX_PATH);
-    ::GetModuleFileNameW(NULL, moPath, MAX_PATH);
-    wchar_t *lastBSlash = wcsrchr(moPath, TEXT('\\'));
-    if (lastBSlash != NULL) {
-      *lastBSlash = TEXT('\0');
-    }
-    QSettings settings(ToQString(std::wstring(moPath).append(L"\\ModOrganizer.ini")), QSettings::IniFormat);
+    QSettings settings(dataPath + "/ModOrganizer.ini", QSettings::IniFormat);
 
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
 
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(moPath, ToWString(QDir::toNativeSeparators(gamePath)))) {
+      if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(dataPath), ToWString(QDir::toNativeSeparators(gamePath)))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));
@@ -444,6 +441,7 @@ int main(int argc, char *argv[])
       return -1;
     } else if (gamePath.length() != 0) {
       // user selected a folder and game was initialised with it
+      qDebug("game path: %s", qPrintable(gamePath));
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
