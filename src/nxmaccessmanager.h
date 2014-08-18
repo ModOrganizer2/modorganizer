@@ -35,9 +35,11 @@ class NXMAccessManager : public QNetworkAccessManager
   Q_OBJECT
 public:
 
-  explicit NXMAccessManager(QObject *parent);
+  explicit NXMAccessManager(QObject *parent, const QString &moVersion);
 
   ~NXMAccessManager();
+
+  void setNMMVersion(const QString &nmmVersion);
 
   bool loggedIn() const;
 
@@ -92,6 +94,9 @@ private:
   QTimer m_LoginTimeout;
   QNetworkReply *m_LoginReply;
   QProgressDialog m_ProgressDialog;
+
+  QString m_MOVersion;
+  QString m_NMMVersion;
 
   QString m_Username;
   QString m_Password;
