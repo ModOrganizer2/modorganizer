@@ -1532,7 +1532,14 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       QStringList columns(fileName);
       bool isArchive = false;
       int originID = current->getOrigin(isArchive);
-      QString source = ToQString(m_DirectoryStructure->getOriginByID(originID).getName());
+      FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
+      QString source("data");
+      unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+      if (modIndex != UINT_MAX) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        source = modInfo->name();
+      }
+
       std::wstring archive = current->getArchive();
       if (archive.length() != 0) {
         source.append(" (").append(ToQString(archive)).append(")");
@@ -1970,12 +1977,18 @@ void MainWindow::refreshBSAList()
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
     FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
-    QList<QTreeWidgetItem*> items = ui->bsaList->findItems(ToQString(origin.getName()), Qt::MatchFixedString);
+    QString modName("data");
+    unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+    if (modIndex != UINT_MAX) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      modName = modInfo->name();
+    }
+    QList<QTreeWidgetItem*> items = ui->bsaList->findItems(modName, Qt::MatchFixedString);
     QTreeWidgetItem *subItem = NULL;
     if (items.length() > 0) {
       subItem = items.at(0);
     } else {
-      subItem = new QTreeWidgetItem(QStringList(ToQString(origin.getName())));
+      subItem = new QTreeWidgetItem(QStringList(modName));
       subItem->setFlags(subItem->flags() & ~Qt::ItemIsDragEnabled);
       ui->bsaList->addTopLevelItem(subItem);
     }
