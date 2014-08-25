@@ -117,10 +117,17 @@ HANDLE startBinary(const QFileInfo &binary,
                    HANDLE stdOut,
                    HANDLE stdErr)
 {
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo;
+
+  ::QueryInformationJobObject(NULL, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), NULL);
+  jobInfo.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+
   HANDLE jobObject = ::CreateJobObject(NULL, NULL);
 
   if (jobObject == NULL) {
     qWarning("failed to create job object: %lu", ::GetLastError());
+  } else {
+    ::SetInformationJobObject(jobObject, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
   }
 
   HANDLE processHandle, threadHandle;

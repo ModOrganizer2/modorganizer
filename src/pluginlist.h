@@ -267,6 +267,7 @@ private:
 
     ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath, bool hasIni);
     QString m_Name;
+    QString m_FullPath;
     bool m_Enabled;
     bool m_ForceEnabled;
     int m_Priority;

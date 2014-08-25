@@ -221,7 +221,7 @@ std::wstring GameInfo::getLocalAppFolder() const
   wchar_t localAppFolder[MAX_PATH];
   memset(localAppFolder, '\0', MAX_PATH);
 
-  if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
+  if (::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
     return localAppFolder;
   } else {
     // fallback: try the registry

@@ -65,13 +65,14 @@ bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) 
 }
 
 bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
-  QString lhsExtension = LHS.m_Name.right(3).toLower();
+  return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
+/*  QString lhsExtension = LHS.m_Name.right(3).toLower();
   QString rhsExtension = RHS.m_Name.right(3).toLower();
   if (lhsExtension != rhsExtension) {
     return lhsExtension == "esm";
   }
 
-  return ::CompareFileTime(&LHS.m_Time, &RHS.m_Time) < 0;
+  return ::CompareFileTime(&LHS.m_Time, &RHS.m_Time) < 0;*/
 }
 
 PluginList::PluginList(QObject *parent)
@@ -1143,8 +1144,8 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
-  : m_Name(name), m_Enabled(enabled), m_ForceEnabled(enabled),
-    m_Priority(0), m_LoadOrder(-1), m_Time(time), m_OriginName(originName), m_HasIni(hasIni)
+  : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),
+    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni)
 {
   try {
     ESP::File file(ToWString(fullPath));

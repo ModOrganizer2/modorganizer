@@ -266,9 +266,11 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
 
 IPluginInstaller::EInstallResult InstallationManager::installArchive(GuessedValue<QString> &modName, const QString &archiveName)
 {
-  GuessedValue<QString> temp(modName);
+  // in earlier versions the modName was copied here and the copy passed to install. I don't know why I did this and it causes
+  // a problem if this is called by the bundle installer and the bundled installer adds additional names that then end up being used,
+  // because the caller will then not have the right name.
   bool iniTweaks;
-  if (install(archiveName, temp, iniTweaks)) {
+  if (install(archiveName, modName, iniTweaks)) {
     return IPluginInstaller::RESULT_SUCCESS;
   } else {
     return IPluginInstaller::RESULT_FAILED;
