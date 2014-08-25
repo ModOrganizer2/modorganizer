@@ -1393,8 +1393,11 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
 
       this->setEnabled(true);
       refreshDirectoryStructure();
+      // need to remove our stored load order because it may be outdated if a foreign tool changed the
+      // file time. After removing that file, refreshESPList will use the file time as the order
       if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+        refreshESPList();
       }
     }
   }
@@ -5485,11 +5488,13 @@ void MainWindow::on_bossButton_clicked()
       }
       m_IntegratedBrowser.openUrl(url);
     }
-    refreshESPList();
 
+    // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
+    // refreshESPList will then use the file time as the load order.
     if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
       QFile::remove(m_CurrentProfile->getLoadOrderFileName());
     }
+    refreshESPList();
   }
 }
 
