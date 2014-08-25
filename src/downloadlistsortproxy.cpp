@@ -35,9 +35,10 @@ void DownloadListSortProxy::updateFilter(const QString &filter)
 bool DownloadListSortProxy::lessThan(const QModelIndex &left,
                                      const QModelIndex &right) const
 {
-  int leftIndex  = sourceModel()->data(left).toInt();
-  int rightIndex = sourceModel()->data(right).toInt();
-  if (leftIndex < m_Manager->numTotalDownloads()) {
+  int leftIndex  = left.data().toInt();
+  int rightIndex = right.data().toInt();
+  if ((leftIndex < m_Manager->numTotalDownloads())
+      && (rightIndex < m_Manager->numTotalDownloads())) {
     if (left.column() == DownloadList::COL_NAME) {
       return m_Manager->getFileName(leftIndex).compare(m_Manager->getFileName(rightIndex), Qt::CaseInsensitive) < 0;
     } else if (left.column() == DownloadList::COL_FILETIME) {
