@@ -5561,7 +5561,7 @@ void MainWindow::on_bossButton_clicked()
       QStringList temp = report.split("?");
       QUrl url = QUrl::fromLocalFile(temp.at(0));
       if (temp.size() > 1) {
-        url.setEncodedQuery(temp.at(1).toUtf8());
+        url.setQuery(temp.at(1).toUtf8());
       }
       m_IntegratedBrowser.openUrl(url);
     }
