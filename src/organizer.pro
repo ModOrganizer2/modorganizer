@@ -9,7 +9,7 @@ TARGET = ModOrganizer
 TEMPLATE = app
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-  QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit
+  QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit webkitwidgets
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
