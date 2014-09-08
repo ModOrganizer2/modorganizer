@@ -1,6 +1,5 @@
 TEMPLATE = subdirs
 
-
 SUBDIRS = bsatk \
           shared \
           uibase \
@@ -31,7 +30,7 @@ DLLSPATH = $${DESTDIR}\\dlls
 
 otherlibs.path = $$DLLSPATH
 otherlibs.files += $${STATICDATAPATH}\\7z.dll \
-    $$(BOOSTPATH)\\stage\\lib\\boost_python-vc*-mt-1*.dll
+    $${BOOSTPATH}\\stage\\lib\\boost_python-vc*-mt-1*.dll
 
 qtlibs.path = $$DLLSPATH
 

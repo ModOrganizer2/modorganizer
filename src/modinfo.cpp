@@ -540,9 +540,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
       metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
       metaFile.setValue("version", m_Version.canonicalString());
-      if (m_NexusID != -1) {
-        metaFile.setValue("modid", m_NexusID);
-      }
+      metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));

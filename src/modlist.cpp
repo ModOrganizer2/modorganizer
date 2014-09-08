@@ -63,6 +63,12 @@ ModList::ModList(QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(QIcon(":/MO/gui/content/texture"), ":/MO/gui/content/texture", tr("Textures"));
 }
 
+ModList::~ModList()
+{
+  m_ModStateChanged.disconnect_all_slots();
+  m_ModMoved.disconnect_all_slots();
+}
+
 void ModList::setProfile(Profile *profile)
 {
   m_Profile = profile;
@@ -634,6 +640,11 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
   } else {
     qCritical("modInfoChanged not called after modInfoAboutToChange");
   }
+}
+
+void ModList::disconnectSlots() {
+  m_ModMoved.disconnect_all_slots();
+  m_ModStateChanged.disconnect_all_slots();
 }
 
 IModList::ModStates ModList::state(unsigned int modIndex) const

@@ -685,7 +685,7 @@ void DownloadManager::queryInfo(int index)
     return;
   }
 
-  if (info->m_FileInfo->modID == 0UL) {
+  if (info->m_FileInfo->modID <= 0) {
     QString fileName = getFileName(index);
     QString ignore;
     NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID, true);

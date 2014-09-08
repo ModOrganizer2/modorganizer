@@ -132,7 +132,6 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-
 QString Settings::obfuscate(const QString &password) const
 {
   QByteArray temp = password.toUtf8();

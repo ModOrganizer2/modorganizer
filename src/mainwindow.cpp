@@ -97,9 +97,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtPlugin>
 #include <QIdentityProxyModel>
 #include <QClipboard>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/assign.hpp>
 #include <Psapi.h>
 #include <shlobj.h>
 #include <ShellAPI.h>
@@ -114,8 +111,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <scopeguard.h>
+#ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/assign.hpp>
+#endif
 #include <regex>
 
 #ifdef TEST_MODELS
@@ -309,8 +311,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_Updater, SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(&m_Updater, SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-//  connect(ExitProxy::instance(), SIGNAL(exit()), this, SLOT(close()));
-
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
   connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
@@ -363,6 +363,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
 MainWindow::~MainWindow()
 {
+  m_AboutToRun.disconnect_all_slots();
+  m_ModInstalled.disconnect_all_slots();
   m_RefresherThread.exit();
   m_RefresherThread.wait();
   m_IntegratedBrowser.close();
@@ -880,6 +882,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
 
   storeSettings();
 
+//  unloadPlugins();
+
   // profile has to be cleaned up before the modinfo-buffer is cleared
   delete m_CurrentProfile;
   m_CurrentProfile = NULL;
@@ -887,6 +891,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
   ModInfo::clear();
   LogBuffer::cleanQuit();
   m_ModList.setProfile(NULL);
+  NexusInterface::instance()->cleanup();
 }
 
 
@@ -1166,7 +1171,9 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != NULL) {
       m_DiagnosisPlugins.push_back(diagnose);
-      diagnose->onInvalidated([&] () { this->scheduleUpdateButton(); });
+      m_DiagnosisConnections.push_back(
+            diagnose->onInvalidated([&] () { this->scheduleUpdateButton(); })
+            );
     }
   }
   { // mod page plugin
@@ -1195,6 +1202,7 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
     if (verifyPlugin(preview)) {
       m_PreviewGenerator.registerPlugin(preview);
+      return true;
     }
   }
   { // proxy plugins
@@ -1233,12 +1241,40 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
   return false;
 }
 
+void MainWindow::unloadPlugins()
+{
+  // disconnect all slots before unloading plugins so plugins don't have to take care of that
+  m_AboutToRun.disconnect_all_slots();
+  m_ModInstalled.disconnect_all_slots();
+  m_ModList.disconnectSlots();
+  m_PluginList.disconnectSlots();
+
+  m_DiagnosisPlugins.clear();
+
+  foreach (const boost::signals2::connection &connection, m_DiagnosisConnections) {
+    connection.disconnect();
+  }
+  m_DiagnosisConnections.clear();
+
+  m_Settings.clearPlugins();
+
+  if (ui->actionTool->menu() != NULL) {
+    ui->actionTool->menu()->clear();
+  }
+
+  foreach (QPluginLoader *loader, m_PluginLoaders) {
+    qDebug("unloading %s", qPrintable(loader->fileName()));
+    if (!loader->unload()) {
+      qDebug("failed to unload %s: %s", qPrintable(loader->fileName()), qPrintable(loader->errorString()));
+    }
+    delete loader;
+  }
+  m_PluginLoaders.clear();
+}
 
 void MainWindow::loadPlugins()
 {
-  m_DiagnosisPlugins.clear();
-
-  m_Settings.clearPlugins();
+  unloadPlugins();
 
   foreach (QObject *plugin, QPluginLoader::staticInstances()) {
     registerPlugin(plugin, "");
@@ -1278,14 +1314,15 @@ void MainWindow::loadPlugins()
     loadCheck.flush();
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
-      QPluginLoader pluginLoader(pluginName);
-      if (pluginLoader.instance() == NULL) {
+      QPluginLoader *pluginLoader = new QPluginLoader(pluginName, this);
+      if (pluginLoader->instance() == NULL) {
         m_UnloadedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
-                  qPrintable(pluginName), qPrintable(pluginLoader.errorString()));
+                  qPrintable(pluginName), qPrintable(pluginLoader->errorString()));
       } else {
-        if (registerPlugin(pluginLoader.instance(), pluginName)) {
+        if (registerPlugin(pluginLoader->instance(), pluginName)) {
           qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
+          m_PluginLoaders.push_back(pluginLoader);
         } else {
           m_UnloadedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
@@ -2181,6 +2218,8 @@ void MainWindow::storeSettings()
 void MainWindow::on_btnRefreshData_clicked()
 {
   if (!m_DirectoryUpdate) {
+    // save the mod list so changes don't get lost
+    m_CurrentProfile->writeModlistNow(true);
     refreshDirectoryStructure();
   } else {
     qDebug("directory update");
@@ -4420,7 +4459,7 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
       if (::FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type: %lu", ::GetLastError());
+          qDebug("failed to determine binary type of \"%ls\": %lu", targetPathW.c_str(), ::GetLastError());
         } else if (binaryType == SCS_32BIT_BINARY) {
           binaryPath = ToQString(buffer);
         }
@@ -5023,9 +5062,6 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 
 void MainWindow::on_actionProblems_triggered()
 {
-//  QString problemDescription;
-//  checkForProblems(problemDescription);
-//  QMessageBox::information(this, tr("Problems"), problemDescription);
   ProblemsDialog problems(m_DiagnosisPlugins, this);
   if (problems.hasProblems()) {
     problems.exec();
@@ -5484,7 +5520,11 @@ void MainWindow::on_bossButton_clicked()
       QStringList temp = report.split("?");
       QUrl url = QUrl::fromLocalFile(temp.at(0));
       if (temp.size() > 1) {
+#if QT_VERSION >= 0x050000
+        url.setQuery(temp.at(1).toUtf8());
+#else
         url.setEncodedQuery(temp.at(1).toUtf8());
+#endif
       }
       m_IntegratedBrowser.openUrl(url);
     }

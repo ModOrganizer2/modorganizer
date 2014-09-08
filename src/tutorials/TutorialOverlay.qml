@@ -1,4 +1,3 @@
-// import QtQuick 1.0 // to target S60 5th Edition or Maemo 5
 import QtQuick 1.1
 import "tutorials.js" as Logic
 
@@ -21,10 +20,11 @@ Rectangle  {
     function enableBackground(enabled) {
         disabledBackground.visible = enabled
     }
-
+/*
     signal nextStep
 
-    onNextStep: {
+    onNextStep: {*/
+    function nextStep() {
         if (step == 0) {
             Logic.init()
         }

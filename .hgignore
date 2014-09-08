@@ -33,3 +33,4 @@ html
 *.lib
 syntax: regexp
 Makefile\.(Debug|Release)
+source/.*/debug/.*

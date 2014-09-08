@@ -104,7 +104,11 @@ void CategoryFactory::reset()
 {
   m_Categories.clear();
   m_IDMap.clear();
-  addCategory(0, "None", MakeVector<int>(2, 28, 87), 0);
+  // 28 =
+  // 43 = Savegames (makes no sense to install them through MO)
+  // 45 = Videos and trailers
+  // 87 = Miscelanous
+  addCategory(0, "None", MakeVector<int>(4, 28, 43, 45, 87), 0);
 }
 
 
@@ -189,24 +193,38 @@ void CategoryFactory::loadDefaultCategories()
   // mods appear in the combo box
   addCategory(1, "Animations", MakeVector<int>(1, 51), 0);
   addCategory(2, "Armour", MakeVector<int>(1, 54), 0);
-  addCategory(3, "Audio", MakeVector<int>(1, 61), 0);
+  addCategory(3, "Sound & Music", MakeVector<int>(1, 61), 0);
   addCategory(5, "Clothing", MakeVector<int>(1, 60), 0);
   addCategory(6, "Collectables", MakeVector<int>(1, 92), 0);
-  addCategory(7, "Creatures", MakeVector<int>(2, 83, 65), 0);
+  addCategory(28, "Companions", MakeVector<int>(2, 66, 96), 0);
+  addCategory(7, "Creatures & Mounts", MakeVector<int>(2, 83, 65), 0);
   addCategory(8, "Factions", MakeVector<int>(1, 25), 0);
   addCategory(9, "Gameplay", MakeVector<int>(1, 24), 0);
   addCategory(10, "Hair", MakeVector<int>(1, 26), 0);
   addCategory(11, "Items", MakeVector<int>(2, 27, 85), 0);
-  addCategory(19, "Weapons", MakeVector<int>(2, 36, 55), 11);
+  addCategory(32, "Mercantile", MakeVector<int>(1, 69), 0);
+  addCategory(19, "Weapons", MakeVector<int>(1, 55), 11);
+  addCategory(36, "Weapon & Armour Sets", MakeVector<int>(1, 39), 11);
   addCategory(12, "Locations", MakeVector<int>(7, 22, 30, 70, 88, 89, 90, 91), 0);
+  addCategory(31, "Landscape Changes", MakeVector<int>(1, 58), 0);
   addCategory(4, "Cities", MakeVector<int>(1, 53), 12);
+  addCategory(29, "Environment", MakeVector<int>(1, 74), 0);
+  addCategory(30, "Immersion", MakeVector<int>(1, 78), 0);
+  addCategory(25, "Castles & Mansions", MakeVector<int>(1, 68), 23);
   addCategory(20, "Magic", MakeVector<int>(3, 75, 93, 94), 0);
   addCategory(21, "Models & Textures", MakeVector<int>(1, 29), 0);
+  addCategory(33, "Modders resources", MakeVector<int>(1, 82), 0);
   addCategory(13, "NPCs", MakeVector<int>(1, 33), 0);
   addCategory(14, "Patches", MakeVector<int>(2, 79, 84), 0);
+  addCategory(24, "Bugfixes", MakeVector<int>(1, 95), 0);
+  addCategory(35, "Utilities", MakeVector<int>(1, 39), 0);
+  addCategory(26, "Cheats", MakeVector<int>(1, 40), 0);
+  addCategory(23, "Player Homes", MakeVector<int>(1, 67), 0);
   addCategory(15, "Quests", MakeVector<int>(1, 35), 0);
   addCategory(16, "Races & Classes", MakeVector<int>(1, 34), 0);
+  addCategory(27, "Combat", MakeVector<int>(1, 77), 0);
   addCategory(22, "Skills", MakeVector<int>(1, 73), 0);
+  addCategory(34, "Stealth", MakeVector<int>(1, 76), 0);
   addCategory(17, "UI", MakeVector<int>(1, 42), 0);
   addCategory(18, "Visuals", MakeVector<int>(1, 62), 0);
 }

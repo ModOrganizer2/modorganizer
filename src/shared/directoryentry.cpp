@@ -936,10 +936,6 @@ void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int ori
     }
   }
 
-  if (removedFiles.size() > 0) {
-    log("%d files actually removed", removedFiles.size());
-  }
-
   // optimization: this is only called when disabling an origin and in this case we don't have
   // to remove the file from the origin
 
