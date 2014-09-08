@@ -11,32 +11,10 @@ TARGET = mo_shared
 TEMPLATE = lib
 CONFIG += staticlib
 
-INCLUDEPATH += ../bsatk "$(BOOSTPATH)"
 
-
-# only for custom leak detection
-DEFINES += TRACE_LEAKS
-LIBS += -lDbgHelp
-
-
-CONFIG(debug, debug|release) {
-  LIBS += -L$$OUT_PWD/../bsatk/debug
-  LIBS += -lDbgHelp
-  QMAKE_CXXFLAGS_DEBUG -= -Zi
-  QMAKE_CXXFLAGS += -Z7
-  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
-} else {
-  LIBS += -L$$OUT_PWD/../bsatk/release
-  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
+!include(../LocalPaths.pri) {
+  message("paths to required libraries need to be set up in LocalPaths.pri")
 }
-
-LIBS += -lbsatk
-
-DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS
-
-DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
-
-# QMAKE_CXXFLAGS += /analyze
 
 SOURCES += \
     inject.cpp \
@@ -66,3 +44,30 @@ HEADERS += \
     appconfig.h \
     appconfig.inc \
     leaktrace.h
+
+
+# only for custom leak detection
+DEFINES += TRACE_LEAKS
+LIBS += -lDbgHelp
+
+
+CONFIG(debug, debug|release) {
+  LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -lDbgHelp
+  QMAKE_CXXFLAGS_DEBUG -= -Zi
+  QMAKE_CXXFLAGS += -Z7
+  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
+} else {
+  LIBS += -L$$OUT_PWD/../bsatk/release
+  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
+}
+
+LIBS += -lbsatk
+
+DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS
+
+DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
+
+# QMAKE_CXXFLAGS += /analyze
+
+INCLUDEPATH += ../bsatk "$${BOOSTPATH}"

@@ -132,7 +132,7 @@ void EditExecutablesDialog::on_browseButton_clicked()
       if (::FindExecutableW(binaryNameW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type: %lu", ::GetLastError());
+          qDebug("failed to determine binary type of \"%ls\": %lu", binaryNameW.c_str(), ::GetLastError());
         } else if (binaryType == SCS_32BIT_BINARY) {
           binaryPath = ToQString(buffer);
         }

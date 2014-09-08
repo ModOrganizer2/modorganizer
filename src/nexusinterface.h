@@ -130,12 +130,19 @@ class NexusInterface : public QObject
 
 public:
 
+  ~NexusInterface();
+
   static NexusInterface *instance();
 
   /**
    * @return the access manager object used to connect to nexus
    **/
   NXMAccessManager *getAccessManager();
+
+  /**
+   * @brief cleanup this interface. this is destructive, afterwards it can't be used again
+   */
+  void cleanup();
 
   /**
    * @brief request description for a mod
@@ -301,7 +308,6 @@ private:
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
   bool requiresLogin(const NXMRequestInfo &info);
-  static void cleanup();
 
 private:
 

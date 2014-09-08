@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <QProgressBar>
 #include <QTranslator>
+#include <QPluginLoader>
 #include "executableslist.h"
 #include "modlist.h"
 #include "pluginlist.h"
@@ -53,7 +54,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
+#ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
+#endif
 
 namespace Ui {
     class MainWindow;
@@ -139,6 +142,8 @@ public:
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
 
+  QString getOriginDisplayName(int originID);
+  void unloadPlugins();
 public slots:
 
   void refreshLists();
@@ -191,6 +196,7 @@ private:
   void registerPluginTool(MOBase::IPluginTool *tool);
   void registerModPage(MOBase::IPluginModPage *modPage);
   bool registerPlugin(QObject *pluginObj, const QString &fileName);
+  bool unregisterPlugin(QObject *pluginObj, const QString &fileName);
 
   void updateToolBar();
   void activateSelectedProfile();
@@ -373,8 +379,10 @@ private:
   MOBase::IGameInfo *m_GameInfo;
 
   std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
+  std::vector<boost::signals2::connection> m_DiagnosisConnections;
   std::vector<MOBase::IPluginModPage*> m_ModPages;
   std::vector<QString> m_UnloadedPlugins;
+  std::vector<QPluginLoader*> m_PluginLoaders;
 
   QFile m_PluginsCheck;
 

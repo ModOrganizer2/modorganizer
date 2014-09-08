@@ -311,8 +311,18 @@ int main(int argc, char *argv[])
   }
 
   QString dataPath = instanceID.isEmpty() ? application.applicationDirPath()
-                                          : QDir::fromNativeSeparators(QDesktopServices::storageLocation(QDesktopServices::DataLocation)) + "/" + instanceID;
+                                          : QDir::fromNativeSeparators(
+#if QT_VERSION >= 0x050000
+                                              QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+#else
+                                              QDesktopServices::storageLocation(QDesktopServices::DataLocation)
+#endif
+                                              ) + "/" + instanceID;
   application.setProperty("dataPath", dataPath);
+
+#if QT_VERSION >= 0x050000
+  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#endif
 
   qDebug("data path: %s", qPrintable(dataPath));
   if (!QDir(dataPath).exists()) {

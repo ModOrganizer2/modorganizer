@@ -26,13 +26,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidget>
 #include <QTimer>
 #include <QTemporaryFile>
+#ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#endif
 #include <vector>
 #include <map>
 #include "pdll.h"
 #include <BOSS-API.h>
-
 
 
 template <class C>
@@ -212,6 +213,11 @@ public:
 
   void refreshLoadOrder();
 
+  void disconnectSlots() {
+    m_PluginMoved.disconnect_all_slots();
+    m_Refreshed.disconnect_all_slots();
+  }
+
 public:
 
   virtual PluginState state(const QString &name) const;
@@ -333,13 +339,11 @@ private:
   mutable QTimer m_SaveTimer;
 
   SignalRefreshed m_Refreshed;
+  SignalPluginMoved m_PluginMoved;
 
   QTemporaryFile m_TempFile;
 
-  SignalPluginMoved m_PluginMoved;
 
 };
-
-
 
 #endif // PLUGINLIST_H

@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMimeData>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
@@ -95,6 +96,8 @@ PluginList::PluginList(QObject *parent)
 
 PluginList::~PluginList()
 {
+  m_Refreshed.disconnect_all_slots();
+  m_PluginMoved.disconnect_all_slots();
 }
 
 
@@ -484,7 +487,7 @@ void PluginList::saveTo(const QString &pluginFileName
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
       qDebug("%s saved", qPrintable(QDir::toNativeSeparators(deleterFileName)));
     }
-  } else {
+  } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
   }
 
