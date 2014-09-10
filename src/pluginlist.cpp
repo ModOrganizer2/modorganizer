@@ -667,6 +667,20 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+QStringList PluginList::masters(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return QStringList();
+  } else {
+    QStringList result;
+    foreach (const QString &master, m_ESPs[iter->second].m_Masters) {
+      result.append(master);
+    }
+    return result;
+  }
+}
+
 QString PluginList::origin(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
