@@ -148,14 +148,23 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
   ui->descriptionLabel->setText(plugin->description());
 
   QMap<QString, QVariant> settings = current->data(Qt::UserRole + 1).toMap();
+  QMap<QString, QVariant> descriptions = current->data(Qt::UserRole + 2).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
     QVariant value = *iter;
+    QString description;
+    {
+      auto descriptionIter = descriptions.find(iter.key());
+      if (descriptionIter != descriptions.end()) {
+        description = descriptionIter->toString();
+      }
+    }
 
     ui->pluginSettingsList->setItemDelegateForColumn(0, new NoEditDelegate());
     newItem->setData(1, Qt::DisplayRole, value);
     newItem->setData(1, Qt::EditRole, value);
+    newItem->setToolTip(1, description);
 
     newItem->setFlags(newItem->flags() | Qt::ItemIsEditable);
     ui->pluginSettingsList->addTopLevelItem(newItem);
