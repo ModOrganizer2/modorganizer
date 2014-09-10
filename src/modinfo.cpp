@@ -1016,5 +1016,5 @@ ModInfoForeign::ModInfoForeign(const QString &referenceFile, const QStringList &
   , m_Archives(archives)
 {
   m_CreationTime = QFileInfo(referenceFile).created();
-  m_Name = QFileInfo(m_ReferenceFile).baseName();
+  m_Name = tr("Unmanaged") + ": " + QFileInfo(m_ReferenceFile).baseName();
 }
