@@ -2133,6 +2133,15 @@ void MainWindow::readSettings()
 }
 
 
+bool renameFile(const QString &oldName, const QString &newName, bool overwrite = true)
+{
+  if (overwrite && QFile::exists(newName)) {
+    QFile::remove(newName);
+  }
+  return QFile::rename(oldName, newName);
+}
+
+
 void MainWindow::storeSettings()
 {
   if (m_CurrentProfile == NULL) {
@@ -2202,8 +2211,12 @@ void MainWindow::storeSettings()
   }
   if (result == QSettings::NoError) {
     if (!shellRename(iniFile + ".new", iniFile, true, this)) {
-      QMessageBox::critical(this, tr("Failed to write settings"),
-                            tr("An error occured trying to write back MO settings: %1").arg(windowsErrorString(::GetLastError())));
+      DWORD err = ::GetLastError();
+      // make a second attempt using qt functions but if that fails print the error from the first attempt
+      if (!renameFile(iniFile + ".new", iniFile)) {
+        QMessageBox::critical(this, tr("Failed to write settings"),
+                              tr("An error occured trying to write back MO settings: %1").arg(windowsErrorString(err)));
+      }
     }
   } else {
     QString reason = result == QSettings::AccessError ? tr("File is write protected")
