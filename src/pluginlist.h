@@ -224,6 +224,7 @@ public:
   virtual int priority(const QString &name) const;
   virtual int loadOrder(const QString &name) const;
   virtual bool isMaster(const QString &name) const;
+  virtual QStringList masters(const QString &name) const;
   virtual QString origin(const QString &name) const;
   virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func);
