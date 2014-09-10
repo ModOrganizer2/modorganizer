@@ -47,6 +47,14 @@ Profile::Profile()
   initTimer();
 }
 
+void Profile::touchFile(QString fileName)
+{
+  QFile modList(m_Directory.filePath(fileName));
+  if (!modList.open(QIODevice::ReadWrite)) {
+    throw std::runtime_error(QObject::tr("failed to create %1").arg(m_Directory.filePath(fileName)).toUtf8().constData());
+  }
+}
+
 Profile::Profile(const QString &name, bool useDefaultSettings)
   : m_SaveTimer(NULL)
 {
@@ -64,14 +72,12 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
   }
   QString fullPath = profilesDir + "/" + fixedName;
   m_Directory = QDir(fullPath);
-  QFile modList(m_Directory.filePath("modlist.txt"));
-  if (!modList.open(QIODevice::ReadWrite)) {
-    profileBase.rmdir(fixedName);
-    throw std::runtime_error(QObject::tr("failed to create %1").arg(m_Directory.filePath("modlist.txt")).toUtf8().constData());
-  }
-  modList.close();
 
   try {
+    // create files. Needs to happen after m_Directory was set!
+    touchFile("modlist.txt");
+    touchFile("archives.txt");
+
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
