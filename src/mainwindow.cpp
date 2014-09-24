@@ -1137,7 +1137,6 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  QToolButton *browserBtn = NULL;
   // turn the browser action into a drop-down menu if necessary
   if (ui->actionNexus->menu() == NULL) {
     QAction *nexusAction = ui->actionNexus;
@@ -1147,10 +1146,8 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
     ui->toolBar->removeAction(nexusAction);
     actionToToolButton(ui->actionNexus);
 
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
     browserBtn->menu()->addAction(nexusAction);
-  } else {
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
   }
 
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
@@ -1434,30 +1431,32 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
       DWORD retLen;
       JOBOBJECT_BASIC_PROCESS_ID_LIST info;
 
-      bool isJobHandle = true;
+      {
+        bool isJobHandle = true;
 
-      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
-      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
-        if (isJobHandle) {
-          if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-            if (info.NumberOfProcessIdsInList == 0) {
-              break;
-            }
-          } else {
-            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-            // the right to break out.
-            if (::GetLastError() != ERROR_MORE_DATA) {
-              isJobHandle = false;
+        DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+        while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
+          if (isJobHandle) {
+            if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+              if (info.NumberOfProcessIdsInList == 0) {
+                break;
+              }
+            } else {
+              // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+              // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+              // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+              // the right to break out.
+              if (::GetLastError() != ERROR_MORE_DATA) {
+                isJobHandle = false;
+              }
             }
           }
+
+          // keep processing events so the app doesn't appear dead
+          QCoreApplication::processEvents();
+
+          res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
         }
-
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
-
-        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
       }
       ::CloseHandle(processHandle);
 
@@ -2191,11 +2190,7 @@ void MainWindow::storeSettings()
   QSettings::Status result = QSettings::NoError;
   {
     QSettings settings(iniFile + ".new", QSettings::IniFormat);
-    if (m_CurrentProfile != NULL) {
-      settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
-    } else {
-      settings.remove("selected_profile");
-    }
+    settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
 
     settings.setValue("mod_list_state", ui->modList->header()->saveState());
     settings.setValue("plugin_list_state", ui->espList->header()->saveState());
@@ -5560,11 +5555,11 @@ void MainWindow::on_bossButton_clicked()
 
     DWORD retLen;
     JOBOBJECT_BASIC_PROCESS_ID_LIST info;
-    bool isJobHandle = true;
-    ULONG lastProcessID;
     HANDLE processHandle = loot;
 
     if (loot != INVALID_HANDLE_VALUE) {
+      bool isJobHandle = true;
+      ULONG lastProcessID;
       DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
       while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
         if (isJobHandle) {

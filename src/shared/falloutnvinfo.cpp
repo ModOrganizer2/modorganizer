@@ -55,15 +55,17 @@ std::wstring FalloutNVInfo::getRegPathStatic()
                                   0, KEY_QUERY_VALUE, &key);
 
   if (errorcode != ERROR_SUCCESS) {
-    return L"";
+    return std::wstring();
   }
 
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  errorcode = ::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize);
-
-  return std::wstring(temp);
+  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+    return std::wstring(temp);
+  } else {
+    return std::wstring();
+  }
 }
 
 std::wstring FalloutNVInfo::getInvalidationBSA()
@@ -162,56 +164,46 @@ std::wstring FalloutNVInfo::getSteamAPPId(int) const
 
 void FalloutNVInfo::createProfile(const std::wstring &directory, bool useDefaults)
 {
-  std::wostringstream target;
+  std::wstring target = directory + L"\\plugins.txt";
 
   // copy plugins.txt
-  target << directory << "\\plugins.txt";
-
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
-    source << getLocalAppFolder() << "\\FalloutNV\\plugins.txt";
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (!FileExists(target)) {
+    std::wstring source = getLocalAppFolder() + L"\\FalloutNV\\plugins.txt";
+    if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
+      HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
       ::CloseHandle(file);
     }
   }
 
   // copy ini-file
-  target.str(L""); target.clear();
-  target << directory << L"\\fallout.ini";
+  target = directory + L"\\fallout.ini";
 
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
+  if (!FileExists(target)) {
+    std::wstring source;
     if (useDefaults) {
-      source << getGameDirectory() << L"\\fallout_default.ini";
+      source = getGameDirectory() + L"\\fallout_default.ini";
     } else {
-      source << getMyGamesDirectory() << L"\\FalloutNV";
-      if (FileExists(source.str(), L"fallout.ini")) {
-        source << L"\\fallout.ini";
+      source = getMyGamesDirectory() + L"\\FalloutNV";
+      if (FileExists(source, L"fallout.ini")) {
+        source += L"\\fallout.ini";
       } else {
-        source.str(L"");
-        source << getGameDirectory() << L"\\fallout_default.ini";
+        source = getGameDirectory() + L"\\fallout_default.ini";
       }
     }
 
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
+    if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
       if (::GetLastError() != ERROR_FILE_EXISTS) {
-        std::ostringstream stream;
-        stream << "failed to copy ini file: " << ToString(source.str(), false);
-        throw windows_error(stream.str());
+        throw windows_error("failed to copy ini file: " + ToString(source, false));
       }
     }
   }
   { // copy falloutprefs.ini-file
-    std::wstring target = directory.substr().append(L"\\falloutprefs.ini");
+    std::wstring target = directory + L"\\falloutprefs.ini";
     if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getMyGamesDirectory() << L"\\FalloutNV\\falloutprefs.ini";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+      std::wstring source = getMyGamesDirectory() + L"\\FalloutNV\\falloutprefs.ini";
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if (::GetLastError() != ERROR_FILE_EXISTS) {
-          std::ostringstream stream;
-          stream << "failed to copy ini file: " << ToString(source.str(), false);
-          throw windows_error(stream.str());
+          throw windows_error("failed to copy ini file: " + ToString(source, false));
         }
       }
     }

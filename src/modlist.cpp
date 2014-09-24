@@ -49,8 +49,12 @@ using namespace MOBase;
 
 
 ModList::ModList(QObject *parent)
-  : QAbstractItemModel(parent), m_Profile(NULL), m_Modified(false),
-    m_FontMetrics(QFont()), m_DropOnItems(false)
+  : QAbstractItemModel(parent)
+  , m_Profile(NULL)
+  , m_NexusInterface(NULL)
+  , m_Modified(false)
+  , m_FontMetrics(QFont())
+  , m_DropOnItems(false)
 {
   m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(QIcon(":/MO/gui/content/plugin"), ":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(QIcon(":/MO/gui/content/interface"), ":/MO/gui/content/interface", tr("Interface"));

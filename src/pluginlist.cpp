@@ -685,7 +685,7 @@ QString PluginList::origin(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
   if (iter == m_ESPsByName.end()) {
-    return false;
+    return QString();
   } else {
     return m_ESPs[iter->second].m_OriginName;
   }
@@ -836,7 +836,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
-      if (enabledMasters.size() > 0) {
+      if (!enabledMasters.empty()) {
         text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
       }
       if (m_ESPs[index].m_HasIni) {
@@ -1102,34 +1102,34 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      int diff = -1;
-      if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
-          ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
-        diff = 1;
-      }
-      QModelIndexList rows = selectionModel->selectedRows();
-      // remove elements that aren't supposed to be movable
-      QMutableListIterator<QModelIndex> iter(rows);
-      while (iter.hasNext()) {
-        if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
-          iter.remove();
+      if (proxyModel != NULL) {
+        int diff = -1;
+        if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
+            ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
+          diff = 1;
         }
-      }
-      if (keyEvent->key() == Qt::Key_Down) {
-        for (int i = 0; i < rows.size() / 2; ++i) {
-          rows.swap(i, rows.size() - i - 1);
+        QModelIndexList rows = selectionModel->selectedRows();
+        // remove elements that aren't supposed to be movable
+        QMutableListIterator<QModelIndex> iter(rows);
+        while (iter.hasNext()) {
+          if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
+            iter.remove();
+          }
         }
-      }
-      foreach (QModelIndex idx, rows) {
-        if (proxyModel != NULL) {
+        if (keyEvent->key() == Qt::Key_Down) {
+          for (int i = 0; i < rows.size() / 2; ++i) {
+            rows.swap(i, rows.size() - i - 1);
+          }
+        }
+        foreach (QModelIndex idx, rows) {
           idx = proxyModel->mapToSource(idx);
+          int newPriority = m_ESPs[idx.row()].m_Priority + diff;
+          if ((newPriority >= 0) && (newPriority < rowCount())) {
+            setPluginPriority(idx.row(), newPriority);
+          }
         }
-        int newPriority = m_ESPs[idx.row()].m_Priority + diff;
-        if ((newPriority >= 0) && (newPriority < rowCount())) {
-          setPluginPriority(idx.row(), newPriority);
-        }
+        refreshLoadOrder();
       }
-      refreshLoadOrder();
       return true;
     } else if (keyEvent->key() == Qt::Key_Space) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();

@@ -63,15 +63,17 @@ std::wstring SkyrimInfo::getRegPathStatic()
                                   0, KEY_QUERY_VALUE, &key);
 
   if (errorcode != ERROR_SUCCESS) {
-    return L"";
+    return std::wstring();
   }
 
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  errorcode = ::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize);
-
-  return std::wstring(temp);
+  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+    return std::wstring(temp);
+  } else {
+    return std::wstring();
+  }
 }
 
 
@@ -222,7 +224,7 @@ int SkyrimInfo::getNexusModIDStatic()
 void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
 {
   { // copy plugins.txt
-    std::wstring target = directory.substr().append(L"\\plugins.txt");
+    std::wstring target = directory + L"\\plugins.txt";
     if (!FileExists(target)) {
       std::wostringstream source;
       source << getLocalAppFolder() << "\\Skyrim\\plugins.txt";
@@ -231,11 +233,10 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
         ::CloseHandle(file);
       }
     }
-    target = directory.substr().append(L"\\loadorder.txt");
+    target = directory + L"\\loadorder.txt";
     if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getLocalAppFolder() << "\\Skyrim\\loadorder.txt";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+      std::wstring source = getLocalAppFolder() + L"\\Skyrim\\loadorder.txt";
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
         ::CloseHandle(file);
       }
@@ -243,42 +244,36 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
   }
 
   { // copy skyrim.ini-file
-    std::wstring target = directory.substr().append(L"\\skyrim.ini");
+    std::wstring target = directory + L"\\skyrim.ini";
     if (!FileExists(target)) {
-      std::wostringstream source;
+      std::wstring source;
       if (useDefaults) {
-        source << getGameDirectory() << L"\\skyrim_default.ini";
+        source = getGameDirectory() + L"\\skyrim_default.ini";
       } else {
-        source << getMyGamesDirectory() << L"\\Skyrim";
-        if (FileExists(source.str(), L"skyrim.ini")) {
-          source << L"\\skyrim.ini";
+        source = getMyGamesDirectory() + L"\\Skyrim";
+        if (FileExists(source, L"skyrim.ini")) {
+          source += L"\\skyrim.ini";
         } else {
-          source.str(L"");
-          source << getGameDirectory() << L"\\skyrim_default.ini";
+          source = getGameDirectory() + L"\\skyrim_default.ini";
         }
       }
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if (::GetLastError() != ERROR_FILE_EXISTS) {
-          std::ostringstream stream;
-          stream << "failed to copy ini file: " << ToString(source.str(), false);
-          throw windows_error(stream.str());
+          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
         }
       }
     }
   }
 
   { // copy skyrimprefs.ini-file
-    std::wstring target = directory.substr().append(L"\\skyrimprefs.ini");
+    std::wstring target = directory + L"\\skyrimprefs.ini";
     if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getMyGamesDirectory() << L"\\Skyrim\\skyrimprefs.ini";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
-        log("failed to copy ini file %ls", source.str().c_str());
+      std::wstring source = getMyGamesDirectory() + L"\\Skyrim\\skyrimprefs.ini";
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
+        log("failed to copy ini file %ls", source.c_str());
         // create empty
         if (::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) == INVALID_HANDLE_VALUE) {
-          std::ostringstream stream;
-          stream << "failed to copy ini file: " << ToString(source.str(), false);
-          throw windows_error(stream.str());
+          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
         }
       }
     }

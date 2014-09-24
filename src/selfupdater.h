@@ -65,7 +65,8 @@ public:
    * @todo passing the nexus interface is unneccessary
    **/
   SelfUpdater(NexusInterface *nexusInterface, QWidget *parent);
-  ~SelfUpdater();
+
+  virtual ~SelfUpdater();
 
   /**
    * @brief start the update process

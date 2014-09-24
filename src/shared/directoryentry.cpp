@@ -325,13 +325,13 @@ static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 
 
 FileEntry::FileEntry()
-  : m_Index(UINT_MAX), m_Name(), m_Parent(NULL), m_LastAccessed(time(NULL))
+  : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(NULL), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Parent(parent), m_Origin(-1), m_Archive(L""), m_LastAccessed(time(NULL))
+  : m_Index(index), m_Name(name), m_Origin(-1), m_Parent(parent), m_Archive(L""), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
@@ -636,7 +636,7 @@ void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origi
 
 void DirectoryEntry::removeFile(FileEntry::Index index)
 {
-  if (m_Files.size() != 0) {
+  if (!m_Files.empty()) {
     auto iter = std::find_if(m_Files.begin(), m_Files.end(),
                              [&index](const std::pair<std::wstring, FileEntry::Index> &iter) -> bool {
                                return iter.second == index; } );

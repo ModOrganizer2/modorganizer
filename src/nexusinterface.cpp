@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "utility.h"
-#include <json.h>
+#include "json.h"
 #include "selectiondialog.h"
 #include <QApplication>
 #include <utility.h>
@@ -580,6 +580,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
@@ -600,6 +601,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
@@ -620,4 +622,5 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}
