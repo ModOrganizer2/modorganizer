@@ -232,7 +232,7 @@ void CategoryFactory::loadDefaultCategories()
 
 int CategoryFactory::getParentID(unsigned int index) const
 {
-  if ((index < 0) || (index >= m_Categories.size())) {
+  if (index >= m_Categories.size()) {
     throw MyException(QObject::tr("invalid index %1").arg(index));
   }
 
@@ -267,7 +267,7 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
 
 bool CategoryFactory::hasChildren(unsigned int index) const
 {
-  if ((index < 0) || (index >= m_Categories.size())) {
+  if (index >= m_Categories.size()) {
     throw MyException(QObject::tr("invalid index %1").arg(index));
   }
 
@@ -277,7 +277,7 @@ bool CategoryFactory::hasChildren(unsigned int index) const
 
 QString CategoryFactory::getCategoryName(unsigned int index) const
 {
-  if ((index < 0) || (index >= m_Categories.size())) {
+  if (index >= m_Categories.size()) {
     throw MyException(QObject::tr("invalid index %1").arg(index));
   }
 
@@ -287,7 +287,7 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
 
 int CategoryFactory::getCategoryID(unsigned int index) const
 {
-  if ((index < 0) || (index >= m_Categories.size())) {
+  if (index >= m_Categories.size()) {
     throw MyException(QObject::tr("invalid index %1").arg(index));
   }
 

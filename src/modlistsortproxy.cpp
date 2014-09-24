@@ -286,7 +286,7 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
-        if ((state == ModInfo::ENDORSED_FALSE) && (state != ModInfo::ENDORSED_NEVER)) return true;
+        if ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER)) return true;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
         if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;

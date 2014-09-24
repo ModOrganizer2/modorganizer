@@ -1129,7 +1129,6 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  QToolButton *browserBtn = NULL;
   // turn the browser action into a drop-down menu if necessary
   if (ui->actionNexus->menu() == NULL) {
     QAction *nexusAction = ui->actionNexus;
@@ -1139,10 +1138,8 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
     ui->toolBar->removeAction(nexusAction);
     actionToToolButton(ui->actionNexus);
 
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
     browserBtn->menu()->addAction(nexusAction);
-  } else {
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
   }
 
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
@@ -2158,11 +2155,7 @@ void MainWindow::storeSettings()
   QSettings::Status result = QSettings::NoError;
   {
     QSettings settings(iniFile + ".new", QSettings::IniFormat);
-    if (m_CurrentProfile != NULL) {
-      settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
-    } else {
-      settings.remove("selected_profile");
-    }
+    settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
 
     settings.setValue("mod_list_state", ui->modList->header()->saveState());
     settings.setValue("plugin_list_state", ui->espList->header()->saveState());

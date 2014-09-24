@@ -265,7 +265,7 @@ private:
 
   struct TModInfo {
     TModInfo(unsigned int index, ModInfo::Ptr modInfo)
-        : modInfo(modInfo), nameOrder(index) {}
+        : modInfo(modInfo), nameOrder(index), priorityOrder(0), modIDOrder(0), categoryOrder(0) {}
     ModInfo::Ptr modInfo;
     unsigned int nameOrder;
     unsigned int priorityOrder;

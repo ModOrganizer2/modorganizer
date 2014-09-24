@@ -53,15 +53,25 @@ void GameInfo::cleanup() {
 
 void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
 {
+  // this function attempts 3 (three!) ways to determine the correct "My Games" folder.
   wchar_t myDocuments[MAX_PATH];
-  memset(myDocuments, '\0', MAX_PATH);
+  memset(myDocuments, '\0', MAX_PATH * sizeof(wchar_t));
 
-  ::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, myDocuments);
+  m_MyGamesDirectory.clear();
 
-  m_MyGamesDirectory.assign(myDocuments).append(L"\\My Games");
-  if (!FileExists(m_MyGamesDirectory.substr().append(L"/").append(file))) {
-    if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_DEFAULT, myDocuments) != S_OK) {
-      m_MyGamesDirectory.assign(myDocuments).append(L"\\My Games");
+  // a) this is the way it should work. get the configured My Documents\My Games directory
+  if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, myDocuments) == S_OK) {
+    m_MyGamesDirectory = std::wstring(myDocuments) + L"\\My Games";
+  }
+
+  // b) if there is no <game> directory there, look in the default directory
+  if (m_MyGamesDirectory.empty()
+      || !FileExists(m_MyGamesDirectory + L"\\" + file)) {
+    if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_DEFAULT, myDocuments) == S_OK) {
+      std::wstring fromDefault = std::wstring(myDocuments) + L"\\My Games";
+      if (FileExists(fromDefault + L"\\" + file)) {
+        m_MyGamesDirectory = fromDefault;
+      }
     }
   }
   if (!FileExists(m_MyGamesDirectory.substr().append(L"/").append(file))) {
@@ -120,71 +130,53 @@ std::wstring GameInfo::getGameDirectory() const
 
 std::wstring GameInfo::getModsDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << L"\\mods";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\mods";
 }
 
 std::wstring GameInfo::getProfilesDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << L"\\profiles";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\profiles";
 }
 
 std::wstring GameInfo::getIniFilename() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << L"\\ModOrganizer.ini";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\ModOrganizer.ini";
 }
 
 
 std::wstring GameInfo::getDownloadDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << L"\\downloads";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\downloads";
 }
 
 
 std::wstring GameInfo::getCacheDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << L"\\webcache";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\webcache";
 }
 
 
 std::wstring GameInfo::getOverwriteDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << "\\overwrite";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\overwrite";
 }
 
 
 std::wstring GameInfo::getLogDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << "\\logs";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\logs";
 }
 
 
 std::wstring GameInfo::getLootDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << "\\loot";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\loot";
 }
 
 
 std::wstring GameInfo::getTutorialDir() const
 {
-  std::wostringstream temp;
-  temp << m_OrganizerDirectory << "\\tutorials";
-  return temp.str();
+  return m_OrganizerDirectory + L"\\tutorials";
 }
 
 
@@ -201,7 +193,15 @@ std::vector<std::wstring> GameInfo::getSteamVariants() const
 
 std::wstring GameInfo::getLocalAppFolder() const
 {
-  return getSpecialPath(L"Local AppData");
+  wchar_t localAppFolder[MAX_PATH];
+  memset(localAppFolder, '\0', MAX_PATH * sizeof(wchar_t));
+
+  if (::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
+    return localAppFolder;
+  } else {
+    // fallback: try the registry
+    return getSpecialPath(L"Local AppData");
+  }
 }
 
 std::wstring GameInfo::getSpecialPath(LPCWSTR name) const

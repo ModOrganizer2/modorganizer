@@ -219,7 +219,7 @@ public:
   void clear();
   bool isPopulated() const { return m_Populated; }
 
-  bool isEmpty() const { return (m_Files.size() == 0) && (m_SubDirectories.size() == 0); }
+  bool isEmpty() const { return m_Files.empty() && m_SubDirectories.empty(); }
 
   const DirectoryEntry *getParent() const { return m_Parent; }
 

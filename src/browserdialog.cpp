@@ -22,10 +22,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "messagedialog.h"
 #include "report.h"
-#include "json.h"
 #include "persistentcookiejar.h"
 
 #include <gameinfo.h>
+#include "json.h"
 
 #include <utility.h>
 #include <gameinfo.h>

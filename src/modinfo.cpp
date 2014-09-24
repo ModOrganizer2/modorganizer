@@ -142,7 +142,7 @@ bool ModInfo::removeMod(unsigned int index)
   auto iter = s_ModsByModID.find(modInfo->getNexusID());
   if (iter != s_ModsByModID.end()) {
     std::vector<unsigned int> indices = iter->second;
-    std::remove(indices.begin(), indices.end(), index);
+    indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
     s_ModsByModID[modInfo->getNexusID()] = indices;
   }
 

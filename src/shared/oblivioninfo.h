@@ -36,7 +36,7 @@ public:
   virtual unsigned long getBSAVersion();
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return OblivionInfo::getRegPathStatic(); }
+  virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Oblivion.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_OBLIVION; }
@@ -72,9 +72,9 @@ public:
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return OblivionInfo::getNexusInfoUrlStatic(); }
+  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return OblivionInfo::getNexusModIDStatic(); }
+  virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 101; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);

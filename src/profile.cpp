@@ -585,7 +585,9 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 bool Profile::invalidationActive(bool *supported) const
 {
   if (GameInfo::instance().requiresBSAInvalidation()) {
-    *supported = true;
+    if (supported != NULL) {
+      *supported = true;
+    }
     wchar_t buffer[1024];
     std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
     // epic ms fail: GetPrivateProfileString uses errno (for whatever reason) to signal a fail since the return value

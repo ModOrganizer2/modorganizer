@@ -447,14 +447,9 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
-    int edition = 0;
-    if (settings.contains("game_edition")) {
-      edition = settings.value("game_edition").toInt();
-    } else {
+    if (!settings.contains("game_edition")) {
       std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
-      if (editions.size() < 2) {
-        edition = 0;
-      } else {
+      if (editions.size() > 1) {
         SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), NULL);
         int index = 0;
         for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
@@ -467,7 +462,7 @@ int main(int argc, char *argv[])
         }
       }
     }
-
+#pragma message("edition isn't used?")
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
     ExecutablesList executablesList;

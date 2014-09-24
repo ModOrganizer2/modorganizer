@@ -55,7 +55,7 @@ public:
    **/
   explicit InstallationManager(QWidget *parent);
 
-  ~InstallationManager();
+  virtual ~InstallationManager();
 
   /**
    * @brief update the directory where mods are to be installed

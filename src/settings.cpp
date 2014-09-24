@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
-#include <json.h>
+#include "json.h"
 
 #include <QCheckBox>
 #include <QLineEdit>
