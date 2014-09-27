@@ -231,7 +231,7 @@ QString Settings::getModDirectory() const
 
 QString Settings::getNMMVersion() const
 {
-  static const QString MIN_NMM_VERSION = "0.47.0";
+  static const QString MIN_NMM_VERSION = "0.52.2";
   QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
   if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
     result = MIN_NMM_VERSION;
