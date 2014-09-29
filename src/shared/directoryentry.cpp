@@ -72,8 +72,7 @@ public:
   }
 
   bool exists(const std::wstring &name) {
-    std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
-    return iter != m_OriginsNameMap.end();
+    return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
   }
 
   FilesOrigin &getByID(Index ID) {
@@ -369,16 +368,14 @@ std::wstring FileEntry::getFullPath() const
   bool ignore = false;
   result = m_Parent->getOriginByID(getOrigin(ignore)).getPath(); //base directory for origin
   recurseParents(result, m_Parent); // all intermediate directories
-  result.append(L"\\").append(m_Name); // the actual filename
-  return result;
+  return result + L"\\" + m_Name;
 }
 
 std::wstring FileEntry::getRelativePath() const
 {
   std::wstring result;
   recurseParents(result, m_Parent); // all intermediate directories
-  result.append(L"\\").append(m_Name); // the actual filename
-  return result;
+  return result + L"\\" + m_Name;
 }
 
 
@@ -446,6 +443,7 @@ void DirectoryEntry::addFromOrigin(const std::wstring &originName, const std::ws
     boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
     memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
     int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
+    buffer.get()[offset] = L'\0';
     addFiles(origin, buffer.get(), offset);
   }
   m_Populated = true;

@@ -331,7 +331,8 @@ bool DownloadManager::addDownload(const QStringList &URLs,
     fileName = "unknown";
   }
 
-  QNetworkRequest request(URLs.first());
+  QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
+  QNetworkRequest request(preferredUrl);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, modID, fileID, fileInfo);
 }
 
@@ -1198,47 +1199,34 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test), QString()));
 }
 
+int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
+{
+  int result = 0;
+
+  int users = map["ConnectedUsers"].toInt();
+  // 0 users is probably a sign that the server is offline. Since there is currently no
+  // mechanism to try a different server, we avoid those without users
+  if (users == 0) {
+    result -= 500;
+  } else {
+    result -= users;
+  }
+
+  auto preference = preferredServers.find(map["Name"].toString());
+
+  if (preference != preferredServers.end()) {
+    result += 100 + preference->second * 20;
+  }
+
+  if (map["IsPremium"].toBool()) result += 5;
+
+  return result;
+}
 
 // sort function to sort by best download server
 bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferredServers, const QVariant &LHS, const QVariant &RHS)
 {
-  int LHSVal = 0;
-  int RHSVal = 0;
-
-  QVariantMap LHSMap = LHS.toMap();
-  QVariantMap RHSMap = RHS.toMap();
-
-  int LHSUsers = LHSMap["ConnectedUsers"].toInt();
-  int RHSUsers = RHSMap["ConnectedUsers"].toInt();
-  // 0 users is probably a sign that the server is offline. Since there is currently no
-  // mechanism to try a different server, we avoid those without users
-  if (LHSUsers == 0) {
-    LHSVal -= 500;
-  } else {
-    LHSVal -= LHSUsers;
-  }
-  if (RHSUsers == 0) {
-    RHSVal -= 500;
-  } else {
-    RHSVal -= RHSUsers;
-  }
-
-  // user preference. This is a bit silly because the more servers on the preferred list the higher the boost
-  auto LHSPreference = preferredServers.find(LHSMap["Name"].toString());
-  auto RHSPreference = preferredServers.find(RHSMap["Name"].toString());
-
-  if (LHSPreference != preferredServers.end()) {
-    LHSVal += 100 + LHSPreference->second * 20;
-  }
-  if (RHSPreference != preferredServers.end()) {
-    RHSVal += 100 + RHSPreference->second * 20;
-  }
-
-  // premium isn't valued high because premium servers already get a massive boost for having few users online
-  if (LHSMap["IsPremium"].toBool()) LHSVal += 5;
-  if (RHSMap["IsPremium"].toBool()) RHSVal += 5;
-
-  return RHSVal < LHSVal;
+  return evaluateFileInfoMap(LHS.toMap(), preferredServers) > evaluateFileInfoMap(RHS.toMap(), preferredServers);
 }
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)

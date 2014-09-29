@@ -217,7 +217,7 @@ void Profile::createTweakedIniFile()
   }
 
   if (localSavesEnabled()) {
-    if (!::WritePrivateProfileStringW(L"General", L"bUseMyGamesDirectory", L"1", ToWString(tweakedIni).c_str())) {
+    if (!::WritePrivateProfileStringW(L"General", L"bUseMyGamesDirectory", L"0", ToWString(tweakedIni).c_str())) {
       error = true;
     }
 
@@ -238,7 +238,7 @@ void Profile::createTweakedIniFile()
 void Profile::refreshModStatus()
 {
   QFile file(getModlistFileName());
-  if (!file.exists()) {
+  if (!file.open(QIODevice::ReadOnly)) {
     throw MyException(tr("\"%1\" is missing or inaccessible").arg(getModlistFileName()));
   }
 
@@ -249,10 +249,9 @@ void Profile::refreshModStatus()
   std::set<QString> namesRead;
 
   // load mods from file and update enabled state and priority for them
-  file.open(QIODevice::ReadOnly);
   int index = 0;
   while (!file.atEnd()) {
-    QByteArray line = file.readLine();
+    QByteArray line = file.readLine().trimmed();
     bool enabled = true;
     QString modName;
     if (line.length() == 0) {

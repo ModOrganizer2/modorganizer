@@ -120,7 +120,7 @@ HANDLE startBinary(const QFileInfo &binary,
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo;
 
   ::QueryInformationJobObject(NULL, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), NULL);
-  jobInfo.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK | JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+  jobInfo.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_BREAKAWAY_OK;
 
   HANDLE jobObject = ::CreateJobObject(NULL, NULL);
 
