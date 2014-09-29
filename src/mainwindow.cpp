@@ -1405,6 +1405,15 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
   }
 }
 
+std::wstring getProcessName(DWORD processId)
+{
+  HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
+
+  DWORD value = MAX_PATH;
+  wchar_t buffer[MAX_PATH];
+  ::QueryFullProcessImageNameW(process, 0, buffer, &value);
+  return buffer;
+}
 
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
 {
@@ -1423,11 +1432,43 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
 
       QCoreApplication::processEvents();
 
-      while ((::WaitForSingleObject(processHandle, 100) == WAIT_TIMEOUT) &&
-              !dialog->unlockClicked()) {
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
+      DWORD retLen;
+      JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+
+      {
+        DWORD currentProcess = 0UL;
+        bool isJobHandle = true;
+
+        DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+        while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
+          if (isJobHandle) {
+            if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+              if (info.NumberOfProcessIdsInList == 0) {
+              } else {
+                if (info.ProcessIdList[0] != currentProcess) {
+                  currentProcess = info.ProcessIdList[0];
+                  dialog->setProcessName(ToQString(getProcessName(currentProcess)));
+                }
+                break;
+              }
+            } else {
+              // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+              // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+              // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+              // the right to break out.
+              if (::GetLastError() != ERROR_MORE_DATA) {
+                isJobHandle = false;
+              }
+            }
+          }
+
+          // keep processing events so the app doesn't appear dead
+          QCoreApplication::processEvents();
+
+          res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+        }
       }
+      ::CloseHandle(processHandle);
 
       this->setEnabled(true);
       refreshDirectoryStructure();
