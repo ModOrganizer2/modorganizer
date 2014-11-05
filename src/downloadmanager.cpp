@@ -332,6 +332,7 @@ bool DownloadManager::addDownload(const QStringList &URLs,
   }
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
+  qDebug("selected download url: %s", qPrintable(preferredUrl.toString()));
   QNetworkRequest request(preferredUrl);
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, modID, fileID, fileInfo);
 }
@@ -645,7 +646,7 @@ void DownloadManager::resumeDownloadInt(int index)
       info->m_CurrentUrl = (info->m_CurrentUrl + 1) % info->m_Urls.count();
     }
     qDebug("request resume from url %s", qPrintable(info->currentURL()));
-    QNetworkRequest request(info->currentURL());
+    QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
     info->m_ResumePos = info->m_Output.size();
     qDebug("resume at %lld bytes", info->m_ResumePos);
     QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";

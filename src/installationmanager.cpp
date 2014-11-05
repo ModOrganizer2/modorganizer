@@ -257,7 +257,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
     m_InstallationProgress.hide();
-    throw std::runtime_error("extracting failed");
+    throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
   }
 
   m_InstallationProgress.hide();
@@ -542,7 +542,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     if (m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
-      throw std::runtime_error("extracting failed");
+      throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
     }
   }
 
