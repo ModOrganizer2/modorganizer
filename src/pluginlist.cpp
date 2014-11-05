@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "safewritefile.h"
 #include "scopeguard.h"
+#include "modinfo.h"
 #include <utility.h>
 #include <gameinfo.h>
 #include <espfile.h>
@@ -158,7 +159,14 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != NULL;
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath()), hasIni));
+        QString originName = ToQString(origin.getName());
+        unsigned int modIndex = ModInfo::getIndex(originName);
+        if (modIndex != UINT_MAX) {
+          ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+          originName = modInfo->name();
+        }
+
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), originName, ToQString(current->getFullPath()), hasIni));
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
@@ -290,6 +298,8 @@ void PluginList::addInformation(const QString &name, const QString &message)
 
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
+  } else {
+    qWarning("failed to associate message for \"%s\"", qPrintable(name));
   }
 }
 

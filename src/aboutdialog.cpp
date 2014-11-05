@@ -41,7 +41,6 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   addLicense("Boost Library", LICENSE_BOOST);
   addLicense("7-zip", LICENSE_LGPL3);
   addLicense("ZLib", LICENSE_ZLIB);
-  addLicense("NIF File Format Library", LICENSE_BSD3);
   addLicense("Tango Icon Theme", LICENSE_NONE);
   addLicense("RRZE Icon Set", LICENSE_CCBY3);
   addLicense("Icons by Lorc, Delapouite and sbed available on http://game-icons.net", LICENSE_CCBY3);
