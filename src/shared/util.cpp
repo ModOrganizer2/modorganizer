@@ -71,7 +71,9 @@ std::string ToString(const std::wstring &source, bool utf8)
   if (sizeRequired == 0) {
     throw windows_error("failed to convert string to multibyte");
   }
-  result.resize(sizeRequired, '\0');
+  // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
+  // we don't want that \0 in the string because then the length field would be wrong. Because madness
+  result.resize(sizeRequired - 1, '\0');
   ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, NULL, NULL);
   return result;
 }
@@ -117,14 +119,15 @@ std::wstring ToLower(const std::wstring &text)
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
 {
-  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), NULL);
+  DWORD handle;
+  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
   if (size == 0) {
     throw windows_error("failed to determine file version info size");
   }
 
   void *buffer = new char[size];
   try {
-    if (!::GetFileVersionInfoW(fileName.c_str(), 0UL, size, buffer)) {
+    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer)) {
       throw windows_error("failed to determine file version info");
     }
 

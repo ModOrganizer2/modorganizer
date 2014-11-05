@@ -103,6 +103,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
@@ -1268,14 +1272,14 @@ void MainWindow::unloadPlugins()
     ui->actionTool->menu()->clear();
   }
 
-  foreach (QPluginLoader *loader, m_PluginLoaders) {
-    qDebug("unloading %s", qPrintable(loader->fileName()));
+  while (!m_PluginLoaders.empty()) {
+    QPluginLoader *loader = m_PluginLoaders.back();
+    m_PluginLoaders.pop_back();
     if (!loader->unload()) {
       qDebug("failed to unload %s: %s", qPrintable(loader->fileName()), qPrintable(loader->errorString()));
     }
     delete loader;
   }
-  m_PluginLoaders.clear();
 }
 
 void MainWindow::loadPlugins()
@@ -1322,7 +1326,7 @@ void MainWindow::loadPlugins()
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader *pluginLoader = new QPluginLoader(pluginName, this);
       if (pluginLoader->instance() == NULL) {
-        m_UnloadedPlugins.push_back(pluginName);
+        m_FailedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
                   qPrintable(pluginName), qPrintable(pluginLoader->errorString()));
       } else {
@@ -1330,7 +1334,7 @@ void MainWindow::loadPlugins()
           qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
           m_PluginLoaders.push_back(pluginLoader);
         } else {
-          m_UnloadedPlugins.push_back(pluginName);
+          m_FailedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
         }
       }
@@ -2285,7 +2289,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 std::vector<unsigned int> MainWindow::activeProblems() const
 {
   std::vector<unsigned int> problems;
-  if (m_UnloadedPlugins.size() != 0) {
+  if (m_FailedPlugins.size() != 0) {
     problems.push_back(PROBLEM_PLUGINSNOTLOADED);
   }
   if (m_PluginList.enabledCount() > 255) {
@@ -2314,7 +2318,7 @@ QString MainWindow::fullDescription(unsigned int key) const
   switch (key) {
     case PROBLEM_PLUGINSNOTLOADED: {
       QString result = tr("The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:") + "<ul>";
-      foreach (const QString &plugin, m_UnloadedPlugins) {
+      foreach (const QString &plugin, m_FailedPlugins) {
         result += "<li>" + plugin + "</li>";
       }
       result += "<ul>";
@@ -5375,13 +5379,10 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
 
   foreach (const std::string &line, lines) {
     if (line.length() > 0) {
-      size_t progidx   = line.find("[progress]");
-      size_t reportidx = line.find("[Report]");
-      size_t erroridx  = line.find("[error]");
+      size_t progidx    = line.find("[progress]");
+      size_t erroridx   = line.find("[error]");
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
-      } else if (reportidx != std::string::npos) {
-        reportURL = line.substr(reportidx + 9);
       } else if (erroridx != std::string::npos) {
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
@@ -5525,12 +5526,15 @@ void MainWindow::on_bossButton_clicked()
     dialog.setMaximum(0);
     dialog.show();
 
+    QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
+
     QStringList parameters;
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
                << "--game" << ToQString(GameInfo::instance().getGameShortName())
-               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
+               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()))
+               << "--out" << outPath;
 
     if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
@@ -5540,7 +5544,7 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/LOOT.exe"),
+    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
                               m_CurrentProfile->getName(),
                               m_Settings.logLevel(),
@@ -5615,6 +5619,22 @@ void MainWindow::on_bossButton_clicked()
         return;
       } else {
         success = true;
+        QFile outFile(outPath);
+        outFile.open(QIODevice::ReadOnly);
+        QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
+        QJsonArray array = doc.array();
+        for (auto iter = array.begin();  iter != array.end(); ++iter) {
+          QJsonObject pluginObj = (*iter).toObject();
+          QJsonArray pluginMessages = pluginObj["messages"].toArray();
+          for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
+            QJsonObject msg = (*msgIter).toObject();
+            m_PluginList.addInformation(pluginObj["name"].toString(),
+                QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
+          }
+          if (pluginObj["dirty"].toString() == "yes")
+            m_PluginList.addInformation(pluginObj["name"].toString(), "dirty");
+        }
+
       }
     } else {
       reportError(tr("failed to start loot"));

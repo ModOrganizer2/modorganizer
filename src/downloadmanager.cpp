@@ -606,7 +606,7 @@ void DownloadManager::pauseDownload(int index)
   DownloadInfo *info = m_ActiveDownloads.at(index);
 
   if (info->m_State == STATE_DOWNLOADING) {
-    if (info->m_Reply->isRunning()) {
+    if ((info->m_Reply != NULL) && (info->m_Reply->isRunning())) {
       setState(info, STATE_PAUSING);
     } else {
       setState(info, STATE_PAUSED);

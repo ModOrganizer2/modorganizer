@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  application.addLibraryPath(application.applicationDirPath() + "/dlls");
+  application.setLibraryPaths(QStringList() << (application.applicationDirPath() + "/dlls"));
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
