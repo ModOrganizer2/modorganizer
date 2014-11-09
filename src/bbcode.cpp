@@ -80,11 +80,15 @@ public:
             if (tagName == "color") {
               QString color = tagIter->second.first.cap(1);
               QString content = tagIter->second.first.cap(2);
-              auto colIter = m_ColorMap.find(color.toLower());
-              if (colIter != m_ColorMap.end()) {
-                color = colIter->second;
+              if (color.at(0) == "#") {
+                return temp.replace(tagIter->second.first, QString("<font style=\"color: %1;\">%2</font>").arg(color, content));
+              } else {
+                auto colIter = m_ColorMap.find(color.toLower());
+                if (colIter != m_ColorMap.end()) {
+                  color = colIter->second;
+                }
+                return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
               }
-              return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
             } else {
               qWarning("don't know how to deal with tag %s", qPrintable(tagName));
             }
@@ -131,7 +135,7 @@ private:
     m_TagMap["color="] = std::make_pair(QRegExp("\\[color=([^\\]]*)\\](.*)\\[/color\\]"),
                                         "");
     m_TagMap["font="]  = std::make_pair(QRegExp("\\[font=([^\\]]*)\\](.*)\\[/font\\]"),
-                                        "<font face=\\1>\\2</font>");
+                                        "<font style=\"font-family: \\1;\">\\2</font>");
     m_TagMap["center"] = std::make_pair(QRegExp("\\[center\\](.*)\\[/center\\]"),
                                         "<div align=\"center\">\\1</div>");
     m_TagMap["quote"]  = std::make_pair(QRegExp("\\[quote\\](.*)\\[/quote\\]"),
@@ -231,7 +235,6 @@ QString convertToHTML(const QString &inputParam)
 
   QString input = inputParam.mid(0).replace("\r\n", "<br/>");
   input.replace("\\\"", "\"").replace("\\'", "'");
-
   QString result;
   int lastBlock = 0;
   int pos = 0;
