@@ -381,7 +381,7 @@ private:
   std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
   std::vector<boost::signals2::connection> m_DiagnosisConnections;
   std::vector<MOBase::IPluginModPage*> m_ModPages;
-  std::vector<QString> m_UnloadedPlugins;
+  std::vector<QString> m_FailedPlugins;
   std::vector<QPluginLoader*> m_PluginLoaders;
 
   QFile m_PluginsCheck;

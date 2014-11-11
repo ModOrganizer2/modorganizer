@@ -83,8 +83,12 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
   foreach (const QString &archive, archives) {
     QFileInfo fileInfo(archive);
     if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
-      directoryStructure->addFromBSA(ToWString(modName), directoryW,
-                                     ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
+      try {
+        directoryStructure->addFromBSA(ToWString(modName), directoryW,
+                                       ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
+      } catch (const std::exception &e) {
+        throw MyException(tr("failed to parse bsa %1: %2").arg(archive, e.what()));
+      }
     }
   }
 }
@@ -143,7 +147,7 @@ void DirectoryRefresher::refresh()
     try {
       addModToStructure(m_DirectoryStructure, iter->modName, i, iter->absolutePath, iter->stealFiles, iter->archives);
     } catch (const std::exception &e) {
-      emit error(tr("failed to read bsa: %1").arg(e.what()));
+      emit error(tr("failed to read mod (%1): %2").arg(iter->modName, e.what()));
     }
     emit progress((i * 100) / m_Mods.size() + 1);
   }
