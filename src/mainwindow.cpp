@@ -223,8 +223,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
 
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) + 1);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) - 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize + 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize - 1);
   } else {
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
@@ -393,6 +393,13 @@ void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
     }
     ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
 #endif
+  }
+
+  // ensure the columns aren't so small you can't see them any more
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    if (ui->modList->header()->sectionSize(i) < 10) {
+      ui->modList->header()->resizeSection(i, 10);
+    }
   }
 
   if (!pluginListCustom) {

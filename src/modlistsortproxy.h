@@ -87,7 +87,6 @@ public:
 
 public slots:
 
-  void displayColumnSelection(const QPoint &pos);
   void updateFilter(const QString &filter);
 
 signals:
