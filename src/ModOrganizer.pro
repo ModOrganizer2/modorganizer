@@ -15,6 +15,7 @@ SUBDIRS = bsatk \
           loot_cli \
           esptk
 
+pythonRunner.depends = uibase
 plugins.depends = pythonRunner uibase
 hookdll.depends = shared
 organizer.depends = shared uibase plugins
