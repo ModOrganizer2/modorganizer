@@ -223,8 +223,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
 
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize + 1);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize - 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) + 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) - 1);
   } else {
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
@@ -1416,10 +1416,18 @@ std::wstring getProcessName(DWORD processId)
 {
   HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
 
-  DWORD value = MAX_PATH;
   wchar_t buffer[MAX_PATH];
-  ::QueryFullProcessImageNameW(process, 0, buffer, &value);
-  return buffer;
+  if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
+    wchar_t *fileName = wcsrchr(buffer, L'\\');
+    if (fileName == nullptr) {
+      fileName = buffer;
+    } else {
+      fileName += 1;
+    }
+    return fileName;
+  } else {
+    return std::wstring(L"unknown");
+  }
 }
 
 void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
@@ -1451,12 +1459,12 @@ void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, 
           if (isJobHandle) {
             if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
               if (info.NumberOfProcessIdsInList == 0) {
+                break;
               } else {
                 if (info.ProcessIdList[0] != currentProcess) {
                   currentProcess = info.ProcessIdList[0];
                   dialog->setProcessName(ToQString(getProcessName(currentProcess)));
                 }
-                break;
               }
             } else {
               // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there

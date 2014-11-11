@@ -12,12 +12,12 @@ SUBDIRS = bsatk \
           nxmhandler \
           BossDummy \
           pythonRunner \
-          esptk# \
-#          loot_cli
+          esptk
 
-plugins.depends = pythonRunner
+pythonRunner.depends = uibase
+plugins.depends = pythonRunner uibase
 hookdll.depends = shared
-organizer.depends = shared uibase plugins# loot_cli
+organizer.depends = shared uibase plugins
 
 CONFIG(debug, debug|release) {
   DESTDIR = $$PWD/../outputd
