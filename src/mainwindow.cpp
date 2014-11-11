@@ -5402,11 +5402,22 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   QString steamAppID;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
+
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
       binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
     }
+
+    std::vector<Executable>::iterator current, end;
+    m_ExecutablesList.getExecutables(current, end);
+    for (; current != end; ++current) {
+      if (current->m_BinaryInfo == binary) {
+        steamAppID = current->m_SteamAppID;
+        currentDirectory = current->m_WorkingDirectory;
+      }
+    }
+
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();
     }
