@@ -7,12 +7,20 @@
     <file name="Qt5Core.dll"/>
     <file name="Qt5Declarative.dll"/>
     <file name="Qt5Gui.dll"/>
-    <file name="Qt5Quick.dll"/>
+    <file name="Qt5Multimedia.dll"/>
+    <file name="Qt5MultimediaWidgets.dll"/>
     <file name="Qt5Network.dll"/>
+    <file name="Qt5OpenGL.dll"/>
+    <file name="Qt5Positioning.dll"/>
+    <file name="Qt5PrintSupport.dll"/>
+    <file name="Qt5Qml.dll"/>
+    <file name="Qt5Quick.dll"/>
+    <file name="Qt5Sensors.dll"/>
     <file name="Qt5Script.dll"/>
     <file name="Qt5Sql.dll"/>
     <file name="Qt5Svg.dll"/>
+    <file name="Qt5WebKit.dll"/>
+    <file name="Qt5WebKitWidgets.dll"/>
     <file name="Qt5Widgets.dll"/>
-    <file name="Qt5Xml.dll"/>
     <file name="Qt5XmlPatterns.dll"/>
 </assembly>
