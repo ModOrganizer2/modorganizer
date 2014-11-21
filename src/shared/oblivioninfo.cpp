@@ -273,7 +273,7 @@ std::wstring OblivionInfo::getSteamAPPId(int) const
   return L"22330";
 }
 
-
+/*
 std::vector<ExecutableInfo> OblivionInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
@@ -286,5 +286,5 @@ std::vector<ExecutableInfo> OblivionInfo::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS (old)", L"Data/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

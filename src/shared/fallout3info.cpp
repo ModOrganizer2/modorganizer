@@ -267,7 +267,7 @@ bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 }
 
 
-std::vector<ExecutableInfo> Fallout3Info::getExecutables()
+/*std::vector<ExecutableInfo> Fallout3Info::getExecutables()
 {
   std::vector<ExecutableInfo> result;
   result.push_back(ExecutableInfo(L"FOSE", L"fose_loader.exe", L"", L"", DEFAULT_CLOSE));
@@ -278,5 +278,5 @@ std::vector<ExecutableInfo> Fallout3Info::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

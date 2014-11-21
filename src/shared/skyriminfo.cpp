@@ -306,7 +306,7 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
 }
 
 
-std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
+/*std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
   result.push_back(ExecutableInfo(L"SKSE", L"skse_loader.exe", L"", L"", DEFAULT_CLOSE));
@@ -317,6 +317,6 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
   result.push_back(ExecutableInfo(L"Creation Kit", L"CreationKit.exe", L"", L"", DEFAULT_STAY, L"202480"));
 
   return result;
-}
+}*/
 
 } // namespace MOShared

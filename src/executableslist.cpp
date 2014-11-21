@@ -31,8 +31,14 @@ using namespace MOShared;
 
 QDataStream &operator<<(QDataStream &out, const Executable &obj)
 {
-  out << obj.m_Title << obj.m_BinaryInfo.absoluteFilePath() << obj.m_Arguments << obj.m_CloseMO
-      << obj.m_SteamAppID << obj.m_WorkingDirectory << obj.m_Custom << obj.m_Toolbar;
+  out << obj.m_Title
+      << obj.m_BinaryInfo.absoluteFilePath()
+      << obj.m_Arguments
+      << static_cast<std::underlying_type<ExecutableInfo::CloseMOStyle>::type>(obj.m_CloseMO)
+      << obj.m_SteamAppID
+      << obj.m_WorkingDirectory
+      << obj.m_Custom
+      << obj.m_Toolbar;
   return out;
 }
 
@@ -43,7 +49,7 @@ QDataStream &operator>>(QDataStream &in, Executable &obj)
   in >> obj.m_Title >> binaryTemp >> obj.m_Arguments >> closeStyleTemp
      >> obj.m_SteamAppID >> obj.m_WorkingDirectory >> obj.m_Custom >> obj.m_Toolbar;
 
-  obj.m_CloseMO = (CloseMOStyle)closeStyleTemp;
+  obj.m_CloseMO = static_cast<ExecutableInfo::CloseMOStyle>(closeStyleTemp);
   obj.m_BinaryInfo.setFile(binaryTemp);
   return in;
 }
@@ -64,14 +70,16 @@ ExecutablesList::~ExecutablesList()
 {
 }
 
-void ExecutablesList::init()
+void ExecutablesList::init(IPluginGame *game)
 {
-  std::vector<ExecutableInfo> executables = GameInfo::instance().getExecutables();
-  for (std::vector<ExecutableInfo>::const_iterator iter = executables.begin(); iter != executables.end(); ++iter) {
-    addExecutableInternal(ToQString(iter->title),
-                          QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())).append("/").append(ToQString(iter->binary)),
-                          ToQString(iter->arguments), ToQString(iter->workingDirectory),
-                          iter->closeMO, ToQString(iter->steamAppID));
+  m_Executables.clear();
+  for (const ExecutableInfo &info : game->executables()) {
+    addExecutableInternal(info.title(),
+                          info.binary().absoluteFilePath(),
+                          info.arguments().join(" "),
+                          info.workingDirectory().absolutePath(),
+                          info.closeMO(),
+                          info.steamAppID());
   }
 }
 
@@ -143,7 +151,7 @@ void ExecutablesList::addExecutable(const Executable &executable)
 
 
 void ExecutablesList::addExecutable(const QString &title, const QString &executableName, const QString &arguments,
-                                    const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID,
+                                    const QString &workingDirectory, ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID,
                                     bool custom, bool toolbar)
 {
   QFileInfo file(executableName);
@@ -185,7 +193,7 @@ void ExecutablesList::remove(const QString &title)
 
 void ExecutablesList::addExecutableInternal(const QString &title, const QString &executableName,
                                             const QString &arguments, const QString &workingDirectory,
-                                            CloseMOStyle closeMO, const QString &steamAppID)
+                                            ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID)
 {
   QFileInfo file(executableName);
   if (file.exists()) {

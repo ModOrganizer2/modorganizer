@@ -202,7 +202,6 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
       return;
     }
 
-    qDebug("unsupported: %s - %s", view->url().toString().toUtf8().constData(), reply->url().toString().toUtf8().constData());
     emit requestDownload(view->url(), reply);
   } catch (const std::exception &e) {
     if (isVisible()) {

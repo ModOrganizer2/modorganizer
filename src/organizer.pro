@@ -94,7 +94,9 @@ SOURCES += \
     modflagicondelegate.cpp \
     genericicondelegate.cpp \
     organizerproxy.cpp \
-    viewmarkingscrollbar.cpp
+    viewmarkingscrollbar.cpp \
+    plugincontainer.cpp \
+    organizercore.cpp
 
 
 HEADERS  += \
@@ -174,7 +176,10 @@ HEADERS  += \
     modflagicondelegate.h \
     genericicondelegate.h \
     organizerproxy.h \
-    viewmarkingscrollbar.h
+    viewmarkingscrollbar.h \
+    plugincontainer.h \
+    organizercore.h \
+    iuserinterface.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -279,7 +284,7 @@ CONFIG(debug, debug|release) {
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
 #QMAKE_CXXFLAGS_WARN_ON += -W4
-QMAKE_CXXFLAGS += -wd4100 -wd4127 -wd4512 -wd4189
+QMAKE_CXXFLAGS += /wd4100 -wd4127 -wd4512 -wd4189
 
 CONFIG += embed_manifest_exe
 

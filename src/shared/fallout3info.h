@@ -87,7 +87,7 @@ public:
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
-  virtual std::vector<ExecutableInfo> getExecutables();
+  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SArchiveList"; }
 

@@ -257,7 +257,7 @@ bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
   return false;
 }
 
-
+/*
 std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
@@ -269,5 +269,5 @@ std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared
