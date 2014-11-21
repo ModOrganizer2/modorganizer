@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QMetaType>
 #include <gameinfo.h>
+#include <iplugingame.h>
 
 
 /*!
@@ -34,7 +35,7 @@ struct Executable {
   QString m_Title;
   QFileInfo m_BinaryInfo;
   QString m_Arguments;
-  MOShared::CloseMOStyle m_CloseMO;
+  MOBase::ExecutableInfo::CloseMOStyle m_CloseMO;
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
@@ -64,7 +65,7 @@ public:
   /**
    * @brief initialise the list with the executables preconfigured for this game
    **/
-  void init();
+  void init(MOBase::IPluginGame *game);
 
   /**
    * @brief retrieve an executable by index
@@ -114,7 +115,9 @@ public:
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID, bool custom, bool toolbar);
+  void addExecutable(const QString &title, const QString &executableName, const QString &arguments,
+                     const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                     const QString &steamAppID, bool custom, bool toolbar);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -144,7 +147,9 @@ private:
 
   Executable *findExe(const QString &title);
 
-  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID);
+  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
+                             const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                             const QString &steamAppID);
 
 private:
 

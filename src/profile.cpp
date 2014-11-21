@@ -47,6 +47,14 @@ Profile::Profile()
   initTimer();
 }
 
+void Profile::touchFile(QString fileName)
+{
+  QFile modList(m_Directory.filePath(fileName));
+  if (!modList.open(QIODevice::ReadWrite)) {
+    throw std::runtime_error(QObject::tr("failed to create %1").arg(m_Directory.filePath(fileName)).toUtf8().constData());
+  }
+}
+
 Profile::Profile(const QString &name, bool useDefaultSettings)
   : m_SaveTimer(NULL)
 {
@@ -64,14 +72,12 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
   }
   QString fullPath = profilesDir + "/" + fixedName;
   m_Directory = QDir(fullPath);
-  QFile modList(m_Directory.filePath("modlist.txt"));
-  if (!modList.open(QIODevice::ReadWrite)) {
-    profileBase.rmdir(fixedName);
-    throw std::runtime_error(QObject::tr("failed to create %1").arg(m_Directory.filePath("modlist.txt")).toUtf8().constData());
-  }
-  modList.close();
 
   try {
+    // create files. Needs to happen after m_Directory was set!
+    touchFile("modlist.txt");
+    touchFile("archives.txt");
+
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
@@ -211,7 +217,7 @@ void Profile::createTweakedIniFile()
   }
 
   if (localSavesEnabled()) {
-    if (!::WritePrivateProfileStringW(L"General", L"bUseMyGamesDirectory", L"1", ToWString(tweakedIni).c_str())) {
+    if (!::WritePrivateProfileStringW(L"General", L"bUseMyGamesDirectory", L"0", ToWString(tweakedIni).c_str())) {
       error = true;
     }
 
@@ -232,7 +238,7 @@ void Profile::createTweakedIniFile()
 void Profile::refreshModStatus()
 {
   QFile file(getModlistFileName());
-  if (!file.exists()) {
+  if (!file.open(QIODevice::ReadOnly)) {
     throw MyException(tr("\"%1\" is missing or inaccessible").arg(getModlistFileName()));
   }
 
@@ -243,10 +249,9 @@ void Profile::refreshModStatus()
   std::set<QString> namesRead;
 
   // load mods from file and update enabled state and priority for them
-  file.open(QIODevice::ReadOnly);
   int index = 0;
   while (!file.atEnd()) {
-    QByteArray line = file.readLine();
+    QByteArray line = file.readLine().trimmed();
     bool enabled = true;
     QString modName;
     if (line.length() == 0) {
@@ -579,7 +584,9 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 bool Profile::invalidationActive(bool *supported) const
 {
   if (GameInfo::instance().requiresBSAInvalidation()) {
-    *supported = true;
+    if (supported != NULL) {
+      *supported = true;
+    }
     wchar_t buffer[1024];
     std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
     // epic ms fail: GetPrivateProfileString uses errno (for whatever reason) to signal a fail since the return value

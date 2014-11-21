@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <algorithm>
 #include <DbgHelp.h>
 #include <set>
+#include <boost/scoped_array.hpp>
 
 namespace MOShared {
 
@@ -64,24 +65,30 @@ bool FileExists(const std::wstring &searchPath, const std::wstring &filename)
 
 std::string ToString(const std::wstring &source, bool utf8)
 {
-  char buffer[MAX_PATH];
-  if (utf8) {
-    ::WideCharToMultiByte(CP_UTF8, 0, source.c_str(), -1, buffer, MAX_PATH, NULL, NULL);
-  } else {
-    ::WideCharToMultiByte(GetACP(), 0, source.c_str(), -1, buffer, MAX_PATH, NULL, NULL);
+  std::string result;
+  UINT codepage = utf8 ? CP_UTF8 : GetACP();
+  int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, NULL, 0, NULL, NULL);
+  if (sizeRequired == 0) {
+    throw windows_error("failed to convert string to multibyte");
   }
-  return std::string(buffer);
+  // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
+  // we don't want that \0 in the string because then the length field would be wrong. Because madness
+  result.resize(sizeRequired - 1, '\0');
+  ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, NULL, NULL);
+  return result;
 }
 
 std::wstring ToWString(const std::string &source, bool utf8)
 {
-  wchar_t buffer[MAX_PATH];
-  if (utf8) {
-    ::MultiByteToWideChar(CP_UTF8, 0, source.c_str(), -1, buffer, MAX_PATH);
-  } else {
-    ::MultiByteToWideChar(GetACP(), 0, source.c_str(), -1, buffer, MAX_PATH);
+  std::wstring result;
+  UINT codepage = utf8 ? CP_UTF8 : GetACP();
+  int sizeRequired = ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), NULL, 0);
+  if (sizeRequired == 0) {
+    throw windows_error("failed to convert string to wide character");
   }
-  return std::wstring(buffer);
+  result.resize(sizeRequired, L'\0');
+  ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired);
+  return result;
 }
 
 std::string &ToLower(std::string &text)
@@ -112,14 +119,15 @@ std::wstring ToLower(const std::wstring &text)
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
 {
-  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), NULL);
+  DWORD handle;
+  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
   if (size == 0) {
     throw windows_error("failed to determine file version info size");
   }
 
   void *buffer = new char[size];
   try {
-    if (!::GetFileVersionInfoW(fileName.c_str(), 0UL, size, buffer)) {
+    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer)) {
       throw windows_error("failed to determine file version info");
     }
 

@@ -15,19 +15,24 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("The highlighted button provides hints on solving problems MO recognized automatically.")
-        if (!tutorialControl.waitForAction("actionProblems")) {
-            highlightAction("actionProblems", false)
-            waitForClick()
-        } else {
+        if (tutorialControl.waitForAction("actionProblems")) {
             tutorial.text += qsTr("\nThere IS a problem now but you may want to hold off on fixing it until after completing the tutorial.")
             highlightAction("actionProblems", true)
+        } else {
+            highlightAction("actionProblems", false)
+            waitForClick()
         }
     },
 
     function() {
+        console.log("next")
         tutorial.text = qsTr("This button provides multiple sources of information and further tutorials.")
-        highlightItem("actionHelp", true)
-        tutorialControl.waitForButton("actionHelp")
+        if (tutorialControl.waitForButton("actionHelp")) {
+          highlightItem("actionHelp", true)
+        } else {
+          console.error("help button broken")
+          waitForClick()
+        }
     },
 
     function() {
@@ -47,12 +52,16 @@ function getTutorialSteps()
     function() {
         tutorial.text = qsTr("Before we start installing mods, let's have a quick look at the settings.")
         manager.activateTutorial("SettingsDialog", "tutorial_firststeps_settings.js")
-        highlightAction("actionSettings", true)
-        tutorialControl.waitForAction("actionSettings")
+        if (tutorialControl.waitForAction("actionSettings")) {
+            highlightAction("actionSettings", true)
+        } else {
+          console.error("settings action broken")
+          waitForClick()
+        }
     },
 
     function() {
-         tutorial.text = qsTr("Now it's time to install a few mods!"
+        tutorial.text = qsTr("Now it's time to install a few mods!"
                             + "Please go along with this because we need a few mods installed to demonstrate other features")
         waitForClick()
     },
@@ -61,8 +70,12 @@ function getTutorialSteps()
         tutorial.text = qsTr("There are a few ways to get mods into ModOrganizer. "
                            + "If you associated MO with NXM links in the settings you can now use your regular browser to send downloads from Nexus to MO. "
                            + "Click on \"Nexus\" to open nexus, find a mod and click the green download buttons on Nexus saying \"Download with Manager\".")
-        highlightAction("actionNexus", true)
-        tutorialControl.waitForAction("actionNexus")
+        if (tutorialControl.waitForAction("actionNexus")) {
+            highlightAction("actionNexus", true)
+        } else {
+          console.error("browser action broken")
+          waitForClick()
+        }
     },
 
     function() {

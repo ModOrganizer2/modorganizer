@@ -36,7 +36,7 @@ class StackData {
 public:
 
   StackData()
-    : m_FunctionName("Dummy"), m_CodeLine(0)
+    : m_Count(0), m_Hash(0UL), m_FunctionName("Dummy"), m_CodeLine(0)
   {}
   StackData(const char *functionName, int line) {
     m_Count = ::CaptureStackBackTrace(FRAMES_TO_SKIP, FRAMES_TO_CAPTURE, m_Stack, &m_Hash);

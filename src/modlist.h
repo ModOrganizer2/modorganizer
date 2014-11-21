@@ -32,7 +32,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidget>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
+#ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
+#endif
 #include <set>
 #include <vector>
 #include <QVector>
@@ -73,6 +75,8 @@ public:
    **/
   ModList(QObject *parent = NULL);
 
+  ~ModList();
+
   /**
    * @brief set the profile used for status information
    *
@@ -102,6 +106,8 @@ public:
 
   void modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
+
+  void disconnectSlots();
 
 public:
 
@@ -261,7 +267,7 @@ private:
 
   struct TModInfo {
     TModInfo(unsigned int index, ModInfo::Ptr modInfo)
-        : modInfo(modInfo), nameOrder(index) {}
+        : modInfo(modInfo), nameOrder(index), priorityOrder(0), modIDOrder(0), categoryOrder(0) {}
     ModInfo::Ptr modInfo;
     unsigned int nameOrder;
     unsigned int priorityOrder;

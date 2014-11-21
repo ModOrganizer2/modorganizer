@@ -39,7 +39,7 @@ public:
     return s_Instance;
   }
 
-  QString convertTag(const QString &input, int &length)
+  QString convertTag(QString input, int &length)
   {
     // extract the tag name
     m_TagNameExp.indexIn(input, 1, QRegExp::CaretAtOffset);
@@ -50,29 +50,52 @@ public:
       if (tagName.endsWith('=')) {
         tagName.chop(1);
       }
-      QString closeTag = tagName == "*" ? "<br/>"
-                                         : QString("[/%1]").arg(tagName);
 
-      int closeTagPos = input.indexOf(closeTag, 0, Qt::CaseInsensitive);
-      //qDebug("close tag %s at %d", closeTag.toUtf8().constData(), closeTagPos);
+      int closeTagPos = 0;
+      int closeTagLength = 0;
+      if (tagName == "*") {
+        // ends at the next bullet point
+        closeTagPos = input.indexOf(QRegExp("(\\[\\*\\]|</ul>)", Qt::CaseInsensitive), 3);
+        // leave closeTagLength at 0 because we don't want to "eat" the next bullet point
+      } else if (tagName == "line") {
+        // ends immediately after the tag
+        closeTagPos = 6;
+        // leave closeTagLength at 0 because there is no close tag to skip over
+      } else {
+        QString closeTag = QString("[/%1]").arg(tagName);
+        closeTagPos = input.indexOf(closeTag, 0, Qt::CaseInsensitive);
+        if (closeTagPos == -1) {
+          // workaround to improve compatibility: add fake closing tag
+          input.append(closeTag);
+          closeTagPos = input.size() - closeTag.size();
+        }
+        closeTagLength = closeTag.size();
+      }
 
       if (closeTagPos > -1) {
-        length = closeTagPos + closeTag.length();
+        length = closeTagPos + closeTagLength;
         QString temp = input.mid(0, length);
         if (tagIter->second.first.indexIn(temp) == 0) {
           if (tagIter->second.second.isEmpty()) {
             if (tagName == "color") {
               QString color = tagIter->second.first.cap(1);
               QString content = tagIter->second.first.cap(2);
-              auto colIter = m_ColorMap.find(color.toLower());
-              if (colIter != m_ColorMap.end()) {
-                color = colIter->second;
+              if (color.at(0) == "#") {
+                return temp.replace(tagIter->second.first, QString("<font style=\"color: %1;\">%2</font>").arg(color, content));
+              } else {
+                auto colIter = m_ColorMap.find(color.toLower());
+                if (colIter != m_ColorMap.end()) {
+                  color = colIter->second;
+                }
+                return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
               }
-              return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
             } else {
               qWarning("don't know how to deal with tag %s", qPrintable(tagName));
             }
           } else {
+            if (tagName == "*") {
+              temp.remove(QRegExp("(\\[/\\*\\])?(<br/>)?$"));
+            }
             return temp.replace(tagIter->second.first, tagIter->second.second);
           }
         } else {
@@ -112,7 +135,7 @@ private:
     m_TagMap["color="] = std::make_pair(QRegExp("\\[color=([^\\]]*)\\](.*)\\[/color\\]"),
                                         "");
     m_TagMap["font="]  = std::make_pair(QRegExp("\\[font=([^\\]]*)\\](.*)\\[/font\\]"),
-                                        "<font face=\\1>\\2</font>");
+                                        "<font style=\"font-family: \\1;\">\\2</font>");
     m_TagMap["center"] = std::make_pair(QRegExp("\\[center\\](.*)\\[/center\\]"),
                                         "<div align=\"center\">\\1</div>");
     m_TagMap["quote"]  = std::make_pair(QRegExp("\\[quote\\](.*)\\[/quote\\]"),
@@ -123,6 +146,8 @@ private:
                                         "<pre>\\1</pre>");
     m_TagMap["heading"]= std::make_pair(QRegExp("\\[heading\\](.*)\\[/heading\\]"),
                                         "<h2><strong>\\1</strong></h2>");
+    m_TagMap["line"]   = std::make_pair(QRegExp("\\[line\\]"),
+                                        "<hr>");
 
     // lists
     m_TagMap["list"]  = std::make_pair(QRegExp("\\[list\\](.*)\\[/list\\]"),
@@ -134,8 +159,6 @@ private:
     m_TagMap["ol"]    = std::make_pair(QRegExp("\\[ol\\](.*)\\[/ol\\]"),
                                        "<ol>\\1</ol>");
     m_TagMap["li"]    = std::make_pair(QRegExp("\\[li\\](.*)\\[/li\\]"),
-                                       "<li>\\1</li>");
-    m_TagMap["*"]     = std::make_pair(QRegExp("\\[\\*\\](.*)<br/>"),
                                        "<li>\\1</li>");
 
     // tables
@@ -153,12 +176,25 @@ private:
                                          "<a href=\"\\1\">\\1</a>");
     m_TagMap["url="]    = std::make_pair(QRegExp("\\[url=([^\\]]*)\\](.*)\\[/url\\]"),
                                          "<a href=\"\\1\">\\2</a>");
-    m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"), " ");
-    m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"), " ");
+    m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"),
+                                     "<img src=\"\\1\">");
+    m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"),
+                                      "<img src=\"\\2\" alt=\"\\1\">");
     m_TagMap["email="]  = std::make_pair(QRegExp("\\[email=\"?([^\\]]*)\"?\\](.*)\\[/email\\]"),
                                          "<a href=\"mailto:\\1\">\\2</a>");
     m_TagMap["youtube"] = std::make_pair(QRegExp("\\[youtube\\](.*)\\[/youtube\\]"),
                                          "<a href=\"http://www.youtube.com/v/\\1\">http://www.youtube.com/v/\\1</a>");
+
+
+    // make all patterns non-greedy and case-insensitive
+    for (TagMap::iterator iter = m_TagMap.begin(); iter != m_TagMap.end(); ++iter) {
+      iter->second.first.setCaseSensitivity(Qt::CaseInsensitive);
+      iter->second.first.setMinimal(true);
+    }
+
+    // this tag is in fact greedy
+    m_TagMap["*"]     = std::make_pair(QRegExp("\\[\\*\\](.*)"),
+                                       "<li>\\1</li>");
 
     m_ColorMap.insert(std::make_pair<QString, QString>("red", "FF0000"));
     m_ColorMap.insert(std::make_pair<QString, QString>("green", "00FF00"));
@@ -170,13 +206,13 @@ private:
     m_ColorMap.insert(std::make_pair<QString, QString>("cyan", "00FFFF"));
     m_ColorMap.insert(std::make_pair<QString, QString>("magenta", "FF00FF"));
     m_ColorMap.insert(std::make_pair<QString, QString>("brown", "A52A2A"));
-    m_ColorMap.insert(std::make_pair<QString, QString>("orange", "FFCC00"));
-
-    // make all patterns non-greedy and case-insensitive
-    for (TagMap::iterator iter = m_TagMap.begin(); iter != m_TagMap.end(); ++iter) {
-      iter->second.first.setCaseSensitivity(Qt::CaseInsensitive);
-      iter->second.first.setMinimal(true);
-    }
+    m_ColorMap.insert(std::make_pair<QString, QString>("orange", "FFA500"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("gold", "FFD700"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("deepskyblue", "00BFFF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("salmon", "FA8072"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("dodgerblue", "1E90FF"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("greenyellow", "ADFF2F"));
+    m_ColorMap.insert(std::make_pair<QString, QString>("peru", "CD853F"));
   }
 
 private:
@@ -199,7 +235,6 @@ QString convertToHTML(const QString &inputParam)
 
   QString input = inputParam.mid(0).replace("\r\n", "<br/>");
   input.replace("\\\"", "\"").replace("\\'", "'");
-
   QString result;
   int lastBlock = 0;
   int pos = 0;
@@ -209,18 +244,23 @@ QString convertToHTML(const QString &inputParam)
     // append everything between the previous tag-block and the current one
     result.append(input.midRef(lastBlock, pos - lastBlock));
 
-    // convert the tag and content if necessary
-    int length = -1;
-    QString replacement = BBCodeMap::instance().convertTag(input.mid(pos), length);
-    if (length != 0) {
-      QString temp = convertToHTML(replacement);
-      result.append(temp);
-      // length contains the number of characters in the original tag
-      pos += length;
+    if ((pos < (input.size() - 1)) && (input.at(pos + 1) == '/')) {
+       // skip invalid end tag
+      int tagEnd = input.indexOf(']',  pos) + 1;
+      pos = tagEnd;
     } else {
-      // nothing replaced
-      result.append('[');
-      ++pos;
+      // convert the tag and content if necessary
+      int length = -1;
+      QString replacement = BBCodeMap::instance().convertTag(input.mid(pos), length);
+      if (length != 0) {
+        result.append(convertToHTML(replacement));
+        // length contains the number of characters in the original tag
+        pos += length;
+      } else {
+        // nothing replaced
+        result.append('[');
+        ++pos;
+      }
     }
     lastBlock = pos;
   }

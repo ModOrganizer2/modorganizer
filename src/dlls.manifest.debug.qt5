@@ -8,7 +8,10 @@
     <file name="Qt5Declaratived.dll"/>
     <file name="Qt5Quickd.dll"/>
     <file name="Qt5Guid.dll"/>
+    <file name="Qt5Multimediad.dll"/>
+    <file name="Qt5MultimediaWidgetsd.dll"/>
     <file name="Qt5Networkd.dll"/>
+    <file name="Qt5OpenGLd.dll"/>
     <file name="Qt5Scriptd.dll"/>
     <file name="Qt5Sqld.dll"/>
     <file name="Qt5Widgetsd.dll"/>

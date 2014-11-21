@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
+#include <scopeguard.h>
 #include <stdexcept>
 #include "mainwindow.h"
 #include "report.h"
@@ -321,6 +322,10 @@ int main(int argc, char *argv[])
                              );
   application.setProperty("dataPath", dataPath);
 
+#if QT_VERSION >= 0x050000
+  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#endif
+
   qDebug("data path: %s", qPrintable(dataPath));
   if (!QDir(dataPath).exists()) {
     if (!QDir().mkpath(dataPath)) {
@@ -329,7 +334,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  application.addLibraryPath(application.applicationDirPath() + "/dlls");
+  application.setLibraryPaths(QStringList() << (application.applicationDirPath() + "/dlls"));
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
@@ -395,6 +400,11 @@ int main(int argc, char *argv[])
 
     QSettings settings(dataPath + "/ModOrganizer.ini", QSettings::IniFormat);
 
+    OrganizerCore organizer(settings);
+
+    PluginContainer pluginContainer(&organizer);
+    pluginContainer.loadPlugins();
+
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
 
     bool done = false;
@@ -452,14 +462,9 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
-    int edition = 0;
-    if (settings.contains("game_edition")) {
-      edition = settings.value("game_edition").toInt();
-    } else {
+    if (!settings.contains("game_edition")) {
       std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
-      if (editions.size() < 2) {
-        edition = 0;
-      } else {
+      if (editions.size() > 1) {
         SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), NULL);
         int index = 0;
         for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
@@ -472,36 +477,16 @@ int main(int argc, char *argv[])
         }
       }
     }
-
+#pragma message("edition isn't used?")
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
-    ExecutablesList executablesList;
-
-    executablesList.init();
+    organizer.updateExecutablesList(settings);
 
     if (!bootstrap()) { // requires gameinfo to be initialised!
       return -1;
     }
 
     cleanupDir();
-
-    qDebug("setting up configured executables");
-
-    int numCustomExecutables = settings.beginReadArray("customExecutables");
-    for (int i = 0; i < numCustomExecutables; ++i) {
-      settings.setArrayIndex(i);
-      CloseMOStyle closeMO = settings.value("closeOnStart").toBool() ? DEFAULT_CLOSE : DEFAULT_STAY;
-      executablesList.addExecutable(settings.value("title").toString(),
-                                    settings.value("binary").toString(),
-                                    settings.value("arguments").toString(),
-                                    settings.value("workingDirectory", "").toString(),
-                                    closeMO,
-                                    settings.value("steamAppID", "").toString(),
-                                    settings.value("custom", true).toBool(),
-                                    settings.value("toolbar", false).toBool());
-    }
-
-    settings.endArray();
 
     qDebug("initializing tutorials");
     TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
@@ -514,11 +499,11 @@ int main(int argc, char *argv[])
     int res = 1;
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(argv[0], settings);
-      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-      QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
+      MainWindow mainWindow(argv[0], settings, organizer, pluginContainer);
 
-      mainWindow.setExecutablesList(executablesList);
+      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
+      QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer, SLOT(externalMessage(QString)));
+
       mainWindow.readSettings();
 
       QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
@@ -573,7 +558,7 @@ int main(int argc, char *argv[])
       if ((arguments.size() > 1) &&
           (isNxmLink(arguments.at(1)))) {
         qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
-        mainWindow.externalMessage(arguments.at(1));
+        organizer.externalMessage(arguments.at(1));
       }
       splash.finish(&mainWindow);
       res = application.exec();

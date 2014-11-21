@@ -16,10 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
+#ifndef Q_MOC_RUN
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <archive.h>
 #include "spawn.h"
 #include "report.h"
 #include "modlist.h"
@@ -61,14 +61,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "aboutdialog.h"
 #include "safewritefile.h"
 #include "organizerproxy.h"
+#include <archive.h>
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <ipluginproxy.h>
 #include <questionboxmemory.h>
+#include <util.h>
+#endif // Q_MOC_RUN
 #include <map>
 #include <ctime>
-#include <util.h>
 #include <wchar.h>
 #include <utility.h>
 #include <QTime>
@@ -97,15 +99,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtPlugin>
 #include <QIdentityProxyModel>
 #include <QClipboard>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/assign.hpp>
 #include <Psapi.h>
 #include <shlobj.h>
 #include <ShellAPI.h>
 #include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#include <QJsonValue>
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
@@ -114,9 +117,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <scopeguard.h>
+#ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/assign.hpp>
+#endif
 #include <regex>
+#include <functional>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -130,46 +139,28 @@ using namespace MOShared;
 
 
 
-static bool isOnline()
-{
-  QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-
-  bool connected = false;
-  for (auto iter = interfaces.begin(); iter != interfaces.end() && !connected; ++iter) {
-    if ( (iter->flags() & QNetworkInterface::IsUp) &&
-         (iter->flags() & QNetworkInterface::IsRunning) &&
-        !(iter->flags() & QNetworkInterface::IsLoopBack)) {
-      auto addresses = iter->addressEntries();
-      if (addresses.count() == 0) {
-        continue;
-      }
-      qDebug("interface %s seems to be up (address: %s)",
-             qPrintable(iter->humanReadableName()),
-             qPrintable(addresses[0].ip().toString()));
-      connected = true;
-    }
-  }
-
-  return connected;
-}
-
-
-MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
-  : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
-    m_ExeName(exeName), m_OldProfileIndex(-1),
-    m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
-    m_ModList(this), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
-    m_PluginList(this), m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
-    m_DownloadManager(NexusInterface::instance(), this), m_InstallationManager(this),
-    m_Updater(NexusInterface::instance(), this), m_CategoryFactory(CategoryFactory::instance()),
-    m_CurrentProfile(NULL), m_AskForNexusPW(false),
-    m_ArchivesInit(false), m_DirectoryUpdate(false), m_ContextItem(NULL), m_ContextAction(NULL), m_CurrentSaveView(NULL),
-    m_GameInfo(new GameInfoImpl()), m_AboutToRun(), m_ModInstalled(), m_DidUpdateMasterList(false)
+MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, OrganizerCore &organizerCore, PluginContainer &pluginContainer, QWidget *parent)
+  : QMainWindow(parent)
+  , ui(new Ui::MainWindow)
+  , m_Tutorial(this, "MainWindow")
+  , m_ExeName(exeName)
+  , m_OldProfileIndex(-1)
+  , m_ModListGroupingProxy(nullptr)
+  , m_ModListSortProxy(nullptr)
+  , m_OldExecutableIndex(-1)
+  , m_GamePath(ToQString(GameInfo::instance().getGameDirectory()))
+  , m_CategoryFactory(CategoryFactory::instance())
+  , m_ContextItem(nullptr)
+  , m_ContextAction(nullptr)
+  , m_CurrentSaveView(nullptr)
+  , m_OrganizerCore(organizerCore)
+  , m_PluginContainer(pluginContainer)
+  , m_DidUpdateMasterList(false)
 {
   ui->setupUi(this);
-  this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
+  this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_OrganizerCore.getVersion().displayString());
 
-  languageChange(m_Settings.language());
+  languageChange(m_OrganizerCore.settings().language());
 
   ui->logList->setModel(LogBuffer::instance());
   ui->logList->setColumnWidth(0, 100);
@@ -196,16 +187,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   updateToolBar();
 
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
-
   // set up mod list
-  m_ModListSortProxy = new ModListSortProxy(m_CurrentProfile, this);
-  m_ModListSortProxy->setSourceModel(&m_ModList);
-
-#ifdef TEST_MODELS
-  new ModelTest(&m_ModList, this);
-  new ModelTest(m_ModListSortProxy, this);
-#endif //TEST_MODELS
+  m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
 
   ui->modList->setModel(m_ModListSortProxy);
 
@@ -215,7 +198,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   //ui->modList->setAcceptDrops(true);
-  ui->modList->header()->installEventFilter(&m_ModList);
+  ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
   if (initSettings.contains("mod_list_state")) {
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
 
@@ -230,11 +213,10 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   }
 
   ui->modList->header()->setSectionHidden(ModList::COL_NAME, false); // prevent the name-column from being hidden
-  ui->modList->installEventFilter(&m_ModList);
+  ui->modList->installEventFilter(m_OrganizerCore.modList());
 
   // set up plugin list
-  m_PluginListSortProxy = new PluginListSortProxy(this);
-  m_PluginListSortProxy->setSourceModel(&m_PluginList);
+  m_PluginListSortProxy = m_OrganizerCore.createPluginListProxyModel();
 
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
@@ -242,7 +224,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   if (initSettings.contains("plugin_list_state")) {
     ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   }
-  ui->espList->installEventFilter(&m_PluginList);
+  ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
   ui->bsaList->setLocalMoveOnly(true);
 
@@ -259,71 +241,49 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
 
-  m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
-  m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
-
-  NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
-  NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
-
-  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-  m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
-
   updateDownloadListDelegate();
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
-  connect(&m_DownloadManager, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
-  connect(&m_DownloadManager, SIGNAL(downloadSpeed(QString,int)), this, SLOT(downloadSpeed(QString,int)));
-  connect(&m_DownloadManager, SIGNAL(downloadAdded()), ui->downloadView, SLOT(scrollToBottom()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
-  connect(&m_ModList, SIGNAL(modorder_changed()), this, SLOT(modorder_changed()));
-  connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
-  connect(&m_ModList, SIGNAL(showMessage(QString)), this, SLOT(showMessage(QString)));
-  connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), this, SLOT(modRenamed(QString,QString)));
-  connect(&m_ModList, SIGNAL(modUninstalled(QString)), this, SLOT(modRemoved(QString)));
-  connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), this, SLOT(modlistChanged(QModelIndex, int)));
-  connect(&m_ModList, SIGNAL(removeSelectedMods()), this, SLOT(removeMod_clicked()));
-  connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), this, SLOT(displayColumnSelection(QPoint)));
-  connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), this, SLOT(fileMoved(QString, QString, QString)));
-  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), &m_ModList, SLOT(dropModeUpdate(bool)));
+  connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
   connect(ui->modList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(modlistSelectionChanged(QModelIndex,QModelIndex)));
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
-  connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
+  connect(m_OrganizerCore.pluginList(), SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
   connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(bsaList_itemMoved()));
 
   connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
 
-  connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
-  connect(&m_DirectoryRefresher, SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
-  connect(&m_DirectoryRefresher, SIGNAL(error(QString)), this, SLOT(showError(QString)));
+  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
+  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
+  connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
   connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
 
-  connect(&m_Settings, SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
-  connect(&m_Settings, SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
+  connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
+  connect(&m_OrganizerCore.settings(), SIGNAL(styleChanged(QString)), this, SIGNAL(styleChanged(QString)));
 
-  connect(&m_Updater, SIGNAL(restart()), this, SLOT(close()));
-  connect(&m_Updater, SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
-  connect(&m_Updater, SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
+  connect(m_OrganizerCore.updater(), SIGNAL(restart()), this, SLOT(close()));
+  connect(m_OrganizerCore.updater(), SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
+  connect(m_OrganizerCore.updater(), SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-//  connect(ExitProxy::instance(), SIGNAL(exit()), this, SLOT(close()));
-
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
   connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
   connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(), SIGNAL(needLogin()), this, SLOT(nexusLogin()));
+  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
+
+  connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
 
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), this, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
@@ -339,40 +299,44 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
 
-  m_DirectoryRefresher.moveToThread(&m_RefresherThread);
-  m_RefresherThread.start();
-
-  m_AskForNexusPW = initSettings.value("ask_for_nexuspw", true).toBool();
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
 
   fixCategories();
 
-  if (isOnline() && !m_Settings.offlineMode()) {
-    m_Updater.testForUpdate();
-  } else {
-    qDebug("user doesn't seem to be connected to the internet");
-  }
-
   m_StartTime = QTime::currentTime();
 
-  m_Tutorial.expose("modList", &m_ModList);
-  m_Tutorial.expose("espList", &m_PluginList);
+  m_Tutorial.expose("modList", m_OrganizerCore.modList());
+  m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
   // before we start loading plugins we, add the dll path to the dll search order
   ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
-  loadPlugins();
+
+  m_OrganizerCore.setUserInterface(this, this);
+
+  for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
+    installTranslator(QFileInfo(fileName).baseName());
+  }
+
+  refreshExecutablesList();
+  updateToolBar();
 }
 
 
 MainWindow::~MainWindow()
 {
-  m_RefresherThread.exit();
-  m_RefresherThread.wait();
+  m_PluginContainer.setUserInterface(nullptr, nullptr);
+  m_OrganizerCore.setUserInterface(nullptr, nullptr);
   m_IntegratedBrowser.close();
   delete ui;
-  delete m_GameInfo;
-  delete m_DirectoryStructure;
+}
+
+
+void MainWindow::disconnectPlugins()
+{
+  if (ui->actionTool->menu() != NULL) {
+    ui->actionTool->menu()->clear();
+  }
 }
 
 
@@ -391,6 +355,13 @@ void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
     }
     ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
 #endif
+  }
+
+  // ensure the columns aren't so small you can't see them any more
+  for (int i = 0; i < ui->modList->header()->count(); ++i) {
+    if (ui->modList->header()->sectionSize(i) < 10) {
+      ui->modList->header()->resizeSection(i, 10);
+    }
   }
 
   if (!pluginListCustom) {
@@ -524,7 +495,7 @@ void MainWindow::updateToolBar()
       ui->toolBar->insertWidget(action, spacer);
 
       std::vector<Executable>::iterator begin, end;
-      m_ExecutablesList.getExecutables(begin, end);
+      m_OrganizerCore.executablesList()->getExecutables(begin, end);
       for (auto iter = begin; iter != end; ++iter) {
         if (iter->m_Toolbar) {
           QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
@@ -610,7 +581,7 @@ bool MainWindow::errorReported(QString &logFile)
 int MainWindow::checkForProblems()
 {
   int numProblems = 0;
-  foreach (IPluginDiagnose *diagnose, m_DiagnosisPlugins) {
+  for (IPluginDiagnose *diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
     numProblems += diagnose->activeProblems().size();
   }
   return numProblems;
@@ -618,7 +589,7 @@ int MainWindow::checkForProblems()
 
 void MainWindow::about()
 {
-  AboutDialog dialog(m_Updater.getVersion().displayString(), this);
+  AboutDialog dialog(m_OrganizerCore.getVersion().displayString(), this);
   dialog.exec();
 }
 
@@ -688,47 +659,10 @@ void MainWindow::createHelpWidget()
 }
 
 
-bool MainWindow::saveArchiveList()
-{
-  if (m_ArchivesInit) {
-    SafeWriteFile archiveFile(m_CurrentProfile->getArchivesFileName());
-    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
-      for (int j = 0; j < tlItem->childCount(); ++j) {
-        QTreeWidgetItem *item = tlItem->child(j);
-        if (item->checkState(0) == Qt::Checked) {
-          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
-          if (ui->manageArchivesBox->isChecked()
-              || item->data(0, Qt::UserRole).toBool()) {
-            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
-          }
-        }
-      }
-    }
-    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_CurrentProfile->getArchivesFileName())));
-      return true;
-    }
-  } else {
-    qWarning("archive list not initialised");
-  }
-  return false;
-}
-
-void MainWindow::savePluginList()
-{
-  m_PluginList.saveTo(m_CurrentProfile->getPluginsFileName(),
-                      m_CurrentProfile->getLoadOrderFileName(),
-                      m_CurrentProfile->getLockedOrderFileName(),
-                      m_CurrentProfile->getDeleterFileName(),
-                      m_Settings.hideUncheckedPlugins());
-  m_PluginList.saveLoadOrder(*m_DirectoryStructure);
-}
-
 void MainWindow::modFilterActive(bool filterActive)
 {
   if (filterActive) {
-    m_ModList.setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
   } else if (ui->groupCombo->currentIndex() != 0) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
@@ -768,22 +702,6 @@ void MainWindow::expandModList(const QModelIndex &index)
   }
 }
 
-bool MainWindow::saveCurrentLists()
-{
-  if (m_DirectoryUpdate) {
-    qWarning("not saving lists during directory update");
-    return false;
-  }
-
-  try {
-    savePluginList();
-    saveArchiveList();
-  } catch (const std::exception &e) {
-    reportError(tr("failed to save load order: %1").arg(e.what()));
-  }
-
-  return true;
-}
 
 bool MainWindow::addProfile()
 {
@@ -821,7 +739,7 @@ void MainWindow::hookUpWindowTutorials()
     QString firstLine = QString::fromUtf8(file.readLine());
     if (firstLine.startsWith("//WIN")) {
       QString windowName = firstLine.mid(6).trimmed();
-      if (!m_Settings.directInterface().value("CompletedWindowTutorials/" + windowName, false).toBool()) {
+      if (!m_OrganizerCore.settings().directInterface().value("CompletedWindowTutorials/" + windowName, false).toBool()) {
         TutorialManager::instance().activateTutorial(windowName, fileName);
       }
     }
@@ -837,7 +755,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
   hookUpWindowTutorials();
 
-  if (m_Settings.directInterface().value("first_start", true).toBool()) {
+  if (m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
     QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
     if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
       if (QMessageBox::question(this, tr("Show tutorial?"),
@@ -856,45 +774,35 @@ void MainWindow::showEvent(QShowEvent *event)
           QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
     }
 
-    m_Settings.directInterface().setValue("first_start", false);
+    m_OrganizerCore.settings().directInterface().setValue("first_start", false);
   }
 
   // this has no visible impact when called before the ui is visible
-  int grouping = m_Settings.directInterface().value("group_state").toInt();
+  int grouping = m_OrganizerCore.settings().directInterface().value("group_state").toInt();
   ui->groupCombo->setCurrentIndex(grouping);
 
   allowListResize();
 
-  m_Settings.registerAsNXMHandler(false);
+  m_OrganizerCore.settings().registerAsNXMHandler(false);
 }
 
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  if (m_DownloadManager.downloadsInProgress()) {
+  if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
       event->ignore();
       return;
     } else {
-      m_DownloadManager.pauseAll();
+      m_OrganizerCore.downloadManager()->pauseAll();
     }
   }
 
   setCursor(Qt::WaitCursor);
 
   m_IntegratedBrowser.close();
-
-  storeSettings();
-
-  // profile has to be cleaned up before the modinfo-buffer is cleared
-  delete m_CurrentProfile;
-  m_CurrentProfile = NULL;
-
-  ModInfo::clear();
-  LogBuffer::cleanQuit();
-  m_ModList.setProfile(NULL);
 }
 
 
@@ -936,7 +844,7 @@ SaveGameGamebryo *MainWindow::getSaveGame(QListWidgetItem *item)
 void MainWindow::displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos)
 {
   if (m_CurrentSaveView == NULL) {
-    m_CurrentSaveView = new SaveGameInfoWidgetGamebryo(save, &m_PluginList, this);
+    m_CurrentSaveView = new SaveGameInfoWidgetGamebryo(save, m_OrganizerCore.pluginList(), this);
   } else {
     m_CurrentSaveView->setSave(save);
   }
@@ -996,53 +904,6 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 }
 
 
-bool MainWindow::testForSteam()
-{
-  DWORD processIDs[1024];
-  DWORD bytesReturned;
-  if (!::EnumProcesses(processIDs, sizeof(processIDs), &bytesReturned)) {
-    qWarning("failed to determine if steam is running");
-    return true;
-  }
-
-  TCHAR processName[MAX_PATH];
-  for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
-    memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
-    if (processIDs[i] != 0) {
-      HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
-
-      if (process != NULL) {
-        HMODULE module;
-        DWORD ignore;
-
-        // first module in a process is always the binary
-        if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
-          GetModuleBaseName(process, module, processName, MAX_PATH);
-          if ((_tcsicmp(processName, TEXT("steam.exe")) == 0) ||
-              (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
-            return true;
-          }
-        }
-      }
-    }
-  }
-
-  return false;
-}
-
-
-bool MainWindow::verifyPlugin(IPlugin *plugin)
-{
-  if (plugin == NULL) {
-    return false;
-  } else if (!plugin->init(new OrganizerProxy(this, plugin->name()))) {
-    qWarning("plugin failed to initialize");
-    return false;
-  }
-  return true;
-}
-
-
 void MainWindow::toolPluginInvoke()
 {
   QAction *triggeredAction = qobject_cast<QAction*>(sender());
@@ -1053,55 +914,6 @@ void MainWindow::toolPluginInvoke()
     reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
   } catch (...) {
     reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
-  }
-}
-
-
-void MainWindow::requestDownload(const QUrl &url, QNetworkReply *reply)
-{
-  QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-  if (browserBtn->menu() != NULL) {
-    // go through modpage plugins, find one to handle the download.
-    QList<QAction*> browserActions = browserBtn->menu()->actions();
-    foreach (QAction *action, browserActions) {
-      // the nexus action doesn't have a plugin connected currently
-      if (action->data().isValid()) {
-        IPluginModPage *plugin = qobject_cast<IPluginModPage*>(qvariant_cast<QObject*>(action->data()));
-        if (plugin == NULL) {
-          qCritical("invalid mod page. This is a bug");
-          continue;
-        }
-        ModRepositoryFileInfo *fileInfo = new ModRepositoryFileInfo();
-        if (plugin->handlesDownload(url, reply->url(), *fileInfo)) {
-          fileInfo->repository = plugin->name();
-          m_DownloadManager.addDownload(reply, fileInfo);
-          return;
-        }
-      }
-    }
-  }
-
-  // no mod found that could handle the download. Is it a nexus mod?
-  if (url.host() == "www.nexusmods.com") {
-    int modID = 0;
-    int fileID = 0;
-    QRegExp modExp("mods/(\\d+)");
-    if (modExp.indexIn(url.toString()) != -1) {
-      modID = modExp.cap(1).toInt();
-    }
-    QRegExp fileExp("fid=(\\d+)");
-    if (fileExp.indexIn(reply->url().toString()) != -1) {
-      fileID = fileExp.cap(1).toInt();
-    }
-    m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo(modID, fileID));
-  } else {
-    if (QMessageBox::question(this, tr("Download?"),
-          tr("A download has been started but no installed page plugin recognizes it.\n"
-             "If you download anyway no information (i.e. version) will be associated with the download.\n"
-             "Continue?"),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_DownloadManager.addDownload(reply, new ModRepositoryFileInfo());
-    }
   }
 }
 
@@ -1118,6 +930,7 @@ void MainWindow::modPagePluginInvoke()
   }
 }
 
+
 void MainWindow::registerPluginTool(IPluginTool *tool)
 {
   QAction *action = new QAction(tool->icon(), tool->displayName(), ui->toolBar);
@@ -1132,7 +945,6 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
-  QToolButton *browserBtn = NULL;
   // turn the browser action into a drop-down menu if necessary
   if (ui->actionNexus->menu() == NULL) {
     QAction *nexusAction = ui->actionNexus;
@@ -1142,10 +954,8 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
     ui->toolBar->removeAction(nexusAction);
     actionToToolButton(ui->actionNexus);
 
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
+    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
     browserBtn->menu()->addAction(nexusAction);
-  } else {
-    browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
   }
 
   QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
@@ -1158,308 +968,23 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
 }
 
 
-bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
-{
-  { // generic treatment for all plugins
-    IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
-    if (pluginObj == NULL) {
-      qDebug("not an IPlugin");
-      return false;
-    }
-    plugin->setProperty("filename", fileName);
-    m_Settings.registerPlugin(pluginObj);
-    installTranslator(QFileInfo(fileName).baseName());
-  }
-
-  { // diagnosis plugins
-    IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
-    if (diagnose != NULL) {
-      m_DiagnosisPlugins.push_back(diagnose);
-      diagnose->onInvalidated([&] () { this->scheduleUpdateButton(); });
-    }
-  }
-  { // mod page plugin
-    IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
-    if (verifyPlugin(modPage)) {
-      registerModPage(modPage);
-      return true;
-    }
-  }
-  { // tool plugins
-    IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
-    if (verifyPlugin(tool)) {
-      registerPluginTool(tool);
-      return true;
-    }
-  }
-  { // installer plugins
-    IPluginInstaller *installer = qobject_cast<IPluginInstaller*>(plugin);
-    if (verifyPlugin(installer)) {
-      installer->setParentWidget(this);
-      m_InstallationManager.registerInstaller(installer);
-      return true;
-    }
-  }
-  { // preview plugins
-    IPluginPreview *preview = qobject_cast<IPluginPreview*>(plugin);
-    if (verifyPlugin(preview)) {
-      m_PreviewGenerator.registerPlugin(preview);
-    }
-  }
-  { // proxy plugins
-    IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
-    if (verifyPlugin(proxy)) {
-      proxy->setParentWidget(this);
-      QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
-      foreach (const QString &pluginName, pluginNames) {
-        try {
-          QObject *proxiedPlugin = proxy->instantiate(pluginName);
-          if (proxiedPlugin != NULL) {
-            if (registerPlugin(proxiedPlugin, pluginName)) {
-              qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
-            } else {
-              qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
-            }
-          }
-        } catch (const std::exception &e) {
-          reportError(tr("failed to init plugin %1: %2").arg(pluginName).arg(e.what()));
-        }
-      }
-      return true;
-    }
-  }
-
-  { // dummy plugins
-    // only initialize these, no processing otherwise
-    IPlugin *dummy = qobject_cast<IPlugin*>(plugin);
-    if (verifyPlugin(dummy)) {
-      return true;
-    }
-  }
-
-  qDebug("no matching plugin interface");
-
-  return false;
-}
-
-
-void MainWindow::loadPlugins()
-{
-  m_DiagnosisPlugins.clear();
-
-  m_Settings.clearPlugins();
-
-  foreach (QObject *plugin, QPluginLoader::staticInstances()) {
-    registerPlugin(plugin, "");
-  }
-
-  QFile loadCheck(qApp->property("dataPath").toString() + "/plugin_loadcheck.tmp");
-  if (loadCheck.exists() && loadCheck.open(QIODevice::ReadOnly)) {
-    // oh, there was a failed plugin load last time. Find out which plugin was loaded last
-    QString fileName;
-    while (!loadCheck.atEnd()) {
-      fileName = QString::fromUtf8(loadCheck.readLine().constData()).trimmed();
-    }
-    if (QMessageBox::question(this, tr("Plugin error"),
-      tr("It appears the plugin \"%1\" failed to load last startup and caused MO to crash. Do you want to disable it?\n"
-         "(Please note: If this is the first time you see this message for this plugin you may want to give it another try. "
-         "The plugin may be able to recover from the problem)").arg(fileName),
-          QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) {
-      m_Settings.addBlacklistPlugin(fileName);
-    }
-    loadCheck.close();
-  }
-
-  loadCheck.open(QIODevice::WriteOnly);
-
-  QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
-  qDebug("looking for plugins in %s", QDir::toNativeSeparators(pluginPath).toUtf8().constData());
-  QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
-
-  while (iter.hasNext()) {
-    iter.next();
-    if (m_Settings.pluginBlacklisted(iter.fileName())) {
-      qDebug("plugin \"%s\" blacklisted", qPrintable(iter.fileName()));
-      continue;
-    }
-    loadCheck.write(iter.fileName().toUtf8());
-    loadCheck.write("\n");
-    loadCheck.flush();
-    QString pluginName = iter.filePath();
-    if (QLibrary::isLibrary(pluginName)) {
-      QPluginLoader pluginLoader(pluginName);
-      if (pluginLoader.instance() == NULL) {
-        m_UnloadedPlugins.push_back(pluginName);
-        qCritical("failed to load plugin %s: %s",
-                  qPrintable(pluginName), qPrintable(pluginLoader.errorString()));
-      } else {
-        if (registerPlugin(pluginLoader.instance(), pluginName)) {
-          qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
-        } else {
-          m_UnloadedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
-        }
-      }
-    }
-  }
-
-  // remove the load check file on success
-  loadCheck.remove();
-
-  m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
-
-  m_DiagnosisPlugins.push_back(this);
-}
-
-
-void MainWindow::startSteam()
-{
-  QSettings steamSettings("HKEY_CURRENT_USER\\Software\\Valve\\Steam",
-                          QSettings::NativeFormat);
-  QString exe = steamSettings.value("SteamExe", "").toString();
-  if (!exe.isEmpty()) {
-    QString temp = QString("\"%1\"").arg(exe);
-    if (!QProcess::startDetached(temp)) {
-      reportError(tr("Failed to start \"%1\"").arg(temp));
-    } else {
-      QMessageBox::information(this, tr("Waiting"), tr("Please press OK once you're logged into steam."));
-    }
-  }
-}
-
-
-HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName,
-                                    const QDir &currentDirectory, const QString &steamAppID)
-{
-  storeSettings();
-
-  if (!binary.exists()) {
-    reportError(tr("Executable \"%1\" not found").arg(binary.fileName()));
-    return INVALID_HANDLE_VALUE;
-  }
-
-  if (!steamAppID.isEmpty()) {
-    ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(steamAppID).c_str());
-  } else {
-    ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(m_Settings.getSteamAppID()).c_str());
-  }
-
-  if ((GameInfo::instance().requiresSteam()) &&
-      (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
-    if (!testForSteam()) {
-      if (QuestionBoxMemory::query(this->isVisible() ? this : NULL,
-            "steamQuery", tr("Start Steam?"),
-            tr("Steam is required to be running already to correctly start the game. "
-               "Should MO try to start steam now?"),
-            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
-        startSteam();
-      }
-    }
-  }
-
-  while (m_DirectoryUpdate) {
-    ::Sleep(100);
-    QCoreApplication::processEvents();
-  }
-
-  // need to make sure all data is saved before we start the application
-  if (m_CurrentProfile != nullptr) {
-    m_CurrentProfile->writeModlistNow(true);
-  }
-
-  // TODO: should also pass arguments
-  if (m_AboutToRun(binary.absoluteFilePath())) {
-    return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
-  } else {
-    qDebug("start of \"%s\" canceled by plugin", qPrintable(binary.absoluteFilePath()));
-    return INVALID_HANDLE_VALUE;
-  }
-}
-
-
-void MainWindow::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
-{
-  LockedDialog *dialog = new LockedDialog(this);
-  dialog->show();
-  ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); });
-
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->getName(), currentDirectory, steamAppID);
-  if (processHandle != INVALID_HANDLE_VALUE) {
-    if (closeAfterStart) {
-      close();
-    } else {
-      this->setEnabled(false);
-      // re-enable the locked dialog because what'd be the point otherwise?
-      dialog->setEnabled(true);
-
-      QCoreApplication::processEvents();
-
-      DWORD retLen;
-      JOBOBJECT_BASIC_PROCESS_ID_LIST info;
-
-      bool isJobHandle = true;
-
-      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
-      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
-        if (isJobHandle) {
-          if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-            if (info.NumberOfProcessIdsInList == 0) {
-              break;
-            }
-          } else {
-            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-            // the right to break out.
-            if (::GetLastError() != ERROR_MORE_DATA) {
-              isJobHandle = false;
-            }
-          }
-        }
-
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
-
-        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
-      }
-      ::CloseHandle(processHandle);
-
-      this->setEnabled(true);
-      refreshDirectoryStructure();
-      // need to remove our stored load order because it may be outdated if a foreign tool changed the
-      // file time. After removing that file, refreshESPList will use the file time as the order
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
-        QFile::remove(m_CurrentProfile->getLoadOrderFileName());
-        refreshESPList();
-      }
-    }
-  }
-}
-
-
 void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != NULL) {
     Executable selectedExecutable = action->data().value<Executable>();
-    spawnBinary(selectedExecutable.m_BinaryInfo,
-                selectedExecutable.m_Arguments,
-                selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
-                                                                    : selectedExecutable.m_BinaryInfo.absolutePath(),
-                selectedExecutable.m_CloseMO == DEFAULT_CLOSE,
-                selectedExecutable.m_SteamAppID);
+    m_OrganizerCore.spawnBinary(
+          selectedExecutable.m_BinaryInfo,
+          selectedExecutable.m_Arguments,
+          selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
+                                                              : selectedExecutable.m_BinaryInfo.absolutePath(),
+          selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE,
+          selectedExecutable.m_SteamAppID);
   } else {
     qCritical("not an action?");
   }
 }
 
-
-void MainWindow::setExecutablesList(const ExecutablesList &executablesList)
-{
-  m_ExecutablesList = executablesList;
-  refreshExecutablesList();
-  updateToolBar();
-}
 
 void MainWindow::setExecutableIndex(int index)
 {
@@ -1478,13 +1003,11 @@ void MainWindow::activateSelectedProfile()
   qDebug("activate profile \"%s\"", qPrintable(profileName));
   QString profileDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()))
                           .append("/").append(profileName);
-  delete m_CurrentProfile;
-  m_CurrentProfile = new Profile(QDir(profileDir));
-  m_ModList.setProfile(m_CurrentProfile);
+  m_OrganizerCore.setCurrentProfile(new Profile(QDir(profileDir)));
 
-  m_ModListSortProxy->setProfile(m_CurrentProfile);
+  m_ModListSortProxy->setProfile(m_OrganizerCore.currentProfile());
 
-  connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
+  connect(m_OrganizerCore.currentProfile(), SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
 
   refreshSaveList();
   refreshModList();
@@ -1497,9 +1020,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     m_OldProfileIndex = index;
 
     if ((previousIndex != -1) &&
-        (m_CurrentProfile != NULL) &&
-        m_CurrentProfile->exists()) {
-      saveCurrentLists();
+        (m_OrganizerCore.currentProfile() != NULL) &&
+        m_OrganizerCore.currentProfile()->exists()) {
+      m_OrganizerCore.saveCurrentLists();
     }
 
     // ensure the new index is valid
@@ -1520,7 +1043,6 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
   {
@@ -1535,7 +1057,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       QStringList columns(fileName);
       bool isArchive = false;
       int originID = current->getOrigin(isArchive);
-      FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
+      FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
       QString source("data");
       unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
       if (modIndex != UINT_MAX) {
@@ -1575,7 +1097,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
           if (altIter != alternatives.begin()) {
             altString << " , ";
           }
-          altString << "<span style=\"white-space: nowrap;\"><i>" << m_DirectoryStructure->getOriginByID(*altIter).getName() << "</font></span>";
+          altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(*altIter).getName() << "</font></span>";
         }
         fileChild->setToolTip(1, QString("%1").arg(ToQString(altString.str())));
         fileChild->setForeground(1, QBrush(Qt::red));
@@ -1636,7 +1158,7 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
     bool conflictsOnly = onDemandDataItem->data(0, Qt::UserRole + 2).toBool();
 
     std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
-    DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(virtualPath);
+    DirectoryEntry *dir = m_OrganizerCore.directoryStructure()->findSubDirectoryRecursive(virtualPath);
     if (dir != NULL) {
       updateTo(item, path, *dir, conflictsOnly);
     } else {
@@ -1699,31 +1221,6 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   }
 }
 
-std::set<QString> MainWindow::enabledArchives()
-{
-  std::set<QString> result;
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      result.insert(QString::fromUtf8(archiveFile.readLine()).trimmed());
-    }
-    archiveFile.close();
-  }
-  return result;
-}
-
-void MainWindow::refreshDirectoryStructure()
-{
-  m_DirectoryUpdate = true;
-  std::vector<std::tuple<QString, QString, int> > activeModList = m_CurrentProfile->getActiveMods();
-
-  m_DirectoryRefresher.setMods(activeModList, enabledArchives());
-
-  statusBar()->show();
-  m_RefreshProgress->setRange(0, 100);
-
-  QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
-}
 
 #if QT_VERSION >= 0x050000
 extern QPixmap qt_pixmapFromWinHICON(HICON icon);
@@ -1754,7 +1251,7 @@ void MainWindow::refreshExecutablesList()
   QAbstractItemModel *model = executablesList->model();
 
   std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
+  m_OrganizerCore.executablesList()->getExecutables(current, end);
   for(int i = 0; current != end; ++current, ++i) {
     QVariant temp;
     temp.setValue(*current);
@@ -1776,7 +1273,7 @@ void MainWindow::refreshDataTree()
   QStringList columns("data");
   columns.append("");
   QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
-  updateTo(subTree, L"", *m_DirectoryStructure, conflictsBox->isChecked());
+  updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
   tree->insertTopLevelItem(0, subTree);
   subTree->setExpanded(true);
   tree->header()->resizeSection(0, 200);
@@ -1796,13 +1293,13 @@ void MainWindow::refreshSaveList()
   ui->savegameList->clear();
 
   QDir savesDir;
-  if (m_CurrentProfile->localSavesEnabled()) {
-    savesDir.setPath(m_CurrentProfile->getPath() + "/saves");
+  if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
+    savesDir.setPath(m_OrganizerCore.currentProfile()->getPath() + "/saves");
   } else {
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(L"General", L"SLocalSavePath", L"Saves",
                                path, MAX_PATH,
-                               (ToWString(m_CurrentProfile->getPath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
+                               (ToWString(m_OrganizerCore.currentProfile()->getPath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
     savesDir.setPath(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getDocumentsDir() + L"\\" + path)));
   }
 
@@ -1825,67 +1322,15 @@ void MainWindow::refreshSaveList()
 }
 
 
-void MainWindow::refreshLists()
-{
-  if ((m_CurrentProfile != NULL) && m_DirectoryStructure->isPopulated()) {
-    refreshESPList();
-    refreshBSAList();
-  } // no point in refreshing lists if no files have been added to the directory tree
-}
-
-
-void MainWindow::refreshESPList()
-{
-  m_CurrentProfile->writeModlist();
-
-  // clear list
-  try {
-    m_PluginList.refresh(m_CurrentProfile->getName(),
-                         *m_DirectoryStructure,
-                         m_CurrentProfile->getPluginsFileName(),
-                         m_CurrentProfile->getLoadOrderFileName(),
-                         m_CurrentProfile->getLockedOrderFileName());
-  } catch (const std::exception &e) {
-    reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
-  }
-}
-
-void MainWindow::refreshModList(bool saveChanges)
-{
-  // don't lose changes!
-  if (saveChanges) {
-    m_CurrentProfile->writeModlistNow(true);
-  }
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
-
-  m_CurrentProfile->refreshModStatus();
-
-  m_ModList.notifyChange(-1);
-
-  refreshDirectoryStructure();
-}
-
-
 static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const std::pair<UINT32, QTreeWidgetItem*> &RHS)
 {
   return LHS.first < RHS.first;
 }
 
 
-template <typename InputIterator>
-QStringList toStringList(InputIterator current, InputIterator end)
+void MainWindow::updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives)
 {
-  QStringList result;
-  for (; current != end; ++current) {
-    result.append(*current);
-  }
-  return result;
-}
 
-
-void MainWindow::refreshBSAList()
-{
-  m_ArchivesInit = false;
   ui->bsaList->clear();
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -1893,40 +1338,9 @@ void MainWindow::refreshBSAList()
   ui->bsaList->header()->setResizeMode(QHeaderView::ResizeToContents);
 #endif
 
-  m_DefaultArchives.clear();
-
-  wchar_t buffer[256];
-  std::wstring iniFileName = ToWString(QDir::toNativeSeparators(m_CurrentProfile->getIniFileName()));
-  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
-    m_DefaultArchives = ToQString(buffer).split(',');
-  } else {
-    std::vector<std::wstring> vanillaBSAs = GameInfo::instance().getVanillaBSAs();
-    for (auto iter = vanillaBSAs.begin(); iter != vanillaBSAs.end(); ++iter) {
-      m_DefaultArchives.append(ToQString(*iter));
-    }
-  }
-
-  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().append(L"2").c_str(),
-                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
-    m_DefaultArchives.append(ToQString(buffer).split(','));
-  }
-
-  for (int i = 0; i < m_DefaultArchives.count(); ++i) {
-    m_DefaultArchives[i] = m_DefaultArchives[i].trimmed();
-  }
-
-  m_ActiveArchives.clear();
-
-  auto iter = enabledArchives();
-  m_ActiveArchives = toStringList(iter.begin(), iter.end());
-  if (m_ActiveArchives.isEmpty()) {
-    m_ActiveArchives = m_DefaultArchives;
-  }
-
   std::vector<std::pair<UINT32, QTreeWidgetItem*> > items;
 
-  std::vector<FileEntry::Ptr> files = m_DirectoryStructure->getFiles();
+  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
   for (auto iter = files.begin(); iter != files.end(); ++iter) {
     FileEntry::Ptr current = *iter;
 
@@ -1934,7 +1348,7 @@ void MainWindow::refreshBSAList()
     QString extension = filename.right(3).toLower();
 
     if (extension == "bsa") {
-      int index = m_ActiveArchives.indexOf(filename);
+      int index = activeArchives.indexOf(filename);
       if (index == -1) {
         index = 0xFFFF;
       }
@@ -1942,20 +1356,20 @@ void MainWindow::refreshBSAList()
       QStringList strings(filename);
       bool isArchive = false;
       int origin = current->getOrigin(isArchive);
-      strings.append(ToQString(m_DirectoryStructure->getOriginByID(origin).getName()));
+      strings.append(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()));
       QTreeWidgetItem *newItem = new QTreeWidgetItem(strings);
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, origin);
       newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       newItem->setData(0, Qt::UserRole, false);
-      if (m_Settings.forceEnableCoreFiles()
-          && m_DefaultArchives.contains(filename)) {
+      if (m_OrganizerCore.settings().forceEnableCoreFiles()
+          && defaultArchives.contains(filename)) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
         newItem->setData(0, Qt::UserRole, true);
-      } else if ((m_PluginList.state(basename + ".esp") == IPluginList::STATE_ACTIVE)
-                 || (m_PluginList.state(basename + ".esm") == IPluginList::STATE_ACTIVE)) {
+      } else if ((m_OrganizerCore.pluginList()->state(basename + ".esp") == IPluginList::STATE_ACTIVE)
+                 || (m_OrganizerCore.pluginList()->state(basename + ".esm") == IPluginList::STATE_ACTIVE)) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
       } else {
@@ -1969,7 +1383,7 @@ void MainWindow::refreshBSAList()
 
       if (index < 0) index = 0;
 
-      UINT32 sortValue = ((m_DirectoryStructure->getOriginByID(origin).getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
+      UINT32 sortValue = ((m_OrganizerCore.directoryStructure()->getOriginByID(origin).getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
       items.push_back(std::make_pair(sortValue, newItem));
     }
   }
@@ -1979,7 +1393,7 @@ void MainWindow::refreshBSAList()
   for (std::vector<std::pair<UINT32, QTreeWidgetItem*> >::iterator iter = items.begin(); iter != items.end(); ++iter) {
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
-    FilesOrigin origin = m_DirectoryStructure->getOriginByID(originID);
+    FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
     QString modName("data");
     unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
     if (modIndex != UINT_MAX) {
@@ -1999,12 +1413,11 @@ void MainWindow::refreshBSAList()
     subItem->setExpanded(true);
   }
 
-  checkBSAList();
-  m_ArchivesInit = true;
+  m_OrganizerCore.checkBSAList();
 }
 
 
-void MainWindow::checkBSAList()
+void MainWindow::checkBSAList(const QStringList &defaultArchives)
 {
   ui->bsaList->blockSignals(true);
 
@@ -2020,7 +1433,7 @@ void MainWindow::checkBSAList()
       item->setToolTip(0, QString());
 
       if (item->checkState(0) == Qt::Unchecked) {
-        if (m_DefaultArchives.contains(filename)) {
+        if (defaultArchives.contains(filename)) {
           item->setIcon(0, QIcon(":/MO/gui/warning"));
           item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
           modWarning = true;
@@ -2129,103 +1542,35 @@ void MainWindow::readSettings()
 }
 
 
-void MainWindow::storeSettings()
+void MainWindow::storeSettings(QSettings &settings)
 {
-  if (m_CurrentProfile == NULL) {
-    return;
-  }
-  m_CurrentProfile->writeModlist();
-  m_CurrentProfile->createTweakedIniFile();
-  saveCurrentLists();
-  m_Settings.setupLoadMechanism();
+  settings.setValue("mod_list_state", ui->modList->header()->saveState());
+  settings.setValue("plugin_list_state", ui->espList->header()->saveState());
 
-  QString iniFile = ToQString(GameInfo::instance().getIniFilename());
-  shellCopy(iniFile, iniFile + ".new", true, this);
+  settings.setValue("group_state", ui->groupCombo->currentIndex());
 
-  QSettings::Status result = QSettings::NoError;
-  {
-    QSettings settings(iniFile + ".new", QSettings::IniFormat);
-    if (m_CurrentProfile != NULL) {
-      settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
-    } else {
-      settings.remove("selected_profile");
-    }
+  settings.setValue("window_geometry", saveGeometry());
+  settings.setValue("window_split", ui->splitter->saveState());
+  settings.setValue("log_split", ui->topLevelSplitter->saveState());
 
-    settings.setValue("mod_list_state", ui->modList->header()->saveState());
-    settings.setValue("plugin_list_state", ui->espList->header()->saveState());
+  settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
 
-    settings.setValue("group_state", ui->groupCombo->currentIndex());
-
-    settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
-
-    settings.setValue("window_geometry", saveGeometry());
-    settings.setValue("window_split", ui->splitter->saveState());
-    settings.setValue("log_split", ui->topLevelSplitter->saveState());
-
-    settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
-
-    settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
-    settings.setValue("manage_bsas", ui->manageArchivesBox->isChecked());
-
-    settings.remove("customExecutables");
-    settings.beginWriteArray("customExecutables");
-    std::vector<Executable>::const_iterator current, end;
-    m_ExecutablesList.getExecutables(current, end);
-    int count = 0;
-    for (; current != end; ++current) {
-      const Executable &item = *current;
-      if (item.m_Custom || item.m_Toolbar) {
-        settings.setArrayIndex(count++);
-        settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-        settings.setValue("title", item.m_Title);
-        settings.setValue("arguments", item.m_Arguments);
-        settings.setValue("workingDirectory", item.m_WorkingDirectory);
-        settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
-        settings.setValue("steamAppID", item.m_SteamAppID);
-        settings.setValue("custom", item.m_Custom);
-        settings.setValue("toolbar", item.m_Toolbar);
-      }
-    }
-    settings.endArray();
-
-    QComboBox *executableBox = findChild<QComboBox*>("executablesListBox");
-    settings.setValue("selected_executable", executableBox->currentIndex());
-
-    FileDialogMemory::save(settings);
-
-    settings.sync();
-    result = settings.status();
-  }
-  if (result == QSettings::NoError) {
-    if (!shellRename(iniFile + ".new", iniFile, true, this)) {
-      QMessageBox::critical(this, tr("Failed to write settings"),
-                            tr("An error occured trying to write back MO settings: %1").arg(windowsErrorString(::GetLastError())));
-    }
-  } else {
-    QString reason = result == QSettings::AccessError ? tr("File is write protected")
-                   : result == QSettings::FormatError ? tr("Invalid file format (probably a bug)")
-                   : tr("Unknown error %1").arg(result);
-    QMessageBox::critical(this, tr("Failed to write settings"),
-                          tr("An error occured trying to write back MO settings: %1").arg(reason));
-  }
+  settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+  settings.setValue("manage_bsas", ui->manageArchivesBox->isChecked());
 }
 
 
 void MainWindow::on_btnRefreshData_clicked()
 {
-  if (!m_DirectoryUpdate) {
-    refreshDirectoryStructure();
-  } else {
-    qDebug("directory update");
-  }
+  m_OrganizerCore.refreshDirectoryStructure();
 }
 
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
   if (index == 0) {
-    refreshESPList();
+    m_OrganizerCore.refreshESPList();
   } else if (index == 1) {
-    refreshBSAList();
+    m_OrganizerCore.refreshBSAList();
   } else if (index == 2) {
     refreshDataTree();
   } else if (index == 3) {
@@ -2235,67 +1580,11 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   }
 }
 
-std::vector<unsigned int> MainWindow::activeProblems() const
-{
-  std::vector<unsigned int> problems;
-  if (m_UnloadedPlugins.size() != 0) {
-    problems.push_back(PROBLEM_PLUGINSNOTLOADED);
-  }
-  if (m_PluginList.enabledCount() > 255) {
-    problems.push_back(PROBLEM_TOOMANYPLUGINS);
-  }
-  return problems;
-}
-
-QString MainWindow::shortDescription(unsigned int key) const
-{
-  switch (key) {
-    case PROBLEM_PLUGINSNOTLOADED: {
-      return tr("Some plugins could not be loaded");
-    } break;
-    case PROBLEM_TOOMANYPLUGINS: {
-      return tr("Too many esps and esms enabled");
-    } break;
-    default: {
-      return tr("Description missing");
-    } break;
-  }
-}
-
-QString MainWindow::fullDescription(unsigned int key) const
-{
-  switch (key) {
-    case PROBLEM_PLUGINSNOTLOADED: {
-      QString result = tr("The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:") + "<ul>";
-      foreach (const QString &plugin, m_UnloadedPlugins) {
-        result += "<li>" + plugin + "</li>";
-      }
-      result += "<ul>";
-      return result;
-    } break;
-    case PROBLEM_TOOMANYPLUGINS: {
-      return tr("The game doesn't allow more than 255 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or "
-                "merge some plugins into one. You can find a guide here: <a href=\"http://wiki.step-project.com/Guide:Merging_Plugins\">http://wiki.step-project.com/Guide:Merging_Plugins</a>");
-    } break;
-    default: {
-      return tr("Description missing");
-    } break;
-  }
-}
-
-bool MainWindow::hasGuidedFix(unsigned int) const
-{
-  return false;
-}
-
-void MainWindow::startGuidedFix(unsigned int) const
-{
-}
 
 void MainWindow::installMod()
 {
   try {
-    QStringList extensions = m_InstallationManager.getSupportedExtensions();
+    QStringList extensions = m_OrganizerCore.installationManager()->getSupportedExtensions();
     for (auto iter = extensions.begin(); iter != extensions.end(); ++iter) {
       *iter = "*." + *iter;
     }
@@ -2306,114 +1595,13 @@ void MainWindow::installMod()
     if (fileName.length() == 0) {
       return;
     } else {
-      installMod(fileName);
+      m_OrganizerCore.installMod(fileName);
     }
   } catch (const std::exception &e) {
     reportError(e.what());
   }
 }
 
-IModInterface *MainWindow::installMod(const QString &fileName)
-{
-  if (m_CurrentProfile == NULL) {
-    return NULL;
-  }
-
-  bool hasIniTweaks = false;
-  GuessedValue<QString> modName;
-  m_CurrentProfile->writeModlistNow();
-  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-  if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
-    MessageDialog::showMessage(tr("Installation successful"), this);
-    refreshModList();
-
-    QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
-    if (posList.count() == 1) {
-      ui->modList->scrollTo(posList.at(0));
-    }
-    int modIndex = ModInfo::getIndex(modName);
-    if (modIndex != UINT_MAX) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      if (hasIniTweaks &&
-          (QMessageBox::question(this, tr("Configure Mod"),
-              tr("This mod contains ini tweaks. Do you want to configure them now?"),
-              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
-        displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
-      }
-      m_ModInstalled(modName);
-      return modInfo.data();
-    } else {
-      reportError(tr("mod \"%1\" not found").arg(modName));
-    }
-  } else if (m_InstallationManager.wasCancelled()) {
-    QMessageBox::information(this, tr("Installation cancelled"), tr("The mod was not installed completely."), QMessageBox::Ok);
-  }
-  return NULL;
-}
-
-IModInterface *MainWindow::getMod(const QString &name)
-{
-  unsigned int index = ModInfo::getIndex(name);
-  if (index == UINT_MAX) {
-    return NULL;
-  } else {
-    return ModInfo::getByIndex(index).data();
-  }
-}
-
-IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
-{
-  if (!m_InstallationManager.testOverwrite(name)) {
-    return NULL;
-  }
-
-  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-
-  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name);
-
-  QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
-
-  settingsFile.setValue("modid", 0);
-  settingsFile.setValue("version", "");
-  settingsFile.setValue("newestVersion", "");
-  settingsFile.setValue("category", 0);
-  settingsFile.setValue("installationFile", "");
-  return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
-}
-
-bool MainWindow::removeMod(IModInterface *mod)
-{
-  unsigned int index = ModInfo::getIndex(mod->name());
-  if (index == UINT_MAX) {
-    return mod->remove();
-  } else {
-    return ModInfo::removeMod(index);
-  }
-}
-
-QList<IOrganizer::FileInfo> MainWindow::findFileInfos(const QString &path, const std::function<bool (const IOrganizer::FileInfo &)> &filter) const
-{
-  QList<IOrganizer::FileInfo> result;
-  DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
-  if (dir != NULL) {
-    std::vector<FileEntry::Ptr> files = dir->getFiles();
-    foreach (FileEntry::Ptr file, files) {
-      IOrganizer::FileInfo info;
-      info.filePath = ToQString(file->getFullPath());
-      bool fromArchive = false;
-      info.origins.append(ToQString(m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive)).getName()));
-      info.archive = fromArchive ? ToQString(file->getArchive()) : "";
-      foreach (int idx, file->getAlternatives()) {
-        info.origins.append(ToQString(m_DirectoryStructure->getOriginByID(idx).getName()));
-      }
-
-      if (filter(info)) {
-        result.append(info);
-      }
-    }
-  }
-  return result;
-}
 
 void MainWindow::on_startButton_clicked()
 {
@@ -2421,12 +1609,13 @@ void MainWindow::on_startButton_clicked()
 
   Executable selectedExecutable = executablesList->itemData(executablesList->currentIndex()).value<Executable>();
 
-  spawnBinary(selectedExecutable.m_BinaryInfo,
-              selectedExecutable.m_Arguments,
-              selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
-                                                                  : selectedExecutable.m_BinaryInfo.absolutePath(),
-              selectedExecutable.m_CloseMO == DEFAULT_CLOSE,
-              selectedExecutable.m_SteamAppID);
+  m_OrganizerCore.spawnBinary(
+        selectedExecutable.m_BinaryInfo,
+        selectedExecutable.m_Arguments,
+        selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
+                                                            : selectedExecutable.m_BinaryInfo.absolutePath(),
+        selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE,
+        selectedExecutable.m_SteamAppID);
 }
 
 
@@ -2503,9 +1692,9 @@ bool MainWindow::modifyExecutablesDialog()
 {
   bool result = false;
   try {
-    EditExecutablesDialog dialog(m_ExecutablesList);
+    EditExecutablesDialog dialog(m_OrganizerCore.executablesList());
     if (dialog.exec() == QDialog::Accepted) {
-      m_ExecutablesList = dialog.getExecutablesList();
+      m_OrganizerCore.setExecutablesDialog(dialog.getExecutablesList());
       result = true;
     }
     refreshExecutablesList();
@@ -2617,26 +1806,6 @@ void MainWindow::setESPListSorting(int index)
 }
 
 
-bool MainWindow::queryLogin(QString &username, QString &password)
-{
-  CredentialsDialog dialog(this);
-  int res = dialog.exec();
-  if (dialog.neverAsk()) {
-    m_AskForNexusPW = false;
-  }
-  if (res == QDialog::Accepted) {
-    username = dialog.username();
-    password = dialog.password();
-    if (dialog.store()) {
-      m_Settings.setNexusLogin(username, password);
-    }
-    return true;
-  } else {
-    return false;
-  }
-}
-
-
 bool MainWindow::setCurrentProfile(int index)
 {
   QComboBox *profilesBox = findChild<QComboBox*>("profileBox");
@@ -2665,141 +1834,60 @@ bool MainWindow::setCurrentProfile(const QString &name)
 
 void MainWindow::refresher_progress(int percent)
 {
-  m_RefreshProgress->setValue(percent);
+  if (percent == 100) {
+    m_RefreshProgress->setVisible(false);
+  } else if (!m_RefreshProgress->isVisible()) {
+    m_RefreshProgress->setVisible(true);
+    m_RefreshProgress->setRange(0, 100);
+    m_RefreshProgress->setValue(percent);
+  }
 }
-
 
 void MainWindow::directory_refreshed()
 {
-  DirectoryEntry *newStructure = m_DirectoryRefresher.getDirectoryStructure();
-  Q_ASSERT(newStructure != m_DirectoryStructure);
-  if (newStructure != NULL) {
-    std::swap(m_DirectoryStructure, newStructure);
-    delete newStructure;
-    refreshDataTree();
-  } else {
-    // TODO: don't know why this happens, this slot seems to get called twice with only one emit
-    return;
-  }
-  m_DirectoryUpdate = false;
-  if (m_CurrentProfile != NULL) {
-    refreshLists();
-  }
-
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
+  refreshDataTree();
   updateProblemsButton();
-
-  for (int i = 0; i < m_ModList.rowCount(); ++i) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-    modInfo->clearCaches();
-  }
   statusBar()->hide();
 }
 
-void MainWindow::externalMessage(const QString &message)
-{
-  if (message.left(6).toLower() == "nxm://") {
-    MessageDialog::showMessage(tr("Download started"), this);
-    downloadRequestedNXM(message);
-  }
-}
-
-void MainWindow::updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo)
-{
-  // add files of the bsa to the directory structure
-  m_DirectoryRefresher.addModFilesToStructure(m_DirectoryStructure
-                                              , modInfo->name()
-                                              , m_CurrentProfile->getModPriority(index)
-                                              , modInfo->absolutePath()
-                                              , modInfo->stealFiles()
-                                              );
-  DirectoryRefresher::cleanStructure(m_DirectoryStructure);
-  // need to refresh plugin list now so we can activate esps
-  refreshESPList();
-  // activate all esps of the specified mod so the bsas get activated along with it
-  updateModActiveState(index, true);
-  // now we need to refresh the bsa list and save it so there is no confusion about what archives are avaiable and active
-  refreshBSAList();
-  saveArchiveList();
-  m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(), enabledArchives());
-
-  // finally also add files from bsas to the directory structure
-  m_DirectoryRefresher.addModBSAToStructure(m_DirectoryStructure
-                                            , modInfo->name()
-                                            , m_CurrentProfile->getModPriority(index)
-                                            , modInfo->absolutePath()
-                                            , modInfo->archives()
-                                            );
-}
-
-void MainWindow::modStatusChanged(unsigned int index)
-{
-  try {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-    if (m_CurrentProfile->modEnabled(index)) {
-      updateModInDirectoryStructure(index, modInfo);
-    } else {
-      updateModActiveState(index, false);
-      refreshESPList();
-      if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
-        FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
-        origin.enable(false);
-      }
-    }
-    modInfo->clearCaches();
-
-    for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-      int priority = m_CurrentProfile->getModPriority(i);
-      if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
-        // priorities in the directory structure are one higher because data is 0
-        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority + 1);
-      }
-    }
-    m_DirectoryStructure->getFileRegister()->sortOrigins();
-
-    refreshLists();
-  } catch (const std::exception& e) {
-    reportError(tr("failed to update mod list: %1").arg(e.what()));
-  }
-}
-
-
-void MainWindow::removeOrigin(const QString &name)
-{
-  FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(name));
-  origin.enable(false);
-  refreshLists();
-}
-
-
 void MainWindow::modorder_changed()
 {
-  for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
-    int priority = m_CurrentProfile->getModPriority(i);
-    if (m_CurrentProfile->modEnabled(i)) {
+  for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
+    int priority = m_OrganizerCore.currentProfile()->getModPriority(i);
+    if (m_OrganizerCore.currentProfile()->modEnabled(i)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
       // priorities in the directory structure are one higher because data is 0
-      m_DirectoryStructure->getOriginByName(ToWString(modInfo->internalName())).setPriority(priority + 1);
+      m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->internalName())).setPriority(priority + 1);
     }
   }
-  refreshBSAList();
-  m_CurrentProfile->writeModlist();
-  saveArchiveList();
-  m_DirectoryStructure->getFileRegister()->sortOrigins();
+  m_OrganizerCore.refreshBSAList();
+  m_OrganizerCore.currentProfile()->writeModlist();
+  m_OrganizerCore.saveArchiveList();
+  m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
 
   { // refresh selection
     QModelIndex current = ui->modList->currentIndex();
     if (current.isValid()) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
       modInfo->doConflictCheck();
-      m_ModList.setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
+      m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
       if (m_ModListSortProxy != NULL) {
         m_ModListSortProxy->invalidate();
       }
       ui->modList->verticalScrollBar()->repaint();
     }
+  }
+}
+
+void MainWindow::modInstalled()
+{
+  QModelIndexList posList =
+      m_OrganizerCore.modList().match(m_OrganizerCore.modList().index(0, 0),
+                                      Qt::DisplayRole, static_cast<const QString&>(modName));
+  if (posList.count() == 1) {
+    ui->modList->scrollTo(posList.at(0));
   }
 }
 
@@ -2812,15 +1900,6 @@ void MainWindow::procError(QProcess::ProcessError error)
 void MainWindow::procFinished(int, QProcess::ExitStatus)
 {
   this->sender()->deleteLater();
-}
-
-void MainWindow::profileRefresh()
-{
-  // have to refresh mods twice (again in refreshModList), otherwise the refresh isn't complete. Not sure why
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
-  m_CurrentProfile->refreshModStatus();
-
-  refreshModList();
 }
 
 void MainWindow::showMessage(const QString &message)
@@ -2906,12 +1985,12 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
   }
 
   // immediately refresh the active profile because the data in memory is invalid
-  m_CurrentProfile->refreshModStatus();
+  m_OrganizerCore.currentProfile()->refreshModStatus();
 
   // also fix the directory structure
   try {
-    if (m_DirectoryStructure->originExists(ToWString(oldName))) {
-      FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(oldName));
+    if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldName))) {
+      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(oldName));
       origin.setName(ToWString(newName));
     } else {
 
@@ -2930,11 +2009,11 @@ void MainWindow::modlistChanged(int)
 
 void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName)
 {
-  const FileEntry::Ptr filePtr = m_DirectoryStructure->findFile(ToWString(filePath));
+  const FileEntry::Ptr filePtr = m_OrganizerCore.directoryStructure()->findFile(ToWString(filePath));
   if (filePtr.get() != NULL) {
     try {
-      if (m_DirectoryStructure->originExists(ToWString(newOriginName))) {
-        FilesOrigin &newOrigin = m_DirectoryStructure->getOriginByName(ToWString(newOriginName));
+      if (m_OrganizerCore.directoryStructure()->originExists(ToWString(newOriginName))) {
+        FilesOrigin &newOrigin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(newOriginName));
 
         QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
         WIN32_FIND_DATAW findData;
@@ -2942,8 +2021,8 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 
         filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
       }
-      if (m_DirectoryStructure->originExists(ToWString(oldOriginName))) {
-        FilesOrigin &oldOrigin = m_DirectoryStructure->getOriginByName(ToWString(oldOriginName));
+      if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldOriginName))) {
+        FilesOrigin &oldOrigin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(oldOriginName));
         filePtr->removeOrigin(oldOrigin.getID());
       }
     } catch (const std::exception &e) {
@@ -3059,7 +2138,7 @@ void MainWindow::restoreBackup_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
   if (backupRegEx.indexIn(modInfo->name()) != -1) {
     QString regName = backupRegEx.cap(1);
-    QDir modDir(QDir::fromNativeSeparators(m_Settings.getModDirectory()));
+    QDir modDir(QDir::fromNativeSeparators(m_OrganizerCore.settings().getModDirectory()));
     if (!modDir.exists(regName) ||
         (QMessageBox::question(this, tr("Overwrite?"),
           tr("This will replace the existing mod \"%1\". Continue?").arg(regName),
@@ -3067,7 +2146,7 @@ void MainWindow::restoreBackup_clicked()
       if (modDir.exists(regName) && !shellDelete(QStringList(modDir.absoluteFilePath(regName)))) {
         reportError(tr("failed to remove mod \"%1\"").arg(regName));
       } else {
-        QString destinationPath = QDir::fromNativeSeparators(m_Settings.getModDirectory()) + "/" + regName;
+        QString destinationPath = QDir::fromNativeSeparators(m_OrganizerCore.settings().getModDirectory()) + "/" + regName;
         if (!modDir.rename(modInfo->absolutePath(), destinationPath)) {
           reportError(tr("failed to rename \"%1\" to \"%2\"").arg(modInfo->absolutePath()).arg(destinationPath));
         }
@@ -3077,43 +2156,18 @@ void MainWindow::restoreBackup_clicked()
   }
 }
 
-void MainWindow::updateModActiveState(int index, bool active)
-{
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-
-  QDir dir(modInfo->absolutePath());
-  foreach (const QString &esm, dir.entryList(QStringList("*.esm"), QDir::Files)) {
-    m_PluginList.enableESP(esm, active);
-  }
-  int enabled = 0;
-  QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
-  foreach (const QString &esp, esps) {
-    if (active != m_PluginList.isEnabled(esp)) {
-      m_PluginList.enableESP(esp, active);
-      ++enabled;
-    }
-  }
-  if (active && (enabled > 1)) {
-    MessageDialog::showMessage(tr("Multiple esps activated, please check that they don't conflict."), this);
-  }
-  m_PluginList.refreshLoadOrder();
-  // immediately save affected lists
-  savePluginList();
-//  refreshBSAList();
-}
-
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
-  m_CurrentProfile->writeModlist();
+  m_OrganizerCore.currentProfile()->writeModlist();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
 {
   if (current.isValid()) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
-    m_ModList.setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+    m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
   } else {
-    m_ModList.setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
   if ((m_ModListSortProxy != NULL)
       && !m_ModListSortProxy->beingInvalidated()) {
@@ -3148,11 +2202,11 @@ void MainWindow::removeMod_clicked()
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
         foreach (QString name, modNames) {
-          m_ModList.removeRowForce(ModInfo::getIndex(name));
+          m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name));
         }
       }
     } else {
-      m_ModList.removeRow(m_ContextRow, QModelIndex());
+      m_OrganizerCore.modList()->removeRow(m_ContextRow, QModelIndex());
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to remove mod: %1").arg(e.what()));
@@ -3163,9 +2217,9 @@ void MainWindow::removeMod_clicked()
 void MainWindow::modRemoved(const QString &fileName)
 {
   if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {
-    int index = m_DownloadManager.indexByName(fileName);
+    int index = m_OrganizerCore.downloadManager()->indexByName(fileName);
     if (index >= 0) {
-      m_DownloadManager.markUninstalled(index);
+      m_OrganizerCore.downloadManager()->markUninstalled(index);
     }
   }
 }
@@ -3182,10 +2236,10 @@ void MainWindow::reinstallMod_clicked()
       if (fileInfo.exists()) {
         fullInstallationFile = installationFile;
       } else {
-        fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(fileInfo.fileName());
+        fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory().append("/").append(fileInfo.fileName());
       }
     } else {
-      fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(installationFile);
+      fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory().append("/").append(installationFile);
     }
     if (QFile::exists(fullInstallationFile)) {
       installMod(fullInstallationFile);
@@ -3202,11 +2256,12 @@ void MainWindow::reinstallMod_clicked()
 void MainWindow::resumeDownload(int downloadIndex)
 {
   if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
-    m_DownloadManager.resumeDownload(downloadIndex);
+    m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
   } else {
     QString username, password;
-    if (m_Settings.getNexusLogin(username, password)) {
-      m_PostLoginTasks.push_back(boost::bind(&MainWindow::resumeDownload, _1, downloadIndex));
+    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+      //m_PostLoginTasks.push_back(boost::bind(&MainWindow::resumeDownload, _1, downloadIndex));
+      m_OrganizerCore.doAfterLogin(std::bind(&MainWindow::resumeDownload, this, downloadIndex));
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
@@ -3221,7 +2276,7 @@ void MainWindow::endorseMod(ModInfo::Ptr mod)
     mod->endorse(true);
   } else {
     QString username, password;
-    if (m_Settings.getNexusLogin(username, password)) {
+    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_PostLoginTasks.push_back(boost::bind(&MainWindow::endorseMod, _1, mod));
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
@@ -3248,7 +2303,7 @@ void MainWindow::unendorse_clicked()
   if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
     ModInfo::getByIndex(m_ContextRow)->endorse(false);
   } else {
-    if (m_Settings.getNexusLogin(username, password)) {
+    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_PostLoginTasks.push_back(boost::mem_fn(&MainWindow::unendorse_clicked));
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
@@ -3257,12 +2312,21 @@ void MainWindow::unendorse_clicked()
   }
 }
 
+void MainWindow::loginFailed(const QString &message)
+{
+  statusBar()->hide();
+}
+
+void MainWindow::windowTutorialFinished(const QString &windowName)
+{
+  m_OrganizerCore.settings().directInterface().setValue(QString("CompletedWindowTutorials/") + windowName, this);
+}
 
 void MainWindow::overwriteClosed(int)
 {
   OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
   if (dialog != NULL) {
-    m_ModList.modInfoChanged(dialog->modInfo());
+    m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
     dialog->deleteLater();
   }
 }
@@ -3270,7 +2334,7 @@ void MainWindow::overwriteClosed(int)
 
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
 {
-  m_ModList.modInfoAboutToChange(modInfo);
+  m_OrganizerCore.modList()->modInfoAboutToChange(modInfo);
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
     QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
@@ -3290,7 +2354,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_DirectoryStructure, modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);
+    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), this, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
@@ -3300,31 +2364,31 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 
     dialog.openTab(tab);
-    dialog.restoreTabState(m_Settings.directInterface().value("mod_info_tabs").toByteArray());
+    dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
     dialog.exec();
-    m_Settings.directInterface().setValue("mod_info_tabs", dialog.saveTabState());
+    m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
 
     modInfo->saveMeta();
     emit modInfoDisplayed();
-    m_ModList.modInfoChanged(modInfo);
+    m_OrganizerCore.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_CurrentProfile->modEnabled(index)) {
-    FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
+  if (m_OrganizerCore.currentProfile()->modEnabled(index)) {
+    FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
 
-    if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
-      FilesOrigin& origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
+    if (m_OrganizerCore.directoryStructure()->originExists(ToWString(modInfo->name()))) {
+      FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
       origin.enable(false);
 
-      m_DirectoryRefresher.addModToStructure(m_DirectoryStructure
+      m_OrganizerCore.directoryRefresher()->addModToStructure(m_OrganizerCore.directoryStructure()
                                              , modInfo->name()
-                                             , m_CurrentProfile->getModPriority(index)
+                                             , m_OrganizerCore.currentProfile()->getModPriority(index)
                                              , modInfo->absolutePath()
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
-      DirectoryRefresher::cleanStructure(m_DirectoryStructure);
-      refreshLists();
+      DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
+      m_OrganizerCore.refreshLists();
     }
   }
 }
@@ -3332,7 +2396,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
 void MainWindow::modOpenNext()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0));
+  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
 
   m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
@@ -3349,7 +2413,7 @@ void MainWindow::modOpenNext()
 
 void MainWindow::modOpenPrev()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_ModList.index(m_ContextRow, 0));
+  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   int row = index.row() - 1;
   if (row == -1) {
     row = m_ModListSortProxy->rowCount() - 1;
@@ -3392,15 +2456,15 @@ void MainWindow::ignoreMissingData_clicked()
   ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
   QDir(info->absolutePath()).mkdir("textures");
   info->testValid();
-  connect(this, SIGNAL(modListDataChanged(QModelIndex,QModelIndex)), &m_ModList, SIGNAL(dataChanged(QModelIndex,QModelIndex)));
+  connect(this, SIGNAL(modListDataChanged(QModelIndex,QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex,QModelIndex)));
 
-  emit modListDataChanged(m_ModList.index(m_ContextRow, 0), m_ModList.index(m_ContextRow, m_ModList.columnCount() - 1));
+  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
 }
 
 
 void MainWindow::visitOnNexus_clicked()
 {
-  int modID = m_ModList.data(m_ModList.index(m_ContextRow, 0), Qt::UserRole).toInt();
+  int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
     nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
   } else {
@@ -3427,9 +2491,9 @@ void MainWindow::information_clicked()
 void MainWindow::syncOverwrite()
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-  SyncOverwriteDialog syncDialog(modInfo->absolutePath(), m_DirectoryStructure, this);
+  SyncOverwriteDialog syncDialog(modInfo->absolutePath(), m_OrganizerCore.directoryStructure(), this);
   if (syncDialog.exec() == QDialog::Accepted) {
-    syncDialog.apply(QDir::fromNativeSeparators(m_Settings.getModDirectory()));
+    syncDialog.apply(QDir::fromNativeSeparators(m_OrganizerCore.settings().getModDirectory()));
     modInfo->testValid();
     refreshDirectoryStructure();
   }
@@ -3452,12 +2516,12 @@ void MainWindow::createModFromOverwrite()
     }
   }
 
-  if (getMod(name) != NULL) {
+  if (m_OrganizerCore.getMod(name) != NULL) {
     reportError(tr("A mod with this name already exists"));
     return;
   }
 
-  IModInterface *newMod = createMod(name);
+  IModInterface *newMod = m_OrganizerCore.createMod(name);
   if (newMod == NULL) {
     return;
   }
@@ -3480,7 +2544,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (!index.isValid()) {
     return;
   }
-  QModelIndex sourceIdx = mapToModel(&m_ModList, index);
+  QModelIndex sourceIdx = mapToModel(m_OrganizerCore.modList(), index);
   if (!sourceIdx.isValid()) {
     return;
   }
@@ -3594,14 +2658,14 @@ void MainWindow::addRemoveCategories_MenuHandler() {
   if (selected.size() > 0) {
     foreach (const QPersistentModelIndex &idx, selected) {
       qDebug("change categories on: %s (ref: %s)", qPrintable(idx.data().toString()), qPrintable(m_ContextIdx.data().toString()));
-      QModelIndex modIdx = mapToModel(&m_ModList, idx);
+      QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
       }
     }
     replaceCategoriesFromMenu(menu, m_ContextIdx.row());
 
-    m_ModList.notifyChange(-1);
+    m_OrganizerCore.modList()->notifyChange(-1);
 
     foreach (const QPersistentModelIndex &idx, selected) {
       ui->modList->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
@@ -3609,7 +2673,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
   } else {
     //For single mod selections, just do a replace
     replaceCategoriesFromMenu(menu, m_ContextRow);
-    m_ModList.notifyChange(m_ContextRow);
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 
   refreshFilters();
@@ -3627,12 +2691,12 @@ void MainWindow::replaceCategories_MenuHandler() {
   if (selected.size() > 0) {
     QStringList selectedMods;
     for (int i = 0; i < selected.size(); ++i) {
-      QModelIndex temp = mapToModel(&m_ModList, selected.at(i));
+      QModelIndex temp = mapToModel(m_OrganizerCore.modList(), selected.at(i));
       selectedMods.append(temp.data().toString());
-      replaceCategoriesFromMenu(menu, mapToModel(&m_ModList, selected.at(i)).row());
+      replaceCategoriesFromMenu(menu, mapToModel(m_OrganizerCore.modList(), selected.at(i)).row());
     }
 
-    m_ModList.notifyChange(-1);
+    m_OrganizerCore.modList()->notifyChange(-1);
 
     // find mods by their name because indices are invalidated
     QAbstractItemModel *model = ui->modList->model();
@@ -3646,7 +2710,7 @@ void MainWindow::replaceCategories_MenuHandler() {
   } else {
     //For single mod selections, just do a replace
     replaceCategoriesFromMenu(menu, m_ContextRow);
-    m_ModList.notifyChange(m_ContextRow);
+    m_OrganizerCore.modList()->notifyChange(m_ContextRow);
   }
 
   refreshFilters();
@@ -3676,6 +2740,33 @@ void MainWindow::savePrimaryCategory()
   }
 }
 
+bool MainWindow::saveArchiveList()
+{
+  if (m_ArchivesInit) {
+    SafeWriteFile archiveFile(m_OrganizerCore.currentProfile()->getArchivesFileName());
+    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
+      for (int j = 0; j < tlItem->childCount(); ++j) {
+        QTreeWidgetItem *item = tlItem->child(j);
+        if (item->checkState(0) == Qt::Checked) {
+          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
+          if (ui->manageArchivesBox->isChecked()
+              || item->data(0, Qt::UserRole).toBool()) {
+            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
+          }
+        }
+      }
+    }
+    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
+      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+      return true;
+    }
+  } else {
+    qWarning("archive list not initialised");
+  }
+  return false;
+}
+
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
@@ -3684,8 +2775,8 @@ void MainWindow::checkModsForUpdates()
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString username, password;
-    if (m_Settings.getNexusLogin(username, password)) {
-      m_PostLoginTasks.push_back(boost::mem_fn(&MainWindow::checkModsForUpdates));
+    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+      m_OrganizerCore.doAfterLogin(boost::mem_fn(&MainWindow::checkModsForUpdates));
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else { // otherwise there will be no endorsement info
       m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
@@ -3810,7 +2901,7 @@ void MainWindow::exportModListCSV()
 
       for (unsigned int i = 0; i < numMods; ++i) {
         ModInfo::Ptr info = ModInfo::getByIndex(i);
-        bool enabled = m_CurrentProfile->modEnabled(i);
+        bool enabled = m_OrganizerCore.currentProfile()->modEnabled(i);
         if ((selection.getChoiceData().toInt() == 1) && !enabled) {
           continue;
         } else if ((selection.getChoiceData().toInt() == 2) && !m_ModListSortProxy->filterMatchesMod(info, enabled)) {
@@ -3855,7 +2946,7 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Check all for update"), this, SLOT(checkModsForUpdates()));
 
-  menu->addAction(tr("Refresh"), this, SLOT(profileRefresh()));
+  menu->addAction(tr("Refresh"), &m_OrganizerCore, SLOT(profileRefresh()));
 
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
   return menu;
@@ -3866,7 +2957,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
   try {
     QTreeView *modList = findChild<QTreeView*>("modList");
 
-    m_ContextIdx = mapToModel(&m_ModList, modList->indexAt(pos));
+    m_ContextIdx = mapToModel(m_OrganizerCore.modList(), modList->indexAt(pos));
     m_ContextRow = m_ContextIdx.row();
 
     QMenu *menu = NULL;
@@ -4042,7 +3133,7 @@ void MainWindow::fixMods_clicked()
 
   for (int i = 0; i < save->numPlugins(); ++i) {
     const QString &pluginName = save->plugin(i);
-    if (!m_PluginList.isEnabled(pluginName)) {
+    if (!m_OrganizerCore.pluginList()->isEnabled(pluginName)) {
       missingPlugins[pluginName] = std::vector<QString>();
     }
   }
@@ -4064,8 +3155,8 @@ void MainWindow::fixMods_clicked()
   }
 
   // search in mods
-  for (unsigned int i = 0; i < m_CurrentProfile->numRegularMods(); ++i) {
-    int modIndex = m_CurrentProfile->modIndexByPriority(i);
+  for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numRegularMods(); ++i) {
+    int modIndex = m_OrganizerCore.currentProfile()->modIndexByPriority(i);
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
 
     QStringList esps = QDir(modInfo->absolutePath()).entryList(espFilter);
@@ -4097,18 +3188,18 @@ void MainWindow::fixMods_clicked()
     for (std::set<QString>::iterator iter = modsToActivate.begin(); iter != modsToActivate.end(); ++iter) {
       if ((*iter != "<data>") && (*iter != "<overwrite>")) {
         unsigned int modIndex = ModInfo::getIndex(*iter);
-        m_CurrentProfile->setModEnabled(modIndex, true);
+        m_OrganizerCore.currentProfile()->setModEnabled(modIndex, true);
       }
     }
 
-    m_CurrentProfile->writeModlist();
-    refreshLists();
+    m_OrganizerCore.currentProfile()->writeModlist();
+    m_OrganizerCore.refreshLists();
 
     std::set<QString> espsToActivate = dialog.getESPsToActivate();
     for (std::set<QString>::iterator iter = espsToActivate.begin(); iter != espsToActivate.end(); ++iter) {
-      m_PluginList.enableESP(*iter);
+      m_OrganizerCore.pluginList()->enableESP(*iter);
     }
-    saveCurrentLists();
+    m_OrganizerCore.saveCurrentLists();
   }
 }
 
@@ -4135,7 +3226,7 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 void MainWindow::linkToolbar()
 {
   const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
-  Executable &exe = m_ExecutablesList.find(selectedExecutable.m_Title);
+  Executable &exe = m_OrganizerCore.executablesList()->find(selectedExecutable.m_Title);
   exe.m_Toolbar = !exe.m_Toolbar;
   ui->linkButton->menu()->actions().at(2)->setIcon(exe.m_Toolbar ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
@@ -4208,44 +3299,44 @@ void MainWindow::linkMenu()
 
 void MainWindow::downloadSpeed(const QString &serverName, int bytesPerSecond)
 {
-  m_Settings.setDownloadSpeed(serverName, bytesPerSecond);
+  m_OrganizerCore.settings().setDownloadSpeed(serverName, bytesPerSecond);
 }
 
 
 void MainWindow::on_actionSettings_triggered()
 {
-  QString oldModDirectory(m_Settings.getModDirectory());
-  QString oldCacheDirectory(m_Settings.getCacheDirectory());
-  bool oldDisplayForeign(m_Settings.displayForeign());
-  bool proxy = m_Settings.useProxy();
-  m_Settings.query(this);
-  m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-  m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
+  QString oldModDirectory(m_OrganizerCore.settings().getModDirectory());
+  QString oldCacheDirectory(m_OrganizerCore.settings().getCacheDirectory());
+  bool oldDisplayForeign(m_OrganizerCore.settings().displayForeign());
+  bool proxy = m_OrganizerCore.settings().useProxy();
+  m_OrganizerCore.settings().query(this);
+  m_OrganizerCore.installationManager()->setModsDirectory(m_OrganizerCore.settings().getModDirectory());
+  m_OrganizerCore.installationManager()->setDownloadDirectory(m_OrganizerCore.settings().getDownloadDirectory());
   fixCategories();
   refreshFilters();
-  if (QDir::fromNativeSeparators(m_DownloadManager.getOutputDirectory()) != QDir::fromNativeSeparators(m_Settings.getDownloadDirectory())) {
-    if (m_DownloadManager.downloadsInProgress()) {
+  if (QDir::fromNativeSeparators(m_OrganizerCore.downloadManager()->getOutputDirectory()) != QDir::fromNativeSeparators(m_OrganizerCore.settings().getDownloadDirectory())) {
+    if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
       MessageDialog::showMessage(tr("Can't change download directory while downloads are in progress!"), this);
     } else {
-      m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
+      m_OrganizerCore.downloadManager()->setOutputDirectory(m_OrganizerCore.settings().getDownloadDirectory());
     }
   }
-  m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
+  m_OrganizerCore.downloadManager()->setPreferredServers(m_OrganizerCore.settings().getPreferredServers());
 
-  if ((m_Settings.getModDirectory() != oldModDirectory)
-      || (m_Settings.displayForeign() != oldDisplayForeign)) {
-    profileRefresh();
+  if ((m_OrganizerCore.settings().getModDirectory() != oldModDirectory)
+      || (m_OrganizerCore.settings().displayForeign() != oldDisplayForeign)) {
+    m_OrganizerCore.profileRefresh();
   }
 
-  if (m_Settings.getCacheDirectory() != oldCacheDirectory) {
-    NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
+  if (m_OrganizerCore.settings().getCacheDirectory() != oldCacheDirectory) {
+    NexusInterface::instance()->setCacheDirectory(m_OrganizerCore.settings().getCacheDirectory());
   }
 
-  if (proxy != m_Settings.useProxy()) {
-    activateProxy(m_Settings.useProxy());
+  if (proxy != m_OrganizerCore.settings().useProxy()) {
+    activateProxy(m_OrganizerCore.settings().useProxy());
   }
 
-  NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
+  NexusInterface::instance()->setNMMVersion(m_OrganizerCore.settings().getNMMVersion());
 
   updateDownloadListDelegate();
 }
@@ -4270,58 +3361,12 @@ void MainWindow::linkClicked(const QString &url)
 }
 
 
-bool MainWindow::nexusLogin()
-{
-  QString username, password;
-
-  NXMAccessManager *accessManager = NexusInterface::instance()->getAccessManager();
-
-  if (!accessManager->loginAttempted()
-      && !accessManager->loggedIn()
-      && (m_Settings.getNexusLogin(username, password)
-          || (m_AskForNexusPW
-              && queryLogin(username, password)))) {
-    accessManager->login(username, password);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-
-void MainWindow::downloadRequestedNXM(const QString &url)
-{
-  qDebug("download requested: %s", qPrintable(url));
-  if (nexusLogin()) {
-    m_PendingDownloads.append(url);
-  } else {
-    m_DownloadManager.addNXMDownload(url);
-  }
-}
-
-
-void MainWindow::downloadRequested(QNetworkReply *reply, int modID, const QString &fileName)
-{
-  try {
-    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, modID, 0, new ModRepositoryFileInfo(modID))) {
-      MessageDialog::showMessage(tr("Download started"), this);
-    }
-  } catch (const std::exception &e) {
-    MessageDialog::showMessage(tr("Download failed"), this);
-    qCritical("exception starting download: %s", e.what());
-  }
-}
-
-
 void MainWindow::installTranslator(const QString &name)
 {
-/*  if (m_CurrentLanguage == "en_US") {
-    return;
-  }*/
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage != "en-US") {
+    if ((m_CurrentLanguage != "en-US") && (m_CurrentLanguage != "en_US")) {
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
@@ -4358,8 +3403,8 @@ void MainWindow::languageChange(const QString &newLanguage)
 void MainWindow::installDownload(int index)
 {
   try {
-    QString fileName = m_DownloadManager.getFilePath(index);
-    int modID = m_DownloadManager.getModID(index);
+    QString fileName = m_OrganizerCore.downloadManager()->getFilePath(index);
+    int modID = m_OrganizerCore.downloadManager()->getModID(index);
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
@@ -4374,15 +3419,15 @@ void MainWindow::installDownload(int index)
       }
     }
 
-    m_CurrentProfile->writeModlistNow();
+    m_OrganizerCore.currentProfile()->writeModlistNow();
 
     bool hasIniTweaks = false;
-    m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-    if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
+    m_OrganizerCore.installationManager()->setModsDirectory(m_OrganizerCore.settings().getModDirectory());
+    if (m_OrganizerCore.installationManager()->install(fileName, modName, hasIniTweaks)) {
       MessageDialog::showMessage(tr("Installation successful"), this);
       refreshModList();
 
-      QModelIndexList posList = m_ModList.match(m_ModList.index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
+      QModelIndexList posList = m_OrganizerCore.modList()->match(m_OrganizerCore.modList()->index(0, 0), Qt::DisplayRole, static_cast<const QString&>(modName));
       if (posList.count() == 1) {
         ui->modList->scrollTo(posList.at(0));
       }
@@ -4401,10 +3446,10 @@ void MainWindow::installDownload(int index)
       } else {
         reportError(tr("mod \"%1\" not found").arg(modName));
       }
-      m_DownloadManager.markInstalled(index);
+      m_OrganizerCore.downloadManager()->markInstalled(index);
 
       emit modInstalled();
-    } else if (m_InstallationManager.wasCancelled()) {
+    } else if (m_OrganizerCore.installationManager()->wasCancelled()) {
       QMessageBox::information(this, tr("Installation cancelled"), tr("The mod was not installed completely."), QMessageBox::Ok);
     }
   } catch (const std::exception &e) {
@@ -4434,7 +3479,7 @@ void MainWindow::writeDataToFile(QFile &file, const QString &directory, const Di
       file.write(fullName.toUtf8());
 
       file.write("\t(");
-      file.write(ToQString(m_DirectoryStructure->getOriginByID(origin).getName()).toUtf8());
+      file.write(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()).toUtf8());
       file.write(")\r\n");
     }
   }
@@ -4457,7 +3502,7 @@ void MainWindow::writeDataToFile()
     reportError(tr("failed to write to file %1").arg(fileName));
   }
 
-  writeDataToFile(file, "data", *m_DirectoryStructure);
+  writeDataToFile(file, "data", *m_OrganizerCore.directoryStructure());
   file.close();
 
   MessageDialog::showMessage(tr("%1 written").arg(QDir::toNativeSeparators(fileName)), this);
@@ -4485,7 +3530,7 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
       if (::FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type: %lu", ::GetLastError());
+          qDebug("failed to determine binary type of \"%ls\": %lu", targetPathW.c_str(), ::GetLastError());
         } else if (binaryType == SCS_32BIT_BINARY) {
           binaryPath = ToQString(buffer);
         }
@@ -4529,9 +3574,9 @@ void MainWindow::addAsExecutable()
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
         if (!name.isEmpty()) {
-          m_ExecutablesList.addExecutable(name, binaryInfo.absoluteFilePath(),
+          m_OrganizerCore.executablesList()->addExecutable(name, binaryInfo.absoluteFilePath(),
                                           arguments, targetInfo.absolutePath(),
-                                          DEFAULT_STAY, QString(),
+                                          ExecutableInfo::CloseMOStyle::DEFAULT_STAY, QString(),
                                           true, false);
           refreshExecutablesList();
         }
@@ -4549,10 +3594,10 @@ void MainWindow::addAsExecutable()
 
 void MainWindow::originModified(int originID)
 {
-  FilesOrigin &origin = m_DirectoryStructure->getOriginByID(originID);
+  FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
   origin.enable(false);
-  m_DirectoryStructure->addFromOrigin(origin.getName(), origin.getPath(), origin.getPriority());
-  DirectoryRefresher::cleanStructure(m_DirectoryStructure);
+  m_OrganizerCore.directoryStructure()->addFromOrigin(origin.getName(), origin.getPath(), origin.getPriority());
+  DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
 }
 
 
@@ -4613,11 +3658,11 @@ void MainWindow::previewDataFile()
   // what we want is the path relative to the virtual data directory
 
   // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-  int offset = m_Settings.getModDirectory().size() + 1;
+  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
   offset = fileName.indexOf("/", offset);
   fileName = fileName.mid(offset + 1);
 
-  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
+  const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), NULL);
 
   if (file.get() == NULL) {
     reportError(tr("file not found: %1").arg(fileName));
@@ -4627,12 +3672,12 @@ void MainWindow::previewDataFile()
   // set up preview dialog
   PreviewDialog preview(fileName);
   auto addFunc = [&] (int originId) {
-      FilesOrigin &origin = m_DirectoryStructure->getOriginByID(originId);
+      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
       QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
       if (QFile::exists(filePath)) {
         // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-        QWidget *wid = m_PreviewGenerator.genPreview(filePath);
-        if (wid == NULL) {
+        QWidget *wid = m_PluginContainer.previewGenerator().genPreview(filePath);
+        if (wid == nullptr) {
           reportError(tr("failed to generate preview for %1").arg(filePath));
         } else {
           preview.addVariant(ToQString(origin.getName()), wid);
@@ -4659,7 +3704,7 @@ void MainWindow::openDataFile()
     QString arguments;
     switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
       case 1: {
-        spawnBinaryDirect(binaryInfo, arguments, m_CurrentProfile->getName(), targetInfo.absolutePath(), "");
+        spawnBinaryDirect(binaryInfo, arguments, m_OrganizerCore.currentProfile()->getName(), targetInfo.absolutePath(), "");
       } break;
       case 2: {
         ::ShellExecuteW(NULL, L"open", ToWString(targetInfo.absoluteFilePath()).c_str(), NULL, NULL, SW_SHOWNORMAL);
@@ -4691,10 +3736,10 @@ void MainWindow::motdReceived(const QString &motd)
   // internet connection is faster next time
   if (m_StartTime.secsTo(QTime::currentTime()) < 5) {
     uint hash = qHash(motd);
-    if (hash != m_Settings.getMotDHash()) {
+    if (hash != m_OrganizerCore.settings().getMotDHash()) {
       MotDDialog dialog(motd);
       dialog.exec();
-      m_Settings.setMotDHash(hash);
+      m_OrganizerCore.settings().setMotDHash(hash);
     }
   }
 
@@ -4719,7 +3764,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
 
     QString fileName = m_ContextItem->text(0);
-    if (m_PreviewGenerator.previewSupported(QFileInfo(fileName).completeSuffix())) {
+    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).completeSuffix())) {
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
 
@@ -4748,11 +3793,7 @@ void MainWindow::on_conflictsCheckBox_toggled(bool)
 
 void MainWindow::on_actionUpdate_triggered()
 {
-  if (nexusLogin()) {
-    m_PostLoginTasks.push_back([&](MainWindow*) { m_Updater.startUpdate(); });
-  } else {
-    m_Updater.startUpdate();
-  }
+  m_OrganizerCore.startMOUpdate();
 }
 
 
@@ -4768,16 +3809,22 @@ void MainWindow::on_actionEndorseMO_triggered()
 
 void MainWindow::updateDownloadListDelegate()
 {
-  if (m_Settings.compactDownloads()) {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetCompactDelegate(&m_DownloadManager, m_Settings.metaDownloads(),
-                                                                            ui->downloadView, ui->downloadView));
+  if (m_OrganizerCore.settings().compactDownloads()) {
+    ui->downloadView->setItemDelegate(
+          new DownloadListWidgetCompactDelegate(m_OrganizerCore.downloadManager(),
+                                                m_OrganizerCore.settings().metaDownloads(),
+                                                ui->downloadView,
+                                                ui->downloadView));
   } else {
-    ui->downloadView->setItemDelegate(new DownloadListWidgetDelegate(&m_DownloadManager, m_Settings.metaDownloads(),
-                                                                     ui->downloadView, ui->downloadView));
+    ui->downloadView->setItemDelegate(
+          new DownloadListWidgetDelegate(m_OrganizerCore.downloadManager(),
+                                         m_OrganizerCore.settings().metaDownloads(),
+                                         ui->downloadView,
+                                         ui->downloadView));
   }
 
-  DownloadListSortProxy *sortProxy = new DownloadListSortProxy(&m_DownloadManager, ui->downloadView);
-  sortProxy->setSourceModel(new DownloadList(&m_DownloadManager, ui->downloadView));
+  DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
+  sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
@@ -4786,11 +3833,11 @@ void MainWindow::updateDownloadListDelegate()
   ui->downloadView->header()->resizeSections(QHeaderView::Fixed);
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), this, SLOT(installDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), &m_DownloadManager, SLOT(queryInfo(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), &m_DownloadManager, SLOT(removeDownload(int, bool)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), &m_DownloadManager, SLOT(restoreDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), &m_DownloadManager, SLOT(cancelDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), &m_DownloadManager, SLOT(pauseDownload(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), m_OrganizerCore.downloadManager(), SLOT(pauseDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
 }
 
@@ -4879,7 +3926,7 @@ void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
     // other keys: ConnectedUsers, Country, URI
     servers.append(info);
   }
-  m_Settings.updateServers(servers);
+  m_OrganizerCore.settings().updateServers(servers);
 }
 
 
@@ -4891,62 +3938,6 @@ void MainWindow::nxmRequestFailed(int modID, int, QVariant, int, const QString &
     statusBar()->hide();
   }
   MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
-}
-
-
-void MainWindow::loginSuccessful(bool necessary)
-{
-  if (necessary) {
-    MessageDialog::showMessage(tr("login successful"), this);
-  }
-  foreach (QString url, m_PendingDownloads) {
-    downloadRequestedNXM(url);
-  }
-  m_PendingDownloads.clear();
-  foreach (auto task, m_PostLoginTasks) {
-    task(this);
-  }
-
-  m_PostLoginTasks.clear();
-  NexusInterface::instance()->loginCompleted();
-}
-
-
-void MainWindow::loginSuccessfulUpdate(bool necessary)
-{
-  if (necessary) {
-    MessageDialog::showMessage(tr("login successful"), this);
-  }
-  m_Updater.startUpdate();
-}
-
-
-void MainWindow::loginFailed(const QString &message)
-{
-  if (!m_PendingDownloads.isEmpty()) {
-    MessageDialog::showMessage(tr("login failed: %1. Trying to download anyway").arg(message), this);
-    foreach (QString url, m_PendingDownloads) {
-      downloadRequestedNXM(url);
-    }
-    m_PendingDownloads.clear();
-  } else {
-    MessageDialog::showMessage(tr("login failed: %1").arg(message), this);
-    m_PostLoginTasks.clear();
-    statusBar()->hide();
-  }
-  NexusInterface::instance()->loginCompleted();
-}
-
-
-void MainWindow::loginFailedUpdate(const QString &message)
-{
-  MessageDialog::showMessage(tr("login failed: %1. You need to log-in with Nexus to update MO.").arg(message), this);
-}
-
-
-void MainWindow::windowTutorialFinished(const QString &windowName)
-{
-  m_Settings.directInterface().setValue(QString("CompletedWindowTutorials/") + windowName, true);
 }
 
 
@@ -5007,7 +3998,7 @@ void MainWindow::extractBSATriggered()
   QString targetFolder = FileDialogMemory::getExistingDirectory("extractBSA", this, tr("Extract BSA"));
   if (!targetFolder.isEmpty()) {
     BSA::Archive archive;
-    QString originPath = QDir::fromNativeSeparators(ToQString(m_DirectoryStructure->getOriginByName(ToWString(item->text(1))).getPath()));
+    QString originPath = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(1))).getPath()));
     QString archivePath =  QString("%1\\%2").arg(originPath).arg(item->text(0));
 
     BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
@@ -5088,10 +4079,7 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 
 void MainWindow::on_actionProblems_triggered()
 {
-//  QString problemDescription;
-//  checkForProblems(problemDescription);
-//  QMessageBox::information(this, tr("Problems"), problemDescription);
-  ProblemsDialog problems(m_DiagnosisPlugins, this);
+  ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
   if (problems.hasProblems()) {
     problems.exec();
     updateProblemsButton();
@@ -5142,10 +4130,10 @@ void MainWindow::updateESPLock(bool locked)
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   if (currentSelection.count() == 0) {
     // this path is probably useless
-    m_PluginList.lockESPIndex(m_ContextRow, locked);
+    m_OrganizerCore.pluginList()->lockESPIndex(m_ContextRow, locked);
   } else {
     Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
-      m_PluginList.lockESPIndex(mapToModel(&m_PluginList, idx).row(), locked);
+      m_OrganizerCore.pluginList()->lockESPIndex(mapToModel(m_OrganizerCore.pluginList(), idx).row(), locked);
     }
   }
 }
@@ -5165,7 +4153,7 @@ void MainWindow::unlockESPIndex()
 void MainWindow::removeFromToolbar()
 {
   try {
-    Executable &exe = m_ExecutablesList.find(m_ContextAction->text());
+    Executable &exe = m_OrganizerCore.executablesList()->find(m_ContextAction->text());
     exe.m_Toolbar = false;
   } catch (const std::runtime_error&) {
     qDebug("executable doesn't exist any more");
@@ -5193,16 +4181,16 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   m_ContextRow = m_PluginListSortProxy->mapToSource(ui->espList->indexAt(pos)).row();
 
   QMenu menu;
-  menu.addAction(tr("Enable all"), &m_PluginList, SLOT(enableAll()));
-  menu.addAction(tr("Disable all"), &m_PluginList, SLOT(disableAll()));
+  menu.addAction(tr("Enable all"), m_OrganizerCore.pluginList(), SLOT(enableAll()));
+  menu.addAction(tr("Disable all"), m_OrganizerCore.pluginList(), SLOT(disableAll()));
 
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   bool hasLocked = false;
   bool hasUnlocked = false;
   Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
     int row = m_PluginListSortProxy->mapToSource(idx).row();
-    if (m_PluginList.isEnabled(row)) {
-      if (m_PluginList.isESPLocked(row)) {
+    if (m_OrganizerCore.pluginList()->isEnabled(row)) {
+      if (m_OrganizerCore.pluginList()->isESPLocked(row)) {
         hasLocked = true;
       } else {
         hasUnlocked = true;
@@ -5236,11 +4224,11 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
     case 1: {
-        newModel = new QtGroupingProxy(&m_ModList, QModelIndex(), ModList::COL_CATEGORY, Qt::UserRole,
+        newModel = new QtGroupingProxy(m_OrganizerCore.modList(), QModelIndex(), ModList::COL_CATEGORY, Qt::UserRole,
                                        0, Qt::UserRole + 2);
       } break;
     case 2: {
-        newModel = new QtGroupingProxy(&m_ModList, QModelIndex(), ModList::COL_MODID, Qt::DisplayRole,
+        newModel = new QtGroupingProxy(m_OrganizerCore.modList(), QModelIndex(), ModList::COL_MODID, Qt::DisplayRole,
                                        QtGroupingProxy::FLAG_NOGROUPNAME | QtGroupingProxy::FLAG_NOSINGLE,
                                        Qt::UserRole + 2);
       } break;
@@ -5258,7 +4246,7 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
     connect(ui->modList, SIGNAL(collapsed(QModelIndex)), newModel, SLOT(collapsed(QModelIndex)));
     connect(newModel, SIGNAL(expandItem(QModelIndex)), this, SLOT(expandModList(QModelIndex)));
   } else {
-    m_ModListSortProxy->setSourceModel(&m_ModList);
+    m_ModListSortProxy->setSourceModel(m_OrganizerCore.modList());
   }
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }
@@ -5280,7 +4268,7 @@ void MainWindow::on_linkButton_pressed()
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)
 {
-  m_DownloadManager.setShowHidden(checked);
+  m_OrganizerCore.downloadManager()->setShowHidden(checked);
 }
 
 
@@ -5334,13 +4322,10 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
 
   foreach (const std::string &line, lines) {
     if (line.length() > 0) {
-      size_t progidx   = line.find("[progress]");
-      size_t reportidx = line.find("[Report]");
-      size_t erroridx  = line.find("[error]");
+      size_t progidx    = line.find("[progress]");
+      size_t erroridx   = line.find("[error]");
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
-      } else if (reportidx != std::string::npos) {
-        reportURL = line.substr(reportidx + 9);
       } else if (erroridx != std::string::npos) {
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
@@ -5349,11 +4334,11 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
         if (std::tr1::regex_match(line, match, exRequires)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
-          m_PluginList.addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
+          m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
         } else if (std::tr1::regex_match(line, match, exIncompatible)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
-          m_PluginList.addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
+          m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
           qDebug("[loot] %s", line.c_str());
         }
@@ -5370,8 +4355,8 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   QString currentDirectory = cwd;
   QString profileName = profile;
   if (profile.length() == 0) {
-    if (m_CurrentProfile != NULL) {
-      profileName = m_CurrentProfile->getName();
+    if (m_OrganizerCore.currentProfile() != NULL) {
+      profileName = m_OrganizerCore.currentProfile()->getName();
     } else {
       throw MyException(tr("No profile set"));
     }
@@ -5379,18 +4364,29 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   QString steamAppID;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
+
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
       binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
     }
+
+    std::vector<Executable>::iterator current, end;
+    m_OrganizerCore.executablesList()->getExecutables(current, end);
+    for (; current != end; ++current) {
+      if (current->m_BinaryInfo == binary) {
+        steamAppID = current->m_SteamAppID;
+        currentDirectory = current->m_WorkingDirectory;
+      }
+    }
+
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();
     }
   } else {
     // only a file name, search executables list
     try {
-      const Executable &exe = m_ExecutablesList.find(executable);
+      const Executable &exe = m_OrganizerCore.executablesList()->find(executable);
       steamAppID = exe.m_SteamAppID;
       if (arguments == "") {
         arguments = exe.m_Arguments;
@@ -5472,7 +4468,7 @@ void MainWindow::on_bossButton_clicked()
   std::string reportURL;
   std::string errorMessages;
 
-  m_CurrentProfile->writeModlistNow();
+  m_OrganizerCore.currentProfile()->writeModlistNow();
 
   bool success = false;
 
@@ -5484,12 +4480,15 @@ void MainWindow::on_bossButton_clicked()
     dialog.setMaximum(0);
     dialog.show();
 
+    QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
+
     QStringList parameters;
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
                << "--game" << ToQString(GameInfo::instance().getGameShortName())
-               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
+               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()))
+               << "--out" << outPath;
 
     if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
@@ -5499,10 +4498,10 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
-    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/LOOT.exe"),
+    HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
-                              m_CurrentProfile->getName(),
-                              m_Settings.logLevel(),
+                              m_OrganizerCore.currentProfile()->getName(),
+                              m_OrganizerCore.settings().logLevel(),
                               qApp->applicationDirPath() + "/loot",
                               true,
                               stdOutWrite);
@@ -5510,15 +4509,15 @@ void MainWindow::on_bossButton_clicked()
     // we don't use the write end
     ::CloseHandle(stdOutWrite);
 
-    m_PluginList.clearAdditionalInformation();
+    m_OrganizerCore.pluginList()->clearAdditionalInformation();
 
     DWORD retLen;
     JOBOBJECT_BASIC_PROCESS_ID_LIST info;
-    bool isJobHandle = true;
-    ULONG lastProcessID;
     HANDLE processHandle = loot;
 
     if (loot != INVALID_HANDLE_VALUE) {
+      bool isJobHandle = true;
+      ULONG lastProcessID;
       DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
       while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
         if (isJobHandle) {
@@ -5574,6 +4573,22 @@ void MainWindow::on_bossButton_clicked()
         return;
       } else {
         success = true;
+        QFile outFile(outPath);
+        outFile.open(QIODevice::ReadOnly);
+        QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
+        QJsonArray array = doc.array();
+        for (auto iter = array.begin();  iter != array.end(); ++iter) {
+          QJsonObject pluginObj = (*iter).toObject();
+          QJsonArray pluginMessages = pluginObj["messages"].toArray();
+          for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
+            QJsonObject msg = (*msgIter).toObject();
+            m_OrganizerCore.pluginList()->addInformation(pluginObj["name"].toString(),
+                QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
+          }
+          if (pluginObj["dirty"].toString() == "yes")
+            m_OrganizerCore.pluginList()->addInformation(pluginObj["name"].toString(), "dirty");
+        }
+
       }
     } else {
       reportError(tr("failed to start loot"));
@@ -5594,7 +4609,11 @@ void MainWindow::on_bossButton_clicked()
       QStringList temp = report.split("?");
       QUrl url = QUrl::fromLocalFile(temp.at(0));
       if (temp.size() > 1) {
+#if QT_VERSION >= 0x050000
         url.setQuery(temp.at(1).toUtf8());
+#else
+        url.setEncodedQuery(temp.at(1).toUtf8());
+#endif
       }
       m_IntegratedBrowser.openUrl(url);
     }
@@ -5602,9 +4621,9 @@ void MainWindow::on_bossButton_clicked()
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
     if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
-      QFile::remove(m_CurrentProfile->getLoadOrderFileName());
+      QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
-    refreshESPList();
+    m_OrganizerCore.refreshESPList();
   }
 }
 
@@ -5628,11 +4647,11 @@ bool MainWindow::createBackup(const QString &filePath, const QDateTime &time)
 
 void MainWindow::on_saveButton_clicked()
 {
-  savePluginList();
+  m_OrganizerCore.savePluginList();
   QDateTime now = QDateTime::currentDateTime();
-  if (createBackup(m_CurrentProfile->getPluginsFileName(), now)
-      && createBackup(m_CurrentProfile->getLoadOrderFileName(), now)
-      && createBackup(m_CurrentProfile->getLockedOrderFileName(), now)) {
+  if (createBackup(m_OrganizerCore.currentProfile()->getPluginsFileName(), now)
+      && createBackup(m_OrganizerCore.currentProfile()->getLoadOrderFileName(), now)
+      && createBackup(m_OrganizerCore.currentProfile()->getLockedOrderFileName(), now)) {
     MessageDialog::showMessage(tr("Backup of load order created"), this);
   }
 }
@@ -5669,32 +4688,32 @@ QString MainWindow::queryRestore(const QString &filePath)
 
 void MainWindow::on_restoreButton_clicked()
 {
-  QString pluginName = m_CurrentProfile->getPluginsFileName();
+  QString pluginName = m_OrganizerCore.currentProfile()->getPluginsFileName();
   QString choice = queryRestore(pluginName);
   if (!choice.isEmpty()) {
-    QString loadOrderName = m_CurrentProfile->getLoadOrderFileName();
-    QString lockedName = m_CurrentProfile->getLockedOrderFileName();
+    QString loadOrderName = m_OrganizerCore.currentProfile()->getLoadOrderFileName();
+    QString lockedName = m_OrganizerCore.currentProfile()->getLockedOrderFileName();
     if (!shellCopy(pluginName    + "." + choice, pluginName, true, this) ||
         !shellCopy(loadOrderName + "." + choice, loadOrderName, true, this) ||
         !shellCopy(lockedName    + "." + choice, lockedName, true, this)) {
       QMessageBox::critical(this, tr("Restore failed"),
                             tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
     }
-    refreshESPList();
+    m_OrganizerCore.refreshESPList();
   }
 }
 
 void MainWindow::on_saveModsButton_clicked()
 {
-  m_CurrentProfile->writeModlistNow(true);
+  m_OrganizerCore.currentProfile()->writeModlistNow(true);
   QDateTime now = QDateTime::currentDateTime();
-  if (createBackup(m_CurrentProfile->getModlistFileName(), now)) {
+  if (createBackup(m_OrganizerCore.currentProfile()->getModlistFileName(), now)) {
     MessageDialog::showMessage(tr("Backup of modlist created"), this);
   }
 }
 void MainWindow::on_restoreModsButton_clicked()
 {
-  QString modlistName = m_CurrentProfile->getModlistFileName();
+  QString modlistName = m_OrganizerCore.currentProfile()->getModlistFileName();
   QString choice = queryRestore(modlistName);
   if (!choice.isEmpty()) {
     if (!shellCopy(modlistName + "." + choice, modlistName, true, this)) {
@@ -5739,5 +4758,5 @@ void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
 
 void MainWindow::on_manageArchivesBox_toggled(bool)
 {
-  refreshBSAList();
+  m_OrganizerCore.refreshBSAList();
 }

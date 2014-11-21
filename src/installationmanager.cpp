@@ -67,9 +67,8 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 }
 
 
-InstallationManager::InstallationManager(QWidget *parent)
-  : QObject(parent), m_ParentWidget(parent),
-    m_InstallationProgress(parent), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
+InstallationManager::InstallationManager()
+  : m_InstallationProgress(nullptr), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -90,6 +89,14 @@ InstallationManager::InstallationManager(QWidget *parent)
 InstallationManager::~InstallationManager()
 {
   delete m_CurrentArchive;
+}
+
+void InstallationManager::setParentWidget(QWidget *widget)
+{
+  m_InstallationProgress.setParent(widget);
+  for (IPluginInstaller *installer : m_Installers) {
+    installer->setParentWidget(widget);
+  }
 }
 
 
@@ -257,7 +264,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
     m_InstallationProgress.hide();
-    throw std::runtime_error("extracting failed");
+    throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
   }
 
   m_InstallationProgress.hide();
@@ -542,7 +549,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     if (m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
-      throw std::runtime_error("extracting failed");
+      throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
     }
   }
 

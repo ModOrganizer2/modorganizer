@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "safewritefile.h"
 #include "scopeguard.h"
+#include "modinfo.h"
 #include <utility.h>
 #include <gameinfo.h>
 #include <espfile.h>
@@ -33,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMimeData>
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
@@ -95,6 +97,8 @@ PluginList::PluginList(QObject *parent)
 
 PluginList::~PluginList()
 {
+  m_Refreshed.disconnect_all_slots();
+  m_PluginMoved.disconnect_all_slots();
 }
 
 
@@ -155,7 +159,14 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != NULL;
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), ToQString(origin.getName()), ToQString(current->getFullPath()), hasIni));
+        QString originName = ToQString(origin.getName());
+        unsigned int modIndex = ModInfo::getIndex(originName);
+        if (modIndex != UINT_MAX) {
+          ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+          originName = modInfo->name();
+        }
+
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), originName, ToQString(current->getFullPath()), hasIni));
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
@@ -287,6 +298,8 @@ void PluginList::addInformation(const QString &name, const QString &message)
 
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
+  } else {
+    qWarning("failed to associate message for \"%s\"", qPrintable(name));
   }
 }
 
@@ -484,7 +497,7 @@ void PluginList::saveTo(const QString &pluginFileName
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
       qDebug("%s saved", qPrintable(QDir::toNativeSeparators(deleterFileName)));
     }
-  } else {
+  } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
   }
 
@@ -664,11 +677,25 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+QStringList PluginList::masters(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return QStringList();
+  } else {
+    QStringList result;
+    foreach (const QString &master, m_ESPs[iter->second].m_Masters) {
+      result.append(master);
+    }
+    return result;
+  }
+}
+
 QString PluginList::origin(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
   if (iter == m_ESPsByName.end()) {
-    return false;
+    return QString();
   } else {
     return m_ESPs[iter->second].m_OriginName;
   }
@@ -819,7 +846,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
-      if (enabledMasters.size() > 0) {
+      if (!enabledMasters.empty()) {
         text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
       }
       if (m_ESPs[index].m_HasIni) {
@@ -1085,34 +1112,34 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      int diff = -1;
-      if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
-          ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
-        diff = 1;
-      }
-      QModelIndexList rows = selectionModel->selectedRows();
-      // remove elements that aren't supposed to be movable
-      QMutableListIterator<QModelIndex> iter(rows);
-      while (iter.hasNext()) {
-        if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
-          iter.remove();
+      if (proxyModel != NULL) {
+        int diff = -1;
+        if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
+            ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
+          diff = 1;
         }
-      }
-      if (keyEvent->key() == Qt::Key_Down) {
-        for (int i = 0; i < rows.size() / 2; ++i) {
-          rows.swap(i, rows.size() - i - 1);
+        QModelIndexList rows = selectionModel->selectedRows();
+        // remove elements that aren't supposed to be movable
+        QMutableListIterator<QModelIndex> iter(rows);
+        while (iter.hasNext()) {
+          if ((iter.next().flags() & Qt::ItemIsDragEnabled) == 0) {
+            iter.remove();
+          }
         }
-      }
-      foreach (QModelIndex idx, rows) {
-        if (proxyModel != NULL) {
+        if (keyEvent->key() == Qt::Key_Down) {
+          for (int i = 0; i < rows.size() / 2; ++i) {
+            rows.swap(i, rows.size() - i - 1);
+          }
+        }
+        foreach (QModelIndex idx, rows) {
           idx = proxyModel->mapToSource(idx);
+          int newPriority = m_ESPs[idx.row()].m_Priority + diff;
+          if ((newPriority >= 0) && (newPriority < rowCount())) {
+            setPluginPriority(idx.row(), newPriority);
+          }
         }
-        int newPriority = m_ESPs[idx.row()].m_Priority + diff;
-        if ((newPriority >= 0) && (newPriority < rowCount())) {
-          setPluginPriority(idx.row(), newPriority);
-        }
+        refreshLoadOrder();
       }
-      refreshLoadOrder();
       return true;
     } else if (keyEvent->key() == Qt::Key_Space) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();

@@ -28,7 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 
 namespace MOShared {
-
+/*
 enum CloseMOStyle {
   DEFAULT_CLOSE,
   DEFAULT_STAY,
@@ -53,7 +53,7 @@ struct ExecutableInfo {
   CloseMOStyle closeMO;
   std::wstring steamAppID;
 };
-
+*/
 
 /**
   Class to manage information that depends on the used game type. The intention is to keep
@@ -160,13 +160,9 @@ public:
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 
-  // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
-  // the game directory. the boolean says whether omo should be closed when the executable is started
-  virtual std::vector<ExecutableInfo> getExecutables() = 0;
-
 public:
 
-  // initialise with the path to the omo directory (needs to be where hook.dll is stored). This
+  // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
   static bool init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath = L"");
 

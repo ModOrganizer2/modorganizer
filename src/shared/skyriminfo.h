@@ -38,7 +38,7 @@ public:
   virtual unsigned long getBSAVersion();
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return SkyrimInfo::getRegPathStatic(); }
+  virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"TESV.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_SKYRIM; }
@@ -81,11 +81,11 @@ public:
   virtual std::wstring getNexusPage(bool nmmScheme = true);
 
   static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return SkyrimInfo::getNexusInfoUrlStatic(); }
+  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return SkyrimInfo::getNexusModIDStatic(); }
+  virtual int getNexusModID() { return getNexusModIDStatic(); }
   static int getNexusGameIDStatic() { return 110; }
-  virtual int getNexusGameID() { return SkyrimInfo::getNexusGameIDStatic(); }
+  virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
   virtual void repairProfile(const std::wstring &directory);
@@ -94,7 +94,7 @@ public:
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
-  virtual std::vector<ExecutableInfo> getExecutables();
+  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SResourceArchiveList"; }
 

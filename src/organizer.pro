@@ -9,9 +9,13 @@ TARGET = ModOrganizer
 TEMPLATE = app
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-  QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit webkitwidgets
+  QT       += core gui widgets network xml sql xmlpatterns qml declarative script webkit webkitwidgets
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
+}
+
+!include(../LocalPaths.pri) {
+  message("paths to required libraries need to be set up in LocalPaths.pri")
 }
 
 SOURCES += \
@@ -90,7 +94,9 @@ SOURCES += \
     modflagicondelegate.cpp \
     genericicondelegate.cpp \
     organizerproxy.cpp \
-    viewmarkingscrollbar.cpp
+    viewmarkingscrollbar.cpp \
+    plugincontainer.cpp \
+    organizercore.cpp
 
 
 HEADERS  += \
@@ -170,7 +176,10 @@ HEADERS  += \
     modflagicondelegate.h \
     genericicondelegate.h \
     organizerproxy.h \
-    viewmarkingscrollbar.h
+    viewmarkingscrollbar.h \
+    plugincontainer.h \
+    organizercore.h \
+    iuserinterface.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -248,9 +257,9 @@ LIBS += -lDbgHelp
 #DEFINES += TEST_MODELS
 
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$(BOOSTPATH)"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$${BOOSTPATH}"
 
-LIBS += -L"$(BOOSTPATH)/stage/lib"
+LIBS += -L"$${BOOSTPATH}/stage/lib"
 
 CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../shared/debug
@@ -258,7 +267,8 @@ CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../uibase/debug
   LIBS += -L$$OUT_PWD/../boss_modified/debug
   LIBS += -lDbgHelp
-  PRE_TARGETDEPS += $$OUT_PWD/../shared/debug/mo_shared.lib \
+  PRE_TARGETDEPS += \
+    $$OUT_PWD/../shared/debug/mo_shared.lib \
     $$OUT_PWD/../bsatk/debug/bsatk.lib
 } else {
   LIBS += -L$$OUT_PWD/../shared/release
@@ -266,20 +276,19 @@ CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
   QMAKE_CXXFLAGS += /Zi# /GL
-#  QMAKE_CXXFLAGS -= -O2
   QMAKE_LFLAGS += /DEBUG# /LTCG /OPT:REF /OPT:ICF
-  PRE_TARGETDEPS += $$OUT_PWD/../shared/release/mo_shared.lib \
+  PRE_TARGETDEPS += \
+    $$OUT_PWD/../shared/release/mo_shared.lib \
     $$OUT_PWD/../bsatk/release/bsatk.lib
 }
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
 #QMAKE_CXXFLAGS_WARN_ON += -W4
-QMAKE_CXXFLAGS += -wd4127 -wd4512 -wd4189
+QMAKE_CXXFLAGS += /wd4100 -wd4127 -wd4512 -wd4189
 
 CONFIG += embed_manifest_exe
 
 # QMAKE_CXXFLAGS += /analyze
-
 # QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
 
 TRANSLATIONS = organizer_de.ts \
@@ -313,9 +322,9 @@ TRANSLATIONS = organizer_de.ts \
 
 LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
 
-LIBS += -L"$(ZLIBPATH)/build" -lzlibstatic
+LIBS += -L"$${ZLIBPATH}/build" -lzlibstatic
 
-DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS NOMINMAX
+DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS NOMINMAX
 
 DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 #DEFINES += QMLJSDEBUGGER
@@ -324,40 +333,40 @@ HGID = $$system(hg id -i)
 DEFINES += HGID=\\\"$${HGID}\\\"
 
 CONFIG(debug, debug|release) {
-  OUTDIR = $$OUT_PWD/debug
+  SRCDIR = $$OUT_PWD/debug
   DSTDIR = $$PWD/../../outputd
 } else {
-  OUTDIR = $$OUT_PWD/release
+  SRCDIR = $$OUT_PWD/release
   DSTDIR = $$PWD/../../output
 }
 
-SRCDIR = $$PWD
+BASEDIR = $$PWD
+BASEDIR ~= s,/,$$QMAKE_DIR_SEP,g
 SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
-OUTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 
-QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /I $$quote($$OUTDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
 
 CONFIG(debug, debug|release) {
   greaterThan(QT_MAJOR_VERSION, 4) {
-    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
     QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.debug.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
     QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug.qt5 $$escape_expand(\\n)
   } else {
-    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
     QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
     QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
   }
 } else {
   greaterThan(QT_MAJOR_VERSION, 4) {
-    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
     QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
     QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.qt5 $$escape_expand(\\n)
   } else {
-    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
   }
 }

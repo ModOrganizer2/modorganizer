@@ -22,10 +22,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "messagedialog.h"
 #include "report.h"
-#include "json.h"
 #include "persistentcookiejar.h"
 
 #include <gameinfo.h>
+#include "json.h"
 
 #include <utility.h>
 #include <gameinfo.h>
@@ -202,7 +202,6 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
       return;
     }
 
-    qDebug("unsupported: %s - %s", view->url().toString().toUtf8().constData(), reply->url().toString().toUtf8().constData());
     emit requestDownload(view->url(), reply);
   } catch (const std::exception &e) {
     if (isVisible()) {

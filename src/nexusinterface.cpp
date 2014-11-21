@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "utility.h"
-#include <json.h>
+#include "json.h"
 #include "selectiondialog.h"
 #include <QApplication>
 #include <utility.h>
@@ -145,30 +145,25 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 NexusInterface::NexusInterface()
   : m_NMMVersion()
 {
-  atexit(&cleanup);
-
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
                             version.dwFileVersionMS & 0xFFFF,
                             version.dwFileVersionLS >> 16);
 
   m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString());
-
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
 }
-
-
-void NexusInterface::cleanup()
-{
-}
-
 
 NXMAccessManager *NexusInterface::getAccessManager()
 {
   return m_AccessManager;
 }
 
+NexusInterface::~NexusInterface()
+{
+  cleanup();
+}
 
 NexusInterface *NexusInterface::instance()
 {
@@ -176,13 +171,11 @@ NexusInterface *NexusInterface::instance()
   return &s_Instance;
 }
 
-
 void NexusInterface::setCacheDirectory(const QString &directory)
 {
   m_DiskCache->setCacheDirectory(directory);
   m_AccessManager->setCache(m_DiskCache);
 }
-
 
 void NexusInterface::setNMMVersion(const QString &nmmVersion)
 {
@@ -376,6 +369,14 @@ bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
 {
   return (info.m_Type == NXMRequestInfo::TYPE_TOGGLEENDORSEMENT)
       || (info.m_Type == NXMRequestInfo::TYPE_DOWNLOADURL);
+}
+
+void NexusInterface::cleanup()
+{
+//  delete m_AccessManager;
+//  delete m_DiskCache;
+  m_AccessManager = nullptr;
+  m_DiskCache = nullptr;
 }
 
 void NexusInterface::nextRequest()
@@ -579,6 +580,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
@@ -599,6 +601,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
@@ -619,4 +622,5 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(url)
   , m_SubModule(subModule)
   , m_NexusGameID(nexusGameId)
+  , m_Endorse(false)
 {}

@@ -54,15 +54,17 @@ std::wstring Fallout3Info::getRegPathStatic()
                                   0, KEY_QUERY_VALUE, &key);
 
   if (errorcode != ERROR_SUCCESS) {
-    return L"";
+    return std::wstring();
   }
 
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  errorcode = ::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize);
-
-  return std::wstring(temp);
+  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+    return std::wstring(temp);
+  } else {
+    return std::wstring();
+  }
 }
 
 std::wstring Fallout3Info::getInvalidationBSA()
@@ -233,15 +235,12 @@ void Fallout3Info::createProfile(const std::wstring &directory, bool useDefaults
     }
   }
   { // copy falloutprefs.ini-file
-    std::wstring target = directory.substr().append(L"\\falloutprefs.ini");
+    std::wstring target = directory + L"\\falloutprefs.ini";
     if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getMyGamesDirectory() << L"\\Fallout3\\falloutprefs.ini";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+      std::wstring source = getMyGamesDirectory() + L"\\Fallout3\\falloutprefs.ini";
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if (::GetLastError() != ERROR_FILE_EXISTS) {
-          std::ostringstream stream;
-          stream << "failed to copy ini file: " << ToString(source.str(), false);
-          throw windows_error(stream.str());
+          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
         }
       }
     }
@@ -268,7 +267,7 @@ bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 }
 
 
-std::vector<ExecutableInfo> Fallout3Info::getExecutables()
+/*std::vector<ExecutableInfo> Fallout3Info::getExecutables()
 {
   std::vector<ExecutableInfo> result;
   result.push_back(ExecutableInfo(L"FOSE", L"fose_loader.exe", L"", L"", DEFAULT_CLOSE));
@@ -279,5 +278,5 @@ std::vector<ExecutableInfo> Fallout3Info::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

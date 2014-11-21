@@ -55,15 +55,17 @@ std::wstring OblivionInfo::getRegPathStatic()
                                   0, KEY_QUERY_VALUE, &key);
 
   if (errorcode != ERROR_SUCCESS) {
-    return L"";
+    return std::wstring();
   }
 
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  errorcode = ::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize);
-
-  return std::wstring(temp);
+  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+    return std::wstring(temp);
+  } else {
+    return std::wstring();
+  }
 }
 
 std::wstring OblivionInfo::getInvalidationBSA()
@@ -188,16 +190,13 @@ void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults
   }
 
   { // copy oblivionprefs.ini-file
-    std::wstring target = directory.substr().append(L"\\oblivionprefs.ini");
+    std::wstring target = directory + L"\\oblivionprefs.ini";
     if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getMyGamesDirectory() << L"\\Oblivion\\oblivionprefs.ini";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
+      std::wstring source = getMyGamesDirectory() + L"\\Oblivion\\oblivionprefs.ini";
+      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if ((::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL) == INVALID_HANDLE_VALUE) &&
             (::GetLastError() != ERROR_FILE_EXISTS)) {
-          std::ostringstream stream;
-          stream << "failed to create ini file: " << ToString(target.c_str(), false);
-          throw windows_error(stream.str());
+          throw windows_error(std::string("failed to create ini file: ") + ToString(target, false));
         }
       }
     }
@@ -274,7 +273,7 @@ std::wstring OblivionInfo::getSteamAPPId(int) const
   return L"22330";
 }
 
-
+/*
 std::vector<ExecutableInfo> OblivionInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
@@ -287,5 +286,5 @@ std::vector<ExecutableInfo> OblivionInfo::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS (old)", L"Data/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

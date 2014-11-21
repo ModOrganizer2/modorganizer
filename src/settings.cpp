@@ -25,7 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
-#include <json.h>
+#include "json.h"
 
 #include <QCheckBox>
 #include <QLineEdit>
@@ -121,6 +121,7 @@ void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);
   m_PluginSettings.insert(plugin->name(), QMap<QString, QVariant>());
+  m_PluginDescriptions.insert(plugin->name(), QMap<QString, QVariant>());
   foreach (const PluginSetting &setting, plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
@@ -129,6 +130,7 @@ void Settings::registerPlugin(IPlugin *plugin)
       temp = setting.defaultValue;
     }
     m_PluginSettings[plugin->name()][setting.key] = temp;
+    m_PluginDescriptions[plugin->name()][setting.key] = QString("%1 (default: %2)").arg(setting.description).arg(setting.defaultValue.toString());
   }
 }
 
@@ -229,7 +231,7 @@ QString Settings::getModDirectory() const
 
 QString Settings::getNMMVersion() const
 {
-  static const QString MIN_NMM_VERSION = "0.47.0";
+  static const QString MIN_NMM_VERSION = "0.52.3";
   QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
   if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
     result = MIN_NMM_VERSION;
@@ -597,6 +599,7 @@ void Settings::query(QWidget *parent)
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
     listItem->setData(Qt::UserRole + 1, m_PluginSettings[plugin->name()]);
+    listItem->setData(Qt::UserRole + 2, m_PluginDescriptions[plugin->name()]);
     pluginsList->addItem(listItem);
   }
 

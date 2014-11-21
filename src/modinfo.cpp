@@ -156,7 +156,7 @@ bool ModInfo::removeMod(unsigned int index)
   auto iter = s_ModsByModID.find(modInfo->getNexusID());
   if (iter != s_ModsByModID.end()) {
     std::vector<unsigned int> indices = iter->second;
-    std::remove(indices.begin(), indices.end(), index);
+    indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
     s_ModsByModID[modInfo->getNexusID()] = indices;
   }
 
@@ -569,9 +569,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
       metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
       metaFile.setValue("version", m_Version.canonicalString());
-      if (m_NexusID != -1) {
-        metaFile.setValue("modid", m_NexusID);
-      }
+      metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
@@ -1047,5 +1045,5 @@ ModInfoForeign::ModInfoForeign(const QString &referenceFile, const QStringList &
   , m_Archives(archives)
 {
   m_CreationTime = QFileInfo(referenceFile).created();
-  m_Name = QFileInfo(m_ReferenceFile).baseName();
+  m_Name = tr("Unmanaged") + ": " + QFileInfo(m_ReferenceFile).baseName();
 }

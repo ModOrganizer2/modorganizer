@@ -38,7 +38,7 @@ public:
   virtual unsigned long getBSAVersion();
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return Fallout3Info::getRegPathStatic(); }
+  virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Fallout3.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_FALLOUT3; }
@@ -75,9 +75,9 @@ public:
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return Fallout3Info::getNexusInfoUrlStatic(); }
+  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return Fallout3Info::getNexusModIDStatic(); }
+  virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 120; }
 
   virtual void createProfile(const std::wstring &directory, bool useDefaults);
@@ -87,7 +87,7 @@ public:
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
-  virtual std::vector<ExecutableInfo> getExecutables();
+  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SArchiveList"; }
 

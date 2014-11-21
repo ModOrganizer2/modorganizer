@@ -79,36 +79,6 @@ Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
   return flags;
 }
 
-void ModListSortProxy::displayColumnSelection(const QPoint &pos)
-{
-   QMenu menu;
-
-  for (int i = 0; i <= ModList::COL_LASTCOLUMN; ++i) {
-    QCheckBox *checkBox = new QCheckBox(&menu);
-    checkBox->setText(ModList::getColumnName(i));
-    checkBox->setChecked(m_EnabledColumns.test(i) ? Qt::Checked : Qt::Unchecked);
-    QWidgetAction *checkableAction = new QWidgetAction(&menu);
-    checkableAction->setDefaultWidget(checkBox);
-    menu.addAction(checkableAction);
-  }
-  menu.exec(pos);
-  int i = 0;
-
-  emit layoutAboutToBeChanged();
-  m_EnabledColumns.reset();
-  foreach (const QAction *action, menu.actions()) {
-    const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
-    if (widgetAction != NULL) {
-      const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
-      if (checkBox != NULL) {
-        m_EnabledColumns.set(i, checkBox->checkState() == Qt::Checked);
-      }
-    }
-    ++i;
-  }
-  emit layoutChanged();
-}
-
 void ModListSortProxy::enableAllVisible()
 {
   if (m_Profile == NULL) return;
@@ -298,7 +268,7 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
-        if ((state == ModInfo::ENDORSED_FALSE) && (state != ModInfo::ENDORSED_NEVER)) return true;
+        if ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER)) return true;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
         if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;

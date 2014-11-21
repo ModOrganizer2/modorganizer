@@ -72,8 +72,7 @@ public:
   }
 
   bool exists(const std::wstring &name) {
-    std::map<std::wstring, int>::iterator iter = m_OriginsNameMap.find(name);
-    return iter != m_OriginsNameMap.end();
+    return m_OriginsNameMap.find(name) != m_OriginsNameMap.end();
   }
 
   FilesOrigin &getByID(Index ID) {
@@ -325,13 +324,13 @@ static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 
 
 FileEntry::FileEntry()
-  : m_Index(UINT_MAX), m_Name(), m_Parent(NULL), m_LastAccessed(time(NULL))
+  : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(NULL), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Parent(parent), m_Origin(-1), m_Archive(L""), m_LastAccessed(time(NULL))
+  : m_Index(index), m_Name(name), m_Origin(-1), m_Parent(parent), m_Archive(L""), m_LastAccessed(time(NULL))
 {
   LEAK_TRACE;
 }
@@ -369,16 +368,14 @@ std::wstring FileEntry::getFullPath() const
   bool ignore = false;
   result = m_Parent->getOriginByID(getOrigin(ignore)).getPath(); //base directory for origin
   recurseParents(result, m_Parent); // all intermediate directories
-  result.append(L"\\").append(m_Name); // the actual filename
-  return result;
+  return result + L"\\" + m_Name;
 }
 
 std::wstring FileEntry::getRelativePath() const
 {
   std::wstring result;
   recurseParents(result, m_Parent); // all intermediate directories
-  result.append(L"\\").append(m_Name); // the actual filename
-  return result;
+  return result + L"\\" + m_Name;
 }
 
 
@@ -446,6 +443,7 @@ void DirectoryEntry::addFromOrigin(const std::wstring &originName, const std::ws
     boost::scoped_array<wchar_t> buffer(new wchar_t[MAXPATH_UNICODE + 1]);
     memset(buffer.get(), L'\0', MAXPATH_UNICODE + 1);
     int offset = _snwprintf(buffer.get(), MAXPATH_UNICODE, L"%ls", directory.c_str());
+    buffer.get()[offset] = L'\0';
     addFiles(origin, buffer.get(), offset);
   }
   m_Populated = true;
@@ -636,7 +634,7 @@ void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origi
 
 void DirectoryEntry::removeFile(FileEntry::Index index)
 {
-  if (m_Files.size() != 0) {
+  if (!m_Files.empty()) {
     auto iter = std::find_if(m_Files.begin(), m_Files.end(),
                              [&index](const std::pair<std::wstring, FileEntry::Index> &iter) -> bool {
                                return iter.second == index; } );
@@ -934,10 +932,6 @@ void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int ori
     } else {
       indices.erase(iter++);
     }
-  }
-
-  if (removedFiles.size() > 0) {
-    log("%d files actually removed", removedFiles.size());
   }
 
   // optimization: this is only called when disabling an origin and in this case we don't have

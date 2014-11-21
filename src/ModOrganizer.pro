@@ -1,6 +1,5 @@
 TEMPLATE = subdirs
 
-
 SUBDIRS = bsatk \
           shared \
           uibase \
@@ -13,9 +12,11 @@ SUBDIRS = bsatk \
           nxmhandler \
           BossDummy \
           pythonRunner \
+          loot_cli \
           esptk
 
-plugins.depends = pythonRunner
+pythonRunner.depends = uibase
+plugins.depends = pythonRunner uibase
 hookdll.depends = shared
 organizer.depends = shared uibase plugins
 
@@ -30,7 +31,7 @@ DLLSPATH = $${DESTDIR}\\dlls
 
 otherlibs.path = $$DLLSPATH
 otherlibs.files += $${STATICDATAPATH}\\7z.dll \
-    $$(BOOSTPATH)\\stage\\lib\\boost_python-vc*-mt-1*.dll
+    $${BOOSTPATH}\\stage\\lib\\boost_python-vc*-mt-1*.dll
 
 qtlibs.path = $$DLLSPATH
 
