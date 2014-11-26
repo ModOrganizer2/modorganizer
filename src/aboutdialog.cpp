@@ -36,14 +36,16 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   m_LicenseFiles[LICENSE_CCBY3] = "by-sa3.txt";
   m_LicenseFiles[LICENSE_ZLIB] = "zlib.txt";
 
-  addLicense("Qt 5.3", LICENSE_LGPL3);
+  addLicense("Qt 4.8.5", LICENSE_LGPL3);
   addLicense("Qt Json", LICENSE_GPL3);
   addLicense("Boost Library", LICENSE_BOOST);
-  addLicense("7-zip", LICENSE_LGPL3);
-  addLicense("ZLib", LICENSE_ZLIB);
   addLicense("Tango Icon Theme", LICENSE_NONE);
   addLicense("RRZE Icon Set", LICENSE_CCBY3);
-  addLicense("Icons by Lorc, Delapouite and sbed available on http://game-icons.net", LICENSE_CCBY3);
+  addLicense("7-zip", LICENSE_LGPL3);
+  addLicense("ZLib", LICENSE_ZLIB);
+  addLicense("NIF File Format Library", LICENSE_BSD3);
+  addLicense("BOSS (modified)", LICENSE_GPL3);
+  addLicense("Alphanum Algorithm", LICENSE_ZLIB);
 
   ui->nameLabel->setText(QString("<span style=\"font-size:12pt; font-weight:600;\">%1 %2</span>").arg(ui->nameLabel->text()).arg(version));
 #ifdef HGID

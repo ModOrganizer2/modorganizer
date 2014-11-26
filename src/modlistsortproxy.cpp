@@ -125,13 +125,6 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       if (leftMod->getFlags().size() != rightMod->getFlags().size())
         lt = leftMod->getFlags().size() < rightMod->getFlags().size();
     } break;
-    case ModList::COL_CONTENT: {
-      int lLen = leftMod->getContents().size();
-      int rLen = rightMod->getContents().size();
-      if (lLen != rLen) {
-        lt = lLen < rLen;
-      }
-    } break;
     case ModList::COL_NAME: {
       int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
       if (comp != 0)

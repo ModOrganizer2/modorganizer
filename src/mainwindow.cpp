@@ -103,10 +103,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValue>
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
@@ -174,6 +170,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_Updater.getVersion().displayString());
+
   ui->logList->setModel(LogBuffer::instance());
   ui->logList->setColumnWidth(0, 100);
   ui->logList->setAutoScroll(true);
@@ -212,22 +209,14 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   ui->modList->setModel(m_ModListSortProxy);
 
-  GenericIconDelegate *contentDelegate = new GenericIconDelegate(ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
-  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), contentDelegate, SLOT(columnResized(int,int,int)));
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
-  ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(&m_ModList);
   if (initSettings.contains("mod_list_state")) {
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
-
-    // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) + 1);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) - 1);
   } else {
     // hide these columns by default
-    ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
   }
@@ -361,6 +350,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   // before we start loading plugins we, add the dll path to the dll search order
   ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
+
+  languageChange(m_Settings.language());
+
   loadPlugins();
 }
 
@@ -636,6 +628,10 @@ void MainWindow::createHelpWidget()
 {
   QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionHelp));
   QMenu *buttonMenu = toolBtn->menu();
+  if (buttonMenu == NULL) {
+    return;
+  }
+  buttonMenu->clear();
 
   QAction *helpAction = new QAction(tr("Help on UI"), buttonMenu);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
@@ -733,7 +729,6 @@ void MainWindow::savePluginList()
 void MainWindow::modFilterActive(bool filterActive)
 {
   if (filterActive) {
-    m_ModList.setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
   } else if (ui->groupCombo->currentIndex() != 0) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
@@ -1173,6 +1168,7 @@ bool MainWindow::registerPlugin(QObject *plugin, const QString &fileName)
     }
     plugin->setProperty("filename", fileName);
     m_Settings.registerPlugin(pluginObj);
+    installTranslator(QFileInfo(fileName).baseName());
   }
 
   { // diagnosis plugins
@@ -2853,26 +2849,13 @@ void MainWindow::modorder_changed()
     if (m_CurrentProfile->modEnabled(i)) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
       // priorities in the directory structure are one higher because data is 0
-      m_DirectoryStructure->getOriginByName(ToWString(modInfo->internalName())).setPriority(priority + 1);
+      m_DirectoryStructure->getOriginByName(ToWString(modInfo->name())).setPriority(priority + 1);
     }
   }
   refreshBSAList();
   m_CurrentProfile->writeModlist();
   saveArchiveList();
   m_DirectoryStructure->getFileRegister()->sortOrigins();
-
-  { // refresh selection
-    QModelIndex current = ui->modList->currentIndex();
-    if (current.isValid()) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
-      modInfo->doConflictCheck();
-      m_ModList.setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
-      if (m_ModListSortProxy != NULL) {
-        m_ModListSortProxy->invalidate();
-      }
-      ui->modList->verticalScrollBar()->repaint();
-    }
-  }
 }
 
 void MainWindow::procError(QProcess::ProcessError error)
@@ -3060,7 +3043,6 @@ void MainWindow::refreshFilters()
 {
   QItemSelection currentSelection = ui->modList->selectionModel()->selection();
 
-  QVariant currentIndexName = ui->modList->currentIndex().data();
   ui->modList->setCurrentIndex(QModelIndex());
 
   QStringList selectedItems;
@@ -3099,11 +3081,8 @@ void MainWindow::refreshFilters()
       matches.at(0)->setSelected(true);
     }
   }
+
   ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
-  QModelIndexList matchList = ui->modList->model()->match(ui->modList->model()->index(0, 0), Qt::DisplayRole, currentIndexName);
-  if (matchList.size() > 0) {
-    ui->modList->setCurrentIndex(matchList.at(0));
-  }
 }
 
 
@@ -4198,6 +4177,7 @@ void MainWindow::linkDesktop()
                                                                   .arg(selectedExecutable.m_Arguments));
     std::wstring description      = ToWString(selectedExecutable.m_BinaryInfo.fileName());
     std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(exeInfo.absolutePath()));
+
     if (CreateShortcut(targetFile.c_str()
                        , parameter.c_str()
                        , linkName.toUtf8().constData()
@@ -4372,26 +4352,17 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   m_CurrentLanguage = newLanguage;
 
-  if (newLanguage != "en_US") {
-    installTranslator("qt");
-    installTranslator(ToQString(AppConfig::translationPrefix()));
-    foreach(IPlugin *plugin, m_Settings.plugins()) {
-      QObject *pluginObj = dynamic_cast<QObject*>(plugin);
-      if (pluginObj != NULL) {
-        QVariant fileNameVariant = pluginObj->property("filename");
-        if (fileNameVariant.isValid()) {
-          QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
-          installTranslator(fileName);
-        }
-      }
-    }
-  }
+  installTranslator("qt");
+  installTranslator(ToQString(AppConfig::translationPrefix()));
   ui->retranslateUi(this);
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
-//  ui->toolBar->addWidget(createHelpWidget(ui->toolBar));
+
+  createHelpWidget();
 
   updateDownloadListDelegate();
   updateProblemsButton();
+
+  ui->listOptionsBtn->setMenu(modListContextMenu());
 }
 
 
@@ -5364,14 +5335,16 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
 
   std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
-  std::tr1::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
   foreach (const std::string &line, lines) {
     if (line.length() > 0) {
-      size_t progidx    = line.find("[progress]");
-      size_t erroridx   = line.find("[error]");
+      size_t progidx   = line.find("[progress]");
+      size_t reportidx = line.find("[report]");
+      size_t erroridx  = line.find("[error]");
       if (progidx != std::string::npos) {
         dialog.setLabelText(line.substr(progidx + 11).c_str());
+      } else if (reportidx != std::string::npos) {
+        reportURL = line.substr(reportidx + 9);
       } else if (erroridx != std::string::npos) {
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
@@ -5381,12 +5354,8 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &reportU
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_PluginList.addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
-        } else if (std::tr1::regex_match(line, match, exIncompatible)) {
-          std::string modName(match[1].first, match[1].second);
-          std::string dependency(match[2].first, match[2].second);
-          m_PluginList.addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
         } else {
-          qDebug("[loot] %s", line.c_str());
+          qDebug("%s", line.c_str());
         }
       }
     }
@@ -5410,22 +5379,11 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
   QString steamAppID;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
-
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
       binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
     }
-
-    std::vector<Executable>::iterator current, end;
-    m_ExecutablesList.getExecutables(current, end);
-    for (; current != end; ++current) {
-      if (current->m_BinaryInfo == binary) {
-        steamAppID = current->m_SteamAppID;
-        currentDirectory = current->m_WorkingDirectory;
-      }
-    }
-
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();
     }
@@ -5526,21 +5484,15 @@ void MainWindow::on_bossButton_clicked()
     dialog.setMaximum(0);
     dialog.show();
 
-    QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
-
     QStringList parameters;
-    parameters << "--unattended"
-               << "--stdout"
-               << "--noreport"
-               << "--game" << ToQString(GameInfo::instance().getGameShortName())
-               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()))
-               << "--out" << outPath;
+    parameters << "--game" << ToQString(GameInfo::instance().getGameShortName())
+               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()));
 
-    if (m_DidUpdateMasterList) {
-      parameters << "--skipUpdateMasterlist";
-    } else {
+    if (!m_DidUpdateMasterList) {
+      parameters << "--updateMasterlist";
       m_DidUpdateMasterList = true;
     }
+
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
@@ -5557,45 +5509,59 @@ void MainWindow::on_bossButton_clicked()
 
     m_PluginList.clearAdditionalInformation();
 
+    DWORD retLen;
+    JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+    bool isJobHandle = true;
+
     if (loot != INVALID_HANDLE_VALUE) {
-      while (::WaitForSingleObject(loot, 100) == WAIT_TIMEOUT) {
+      DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
+      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
+        if (isJobHandle) {
+          if (::QueryInformationJobObject(loot, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+            if (info.NumberOfProcessIdsInList == 0) {
+              break;
+            }
+          } else {
+            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+            // the right to break out.
+            if (::GetLastError() != ERROR_MORE_DATA) {
+              isJobHandle = false;
+            }
+          }
+        }
+
+        if (dialog.wasCanceled()) {
+          if (isJobHandle) {
+            ::TerminateJobObject(loot, 1);
+          } else {
+            ::TerminateProcess(loot, 1);
+          }
+        }
+
         // keep processing events so the app doesn't appear dead
         QCoreApplication::processEvents();
-        if (dialog.wasCanceled()) {
-          ::TerminateProcess(loot, 1);
-        }
         std::string lootOut = readFromPipe(stdOutRead);
         processLOOTOut(lootOut, reportURL, errorMessages, dialog);
+
+        res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
       }
+
       std::string remainder = readFromPipe(stdOutRead).c_str();
       if (remainder.length() > 0) {
         processLOOTOut(remainder, reportURL, errorMessages, dialog);
       }
       DWORD exitCode = 0UL;
-      ::GetExitCodeProcess(processHandle, &exitCode);
-      ::CloseHandle(processHandle);
+      ::GetExitCodeProcess(loot, &exitCode);
       if (exitCode != 0UL) {
         reportError(tr("loot failed. Exit code was: %1").arg(exitCode));
         return;
       } else {
         success = true;
-        QFile outFile(outPath);
-        outFile.open(QIODevice::ReadOnly);
-        QJsonDocument doc = QJsonDocument::fromJson(outFile.readAll());
-        QJsonArray array = doc.array();
-        for (auto iter = array.begin();  iter != array.end(); ++iter) {
-          QJsonObject pluginObj = (*iter).toObject();
-          QJsonArray pluginMessages = pluginObj["messages"].toArray();
-          for (auto msgIter = pluginMessages.begin(); msgIter != pluginMessages.end(); ++msgIter) {
-            QJsonObject msg = (*msgIter).toObject();
-            m_PluginList.addInformation(pluginObj["name"].toString(),
-                QString("%1: %2").arg(msg["type"].toString(), msg["message"].toString()));
-          }
-          if (pluginObj["dirty"].toString() == "yes")
-            m_PluginList.addInformation(pluginObj["name"].toString(), "dirty");
-        }
-
       }
+    } else {
+      reportError(tr("failed to start loot"));
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to run loot: %1").arg(e.what()));
@@ -5610,16 +5576,11 @@ void MainWindow::on_bossButton_clicked()
     if (reportURL.length() > 0) {
       m_IntegratedBrowser.setWindowTitle("LOOT Report");
       QString report(reportURL.c_str());
-      QStringList temp = report.split("?");
-      QUrl url = QUrl::fromLocalFile(temp.at(0));
-      if (temp.size() > 1) {
-#if QT_VERSION >= 0x050000
-        url.setQuery(temp.at(1).toUtf8());
-#else
-        url.setEncodedQuery(temp.at(1).toUtf8());
-#endif
+      if (QFile::exists(report)) {
+        m_IntegratedBrowser.openUrl(QUrl::fromLocalFile(report));
+      } else {
+        qWarning("report file missing");
       }
-      m_IntegratedBrowser.openUrl(url);
     }
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.

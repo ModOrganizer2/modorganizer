@@ -54,7 +54,6 @@ public:
   enum EColumn {
     COL_NAME,
     COL_FLAGS,
-    COL_CONTENT,
     COL_CATEGORY,
     COL_MODID,
     COL_VERSION,

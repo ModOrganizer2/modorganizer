@@ -158,23 +158,6 @@ void cleanupDir()
   // files from previous versions of MO that are no longer
   // required (in that location)
   QString fileNames[] = {
-    "ModOrganiser.exe",
-    "ModOrganizer.log",
-    "ModOrganizer.log.old",
-    "7z.dll",
-    "mo1.dll",
-    "mo_archive.dll",
-    "mo_helper.exe",
-    "msvcp90.dll",
-    "msvcr90.dll",
-    "phonon4.dll",
-    "QtCore4.dll",
-    "QtGui4.dll",
-    "QtNetwork4.dll",
-    "QtXml4.dll",
-    "QtWebKit4.dll",
-    "qjpeg4.dll",
-    "NCC/GamebryoBase.dll",
     "plugins/helloWorld.dll",
     "plugins/testnexus.py"
   };
@@ -317,37 +300,7 @@ int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
 
-  qDebug("application name: %s", qPrintable(application.applicationName()));
-
-  QString instanceID;
-  QFile instanceFile(application.applicationDirPath() + "/INSTANCE");
-  if (instanceFile.open(QIODevice::ReadOnly)) {
-    instanceID = instanceFile.readAll().trimmed();
-  }
-
-  QString dataPath = instanceID.isEmpty() ? application.applicationDirPath()
-                                          : QDir::fromNativeSeparators(
-#if QT_VERSION >= 0x050000
-                                              QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-#else
-                                              QDesktopServices::storageLocation(QDesktopServices::DataLocation)
-#endif
-                                              ) + "/" + instanceID;
-  application.setProperty("dataPath", dataPath);
-
-#if QT_VERSION >= 0x050000
-  qDebug("ssl support: %d", QSslSocket::supportsSsl());
-#endif
-
-  qDebug("data path: %s", qPrintable(dataPath));
-  if (!QDir(dataPath).exists()) {
-    if (!QDir().mkpath(dataPath)) {
-      qCritical("failed to create %s", qPrintable(dataPath));
-      return 1;
-    }
-  }
-
-  application.setLibraryPaths(QStringList() << (application.applicationDirPath() + "/dlls"));
+  application.addLibraryPath(application.applicationDirPath() + "/dlls");
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
