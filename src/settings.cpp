@@ -643,22 +643,33 @@ void Settings::query(QWidget *parent)
     m_Settings.setValue("Settings/compact_downloads", compactBox->isChecked());
     m_Settings.setValue("Settings/meta_downloads", showMetaBox->isChecked());
     m_Settings.setValue("Settings/load_mechanism", mechanismBox->itemData(mechanismBox->currentIndex()).toInt());
-    if (QDir(downloadDirEdit->text()).exists()) {
-      m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));
-    }
-    if (!QDir(cacheDirEdit->text()).exists()) {
-      QDir().mkpath(cacheDirEdit->text());
-    }
-    m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(cacheDirEdit->text()));
-    if (QDir(modDirEdit->text()).exists()) {
+
+
+    { // advanced settings
       if ((QDir::fromNativeSeparators(modDirEdit->text()) != QDir::fromNativeSeparators(getModDirectory())) &&
           (QMessageBox::question(NULL, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
                                                          "Mods not present (or named differently) in the new location will be disabled in all profiles. "
                                                          "There is no way to undo this unless you backed up your profiles manually. Proceed?"),
-                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
-        m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
+        modDirEdit->setText(getModDirectory());
       }
+
+      if (!QDir(downloadDirEdit->text()).exists()) {
+        QDir().mkpath(downloadDirEdit->text());
+      }
+      if (!QDir(cacheDirEdit->text()).exists()) {
+        QDir().mkpath(cacheDirEdit->text());
+      }
+      if (!QDir(modDirEdit->text()).exists()) {
+        QDir().mkpath(modDirEdit->text());
+      }
+
+      m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));
+      m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(cacheDirEdit->text()));
+      m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
     }
+
+
     QString oldLanguage = m_Settings.value("Settings/language", "en_US").toString();
     QString newLanguage = languageBox->itemData(languageBox->currentIndex()).toString();
     if (newLanguage != oldLanguage) {

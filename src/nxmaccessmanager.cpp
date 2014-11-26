@@ -177,10 +177,14 @@ void NXMAccessManager::loginTimeout()
 void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 {
   m_ProgressDialog.hide();
-  emit loginFailed(m_LoginReply->errorString());
   m_LoginTimeout.stop();
-  m_LoginReply->deleteLater();
-  m_LoginReply = NULL;
+  if (m_LoginReply != NULL) {
+    emit loginFailed(m_LoginReply->errorString());
+    m_LoginReply->deleteLater();
+    m_LoginReply = NULL;
+  } else {
+    emit loginFailed(tr("Unknown error"));
+  }
   m_Username.clear();
   m_Password.clear();
 }

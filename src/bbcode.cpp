@@ -80,7 +80,7 @@ public:
             if (tagName == "color") {
               QString color = tagIter->second.first.cap(1);
               QString content = tagIter->second.first.cap(2);
-              if (color.at(0) == "#") {
+              if (color.at(0) == '#') {
                 return temp.replace(tagIter->second.first, QString("<font style=\"color: %1;\">%2</font>").arg(color, content));
               } else {
                 auto colIter = m_ColorMap.find(color.toLower());
