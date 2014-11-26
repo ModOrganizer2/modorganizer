@@ -88,7 +88,7 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
                                  commandLine,
                                  NULL, NULL,       // no special process or thread attributes
                                  inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
-                                 suspended ? CREATE_SUSPENDED : 0, // create suspended so I have time to inject the DLL
+                                 CREATE_BREAKAWAY_FROM_JOB | (suspended ? CREATE_SUSPENDED : 0), // create suspended so I have time to inject the DLL
                                  NULL,             // same environment as parent
                                  currentDirectory, // current directory
                                  &si, &pi          // startup and process information
@@ -183,12 +183,22 @@ HANDLE startBinary(const QFileInfo &binary,
 #ifdef _DEBUG
     reportError("ready?");
 #endif // DEBUG
-    if (::ResumeThread(threadHandle) == (DWORD)-1) {
-      reportError(QObject::tr("failed to run \"%1\"").arg(binary.fileName()));
-      return INVALID_HANDLE_VALUE;
-    }
   }
-  return processHandle;
+
+  if (::AssignProcessToJobObject(jobObject, processHandle) == 0) {
+    qWarning("failed to assign to job object: %lu", ::GetLastError());
+    ::CloseHandle(jobObject);
+    jobObject = processHandle;
+  } else {
+    ::CloseHandle(processHandle);
+  }
+
+  if (::ResumeThread(threadHandle) == (DWORD)-1) {
+    reportError(QObject::tr("failed to run \"%1\"").arg(binary.fileName()));
+    return INVALID_HANDLE_VALUE;
+  }
+  ::CloseHandle(threadHandle);
+  return jobObject;
 }
 
 /*
