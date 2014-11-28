@@ -55,7 +55,7 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
   }
   si.cb = sizeof(si);
   int length = wcslen(binary) + wcslen(arguments) + 4;
-  wchar_t *commandLine = NULL;
+  wchar_t *commandLine = nullptr;
   if (arguments[0] != L'\0') {
     commandLine = new wchar_t[length];
     _snwprintf(commandLine, length, L"\"%ls\" %ls", binary, arguments);
@@ -84,12 +84,12 @@ bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool sus
   }
 
   PROCESS_INFORMATION pi;
-  BOOL success = ::CreateProcess(NULL,
+  BOOL success = ::CreateProcess(nullptr,
                                  commandLine,
-                                 NULL, NULL,       // no special process or thread attributes
+                                 nullptr, nullptr,       // no special process or thread attributes
                                  inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
                                  CREATE_BREAKAWAY_FROM_JOB | (suspended ? CREATE_SUSPENDED : 0), // create suspended so I have time to inject the DLL
-                                 NULL,             // same environment as parent
+                                 nullptr,             // same environment as parent
                                  currentDirectory, // current directory
                                  &si, &pi          // startup and process information
                                  );
@@ -119,12 +119,12 @@ HANDLE startBinary(const QFileInfo &binary,
 {
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo;
 
-  ::QueryInformationJobObject(NULL, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), NULL);
+  ::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), nullptr);
   jobInfo.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_BREAKAWAY_OK;
 
-  HANDLE jobObject = ::CreateJobObject(NULL, NULL);
+  HANDLE jobObject = ::CreateJobObject(nullptr, nullptr);
 
-  if (jobObject == NULL) {
+  if (jobObject == nullptr) {
     qWarning("failed to create job object: %lu", ::GetLastError());
   } else {
     ::SetInformationJobObject(jobObject, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
@@ -144,7 +144,7 @@ HANDLE startBinary(const QFileInfo &binary,
     if (e.getErrorCode() == ERROR_ELEVATION_REQUIRED) {
       // TODO: check if this is really correct. Are all settings updated that the secondary instance may use?
 
-      if (QMessageBox::question(NULL, QObject::tr("Elevation required"),
+      if (QMessageBox::question(nullptr, QObject::tr("Elevation required"),
                                 QObject::tr("This process requires elevation to run.\n"
                                     "This is a potential security risk so I highly advice you to investigate if\n"
                                     "\"%1\"\n"
@@ -153,7 +153,7 @@ HANDLE startBinary(const QFileInfo &binary,
                                     "(you will be asked if you want to allow ModOrganizer.exe to make changes to the system)").arg(
                                         QDir::toNativeSeparators(binary.absoluteFilePath())),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        ::ShellExecuteW(NULL, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
+        ::ShellExecuteW(nullptr, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
                         (std::wstring(L"\"") + binaryName + L"\" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
         return INVALID_HANDLE_VALUE;
       } else {

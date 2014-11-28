@@ -48,7 +48,7 @@ typedef Archive* (*CreateArchiveType)();
 template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
-  if (temp == NULL) {
+  if (temp == nullptr) {
     throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1").arg(lib.errorString()).toLatin1().constData());
   }
   return temp;
@@ -94,7 +94,6 @@ SelfUpdater::~SelfUpdater()
 
 void SelfUpdater::setUserInterface(QWidget *widget)
 {
-  m_Progress.setVisible(false);
   m_Parent = widget;
 }
 
@@ -163,7 +162,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 
 void SelfUpdater::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     if (m_Canceled) {
       m_Reply->abort();
     } else {
@@ -177,7 +176,7 @@ void SelfUpdater::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
 void SelfUpdater::downloadReadyRead()
 {
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     m_UpdateFile.write(m_Reply->readAll());
   }
 }
@@ -187,7 +186,7 @@ void SelfUpdater::downloadFinished()
 {
   int error = QNetworkReply::NoError;
 
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     m_UpdateFile.write(m_Reply->readAll());
 
     error = m_Reply->error();
@@ -199,7 +198,7 @@ void SelfUpdater::downloadFinished()
     m_Progress.hide();
     m_Reply->close();
     m_Reply->deleteLater();
-    m_Reply = NULL;
+    m_Reply = nullptr;
   }
 
   m_UpdateFile.close();

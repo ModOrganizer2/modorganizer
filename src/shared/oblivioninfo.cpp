@@ -61,7 +61,7 @@ std::wstring OblivionInfo::getRegPathStatic()
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+  if (::RegQueryValueExW(key, L"Installed Path", nullptr, nullptr, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
     return std::wstring(temp);
   } else {
     return std::wstring();
@@ -76,9 +76,9 @@ std::wstring OblivionInfo::getInvalidationBSA()
 bool OblivionInfo::isInvalidationBSA(const std::wstring &bsaName)
 {
   static LPCWSTR invalidation[] = { L"Oblivion - Invalidation.bsa", L"ArchiveInvalidationInvalidated!.bsa",
-                                    L"BSARedirection.bsa", NULL };
+                                    L"BSARedirection.bsa", nullptr };
 
-  for (int i = 0; invalidation[i] != NULL; ++i) {
+  for (int i = 0; invalidation[i] != nullptr; ++i) {
     if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
       return true;
     }
@@ -158,7 +158,7 @@ void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults
     std::wostringstream source;
     source << getLocalAppFolder() << "\\Oblivion\\plugins.txt";
     if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
       ::CloseHandle(file);
     }
   }
@@ -194,7 +194,7 @@ void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults
     if (!FileExists(target)) {
       std::wstring source = getMyGamesDirectory() + L"\\Oblivion\\oblivionprefs.ini";
       if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        if ((::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL) == INVALID_HANDLE_VALUE) &&
+        if ((::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr) == INVALID_HANDLE_VALUE) &&
             (::GetLastError() != ERROR_FILE_EXISTS)) {
           throw windows_error(std::string("failed to create ini file: ") + ToString(target, false));
         }
@@ -240,9 +240,9 @@ void OblivionInfo::repairProfile(const std::wstring &directory)
 
 bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
-  static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", NULL };
+  static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };
 
-  for (int i = 0; profileFiles[i] != NULL; ++i) {
+  for (int i = 0; profileFiles[i] != nullptr; ++i) {
     if (_wcsicmp(fileName, profileFiles[i]) == 0) {
       return true;
     }

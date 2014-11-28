@@ -60,7 +60,7 @@ std::wstring Fallout3Info::getRegPathStatic()
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+  if (::RegQueryValueExW(key, L"Installed Path", nullptr, nullptr, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
     return std::wstring(temp);
   } else {
     return std::wstring();
@@ -74,9 +74,9 @@ std::wstring Fallout3Info::getInvalidationBSA()
 
 bool Fallout3Info::isInvalidationBSA(const std::wstring &bsaName)
 {
-  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", NULL };
+  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
 
-  for (int i = 0; invalidation[i] != NULL; ++i) {
+  for (int i = 0; invalidation[i] != nullptr; ++i) {
     if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
       return true;
     }
@@ -203,7 +203,7 @@ void Fallout3Info::createProfile(const std::wstring &directory, bool useDefaults
     std::wostringstream source;
     source << getLocalAppFolder() << "\\Fallout3\\plugins.txt";
     if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
       ::CloseHandle(file);
     }
   }
@@ -256,9 +256,9 @@ void Fallout3Info::repairProfile(const std::wstring &directory)
 
 bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
-  static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", NULL };
+  static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
 
-  for (int i = 0; profileFiles[i] != NULL; ++i) {
+  for (int i = 0; profileFiles[i] != nullptr; ++i) {
     if (_wcsicmp(fileName, profileFiles[i]) == 0) {
       return true;
     }

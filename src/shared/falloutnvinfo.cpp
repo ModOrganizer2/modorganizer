@@ -61,7 +61,7 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+  if (::RegQueryValueExW(key, L"Installed Path", nullptr, nullptr, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
     return std::wstring(temp);
   } else {
     return std::wstring();
@@ -75,9 +75,9 @@ std::wstring FalloutNVInfo::getInvalidationBSA()
 
 bool FalloutNVInfo::isInvalidationBSA(const std::wstring &bsaName)
 {
-  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", NULL };
+  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
 
-  for (int i = 0; invalidation[i] != NULL; ++i) {
+  for (int i = 0; invalidation[i] != nullptr; ++i) {
     if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
       return true;
     }
@@ -170,7 +170,7 @@ void FalloutNVInfo::createProfile(const std::wstring &directory, bool useDefault
   if (!FileExists(target)) {
     std::wstring source = getLocalAppFolder() + L"\\FalloutNV\\plugins.txt";
     if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+      HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
       ::CloseHandle(file);
     }
   }
@@ -247,9 +247,9 @@ void FalloutNVInfo::repairProfile(const std::wstring &directory)
 
 bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
-  static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", NULL };
+  static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
 
-  for (int i = 0; profileFiles[i] != NULL; ++i) {
+  for (int i = 0; profileFiles[i] != nullptr; ++i) {
     if (_wcsicmp(fileName, profileFiles[i]) == 0) {
       return true;
     }

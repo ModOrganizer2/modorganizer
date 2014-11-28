@@ -91,7 +91,7 @@ static bool testForSteam()
     if (processIDs[i] != 0) {
       HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
 
-      if (process != NULL) {
+      if (process != nullptr) {
         HMODULE module;
         DWORD ignore;
 
@@ -463,7 +463,7 @@ MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
 
 QString OrganizerCore::profileName() const
 {
-  if (m_CurrentProfile != NULL) {
+  if (m_CurrentProfile != nullptr) {
     return m_CurrentProfile->getName();
   } else {
     return "";
@@ -472,7 +472,7 @@ QString OrganizerCore::profileName() const
 
 QString OrganizerCore::profilePath() const
 {
-  if (m_CurrentProfile != NULL) {
+  if (m_CurrentProfile != nullptr) {
     return m_CurrentProfile->getPath();
   } else {
     return "";
@@ -493,7 +493,7 @@ MOBase::IModInterface *OrganizerCore::getMod(const QString &name)
 {
   unsigned int index = ModInfo::getIndex(name);
   if (index == UINT_MAX) {
-    return NULL;
+    return nullptr;
   } else {
     return ModInfo::getByIndex(index).data();
   }
@@ -502,7 +502,7 @@ MOBase::IModInterface *OrganizerCore::getMod(const QString &name)
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
   if (!m_InstallationManager.testOverwrite(name)) {
-    return NULL;
+    return nullptr;
   }
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
@@ -670,7 +670,7 @@ QStringList OrganizerCore::listDirectories(const QString &directoryName) const
 {
   QStringList result;
   DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(directoryName));
-  if (dir != NULL) {
+  if (dir != nullptr) {
     std::vector<DirectoryEntry*>::iterator current, end;
     dir->getSubDirectories(current, end);
     for (; current != end; ++current) {
@@ -684,7 +684,7 @@ QStringList OrganizerCore::findFiles(const QString &path, const std::function<bo
 {
   QStringList result;
   DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
-  if (dir != NULL) {
+  if (dir != nullptr) {
     std::vector<FileEntry::Ptr> files = dir->getFiles();
     foreach (FileEntry::Ptr file, files) {
       if (filter(ToQString(file->getFullPath()))) {
@@ -700,9 +700,9 @@ QStringList OrganizerCore::findFiles(const QString &path, const std::function<bo
 QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
 {
   QStringList result;
-  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(QFileInfo(fileName).fileName()), NULL);
+  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(QFileInfo(fileName).fileName()), nullptr);
 
-  if (file.get() != NULL) {
+  if (file.get() != nullptr) {
     result.append(ToQString(m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
     foreach (int i, file->getAlternatives()) {
       result.append(ToQString(m_DirectoryStructure->getOriginByID(i).getName()));
@@ -717,7 +717,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(const QString &
 {
   QList<IOrganizer::FileInfo> result;
   DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
-  if (dir != NULL) {
+  if (dir != nullptr) {
     std::vector<FileEntry::Ptr> files = dir->getFiles();
     foreach (FileEntry::Ptr file, files) {
       IOrganizer::FileInfo info;
@@ -987,7 +987,7 @@ bool OrganizerCore::waitForProcessOrJob(HANDLE handle, LPDWORD exitCode)
     res = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
   }
 
-  if (exitCode != NULL) {
+  if (exitCode != nullptr) {
     ::GetExitCodeProcess(processHandle, exitCode);
   }
   ::CloseHandle(processHandle);

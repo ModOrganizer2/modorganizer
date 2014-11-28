@@ -27,13 +27,13 @@ std::string windows_error::constructMessage(const std::string& input, int inErro
   std::ostringstream finalMessage;
   finalMessage << input;
 
-  LPSTR buffer = NULL;
+  LPSTR buffer = nullptr;
 
   DWORD errorCode = inErrorCode != -1 ? inErrorCode : ::GetLastError();
 
   // TODO: the message is not english?
   if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                     NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, NULL) == 0) {
+                     nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
     finalMessage << " (errorcode " << errorCode << ")";
   } else {
     LPSTR lastChar = buffer + strlen(buffer) - 2;

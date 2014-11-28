@@ -115,7 +115,7 @@ BrowserView *BrowserDialog::getCurrentView()
 void BrowserDialog::urlChanged(const QUrl &url)
 {
   BrowserView *currentView = getCurrentView();
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
   }
@@ -192,12 +192,12 @@ void BrowserDialog::unsupportedContent(QNetworkReply *reply)
 {
   try {
     QWebPage *page = qobject_cast<QWebPage*>(sender());
-    if (page == NULL) {
+    if (page == nullptr) {
       qCritical("sender not a page");
       return;
     }
     BrowserView *view = qobject_cast<BrowserView*>(page->view());
-    if (view == NULL) {
+    if (view == nullptr) {
       qCritical("no view?");
       return;
     }
@@ -231,7 +231,7 @@ void BrowserDialog::tabCloseRequested(int index)
 void BrowserDialog::on_backBtn_clicked()
 {
   BrowserView *currentView = getCurrentView();
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     currentView->back();
   }
 }
@@ -239,7 +239,7 @@ void BrowserDialog::on_backBtn_clicked()
 void BrowserDialog::on_fwdBtn_clicked()
 {
   BrowserView *currentView = getCurrentView();
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     currentView->forward();
   }
 }
@@ -254,7 +254,7 @@ void BrowserDialog::startSearch()
 void BrowserDialog::on_searchEdit_returnPressed()
 {
   BrowserView *currentView = getCurrentView();
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     currentView->findText(ui->searchEdit->text(), QWebPage::FindWrapsAroundDocument);
   }
 }
@@ -267,7 +267,7 @@ void BrowserDialog::on_refreshBtn_clicked()
 void BrowserDialog::on_browserTabWidget_currentChanged(int index)
 {
   BrowserView *currentView = qobject_cast<BrowserView*>(ui->browserTabWidget->widget(index));
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     ui->backBtn->setEnabled(currentView->history()->canGoBack());
     ui->fwdBtn->setEnabled(currentView->history()->canGoForward());
   }
@@ -276,7 +276,7 @@ void BrowserDialog::on_browserTabWidget_currentChanged(int index)
 void BrowserDialog::on_urlEdit_returnPressed()
 {
   QWebView *currentView = getCurrentView();
-  if (currentView != NULL) {
+  if (currentView != nullptr) {
     currentView->setUrl(QUrl(ui->urlEdit->text()));
   }
 }

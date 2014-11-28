@@ -34,7 +34,7 @@ bool FileExists(const std::string &filename)
 {
   WIN32_FIND_DATAA findData;
   ZeroMemory(&findData, sizeof(WIN32_FIND_DATAA));
-  HANDLE search = ::FindFirstFileExA(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
+  HANDLE search = ::FindFirstFileExA(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0);
   if (search == INVALID_HANDLE_VALUE) {
     return false;
   } else {
@@ -47,7 +47,7 @@ bool FileExists(const std::wstring &filename)
 {
   WIN32_FIND_DATAW findData;
   ZeroMemory(&findData, sizeof(WIN32_FIND_DATAW));
-  HANDLE search = ::FindFirstFileExW(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
+  HANDLE search = ::FindFirstFileExW(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0);
   if (search == INVALID_HANDLE_VALUE) {
     return false;
   } else {
@@ -67,14 +67,14 @@ std::string ToString(const std::wstring &source, bool utf8)
 {
   std::string result;
   UINT codepage = utf8 ? CP_UTF8 : GetACP();
-  int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, NULL, 0, NULL, NULL);
+  int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, nullptr, 0, nullptr, nullptr);
   if (sizeRequired == 0) {
     throw windows_error("failed to convert string to multibyte");
   }
   // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
   // we don't want that \0 in the string because then the length field would be wrong. Because madness
   result.resize(sizeRequired - 1, '\0');
-  ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, NULL, NULL);
+  ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, nullptr, nullptr);
   return result;
 }
 
@@ -82,7 +82,7 @@ std::wstring ToWString(const std::string &source, bool utf8)
 {
   std::wstring result;
   UINT codepage = utf8 ? CP_UTF8 : GetACP();
-  int sizeRequired = ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), NULL, 0);
+  int sizeRequired = ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), nullptr, 0);
   if (sizeRequired == 0) {
     throw windows_error("failed to convert string to wide character");
   }
@@ -131,7 +131,7 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
       throw windows_error("failed to determine file version info");
     }
 
-    void *versionInfoPtr = NULL;
+    void *versionInfoPtr = nullptr;
     UINT versionInfoLength = 0;
     if (!::VerQueryValue(buffer, L"\\", &versionInfoPtr, &versionInfoLength)) {
       throw windows_error("failed to determine file version");
@@ -160,14 +160,14 @@ std::string GetStack()
       ::SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
       firstCall = false;
     }
-    if (!::SymInitialize(process, NULL, TRUE)) {
+    if (!::SymInitialize(process, nullptr, TRUE)) {
       log("failed to initialize symbols: %d", ::GetLastError());
     }
     initialized.insert(::GetCurrentProcessId());
   }
 
   LPVOID stack[32];
-  WORD frames = ::CaptureStackBackTrace(0, 100, stack, NULL);
+  WORD frames = ::CaptureStackBackTrace(0, 100, stack, nullptr);
 
   char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
   PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;

@@ -59,7 +59,7 @@ QStringList PluginContainer::pluginFileNames() const
 
 bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
-  if (plugin == NULL) {
+  if (plugin == nullptr) {
     return false;
   } else if (!plugin->init(new OrganizerProxy(m_Organizer, plugin->name()))) {
     qWarning("plugin failed to initialize");
@@ -89,7 +89,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 
   { // diagnosis plugins
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
-    if (diagnose != NULL) {
+    if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       m_DiagnosisConnections.push_back(
             diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
@@ -142,7 +142,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       foreach (const QString &pluginName, pluginNames) {
         try {
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
-          if (proxiedPlugin != NULL) {
+          if (proxiedPlugin != nullptr) {
             if (registerPlugin(proxiedPlugin, pluginName)) {
               qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
             } else {
@@ -264,7 +264,7 @@ void PluginContainer::loadPlugins()
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader *pluginLoader = new QPluginLoader(pluginName, this);
-      if (pluginLoader->instance() == NULL) {
+      if (pluginLoader->instance() == nullptr) {
         m_FailedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
                   qPrintable(pluginName), qPrintable(pluginLoader->errorString()));

@@ -32,7 +32,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-CategoryFactory* CategoryFactory::s_Instance = NULL;
+CategoryFactory* CategoryFactory::s_Instance = nullptr;
 
 
 QString CategoryFactory::categoriesFilePath()
@@ -93,7 +93,7 @@ CategoryFactory::CategoryFactory()
 
 CategoryFactory &CategoryFactory::instance()
 {
-  if (s_Instance == NULL) {
+  if (s_Instance == nullptr) {
     s_Instance = new CategoryFactory;
   }
   return *s_Instance;
@@ -133,7 +133,7 @@ void CategoryFactory::setParents()
 void CategoryFactory::cleanup()
 {
   delete s_Instance;
-  s_Instance = NULL;
+  s_Instance = nullptr;
 }
 
 

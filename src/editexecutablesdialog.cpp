@@ -30,7 +30,7 @@ using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
   : TutorableDialog("EditExecutables", parent),
-  ui(new Ui::EditExecutablesDialog), m_CurrentItem(NULL), m_ExecutablesList(executablesList)
+  ui(new Ui::EditExecutablesDialog), m_CurrentItem(nullptr), m_ExecutablesList(executablesList)
 {
   ui->setupUi(this);
 
@@ -86,7 +86,7 @@ void EditExecutablesDialog::resetInput()
   ui->appIDOverwriteEdit->clear();
   ui->overwriteAppIDBox->setChecked(false);
   ui->closeCheckBox->setChecked(false);
-  m_CurrentItem = NULL;
+  m_CurrentItem = nullptr;
 }
 
 
@@ -128,7 +128,7 @@ void EditExecutablesDialog::on_browseButton_clicked()
     { // try to find java automatically
       std::wstring binaryNameW = ToWString(binaryName);
       WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(binaryNameW.c_str(), NULL, buffer) > (HINSTANCE)32) {
+      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
           qDebug("failed to determine binary type of \"%ls\": %lu", binaryNameW.c_str(), ::GetLastError());
@@ -204,7 +204,7 @@ void EditExecutablesDialog::on_titleEdit_textChanged(const QString &arg1)
 
 bool EditExecutablesDialog::executableChanged()
 {
-  if (m_CurrentItem != NULL) {
+  if (m_CurrentItem != nullptr) {
     const Executable &selectedExecutable = m_CurrentItem->data(Qt::UserRole).value<Executable>();
 
     return selectedExecutable.m_Arguments != ui->argumentsEdit->text()
@@ -220,7 +220,7 @@ bool EditExecutablesDialog::executableChanged()
 
 void EditExecutablesDialog::on_executablesListBox_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
-  if (current == NULL) {
+  if (current == nullptr) {
     resetInput();
     return;
   }

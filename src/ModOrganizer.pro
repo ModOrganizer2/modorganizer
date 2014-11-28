@@ -12,7 +12,6 @@ SUBDIRS = bsatk \
           nxmhandler \
           BossDummy \
           pythonRunner \
-          loot_cli \
           esptk
 
 pythonRunner.depends = uibase

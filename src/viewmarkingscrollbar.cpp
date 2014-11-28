@@ -14,7 +14,7 @@ ViewMarkingScrollBar::ViewMarkingScrollBar(QAbstractItemModel *model, QWidget *p
 
 void ViewMarkingScrollBar::paintEvent(QPaintEvent *event)
 {
-  if (m_Model == NULL) {
+  if (m_Model == nullptr) {
     return;
   }
   QScrollBar::paintEvent(event);

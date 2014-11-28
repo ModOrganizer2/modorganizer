@@ -88,7 +88,7 @@ PluginList::PluginList(QObject *parent)
   m_Utf8Codec = QTextCodec::codecForName("utf-8");
   m_LocalCodec = QTextCodec::codecForName("Windows-1252");
 
-  if (m_LocalCodec == NULL) {
+  if (m_LocalCodec == nullptr) {
     qCritical("required 8-bit string-encoding not supported.");
     m_LocalCodec = m_Utf8Codec;
   }
@@ -142,7 +142,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
   std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (auto iter = files.begin(); iter != files.end(); ++iter) {
     FileEntry::Ptr current = *iter;
-    if (current.get() == NULL) {
+    if (current.get() == nullptr) {
       continue;
     }
     QString filename = ToQString(current->getName());
@@ -157,7 +157,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
-        bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != NULL;
+        bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
 
         QString originName = ToQString(origin.getName());
         unsigned int modIndex = ModInfo::getIndex(originName);
@@ -243,7 +243,7 @@ void PluginList::enableESP(const QString &name, bool enable)
 
 void PluginList::enableAll()
 {
-  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really enable all plugins?"),
+  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
       iter->m_Enabled = true;
@@ -255,7 +255,7 @@ void PluginList::enableAll()
 
 void PluginList::disableAll()
 {
-  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really disable all plugins?"),
+  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
       if (!iter->m_ForceEnabled) {
@@ -515,14 +515,14 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
   for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     std::wstring espName = ToWString(iter->m_Name);
     const FileEntry::Ptr fileEntry = directoryStructure.findFile(espName);
-    if (fileEntry.get() != NULL) {
+    if (fileEntry.get() != nullptr) {
       QString fileName;
       bool archive = false;
       int originid = fileEntry->getOrigin(archive);
       fileName = QString("%1\\%2").arg(QDir::toNativeSeparators(ToQString(directoryStructure.getOriginByID(originid).getPath()))).arg(iter->m_Name);
 
       HANDLE file = ::CreateFile(ToWString(fileName).c_str(), GENERIC_READ | GENERIC_WRITE,
-                                 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                                 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
       if (file == INVALID_HANDLE_VALUE) {
         if (::GetLastError() == ERROR_SHARING_VIOLATION) {
           // file is locked, probably the game is running
@@ -541,7 +541,7 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
       newWriteTime.dwHighDateTime = (DWORD)(temp >> 32);
       iter->m_Time = newWriteTime;
       fileEntry->setFileTime(newWriteTime);
-      if (!::SetFileTime(file, NULL, NULL, &newWriteTime)) {
+      if (!::SetFileTime(file, nullptr, nullptr, &newWriteTime)) {
         throw windows_error(QObject::tr("failed to set file time %1").arg(fileName).toUtf8().constData());
       }
 
@@ -1102,7 +1102,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
   if (event->type() == QEvent::KeyPress) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
 
-    if (itemView == NULL) {
+    if (itemView == nullptr) {
       return QObject::eventFilter(obj, event);
     }
 
@@ -1112,7 +1112,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      if (proxyModel != NULL) {
+      if (proxyModel != nullptr) {
         int diff = -1;
         if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
             ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
@@ -1147,7 +1147,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 
       QModelIndex minRow, maxRow;
       foreach (QModelIndex idx, selectionModel->selectedRows()) {
-        if (proxyModel != NULL) {
+        if (proxyModel != nullptr) {
           idx = proxyModel->mapToSource(idx);
         }
         if (!minRow.isValid() || (idx.row() < minRow.row())) {

@@ -42,7 +42,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 Profile::Profile()
-  : m_SaveTimer(NULL)
+  : m_SaveTimer(nullptr)
 {
   initTimer();
 }
@@ -56,7 +56,7 @@ void Profile::touchFile(QString fileName)
 }
 
 Profile::Profile(const QString &name, bool useDefaultSettings)
-  : m_SaveTimer(NULL)
+  : m_SaveTimer(nullptr)
 {
   initTimer();
   QString profilesDir = qApp->property("datapath").toString() + "/" + ToQString(AppConfig::profilesPath());
@@ -108,7 +108,7 @@ Profile::Profile(const QDir &directory)
 
 
 Profile::Profile(const Profile& reference)
-  : m_Directory(reference.m_Directory), m_SaveTimer(NULL)
+  : m_Directory(reference.m_Directory), m_SaveTimer(nullptr)
 {
   initTimer();
   refreshModStatus();
@@ -553,7 +553,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
   for (std::vector<std::wstring>::iterator iter = sections.begin();
        iter != sections.end(); ++iter) {
     // retrieve the names of all keys
-    size = ::GetPrivateProfileStringW(iter->c_str(), NULL, NULL, buffer.data(),
+    size = ::GetPrivateProfileStringW(iter->c_str(), nullptr, nullptr, buffer.data(),
                                       bufferSize, tweakNameW.c_str());
     if (size == bufferSize - 2) {
       throw MyException(QString("Buffer too small. Please report this as a bug. "
@@ -566,7 +566,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
          keyIter != keys.end(); ++keyIter) {
       //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
-                                 NULL, buffer.data(), bufferSize, ToWString(tweakName).c_str());
+                                 nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
       ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                    buffer.data(), tweakedIniW.c_str());
     }
@@ -586,7 +586,7 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 bool Profile::invalidationActive(bool *supported) const
 {
   if (GameInfo::instance().requiresBSAInvalidation()) {
-    if (supported != NULL) {
+    if (supported != nullptr) {
       *supported = true;
     }
     wchar_t buffer[1024];
@@ -597,7 +597,7 @@ bool Profile::invalidationActive(bool *supported) const
     if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                    L"", buffer, 1024, iniFileName.c_str()) == 0) {
       if (errno != 0x02) {
-        if (supported != NULL) {
+        if (supported != nullptr) {
           *supported = false;
         }
         return false;

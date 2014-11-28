@@ -86,9 +86,9 @@ void PluginListSortProxy::displayColumnSelection(const QPoint &pos)
   m_EnabledColumns.reset();
   foreach (const QAction *action, menu.actions()) {
     const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
-    if (widgetAction != NULL) {
+    if (widgetAction != nullptr) {
       const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
-      if (checkBox != NULL) {
+      if (checkBox != nullptr) {
         m_EnabledColumns.set(i, checkBox->checkState() == Qt::Checked);
       }
     }

@@ -99,12 +99,12 @@ bool bootstrap()
   // verify the hook-dll exists
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
 
-  if (::GetModuleHandleW(ToWString(dllName).c_str()) != NULL) {
+  if (::GetModuleHandleW(ToWString(dllName).c_str()) != nullptr) {
     throw std::runtime_error("hook.dll already loaded! You can't start Mod Organizer from within itself (not even indirectly)");
   }
 
   HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
-  if (dllMod == NULL) {
+  if (dllMod == nullptr) {
     throw windows_error("hook.dll is missing or invalid");
   }
   ::FreeLibrary(dllMod);
@@ -135,7 +135,7 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
     FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
     if (funcDump) {
 
-      if (QMessageBox::question(NULL, QObject::tr("Woops"),
+      if (QMessageBox::question(nullptr, QObject::tr("Woops"),
                             QObject::tr("ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file "
                                "(%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. "
                                "Please include a short description of what you were doing when the crash happened").arg(qApp->applicationFilePath().append(".dmp")),
@@ -144,14 +144,14 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
         std::wstring dumpName = ToWString(qApp->applicationFilePath().append(".dmp"));
 
         HANDLE dumpFile = ::CreateFile(dumpName.c_str(),
-                                       GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                                       GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (dumpFile != INVALID_HANDLE_VALUE) {
           _MINIDUMP_EXCEPTION_INFORMATION exceptionInfo;
           exceptionInfo.ThreadId = ::GetCurrentThreadId();
           exceptionInfo.ExceptionPointers = exceptionPtrs;
-          exceptionInfo.ClientPointers = NULL;
+          exceptionInfo.ClientPointers = false;
 
-          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, NULL, NULL);
+          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
 
           ::FlushFileBuffers(dumpFile);
           ::CloseHandle(dumpFile);
@@ -174,7 +174,7 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
     _snprintf(errorBuffer, errorLen, "dbghelp.dll not found");
   }
 
-  QMessageBox::critical(NULL, QObject::tr("Woops"),
+  QMessageBox::critical(nullptr, QObject::tr("Woops"),
                         QObject::tr("ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1").arg(errorBuffer));
   return result;
 }
@@ -191,14 +191,14 @@ bool HaveWriteAccess(const std::wstring &path)
   const static SECURITY_INFORMATION requestedFileInformation = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
 
   DWORD length = 0;
-  if (!::GetFileSecurityW(path.c_str(), requestedFileInformation, NULL, NULL, &length)
+  if (!::GetFileSecurityW(path.c_str(), requestedFileInformation, nullptr, 0UL, &length)
       && (::GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
     std::string tempBuffer;
     tempBuffer.reserve(length);
     PSECURITY_DESCRIPTOR security = (PSECURITY_DESCRIPTOR)tempBuffer.data();
     if (security
         && ::GetFileSecurity(path.c_str(), requestedFileInformation, security, length, &length)) {
-      HANDLE token = NULL;
+      HANDLE token = nullptr;
       const static DWORD tokenDesiredAccess = TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ;
       if (!::OpenThreadToken(::GetCurrentThread(), tokenDesiredAccess, TRUE, &token)) {
         if (!::OpenProcessToken(::GetCurrentProcess(), tokenDesiredAccess, &token)) {
@@ -206,7 +206,7 @@ bool HaveWriteAccess(const std::wstring &path)
         }
       }
 
-      HANDLE impersonatedToken = NULL;
+      HANDLE impersonatedToken = nullptr;
       if (::DuplicateToken(token, SecurityImpersonation, &impersonatedToken)) {
         GENERIC_MAPPING mapping = { 0xFFFFFFFF };
         mapping.GenericRead = FILE_GENERIC_READ;
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
   if (!HaveWriteAccess(ToWString(application.applicationDirPath()))) {
     QStringList arguments = application.arguments();
     arguments.pop_front();
-    ::ShellExecuteW( NULL
+    ::ShellExecuteW( nullptr
                    , L"runas"
                    , ToWString(QString("\"%1\"").arg(QCoreApplication::applicationFilePath())).c_str()
                    , ToWString(arguments.join(" ")).c_str()
@@ -348,7 +348,7 @@ int main(int argc, char *argv[])
         instance.sendMessage(arguments.at(1));
         return 0;
       } else if (arguments.size() == 1) {
-        QMessageBox::information(NULL, QObject::tr("Mod Organizer"), QObject::tr("An instance of Mod Organizer is already running"));
+        QMessageBox::information(nullptr, QObject::tr("Mod Organizer"), QObject::tr("An instance of Mod Organizer is already running"));
         return 0;
       }
     } // we continue for the primary instance OR if MO has been called with parameters
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
         } else {
           gamePath = QDir::cleanPath(selection.getChoiceData().toString());
           if (gamePath.isEmpty()) {
-            gamePath = QFileDialog::getExistingDirectory(NULL, QObject::tr("Please select the game to manage"), QString(),
+            gamePath = QFileDialog::getExistingDirectory(nullptr, QObject::tr("Please select the game to manage"), QString(),
                                                          QFileDialog::ShowDirsOnly);
           }
         }
@@ -426,7 +426,7 @@ int main(int argc, char *argv[])
     if (!settings.contains("game_edition")) {
       std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
       if (editions.size() > 1) {
-        SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), NULL);
+        SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), nullptr);
         int index = 0;
         for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
           selection.addChoice(ToQString(*iter), "", index++);

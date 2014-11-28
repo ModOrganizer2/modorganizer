@@ -38,7 +38,7 @@ public:
   virtual MOBase::IPluginList *pluginList();
   virtual MOBase::IModList *modList();
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-  virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = NULL) const;
+  virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
   virtual void refreshModList(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);

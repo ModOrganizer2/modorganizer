@@ -22,7 +22,7 @@ void initDbgIfNecessary()
       ::SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
       firstCall = false;
     }
-    if (!::SymInitialize(process, NULL, TRUE)) {
+    if (!::SymInitialize(process, nullptr, TRUE)) {
       printf("failed to initialize symbols: %d", ::GetLastError());
     }
     initialized.insert(::GetCurrentProcessId());

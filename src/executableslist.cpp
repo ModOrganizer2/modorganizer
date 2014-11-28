@@ -130,7 +130,7 @@ Executable *ExecutablesList::findExe(const QString &title)
       return &*iter;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 
@@ -144,7 +144,7 @@ bool ExecutablesList::titleExists(const QString &title) const
 void ExecutablesList::addExecutable(const Executable &executable)
 {
   Executable *existingExe = findExe(executable.m_Title);
-  if (existingExe != NULL) {
+  if (existingExe != nullptr) {
     *existingExe = executable;
   } else {
     m_Executables.push_back(executable);
@@ -158,7 +158,7 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
 {
   QFileInfo file(executableName);
   Executable *existingExe = findExe(title);
-  if (existingExe != NULL) {
+  if (existingExe != nullptr) {
     existingExe->m_Title = title;
     existingExe->m_CloseMO = closeMO;
     existingExe->m_BinaryInfo = file;

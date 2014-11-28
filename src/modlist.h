@@ -73,7 +73,7 @@ public:
    * @brief constructor
    * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
    **/
-  ModList(QObject *parent = NULL);
+  ModList(QObject *parent = nullptr);
 
   ~ModList();
 

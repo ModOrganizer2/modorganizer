@@ -96,7 +96,7 @@ public:
    *
    * @param parent parent object
    **/
-  PluginList(QObject *parent = NULL);
+  PluginList(QObject *parent = nullptr);
 
   ~PluginList();
 
