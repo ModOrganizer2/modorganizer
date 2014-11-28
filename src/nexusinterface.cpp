@@ -34,35 +34,34 @@ using namespace MOShared;
 
 NexusBridge::NexusBridge(const QString &subModule)
   : m_Interface(NexusInterface::instance())
-  , m_Url(MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()))
+  , m_Url() // lazy initialized
   , m_SubModule(subModule)
 {
 }
 
-
 void NexusBridge::requestDescription(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestFiles(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
@@ -136,6 +135,13 @@ void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int
     m_RequestIDs.erase(iter);
     emit requestFailed(modID, fileID, userData, errorMessage);
   }
+}
+
+QString NexusBridge::url() {
+  if (m_Url.isEmpty()) {
+    m_Url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl());
+  }
+  return m_Url;
 }
 
 

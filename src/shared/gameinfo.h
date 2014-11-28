@@ -109,8 +109,6 @@ public:
   virtual std::wstring getProfilesDir() const;
 
   virtual std::wstring getIniFilename() const;
-  virtual std::wstring getDownloadDir() const;
-  virtual std::wstring getCacheDir() const;
   virtual std::wstring getOverwriteDir() const;
   virtual std::wstring getLogDir() const;
   virtual std::wstring getLootDir() const;

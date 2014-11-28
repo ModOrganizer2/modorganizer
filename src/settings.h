@@ -43,7 +43,7 @@ public:
   /**
    * @brief constructor
    **/
-  Settings();
+  Settings(const QSettings &config);
 
   virtual ~Settings();
 

@@ -119,6 +119,7 @@ private:
   void updateProgressFile(LPCWSTR fileName);
   void report7ZipError(LPCWSTR errorMessage);
   QString retrieveNews(const QString &description);
+  void showProgress();
 
 private slots:
 

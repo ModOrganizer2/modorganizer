@@ -56,8 +56,12 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 
 SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
-  : m_Parent(nullptr), m_Interface(nexusInterface), m_UpdateRequestID(-1),
-    m_Reply(NULL), m_Progress(nullptr), m_Attempts(3)
+  : m_Parent(nullptr)
+  , m_Interface(nexusInterface)
+  , m_UpdateRequestID(-1)
+  , m_Reply(nullptr)
+  , m_Progress(nullptr)
+  , m_Attempts(3)
 {
   m_Progress.setMaximum(100);
 
@@ -90,7 +94,7 @@ SelfUpdater::~SelfUpdater()
 
 void SelfUpdater::setUserInterface(QWidget *widget)
 {
-  m_Progress.setParent(widget);
+  m_Progress.setVisible(false);
   m_Parent = widget;
 }
 
@@ -130,6 +134,16 @@ void SelfUpdater::startUpdate()
 }
 
 
+void SelfUpdater::showProgress()
+{
+  m_Progress.setModal(true);
+  m_Progress.setParent(m_Parent, Qt::Dialog);
+  m_Progress.show();
+  m_Progress.setValue(0);
+  m_Progress.setWindowTitle(tr("Update"));
+  m_Progress.setLabelText(tr("Download in progress"));
+}
+
 void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 {
   QNetworkAccessManager *accessManager = m_Interface->getAccessManager();
@@ -139,11 +153,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
   m_Reply = accessManager->get(request);
   m_UpdateFile.setFileName(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()).append("\\").append(fileName)));
   m_UpdateFile.open(QIODevice::WriteOnly);
-  m_Progress.setModal(true);
-  m_Progress.show();
-  m_Progress.setValue(0);
-  m_Progress.setWindowTitle(tr("Update"));
-  m_Progress.setLabelText(tr("Download in progress"));
+  showProgress();
 
   connect(m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
   connect(m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));

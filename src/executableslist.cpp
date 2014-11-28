@@ -72,17 +72,19 @@ ExecutablesList::~ExecutablesList()
 
 void ExecutablesList::init(IPluginGame *game)
 {
+  Q_ASSERT(game != nullptr);
   m_Executables.clear();
   for (const ExecutableInfo &info : game->executables()) {
-    addExecutableInternal(info.title(),
-                          info.binary().absoluteFilePath(),
-                          info.arguments().join(" "),
-                          info.workingDirectory().absolutePath(),
-                          info.closeMO(),
-                          info.steamAppID());
+    if (info.isValid()) {
+      addExecutableInternal(info.title(),
+                            info.binary().absoluteFilePath(),
+                            info.arguments().join(" "),
+                            info.workingDirectory().absolutePath(),
+                            info.closeMO(),
+                            info.steamAppID());
+    }
   }
 }
-
 
 void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end)
 {

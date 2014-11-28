@@ -61,6 +61,7 @@ namespace Ui {
     class MainWindow;
 }
 
+class LockedDialog;
 class QToolButton;
 class ModListSortProxy;
 class ModListGroupCategoriesProxy;
@@ -79,8 +80,12 @@ public:
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void storeSettings(QSettings &settings);
+  void storeSettings(QSettings &settings) override;
   void readSettings();
+
+  virtual void lock() override;
+  virtual void unlock() override;
+  virtual bool unlockClicked() override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
@@ -91,9 +96,6 @@ public:
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
-
-  bool setCurrentProfile(int index);
-  bool setCurrentProfile(const QString &name);
 
   void createFirstProfile();
 
@@ -106,11 +108,7 @@ public:
 
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
-  void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
-
-  HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-
-  bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL);
+  void processLOOTOut(const std::string &lootOut, std::string &errorMessages, QProgressDialog &dialog);
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
@@ -120,10 +118,10 @@ public:
 
   virtual void disconnectPlugins();
 
-  virtual bool close();
-  virtual void setEnabled(bool enabled);
-
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+
+  virtual bool closeWindow();
+  virtual void setWindowEnabled(bool enabled);
 
 public slots:
 
@@ -161,8 +159,6 @@ protected:
 
 private:
 
-  void refreshModList(bool saveChanges = true);
-
   void actionToToolButton(QAction *&sourceAction);
 
   void updateToolBar();
@@ -172,13 +168,10 @@ private:
 
   void startSteam();
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
-
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
-  void refreshDirectoryStructure();
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod();
+  void installMod(QString fileName = "");
 
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
@@ -275,6 +268,8 @@ private:
   QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
+  QStringList m_DefaultArchives;
+
   QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
@@ -322,6 +317,8 @@ private:
 
   bool m_DidUpdateMasterList;
 
+  LockedDialog *m_LockDialog { nullptr };
+
 private slots:
 
   void showMessage(const QString &message);
@@ -363,7 +360,6 @@ private slots:
   void linkMenu();
 
   void languageChange(const QString &newLanguage);
-  void modStatusChanged(unsigned int index);
   void saveSelectionChanged(QListWidgetItem *newItem);
 
   void windowTutorialFinished(const QString &windowName);
@@ -385,7 +381,6 @@ private slots:
 
   void linkClicked(const QString &url);
 
-  void installDownload(int index);
   void updateAvailable();
 
   void motdReceived(const QString &motd);
@@ -402,7 +397,7 @@ private slots:
   void modDetailsUpdated(bool success);
   void modlistChanged(int row);
 
-  void modInstalled();
+  void modInstalled(const QString &modName);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
@@ -436,7 +431,7 @@ private slots:
 
   void startExeAction();
 
-  void checkBSAList(const QStringList &defaultArchives);
+  void checkBSAList();
 
   void updateProblemsButton();
 
@@ -464,8 +459,6 @@ private slots:
    */
   void allowListResize();
 
-  void downloadSpeed(const QString &serverName, int bytesPerSecond);
-
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
   void overwriteClosed(int);
@@ -479,7 +472,6 @@ private slots:
   void about();
   void delayedRemove();
 
-  void requestDownload(const QUrl &url, QNetworkReply *reply);
   void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 

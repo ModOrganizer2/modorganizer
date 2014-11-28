@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "utility.h"
 #include "selfupdater.h"
+#include "settings.h"
 #include "persistentcookiejar.h"
 #include <QMessageBox>
 #include <QPushButton>
@@ -48,8 +49,9 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   , m_MOVersion(moVersion)
   , m_LoginAttempted(false)
 {
+
   setCookieJar(new PersistentCookieJar(
-      QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/nexus_cookies.dat", this));
+      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 }
 
 NXMAccessManager::~NXMAccessManager()

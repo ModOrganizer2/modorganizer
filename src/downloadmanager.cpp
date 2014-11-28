@@ -980,7 +980,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
   int index = 0;
   try {
     DownloadInfo *info = findDownload(this->sender(), &index);
-    if (info != NULL) {
+    if (info != nullptr) {
       if (info->m_State == STATE_CANCELING) {
         setState(info, STATE_CANCELED);
       } else if (info->m_State == STATE_PAUSING) {

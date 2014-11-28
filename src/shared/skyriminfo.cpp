@@ -259,7 +259,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
       }
       if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if (::GetLastError() != ERROR_FILE_EXISTS) {
-          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
+          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false) + " to " + ToString(target, false));
         }
       }
     }

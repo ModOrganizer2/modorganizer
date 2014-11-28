@@ -59,7 +59,8 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
   : m_SaveTimer(NULL)
 {
   initTimer();
-  QString profilesDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()));
+  QString profilesDir = qApp->property("datapath").toString() + "/" + ToQString(AppConfig::profilesPath());
+qDebug("pd %s", qPrintable(profilesDir));
   QDir profileBase(profilesDir);
 
   QString fixedName = name;
@@ -78,6 +79,7 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
     touchFile("modlist.txt");
     touchFile("archives.txt");
 
+qDebug("fp %s", qPrintable(fullPath));
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
@@ -88,8 +90,8 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
 }
 
 
-Profile::Profile(const QDir& directory)
-  : m_Directory(directory), m_SaveTimer(NULL)
+Profile::Profile(const QDir &directory)
+  : m_Directory(directory), m_SaveTimer(nullptr)
 {
   initTimer();
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {

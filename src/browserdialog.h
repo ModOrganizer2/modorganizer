@@ -23,7 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserview.h"
 #include "tutorialcontrol.h"
 #include <QDialog>
-#include <QProgressBar>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTimer>

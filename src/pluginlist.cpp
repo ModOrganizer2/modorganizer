@@ -166,7 +166,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
           originName = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), originName, ToQString(current->getFullPath()), hasIni));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni));
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
@@ -1168,7 +1168,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 }
 
 
-PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
+PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),

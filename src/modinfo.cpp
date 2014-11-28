@@ -476,6 +476,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   , m_Path(path.absolutePath())
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
+  , m_NexusBridge()
 {
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();

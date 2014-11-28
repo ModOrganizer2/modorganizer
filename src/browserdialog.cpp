@@ -24,11 +24,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "persistentcookiejar.h"
 
-#include <gameinfo.h>
 #include "json.h"
 
 #include <utility.h>
 #include <gameinfo.h>
+#include "settings.h"
 #include <QNetworkCookieJar>
 #include <QNetworkCookie>
 #include <QMenu>
@@ -49,7 +49,7 @@ BrowserDialog::BrowserDialog(QWidget *parent)
   ui->setupUi(this);
 
   m_AccessManager->setCookieJar(new PersistentCookieJar(
-      QDir::fromNativeSeparators(MOBase::ToQString(MOShared::GameInfo::instance().getCacheDir())) + "/cookies.dat", this));
+      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/cookies.dat")));
 
   Qt::WindowFlags flags = windowFlags() | Qt::WindowMaximizeButtonHint | Qt::WindowMinimizeButtonHint;
   Qt::WindowFlags helpFlag = Qt::WindowContextHelpButtonHint;

@@ -27,12 +27,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "skyriminfo.h"
 #include "util.h"
 
+#include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 #include <shlobj.h>
 #include <sstream>
 #include <cassert>
-#include <boost/assign.hpp>
-#include <boost/format.hpp>
 
 namespace MOShared {
 
@@ -49,7 +49,7 @@ GameInfo::GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDi
 
 void GameInfo::cleanup() {
   delete GameInfo::s_Instance;
-  GameInfo::s_Instance = NULL;
+  GameInfo::s_Instance = nullptr;
 }
 
 
@@ -126,7 +126,7 @@ bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &moDataD
 
 GameInfo &GameInfo::instance()
 {
-  assert(s_Instance != NULL);
+  assert(s_Instance != nullptr && "gameinfo not yet initialized");
   return *s_Instance;
 }
 
@@ -148,18 +148,6 @@ std::wstring GameInfo::getProfilesDir() const
 std::wstring GameInfo::getIniFilename() const
 {
   return m_OrganizerDirectory + L"\\ModOrganizer.ini";
-}
-
-
-std::wstring GameInfo::getDownloadDir() const
-{
-  return m_OrganizerDirectory + L"\\downloads";
-}
-
-
-std::wstring GameInfo::getCacheDir() const
-{
-  return m_OrganizerDirectory + L"\\webcache";
 }
 
 

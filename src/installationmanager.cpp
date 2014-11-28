@@ -68,7 +68,8 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 
 InstallationManager::InstallationManager()
-  : m_InstallationProgress(nullptr), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
+  : m_InstallationProgress(nullptr)
+  , m_SupportedExtensions({ "zip", "rar", "7z", "fomod", "001" })
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
