@@ -563,17 +563,19 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolde
 }
 
 
-void DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
+bool DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
 {
   size_t pos = filePath.find_first_of(L"\\/");
   if (pos == std::string::npos) {
-    this->remove(filePath, origin);
+    return this->remove(filePath, origin);
   } else {
     std::wstring dirName = filePath.substr(0, pos);
     std::wstring rest = filePath.substr(pos + 1);
     DirectoryEntry *entry = getSubDirectoryRecursive(dirName, false);
     if (entry != NULL) {
-      entry->removeFile(rest, origin);
+      return entry->removeFile(rest, origin);
+    } else {
+      return false;
     }
   }
 }
@@ -894,14 +896,16 @@ void FileRegister::unregisterFile(FileEntry::Ptr file)
 }
 
 
-void FileRegister::removeFile(FileEntry::Index index)
+bool FileRegister::removeFile(FileEntry::Index index)
 {
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {
     unregisterFile(iter->second);
     m_Files.erase(index);
+    return true;
   } else {
     log("invalid file index for remove: %lu", index);
+    return false;
   }
 }
 

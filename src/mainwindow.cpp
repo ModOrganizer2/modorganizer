@@ -4334,7 +4334,7 @@ void MainWindow::installTranslator(const QString &name)
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if (m_CurrentLanguage != "en_US") {
+    if ((m_CurrentLanguage != "en-US") && (m_CurrentLanguage != "en_US")) {
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
@@ -5238,6 +5238,9 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_groupCombo_currentIndexChanged(int index)
 {
+  if (m_ModListSortProxy == NULL) {
+    return;
+  }
   QAbstractProxyModel *newModel = NULL;
   switch (index) {
     case 1: {

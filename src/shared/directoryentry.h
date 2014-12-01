@@ -184,7 +184,7 @@ public:
 
   size_t size() const { return m_Files.size(); }
 
-  void removeFile(FileEntry::Index index);
+  bool removeFile(FileEntry::Index index);
   void removeOrigin(FileEntry::Index index, int originID);
   void removeOriginMulti(std::set<FileEntry::Index> indices, int originID, time_t notAfter);
 
@@ -263,7 +263,7 @@ public:
   void removeFile(FileEntry::Index index);
 
   // remove the specified file from the tree. This can be a path leading to a file in a subdirectory
-  void removeFile(const std::wstring &filePath, int *origin = NULL);
+  bool removeFile(const std::wstring &filePath, int *origin = NULL);
 
   /**
    * @brief remove the specified directory
@@ -271,7 +271,7 @@ public:
    */
   void removeDir(const std::wstring &path);
 
-  void remove(const std::wstring &fileName, int *origin) {
+  bool remove(const std::wstring &fileName, int *origin) {
     auto iter = m_Files.find(ToLower(fileName));
     if (iter != m_Files.end()) {
       if (origin != NULL) {
@@ -281,7 +281,9 @@ public:
           *origin = entry->getOrigin(ignore);
         }
       }
-      m_FileRegister->removeFile(iter->second);
+      return m_FileRegister->removeFile(iter->second);
+    } else {
+      return false;
     }
   }
 
