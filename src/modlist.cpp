@@ -430,7 +430,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       } break;
       case COL_VERSION: {
         VersionInfo::VersionScheme scheme = info->getVersion().scheme();
-        VersionInfo version(value.toString(), scheme);
+        VersionInfo version(value.toString(), scheme, true);
         if (version.isValid()) {
           info->setVersion(version);
           result = true;
