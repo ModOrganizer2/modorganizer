@@ -203,8 +203,9 @@ void Profile::createTweakedIniFile()
   }
 
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
-    if (m_ModStatus[i].m_Enabled) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+    unsigned int idx = modIndexByPriority(i);
+    if ((idx != UINT_MAX) && m_ModStatus[idx].m_Enabled) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(idx);
       mergeTweaks(modInfo, tweakedIni);
     }
   }
