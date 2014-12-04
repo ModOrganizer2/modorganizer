@@ -35,14 +35,14 @@ void ProblemsDialog::runDiagnosis()
       QTreeWidgetItem *newItem = new QTreeWidgetItem();
       newItem->setText(0, diagnose->shortDescription(key));
       newItem->setData(0, Qt::UserRole, diagnose->fullDescription(key));
-      newItem->setData(1, Qt::UserRole, qVariantFromValue(reinterpret_cast<void*>(diagnose)));
-      newItem->setData(1, Qt::UserRole + 1, key);
 
       ui->problemsWidget->addTopLevelItem(newItem);
 
       if (diagnose->hasGuidedFix(key)) {
         newItem->setText(1, tr("Fix"));
         QPushButton *fixButton = new QPushButton(tr("Fix"));
+        fixButton->setProperty("fix", qVariantFromValue(reinterpret_cast<void*>(diagnose)));
+        fixButton->setProperty("key", key);
         connect(fixButton, SIGNAL(clicked()), this, SLOT(startFix()));
         ui->problemsWidget->setItemWidget(newItem, 1, fixButton);
       } else {
@@ -66,8 +66,13 @@ void ProblemsDialog::selectionChanged()
 
 void ProblemsDialog::startFix()
 {
-  IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(ui->problemsWidget->currentItem()->data(1, Qt::UserRole).value<void*>());
-  plugin->startGuidedFix(ui->problemsWidget->currentItem()->data(1, Qt::UserRole + 1).toUInt());
+  QObject *fixButton = QObject::sender();
+  if (fixButton == NULL) {
+    qWarning("no button");
+    return;
+  }
+  IPluginDiagnose *plugin = reinterpret_cast<IPluginDiagnose*>(fixButton ->property("fix").value<void*>());
+  plugin->startGuidedFix(fixButton ->property("key").toUInt());
   runDiagnosis();
 }
 
