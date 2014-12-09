@@ -113,14 +113,14 @@ Executable &ExecutablesList::find(const QString &title)
 }
 
 
-Executable *ExecutablesList::findExe(const QString &title)
+std::vector<Executable>::iterator ExecutablesList::findExe(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
     if (iter->m_Title == title) {
-      return &*iter;
+      return iter;
     }
   }
-  return NULL;
+  return m_Executables.end();
 }
 
 
@@ -133,8 +133,8 @@ bool ExecutablesList::titleExists(const QString &title) const
 
 void ExecutablesList::addExecutable(const Executable &executable)
 {
-  Executable *existingExe = findExe(executable.m_Title);
-  if (existingExe != NULL) {
+  auto existingExe = findExe(executable.m_Title);
+  if (existingExe != m_Executables.end()) {
     *existingExe = executable;
   } else {
     m_Executables.push_back(executable);
@@ -142,13 +142,26 @@ void ExecutablesList::addExecutable(const Executable &executable)
 }
 
 
+void ExecutablesList::position(const QString &title, bool toolbar, int pos)
+{
+  auto existingExe = findExe(title);
+  if (existingExe != m_Executables.end()) {
+    Executable temp = *existingExe;
+    temp.m_Toolbar = toolbar;
+    m_Executables.erase(existingExe);
+    m_Executables.insert(m_Executables.begin() + pos, temp);
+  }
+}
+
+
 void ExecutablesList::addExecutable(const QString &title, const QString &executableName, const QString &arguments,
                                     const QString &workingDirectory, CloseMOStyle closeMO, const QString &steamAppID,
-                                    bool custom, bool toolbar)
+                                    bool custom, bool toolbar, int pos)
 {
   QFileInfo file(executableName);
-  Executable *existingExe = findExe(title);
-  if (existingExe != NULL) {
+  auto existingExe = findExe(title);
+
+  if (existingExe != m_Executables.end()) {
     existingExe->m_Title = title;
     existingExe->m_CloseMO = closeMO;
     existingExe->m_BinaryInfo = file;
@@ -157,6 +170,11 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     existingExe->m_SteamAppID = steamAppID;
     existingExe->m_Custom = custom;
     existingExe->m_Toolbar = toolbar;
+    if (pos >= 0) {
+      Executable temp = *existingExe;
+      m_Executables.erase(existingExe);
+      m_Executables.insert(m_Executables.begin() + pos, temp);
+    }
   } else {
     Executable newExe;
     newExe.m_Title = title;
@@ -167,7 +185,11 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = true;
     newExe.m_Toolbar = toolbar;
-    m_Executables.push_back(newExe);
+    if ((pos < 0) || (pos >= m_Executables.size())) {
+      m_Executables.push_back(newExe);
+    } else {
+      m_Executables.insert(m_Executables.begin() + pos, newExe);
+    }
   }
 }
 

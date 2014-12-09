@@ -114,7 +114,17 @@ public:
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID, bool custom, bool toolbar);
+  void addExecutable(const QString &title, const QString &executableName, const QString &arguments,
+                     const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID,
+                     bool custom, bool toolbar, int pos = -1);
+
+  /**
+   * @brief change position of an executable which is expected to exist
+   * @param title title of the executable
+   * @param toolbar enable/disable placement on the toolbar
+   * @param pos new position for the executable
+   */
+  void position(const QString &title, bool toolbar, int pos);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -142,7 +152,7 @@ public:
 
 private:
 
-  Executable *findExe(const QString &title);
+  std::vector<Executable>::iterator findExe(const QString &title);
 
   void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments, const QString &workingDirectory, MOShared::CloseMOStyle closeMO, const QString &steamAppID);
 

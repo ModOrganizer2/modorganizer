@@ -464,14 +464,20 @@ int main(int argc, char *argv[])
     for (int i = 0; i < numCustomExecutables; ++i) {
       settings.setArrayIndex(i);
       CloseMOStyle closeMO = settings.value("closeOnStart").toBool() ? DEFAULT_CLOSE : DEFAULT_STAY;
-      executablesList.addExecutable(settings.value("title").toString(),
-                                    settings.value("binary").toString(),
-                                    settings.value("arguments").toString(),
-                                    settings.value("workingDirectory", "").toString(),
-                                    closeMO,
-                                    settings.value("steamAppID", "").toString(),
-                                    settings.value("custom", true).toBool(),
-                                    settings.value("toolbar", false).toBool());
+      bool custom = settings.value("custom", true).toBool();
+      if (custom) {
+        executablesList.addExecutable(settings.value("title").toString(),
+                                      settings.value("binary").toString(),
+                                      settings.value("arguments").toString(),
+                                      settings.value("workingDirectory", "").toString(),
+                                      closeMO,
+                                      settings.value("steamAppID", "").toString(),
+                                      custom,
+                                      settings.value("toolbar", false).toBool(),
+                                      i);
+      } else {
+        executablesList.position(settings.value("title").toString(), settings.value("toolbar", false).toBool(), i);
+      }
     }
 
     settings.endArray();

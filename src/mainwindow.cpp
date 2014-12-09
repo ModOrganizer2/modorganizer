@@ -2248,16 +2248,16 @@ void MainWindow::storeSettings()
     int count = 0;
     for (; current != end; ++current) {
       const Executable &item = *current;
-      if (item.m_Custom || item.m_Toolbar) {
-        settings.setArrayIndex(count++);
+      settings.setArrayIndex(count++);
+      settings.setValue("title", item.m_Title);
+      settings.setValue("custom", item.m_Custom);
+      settings.setValue("toolbar", item.m_Toolbar);
+      if (item.m_Custom) {
         settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-        settings.setValue("title", item.m_Title);
         settings.setValue("arguments", item.m_Arguments);
         settings.setValue("workingDirectory", item.m_WorkingDirectory);
         settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
         settings.setValue("steamAppID", item.m_SteamAppID);
-        settings.setValue("custom", item.m_Custom);
-        settings.setValue("toolbar", item.m_Toolbar);
       }
     }
     settings.endArray();
