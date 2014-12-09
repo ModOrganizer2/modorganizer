@@ -524,7 +524,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     return false;
   }
 
-  QString targetDirectoryNative = m_ModsDirectory.mid(0).append("\\").append(modName);
+  QString targetDirectoryNative = m_ModsDirectory + "\\" + modName;
   QString targetDirectory = QDir::fromNativeSeparators(targetDirectoryNative);
 
   qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
@@ -548,7 +548,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
 
   m_InstallationProgress.hide();
 
-  QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
+  QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
   // overwrite settings only if they are actually are available or haven't been set before
   if ((modID != 0) || !settingsFile.contains("modid")) {

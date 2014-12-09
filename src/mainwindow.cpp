@@ -1001,18 +1001,28 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 
 bool MainWindow::testForSteam()
 {
-  DWORD processIDs[1024];
+  size_t currentSize = 1024;
+  std::unique_ptr<DWORD[]> processIDs;
   DWORD bytesReturned;
-  if (!::EnumProcesses(processIDs, sizeof(processIDs), &bytesReturned)) {
-    qWarning("failed to determine if steam is running");
-    return true;
+  bool success = false;
+  while (!success) {
+    processIDs.reset(new DWORD[currentSize]);
+    if (!::EnumProcesses(processIDs.get(), currentSize * sizeof(DWORD), &bytesReturned)) {
+      qWarning("failed to determine if steam is running");
+      return true;
+    }
+    if (bytesReturned == (currentSize * sizeof(DWORD))) {
+      // maximum size used, list probably truncated
+      currentSize *= 2;
+    } else {
+      success = true;
+    }
   }
-
   TCHAR processName[MAX_PATH];
   for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
     memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
     if (processIDs[i] != 0) {
-      HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
+      HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
 
       if (process != NULL) {
         HMODULE module;
@@ -1020,12 +1030,14 @@ bool MainWindow::testForSteam()
 
         // first module in a process is always the binary
         if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
-          GetModuleBaseName(process, module, processName, MAX_PATH);
+          ::GetModuleBaseName(process, module, processName, MAX_PATH);
           if ((_tcsicmp(processName, TEXT("steam.exe")) == 0) ||
               (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
             return true;
           }
         }
+      } else {
+        qDebug("can't open process %lu: %lu", processIDs[i], ::GetLastError());
       }
     }
   }
@@ -2105,7 +2117,7 @@ void MainWindow::saveModMetas()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->saveMeta();
   }
-  }
+}
 
 
 void MainWindow::fixCategories()
@@ -2962,7 +2974,6 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 
     QFile modList(modlistName);
     if (modList.exists()) {
-      qDebug("rewrite modlist %s", QDir::toNativeSeparators(modlistName).toUtf8().constData());
       renameModInList(modList, oldName, newName);
     }
   }
@@ -4394,7 +4405,6 @@ void MainWindow::installDownload(int index)
     }
 
     m_CurrentProfile->writeModlistNow();
-
     bool hasIniTweaks = false;
     m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
     if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
