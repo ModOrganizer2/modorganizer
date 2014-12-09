@@ -446,6 +446,13 @@ public:
   virtual QStringList archives() const = 0;
 
   /**
+   * @brief adds the information that a file has been installed into this mod
+   * @param modId id of the mod installed
+   * @param fileId id of the file installed
+   */
+  virtual void addInstalledFile(int modId, int fileId) = 0;
+
+  /**
    * @brief test if the mod belongs to the specified category
    *
    * @param categoryID the category to test for.
@@ -847,6 +854,8 @@ public:
 
   virtual QStringList archives() const;
 
+  virtual void addInstalledFile(int modId, int fileId);
+
   /**
    * @brief stores meta information back to disk
    */
@@ -876,6 +885,7 @@ private:
   QDateTime m_LastNexusQuery;
 
   int m_NexusID;
+  std::set<std::pair<int, int>> m_InstalledFileIDs;
 
   bool m_MetaInfoChanged;
   MOBase::VersionInfo m_NewestVersion;
@@ -912,6 +922,8 @@ public:
   virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator&,
                              QList<MOBase::ModRepositoryFileInfo*>::const_iterator&) {}
   virtual QString getNexusDescription() const { return QString(); }
+
+  virtual void addInstalledFile(int, int) {}
 
 private:
 
@@ -962,6 +974,7 @@ public:
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual QString getNexusDescription() const { return QString(); }
   virtual QStringList archives() const;
+  virtual void addInstalledFile(int, int) {}
 
 private:
 
@@ -1022,6 +1035,7 @@ public:
   virtual QStringList archives() const { return m_Archives; }
   virtual QStringList stealFiles() const { return m_Archives + QStringList(m_ReferenceFile); }
   virtual bool alwaysEnabled() const { return true; }
+  virtual void addInstalledFile(int, int) {}
 
 protected:
 

@@ -2446,6 +2446,12 @@ IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
   settingsFile.setValue("newestVersion", "");
   settingsFile.setValue("category", 0);
   settingsFile.setValue("installationFile", "");
+
+  if (!merge) {
+    settingsFile.beginWriteArray("installedFiles", 0);
+    settingsFile.endArray();
+  }
+
   return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
 }
 
@@ -4371,6 +4377,7 @@ void MainWindow::installDownload(int index)
   try {
     QString fileName = m_DownloadManager.getFilePath(index);
     int modID = m_DownloadManager.getModID(index);
+    int fileID = m_DownloadManager.getFileInfo(index)->fileID;
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
@@ -4400,6 +4407,7 @@ void MainWindow::installDownload(int index)
       int modIndex = ModInfo::getIndex(modName);
       if (modIndex != UINT_MAX) {
         ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        modInfo->addInstalledFile(modID, fileID);
 
         if (hasIniTweaks &&
             (QMessageBox::question(this, tr("Configure Mod"),

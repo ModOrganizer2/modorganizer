@@ -568,6 +568,14 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   }
   settingsFile.setValue("installationFile", m_CurrentFile);
 
+  if (!merge) {
+    // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
+    // btw.: installedFiles were written with beginWriteArray but we can still clear it with beginGroup. nice
+    settingsFile.beginGroup("installedFiles");
+    settingsFile.remove("");
+    settingsFile.endGroup();
+  }
+
   return true;
 }
 

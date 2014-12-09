@@ -525,6 +525,13 @@ void ModInfoRegular::readMeta()
     }
   }
 
+  int numFiles = metaFile.beginReadArray("installedFiles");
+  for (int i = 0; i < numFiles; ++i) {
+    metaFile.setArrayIndex(i);
+    m_InstalledFileIDs.insert(std::make_pair(metaFile.value("modid").toInt(), metaFile.value("fileid").toInt()));
+  }
+  metaFile.endArray();
+
   m_MetaInfoChanged = false;
 }
 
@@ -547,6 +554,16 @@ void ModInfoRegular::saveMeta()
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
+
+      metaFile.beginWriteArray("installedFiles");
+      int idx = 0;
+      for (auto iter = m_InstalledFileIDs.begin(); iter != m_InstalledFileIDs.end(); ++iter) {
+        metaFile.setArrayIndex(idx++);
+        metaFile.setValue("modid", iter->first);
+        metaFile.setValue("fileid", iter->second);
+      }
+      metaFile.endArray();
+
       metaFile.sync(); // sync needs to be called to ensure the file is created
 
       if (metaFile.status() == QSettings::NoError) {
@@ -880,6 +897,12 @@ QStringList ModInfoRegular::archives() const
     result.append(this->absolutePath() + "/" + archive);
   }
   return result;
+}
+
+void ModInfoRegular::addInstalledFile(int modId, int fileId)
+{
+  m_InstalledFileIDs.insert(std::make_pair(modId, fileId));
+  m_MetaInfoChanged = true;
 }
 
 std::vector<QString> ModInfoRegular::getIniTweaks() const
