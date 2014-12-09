@@ -232,7 +232,7 @@ void ModInfo::updateIndices()
   QRegExp backupRegEx(".*backup[0-9]*$");
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
-    QString modName = s_Collection[i]->internalName();
+    QString modName = s_Collection[i]->name();
     int modID = s_Collection[i]->getNexusID();
     s_ModsByName[modName] = i;
     s_ModsByModID[modID].push_back(i);

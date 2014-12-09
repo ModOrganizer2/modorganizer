@@ -317,13 +317,6 @@ public:
   virtual QString name() const = 0;
 
   /**
-   * @brief getter for an internal name. This is usually the same as the regular name, but with special mod types it might be
-   *        this is used to distinguish between mods that have the same visible name
-   * @return internal mod name
-   */
-  virtual QString internalName() const { return name(); }
-
-  /**
    * @brief getter for the mod path
    *
    * @return the (absolute) path to the mod
@@ -1018,7 +1011,6 @@ public:
   virtual void endorse(bool) {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;
-  virtual QString internalName() const { return name() + INT_IDENTIFIER; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
   virtual QString absolutePath() const;

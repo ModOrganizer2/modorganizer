@@ -2431,7 +2431,8 @@ IModInterface *MainWindow::getMod(const QString &name)
 
 IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
 {
-  if (!m_InstallationManager.testOverwrite(name)) {
+  bool merge = false;
+  if (!m_InstallationManager.testOverwrite(name, &merge)) {
     return NULL;
   }
 
