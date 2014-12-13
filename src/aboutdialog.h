@@ -48,7 +48,8 @@ private:
     LICENSE_BSD3,
     LICENSE_BOOST,
     LICENSE_CCBY3,
-    LICENSE_ZLIB
+    LICENSE_ZLIB,
+    LICENSE_APACHE2
   };
 
 private:

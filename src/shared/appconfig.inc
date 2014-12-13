@@ -1,5 +1,6 @@
 APPPARAM(std::wstring, translationPrefix, L"organizer")
 APPPARAM(std::wstring, pluginPath, L"plugins")
+APPPARAM(std::wstring, overwritePath, L"overwrite")
 APPPARAM(std::wstring, stylesheetsPath, L"stylesheets")
 APPPARAM(std::wstring, profileTweakIni, L"profile_tweaks.ini")
 APPPARAM(std::wstring, logFile, L"ModOrganizer.log")

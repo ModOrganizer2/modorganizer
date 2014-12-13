@@ -48,6 +48,13 @@ QString OrganizerProxy::downloadsPath() const
   return QDir::fromNativeSeparators(m_Proxied->m_Settings.getDownloadDirectory());
 }
 
+QString OrganizerProxy::overwritePath() const
+{
+  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()))
+         + "/"
+         + ToQString(AppConfig::overwritePath());
+}
+
 VersionInfo OrganizerProxy::appVersion() const
 {
   return m_Proxied->m_Updater.getVersion();

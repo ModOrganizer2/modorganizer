@@ -35,6 +35,7 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   m_LicenseFiles[LICENSE_BOOST] = "boost.txt";
   m_LicenseFiles[LICENSE_CCBY3] = "by-sa3.txt";
   m_LicenseFiles[LICENSE_ZLIB] = "zlib.txt";
+  m_LicenseFiles[LICENSE_APACHE2] = "apache-license-2.0.txt";
 
   addLicense("Qt 4.8.5", LICENSE_LGPL3);
   addLicense("Qt Json", LICENSE_GPL3);
@@ -46,6 +47,7 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   addLicense("NIF File Format Library", LICENSE_BSD3);
   addLicense("BOSS (modified)", LICENSE_GPL3);
   addLicense("Alphanum Algorithm", LICENSE_ZLIB);
+  addLicense("Castle Core", LICENSE_APACHE2);
 
   ui->nameLabel->setText(QString("<span style=\"font-size:12pt; font-weight:600;\">%1 %2</span>").arg(ui->nameLabel->text()).arg(version));
 #ifdef HGID
