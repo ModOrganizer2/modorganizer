@@ -273,6 +273,12 @@ public:
   virtual void setNexusDescription(const QString &description) = 0;
 
   /**
+   * @brief sets the file this mod was installed from
+   * @param fileName name of the file
+   */
+  virtual void setInstallationFile(const QString &fileName) = 0;
+
+  /**
    * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
    * @param categoryID the nexus category id
    * @note if a mapping is not possible, the category is set to the default value
@@ -705,6 +711,8 @@ public:
    */
   virtual void setNexusDescription(const QString &description);
 
+  virtual void setInstallationFile(const QString &fileName);
+
   /**
    * @brief sets the category id from a nexus category id. Conversion to MO id happens internally
    * @param categoryID the nexus category id
@@ -945,6 +953,7 @@ public:
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void ignoreUpdate(bool) {}
   virtual void setNexusDescription(const QString&) {}
+  virtual void setInstallationFile(const QString&) {}
   virtual void addNexusCategory(int) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}
@@ -1004,6 +1013,7 @@ public:
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void ignoreUpdate(bool) {}
   virtual void setNexusDescription(const QString&) {}
+  virtual void setInstallationFile(const QString&) {}
   virtual void addNexusCategory(int) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}

@@ -485,7 +485,6 @@ bool ModInfoRegular::isEmpty() const
 void ModInfoRegular::readMeta()
 {
   QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
-
   m_Notes            = metaFile.value("notes", "").toString();
   m_NexusID          = metaFile.value("modid", -1).toInt();
   m_Version.parse(metaFile.value("version", "").toString());
@@ -547,6 +546,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("newestVersion", m_NewestVersion.canonicalString());
       metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
       metaFile.setValue("version", m_Version.canonicalString());
+      metaFile.setValue("installationFile", m_InstallationFile);
       metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
@@ -737,13 +737,21 @@ void ModInfoRegular::setVersion(const VersionInfo &version)
   m_MetaInfoChanged = true;
 }
 
-void ModInfoRegular::setNewestVersion(const VersionInfo &version) {
+void ModInfoRegular::setNewestVersion(const VersionInfo &version)
+{
   m_NewestVersion = version;
+  m_MetaInfoChanged = true;
 }
 
 void ModInfoRegular::setNexusDescription(const QString &description)
 {
   m_NexusDescription = description;
+  m_MetaInfoChanged = true;
+}
+
+void ModInfoRegular::setInstallationFile(const QString &fileName)
+{
+  m_InstallationFile = fileName;
   m_MetaInfoChanged = true;
 }
 
