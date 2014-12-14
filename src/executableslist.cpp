@@ -113,6 +113,17 @@ Executable &ExecutablesList::find(const QString &title)
 }
 
 
+Executable &ExecutablesList::findByBinary(const QFileInfo &info)
+{
+  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
+    if (info == iter->m_BinaryInfo) {
+      return *iter;
+    }
+  }
+  throw std::runtime_error("invalid info");
+}
+
+
 std::vector<Executable>::iterator ExecutablesList::findExe(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {

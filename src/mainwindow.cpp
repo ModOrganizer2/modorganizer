@@ -5409,6 +5409,12 @@ HANDLE MainWindow::startApplication(const QString &executable, const QStringList
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();
     }
+    try {
+      const Executable &exe = m_ExecutablesList.findByBinary(binary);
+      steamAppID = exe.m_SteamAppID;
+    } catch (const std::runtime_error&)  {
+      // nop
+    }
   } else {
     // only a file name, search executables list
     try {

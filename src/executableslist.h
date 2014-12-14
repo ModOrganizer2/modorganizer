@@ -94,6 +94,14 @@ public:
   Executable &find(const QString &tilte);
 
   /**
+   * @brief find an executable by a fileinfo structure
+   * @param info the info object to search for
+   * @return the executable
+   * @exception runtime_error will throw an exception if the name is not correct
+   */
+  Executable &findByBinary(const QFileInfo &info);
+
+  /**
    * @brief determine if an executable exists
    * @param title the title of the executable to look up
    * @return true if the executable exists, false otherwise
