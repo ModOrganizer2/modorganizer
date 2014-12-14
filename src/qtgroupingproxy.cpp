@@ -866,6 +866,23 @@ QtGroupingProxy::hasChildren( const QModelIndex &parent ) const
   return sourceModel()->hasChildren( mapToSource( parent ) );
 }
 
+bool
+QtGroupingProxy::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+  QModelIndex idx = index(row, column, parent);
+  if (isGroup(idx)) {
+    QList<int> childRows = m_groupHash.value(idx.row());
+    int max = *std::max_element(childRows.begin(), childRows.end());
+
+    QModelIndex newIdx = mapToSource(index(max, column, idx));
+    return sourceModel()->dropMimeData(data, action, max, column, newIdx);
+  } else {
+    QModelIndex idx = mapToSource(index(row, column, parent));
+
+    return sourceModel()->dropMimeData(data, action, idx.row(), idx.column(), idx.parent());
+  }
+}
+
 void
 QtGroupingProxy::modelRowsAboutToBeInserted( const QModelIndex &parent, int start, int end )
 {

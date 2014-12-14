@@ -73,6 +73,7 @@ public:
   virtual bool canFetchMore( const QModelIndex &parent ) const;
   virtual void fetchMore( const QModelIndex &parent );
   virtual bool hasChildren( const QModelIndex &parent = QModelIndex() ) const;
+  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 
   /* QtGroupingProxy methods */
   virtual QModelIndex addEmptyGroup( const RowData &data );
@@ -162,6 +163,7 @@ private:
   int m_groupedRole;
 
   int m_aggregateRole;
+
 };
 
 #endif //GROUPINGPROXY_H

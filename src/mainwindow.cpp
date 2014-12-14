@@ -2537,7 +2537,6 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
       qCritical("failed to create IShellLink instance");
       return result;
     }
-      if (!SUCCEEDED(result)) return result;
 
     result = shellLink->SetPath(targetFileName);
     if (!SUCCEEDED(result)) {
@@ -2545,6 +2544,7 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
       shellLink->Release();
       return result;
     }
+
     result = shellLink->SetArguments(arguments);
     if (!SUCCEEDED(result)) {
       qCritical("failed to set arguments: %ls", arguments);
@@ -2570,7 +2570,7 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
       }
     }
 
-    IPersistFile* persistFile;
+    IPersistFile *persistFile;
     result = shellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&persistFile);
     if (SUCCEEDED(result)) {
       wchar_t linkFileNameW[MAX_PATH];

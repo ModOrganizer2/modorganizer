@@ -21,10 +21,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "profile.h"
 #include "modlist.h"
+#include "messagedialog.h"
 #include <QMenu>
 #include <QCheckBox>
 #include <QWidgetAction>
-#include <QMessageBox>
+#include <QApplication>
+#include <QDebug>
 
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
@@ -65,9 +67,9 @@ void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 {
   Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
-  if (sortColumn() != ModList::COL_PRIORITY) {
+/*  if (sortColumn() != ModList::COL_PRIORITY) {
     flags &= ~Qt::ItemIsDragEnabled;
-  }
+  }*/
 
   return flags;
 }
@@ -321,6 +323,10 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
 {
+    if (sortColumn() != ModList::COL_PRIORITY) {
+      MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), qApp->activeWindow());
+      return false;
+    }
     if ((row == -1) && (column == -1)) {
       return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
     }
