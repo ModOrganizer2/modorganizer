@@ -213,7 +213,7 @@ private:
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod();
-  MOBase::IModInterface *installMod(const QString &fileName);
+  MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName = QString());
   MOBase::IModInterface *getMod(const QString &name);
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   bool removeMod(MOBase::IModInterface *mod);

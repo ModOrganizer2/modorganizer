@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugininstallercustom.h"
 #include "nexusinterface.h"
 #include "selectiondialog.h"
+#include "modinfo.h"
 #include <scopeguard.h>
 #include <installationtester.h>
 #include <gameinfo.h>
@@ -454,11 +455,11 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           if (!ensureValidModName(modName)) {
             return false;
           }
-          targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory.mid(0).append("\\").append(modName));
+          targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory) + "/" + modName;
         }
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_REPLACE) {
         // save original settings like categories. Because it makes sense
-        QString metaFilename = targetDirectory.mid(0).append("/meta.ini");
+        QString metaFilename = targetDirectory + "/meta.ini";
         QFile settingsFile(metaFilename);
         QByteArray originalSettings;
         if (settingsFile.open(QIODevice::ReadOnly)) {

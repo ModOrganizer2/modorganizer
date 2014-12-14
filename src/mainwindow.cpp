@@ -1036,8 +1036,6 @@ bool MainWindow::testForSteam()
             return true;
           }
         }
-      } else {
-        qDebug("can't open process %lu: %lu", processIDs[i], ::GetLastError());
       }
     }
   }
@@ -2393,7 +2391,7 @@ void MainWindow::installMod()
   }
 }
 
-IModInterface *MainWindow::installMod(const QString &fileName)
+IModInterface *MainWindow::installMod(const QString &fileName, const QString &initModName)
 {
   if (m_CurrentProfile == NULL) {
     return NULL;
@@ -2401,6 +2399,9 @@ IModInterface *MainWindow::installMod(const QString &fileName)
 
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
+  if (!initModName.isEmpty()) {
+    modName.update(initModName, GUESS_USER);
+  }
   m_CurrentProfile->writeModlistNow();
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
@@ -2450,9 +2451,9 @@ IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
 
-  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name);
+  QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()) + "/" + name;
 
-  QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
+  QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
   settingsFile.setValue("modid", 0);
   settingsFile.setValue("version", "");
@@ -3223,13 +3224,13 @@ void MainWindow::reinstallMod_clicked()
       if (fileInfo.exists()) {
         fullInstallationFile = installationFile;
       } else {
-        fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(fileInfo.fileName());
+        fullInstallationFile = m_DownloadManager.getOutputDirectory() + "/" + fileInfo.fileName();
       }
     } else {
-      fullInstallationFile = m_DownloadManager.getOutputDirectory().append("/").append(installationFile);
+      fullInstallationFile = m_DownloadManager.getOutputDirectory() + "/" + installationFile;
     }
     if (QFile::exists(fullInstallationFile)) {
-      installMod(fullInstallationFile);
+      installMod(fullInstallationFile, modInfo->name());
     } else {
       QMessageBox::information(this, tr("Failed"), tr("Installation file no longer exists"));
     }
