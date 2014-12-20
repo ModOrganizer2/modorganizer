@@ -2455,13 +2455,14 @@ IModInterface *MainWindow::createMod(GuessedValue<QString> &name)
 
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
-  settingsFile.setValue("modid", 0);
-  settingsFile.setValue("version", "");
-  settingsFile.setValue("newestVersion", "");
-  settingsFile.setValue("category", 0);
-  settingsFile.setValue("installationFile", "");
-
   if (!merge) {
+    settingsFile.setValue("modid", 0);
+    settingsFile.setValue("version", "");
+    settingsFile.setValue("newestVersion", "");
+    settingsFile.setValue("category", 0);
+    settingsFile.setValue("installationFile", "");
+
+
     settingsFile.beginWriteArray("installedFiles", 0);
     settingsFile.endArray();
   }
