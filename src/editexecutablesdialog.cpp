@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "editexecutablesdialog.h"
 #include "ui_editexecutablesdialog.h"
 #include "filedialogmemory.h"
+#include "stackdata.h"
 #include <QMessageBox>
 #include <Shellapi.h>
 #include <utility.h>
@@ -218,54 +219,13 @@ bool EditExecutablesDialog::executableChanged()
   }
 }
 
-
-void EditExecutablesDialog::on_executablesListBox_currentItemChanged(QListWidgetItem *current, QListWidgetItem*)
+void EditExecutablesDialog::on_executablesListBox_itemSelectionChanged()
 {
-  if (current == NULL) {
+  if (ui->executablesListBox->selectedItems().size() == 0) {
+    // deselected
     resetInput();
-    return;
-  }
-
-  if (executableChanged()) {
-    QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
-        tr("You made changes to the current executable, do you want to save them?"),
-        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-    if (res == QMessageBox::Cancel) {
-      return;
-    } else if (res == QMessageBox::Yes) {
-      // this invalidates the item passed as a a parameter
-      saveExecutable();
-
-      QTimer::singleShot(50, this, SLOT(delayedRefresh()));
-      return;
-    }
-  }
-
-  m_CurrentItem = current;
-
-  const Executable &selectedExecutable = current->data(Qt::UserRole).value<Executable>();
-
-  ui->titleEdit->setText(selectedExecutable.m_Title);
-  ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
-  ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
-  ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
-  ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == DEFAULT_CLOSE);
-  if (selectedExecutable.m_CloseMO == NEVER_CLOSE) {
-    ui->closeCheckBox->setEnabled(false);
-    ui->closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
-  } else {
-    ui->closeCheckBox->setEnabled(true);
-    ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
-  }
-  ui->removeButton->setEnabled(selectedExecutable.m_Custom);
-  ui->overwriteAppIDBox->setChecked(selectedExecutable.m_SteamAppID != 0);
-  if (selectedExecutable.m_SteamAppID != 0) {
-    ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
-  } else {
-    ui->appIDOverwriteEdit->clear();
   }
 }
-
 
 void EditExecutablesDialog::on_overwriteAppIDBox_toggled(bool checked)
 {
@@ -287,3 +247,49 @@ void EditExecutablesDialog::on_closeButton_clicked()
   this->accept();
 }
 
+void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
+{
+  if (current.isValid()) {
+    ui->executablesListBox->selectionModel()->clearSelection();
+    ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
+
+    if (executableChanged()) {
+      QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
+                                                              tr("You made changes to the current executable, do you want to save them?"),
+                                                              QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+      if (res == QMessageBox::Cancel) {
+        return;
+      } else if (res == QMessageBox::Yes) {
+        // this invalidates the item passed as a a parameter
+        saveExecutable();
+
+        QTimer::singleShot(50, this, SLOT(delayedRefresh()));
+        return;
+      }
+    }
+
+    m_CurrentItem = ui->executablesListBox->item(current.row());
+
+    const Executable &selectedExecutable = m_CurrentItem->data(Qt::UserRole).value<Executable>();
+
+    ui->titleEdit->setText(selectedExecutable.m_Title);
+    ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
+    ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
+    ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
+    ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == DEFAULT_CLOSE);
+    if (selectedExecutable.m_CloseMO == NEVER_CLOSE) {
+      ui->closeCheckBox->setEnabled(false);
+      ui->closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
+    } else {
+      ui->closeCheckBox->setEnabled(true);
+      ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
+    }
+    ui->removeButton->setEnabled(selectedExecutable.m_Custom);
+    ui->overwriteAppIDBox->setChecked(selectedExecutable.m_SteamAppID != 0);
+    if (selectedExecutable.m_SteamAppID != 0) {
+      ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
+    } else {
+      ui->appIDOverwriteEdit->clear();
+    }
+  }
+}

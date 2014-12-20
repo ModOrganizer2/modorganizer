@@ -74,9 +74,11 @@ private slots:
 
   void on_closeButton_clicked();
 
-  void on_executablesListBox_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-
   void delayedRefresh();
+
+  void on_executablesListBox_itemSelectionChanged();
+
+  void on_executablesListBox_clicked(const QModelIndex &index);
 
 private:
 
