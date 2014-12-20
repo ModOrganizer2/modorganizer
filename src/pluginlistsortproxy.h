@@ -40,8 +40,6 @@ public:
 
   explicit PluginListSortProxy(QObject *parent = 0);
 
-  unsigned int getEnabledColumns() const;
-
   void setEnabledColumns(unsigned int columns);
 
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
@@ -50,7 +48,6 @@ public:
 
 public slots:
 
-  void displayColumnSelection(const QPoint &pos);
   void updateFilter(const QString &filter);
 
 protected:
