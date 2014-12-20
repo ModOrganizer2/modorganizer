@@ -3964,22 +3964,24 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
-        switch (info->endorsedState()) {
-          case ModInfo::ENDORSED_TRUE: {
-            menu->addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
-          } break;
-          case ModInfo::ENDORSED_FALSE: {
-            menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
-            menu->addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
-          } break;
-          case ModInfo::ENDORSED_NEVER: {
-            menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
-          } break;
-          default: {
-            QAction *action = new QAction(tr("Endorsement state unknown"), menu);
-            action->setEnabled(false);
-            menu->addAction(action);
-          } break;
+        if (info->getNexusID() > 0) {
+          switch (info->endorsedState()) {
+            case ModInfo::ENDORSED_TRUE: {
+              menu->addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
+            } break;
+            case ModInfo::ENDORSED_FALSE: {
+              menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
+              menu->addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
+            } break;
+            case ModInfo::ENDORSED_NEVER: {
+              menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
+            } break;
+            default: {
+              QAction *action = new QAction(tr("Endorsement state unknown"), menu);
+              action->setEnabled(false);
+              menu->addAction(action);
+            } break;
+          }
         }
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
