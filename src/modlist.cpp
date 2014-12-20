@@ -464,17 +464,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 }
 
 
-ModList::EColumn ModList::getEnabledColumn(int index) const
-{
-  for (int i = 0; i <= COL_LASTCOLUMN; ++i) {
-    if (index == 0) {
-      return static_cast<EColumn>(i);
-    } else {
-      --index;
-    }
-  }
-  return ModList::COL_NAME;
-}
+
 
 
 QVariant ModList::headerData(int section, Qt::Orientation orientation,

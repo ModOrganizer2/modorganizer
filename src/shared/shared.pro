@@ -28,7 +28,8 @@ SOURCES += \
     util.cpp \
     skyriminfo.cpp \
     appconfig.cpp \
-    leaktrace.cpp
+    leaktrace.cpp \
+    stackdata.cpp
 
 HEADERS += \
     inject.h \
@@ -43,12 +44,13 @@ HEADERS += \
     skyriminfo.h \
     appconfig.h \
     appconfig.inc \
-    leaktrace.h
+    leaktrace.h \
+    stackdata.h
 
 
 # only for custom leak detection
-DEFINES += TRACE_LEAKS
-LIBS += -lDbgHelp
+#DEFINES += TRACE_LEAKS
+#LIBS += -lDbgHelp
 
 
 CONFIG(debug, debug|release) {

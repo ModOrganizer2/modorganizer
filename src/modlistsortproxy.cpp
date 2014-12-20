@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidgetAction>
 #include <QApplication>
 #include <QDebug>
+#include <QTreeView>
 
 
 ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
@@ -324,7 +325,8 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
                                     int row, int column, const QModelIndex &parent)
 {
     if (sortColumn() != ModList::COL_PRIORITY) {
-      MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), qApp->activeWindow());
+      QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");
+      MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), wid);
       return false;
     }
     if ((row == -1) && (column == -1)) {

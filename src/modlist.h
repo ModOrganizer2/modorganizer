@@ -245,8 +245,6 @@ private:
 
   QString contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const;
 
-  ModList::EColumn getEnabledColumn(int index) const;
-
   QVariant categoryData(int categoryID, int column, int role) const;
   QVariant modData(int modID, int modelColumn, int role) const;
 
