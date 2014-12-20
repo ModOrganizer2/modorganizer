@@ -4502,14 +4502,15 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
                                     QFileInfo &binaryInfo, QString &arguments)
 {
   QString extension = targetInfo.completeSuffix();
-  if ((extension == "exe") ||
-      (extension == "cmd") ||
-      (extension == "com") ||
-      (extension == "bat")) {
+  if ((extension.compare("cmd", Qt::CaseInsensitive)) ||
+      (extension.compare("com", Qt::CaseInsensitive)) ||
+      (extension.compare("bat", Qt::CaseInsensitive))) {
     binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
     arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     return 1;
-  } else if (extension == "jar") {
+  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
+    binaryInfo = targetInfo;
+  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
     // types that need to be injected into
     std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
     QString binaryPath;
