@@ -77,7 +77,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="activatemodsdialog.ui" line="37"/>
         <source>Missing ESP</source>
-        <translation>Отсутствющий ESP</translation>
+        <translation>Отсутствующий ESP</translation>
     </message>
     <message>
         <location filename="activatemodsdialog.ui" line="42"/>
@@ -100,7 +100,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="22"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="baincomplexinstallerdialog.ui" line="34"/>
@@ -190,7 +190,7 @@ If there is a component called &quot;00 Core&quot; it is usually required. Optio
     <message>
         <location filename="categoriesdialog.ui" line="69"/>
         <source>Internal ID for the category.</source>
-        <translation>Внутренний ID категорий.</translation>
+        <translation>Внутренний ID категории.</translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="72"/>
@@ -200,13 +200,13 @@ If there is a component called &quot;00 Core&quot; it is usually required. Optio
     <message>
         <location filename="categoriesdialog.ui" line="77"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="80"/>
         <location filename="categoriesdialog.ui" line="83"/>
         <source>Name of the Categorie used for display.</source>
-        <translation>Название категории используемое для отображения.</translation>
+        <translation>Название категории, используемое для отображения.</translation>
     </message>
     <message>
         <location filename="categoriesdialog.ui" line="88"/>
@@ -243,7 +243,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="categoriesdialog.ui" line="108"/>
         <source>If set, the category is defined as a sub-category of another one. Parent ID needs to be a valid category ID.</source>
-        <translation>Если установлен, то категория определяется как подкатегория другой. Родительский ID должен быть главным идентификатор категории.</translation>
+        <translation>Если установлен, то категория определяется как подкатегория другой. Родительский ID должен соответствовать идентификатору категории.</translation>
     </message>
     <message>
         <location filename="categoriesdialog.cpp" line="239"/>
@@ -302,7 +302,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlist.cpp" line="64"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="65"/>
@@ -338,7 +338,7 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadlistwidget.cpp" line="150"/>
         <location filename="downloadlistwidget.cpp" line="152"/>
         <source>Done - Double Click to install</source>
-        <translation>Готово - двойной щелчок для установки.</translation>
+        <translation>Готово - двойной клик для установки</translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="116"/>
@@ -426,7 +426,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="246"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
-        <translation>Это удалит все готовые загрузки из этого списка и с диска.</translation>
+        <translation>Это удалит все завершенные загрузки из этого списка и с диска.</translation>
     </message>
     <message>
         <location filename="downloadlistwidgetcompact.cpp" line="255"/>
@@ -542,7 +542,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidget.cpp" line="259"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
-        <translation>Это удалит все готовые загрузки из этого списка и с диска.</translation>
+        <translation>Это удалит все завершенные загрузки из этого списка и с диска.</translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="268"/>
@@ -552,7 +552,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="downloadlistwidget.cpp" line="277"/>
         <source>This will remove all finished downloads from this list (but NOT from disk).</source>
-        <translation>Это удалит все готовые загрузки из этого списка (но НЕ с диска).</translation>
+        <translation>Это удалит все завершенные загрузки из этого списка (но НЕ с диска).</translation>
     </message>
     <message>
         <location filename="downloadlistwidget.cpp" line="286"/>
@@ -766,12 +766,12 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadmanager.cpp" line="1143"/>
         <location filename="downloadmanager.cpp" line="1157"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
-        <translation>Нет соответствующих модов на Nexus! Возможно фал был удален или переименован?</translation>
+        <translation>Нет соответствующих модов на Nexus! Возможно файл был удален или переименован?</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1145"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
-        <translation>Нет соответствующих фалов на Nexus. Выберите файл вручную.</translation>
+        <translation>Нет соответствующих файлов на Nexus. Выберите файл вручную.</translation>
     </message>
     <message>
         <location filename="downloadmanager.cpp" line="1285"/>
@@ -809,7 +809,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="editexecutablesdialog.ui" line="20"/>
         <source>List of configured executables</source>
-        <translation>Список настроенных исполняемых</translation>
+        <translation>Список настроенных программ</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="23"/>
@@ -881,7 +881,7 @@ p, li { white-space: pre-wrap; }
 Every game/tool distributed through Steam has a unique ID. MO needs to know this ID to start those programs directly, otherwise the program is started by steam and then MO will not work. By default, MO will use the AppID for the game.
 Right now the only case I know of where this needs to be overwritten is for the Skyrim Creation Kit which has its own AppID. This overwrite is already preconfigured.</source>
         <translation>Разрешить изменение Steam AppID, который будет использоваться для исполняемого файла.
-Каждая игра/инструмент распространяемые через Steam имеют свой уникальный ID. MO необходимо знать этот ID для прямого запуска этих программ, иначе они будут запущены через Steam и MO работать не будет. По умолчанию MO будет использовать AppID для игры.
+Каждая игра/инструмент, распространяемые через Steam, имеют свой уникальный ID. MO необходимо знать этот ID для прямого запуска этих программ, иначе они будут запущены через Steam и MO работать не будет. По умолчанию MO будет использовать AppID для игры.
 В данный момент единственный случай, где это должно быть перезаписано это Skyrim Creation Kit, который имеет свой собственный AppID. Эта замена уже предварительно сконфигурирована.</translation>
     </message>
     <message>
@@ -892,23 +892,23 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="editexecutablesdialog.ui" line="153"/>
         <source>Steam AppID to use for this executable that differs from the games AppID.</source>
-        <translation>Steam AppID использует для исполняемого файла, отличающегося от AppID игры.</translation>
+        <translation>Steam AppID, используемый для исполняемого файла, отличающегося от AppID игры.</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="156"/>
         <source>Steam AppID to use for this executable that differs from the games AppID.
 Every game/tool distributed through Steam has a unique ID. MO needs to know this ID to start those programs directly, otherwise the program is started by steam and then MO will not work. By default, MO will use the AppID for the game (usually 72850).
 Right now the only case I know of where this needs to be overwritten is for the Skyrim Creation Kit which has its own AppID (usually 202480). This overwrite is already preconfigured.</source>
-        <translation>Steam AppID, используемый для этого исполняемого файла, отличающийся от AppID других игр.
-Каждая игра/инструмент распространяемые через Steam имеют свой уникальный ID. MO необходимо знать этот ID для прямого запуска этих программ, иначе они будут запущены через Steam и MO работать не будет. По умолчанию MO будет использовать AppID для игры (обычно 72850).
-В данный момент единственный случай, где он должен быть перезаписан, это для Skyrim Creation Kit, который имеет свой собственный AppID (обычно 202480). Эта замена уже предварительно сконфигурирована.</translation>
+        <translation>Steam AppID, используемый для этого исполняемого файла, отличающийся от AppID игры.
+Каждая игра/инструмент, распространяемые через Steam, имеют свой уникальный ID. MO необходимо знать этот ID для прямого запуска этих программ, иначе они будут запущены через Steam и MO работать не будет. По умолчанию MO будет использовать AppID для игры (обычно 72850).
+В данный момент, единственный случай, где он должен быть перезаписан, это для Skyrim Creation Kit, который имеет свой собственный AppID (обычно 202480). Эта замена уже предварительно сконфигурирована.</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="169"/>
         <location filename="editexecutablesdialog.ui" line="172"/>
         <location filename="editexecutablesdialog.cpp" line="258"/>
         <source>If checked, MO will be closed once the specified executable is run.</source>
-        <translation>Если активно, MO будет закрыт после работы исполняемого файла.</translation>
+        <translation>Если активно, MO будет закрыт после запуска исполняемого файла.</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="175"/>
@@ -931,7 +931,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <location filename="editexecutablesdialog.ui" line="199"/>
         <location filename="editexecutablesdialog.ui" line="202"/>
         <source>Remove the selected executable</source>
-        <translation>Удалить выделенный исполняемые</translation>
+        <translation>Удалить выделенное</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="205"/>
@@ -961,7 +961,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="editexecutablesdialog.cpp" line="150"/>
         <source>MO requires 32-bit java to run this application. If you already have it installed, select javaw.exe from that installation as the binary.</source>
-        <translation>MO требует 32-bit java для запуска этого приложения. Если он у вас уже установлен, выберете javaw.exe для этой установки как исполняемый файл.</translation>
+        <translation>MO требует 32-bit java для запуска этого приложения. Если он у вас уже установлен, выберите javaw.exe для этой установки как исполняемый файл.</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="166"/>
@@ -976,7 +976,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="editexecutablesdialog.cpp" line="175"/>
         <source>Really remove &quot;%1&quot; from executables?</source>
-        <translation>Действительно удалить &quot;%1&quot; исполняемых?</translation>
+        <translation>Действительно удалить &quot;%1&quot; из исполняемых?</translation>
     </message>
     <message>
         <location filename="editexecutablesdialog.cpp" line="200"/>
@@ -998,7 +998,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="editexecutablesdialog.cpp" line="255"/>
         <source>MO must be kept running or this application will not work correctly.</source>
-        <translation>MO должна быть запущена или приложение не сможет работать правильно</translation>
+        <translation>MO должен быть запущен или приложение не сможет работать правильно.</translation>
     </message>
 </context>
 <context>
@@ -1048,7 +1048,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="fomodinstallerdialog.ui" line="22"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="46"/>
@@ -1063,7 +1063,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="fomodinstallerdialog.ui" line="74"/>
         <source>Website</source>
-        <translation>Веб - сайт</translation>
+        <translation>Веб-сайт</translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="81"/>
@@ -1073,7 +1073,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="fomodinstallerdialog.ui" line="160"/>
         <source>Manual</source>
-        <translation>Руководсвто</translation>
+        <translation>Вручную</translation>
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="170"/>
@@ -1106,17 +1106,17 @@ Right now the only case I know of where this needs to be overwritten is for the 
     <message>
         <location filename="installdialog.ui" line="46"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="53"/>
         <source>Pick a name for the mod</source>
-        <translation>Выберете имя для мода</translation>
+        <translation>Выберите название для мода</translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="56"/>
         <source>Pick a name for the mod. This is also used as a directory name, so please don&apos;t use characters that are illegal in file names.</source>
-        <translation>Выбери имя для мода. Это также используется в качестве имени каталога, поэтому, пожалуйста, не используйте символы, которые запрещены в именах файлов.</translation>
+        <translation>Выберите название для мода. Оно также используется в качестве имени каталога, поэтому, пожалуйста, не используйте символы, которые запрещены в именах файлов.</translation>
     </message>
     <message>
         <location filename="installdialog.ui" line="65"/>
@@ -1189,12 +1189,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="installationmanager.cpp" line="450"/>
         <source>Mod Name</source>
-        <translation>Имя мода</translation>
+        <translation>Название мода</translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="450"/>
         <source>Name</source>
-        <translation>Имя</translation>
+        <translation>Название</translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="503"/>
@@ -1204,7 +1204,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="installationmanager.cpp" line="504"/>
         <source>The name you entered is invalid, please enter a different one.</source>
-        <translation>Введенное вами имя недопустимо, пожалуйста введите другое.</translation>
+        <translation>Введенное вами название недопустимо, пожалуйста, введите другое.</translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="612"/>
@@ -1214,7 +1214,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="installationmanager.cpp" line="745"/>
         <source>None of the available installer plugins were able to handle that archive</source>
-        <translation>Не один из доступных плагинов-установщиков не смог просмотреть этот архив</translation>
+        <translation>Ни один из доступных плагинов-установщиков не смог просмотреть этот архив</translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="755"/>
@@ -1244,7 +1244,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="installationmanager.cpp" line="770"/>
         <source>unsupported archive type</source>
-        <translation>не поддерживаемый тип архива</translation>
+        <translation>неподдерживаемый тип архива</translation>
     </message>
     <message>
         <location filename="installationmanager.cpp" line="773"/>
@@ -1277,7 +1277,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="lockeddialog.ui" line="23"/>
         <source>MO is locked while the executable is running.</source>
-        <translation>MO заблокирован, т.к исполняемый файл запущен.</translation>
+        <translation>MO заблокирован, т.к. исполняемый файл запущен.</translation>
     </message>
     <message>
         <location filename="lockeddialog.ui" line="54"/>
@@ -1347,7 +1347,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="181"/>
         <source>Pick a module collection</source>
-        <translation>Выберете набор модулей</translation>
+        <translation>Выберите набор модулей</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="184"/>
@@ -1361,7 +1361,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Создать профили здесь. Каждый профиль включает свой собственный список активных модов и esp. Таким образом, вы можете быстро переключаться между установками для различных прохождений игры.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Создайте профили здесь. Каждый профиль включает свой собственный список активных модов и esp. Таким образом, вы можете быстро переключаться между установками для различных прохождений игры.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Обратите внимание, что порядок загрузки esp одинаков для всех профилей.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
@@ -1394,7 +1394,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="371"/>
         <source>This is a list of installed mods. Use the checkboxes to activate/deactivate mods and drag &amp; drop mods to change their &quot;installation&quot; orders.</source>
-        <translation>Это список установленных модов. Используйте флажки, для включения/отключения модов и перетаскивание модов, для изменения их порядка установки.</translation>
+        <translation>Это список установленных модов. Используйте флажки для включения/отключения модов и перетаскивание модов для изменения их порядка установки.</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="456"/>
@@ -1421,7 +1421,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="530"/>
         <source>Pick a program to run.</source>
-        <translation>Выберете программу для запуска.</translation>
+        <translation>Выберите программу для запуска.</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="533"/>
@@ -1435,8 +1435,8 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Выберете программу для запуска. Как только вы начинаете использовать ModOrganizer, вы всегда должны запускать игры и инструменты из него или через созданные в нем ярлыки, в противном случае, установленные через MO моды отображаться не будут.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Вы можете добавить новые инструменты в этот список, но работоспособность их всех не гарантированна.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Выберите программу для запуска. Как только вы начинаете использовать ModOrganizer, вы всегда должны запускать игры и инструменты из него или через созданные в нем ярлыки, в противном случае, установленные через MO моды отображаться не будут.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Вы можете добавить новые инструменты в этот список, но работоспособность их всех не гарантируется.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="581"/>
@@ -1510,7 +1510,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Этот список содержит esp и esm файлы активных модов. Для них требуется определенный порядок загрузки. Используйте перетаскивание для изменения порядка загрузки. Обратите внимание, что MO сохранит порядок загрузки только для активными/проверенных модов.&lt;br /&gt;Существует замечательная утилита, называющаяся &amp;quot;BOSS&amp;quot; , которая автоматически сортирует эти файлы.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Этот список содержит esp и esm файлы активных модов. Для них требуется определенный порядок загрузки. Используйте перетаскивание для изменения порядка загрузки. Обратите внимание, что MO сохранит порядок загрузки только для активных/отмеченных модов.&lt;br /&gt;Существует замечательная утилита, называющаяся &amp;quot;BOSS&amp;quot; , которая автоматически сортирует эти файлы.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="886"/>
@@ -1520,17 +1520,17 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="916"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs are bundles of game assets (textures, scripts, ...). By default, the engine loads these bundles in a separate step from loose files. MO can manage those archives to align their load order with that of loose files:&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;managed&lt;/span&gt;, their load order is specified by the priority of the corresponding mod (left pane), the same as the loose files. You can manually enable any BSA that has no corresponding plugin active.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;not managed&lt;/span&gt; their load order is specified by the priority of the corresponding plugin (right pane, plugins tab). You can then not manually enable BSAs where the plugin isn&apos;t active.&lt;/p&gt;&lt;p&gt;In either case you can not disable archives if there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSA это пакет ресурсов игры (textures, scripts, ...). По умолчанию движок грузит эти пакеты отдельно от свободных файлов. MO может управлять этими архивами, чтобы совместить их порядок загрузки этими свободными файлами:&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;управляются&lt;/span&gt;, их порядок загрузки определяется приоритетом соответствующего мода (левая панель), также, как и свободные файлы. Вы можете вручную подключить любой BSA, который не имеет соответствующего активного плагина.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;не управляются/span&gt;, их порядок загрузки определяется соответствующим активным файлом мода (правая панель, вкладка плагинов). В таком случае вы не сможете вручную подключить BSA, для которых нет активного плагина.&lt;/p&gt;&lt;p&gt;В обоих вариантах вы не сможете отключить архивы имеющие соответствующий активный плагин, игра все равно загрузит их.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSA - это пакет ресурсов игры (textures, scripts, ...). По умолчанию движок грузит эти пакеты отдельно от свободных файлов. MO может управлять этими архивами, чтобы совместить их порядок загрузки этими свободными файлами:&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;управляются&lt;/span&gt;, их порядок загрузки определяется приоритетом соответствующего мода (левая панель), также, как и свободные файлы. Вы можете вручную подключить любой BSA, который не имеет соответствующего активного плагина.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Если архивы &lt;span style=&quot; font-weight:600;&quot;&gt;не управляются/span&gt;, их порядок загрузки определяется соответствующим активным файлом мода (правая панель, вкладка плагинов). В таком случае вы не сможете вручную подключить BSA, для которых нет активного плагина.&lt;/p&gt;&lt;p&gt;В обоих вариантах вы не сможете отключить архивы, имеющие соответствующий активный плагин, игра все равно загрузит их.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="919"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Have MO manage archives (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;read more&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Не имеет управляемых в MO архивов(&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;читать далее&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Имеет управляемые в MO архивы(&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;читать далее&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="934"/>
         <source>List of available BS Archives. Archives not checked here are not managed by MO and ignore installation order.</source>
-        <translation>Список доступных BSA. Они не отмечены здесь, не управляются с помощью MO и игнорируют порядок установки.</translation>
+        <translation>Список доступных BSA. Неотмеченные здесь архивы не управляются с помощью MO и игнорируют порядок установки.</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="937"/>
@@ -1538,8 +1538,8 @@ p, li { white-space: pre-wrap; }
 By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
 
 BSAs checked here are loaded in such a way that your installation order is obeyed properly.</source>
-        <translation>BSA файлы - архивы (сопоставимы с файлами .zip) которые содержат используемые игрой данные (meshes, textures, ...). Как таковые они &quot;конкурируют&quot; с отдельными файлами в папке Data, поверх которых загружены.
-По умолчанию, BSA, у которых имя совпадает с именем ESP (т.е. plugin.esp и plugin.bsa) будут автоматически загружены и будут иметь приоритет над всеми отдельными файлами и установленный вами слева порядок установки будет проигнорирован!
+        <translation>BSA файлы - архивы (сопоставимы с файлами .zip), которые содержат используемые игрой данные (meshes, textures, ...). Как таковые они &quot;конкурируют&quot; с отдельными файлами в папке Data, поверх которых загружены.
+По умолчанию, BSA, у которых имя совпадает с именем ESP (т.е. plugin.esp и plugin.bsa), будут автоматически загружены и будут иметь приоритет над всеми отдельными файлами и установленный вами слева порядок установки будет проигнорирован!
 
 BSA, отмеченные здесь, загружаются так, чтобы порядок установки соблюдался должным образом.</translation>
     </message>
@@ -1768,7 +1768,7 @@ p, li { white-space: pre-wrap; }
 
 !Work in progress!
 Right now this has very limited functionality</source>
-        <translation>Эта кнопка будет подсвечена, если MO обнарул возможные проблемы в вашей установке и имеются советы по их исправлению.
+        <translation>Эта кнопка будет подсвечена если MO обнаружил возможные проблемы в вашей установке и имеются советы по их исправлению.
 
 !В разработке!
 Прямо сейчас этот функционал сильно ограничен</translation>
@@ -1833,7 +1833,7 @@ Right now this has very limited functionality</source>
     <message>
         <location filename="mainwindow.cpp" line="574"/>
         <source>Everything seems to be in order</source>
-        <translation>Кажется всё в порядке</translation>
+        <translation>Кажется, всё в порядке</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="635"/>
@@ -1893,7 +1893,7 @@ Right now this has very limited functionality</source>
     <message>
         <location filename="mainwindow.cpp" line="844"/>
         <source>You are starting Mod Organizer for the first time. Do you want to show a tutorial of its basic features? If you choose no you can always start the tutorial from the &quot;Help&quot;-menu.</source>
-        <translation>Вы запустили Mod Organizer в первый раз. Вы хотите просмотреть уроки по основным возможностям? В случае отказа вы всегда можете открыть уроки из меню &quot;Помощь&quot;.</translation>
+        <translation>Вы запустили Mod Organizer в первый раз. Хотите пройти обучение по основным возможностям? В случае отказа вы всегда можете открыть уроки из меню &quot;Помощь&quot;.</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="875"/>
@@ -1954,7 +1954,7 @@ Continue?</source>
         <source>It appears the plugin &quot;%1&quot; failed to load last startup and caused MO to crash. Do you want to disable it?
 (Please note: If this is the first time you see this message for this plugin you may want to give it another try. The plugin may be able to recover from the problem)</source>
         <translation>Кажется, что при последнем запуске не удалось загрузить плагин &quot;%1&quot; и это привело к падению MO. Вы хотите отключить его?
-(Замечание: Если это первый раз, когда вы видите такое сообщение для этого плагина, вероятно вы захотите сделать ещё одну попытка. Плагин может восстановиться после проблемы)</translation>
+(Замечание: Если это первый раз, когда вы видите такое сообщение для этого плагина, вероятно вы захотите сделать ещё одну попытку. Плагин может восстановиться после проблемы)</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="1323"/>
@@ -1969,7 +1969,7 @@ Continue?</source>
     <message>
         <location filename="mainwindow.cpp" line="1325"/>
         <source>Please press OK once you&apos;re logged into steam.</source>
-        <translation>Нажмите OK как только вы войдете в Steam.</translation>
+        <translation>Нажмите OK после входа в Steam.</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="1337"/>
@@ -2072,7 +2072,7 @@ Continue?</source>
     <message>
         <location filename="mainwindow.cpp" line="2303"/>
         <source>Choose Mod</source>
-        <translation>Выберете мод</translation>
+        <translation>Выберите мод</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2304"/>
@@ -2095,7 +2095,7 @@ Continue?</source>
         <location filename="mainwindow.cpp" line="2339"/>
         <location filename="mainwindow.cpp" line="4395"/>
         <source>This mod contains ini tweaks. Do you want to configure them now?</source>
-        <translation>Этот мод включает настройки ini. Вы хотите настроить их сейчас?</translation>
+        <translation>Этот мод содержит настройки ini. Вы хотите настроить их сейчас?</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="2346"/>
@@ -2231,7 +2231,7 @@ Continue?</source>
     <message>
         <location filename="mainwindow.cpp" line="3097"/>
         <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
-        <translation>Подключено несколько esp, выберете из них не конфликтующие.</translation>
+        <translation>Подключено несколько esp, выберите из них не конфликтующие.</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3146"/>
@@ -2265,7 +2265,7 @@ Continue?</source>
     <message>
         <location filename="mainwindow.cpp" line="3197"/>
         <source>Mods installed with old versions of MO can&apos;t be reinstalled in this way.</source>
-        <translation>Моды, установленные с использованием старых версий MO не могут быть переустановленны таким образом.</translation>
+        <translation>Моды, установленные с использованием старых версий MO, не могут быть переустановленны таким образом.</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3212"/>
@@ -2342,7 +2342,7 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="mainwindow.cpp" line="3787"/>
         <source>Choose what to export</source>
-        <translation>Выберете, что экспортировать</translation>
+        <translation>Выберите, что экспортировать</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3789"/>
@@ -2587,7 +2587,7 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="mainwindow.cpp" line="4502"/>
         <source>Select binary</source>
-        <translation>Выберете исполняемый файл</translation>
+        <translation>Выберите исполняемый файл</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4502"/>
@@ -2675,7 +2675,7 @@ This function will guess the versioning scheme under the assumption that the ins
     <message>
         <location filename="mainwindow.cpp" line="4723"/>
         <source>Preview</source>
-        <translation>Предосмотр</translation>
+        <translation>Предпросмотр</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4729"/>
@@ -3045,7 +3045,7 @@ This function will guess the versioning scheme under the assumption that the ins
         <location filename="modinfodialog.ui" line="276"/>
         <location filename="modinfodialog.ui" line="295"/>
         <source>Optional ESPs</source>
-        <translation>Необязательные ESP</translation>
+        <translation>Опциональные ESP</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="282"/>
@@ -3091,7 +3091,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
     <message>
         <location filename="modinfodialog.ui" line="380"/>
         <source>These are the mod files that are in the (virtual) data directory of your game and will thus be selecteable in the esp list in the main window.</source>
-        <translation>Это файлы модов, которые находятся в (виртуальном)каталоге данных вашей игры и могут быть выбираемыми в списке esp, в главном окне.</translation>
+        <translation>Это файлы модов, которые находятся в (виртуальном) каталоге данных вашей игры и могут быть выбираемыми в списке esp, в главном окне.</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="387"/>
@@ -3559,7 +3559,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlist.cpp" line="60"/>
         <source>Script Extender Plugin</source>
-        <translation>Script Extender плагин</translation>
+        <translation>SKSE плагин</translation>
     </message>
     <message>
         <location filename="modlist.cpp" line="61"/>
@@ -3745,7 +3745,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlist.cpp" line="957"/>
         <source>Depicts the content of the mod:&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;Game plugins (esp/esm)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;interface&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;Meshes&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;Textures&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;Sounds&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;Music&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;Strings&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;Scripts (Papyrus)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;Script Extender plugins&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;SkyProc Patcher&lt;br&gt;</source>
-        <translation>Показывает содержимое мода:&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;Плагины (esp/esm)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;интерфейс&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;Полигональные сетки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;Текстуры&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;Звуки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;Музыка&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;Строки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;Скрипты (Papyrus)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;Плагины Script Extender&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;Патч SkyProc&lt;br&gt;</translation>
+        <translation>Показывает содержимое мода:&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;Плагины (esp/esm)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;интерфейс&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;Полигональные сетки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;Текстуры&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;Звуки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;Музыка&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;Строки&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;Скрипты (Papyrus)&lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;Плагины Script Extender &lt;br&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;Патч SkyProc&lt;br&gt;</translation>
     </message>
     <message>
         <location filename="modlist.cpp" line="969"/>
@@ -3807,7 +3807,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="nexusinterface.cpp" line="216"/>
         <source>Failed to guess mod id for &quot;%1&quot;, please pick the correct one</source>
-        <translation>Не удалось опознать id мода &quot;%1&quot;, пожалуйста, выберете правильный</translation>
+        <translation>Не удалось опознать id мода &quot;%1&quot;, пожалуйста, выберите правильный</translation>
     </message>
     <message>
         <location filename="nexusinterface.cpp" line="482"/>
@@ -3992,12 +3992,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="pluginlist.cpp" line="816"/>
         <source>Missing Masters</source>
-        <translation>Отсутствующие мастерфайлы</translation>
+        <translation>Отсутствующие мастер-файлы</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="823"/>
         <source>Enabled Masters</source>
-        <translation>Подключенные мастерфайлы</translation>
+        <translation>Подключенные мастер-файлы</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="974"/>
@@ -4010,7 +4010,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="previewdialog.ui" line="14"/>
         <source>Preview</source>
-        <translation>Предосмотр</translation>
+        <translation>Предпросмотр</translation>
     </message>
     <message>
         <location filename="previewdialog.ui" line="78"/>
@@ -4052,7 +4052,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="problemsdialog.cpp" line="49"/>
         <source>No guided fix</source>
-        <translation>Не управляемое исправление</translation>
+        <translation>Нет распознанного исправления</translation>
     </message>
 </context>
 <context>
@@ -4188,7 +4188,7 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Это список профилей. Каждый профиль содержит свой собственный список и порядок установки подключенных модов (из общего пула), настройки подключенных esps/esms, копии игровых ini-файлов и опциональный фильтр сохранений.&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Примечание&lt;/span&gt; По техническим причинам невозможно иметь отдельные порядки загрузки для esp. Это означает, что вы не сможете загрузить moda.esp пере modb.esp в одном профиле и иным образом в другом профиле.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Примечание&lt;/span&gt; По техническим причинам невозможно иметь отдельные порядки загрузки для esp. Это означает, что вы не сможете загрузить moda.esp перед modb.esp в одном профиле и иным образом в другом профиле.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="profilesdialog.ui" line="38"/>
@@ -4228,7 +4228,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profilesdialog.ui" line="64"/>
         <source>Automatic Archive Invalidation</source>
-        <translation>Автоматическая инвалидадция</translation>
+        <translation>Автоматическая инвалидация</translation>
     </message>
     <message>
         <location filename="profilesdialog.ui" line="75"/>
@@ -4530,7 +4530,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="203"/>
         <source>ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file (%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. Please include a short description of what you were doing when the crash happened</source>
-        <translation>Mod Organizer вышел из строя! Нужно ли создать диагностический файл? Если вы вышлите файл (%1) по адресу sherb@gmx.net, ошибка с намного большей вероятностью будет исправлена. Пожалуйста, добавьте краткое описание своих действий, перед тем, как произошла ошибка</translation>
+        <translation>Mod Organizer вышел из строя! Нужно ли создать диагностический файл? Если вы вышлете файл (%1) по адресу sherb@gmx.net, ошибка с намного большей вероятностью будет исправлена. Пожалуйста, добавьте краткое описание своих действий перед тем, как произошла ошибка</translation>
     </message>
     <message>
         <location filename="main.cpp" line="242"/>
@@ -4557,12 +4557,12 @@ p, li { white-space: pre-wrap; }
         <location filename="main.cpp" line="400"/>
         <location filename="main.cpp" line="429"/>
         <source>Please select the game to manage</source>
-        <translation>Выберете игру для управления</translation>
+        <translation>Выберите игру для управления</translation>
     </message>
     <message>
         <location filename="main.cpp" line="456"/>
         <source>Please select the game edition you have (MO can&apos;t start the game correctly if this is set incorrectly!)</source>
-        <translation>Пожалуйста, выберете редакцию игры, которую вы имеете (MO не сможет правильно запустить игру, если это будет установлено неверно!)</translation>
+        <translation>Пожалуйста, выберите редакцию игры, которую вы имеете (MO не сможет правильно запустить игру, если это будет установлено неверно!)</translation>
     </message>
     <message>
         <location filename="main.cpp" line="545"/>
@@ -4967,7 +4967,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Используемый язык. Будут отображены языки, локализация на которые имеется.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Используемый язык. Будут отображены языки,  для которых имеется локализация.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="57"/>
@@ -5264,8 +5264,8 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Предустановленный ID в большинстве случаев должен быть установлен.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Если вы думаете, что у вас другая версия (GotY или другое), следуйте следующей инструкции по установке id:&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;1. Перейдите в библиотеку игр Steam.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;2. Сделайте правый клик по игре, id которой нужен и выберете &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Создать ярлык на рабочем столе&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;3. Сделайте правый клик на созданном на рабочем столе ярлыке и выберете &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Свойства&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;2. Сделайте правый клик по игре, id которой нужен и выберите &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Создать ярлык на Рабочем столе&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;3. Сделайте правый клик на созданном на рабочем столе ярлыке и выберите &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Свойства&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;4. в поле URL вы должны увидеть что-то вроде: &lt;/span&gt;&lt;span style=&quot; font-size:8pt; font-style:italic;&quot;&gt;steam://rungameid/22380&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;22380 это и есть id, который вам нужен.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -5277,7 +5277,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="658"/>
         <source>Select loading mechanism. See help for details.</source>
-        <translation>Выберете механизм загрузки. Смотрите справку для подробностей.</translation>
+        <translation>Выберите механизм загрузки. Смотрите справку для подробностей.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="661"/>
@@ -5288,7 +5288,7 @@ There are several means to do this:
 *Proxy DLL* In this mode, MO replaces one of the game's dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don't work.
 
 If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</source>
-        <translation>Mod Organizer необходимо подключить dll к игре, чтобы все моды были видны в ней.
+        <translation>Mod Organizer&apos;у необходимо dll для подключения к игре, чтобы все моды были видны в ней.
 Есть несколько способов сделать это:
 *Mod Organizer* (по умолчанию) В этом режиме Mod Organizer сам подключает dll. Недостатком этого является то, что вам необходимо всегда начинать игру через MO или созданный им ярлык.
 *Script Extender* В этом режиме, MO установлен как плагин Script Extender (obse, fose, nvse, skse).
@@ -5364,7 +5364,7 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
 However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
 
 If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps and esms) displayed in the right pane are completely unaffected by this feature.</source>
-        <translation>По умолчанию Mod Organizer отобразит пакеты esp+bsa, установленные из других инструментов, как моды (левая панель). Это позволяет вам контроллировать их приоритет по отношению к другим модам. Это особенно полезно, если вы используете Steam Workshop, для установки модов.
+        <translation>По умолчанию Mod Organizer отобразит пакеты esp+bsa, установленные из других инструментов, как моды (левая панель). Это позволяет вам контролировать их приоритет по отношению к другим модам. Это особенно полезно, если вы используете Steam Workshop, для установки модов.
 Однако, если вы установили из вне MO моды с свободными файлами, конфликтующими с BSA, также установленными из вне MO, то такие конфликты не могут быть решены правильно.
 
 Если вы отключите эту возможность, MO будет отображать только официальные DLC. Имейте ввиду, что отображенные в правой панели влагины (esps и esm), полностью не затрагиваются этой возможностью.</translation>
@@ -5372,7 +5372,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
     <message>
         <location filename="settingsdialog.ui" line="763"/>
         <source>Display mods installed outside MO</source>
-        <translation>Отображать установленные из вне MO моды</translation>
+        <translation>Отображать установленные вне MO моды</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="773"/>
@@ -5395,17 +5395,17 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="settingsdialog.cpp" line="95"/>
         <source>Select download directory</source>
-        <translation>Выберете каталог для загрузок</translation>
+        <translation>Выберите каталог для загрузок</translation>
     </message>
     <message>
         <location filename="settingsdialog.cpp" line="103"/>
         <source>Select mod directory</source>
-        <translation>Выберете каталог для модов</translation>
+        <translation>Выберите каталог для модов</translation>
     </message>
     <message>
         <location filename="settingsdialog.cpp" line="111"/>
         <source>Select cache directory</source>
-        <translation>Выберете каталог для кеша</translation>
+        <translation>Выберите каталог для кэша</translation>
     </message>
     <message>
         <location filename="settingsdialog.cpp" line="119"/>
@@ -5415,7 +5415,7 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="settingsdialog.cpp" line="120"/>
         <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box. Continue?</source>
-        <translation>Это позволить снова отобразить все диалоги, для которых вы ранее выбрали флажок &quot;Запомнить выбор&quot;.</translation>
+        <translation>Это позволит снова отобразить все диалоги, для которых вы ранее выбрали флажок &quot;Запомнить выбор&quot;.</translation>
     </message>
 </context>
 <context>
@@ -5467,7 +5467,7 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="singleinstance.cpp" line="88"/>
         <source>failed to communicate with running instance: %1</source>
-        <translation>Не удалось подключиться к запущенному экземпляру: %1</translation>
+        <translation>не удалось подключиться к запущенному экземпляру: %1</translation>
     </message>
     <message>
         <location filename="singleinstance.cpp" line="100"/>
@@ -5518,7 +5518,7 @@ For the other games this is not a sufficient replacement for AI!</source>
     <message>
         <location filename="transfersavesdialog.ui" line="22"/>
         <source>Global Characters</source>
-        <translation>Общие символы</translation>
+        <translation>Общие персонажи</translation>
     </message>
     <message>
         <location filename="transfersavesdialog.ui" line="29"/>

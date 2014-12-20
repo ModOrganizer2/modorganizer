@@ -1520,12 +1520,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="916"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs are bundles of game assets (textures, scripts, ...). By default, the engine loads these bundles in a separate step from loose files. MO can manage those archives to align their load order with that of loose files:&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;managed&lt;/span&gt;, their load order is specified by the priority of the corresponding mod (left pane), the same as the loose files. You can manually enable any BSA that has no corresponding plugin active.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;not managed&lt;/span&gt; their load order is specified by the priority of the corresponding plugin (right pane, plugins tab). You can then not manually enable BSAs where the plugin isn&apos;t active.&lt;/p&gt;&lt;p&gt;In either case you can not disable archives if there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Les BSAs sont des archives compressées de ressources de jeu (textures, scripts, ...). Par défaut, le moteur de jeu charge toutes ces archives selon une procédure indépendante de celle qui concerne les fichiers de ressource dites &apos;lâches&apos; -&apos;Loose files&apos;-. MO peut gérer ces archives afin d&apos;aligner leur ordre de chargement avec celui des fichiers lâches :&lt;/p&gt;&lt;p&gt;Si les archives sont&lt;span style=&quot; font-weight:600;&quot;&gt;gérées&lt;/span&gt;, leur ordre de chargement est alors spécifié par la priorité de leur mod correspondant (panneau de gauche); de la même manière que les fichiers &apos;lâches&apos;. Vous pouvez ainsi manuellement activer chaque BSA qui n&apos;a pas de plugin attaché.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Si les archives ne sont &lt;span style=&quot; font-weight:600;&quot;&gt;pas gérées&lt;/span&gt; leur ordre de chargement reste spécifié par la priorité de leur plugin attaché (panneau de droite, onglet plugin). Vous n&apos;avez alors pas la possibilité de manuellement activer les BSAs lorsque le plugin attaché n&apos;est pas actif -ce qui permettrait de faire l&apos;économie des plugin attachés dit &apos;dummy&apos;-.&lt;/p&gt;&lt;p&gt;Dans tout les cas, vous ne pouvez pas désactiver une archive si il existe un plugin actif qui lui est attaché, le jeu la chargera quoi qu&apos;il en soit.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="919"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Have MO manage archives (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;read more&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Laisser MO gérer les archives (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;lire plus&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="934"/>
@@ -1590,7 +1590,7 @@ Les BSAs cochés ici sont chargés d&apos;une telle manière que votre ordre d&a
     <message>
         <location filename="mainwindow.ui" line="1063"/>
         <source>Show only conflicts</source>
-        <translation>Uniquement afficher les conflits</translation>
+        <translation>Afficher uniquement les conflits</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1071"/>
@@ -1606,7 +1606,13 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a list of all savegames for this game. Hover over a list entry to get detailed information about the save including a list of esps/esms that were used at the time this save was created but aren't active now.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;If you click &amp;quot;Fix Mods...&amp;quot; in the context menu, MO will try to activate all mods and esps to fix those missing esps. It will not disable anything!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Ceci est la liste de toute les sauvegardes de ce jeu. Passez sur une entrée pour obtenir des informations détaillée à propos de la sauvegarde, notamment la liste des esps/esms qui ont été utilisés lors de la création de la sauvegarde, mais qui ne sont désormais plus actifs &lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Si vous cliquer sur&amp;quot;Rétablir les Mods...&amp;quot; dans le menu contextuel, MO va tenter d&apos;activer tout les mods et esps signalés manquants. Ceci ne désactive rien !&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1115"/>
@@ -1923,7 +1929,9 @@ Actuellement une fonctionnalité encore très limitée.</translation>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
-        <translation type="unfinished"/>
+        <translation>Un téléchargement a démarré, mais aucune page du plugin installé n&apos;est reconnue.
+Si vous téléchargez quand même aucune information (sans doute la version) ne sera associée au téléchargement.
+Continuer?</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="1140"/>
@@ -1975,7 +1983,7 @@ Continue?</source>
     <message>
         <location filename="mainwindow.cpp" line="1352"/>
         <source>Steam is required to be running already to correctly start the game. Should MO try to start steam now?</source>
-        <translation>Steam doit être déjà démarré afin de correctement lancer le jeu. MO devrait-il essayer de lancer Steam maintenant ?</translation>
+        <translation>Steam doit déjà être démarré afin de lancer correctement le jeu. MO doit-il essayer de lancer Steam maintenant ?</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="1572"/>
@@ -2538,7 +2546,7 @@ Cette fonction va deviner quel système de version utiliser dans l&apos;hypothè
     <message>
         <location filename="mainwindow.cpp" line="4126"/>
         <source>Fix Mods...</source>
-        <translation>Corriger les Mods...</translation>
+        <translation>Rétablir les Mods...</translation>
     </message>
     <message numerus="yes">
         <location filename="mainwindow.cpp" line="4128"/>
@@ -3051,7 +3059,10 @@ Cette fonction va deviner quel système de version utiliser dans l&apos;hypothè
 They usually contain optional functionality, see the readme.
 
 Most mods do not have optional esps, so chances are good you are looking at an empty list.</source>
-        <translation type="unfinished"/>
+        <translation>La liste des ESP et ESM contenus dans ce plugin qui actuellement ne peuvent être chargés par le jeu. Ils n&apos;apparaîtront pas dans la même liste que les esp de la fenêtre principale de MO.
+Ils contiennent généralement des fonctionnalités optionnelles, voir le lisez-moi.
+
+La plupart des mods n&apos;ont pas d&apos;ESP optionnel, vous avez donc de grandes chances d&apos;avoir cette liste vide.</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="310"/>
@@ -3156,7 +3167,11 @@ Most mods do not have optional esps, so chances are good you are looking at an e
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Mod ID for this mod on Nexus. This is filled in automatically if you downloaded and installed the mod from inside MO. Otherwise you can enter it manually. To find the correct id, find the mod on nexus. The URL will look like this: &lt;/span&gt;&lt;a href=&quot; http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; text-decoration: underline; color:#0000ff;&quot;&gt;http://skyrim.nexusmods.com/downloads/file.php?id=1334&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; color:#000000;&quot;&gt;. In this example, 1334 is the id you&apos;re looking for. Besides: The above is the link to Mod Organizer on the Nexus. Why not go there now and endorse?&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;ID de Mod sur Nexus. Ce champ est automatiquement rempli si vous télécharger et installer ce mod via MO. Cependant vous pouvez l&apos;entrer manuellement. Pour trouver l&apos;ID correcte, trouvez la page du mod sur le Nexus. L&apos;URL devrait ressembler à ceci: &lt;/span&gt;&lt;a href=&quot; http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; text-decoration: underline; color:#0000ff;&quot;&gt;http://skyrim.nexusmods.com/downloads/file.php?id=1334&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; color:#000000;&quot;&gt;. Dans l&apos;exemple ci-dessus, 1334 est l&apos;ID que vous cherchez. Par ailleurs, le lien ci-dessus est celui de la page de Mod Organizer sur le Nexus. S&apos;il vous agrée, pourquoi ne pas prendre l&apos;occasion d&apos;y recommander MO ?&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="modinfodialog.ui" line="620"/>
@@ -3655,7 +3670,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlist.cpp" line="934"/>
         <source>Flags</source>
-        <translation>Flags</translation>
+        <translation>Indicateurs</translation>
     </message>
     <message>
         <location filename="modlist.cpp" line="935"/>
@@ -3896,7 +3911,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="pluginlist.cpp" line="107"/>
         <source>Flags</source>
-        <translation>Flags</translation>
+        <translation>Indicateurs</translation>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="108"/>
@@ -4116,7 +4131,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profile.cpp" line="714"/>
         <source>Do you want to delete local savegames? (If you select &quot;No&quot;, the save games will show up again if you re-enable local savegames)</source>
-        <translation type="unfinished"/>
+        <translation>Voulez-vous supprimer les sauvegardes locales? (Si vous sélectionnez &quot;Non&quot;, les sauvegardes du jeu apparaîtront à nouveau si vous réactivez les sauvegardes locales)</translation>
     </message>
 </context>
 <context>
@@ -4139,7 +4154,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profileinputdialog.ui" line="33"/>
         <source>If checked, the new profile will use the default game settings instead of the &quot;global&quot; settings. Global settings are the settings you configure when running the game launcher directly, without MO.</source>
-        <translation type="unfinished"/>
+        <translation>Si c&apos;est coché, le nouveau profil utilisera les paramètres de jeu par défaut à la place des paramètres &quot;globaux&quot;. Les paramètres globaux sont les paramètres que vous configurez lors de l&apos;exécution du lanceur de jeu directement, sans MO.</translation>
     </message>
     <message>
         <location filename="profileinputdialog.ui" line="36"/>
@@ -4180,7 +4195,7 @@ p, li { white-space: pre-wrap; }
         <location filename="profilesdialog.ui" line="38"/>
         <location filename="profilesdialog.ui" line="41"/>
         <source>If checked, savegames are local to this profile and will not appear when starting with a different profile.</source>
-        <translation type="unfinished"/>
+        <translation>Si c&apos;est coché, les sauvegardes seront liées à ce profil et n&apos;apparaîtront pas quand vous activerez un profil différent.</translation>
     </message>
     <message>
         <location filename="profilesdialog.ui" line="44"/>
@@ -4328,7 +4343,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profilesdialog.cpp" line="183"/>
         <source>This profile you&apos;re about to delete seems to be broken or the path is invalid. I&apos;m about to delete the following folder: &quot;%1&quot;. Proceed?</source>
-        <translation type="unfinished"/>
+        <translation>Ce profil que vous êtes sur le point de supprimer semble être endommagé ou le chemin n&apos;est pas valide. Je suis sur le point de supprimer le dossier suivant: &quot;% 1&quot;. Continuer?</translation>
     </message>
     <message>
         <location filename="profilesdialog.cpp" line="215"/>
@@ -4505,7 +4520,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="123"/>
         <source>The current user account doesn&apos;t have the required access rights to run Mod Organizer. The neccessary changes can be made automatically (the MO directory will be made writable for the current user account). You will be asked to run &quot;helper.exe&quot; with administrative rights.</source>
-        <translation type="unfinished"/>
+        <translation>Le compte d&apos;utilisateur actuel n&apos;a pas les droits d&apos;accès nécessaires pour exécuter Mod Organisateur. Les changements nécessaires peuvent être faits automatiquement (le répertoire MO sera accessible en écriture pour le compte de l&apos;utilisateur courant). Vous serez invité à exécuter &quot;helper.exe&quot; avec des droits d&apos;administrateurs.</translation>
     </message>
     <message>
         <location filename="main.cpp" line="202"/>
@@ -4516,12 +4531,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="203"/>
         <source>ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file (%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. Please include a short description of what you were doing when the crash happened</source>
-        <translation type="unfinished"/>
+        <translation>ModOrganizer a planté! Un fichier de diagnostic a-t&apos;il été créer? Si vous m&apos;envoyez ce fichier (%1) à sherb@gmx.net, le bug est beaucoup plus susceptible d&apos;être corrigé. Veuillez inclure une brève description de ce que vous faisiez lorsque l&apos;accident s&apos;est produit    </translation>
     </message>
     <message>
         <location filename="main.cpp" line="242"/>
         <source>ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1</source>
-        <translation type="unfinished"/>
+        <translation>ModOrganizer a planté! Malheureusement, je ne suis pas capable d&apos;écrire un fichier de diagnostic: %1</translation>
     </message>
     <message>
         <location filename="main.cpp" line="383"/>
@@ -4537,7 +4552,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="397"/>
         <source>No game identified in &quot;%1&quot;. The directory is required to contain the game binary and its launcher.</source>
-        <translation type="unfinished"/>
+        <translation>Pas de jeu identifié dans &quot;% 1&quot;. Le répertoire doit contenir le binaire du jeu et son lanceur.</translation>
     </message>
     <message>
         <location filename="main.cpp" line="400"/>
@@ -4548,7 +4563,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="main.cpp" line="456"/>
         <source>Please select the game edition you have (MO can&apos;t start the game correctly if this is set incorrectly!)</source>
-        <translation type="unfinished"/>
+        <translation>Veuillez sélectionnez l&apos;édition de jeu que vous avez (MO ne peut pas démarrer le jeu correctement si cela n&apos;est pas fait!)</translation>
     </message>
     <message>
         <location filename="main.cpp" line="545"/>
@@ -4652,7 +4667,12 @@ This is a potential security risk so I highly advice you to investigate if
 can be installed to work without elevation.
 
 Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe to make changes to the system)</source>
-        <translation type="unfinished"/>
+        <translation>Ce processus nécessite une élévation afin de fonctionner.
+Ce est un risque potentiel pour la sécurité, donc je vous conseille vivement de vérifier si
+&quot;% 1&quot;
+peut être installé pour travailler sans élévation.
+
+Commencez à élevé quand même? (il vous sera demandé si vous souhaitez autoriser ModOrganizer.exe à apporter des changements au système)</translation>
     </message>
     <message>
         <location filename="spawn.cpp" line="163"/>
@@ -4868,7 +4888,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="selfupdater.cpp" line="417"/>
         <source>No incremental update available for this version, the complete package needs to be downloaded (%1 kB)</source>
-        <translation type="unfinished"/>
+        <translation>Aucune mise à jour incrémentale disponible pour cette version, le package complet doit être téléchargé (%1 kB)</translation>
     </message>
     <message>
         <location filename="selfupdater.cpp" line="426"/>
@@ -4902,7 +4922,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <location filename="settings.cpp" line="335"/>
         <location filename="settings.cpp" line="354"/>
         <source>attempt to store setting for unknown plugin &quot;%1&quot;</source>
-        <translation type="unfinished"/>
+        <translation>tenter de stocker le réglage pour le plugin inconnu &quot;%1&quot;</translation>
     </message>
     <message>
         <location filename="settings.cpp" line="647"/>
@@ -4912,7 +4932,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="settings.cpp" line="647"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
-        <translation type="unfinished"/>
+        <translation>Changer le dossier des mods affecte tout les profils! Les mods non présents(ou nommés différemment) dans le nouvel emplacement seront désactivés dans tout les profils. Il n&apos;y a aucun moyen de revenir en arrière à moins de faire une sauvegarde de vos profils manuellement.Poursuivre?</translation>
     </message>
 </context>
 <context>
@@ -4925,7 +4945,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="settingsdialog.ui" line="24"/>
         <source>General</source>
-        <translation>Divers</translation>
+        <translation>Général</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="32"/>
@@ -4979,7 +4999,8 @@ p, li { white-space: pre-wrap; }
         <location filename="settingsdialog.ui" line="88"/>
         <source>Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
 &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.</source>
-        <translation type="unfinished"/>
+        <translation>Décide la quantité de données imprimées vers &quot;ModOrganizer.log&quot; .
+&quot;Debug&quot; donne des informations très utile pour trouver des problèmes. Il n&apos;y a habituellement pas d&apos;impact de performance notable, mais le fichier peut devenir assez grand. Si cela pose problème vous pouvez préférez le niveau &quot;Info&quot; pour une utilisation régulière. Au niveau &quot;Erreur&quot; le fichier journal reste généralement vide.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="93"/>
@@ -5020,7 +5041,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="158"/>
         <source>Directory where mods are stored. Please note that changing this will break all associations of profiles with mods that don&apos;t exist in the new location (with the same name).</source>
-        <translation type="unfinished"/>
+        <translation>Dossier ou les mods seront stockés. Veuillez noter que changer ceci brisera toutes les associations des profils avec les mods qui n&apos;existent pas dans le nouvel emplacement (avec le même nom). </translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="172"/>
@@ -5035,7 +5056,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="199"/>
         <source>User interface</source>
-        <translation>Interface utiliser</translation>
+        <translation>Interface utilisateur</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="205"/>
@@ -5050,22 +5071,22 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="215"/>
         <source>If checked, the download list will display meta information instead of file names.</source>
-        <translation type="unfinished"/>
+        <translation>Si coché, la liste du téléchargement va afficher les méta-données à la place des noms de fichiers.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="218"/>
         <source>Download Meta Information</source>
-        <translation>Télécharger les Informations Meta</translation>
+        <translation>Télécharger les les méta-données</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="234"/>
         <source>Reset stored information from dialogs.</source>
-        <translation type="unfinished"/>
+        <translation>Réinitialiser les informations stockées à partir des boîtes de dialogue.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="237"/>
         <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</source>
-        <translation type="unfinished"/>
+        <translation>Cela rendra tous les dialogues apparant à nouveau si vous cochez &quot;Se souvenir de la sélection&quot;.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="240"/>
@@ -5110,7 +5131,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="299"/>
         <source>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</source>
-        <translation type="unfinished"/>
+        <translation>Si coché et si les informations d&apos;identification ci-dessous sont correctes, vous connecte au Nexus (pour la navigation et le téléchargement) automatiquement.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="302"/>
@@ -5135,7 +5156,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="350"/>
         <source>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</source>
-        <translation type="unfinished"/>
+        <translation>Désactive des fonctionnalités automatiques d&apos;Internet. Cela n&apos;affecte pas les fonctionnalités qui sont explicitement invoqués par l&apos;utilisateur (comme la vérification des mods pour mises à jour, recommandé, en ouvrant le navigateur Web)</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="353"/>
@@ -5150,7 +5171,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="settingsdialog.ui" line="363"/>
         <source>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</source>
-        <translation type="unfinished"/>
+        <translation>Utilise un proxy pour les connexions réseau. Cette option utilise les paramètres de l&apos;ensemble du système qui peuvent être configurés dans Internet Explorer. SVP notez que MO démarrera quelques secondes plus lentement sur certains systèmes en utilisant un proxy. </translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="366"/>
@@ -5268,7 +5289,14 @@ There are several means to do this:
 *Proxy DLL* In this mode, MO replaces one of the game's dlls with one that loads MO (and the original dll of course). This will ONLY work with Steam games and it has only been tested with Skyrim. Please use this only if the other mechanisms don't work.
 
 If you use the Steam version of Oblivion the default will NOT work. In this case, please install obse and use &quot;Script Extender&quot; as the load mechanism. Also you can then not start Oblivion from MO. Instead, use MO only to set up your mods, then quit and start Oblivion through Steam.</source>
-        <translation type="unfinished"/>
+        <translation>Mod Organizer nécessite une dll qui est injectée au jeu afin de lui rendre visible tout les mods.
+Pour ce faire, il existe plusieurs méthodes :
+*Mod Organizer* (par défaut) Dans ce mode, Mod Organizer injecte par lui même la dll. L&apos;inconvénient est que vous devrez alors toujours lancer le jeu dans MO ou via un raccourci créé par MO.
+*Script Extender* Dans ce mode, MO est installé comme un Script Extender (OBSE, FOSE, NVSE, SKSE) plugin.
+*Proxy DLL* Dans ce mode, MO remplace l&apos;une des dll du jeu original par une qui intègre MO (et la dll d&apos;origine bien sûr). Ceci ne fonctionne UNIQUEMENT pour une version Steam et cette méthode n&apos;a été testée qu&apos;avec le jeu Skyrim. Veuillez utiliser cette méthode uniquement si les autres modes ne fonctionnent pas.
+
+Si vous utilisez la version Steam d&apos;Oblivion, le mode par défaut ne fonctionnera PAS. Dans le cas échéant, veuillez installer OBSE et utiliser le mode &quot;Script Extender&quot; comme mode de chargement.   
+Vous ne pourrez pas alors lancer le jeu via MO : n&apos;utiliser alors MO que pour la gestion de vos mods, quitter le logiciel et démarrez Oblivion via Steam.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="678"/>
@@ -5287,7 +5315,11 @@ On top of this Nexus has used the client identification to lock out outdated ver
 Please note that MO does identify itself as MO to the webserver, it's not lying about what it is. It is merely adding a &quot;compatible&quot; NMM version to the user agent.
 
 tl;dr-version: If Nexus-features don&apos;t work, insert the current version number of NMM here and try again.</source>
-        <translation type="unfinished"/>
+        <translation>Mod Organisateur utilise une API fournie par le Nexus pour fournir des fonctionnalités comme la vérification des mises à jour et le téléchargement de fichiers. Malheureusement cette API n&apos;a pas été mis à disposition officiellement pour des outils tiers tels que MO nous devons donc usurper l&apos;identité du Nexus Mod Manager pour être autorisés à entrer.
+En plus Nexus a utilisé l&apos;identification de client pour verrouiller des versions périmées de NMM pour forcer les utilisateurs à mettre à jour. Cela signifie que MO doit également se faire passer pour la nouvelle version de NMM, même si MO n&apos;a pas besoin d&apos;une mise à jour. Par conséquent, vous pouvez configurer la version d&apos;identification ici.
+Veuillez noter que MO s&apos;identifie lui-même comme MO sur le serveur web, ce n&apos;est pas mentir sur ce qu&apos;il est. Il s&apos;agit simplement d&apos;ajouter une version de NMM «compatible» avec l&apos;agent utilisateur.
+
+tl;dr-version: Si les fonctionnalités de Nexus ne marchent pas, insérer le numéro de version de NMM ici et essayez à nouveau.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="723"/>
@@ -5309,13 +5341,14 @@ Je n&apos;en connais pas encore les circonstances, mais les rapports des usagers
     <message>
         <location filename="settingsdialog.ui" line="737"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
-        <translation type="unfinished"/>
+        <translation>Si coché, les fichiers (ex : ESPs, ESMs et BSAs) appartenant au jeu original ne pourront être désactivés dans l&apos;UI. (par défaut : on)</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="740"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
 Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
-        <translation type="unfinished"/>
+        <translation>Si coché, les fichiers (ex : ESPs, ESMs et BSAs) appartenant au jeu original ne pourront être désactivés dans l&apos;UI. (par défaut : on)
+Décocher ceci si vous voulez utiliser Mod Organizer avec des Conversions Totales (comme Nehrim) mais veuillez noter que le jeu crash si jamais les fichiers requis ne sont pas activés.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="744"/>
@@ -5325,7 +5358,7 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
     <message>
         <location filename="settingsdialog.ui" line="754"/>
         <source>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</source>
-        <translation type="unfinished"/>
+        <translation>Désactiver ceci pour ne plus afficher les mods installés en dehors de MO dans la liste des mods (panneau gauche). Les fichiers de ces mods seront traités comme ayant la plus faible priorité avec le contenu du jeu original.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="757"/>
@@ -5333,7 +5366,10 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
 However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
 
 If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps and esms) displayed in the right pane are completely unaffected by this feature.</source>
-        <translation type="unfinished"/>
+        <translation>Par défaut Mod Organisateur affiche les esps + les archives bsa des mods installés avec des outils étrangers  (volet gauche). Cela vous permet de contrôler leur priorité par rapport à d&apos;autres mods. Ceci est particulièrement utile si vous utilisez également Steam Workshop pour installer des mods.
+Cependant, si vous avez installé ces mods sans MO et qu&apos;ils entrent en conflit avec les BSA également installés sans MO ces conflits ne peuvent pas être résolus correctement.
+
+Si vous désactivez cette fonction, MO n&apos;affichera plus les DLC officielles de cette façon. Veuillez noter que les plugins (ESP et ESM) affichés dans le volet de droite ne sont pas affectés par cette fonction.</translation>
     </message>
     <message>
         <location filename="settingsdialog.ui" line="763"/>
@@ -5381,7 +5417,7 @@ Pour les autres jeux, ceci ne suffit pas à remplacer l&apos;invalidation des ar
     <message>
         <location filename="settingsdialog.cpp" line="120"/>
         <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box. Continue?</source>
-        <translation type="unfinished"/>
+        <translation>Ceci fera apparaître à nouveau toutes les boites de dialogues ou vous avez précédemment coché l&apos;option &quot;Retenir la sélection&quot;. Continuer ?</translation>
     </message>
 </context>
 <context>
@@ -5501,7 +5537,14 @@ On Windows Vista/Windows 7:
 On Windows XP:
   C:\Documents and Settings\[UserName]\My Documents\My Games\Skyrim\Saves
 </source>
-        <translation type="unfinished"/>
+        <translation>Ceci est une liste de tout les personnages présents dans le dépôt global.
+
+Sur Windows Vista/Windows 7 :
+  C:\Users\[Nom d&apos;Utilisateur]\Documents\My Games\Skyrim\Saves
+
+Sur Windows XP :
+  C:\Documents and Settings\[Nom d&apos;Utilisateur]\Mes Documents\My Games\Skyrim\Saves
+</translation>
     </message>
     <message>
         <location filename="transfersavesdialog.ui" line="46"/>
@@ -5514,7 +5557,14 @@ On Windows XP:
   C:\Documents and Settings[UserName]\My Documents\My Games\Skyrim\Saves
 
 </source>
-        <translation type="unfinished"/>
+        <translation>Ceci est une liste de toutes les sauvegardes pour le personnage sélectionné présentes dans le dépôt global.
+
+On Windows Vista/Windows 7:
+  C:\Users\[Nom d&apos;Utilisateur]\Documents\My Games\Skyrim\Saves
+
+On Windows XP:
+  C:\Documents and Settings[Nom d&apos;Utilisateur]\Mes Documents\My Games\Skyrim\Saves
+</translation>
     </message>
     <message>
         <location filename="transfersavesdialog.ui" line="87"/>
@@ -5544,7 +5594,7 @@ On Windows XP:
     <message>
         <location filename="transfersavesdialog.ui" line="167"/>
         <source>Profile Characters</source>
-        <translation>Profil des personnages</translation>
+        <translation>Personnages du Profil</translation>
     </message>
     <message>
         <location filename="transfersavesdialog.cpp" line="140"/>
@@ -5573,12 +5623,14 @@ On Windows XP:
     <message>
         <location filename="transfersavesdialog.cpp" line="231"/>
         <source>Move all save games of character &quot;%1&quot; to the global location? Please be aware that this will mess up the running number of save games.</source>
-        <translation type="unfinished"/>
+        <translation>Déplacer toutes les sauvegardes du personnage &quot;%1&quot; vers le dépôt global ?
+Veuillez garder à l&apos;esprit que ceci désordonne la numérotation de vos sauvegardes actuelles.</translation>
     </message>
     <message>
         <location filename="transfersavesdialog.cpp" line="270"/>
         <source>Copy all save games of character &quot;%1&quot; to the global location? Please be aware that this will mess up the running number of save games.</source>
-        <translation type="unfinished"/>
+        <translation>Copier toutes les sauvegardes du personnage &quot;%1&quot; vers le dépôt global ?
+Veuillez garder à l&apos;esprit que ceci désordonne la numérotation de vos sauvegardes actuelles.</translation>
     </message>
 </context>
 </TS>
