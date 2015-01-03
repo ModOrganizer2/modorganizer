@@ -66,28 +66,34 @@ bool FileExists(const std::wstring &searchPath, const std::wstring &filename)
 std::string ToString(const std::wstring &source, bool utf8)
 {
   std::string result;
-  UINT codepage = utf8 ? CP_UTF8 : GetACP();
-  int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, NULL, 0, NULL, NULL);
-  if (sizeRequired == 0) {
-    throw windows_error("failed to convert string to multibyte");
+  if (source.length() > 0) {
+    UINT codepage = utf8 ? CP_UTF8 : GetACP();
+    int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, NULL, 0, NULL, NULL);
+    if (sizeRequired == 0) {
+      throw windows_error("failed to convert string to multibyte");
+    }
+    // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
+    // we don't want that \0 in the string because then the length field would be wrong. Because madness
+    result.resize(sizeRequired - 1, '\0');
+    ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, NULL, NULL);
   }
-  // the size returned by WideCharToMultiByte contains zero termination IF -1 is specified for the length.
-  // we don't want that \0 in the string because then the length field would be wrong. Because madness
-  result.resize(sizeRequired - 1, '\0');
-  ::WideCharToMultiByte(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired, NULL, NULL);
+
   return result;
 }
 
 std::wstring ToWString(const std::string &source, bool utf8)
 {
   std::wstring result;
-  UINT codepage = utf8 ? CP_UTF8 : GetACP();
-  int sizeRequired = ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), NULL, 0);
-  if (sizeRequired == 0) {
-    throw windows_error("failed to convert string to wide character");
+  if (source.length() > 0) {
+    UINT codepage = utf8 ? CP_UTF8 : GetACP();
+    int sizeRequired = ::MultiByteToWideChar(codepage, 0, source.c_str(), source.length(), NULL, 0);
+    if (sizeRequired == 0) {
+      throw windows_error("failed to convert string to wide character");
+    }
+    result.resize(sizeRequired, L'\0');
+    ::MultiByteToWideChar(codepage, 0, source.c_str(), source.length(), &result[0], sizeRequired);
   }
-  result.resize(sizeRequired, L'\0');
-  ::MultiByteToWideChar(codepage, 0, &source[0], (int)source.size(), &result[0], sizeRequired);
+
   return result;
 }
 

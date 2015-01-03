@@ -92,7 +92,6 @@ SOURCES += \
     json.cpp \
     safewritefile.cpp \
     modflagicondelegate.cpp \
-    pluginflagicondelegate.cpp \
     genericicondelegate.cpp \
     organizerproxy.cpp
 
@@ -172,7 +171,6 @@ HEADERS  += \
     safewritefile.h\
     pdll.h \
     modflagicondelegate.h \
-    pluginflagicondelegate.h \
     genericicondelegate.h \
     organizerproxy.h
 

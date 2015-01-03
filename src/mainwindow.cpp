@@ -4498,8 +4498,7 @@ void MainWindow::writeDataToFile()
 }
 
 
-int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
-                                    QFileInfo &binaryInfo, QString &arguments)
+int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
 {
   QString extension = targetInfo.completeSuffix();
   if ((extension.compare("cmd", Qt::CaseInsensitive)) ||
@@ -4510,6 +4509,7 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo,
     return 1;
   } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
     binaryInfo = targetInfo;
+    return 1;
   } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
     // types that need to be injected into
     std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());

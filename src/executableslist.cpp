@@ -196,7 +196,7 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = true;
     newExe.m_Toolbar = toolbar;
-    if ((pos < 0) || (pos >= m_Executables.size())) {
+    if ((pos < 0) || (pos >= static_cast<int>(m_Executables.size()))) {
       m_Executables.push_back(newExe);
     } else {
       m_Executables.insert(m_Executables.begin() + pos, newExe);
