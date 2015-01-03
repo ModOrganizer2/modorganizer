@@ -445,6 +445,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   : ModInfoWithConflictInfo(directoryStructure)
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
+  , m_Repository()
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
 {
@@ -492,6 +493,7 @@ void ModInfoRegular::readMeta()
   m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
+  m_Repository = metaFile.value("repository", "Nexus").toString();
   m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
@@ -547,6 +549,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("ignoredVersion", m_IgnoredVersion.canonicalString());
       metaFile.setValue("version", m_Version.canonicalString());
       metaFile.setValue("installationFile", m_InstallationFile);
+      metaFile.setValue("repository", m_Repository);
       metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
@@ -884,6 +887,11 @@ QDateTime ModInfoRegular::creationTime() const
 QString ModInfoRegular::getNexusDescription() const
 {
   return m_NexusDescription;
+}
+
+QString ModInfoRegular::repository() const
+{
+  return m_Repository;
 }
 
 ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const

@@ -169,7 +169,7 @@ private:
   //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = NULL);
 
   bool doInstall(MOBase::GuessedValue<QString> &modName,
-                 int modID, const QString &version, const QString &newestVersion, int categoryID);
+                 int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
   QString generateBackupName(const QString &directoryName) const;
 

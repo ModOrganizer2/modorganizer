@@ -513,7 +513,8 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
 }
 
 bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
-                                    const QString &version, const QString &newestVersion, int categoryID)
+                                    const QString &version, const QString &newestVersion,
+                                    int categoryID, const QString &repository)
 {
   if (!ensureValidModName(modName)) {
     return false;
@@ -568,6 +569,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     settingsFile.setValue("category", QString::number(categoryID));
   }
   settingsFile.setValue("installationFile", m_CurrentFile);
+  settingsFile.setValue("repository", repository);
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
@@ -631,6 +633,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
+  QString repository = "Nexus";
 
   QString metaName = fileName.mid(0).append(".meta");
   if (QFile(metaName).exists()) {
@@ -643,6 +646,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     newestVersion = metaFile.value("newestVersion", "").toString();
     unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(metaFile.value("category", 0).toInt());
     categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
+    repository = metaFile.value("repository", "").toString();
   }
 
   if (version.isEmpty()) {
@@ -707,7 +711,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
             mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest works the same for all installers
-            if (!doInstall(modName, modID, version, newestVersion, categoryID)) {
+            if (!doInstall(modName, modID, version, newestVersion, categoryID, repository)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
           }
@@ -722,6 +726,11 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
           std::set<QString> installerExtensions = installerCustom->supportedExtensions();
           if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
             installResult = installerCustom->install(modName, fileName, version, modID);
+            unsigned int idx = ModInfo::getIndex(modName);
+            if (idx != UINT_MAX) {
+              ModInfo::Ptr info = ModInfo::getByIndex(idx);
+              info->setRepository(repository);
+            }
           }
         }
       }

@@ -267,6 +267,11 @@ public:
   virtual void setNewestVersion(const MOBase::VersionInfo &version) = 0;
 
   /**
+   * @brief sets the repository that was used to download the mod
+   */
+  virtual void setRepository(const QString &) {}
+
+  /**
    * @brief changes/updates the nexus description text
    * @param description the current description text
    */
@@ -347,6 +352,11 @@ public:
    * @return newest version of the mod
    **/
   virtual MOBase::VersionInfo getNewestVersion() const = 0;
+
+  /**
+   * @return the repository from which the file was downloaded. Only relevant regular mods
+   */
+  virtual QString repository() const { return ""; }
 
   /**
    * @brief ignore the newest version for updates
@@ -727,6 +737,12 @@ public:
   virtual void setPrimaryCategory(int categoryID) { m_PrimaryCategory = categoryID; m_MetaInfoChanged = true; }
 
   /**
+   * @brief sets the download repository
+   * @param repository
+   */
+  virtual void setRepository(const QString &repository) { m_Repository = repository; }
+
+  /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
    * @param endorsed the new endorsement state
@@ -844,6 +860,11 @@ public:
   QString getNexusDescription() const;
 
   /**
+   * @return repository from which the file was downloaded
+   */
+  virtual QString repository() const;
+
+  /**
    * @return true if the file has been endorsed on nexus
    */
   virtual EEndorsedState endorsedState() const;
@@ -881,6 +902,7 @@ private:
   QString m_InstallationFile;
   QString m_Notes;
   QString m_NexusDescription;
+  QString m_Repository;
 
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
