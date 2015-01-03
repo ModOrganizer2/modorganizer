@@ -268,8 +268,8 @@ CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../bsatk/release
   LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
-  QMAKE_CXXFLAGS += /Zi# /GL
-  QMAKE_LFLAGS += /DEBUG# /LTCG /OPT:REF /OPT:ICF
+  QMAKE_CXXFLAGS += /Zi /GL
+  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
   PRE_TARGETDEPS += \
     $$OUT_PWD/../shared/release/mo_shared.lib \
     $$OUT_PWD/../bsatk/release/bsatk.lib
@@ -284,17 +284,7 @@ CONFIG += embed_manifest_exe
 # QMAKE_CXXFLAGS += /analyze
 # QMAKE_LFLAGS += /MANIFESTUAC:\"level=\'highestAvailable\' uiAccess=\'false\'\"
 
-TRANSLATIONS = organizer_de.ts \
-               organizer_es.ts \
-               organizer_fr.ts \
-               organizer_zh_TW.ts \
-               organizer_zh_CN.ts \
-               organizer_cs.ts \
-               organizer_tr.ts \
-               organizer_en_US.ts \
-               organizer_ko.ts \
-               organizer_ru.ts \
-               organizer_en.ts
+TRANSLATIONS = organizer_en.ts
 
 #!isEmpty(TRANSLATIONS) {
 #  isEmpty(QMAKE_LRELEASE) {
