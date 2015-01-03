@@ -55,9 +55,9 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 }
 
 
-SelfUpdater::SelfUpdater(NexusInterface *nexusInterface, QWidget *parent)
-  : QObject(parent), m_Parent(parent), m_Interface(nexusInterface), m_UpdateRequestID(-1),
-    m_Reply(NULL), m_Progress(parent), m_Attempts(3)
+SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
+  : m_Parent(nullptr), m_Interface(nexusInterface), m_UpdateRequestID(-1),
+    m_Reply(NULL), m_Progress(nullptr), m_Attempts(3)
 {
   m_Progress.setMaximum(100);
 
@@ -88,6 +88,11 @@ SelfUpdater::~SelfUpdater()
   delete m_CurrentArchive;
 }
 
+void SelfUpdater::setUserInterface(QWidget *widget)
+{
+  m_Progress.setParent(widget);
+  m_Parent = widget;
+}
 
 void SelfUpdater::testForUpdate()
 {

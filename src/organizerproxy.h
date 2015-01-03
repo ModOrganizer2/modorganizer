@@ -7,8 +7,10 @@
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
+
 public:
-  OrganizerProxy(MainWindow *window, const QString &pluginName);
+
+  OrganizerProxy(OrganizerCore *organizer, const QString &pluginName);
 
   virtual MOBase::IGameInfo &gameInfo() const;
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
@@ -41,10 +43,14 @@ public:
   virtual void refreshModList(bool saveChanges);
 
   virtual bool onAboutToRun(const std::function<bool(const QString&)> &func);
-  virtual bool onModInstalled(const std::function<void (const QString &)> &func);
+  virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
+  virtual bool onModInstalled(const std::function<void (const QString&)> &func);
+
 
 private:
-  MainWindow *m_Proxied;
+
+  OrganizerCore *m_Proxied;
+
   const QString &m_PluginName;
 
 };

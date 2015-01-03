@@ -36,8 +36,9 @@ void ModListViewStyle::drawPrimitive(PrimitiveElement element, const QStyleOptio
 
 ModListView::ModListView(QWidget *parent)
   : QTreeView(parent)
+  , m_Scrollbar(new ViewMarkingScrollBar(this->model(), this))
 {
-//  setStyle(new ModListViewStyle(style(), indentation()));
+  setVerticalScrollBar(m_Scrollbar);
 }
 
 void ModListView::dragEnterEvent(QDragEnterEvent *event)
@@ -45,4 +46,10 @@ void ModListView::dragEnterEvent(QDragEnterEvent *event)
   emit dropModeUpdate(event->mimeData()->hasUrls());
 
   QTreeView::dragEnterEvent(event);
+}
+
+void ModListView::setModel(QAbstractItemModel *model)
+{
+  QTreeView::setModel(model);
+  setVerticalScrollBar(new ViewMarkingScrollBar(model, this));
 }

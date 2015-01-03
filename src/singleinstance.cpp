@@ -54,6 +54,8 @@ SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
   }
   if (m_PrimaryInstance) {
     connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()));
+    // has to be called before listen
+    m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
     m_Server.listen(s_Key);
   }
 }

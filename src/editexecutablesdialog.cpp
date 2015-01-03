@@ -54,9 +54,7 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
 
 void EditExecutablesDialog::refreshExecutablesWidget()
 {
-  QListWidget *executablesWidget = findChild<QListWidget*>("executablesListBox");
-
-  executablesWidget->clear();
+  ui->executablesListBox->clear();
   std::vector<Executable>::const_iterator current, end;
   m_ExecutablesList.getExecutables(current, end);
 
@@ -66,7 +64,7 @@ void EditExecutablesDialog::refreshExecutablesWidget()
     temp.setValue(*current);
     newItem->setData(Qt::UserRole, temp);
     newItem->setTextColor(current->m_Custom ? QColor(Qt::black) : QColor(Qt::darkGray));
-    executablesWidget->addItem(newItem);
+    ui->executablesListBox->addItem(newItem);
   }
 
   ui->addButton->setEnabled(false);
@@ -97,7 +95,8 @@ void EditExecutablesDialog::saveExecutable()
 {
   m_ExecutablesList.addExecutable(ui->titleEdit->text(), QDir::fromNativeSeparators(ui->binaryEdit->text()),
         ui->argumentsEdit->text(), QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-        (ui->closeCheckBox->checkState() == Qt::Checked) ? DEFAULT_CLOSE : DEFAULT_STAY,
+        (ui->closeCheckBox->checkState() == Qt::Checked) ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
+                                                         : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
         ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
         true, false);
 }
@@ -213,7 +212,7 @@ bool EditExecutablesDialog::executableChanged()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
-        || (selectedExecutable.m_CloseMO == DEFAULT_CLOSE) != ui->closeCheckBox->isChecked();
+        || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked();
   } else {
     return false;
   }

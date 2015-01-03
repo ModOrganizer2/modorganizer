@@ -135,7 +135,7 @@ HANDLE startBinary(const QFileInfo &binary,
   std::wstring currentDirectoryName = ToWString(QDir::toNativeSeparators(currentDirectory.absolutePath()));
 
   try {
-    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(), hooked,
+    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(), true,
                stdOut, stdErr, processHandle, threadHandle)) {
       reportError(QObject::tr("failed to spawn \"%1\"").arg(binary.fileName()));
       return INVALID_HANDLE_VALUE;
@@ -200,19 +200,3 @@ HANDLE startBinary(const QFileInfo &binary,
   ::CloseHandle(threadHandle);
   return jobObject;
 }
-
-/*
-ExitProxy *ExitProxy::s_Instance = NULL;
-
-ExitProxy *ExitProxy::instance()
-{
-  if (s_Instance == NULL) {
-    s_Instance = new ExitProxy();
-  }
-  return s_Instance;
-}
-
-void ExitProxy::emitExit()
-{
-  emit exit();
-}*/

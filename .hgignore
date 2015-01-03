@@ -31,6 +31,9 @@ html
 *.log
 *.filters
 *.lib
+source/organizer/resources/contents/icons
+source/plugins/build-*
+*/GeneratedFiles/*
 syntax: regexp
 Makefile\.(Debug|Release)
 source/.*/debug/.*

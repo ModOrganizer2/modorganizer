@@ -33,8 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-SkyrimInfo::SkyrimInfo(const std::wstring &moDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDirectory, gameDirectory)
+SkyrimInfo::SkyrimInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"skyrim");
 
@@ -306,7 +306,7 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
 }
 
 
-std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
+/*std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
   result.push_back(ExecutableInfo(L"SKSE", L"skse_loader.exe", L"", L"", DEFAULT_CLOSE));
@@ -317,6 +317,6 @@ std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
   result.push_back(ExecutableInfo(L"Creation Kit", L"CreationKit.exe", L"", L"", DEFAULT_STAY, L"202480"));
 
   return result;
-}
+}*/
 
 } // namespace MOShared

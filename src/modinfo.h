@@ -81,6 +81,8 @@ public:
     CONTENT_STRING
   };
 
+  static const int NUM_CONTENT_TYPES = CONTENT_STRING + 1;
+
   enum EHighlight {
     HIGHLIGHT_NONE = 0,
     HIGHLIGHT_INVALID = 1,
@@ -181,6 +183,13 @@ public:
    * @return a new mod
    */
   static ModInfo::Ptr createFromPlugin(const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
+
+  /**
+   * @brief retieve a name for one of the CONTENT_ enums
+   * @param contentType the content value
+   * @return a display string
+   */
+  static QString getContentTypeName(int contentType);
 
   virtual bool isRegular() const { return false; }
 
@@ -328,6 +337,13 @@ public:
   virtual QString name() const = 0;
 
   /**
+   * @brief getter for an internal name. This is usually the same as the regular name, but with special mod types it might be
+   *        this is used to distinguish between mods that have the same visible name
+   * @return internal mod name
+   */
+  virtual QString internalName() const { return name(); }
+
+  /**
    * @brief getter for the mod path
    *
    * @return the (absolute) path to the mod
@@ -403,11 +419,23 @@ public:
   virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
 
   /**
+   * @return a list of content types contained in a mod
+   */
+  virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
+
+  /**
    * @brief test if the specified flag is set for this mod
    * @param flag the flag to test
    * @return true if the flag is set, false otherwise
    */
   bool hasFlag(EFlag flag) const;
+
+  /**
+   * @brief test if the mods contains the specified content
+   * @param content the content to test
+   * @return true if the content is there, false otherwise
+   */
+  bool hasContent(ModInfo::EContent content) const;
 
   /**
    * @return an indicator if and how this mod should be highlighted by the UI
@@ -513,6 +541,21 @@ public:
    */
   virtual void saveMeta() {}
 
+  /**
+   * @return retrieve list of mods (as mod index) that are overwritten by this one. Updates may be delayed
+   */
+  virtual std::set<unsigned int> getModOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+   * @return list of mods (as mod index) that overwrite this one. Updates may be delayed
+   */
+  virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
+
+  /**
+   * @brief update conflict information
+   */
+  virtual void doConflictCheck() const {}
+
 signals:
 
   /**
@@ -566,6 +609,13 @@ public:
    * @brief clear all caches held for this mod
    */
   virtual void clearCaches();
+
+  virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
+
+  virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
+
+  virtual void doConflictCheck() const;
+
 private:
 
   enum EConflictType {
@@ -594,6 +644,9 @@ private:
 
   mutable EConflictType m_CurrentConflictState;
   mutable QTime m_LastConflictCheck;
+
+  mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
+  mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
 
 };
 
@@ -1024,6 +1077,10 @@ public:
 
 public:
 
+  static const char INT_IDENTIFIER[];
+
+public:
+
   virtual bool updateAvailable() const { return false; }
   virtual bool updateIgnored() const { return false; }
   virtual bool downgradeAvailable() const { return false; }
@@ -1043,6 +1100,7 @@ public:
   virtual void endorse(bool) {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;
+  virtual QString internalName() const { return name() + INT_IDENTIFIER; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
   virtual QString absolutePath() const;

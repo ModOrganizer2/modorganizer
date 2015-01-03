@@ -37,7 +37,7 @@ CategoryFactory* CategoryFactory::s_Instance = NULL;
 
 QString CategoryFactory::categoriesFilePath()
 {
-  return QCoreApplication::applicationDirPath() + "/categories.dat";
+  return qApp->property("dataPath").toString() + "/categories.dat";
 }
 
 

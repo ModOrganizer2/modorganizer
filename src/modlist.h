@@ -54,6 +54,7 @@ public:
   enum EColumn {
     COL_NAME,
     COL_FLAGS,
+    COL_CONTENT,
     COL_CATEGORY,
     COL_MODID,
     COL_VERSION,
@@ -100,6 +101,8 @@ public:
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
+
+  void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
 
   void modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -245,6 +248,8 @@ private:
 
   QString contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const;
 
+  ModList::EColumn getEnabledColumn(int index) const;
+
   QVariant categoryData(int categoryID, int column, int role) const;
   QVariant modData(int modID, int modelColumn, int role) const;
 
@@ -287,6 +292,9 @@ private:
   QFontMetrics m_FontMetrics;
 
   bool m_DropOnItems;
+
+  std::set<unsigned int> m_Overwrite;
+  std::set<unsigned int> m_Overwritten;
 
   TModInfoChange m_ChangeInfo;
 

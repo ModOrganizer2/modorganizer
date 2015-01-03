@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-FalloutNVInfo::FalloutNVInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : GameInfo(omoDirectory, gameDirectory)
+FalloutNVInfo::FalloutNVInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"falloutnv");
 }
@@ -257,7 +257,7 @@ bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
   return false;
 }
 
-
+/*
 std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
@@ -269,5 +269,5 @@ std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

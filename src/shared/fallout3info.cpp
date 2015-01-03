@@ -30,8 +30,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-Fallout3Info::Fallout3Info(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : GameInfo(omoDirectory, gameDirectory)
+Fallout3Info::Fallout3Info(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"fallout3");
 }
@@ -267,7 +267,7 @@ bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 }
 
 
-std::vector<ExecutableInfo> Fallout3Info::getExecutables()
+/*std::vector<ExecutableInfo> Fallout3Info::getExecutables()
 {
   std::vector<ExecutableInfo> result;
   result.push_back(ExecutableInfo(L"FOSE", L"fose_loader.exe", L"", L"", DEFAULT_CLOSE));
@@ -278,5 +278,5 @@ std::vector<ExecutableInfo> Fallout3Info::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

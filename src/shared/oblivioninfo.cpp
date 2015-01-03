@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-OblivionInfo::OblivionInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : GameInfo(omoDirectory, gameDirectory)
+OblivionInfo::OblivionInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
 {
   identifyMyGamesDirectory(L"oblivion");
 }
@@ -273,7 +273,7 @@ std::wstring OblivionInfo::getSteamAPPId(int) const
   return L"22330";
 }
 
-
+/*
 std::vector<ExecutableInfo> OblivionInfo::getExecutables()
 {
   std::vector<ExecutableInfo> result;
@@ -286,5 +286,5 @@ std::vector<ExecutableInfo> OblivionInfo::getExecutables()
   result.push_back(ExecutableInfo(L"BOSS (old)", L"Data/BOSS.exe", L"", L"", NEVER_CLOSE));
 
   return result;
-}
+}*/
 } // namespace MOShared

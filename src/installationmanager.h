@@ -53,9 +53,11 @@ public:
    *
    * @param parent parent object.
    **/
-  explicit InstallationManager(QWidget *parent);
+  explicit InstallationManager();
 
   virtual ~InstallationManager();
+
+  void setParentWidget(QWidget *widget);
 
   /**
    * @brief update the directory where mods are to be installed

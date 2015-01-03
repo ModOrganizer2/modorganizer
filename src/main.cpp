@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 #include <QToolBar>
 #include <QFileDialog>
+#include <QDesktopServices>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <DbgHelp.h>
@@ -41,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
+#include <scopeguard.h>
 #include <stdexcept>
 #include "mainwindow.h"
 #include "report.h"
@@ -174,7 +176,6 @@ void cleanupDir()
   }
 }
 
-
 bool isNxmLink(const QString &link)
 {
   return link.left(6).toLower() == "nxm://";
@@ -216,6 +217,7 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
 
           BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, NULL, NULL);
 
+          ::FlushFileBuffers(dumpFile);
           ::CloseHandle(dumpFile);
           if (success) {
             return EXCEPTION_EXECUTE_HANDLER;
@@ -300,7 +302,37 @@ int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
 
-  application.addLibraryPath(application.applicationDirPath() + "/dlls");
+  qDebug("application name: %s", qPrintable(application.applicationName()));
+
+  QString instanceID;
+  QFile instanceFile(application.applicationDirPath() + "/INSTANCE");
+  if (instanceFile.open(QIODevice::ReadOnly)) {
+    instanceID = instanceFile.readAll().trimmed();
+  }
+
+  QString dataPath = instanceID.isEmpty() ? application.applicationDirPath()
+                                          : QDir::fromNativeSeparators(
+#if QT_VERSION >= 0x050000
+                                              QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+#else
+                                              QDesktopServices::storageLocation(QDesktopServices::DataLocation)
+#endif
+                                              ) + "/" + instanceID;
+  application.setProperty("dataPath", dataPath);
+
+#if QT_VERSION >= 0x050000
+  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#endif
+
+  qDebug("data path: %s", qPrintable(dataPath));
+  if (!QDir(dataPath).exists()) {
+    if (!QDir().mkpath(dataPath)) {
+      qCritical("failed to create %s", qPrintable(dataPath));
+      return 1;
+    }
+  }
+
+  application.setLibraryPaths(QStringList() << (application.applicationDirPath() + "/dlls"));
 
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
@@ -314,7 +346,7 @@ int main(int argc, char *argv[])
                    , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
     return 1;
   }
-  LogBuffer::init(100, QtDebugMsg, application.applicationDirPath() + "/logs/mo_interface.log");
+  LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
@@ -364,21 +396,18 @@ int main(int argc, char *argv[])
     } // we continue for the primary instance OR if MO has been called with parameters
 
 
-    // TODO: this should be MAX_PATH_UNICODE!
-    wchar_t moPath[MAX_PATH];
-    memset(moPath, 0, sizeof(TCHAR) * MAX_PATH);
-    ::GetModuleFileNameW(NULL, moPath, MAX_PATH);
-    wchar_t *lastBSlash = wcsrchr(moPath, TEXT('\\'));
-    if (lastBSlash != NULL) {
-      *lastBSlash = TEXT('\0');
-    }
-    QSettings settings(ToQString(std::wstring(moPath).append(L"\\ModOrganizer.ini")), QSettings::IniFormat);
+    QSettings settings(dataPath + "/ModOrganizer.ini", QSettings::IniFormat);
+
+    OrganizerCore organizer(settings);
+
+    PluginContainer pluginContainer(&organizer);
+    pluginContainer.loadPlugins();
 
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
 
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(moPath, ToWString(QDir::toNativeSeparators(gamePath)))) {
+      if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(dataPath), ToWString(QDir::toNativeSeparators(gamePath)))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));
@@ -427,6 +456,7 @@ int main(int argc, char *argv[])
       return -1;
     } else if (gamePath.length() != 0) {
       // user selected a folder and game was initialised with it
+      qDebug("game path: %s", qPrintable(gamePath));
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
@@ -448,39 +478,13 @@ int main(int argc, char *argv[])
 #pragma message("edition isn't used?")
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 
-    ExecutablesList executablesList;
-
-    executablesList.init();
+    organizer.updateExecutablesList(settings);
 
     if (!bootstrap()) { // requires gameinfo to be initialised!
       return -1;
     }
 
     cleanupDir();
-
-    qDebug("setting up configured executables");
-
-    int numCustomExecutables = settings.beginReadArray("customExecutables");
-    for (int i = 0; i < numCustomExecutables; ++i) {
-      settings.setArrayIndex(i);
-      CloseMOStyle closeMO = settings.value("closeOnStart").toBool() ? DEFAULT_CLOSE : DEFAULT_STAY;
-      bool custom = settings.value("custom", true).toBool();
-      if (custom) {
-        executablesList.addExecutable(settings.value("title").toString(),
-                                      settings.value("binary").toString(),
-                                      settings.value("arguments").toString(),
-                                      settings.value("workingDirectory", "").toString(),
-                                      closeMO,
-                                      settings.value("steamAppID", "").toString(),
-                                      custom,
-                                      settings.value("toolbar", false).toBool(),
-                                      i);
-      } else {
-        executablesList.position(settings.value("title").toString(), settings.value("toolbar", false).toBool(), i);
-      }
-    }
-
-    settings.endArray();
 
     qDebug("initializing tutorials");
     TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
@@ -493,11 +497,11 @@ int main(int argc, char *argv[])
     int res = 1;
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(argv[0], settings);
-      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-      QObject::connect(&instance, SIGNAL(messageSent(QString)), &mainWindow, SLOT(externalMessage(QString)));
+      MainWindow mainWindow(argv[0], settings, organizer, pluginContainer);
 
-      mainWindow.setExecutablesList(executablesList);
+      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
+      QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer, SLOT(externalMessage(QString)));
+
       mainWindow.readSettings();
 
       QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
@@ -552,7 +556,7 @@ int main(int argc, char *argv[])
       if ((arguments.size() > 1) &&
           (isNxmLink(arguments.at(1)))) {
         qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
-        mainWindow.externalMessage(arguments.at(1));
+        organizer.externalMessage(arguments.at(1));
       }
       splash.finish(&mainWindow);
       res = application.exec();

@@ -27,10 +27,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "skyriminfo.h"
 #include "util.h"
 
+
 #include <shlobj.h>
 #include <sstream>
 #include <cassert>
 #include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 namespace MOShared {
 
@@ -38,8 +40,8 @@ namespace MOShared {
 GameInfo* GameInfo::s_Instance = NULL;
 
 
-GameInfo::GameInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory)
-  : m_GameDirectory(gameDirectory), m_OrganizerDirectory(omoDirectory)
+GameInfo::GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
+  : m_GameDirectory(gameDirectory), m_OrganizerDirectory(moDirectory), m_OrganizerDataDirectory(moDataDirectory)
 {
   atexit(&cleanup);
 }
@@ -74,42 +76,47 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
       }
     }
   }
-  if (!FileExists(m_MyGamesDirectory.substr().append(L"/").append(file))) {
-    m_MyGamesDirectory.assign(getSpecialPath(L"Personal")).append(L"\\My Games");
+  // c) finally, look in the registry. This is discouraged
+  if (m_MyGamesDirectory.empty()
+      || !FileExists(m_MyGamesDirectory + L"\\" + file)) {
+    std::wstring fromRegistry = getSpecialPath(L"Personal") + L"\\My Games";
+    if (FileExists(fromRegistry + L"\\" + file)) {
+      m_MyGamesDirectory = fromRegistry;
+    }
   }
 }
 
 
-bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &searchPath)
+bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath)
 {
   if (OblivionInfo::identifyGame(searchPath)) {
-    s_Instance = new OblivionInfo(moDirectory, searchPath);
+    s_Instance = new OblivionInfo(moDirectory, moDataDirectory, searchPath);
   } else if (Fallout3Info::identifyGame(searchPath)) {
-    s_Instance = new Fallout3Info(moDirectory, searchPath);
+    s_Instance = new Fallout3Info(moDirectory, moDataDirectory, searchPath);
   } else if (FalloutNVInfo::identifyGame(searchPath)) {
-    s_Instance = new FalloutNVInfo(moDirectory, searchPath);
+    s_Instance = new FalloutNVInfo(moDirectory, moDataDirectory, searchPath);
   } else if (SkyrimInfo::identifyGame(searchPath)) {
-    s_Instance = new SkyrimInfo(moDirectory, searchPath);
+    s_Instance = new SkyrimInfo(moDirectory, moDataDirectory, searchPath);
   }
 
   return s_Instance != NULL;
 }
 
 
-bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &gamePath)
+bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath)
 {
   if (s_Instance == NULL) {
     if (gamePath.length() == 0) {
       // search upward in the directory until a recognized game-binary is found
       std::wstring searchPath(moDirectory);
-      while (!identifyGame(moDirectory, searchPath)) {
+      while (!identifyGame(moDirectory, moDataDirectory, searchPath)) {
         size_t lastSep = searchPath.find_last_of(L"/\\");
         if (lastSep == std::string::npos) {
           return false;
         }
         searchPath.erase(lastSep);
       }
-    } else if (!identifyGame(moDirectory, gamePath)) {
+    } else if (!identifyGame(moDirectory, moDataDirectory, gamePath)) {
       return false;
     }
   }
@@ -207,11 +214,11 @@ std::wstring GameInfo::getLocalAppFolder() const
 std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
 {
   HKEY key;
-  LONG errorcode = ::RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
-                                  0, KEY_QUERY_VALUE, &key);
+  LONG errorcode = ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders",
+                                   0, KEY_QUERY_VALUE, &key);
 
   if (errorcode != ERROR_SUCCESS) {
-    throw windows_error("failed to look up special folder", errorcode);
+    throw windows_error("failed to look up special folder (path)", errorcode);
   }
 
   WCHAR temp[MAX_PATH];
@@ -219,7 +226,7 @@ std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
 
   errorcode = ::RegQueryValueExW(key, name, NULL, NULL, (LPBYTE)temp, &bufferSize);
   if (errorcode != ERROR_SUCCESS) {
-    throw windows_error("failed to look up special folder", errorcode);
+    throw windows_error((boost::format("failed to look up special folder (%1%)") % ToString(name, true)).str(), errorcode);
   }
 
   WCHAR temp2[MAX_PATH];

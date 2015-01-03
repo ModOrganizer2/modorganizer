@@ -469,6 +469,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
+  qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
 }
 
 
@@ -773,7 +774,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 {
   int index = modelIndex.row();
 
-  if (role == Qt::DisplayRole) {
+  if ((role == Qt::DisplayRole)
+      || (role == Qt::EditRole)) {
     switch (modelIndex.column()) {
       case COL_NAME: {
         return m_ESPs[index].m_Name;
@@ -886,6 +888,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 
 bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)
 {
+  bool result = false;
   if (role == Qt::CheckStateRole) {
     m_ESPs[modIndex.row()].m_Enabled = value.toInt() == Qt::Checked;
     emit dataChanged(modIndex, modIndex);
@@ -893,10 +896,19 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
     refreshLoadOrder();
     startSaveTime();
 
-    return true;
-  } else {
-    return false;
+    result = true;
+  } else if (role == Qt::EditRole) {
+    if (modIndex.column() == COL_PRIORITY) {
+      bool ok = false;
+      int newPriority = value.toInt(&ok);
+      if (ok) {
+        setPluginPriority(modIndex.row(), newPriority);
+        result = true;
+      }
+      refreshLoadOrder();
+    }
   }
+  return result;
 }
 
 
@@ -927,6 +939,9 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
   if (modelIndex.isValid())  {
     if (!m_ESPs[index].m_ForceEnabled) {
       result |= Qt::ItemIsUserCheckable | Qt::ItemIsDragEnabled;
+    }
+    if (modelIndex.column() == COL_PRIORITY) {
+      result |= Qt::ItemIsEditable;
     }
   } else {
     result |= Qt::ItemIsDropEnabled;
