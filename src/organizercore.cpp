@@ -76,15 +76,25 @@ static std::wstring getProcessName(DWORD processId)
   }
 }
 
-static bool testForSteam()
+bool MainWindow::testForSteam()
 {
-  DWORD processIDs[1024];
+  size_t currentSize = 1024;
+  std::unique_ptr<DWORD[]> processIDs;
   DWORD bytesReturned;
-  if (!::EnumProcesses(processIDs, sizeof(processIDs), &bytesReturned)) {
-    qWarning("failed to determine if steam is running");
-    return true;
+  bool success = false;
+  while (!success) {
+    processIDs.reset(new DWORD[currentSize]);
+    if (!::EnumProcesses(processIDs.get(), currentSize * sizeof(DWORD), &bytesReturned)) {
+      qWarning("failed to determine if steam is running");
+      return true;
+    }
+    if (bytesReturned == (currentSize * sizeof(DWORD))) {
+      // maximum size used, list probably truncated
+      currentSize *= 2;
+    } else {
+      success = true;
+    }
   }
-
   TCHAR processName[MAX_PATH];
   for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
     memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
@@ -96,13 +106,15 @@ static bool testForSteam()
         DWORD ignore;
 
         // first module in a process is always the binary
-        if (::EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
+        if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
           ::GetModuleBaseName(process, module, processName, MAX_PATH);
           if ((_tcsicmp(processName, TEXT("steam.exe")) == 0) ||
               (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
             return true;
           }
         }
+      } else {
+        qDebug("can't open process %lu: %lu", processIDs[i], ::GetLastError());
       }
     }
   }
@@ -224,16 +236,16 @@ void OrganizerCore::storeSettings()
     int count = 0;
     for (; current != end; ++current) {
       const Executable &item = *current;
-      if (item.m_Custom || item.m_Toolbar) {
-        settings.setArrayIndex(count++);
+      settings.setArrayIndex(count++);
+      settings.setValue("title", item.m_Title);
+      settings.setValue("custom", item.m_Custom);
+      settings.setValue("toolbar", item.m_Toolbar);
+      if (item.m_Custom) {
         settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-        settings.setValue("title", item.m_Title);
         settings.setValue("arguments", item.m_Arguments);
         settings.setValue("workingDirectory", item.m_WorkingDirectory);
-        settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
+        settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
         settings.setValue("steamAppID", item.m_SteamAppID);
-        settings.setValue("custom", item.m_Custom);
-        settings.setValue("toolbar", item.m_Toolbar);
       }
     }
     settings.endArray();
@@ -484,21 +496,28 @@ MOBase::IModInterface *OrganizerCore::getMod(const QString &name)
 
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
-  if (!m_InstallationManager.testOverwrite(name)) {
-    return NULL;
+  bool merge = false;
+  if (!m_InstallationManager.testOverwrite(name, &merge)) {
+    return nullptr;
   }
 
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
 
   QString targetDirectory = QDir::fromNativeSeparators(m_Settings.getModDirectory()).append("/").append(name);
 
-  QSettings settingsFile(targetDirectory.mid(0).append("/meta.ini"), QSettings::IniFormat);
+  QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
-  settingsFile.setValue("modid", 0);
-  settingsFile.setValue("version", "");
-  settingsFile.setValue("newestVersion", "");
-  settingsFile.setValue("category", 0);
-  settingsFile.setValue("installationFile", "");
+  if (!merge) {
+    settingsFile.setValue("modid", 0);
+    settingsFile.setValue("version", "");
+    settingsFile.setValue("newestVersion", "");
+    settingsFile.setValue("category", 0);
+    settingsFile.setValue("installationFile", "");
+
+    settingsFile.beginWriteArray("installedFiles", 0);
+    settingsFile.endArray();
+  }
+
   return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure).data();
 }
 
@@ -543,7 +562,7 @@ QString OrganizerCore::pluginDataPath() const
   return pluginPath + "/data";
 }
 
-MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName)
+MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName, const QString &initModName)
 {
   if (m_CurrentProfile == nullptr) {
     return nullptr;
@@ -551,6 +570,9 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName)
 
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
+  if (!initModName.isEmpty()) {
+    modName.update(initModName, GUESS_USER);
+  }
   m_CurrentProfile->writeModlistNow();
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {

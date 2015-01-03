@@ -134,7 +134,7 @@ public:
   virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
   virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
   virtual QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName);
+  virtual MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName);
   virtual QString resolvePath(const QString &fileName) const;
   virtual QStringList listDirectories(const QString &directoryName) const;
   virtual QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;

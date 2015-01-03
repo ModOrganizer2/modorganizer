@@ -2243,7 +2243,7 @@ void MainWindow::reinstallMod_clicked()
       fullInstallationFile = m_OrganizerCore.downloadManager()->getOutputDirectory() + "/" + installationFile;
     }
     if (QFile::exists(fullInstallationFile)) {
-      installMod(fullInstallationFile, modInfo->name());
+      m_OrganizerCore.installMod(fullInstallationFile, modInfo->name());
     } else {
       QMessageBox::information(this, tr("Failed"), tr("Installation file no longer exists"));
     }
