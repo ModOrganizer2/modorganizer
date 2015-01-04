@@ -6,5 +6,5 @@ NoEditDelegate::NoEditDelegate(QObject *parent)
 }
 
 QWidget *NoEditDelegate::createEditor(QWidget*, const QStyleOptionViewItem&, const QModelIndex&) const {
-  return NULL;
+  return nullptr;
 }

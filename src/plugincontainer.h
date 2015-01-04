@@ -77,13 +77,9 @@ signals:
 private:
 
   bool verifyPlugin(MOBase::IPlugin *plugin);
-  void registerPluginTool(MOBase::IPluginTool *tool);
-  void registerModPage(MOBase::IPluginModPage *modPage);
   void registerGame(MOBase::IPluginGame *game);
   bool registerPlugin(QObject *pluginObj, const QString &fileName);
   bool unregisterPlugin(QObject *pluginObj, const QString &fileName);
-
-private:
 
   OrganizerCore *m_Organizer;
 
@@ -100,5 +96,6 @@ private:
 
   QFile m_PluginsCheck;
 };
+
 
 #endif // PLUGINCONTAINER_H

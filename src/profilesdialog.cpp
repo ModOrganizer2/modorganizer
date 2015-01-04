@@ -177,7 +177,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
 
     Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
     QString profilePath;
-    if (currentProfile.get() == NULL) {
+    if (currentProfile.get() == nullptr) {
       profilePath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())) + "/" + profilesList->currentItem()->text();
       if (QMessageBox::question(this, tr("Profile broken"),
             tr("This profile you're about to delete seems to be broken or the path is invalid. "
@@ -190,7 +190,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
       profilePath = currentProfile->getPath();
     }
     QListWidgetItem* item = profilesList->takeItem(profilesList->currentRow());
-    if (item != NULL) {
+    if (item != nullptr) {
       delete item;
     }
     if (!shellDelete(QStringList(profilePath))) {
@@ -231,7 +231,7 @@ void ProfilesDialog::on_invalidationBox_stateChanged(int state)
   QListWidget *profilesList = findChild<QListWidget*>("profilesList");
 
   QListWidgetItem *currentItem = profilesList->currentItem();
-  if (currentItem == NULL) {
+  if (currentItem == nullptr) {
     return;
   }
   if (!ui->invalidationBox->isEnabled()) {
@@ -263,7 +263,7 @@ void ProfilesDialog::on_profilesList_currentItemChanged(QListWidgetItem *current
   QPushButton *transferButton = findChild<QPushButton*>("transferButton");
   QPushButton *renameButton = findChild<QPushButton*>("renameButton");
 
-  if (current != NULL) {
+  if (current != nullptr) {
     if (!current->data(Qt::UserRole).isValid()) return;
     const Profile::Ptr currentProfile = current->data(Qt::UserRole).value<Profile::Ptr>();
 

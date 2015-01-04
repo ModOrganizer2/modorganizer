@@ -31,7 +31,7 @@ LockedDialog::LockedDialog(QWidget *parent, const QString &text, bool unlockButt
 
   this->setWindowFlags(this->windowFlags() | Qt::ToolTip | Qt::FramelessWindowHint);
 
-  if (parent != NULL) {
+  if (parent != nullptr) {
     QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
     position.rx() -= this->width() / 2;
     position.ry() -= this->height() / 2;
@@ -61,7 +61,7 @@ void LockedDialog::setProcessName(const QString &name)
 void LockedDialog::resizeEvent(QResizeEvent *event)
 {
   QWidget *par = parentWidget();
-  if (par != NULL) {
+  if (par != nullptr) {
     QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height() / 2));
     position.rx() -= event->size().width() / 2;
     position.ry() -= event->size().height() / 2;

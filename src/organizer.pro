@@ -284,7 +284,8 @@ CONFIG(debug, debug|release) {
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
 #QMAKE_CXXFLAGS_WARN_ON += -W4
-QMAKE_CXXFLAGS += /wd4100 -wd4127 -wd4512 -wd4189
+QMAKE_CXXFLAGS -= -w34100 -w34189
+QMAKE_CXXFLAGS += -wd4100 -wd4127 -wd4512 -wd4189
 
 CONFIG += embed_manifest_exe
 
@@ -336,7 +337,7 @@ SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
 DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 
 QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)

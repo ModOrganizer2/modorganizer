@@ -57,13 +57,13 @@ private:
 static const unsigned char Key2[20] = { 0x99, 0xb8, 0x76, 0x42, 0x3e, 0xc1, 0x60, 0xa4, 0x5b, 0x01,
                                         0xdb, 0xf8, 0x43, 0x3a, 0xb7, 0xb6, 0x98, 0xd4, 0x7d, 0xa2 };
 
-Settings *Settings::s_Instance = NULL;
+Settings *Settings::s_Instance = nullptr;
 
 
 Settings::Settings(const QSettings &settingsSource)
   : m_Settings(settingsSource.fileName(), settingsSource.format())
 {
-  if (s_Instance != NULL) {
+  if (s_Instance != nullptr) {
     throw std::runtime_error("second instance of \"Settings\" created");
   } else {
     s_Instance = this;
@@ -73,13 +73,13 @@ Settings::Settings(const QSettings &settingsSource)
 
 Settings::~Settings()
 {
-  s_Instance = NULL;
+  s_Instance = nullptr;
 }
 
 
 Settings &Settings::instance()
 {
-  if (s_Instance == NULL) {
+  if (s_Instance == nullptr) {
     throw std::runtime_error("no instance of \"Settings\"");
   }
   return *s_Instance;
@@ -110,9 +110,9 @@ void Settings::registerAsNXMHandler(bool force)
   std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
   std::wstring mode = force ? L"forcereg" : L"reg";
   std::wstring parameters = mode + L" " + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"";
-  HINSTANCE res = ::ShellExecuteW(NULL, L"open", nxmPath.c_str(), parameters.c_str(), NULL, SW_SHOWNORMAL);
+  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
   if ((int)res <= 32) {
-    QMessageBox::critical(NULL, tr("Failed"),
+    QMessageBox::critical(nullptr, tr("Failed"),
                           tr("Sorry, failed to start the helper application"));
   }
 }
@@ -652,7 +652,7 @@ void Settings::query(QWidget *parent)
 
     { // advanced settings
       if ((QDir::fromNativeSeparators(modDirEdit->text()) != QDir::fromNativeSeparators(getModDirectory())) &&
-          (QMessageBox::question(NULL, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
+          (QMessageBox::question(nullptr, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
                                                          "Mods not present (or named differently) in the new location will be disabled in all profiles. "
                                                          "There is no way to undo this unless you backed up your profiles manually. Proceed?"),
                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {

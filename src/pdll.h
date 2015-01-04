@@ -26,7 +26,7 @@
 //check for dll handle
 //if this is the first call to the function then try to load it
 //if not then if the function was loaded successfully make a call to it
-//otherwise return a NULL cast to the return parameter.
+//otherwise return a nullptr cast to the return parameter.
 
 #define DECLARE_FUNCTION0(CallType, retVal, FuncName) \
     typedef  retVal (CallType* TYPE_##FuncName)(); \
@@ -38,17 +38,17 @@
         { \
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(); \
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else \
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION1(CallType,retVal, FuncName, Param1) \
@@ -61,17 +61,17 @@
         { \
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1); \
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else \
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION2(CallType,retVal, FuncName, Param1, Param2) \
@@ -84,17 +84,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2); \
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION3(CallType,retVal, FuncName, Param1, Param2, Param3) \
@@ -107,17 +107,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED; \
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION4(CallType,retVal, FuncName, Param1, Param2, Param3, Param4) \
@@ -130,17 +130,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION5(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5) \
@@ -153,17 +153,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION6(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5, Param6) \
@@ -176,17 +176,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5, p6);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION7(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5, Param6, Param7) \
@@ -199,17 +199,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5, p6, p7);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         } \
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION8(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5, Param6, Param7, Param8) \
@@ -222,17 +222,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5, p6, p7, p8);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         }\
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION9(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5, Param6, Param7, Param8, Param9) \
@@ -245,17 +245,17 @@
         {\
             if (FUNC_NAME != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5, p6, p7, p8, p9);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         }\
         else\
-            return (retVal)NULL; \
+            return (retVal)nullptr; \
     }
 
 #define DECLARE_FUNCTION10(CallType,retVal, FuncName, Param1, Param2, Param3, Param4, Param5, Param6, Param7, Param8, Param9, Param10) \
@@ -268,17 +268,17 @@
         {\
             if (FUNC_LOADED != m_is##FuncName) \
             {\
-                m_##FuncName = NULL; \
+                m_##FuncName = nullptr; \
                 m_##FuncName = (TYPE_##FuncName)GetProcAddress(m_dllHandle, #FuncName); \
                 m_is##FuncName = FUNC_LOADED;\
             }\
-            if (NULL != m_##FuncName) \
+            if (nullptr != m_##FuncName) \
                 return m_##FuncName(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10);\
             else \
-                return (retVal)NULL; \
+                return (retVal)nullptr; \
         }\
         else                    \
-            return (retVal)NULL;\
+            return (retVal)nullptr;\
     }
 
 //declare constructors and LoadFunctions
@@ -299,12 +299,12 @@ public:
 
     PDLL()
     {
-        m_dllHandle = NULL;
-        m_dllName = NULL;
+        m_dllHandle = nullptr;
+        m_dllName = nullptr;
         m_refCount = 0;
     }
 
-    //A NULL here means the name has already been set
+    //A nullptr here means the name has already been set
     void LoadDll(LPCTSTR name, bool showMsg = true)
     {
         if (name)
@@ -313,7 +313,7 @@ public:
         //try to load
         m_dllHandle = LoadLibrary(m_dllName);
 
-        if (m_dllHandle == NULL && showMsg)
+        if (m_dllHandle == nullptr && showMsg)
         {
           std::ostringstream message;
           message << "failed to load dll: " << ::GetLastError();
@@ -332,7 +332,7 @@ public:
             if (m_dllName)
             {
                 delete []m_dllName;
-                m_dllName = NULL;
+                m_dllName = nullptr;
             }
 
             //They may be setting this null (e.g., uninitialize)
@@ -357,8 +357,8 @@ public:
         if (m_refCount == 1 && m_dllName) //if this is first time, load the DLL
         {
             //we are assuming the name is already set
-            LoadDll(NULL, showMsg);
-            retVal = (m_dllHandle != NULL);
+            LoadDll(nullptr, showMsg);
+            retVal = (m_dllHandle != nullptr);
         }
         return retVal;
     }
@@ -377,10 +377,10 @@ public:
             if (m_dllHandle)
             {
                 FreeLibrary(m_dllHandle);
-                m_dllHandle = NULL;
+                m_dllHandle = nullptr;
             }
 
-            SetDllName(NULL); //clear out the name & free memory
+            SetDllName(nullptr); //clear out the name & free memory
         }
     }
 
@@ -394,7 +394,7 @@ public:
         if (m_dllName)
         {
             delete [] m_dllName;
-            m_dllName = NULL;
+            m_dllName = nullptr;
         }
     }
 

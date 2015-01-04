@@ -30,7 +30,7 @@ QMutex LogBuffer::s_Mutex;
 
 
 LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outputFileName)
-  : QAbstractItemModel(NULL), m_OutFileName(outputFileName), m_ShutDown(false),
+  : QAbstractItemModel(nullptr), m_OutFileName(outputFileName), m_ShutDown(false),
     m_MinMsgType(minMsgType), m_NumMessages(0)
 {
   m_Messages.resize(messageCount);

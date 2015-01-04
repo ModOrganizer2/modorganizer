@@ -44,19 +44,21 @@ using namespace MOShared;
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
-  , m_LoginReply(NULL)
+  , m_LoginReply(nullptr)
   , m_ProgressDialog()
   , m_MOVersion(moVersion)
   , m_LoginAttempted(false)
 {
-  setCookieJar(new PersistentCookieJar(Settings::instance().getCacheDirectory()));
+
+  setCookieJar(new PersistentCookieJar(
+      QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 }
 
 NXMAccessManager::~NXMAccessManager()
 {
-  if (m_LoginReply != NULL) {
+  if (m_LoginReply != nullptr) {
     m_LoginReply->deleteLater();
-    m_LoginReply = NULL;
+    m_LoginReply = nullptr;
   }
 }
 
@@ -102,13 +104,13 @@ bool NXMAccessManager::loggedIn() const
 
 bool NXMAccessManager::loginWaiting() const
 {
-  return m_LoginReply != NULL;
+  return m_LoginReply != nullptr;
 }
 
 
 void NXMAccessManager::login(const QString &username, const QString &password)
 {
-  if (m_LoginReply != NULL) {
+  if (m_LoginReply != nullptr) {
     return;
   }
 
@@ -166,7 +168,7 @@ void NXMAccessManager::loginTimeout()
 {
   emit loginFailed(tr("timeout"));
   m_LoginReply->deleteLater();
-  m_LoginReply = NULL;
+  m_LoginReply = nullptr;
   m_LoginAttempted = false; // this usually means we might have usccess later
   m_LoginTimeout.stop();
   m_Username.clear();
@@ -178,10 +180,10 @@ void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 {
   m_ProgressDialog.hide();
   m_LoginTimeout.stop();
-  if (m_LoginReply != NULL) {
+  if (m_LoginReply != nullptr) {
     emit loginFailed(m_LoginReply->errorString());
     m_LoginReply->deleteLater();
-    m_LoginReply = NULL;
+    m_LoginReply = nullptr;
   } else {
     emit loginFailed(tr("Unknown error"));
   }
@@ -214,7 +216,7 @@ void NXMAccessManager::loginFinished()
 
   m_LoginTimeout.stop();
   m_LoginReply->deleteLater();
-  m_LoginReply = NULL;
+  m_LoginReply = nullptr;
   m_Username.clear();
   m_Password.clear();
 }

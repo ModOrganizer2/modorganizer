@@ -13,8 +13,6 @@ public:
 
   virtual void storeSettings(QSettings &settings) = 0;
 
-  virtual bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL) = 0;
-
   virtual void registerPluginTool(MOBase::IPluginTool *tool) = 0;
   virtual void registerModPage(MOBase::IPluginModPage *modPage) = 0;
 
@@ -27,6 +25,10 @@ public:
   virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;
 
   virtual bool saveArchiveList() = 0;
+
+  virtual void lock() = 0;
+  virtual void unlock() = 0;
+  virtual bool unlockClicked() = 0;
 
 };
 

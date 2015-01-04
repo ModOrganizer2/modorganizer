@@ -83,7 +83,7 @@ Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 }
 void ModListSortProxy::enableAllVisible()
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
@@ -94,7 +94,7 @@ void ModListSortProxy::enableAllVisible()
 
 void ModListSortProxy::disableAllVisible()
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
@@ -315,7 +315,7 @@ void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
 
 bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
-  if (m_Profile == NULL) {
+  if (m_Profile == nullptr) {
     return false;
   }
 

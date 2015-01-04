@@ -96,7 +96,7 @@ public:
    *
    * @param parent parent object
    **/
-  PluginList(QObject *parent = NULL);
+  PluginList(QObject *parent = nullptr);
 
   ~PluginList();
 
@@ -272,7 +272,7 @@ private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath, bool hasIni);
+    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;

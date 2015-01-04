@@ -72,7 +72,7 @@ std::set<QString> ActivateModsDialog::getModsToActivate()
 
   for (int row = 0; row < modsTable->rowCount(); ++row) {
     QComboBox *comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
-    if (comboBox != NULL) {
+    if (comboBox != nullptr) {
       result.insert(comboBox->currentText());
     }
   }
@@ -87,7 +87,7 @@ std::set<QString> ActivateModsDialog::getESPsToActivate()
 
   for (int row = 0; row < modsTable->rowCount(); ++row) {
     QComboBox *comboBox = dynamic_cast<QComboBox*>(modsTable->cellWidget(row, 1));
-    if (comboBox != NULL) {
+    if (comboBox != nullptr) {
       QLabel *espName = dynamic_cast<QLabel*>(modsTable->cellWidget(row, 0));
 
       result.insert(espName->text());

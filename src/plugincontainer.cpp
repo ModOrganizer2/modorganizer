@@ -1,11 +1,9 @@
 #include "plugincontainer.h"
 #include "organizerproxy.h"
 #include "report.h"
-#include <gameinfo.h>
 #include <ipluginproxy.h>
 #include <idownloadmanager.h>
 #include <appconfig.h>
-#include <gameinfo.h>
 #include <QAction>
 #include <QToolButton>
 #include <QCoreApplication>
@@ -24,6 +22,7 @@ namespace bf = boost::fusion;
 
 PluginContainer::PluginContainer(OrganizerCore *organizer)
   : m_Organizer(organizer)
+  , m_UserInterface(nullptr)
 {
 }
 
@@ -33,6 +32,17 @@ void PluginContainer::setUserInterface(IUserInterface *userInterface, QWidget *w
   for (IPluginProxy *proxy : bf::at_key<IPluginProxy>(m_Plugins)) {
     proxy->setParentWidget(widget);
   }
+
+  if (userInterface != nullptr) {
+    for (IPluginModPage *modPage : bf::at_key<IPluginModPage>(m_Plugins)) {
+      userInterface->registerModPage(modPage);
+    }
+
+    for (IPluginTool *tool : bf::at_key<IPluginTool>(m_Plugins)) {
+      userInterface->registerPluginTool(tool);
+    }
+  }
+
   m_UserInterface = userInterface;
 }
 
@@ -49,7 +59,7 @@ QStringList PluginContainer::pluginFileNames() const
 
 bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
-  if (plugin == NULL) {
+  if (plugin == nullptr) {
     return false;
   } else if (!plugin->init(new OrganizerProxy(m_Organizer, plugin->name()))) {
     qWarning("plugin failed to initialize");
@@ -69,7 +79,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 {
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
-    if (pluginObj == NULL) {
+    if (pluginObj == nullptr) {
       qDebug("not an IPlugin");
       return false;
     }
@@ -79,7 +89,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 
   { // diagnosis plugins
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
-    if (diagnose != NULL) {
+    if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       m_DiagnosisConnections.push_back(
             diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
@@ -132,7 +142,7 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       foreach (const QString &pluginName, pluginNames) {
         try {
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
-          if (proxiedPlugin != NULL) {
+          if (proxiedPlugin != nullptr) {
             if (registerPlugin(proxiedPlugin, pluginName)) {
               qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
             } else {
@@ -238,7 +248,7 @@ void PluginContainer::loadPlugins()
 
   loadCheck.open(QIODevice::WriteOnly);
 
-  QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
+  QString pluginPath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
   qDebug("looking for plugins in %s", QDir::toNativeSeparators(pluginPath).toUtf8().constData());
   QDirIterator iter(pluginPath, QDir::Files | QDir::NoDotAndDotDot);
 
@@ -254,7 +264,7 @@ void PluginContainer::loadPlugins()
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
       QPluginLoader *pluginLoader = new QPluginLoader(pluginName, this);
-      if (pluginLoader->instance() == NULL) {
+      if (pluginLoader->instance() == nullptr) {
         m_FailedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
                   qPrintable(pluginName), qPrintable(pluginLoader->errorString()));

@@ -29,7 +29,7 @@ namespace BBCode {
 /**
  * @brief convert a string with BB Code-Tags to HTML
  * @param input the input string with BB tags
- * @param replaceOccured if not NULL, this parameter will be set to true if any bb tags were replaced
+ * @param replaceOccured if not nullptr, this parameter will be set to true if any bb tags were replaced
  * @return the same string in html representation
  **/
 QString convertToHTML(const QString &input);

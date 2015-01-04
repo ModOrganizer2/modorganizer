@@ -40,7 +40,7 @@ bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
   execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.hwnd = NULL;
+  execInfo.hwnd = nullptr;
   execInfo.lpVerb = L"runas";
   execInfo.lpFile = fileName;
   execInfo.lpParameters = commandLine;

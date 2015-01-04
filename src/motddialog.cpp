@@ -45,5 +45,5 @@ void MotDDialog::on_okButton_clicked()
 
 void MotDDialog::linkClicked(const QUrl &url)
 {
-  ::ShellExecuteW(NULL, L"open", MOBase::ToWString(url.toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", MOBase::ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }

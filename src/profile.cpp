@@ -42,7 +42,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 Profile::Profile()
-  : m_SaveTimer(NULL)
+  : m_SaveTimer(nullptr)
 {
   initTimer();
 }
@@ -56,10 +56,11 @@ void Profile::touchFile(QString fileName)
 }
 
 Profile::Profile(const QString &name, bool useDefaultSettings)
-  : m_SaveTimer(NULL)
+  : m_SaveTimer(nullptr)
 {
   initTimer();
-  QString profilesDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()));
+  QString profilesDir = qApp->property("datapath").toString() + "/" + ToQString(AppConfig::profilesPath());
+qDebug("pd %s", qPrintable(profilesDir));
   QDir profileBase(profilesDir);
 
   QString fixedName = name;
@@ -78,6 +79,7 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
     touchFile("modlist.txt");
     touchFile("archives.txt");
 
+qDebug("fp %s", qPrintable(fullPath));
     GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
   } catch (...) {
     // clean up in case of an error
@@ -88,8 +90,8 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
 }
 
 
-Profile::Profile(const QDir& directory)
-  : m_Directory(directory), m_SaveTimer(NULL)
+Profile::Profile(const QDir &directory)
+  : m_Directory(directory), m_SaveTimer(nullptr)
 {
   initTimer();
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
@@ -106,7 +108,7 @@ Profile::Profile(const QDir& directory)
 
 
 Profile::Profile(const Profile& reference)
-  : m_Directory(reference.m_Directory), m_SaveTimer(NULL)
+  : m_Directory(reference.m_Directory), m_SaveTimer(nullptr)
 {
   initTimer();
   refreshModStatus();
@@ -552,7 +554,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
   for (std::vector<std::wstring>::iterator iter = sections.begin();
        iter != sections.end(); ++iter) {
     // retrieve the names of all keys
-    size = ::GetPrivateProfileStringW(iter->c_str(), NULL, NULL, buffer.data(),
+    size = ::GetPrivateProfileStringW(iter->c_str(), nullptr, nullptr, buffer.data(),
                                       bufferSize, tweakNameW.c_str());
     if (size == bufferSize - 2) {
       throw MyException(QString("Buffer too small. Please report this as a bug. "
@@ -565,7 +567,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
          keyIter != keys.end(); ++keyIter) {
       //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
-                                 NULL, buffer.data(), bufferSize, ToWString(tweakName).c_str());
+                                 nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
       ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                    buffer.data(), tweakedIniW.c_str());
     }
@@ -585,7 +587,7 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 bool Profile::invalidationActive(bool *supported) const
 {
   if (GameInfo::instance().requiresBSAInvalidation()) {
-    if (supported != NULL) {
+    if (supported != nullptr) {
       *supported = true;
     }
     wchar_t buffer[1024];
@@ -596,7 +598,7 @@ bool Profile::invalidationActive(bool *supported) const
     if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
                                    L"", buffer, 1024, iniFileName.c_str()) == 0) {
       if (errno != 0x02) {
-        if (supported != NULL) {
+        if (supported != nullptr) {
           *supported = false;
         }
         return false;

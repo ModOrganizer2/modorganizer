@@ -125,7 +125,7 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)
 {
-  if (pluginItem != NULL) {
+  if (pluginItem != nullptr) {
     QMap<QString, QVariant> settings = pluginItem->data(Qt::UserRole + 1).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {

@@ -141,7 +141,7 @@ void LoadMechanism::deactivateScriptExtender()
 
     removeHintFile(pluginsDir);
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to deactivate script extender loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate script extender loading"), e.what());
   }
 }
 
@@ -172,7 +172,7 @@ void LoadMechanism::deactivateProxyDLL()
     QDir dir(gameDirectory);
     removeHintFile(dir);
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to deactivate proxy-dll loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate proxy-dll loading"), e.what());
   }
 }
 
@@ -211,7 +211,7 @@ void LoadMechanism::activateScriptExtender()
     }
     writeHintFile(pluginsDir);
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to set up script extender loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to set up script extender loading"), e.what());
   }
 }
 
@@ -265,7 +265,7 @@ void LoadMechanism::activateProxyDLL()
     }
     writeHintFile(QDir(gameDirectory));
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to set up proxy-dll loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to set up proxy-dll loading"), e.what());
   }
 }
 

@@ -477,6 +477,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   , m_Repository()
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
+  , m_NexusBridge()
 {
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
@@ -658,7 +659,7 @@ void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
     fullMessage += "\nNexus will reject endorsements within 15 Minutes of a failed attempt, the error message may be misleading.";
   }
-  if (QApplication::activeWindow() != NULL) {
+  if (QApplication::activeWindow() != nullptr) {
     MessageDialog::showMessage(fullMessage, QApplication::activeWindow());
   }
   emit modDetailsUpdated(false);

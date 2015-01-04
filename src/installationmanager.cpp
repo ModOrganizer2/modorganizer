@@ -61,7 +61,7 @@ typedef Archive* (*CreateArchiveType)();
 template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
-  if (temp == NULL) {
+  if (temp == nullptr) {
     throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1").arg(lib.errorString()).toLatin1().constData());
   }
   return temp;
@@ -69,7 +69,8 @@ template <typename T> T resolveFunction(QLibrary &lib, const char *name)
 
 
 InstallationManager::InstallationManager()
-  : m_InstallationProgress(nullptr), m_SupportedExtensions(boost::assign::list_of("zip")("rar")("7z")("fomod")("001"))
+  : m_InstallationProgress(nullptr)
+  , m_SupportedExtensions({ "zip", "rar", "7z", "fomod", "001" })
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -94,7 +95,7 @@ InstallationManager::~InstallationManager()
 
 void InstallationManager::setParentWidget(QWidget *widget)
 {
-  m_InstallationProgress.setParent(widget);
+  m_InstallationProgress.setParent(widget, Qt::Dialog);
   for (IPluginInstaller *installer : m_Installers) {
     installer->setParentWidget(widget);
   }
@@ -103,7 +104,7 @@ void InstallationManager::setParentWidget(QWidget *widget)
 
 void InstallationManager::queryPassword(LPSTR password)
 {
-  QString result = QInputDialog::getText(NULL, tr("Password required"), tr("Password"), QLineEdit::Password);
+  QString result = QInputDialog::getText(nullptr, tr("Password required"), tr("Password"), QLineEdit::Password);
   strncpy(password, result.toLocal8Bit().constData(), MAX_PASSWORD_LENGTH);
 }
 
@@ -231,10 +232,10 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
       const wchar_t *targetFile = data[i]->getFileName();
       if (flatten) {
         targetFile = wcsrchr(data[i]->getFileName(), '\\');
-        if (targetFile == NULL) {
+        if (targetFile == nullptr) {
           targetFile = wcsrchr(data[i]->getFileName(), '/');
         }
-        if (targetFile == NULL) {
+        if (targetFile == nullptr) {
           qCritical("failed to find backslash in %ls", data[i]->getFileName());
           continue;
         } else {
@@ -383,7 +384,7 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
       currentNode = *currentNode->nodesBegin();
     } else {
       qDebug("not a simple archive");
-      return NULL;
+      return nullptr;
     }
   }
 }
@@ -687,7 +688,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
-  QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : NULL);
+  QScopedPointer<DirectoryTree> filesTree(archiveOpen ? createFilesTree() : nullptr);
   IPluginInstaller::EInstallResult installResult = IPluginInstaller::RESULT_NOTATTEMPTED;
 
   std::sort(m_Installers.begin(), m_Installers.end(), [] (IPluginInstaller *LHS, IPluginInstaller *RHS) {
@@ -712,8 +713,8 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
     try {
       { // simple case
         IPluginInstallerSimple *installerSimple = dynamic_cast<IPluginInstallerSimple*>(installer);
-        if ((installerSimple != NULL) &&
-            (filesTree != NULL) && (installer->isArchiveSupported(*filesTree))) {
+        if ((installerSimple != nullptr) &&
+            (filesTree != nullptr) && (installer->isArchiveSupported(*filesTree))) {
           installResult = installerSimple->install(modName, *filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
             mapToArchive(filesTree.data());
@@ -727,9 +728,9 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
 
       { // custom case
         IPluginInstallerCustom *installerCustom = dynamic_cast<IPluginInstallerCustom*>(installer);
-        if ((installerCustom != NULL) &&
-            (((filesTree != NULL) && installer->isArchiveSupported(*filesTree)) ||
-             ((filesTree == NULL) && installerCustom->isArchiveSupported(fileName)))) {
+        if ((installerCustom != nullptr) &&
+            (((filesTree != nullptr) && installer->isArchiveSupported(*filesTree)) ||
+             ((filesTree == nullptr) && installerCustom->isArchiveSupported(fileName)))) {
           std::set<QString> installerExtensions = installerCustom->supportedExtensions();
           if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
             installResult = installerCustom->install(modName, fileName, version, modID);
@@ -755,7 +756,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       } break;
       case IPluginInstaller::RESULT_SUCCESS:
       case IPluginInstaller::RESULT_SUCCESSCANCEL: {
-        if (filesTree != NULL) {
+        if (filesTree != nullptr) {
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
                          ((*iniTweakNode)->numLeafs() != 0);
@@ -813,7 +814,7 @@ void InstallationManager::registerInstaller(IPluginInstaller *installer)
   m_Installers.push_back(installer);
   installer->setInstallationManager(this);
   IPluginInstallerCustom *installerCustom = dynamic_cast<IPluginInstallerCustom*>(installer);
-  if (installerCustom != NULL) {
+  if (installerCustom != nullptr) {
     std::set<QString> extensions = installerCustom->supportedExtensions();
     m_SupportedExtensions.insert(extensions.begin(), extensions.end());
   }

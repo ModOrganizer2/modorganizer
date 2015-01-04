@@ -27,17 +27,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "skyriminfo.h"
 #include "util.h"
 
+#include <boost/assign.hpp>
+#include <boost/format.hpp>
 
 #include <shlobj.h>
 #include <sstream>
 #include <cassert>
-#include <boost/assign.hpp>
-#include <boost/format.hpp>
 
 namespace MOShared {
 
 
-GameInfo* GameInfo::s_Instance = NULL;
+GameInfo* GameInfo::s_Instance = nullptr;
 
 
 GameInfo::GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
@@ -49,7 +49,7 @@ GameInfo::GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDi
 
 void GameInfo::cleanup() {
   delete GameInfo::s_Instance;
-  GameInfo::s_Instance = NULL;
+  GameInfo::s_Instance = nullptr;
 }
 
 
@@ -62,14 +62,14 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
   m_MyGamesDirectory.clear();
 
   // a) this is the way it should work. get the configured My Documents\My Games directory
-  if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, myDocuments) == S_OK) {
+  if (::SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, myDocuments) == S_OK) {
     m_MyGamesDirectory = std::wstring(myDocuments) + L"\\My Games";
   }
 
   // b) if there is no <game> directory there, look in the default directory
   if (m_MyGamesDirectory.empty()
       || !FileExists(m_MyGamesDirectory + L"\\" + file)) {
-    if (::SHGetFolderPathW(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_DEFAULT, myDocuments) == S_OK) {
+    if (::SHGetFolderPathW(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_DEFAULT, myDocuments) == S_OK) {
       std::wstring fromDefault = std::wstring(myDocuments) + L"\\My Games";
       if (FileExists(fromDefault + L"\\" + file)) {
         m_MyGamesDirectory = fromDefault;
@@ -99,13 +99,13 @@ bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring 
     s_Instance = new SkyrimInfo(moDirectory, moDataDirectory, searchPath);
   }
 
-  return s_Instance != NULL;
+  return s_Instance != nullptr;
 }
 
 
 bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath)
 {
-  if (s_Instance == NULL) {
+  if (s_Instance == nullptr) {
     if (gamePath.length() == 0) {
       // search upward in the directory until a recognized game-binary is found
       std::wstring searchPath(moDirectory);
@@ -126,7 +126,7 @@ bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &moDataD
 
 GameInfo &GameInfo::instance()
 {
-  assert(s_Instance != NULL);
+  assert(s_Instance != nullptr && "gameinfo not yet initialized");
   return *s_Instance;
 }
 
@@ -148,18 +148,6 @@ std::wstring GameInfo::getProfilesDir() const
 std::wstring GameInfo::getIniFilename() const
 {
   return m_OrganizerDirectory + L"\\ModOrganizer.ini";
-}
-
-
-std::wstring GameInfo::getDownloadDir() const
-{
-  return m_OrganizerDirectory + L"\\downloads";
-}
-
-
-std::wstring GameInfo::getCacheDir() const
-{
-  return m_OrganizerDirectory + L"\\webcache";
 }
 
 
@@ -203,7 +191,7 @@ std::wstring GameInfo::getLocalAppFolder() const
   wchar_t localAppFolder[MAX_PATH];
   memset(localAppFolder, '\0', MAX_PATH * sizeof(wchar_t));
 
-  if (::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
+  if (::SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
     return localAppFolder;
   } else {
     // fallback: try the registry
@@ -224,7 +212,7 @@ std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  errorcode = ::RegQueryValueExW(key, name, NULL, NULL, (LPBYTE)temp, &bufferSize);
+  errorcode = ::RegQueryValueExW(key, name, nullptr, nullptr, (LPBYTE)temp, &bufferSize);
   if (errorcode != ERROR_SUCCESS) {
     throw windows_error((boost::format("failed to look up special folder (%1%)") % ToString(name, true)).str(), errorcode);
   }

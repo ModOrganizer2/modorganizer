@@ -81,7 +81,7 @@ public:
   void setExecutablesDialog(const ExecutablesList &executablesList) { m_ExecutablesList = executablesList; }
 
   Profile *currentProfile() { return m_CurrentProfile; }
-  void setCurrentProfile(Profile *profile);
+  void setCurrentProfile(const QString &profileName);
 
   void setExecutablesList(const ExecutablesList &executablesList);
 
@@ -97,7 +97,6 @@ public:
   bool isArchivesInit() const { return m_ArchivesInit; }
 
   bool saveCurrentLists();
-  void savePluginList();
 
   void prepareStart();
 
@@ -107,52 +106,47 @@ public:
   void refreshDirectoryStructure();
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
-  void requestDownload(const QUrl &url, QNetworkReply *reply);
-
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
 
-  void modStatusChanged(unsigned int index);
-
-  void loginSuccessful(bool necessary);
   void loginSuccessfulUpdate(bool necessary);
-  void loginFailed(const QString &message);
   void loginFailedUpdate(const QString &message);
 
   void syncOverwrite();
 
 public:
-  virtual MOBase::IGameInfo &gameInfo() const;
-  virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
-  virtual QString profileName() const;
-  virtual QString profilePath() const;
-  virtual QString downloadsPath() const;
-  virtual MOBase::VersionInfo appVersion() const;
-  virtual MOBase::IModInterface *getMod(const QString &name);
-  virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  virtual bool removeMod(MOBase::IModInterface *mod);
-  virtual void modDataChanged(MOBase::IModInterface *mod);
-  virtual QVariant pluginSetting(const QString &pluginName, const QString &key) const;
-  virtual void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
-  virtual QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
-  virtual void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
-  virtual QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName);
-  virtual QString resolvePath(const QString &fileName) const;
-  virtual QStringList listDirectories(const QString &directoryName) const;
-  virtual QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;
-  virtual QStringList getFileOrigins(const QString &fileName) const;
-  virtual QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
-  virtual DownloadManager *downloadManager();
-  virtual PluginList *pluginList();
-  virtual ModList *modList();
-  virtual HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
-  virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode) const;
-  virtual bool onModInstalled(const std::function<void (const QString &)> &func);
-  virtual bool onAboutToRun(const std::function<bool (const QString &)> &func);
-  virtual bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
-  virtual void refreshModList(bool saveChanges = true);
+  MOBase::IGameInfo &gameInfo() const;
+  MOBase::IModRepositoryBridge *createNexusBridge() const;
+  QString profileName() const;
+  QString profilePath() const;
+  QString downloadsPath() const;
+  MOBase::VersionInfo appVersion() const;
+  MOBase::IModInterface *getMod(const QString &name);
+  MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
+  bool removeMod(MOBase::IModInterface *mod);
+  void modDataChanged(MOBase::IModInterface *mod);
+  QVariant pluginSetting(const QString &pluginName, const QString &key) const;
+  void setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value);
+  QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
+  void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
+  QString pluginDataPath() const;
+  virtual MOBase::IModInterface *installMod(const QString &fileName);
+  QString resolvePath(const QString &fileName) const;
+  QStringList listDirectories(const QString &directoryName) const;
+  QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;
+  QStringList getFileOrigins(const QString &fileName) const;
+  QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
+  DownloadManager *downloadManager();
+  PluginList *pluginList();
+  ModList *modList();
+  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
+  bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
+  bool onModInstalled(const std::function<void (const QString &)> &func);
+  bool onAboutToRun(const std::function<bool (const QString &)> &func);
+  bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
+  void refreshModList(bool saveChanges = true);
 
 public: // IPluginDiagnose interface
 
@@ -166,9 +160,18 @@ public slots:
 
   void profileRefresh();
   void externalMessage(const QString &message);
-  void installDownload(int index);
+
+  void savePluginList();
 
   void refreshLists();
+
+  void installDownload(int downloadIndex);
+
+  void modStatusChanged(unsigned int index);
+  void requestDownload(const QUrl &url, QNetworkReply *reply);
+  void downloadRequestedNXM(const QString &url);
+
+  bool nexusLogin();
 
 signals:
 
@@ -184,8 +187,6 @@ private:
 
   bool queryLogin(QString &username, QString &password);
 
-  bool nexusLogin();
-
   void updateModActiveState(int index, bool active);
 
   bool testForSteam();
@@ -194,9 +195,11 @@ private:
 private slots:
 
   void directory_refreshed();
-  void downloadRequestedNXM(const QString &url);
   void downloadRequested(QNetworkReply *reply, int modID, const QString &fileName);
   void removeOrigin(const QString &name);
+  void downloadSpeed(const QString &serverName, int bytesPerSecond);
+  void loginSuccessful(bool necessary);
+  void loginFailed(const QString &message);
 
 private:
 

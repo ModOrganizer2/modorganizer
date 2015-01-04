@@ -20,7 +20,7 @@ public:
    *                     of the view, the delegate will turn off this behaviour if the column is smaller than "compactSize"
    * @param compactSize see explanation of logicalIndex
    */
-  GenericIconDelegate(QObject *parent = NULL, int role = Qt::UserRole + 1, int logicalIndex = -1, int compactSize = 150);
+  GenericIconDelegate(QObject *parent = nullptr, int role = Qt::UserRole + 1, int logicalIndex = -1, int compactSize = 150);
 public slots:
   void columnResized(int logicalIndex, int oldSize, int newSize);
 private:

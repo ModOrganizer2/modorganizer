@@ -62,6 +62,7 @@ namespace Ui {
     class MainWindow;
 }
 
+class LockedDialog;
 class QToolButton;
 class ModListSortProxy;
 class ModListGroupCategoriesProxy;
@@ -80,8 +81,12 @@ public:
                       QWidget *parent = 0);
   ~MainWindow();
 
-  void storeSettings(QSettings &settings);
+  void storeSettings(QSettings &settings) override;
   void readSettings();
+
+  virtual void lock() override;
+  virtual void unlock() override;
+  virtual bool unlockClicked() override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
@@ -92,9 +97,6 @@ public:
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
-
-  bool setCurrentProfile(int index);
-  bool setCurrentProfile(const QString &name);
 
   void createFirstProfile();
 
@@ -107,9 +109,7 @@ public:
 
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
-  void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
-
-  bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL);
+  void processLOOTOut(const std::string &lootOut, std::string &errorMessages, QProgressDialog &dialog);
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
@@ -118,9 +118,11 @@ public:
   void installTranslator(const QString &name);
 
   virtual void disconnectPlugins();
-  void unloadPlugins();
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+
+  virtual bool closeWindow();
+  virtual void setWindowEnabled(bool enabled);
 
 public slots:
 
@@ -170,7 +172,7 @@ private:
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod();
+  void installMod(QString fileName = "");
 
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
@@ -267,6 +269,8 @@ private:
   QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
+  QStringList m_DefaultArchives;
+
   QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
@@ -313,6 +317,8 @@ private:
   QByteArray m_ArchiveListHash;
 
   bool m_DidUpdateMasterList;
+
+  LockedDialog *m_LockDialog { nullptr };
 
 private slots:
 
@@ -424,7 +430,7 @@ private slots:
 
   void startExeAction();
 
-  void checkBSAList(const QStringList &defaultArchives);
+  void checkBSAList();
 
   void updateProblemsButton();
 
@@ -451,8 +457,6 @@ private slots:
    * @brief allow columns in mod list and plugin list to be resized
    */
   void allowListResize();
-
-  void downloadSpeed(const QString &serverName, int bytesPerSecond);
 
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();

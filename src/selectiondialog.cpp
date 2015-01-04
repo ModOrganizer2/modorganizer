@@ -23,7 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCommandLinkButton>
 
 SelectionDialog::SelectionDialog(const QString &description, QWidget *parent)
-  : QDialog(parent), ui(new Ui::SelectionDialog), m_Choice(NULL), m_ValidateByData(false)
+  : QDialog(parent), ui(new Ui::SelectionDialog), m_Choice(nullptr), m_ValidateByData(false)
 {
   ui->setupUi(this);
 
@@ -58,7 +58,7 @@ QVariant SelectionDialog::getChoiceData()
 
 QString SelectionDialog::getChoiceString()
 {
-  if ((m_Choice == NULL) ||
+  if ((m_Choice == nullptr) ||
       (m_ValidateByData && !m_Choice->property("data").isValid())) {
     return QString();
   } else {

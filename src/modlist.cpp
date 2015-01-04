@@ -50,8 +50,8 @@ using namespace MOBase;
 
 ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent)
-  , m_Profile(NULL)
-  , m_NexusInterface(NULL)
+  , m_Profile(nullptr)
+  , m_NexusInterface(nullptr)
   , m_Modified(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
@@ -176,7 +176,7 @@ QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &content
 
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
-  if (m_Profile == NULL) return QVariant();
+  if (m_Profile == nullptr) return QVariant();
   if (!modelIndex.isValid()) return QVariant();
   unsigned int modIndex = modelIndex.row();
   int column = modelIndex.column();
@@ -409,7 +409,7 @@ bool ModList::renameMod(int index, const QString &newName)
 {
   QString nameFixed = newName;
   if (!fixDirectoryName(nameFixed) || nameFixed.isEmpty()) {
-    MessageDialog::showMessage(tr("Invalid name"), NULL);
+    MessageDialog::showMessage(tr("Invalid name"), nullptr);
     return false;
   }
 
@@ -432,7 +432,7 @@ bool ModList::renameMod(int index, const QString &newName)
 
 bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-  if (m_Profile == NULL) return false;
+  if (m_Profile == nullptr) return false;
 
   if (static_cast<unsigned int>(index.row()) >= ModInfo::getNumMods()) {
     return false;
@@ -580,7 +580,7 @@ QStringList ModList::mimeTypes() const
 
 void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   emit layoutAboutToBeChanged();
   Profile *profile = m_Profile;
@@ -614,7 +614,7 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
 void ModList::changeModPriority(int sourceIndex, int newPriority)
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
   emit layoutAboutToBeChanged();
 
   m_Profile->setModPriority(sourceIndex, newPriority);
@@ -828,7 +828,7 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
     return true;
   }
 
-  if (m_Profile == NULL) return false;
+  if (m_Profile == nullptr) return false;
   if (mimeData->hasUrls()) {
     return dropURLs(mimeData, row, parent);
   } else {
@@ -843,7 +843,7 @@ void ModList::removeRowForce(int row)
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
     return;
   }
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   m_Profile->setModEnabled(row, false);
 
@@ -871,7 +871,7 @@ void ModList::removeRow(int row, const QModelIndex&)
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
     return;
   }
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   m_Profile->setModEnabled(row, false);
 
@@ -981,28 +981,28 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   if (event->type() == QEvent::ContextMenu) {
     QContextMenuEvent *contextEvent = static_cast<QContextMenuEvent*>(event);
     QWidget *object = qobject_cast<QWidget*>(obj);
-    if ((object != NULL) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
+    if ((object != nullptr) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
       emit requestColumnSelect(object->mapToGlobal(contextEvent->pos()));
 
       return true;
     }
-  } else if ((event->type() == QEvent::KeyPress) && (m_Profile != NULL)) {
+  } else if ((event->type() == QEvent::KeyPress) && (m_Profile != nullptr)) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if ((itemView != NULL)
+    if ((itemView != nullptr)
         && (keyEvent->modifiers() == Qt::ControlModifier)
         && ((keyEvent->key() == Qt::Key_Up)
             || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
-      const QSortFilterProxyModel *filterModel = NULL;
-      while ((filterModel == NULL) && (proxyModel != NULL)) {
+      const QSortFilterProxyModel *filterModel = nullptr;
+      while ((filterModel == nullptr) && (proxyModel != nullptr)) {
         filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
-        if (filterModel == NULL) {
+        if (filterModel == nullptr) {
           proxyModel = qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel());
         }
       }
-      if (filterModel == NULL) {
+      if (filterModel == nullptr) {
         return true;
       }
       int diff = -1;
@@ -1017,7 +1017,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
         }
       }
       foreach (QModelIndex idx, rows) {
-        if (filterModel != NULL) {
+        if (filterModel != nullptr) {
           idx = filterModel->mapToSource(idx);
         }
         int newPriority = m_Profile->getModPriority(idx.row()) + diff;
@@ -1043,7 +1043,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
 
       QModelIndex minRow, maxRow;
       foreach (QModelIndex idx, selectionModel->selectedRows()) {
-        if (proxyModel != NULL) {
+        if (proxyModel != nullptr) {
           idx = proxyModel->mapToSource(idx);
         }
         if (!minRow.isValid() || (idx.row() < minRow.row())) {

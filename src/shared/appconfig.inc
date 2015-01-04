@@ -1,5 +1,6 @@
 APPPARAM(std::wstring, translationPrefix, L"organizer")
 APPPARAM(std::wstring, pluginPath, L"plugins")
+APPPARAM(std::wstring, profilesPath, L"profiles")
 APPPARAM(std::wstring, modsPath, L"mods")
 APPPARAM(std::wstring, downloadPath, L"downloads")
 APPPARAM(std::wstring, overwritePath, L"overwrite")

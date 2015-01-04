@@ -439,7 +439,7 @@ private:
   bool addDownload(const QStringList &URLs, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
-  DownloadInfo *findDownload(QObject *reply, int *index = NULL) const;
+  DownloadInfo *findDownload(QObject *reply, int *index = nullptr) const;
 
   void removeFile(int index, bool deleteFile);
 

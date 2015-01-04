@@ -65,7 +65,7 @@ static unsigned long long genHash(const char* fileName)
   fileNameLower[i] = '\0';
 
   char* ext = strrchr(fileNameLower, '.');
-  if (ext == NULL) {
+  if (ext == nullptr) {
     ext = fileNameLower + strlen(fileNameLower);
   }
 
@@ -117,7 +117,7 @@ static unsigned long long genHash(const char* fileName)
   unsigned char *fileNameLowerU = reinterpret_cast<unsigned char*>(fileNameLower);
 
   char* ext = strrchr(fileNameLower, '.');
-  if (ext == NULL) {
+  if (ext == nullptr) {
     ext = fileNameLower + strlen(fileNameLower);
   }
   unsigned char *extU = reinterpret_cast<unsigned char*>(ext);

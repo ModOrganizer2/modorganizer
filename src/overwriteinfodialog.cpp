@@ -71,8 +71,8 @@ private:
 
 
 OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
-  : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(NULL),
-    m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL)
+  : QDialog(parent), ui(new Ui::OverwriteInfoDialog), m_FileSystemModel(nullptr),
+    m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr)
 {
   ui->setupUi(this);
 
@@ -185,7 +185,7 @@ void OverwriteInfoDialog::openFile(const QModelIndex &index)
 {
   QString fileName = m_FileSystemModel->filePath(index);
 
-  HINSTANCE res = ::ShellExecuteW(NULL, L"open", ToWString(fileName).c_str(), NULL, NULL, SW_SHOW);
+  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
   if ((int)res <= 32) {
     qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
   }

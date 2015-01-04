@@ -39,7 +39,7 @@ SkyrimInfo::SkyrimInfo(const std::wstring &moDirectory, const std::wstring &moDa
   identifyMyGamesDirectory(L"skyrim");
 
   wchar_t appDataPath[MAX_PATH];
-  if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataPath))) {
+  if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, appDataPath))) {
     m_AppData = appDataPath;
   }
 }
@@ -69,7 +69,7 @@ std::wstring SkyrimInfo::getRegPathStatic()
   WCHAR temp[MAX_PATH];
   DWORD bufferSize = MAX_PATH;
 
-  if (::RegQueryValueExW(key, L"Installed Path", NULL, NULL, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
+  if (::RegQueryValueExW(key, L"Installed Path", nullptr, nullptr, (LPBYTE)temp, &bufferSize) == ERROR_SUCCESS) {
     return std::wstring(temp);
   } else {
     return std::wstring();
@@ -84,9 +84,9 @@ std::wstring SkyrimInfo::getInvalidationBSA()
 
 bool SkyrimInfo::isInvalidationBSA(const std::wstring &bsaName)
 {
-  static LPCWSTR invalidation[] = { L"Skyrim - Invalidation.bsa", NULL };
+  static LPCWSTR invalidation[] = { L"Skyrim - Invalidation.bsa", nullptr };
 
-  for (int i = 0; invalidation[i] != NULL; ++i) {
+  for (int i = 0; invalidation[i] != nullptr; ++i) {
     if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
       return true;
     }
@@ -229,7 +229,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
       std::wostringstream source;
       source << getLocalAppFolder() << "\\Skyrim\\plugins.txt";
       if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
-        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
         ::CloseHandle(file);
       }
     }
@@ -237,7 +237,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
     if (!FileExists(target)) {
       std::wstring source = getLocalAppFolder() + L"\\Skyrim\\loadorder.txt";
       if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
         ::CloseHandle(file);
       }
     }
@@ -259,7 +259,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
       }
       if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         if (::GetLastError() != ERROR_FILE_EXISTS) {
-          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
+          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false) + " to " + ToString(target, false));
         }
       }
     }
@@ -272,7 +272,7 @@ void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
       if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
         log("failed to copy ini file %ls", source.c_str());
         // create empty
-        if (::CreateFileW(target.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL) == INVALID_HANDLE_VALUE) {
+        if (::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) == INVALID_HANDLE_VALUE) {
           throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
         }
       }
@@ -289,16 +289,16 @@ void SkyrimInfo::repairProfile(const std::wstring &directory)
 
 bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
 {
-  static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", NULL };
+  static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };
 
-  for (int i = 0; profileFiles[i] != NULL; ++i) {
+  for (int i = 0; profileFiles[i] != nullptr; ++i) {
     if (_wcsicmp(fileName, profileFiles[i]) == 0) {
       return true;
     }
   }
 
   if ((_wcsicmp(fileName, L"plugins.txt") == 0) &&
-      (m_AppData.empty() || (StrStrIW(fullPath, m_AppData.c_str()) != NULL))) {
+      (m_AppData.empty() || (StrStrIW(fullPath, m_AppData.c_str()) != nullptr))) {
     return true;
   }
 
