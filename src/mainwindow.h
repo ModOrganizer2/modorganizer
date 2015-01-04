@@ -109,8 +109,6 @@ public:
   std::string readFromPipe(HANDLE stdOutRead);
   void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
 
-  HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-
   bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL);
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
@@ -121,9 +119,6 @@ public:
 
   virtual void disconnectPlugins();
   void unloadPlugins();
-
-  virtual bool close();
-  virtual void setEnabled(bool enabled);
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
 
@@ -163,8 +158,6 @@ protected:
 
 private:
 
-  void refreshModList(bool saveChanges = true);
-
   void actionToToolButton(QAction *&sourceAction);
 
   void updateToolBar();
@@ -174,10 +167,7 @@ private:
 
   void startSteam();
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
-
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
-  void refreshDirectoryStructure();
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod();
@@ -365,14 +355,11 @@ private slots:
   void linkMenu();
 
   void languageChange(const QString &newLanguage);
-  void modStatusChanged(unsigned int index);
   void saveSelectionChanged(QListWidgetItem *newItem);
 
   void windowTutorialFinished(const QString &windowName);
 
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
-
-  void syncOverwrite();
 
   void createModFromOverwrite();
 
@@ -387,7 +374,6 @@ private slots:
 
   void linkClicked(const QString &url);
 
-  void installDownload(int index);
   void updateAvailable();
 
   void motdReceived(const QString &motd);
@@ -404,7 +390,7 @@ private slots:
   void modDetailsUpdated(bool success);
   void modlistChanged(int row);
 
-  void modInstalled();
+  void modInstalled(const QString &modName);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
@@ -481,7 +467,6 @@ private slots:
   void about();
   void delayedRemove();
 
-  void requestDownload(const QUrl &url, QNetworkReply *reply);
   void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 

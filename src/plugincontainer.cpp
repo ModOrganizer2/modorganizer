@@ -90,7 +90,6 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginModPage *modPage = qobject_cast<IPluginModPage*>(plugin);
     if (verifyPlugin(modPage)) {
       bf::at_key<IPluginModPage>(m_Plugins).push_back(modPage);
-      registerModPage(modPage);
       return true;
     }
   }
@@ -106,7 +105,6 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginTool *tool = qobject_cast<IPluginTool*>(plugin);
     if (verifyPlugin(tool)) {
       bf::at_key<IPluginTool>(m_Plugins).push_back(tool);
-      registerPluginTool(tool);
       return true;
     }
   }

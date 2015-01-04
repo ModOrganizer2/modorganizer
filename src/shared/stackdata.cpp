@@ -1,9 +1,9 @@
 #include "stackdata.h"
 
+#include "util.h"
 #include <DbgHelp.h>
 #include <sstream>
 #include <TlHelp32.h>
-#include <util.h>
 #include <set>
 
 

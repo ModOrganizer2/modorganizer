@@ -275,8 +275,8 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
     ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
     ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
-    ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == DEFAULT_CLOSE);
-    if (selectedExecutable.m_CloseMO == NEVER_CLOSE) {
+    ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
+    if (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::NEVER_CLOSE) {
       ui->closeCheckBox->setEnabled(false);
       ui->closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
     } else {

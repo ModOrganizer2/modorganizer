@@ -10,6 +10,7 @@
 #include "report.h"
 #include "spawn.h"
 #include "safewritefile.h"
+#include "syncoverwritedialog.h"
 #include <ipluginmodpage.h>
 #include <directoryentry.h>
 #include <scopeguard.h>
@@ -76,7 +77,7 @@ static std::wstring getProcessName(DWORD processId)
   }
 }
 
-bool MainWindow::testForSteam()
+bool OrganizerCore::testForSteam()
 {
   size_t currentSize = 1024;
   std::unique_ptr<DWORD[]> processIDs;
@@ -153,7 +154,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   , m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
   , m_CurrentProfile(nullptr)
-  , m_Settings()
+  , m_Settings(initSettings)
   , m_Updater(NexusInterface::instance())
   , m_AboutToRun()
   , m_FinishedRun()
@@ -244,7 +245,7 @@ void OrganizerCore::storeSettings()
         settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
         settings.setValue("arguments", item.m_Arguments);
         settings.setValue("workingDirectory", item.m_WorkingDirectory);
-        settings.setValue("closeOnStart", item.m_CloseMO == DEFAULT_CLOSE);
+        settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
         settings.setValue("steamAppID", item.m_SteamAppID);
       }
     }
@@ -443,6 +444,7 @@ InstallationManager *OrganizerCore::installationManager()
 void OrganizerCore::setCurrentProfile(Profile *profile) {
   delete m_CurrentProfile;
   m_CurrentProfile = profile;
+  connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
   m_ModList.setProfile(profile);
 }
 
@@ -601,6 +603,63 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName, const 
   return nullptr;
 }
 
+void OrganizerCore::installDownload(int index)
+{
+  try {
+    QString fileName = m_DownloadManager.getFilePath(index);
+    int modID = m_DownloadManager.getModID(index);
+    int fileID = m_DownloadManager.getFileInfo(index)->fileID;
+    GuessedValue<QString> modName;
+
+    // see if there already are mods with the specified mod id
+    if (modID != 0) {
+      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(modID);
+      for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
+        std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
+          modName.update((*iter)->name(), GUESS_PRESET);
+          (*iter)->saveMeta();
+        }
+      }
+    }
+
+    m_CurrentProfile->writeModlistNow();
+
+    bool hasIniTweaks = false;
+    m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
+    if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
+      MessageDialog::showMessage(tr("Installation successful"), qApp->activeWindow());
+      refreshModList();
+
+      int modIndex = ModInfo::getIndex(modName);
+      if (modIndex != UINT_MAX) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        modInfo->addInstalledFile(modID, fileID);
+
+        if (hasIniTweaks
+            && m_UserInterface != nullptr
+            && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
+                                      tr("This mod contains ini tweaks. Do you want to configure them now?"),
+                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
+          m_UserInterface->displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
+        }
+
+        m_ModInstalled(modName);
+      } else {
+        reportError(tr("mod \"%1\" not found").arg(modName));
+      }
+      m_DownloadManager.markInstalled(index);
+
+      emit modInstalled(modName);
+    } else if (m_InstallationManager.wasCancelled()) {
+      QMessageBox::information(qApp->activeWindow(), tr("Installation cancelled"),
+                               tr("The mod was not installed completely."), QMessageBox::Ok);
+    }
+  } catch (const std::exception &e) {
+    reportError(e.what());
+  }
+}
+
 QString OrganizerCore::resolvePath(const QString &fileName) const
 {
   if (m_DirectoryStructure == nullptr) {
@@ -709,10 +768,11 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->getName(), currentDirectory, steamAppID);
   if (processHandle != INVALID_HANDLE_VALUE) {
     if (closeAfterStart && (m_UserInterface != nullptr)) {
-      m_UserInterface->close();
+      qApp->closeAllWindows();
     } else {
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->setEnabled(false);
+      QWidget *mainWindow = qApp->activeWindow();
+      if (mainWindow != nullptr) {
+        mainWindow->setEnabled(false);
       }
       // re-enable the locked dialog because what'd be the point otherwise?
       dialog->setEnabled(true);
@@ -759,9 +819,10 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       }
       ::CloseHandle(processHandle);
 
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->setEnabled(true);
+      if (mainWindow != nullptr) {
+        mainWindow->setEnabled(false);
       }
+
       refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
@@ -829,9 +890,53 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
 
 HANDLE OrganizerCore::startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile)
 {
-  if (m_UserInterface != nullptr) {
-    return m_UserInterface->startApplication(executable, args, cwd, profile);
+  QFileInfo binary;
+  QString arguments = args.join(" ");
+  QString currentDirectory = cwd;
+  QString profileName = profile;
+  if (profile.length() == 0) {
+    if (m_CurrentProfile != NULL) {
+      profileName = m_CurrentProfile->getName();
+    } else {
+      throw MyException(tr("No profile set"));
+    }
   }
+  QString steamAppID;
+  if (executable.contains('\\') || executable.contains('/')) {
+    // file path
+    binary = QFileInfo(executable);
+    if (binary.isRelative()) {
+      // relative path, should be relative to game directory
+      binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
+    }
+    if (cwd.length() == 0) {
+      currentDirectory = binary.absolutePath();
+    }
+    try {
+      const Executable &exe = m_ExecutablesList.findByBinary(binary);
+      steamAppID = exe.m_SteamAppID;
+    } catch (const std::runtime_error&)  {
+      // nop
+    }
+  } else {
+    // only a file name, search executables list
+    try {
+      const Executable &exe = m_ExecutablesList.find(executable);
+      steamAppID = exe.m_SteamAppID;
+      if (arguments == "") {
+        arguments = exe.m_Arguments;
+      }
+      binary = exe.m_BinaryInfo;
+      if (cwd.length() == 0) {
+        currentDirectory = exe.m_WorkingDirectory;
+      }
+    } catch (const std::runtime_error&) {
+      qWarning("\"%s\" not set up as executable", executable.toUtf8().constData());
+      binary = QFileInfo(executable);
+    }
+  }
+
+  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode) const
@@ -890,12 +995,29 @@ void OrganizerCore::refreshESPList()
   }
 }
 
+QStringList OrganizerCore::defaultArchiveList()
+{
+  QStringList result;
+  wchar_t buffer[256];
+  std::wstring iniFileName = ToWString(QDir::toNativeSeparators(m_CurrentProfile->getIniFileName()));
+
+  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().append(L"2").c_str(),
+                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
+    result.append(ToQString(buffer).split(','));
+  }
+
+  for (int i = 0; i < m_DefaultArchives.count(); ++i) {
+    result[i] = result[i].trimmed();
+  }
+
+  return result;
+}
 
 void OrganizerCore::refreshBSAList()
 {
   m_ArchivesInit = false;
 
-  m_DefaultArchives.clear();
+  m_DefaultArchives = defaultArchiveList();
 
   wchar_t buffer[256];
   std::wstring iniFileName = ToWString(QDir::toNativeSeparators(m_CurrentProfile->getIniFileName()));
@@ -909,15 +1031,6 @@ void OrganizerCore::refreshBSAList()
     }
   }
 
-  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().append(L"2").c_str(),
-                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
-    m_DefaultArchives.append(ToQString(buffer).split(','));
-  }
-
-  for (int i = 0; i < m_DefaultArchives.count(); ++i) {
-    m_DefaultArchives[i] = m_DefaultArchives[i].trimmed();
-  }
-
   m_ActiveArchives.clear();
 
   auto iter = enabledArchives();
@@ -927,7 +1040,7 @@ void OrganizerCore::refreshBSAList()
   }
 
   if (m_UserInterface != nullptr) {
-    m_UserInterface->updateBSAList();
+    m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
   }
 
   m_ArchivesInit = true;
@@ -1185,11 +1298,27 @@ void OrganizerCore::loginFailedUpdate(const QString &message)
   MessageDialog::showMessage(tr("login failed: %1. You need to log-in with Nexus to update MO.").arg(message), qApp->activeWindow());
 }
 
+void OrganizerCore::syncOverwrite()
+{
+  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
+    std::vector<ModInfo::EFlag> flags = mod->getFlags();
+    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(overwriteIndex);
+  SyncOverwriteDialog syncDialog(modInfo->absolutePath(), m_DirectoryStructure, qApp->activeWindow());
+  if (syncDialog.exec() == QDialog::Accepted) {
+    syncDialog.apply(QDir::fromNativeSeparators(m_Settings.getModDirectory()));
+    modInfo->testValid();
+    refreshDirectoryStructure();
+  }
+
+}
+
 
 std::vector<unsigned int> OrganizerCore::activeProblems() const
 {
   std::vector<unsigned int> problems;
-  if (enabledCount() > 255) {
+  if (m_PluginList.enabledCount() > 255) {
     problems.push_back(PROBLEM_TOOMANYPLUGINS);
   }
   return problems;

@@ -43,7 +43,7 @@ public:
   /**
    * @brief constructor
    **/
-  Settings();
+  Settings(const QSettings &settingsSource);
 
   virtual ~Settings();
 
@@ -281,6 +281,7 @@ private:
   void addStyles(QComboBox *styleBox);
   void readPluginBlacklist();
   void writePluginBlacklist();
+  QString getConfigurablePath(const QString &key, const QString &def) const;
 
 private slots:
 

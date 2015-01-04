@@ -1168,7 +1168,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 }
 
 
-PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
+PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),

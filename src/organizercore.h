@@ -92,6 +92,8 @@ public:
   ModListSortProxy *createModListProxyModel();
   PluginListSortProxy *createPluginListProxyModel();
 
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
+
   bool isArchivesInit() const { return m_ArchivesInit; }
 
   bool saveCurrentLists();
@@ -107,7 +109,7 @@ public:
 
   void requestDownload(const QUrl &url, QNetworkReply *reply);
 
-  void doAfterLogin(std::function<void()> &function) { m_PostLoginTasks.append(function); }
+  void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
 
@@ -117,6 +119,8 @@ public:
   void loginSuccessfulUpdate(bool necessary);
   void loginFailed(const QString &message);
   void loginFailedUpdate(const QString &message);
+
+  void syncOverwrite();
 
 public:
   virtual MOBase::IGameInfo &gameInfo() const;
@@ -162,6 +166,7 @@ public slots:
 
   void profileRefresh();
   void externalMessage(const QString &message);
+  void installDownload(int index);
 
   void refreshLists();
 
@@ -171,7 +176,7 @@ signals:
    * @brief emitted after a mod has been installed
    * @node this is currently only used for tutorials
    */
-  void modInstalled();
+  void modInstalled(const QString &modName);
 
 private:
 
@@ -181,8 +186,10 @@ private:
 
   bool nexusLogin();
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
   void updateModActiveState(int index, bool active);
+
+  bool testForSteam();
+  QStringList defaultArchiveList();
 
 private slots:
 

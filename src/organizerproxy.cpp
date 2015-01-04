@@ -102,11 +102,6 @@ HANDLE OrganizerProxy::startApplication(const QString &executable, const QString
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->waitForProcessOrJob(handle, exitCode);
-}
-
-bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
-{
   return m_Proxied->waitForApplication(handle, exitCode);
 }
 
@@ -125,16 +120,14 @@ bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> 
   return m_Proxied->onModInstalled(func);
 }
 
-
 void OrganizerProxy::refreshModList(bool saveChanges)
 {
   m_Proxied->refreshModList(saveChanges);
 }
 
-
 IModInterface *OrganizerProxy::installMod(const QString &fileName)
 {
-  return m_Proxied->installMod(fileName);
+  return m_Proxied->installMod(fileName, QString());
 }
 
 QString OrganizerProxy::resolvePath(const QString &fileName) const
@@ -155,22 +148,6 @@ QStringList OrganizerProxy::findFiles(const QString &path, const std::function<b
 QStringList OrganizerProxy::getFileOrigins(const QString &fileName) const
 {
   return m_Proxied->getFileOrigins(fileName);
-}
-
-QStringList OrganizerProxy::getFileOrigins(const QString &fileName) const
-{
-  QStringList result;
-  const FileEntry::Ptr file = m_Proxied->m_DirectoryStructure->searchFile(ToWString(QFileInfo(fileName).fileName()), NULL);
-
-  if (file.get() != NULL) {
-    result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
-    foreach (int i, file->getAlternatives()) {
-      result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(i).getName()));
-    }
-  } else {
-    qDebug("%s not found", qPrintable(fileName));
-  }
-  return result;
 }
 
 QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const

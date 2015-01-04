@@ -419,11 +419,6 @@ public:
   virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
 
   /**
-   * @return a list of content types contained in a mod
-   */
-  virtual std::vector<EContent> getContents() const { return std::vector<EContent>(); }
-
-  /**
    * @brief test if the specified flag is set for this mod
    * @param flag the flag to test
    * @return true if the flag is set, false otherwise
@@ -1070,10 +1065,6 @@ class ModInfoForeign : public ModInfoWithConflictInfo
   Q_OBJECT
 
   friend class ModInfo;
-
-public:
-
-  static const char INT_IDENTIFIER[];
 
 public:
 

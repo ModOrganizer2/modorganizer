@@ -60,8 +60,8 @@ static const unsigned char Key2[20] = { 0x99, 0xb8, 0x76, 0x42, 0x3e, 0xc1, 0x60
 Settings *Settings::s_Instance = NULL;
 
 
-Settings::Settings()
-  : m_Settings(ToQString(GameInfo::instance().getIniFilename()), QSettings::IniFormat)
+Settings::Settings(const QSettings &settingsSource)
+  : m_Settings(settingsSource.fileName(), settingsSource.format())
 {
   if (s_Instance != NULL) {
     throw std::runtime_error("second instance of \"Settings\" created");
@@ -181,7 +181,7 @@ QString Settings::getSteamAppID() const
 
 QString Settings::getDownloadDirectory() const
 {
-  return QDir::toNativeSeparators(m_Settings.value("Settings/download_directory", ToQString(GameInfo::instance().getDownloadDir())).toString());
+  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()));
 }
 
 
@@ -219,14 +219,19 @@ std::map<QString, int> Settings::getPreferredServers()
   return result;
 }
 
+QString Settings::getConfigurablePath(const QString &key, const QString &def) const
+{
+  return m_Settings.value(QString("settings/") + key, qApp->property("dataPath").toString() + "/" + def).toString();
+}
+
 QString Settings::getCacheDirectory() const
 {
-  return QDir::toNativeSeparators(m_Settings.value("Settings/cache_directory", ToQString(GameInfo::instance().getCacheDir())).toString());
+  return getConfigurablePath("cache_directory", ToQString(AppConfig::cachePath()));
 }
 
 QString Settings::getModDirectory() const
 {
-  return QDir::toNativeSeparators(m_Settings.value("Settings/mod_directory", ToQString(GameInfo::instance().getModsDir())).toString());
+  return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()));
 }
 
 QString Settings::getNMMVersion() const

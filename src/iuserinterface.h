@@ -11,9 +11,7 @@ class IUserInterface
 {
 public:
 
-  void storeSettings(QSettings &settings);
-
-  virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "") = 0;
+  virtual void storeSettings(QSettings &settings) = 0;
 
   virtual bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL) = 0;
 
@@ -23,10 +21,6 @@ public:
   virtual void installTranslator(const QString &name) = 0;
 
   virtual void disconnectPlugins() = 0;
-
-  virtual bool close() = 0;
-
-  virtual void setEnabled(bool enabled) = 0;
 
   virtual void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) = 0;
 

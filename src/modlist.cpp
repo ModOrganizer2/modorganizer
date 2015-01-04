@@ -657,11 +657,6 @@ void ModList::disconnectSlots() {
   m_ModStateChanged.disconnect_all_slots();
 }
 
-void ModList::disconnectSlots() {
-  m_ModMoved.disconnect_all_slots();
-  m_ModStateChanged.disconnect_all_slots();
-}
-
 IModList::ModStates ModList::state(unsigned int modIndex) const
 {
   IModList::ModStates result;

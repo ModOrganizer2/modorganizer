@@ -129,7 +129,7 @@ void SyncOverwriteDialog::applyTo(QTreeWidgetItem *item, const QString &path, co
     QTreeWidgetItem *child = item->child(i);
     QString filePath;
     if (path.length() != 0) {
-      filePath = path.mid(0).append("/").append(child->text(0));
+      filePath = path + "/" + child->text(0);
     } else {
       filePath = child->text(0);
     }
@@ -141,8 +141,8 @@ void SyncOverwriteDialog::applyTo(QTreeWidgetItem *item, const QString &path, co
         int originID = comboBox->itemData(comboBox->currentIndex(), Qt::UserRole).toInt();
         if (originID != -1) {
           FilesOrigin &origin = m_DirectoryStructure->getOriginByID(originID);
-          QString source = m_SourcePath.mid(0).append("/").append(filePath);
-          QString destination = modDirectory.mid(0).append("/").append(ToQString(origin.getName())).append("/").append(filePath);
+          QString source = m_SourcePath + "/" + filePath;
+          QString destination = modDirectory + "/" + ToQString(origin.getName()) + "/" + filePath;
           if (!QFile::remove(destination)) {
             reportError(tr("failed to remove %1").arg(destination));
           } else if (!QFile::rename(source, destination)) {
