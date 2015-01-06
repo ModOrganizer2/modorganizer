@@ -249,7 +249,7 @@ LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
 
 # custom leak detection
-LIBS += -lDbgHelp
+#LIBS += -lDbgHelp
 
 # model tests
 #SOURCES += modeltest.cpp
@@ -257,7 +257,7 @@ LIBS += -lDbgHelp
 #DEFINES += TEST_MODELS
 
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$${BOOSTPATH}"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$${LOOTPATH}" "$${BOOSTPATH}"
 
 LIBS += -L"$${BOOSTPATH}/stage/lib"
 
@@ -317,7 +317,7 @@ LIBS += -L"$${ZLIBPATH}/build" -lzlibstatic
 
 DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS NOMINMAX
 
-DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
+DEFINES += BOOST_DISABLE_ASSERTS NDEBUG QT_MESSAGELOGCONTEXT
 #DEFINES += QMLJSDEBUGGER
 
 HGID = $$system(hg id -i)
@@ -361,3 +361,8 @@ CONFIG(debug, debug|release) {
     QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
   }
 }
+
+DISTFILES += \
+    tutorials/tutorial_primer_main.js \
+    tutorials/Tooltip.qml \
+    tutorials/TooltipArea.qml

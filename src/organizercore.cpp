@@ -77,52 +77,6 @@ static std::wstring getProcessName(DWORD processId)
   }
 }
 
-bool OrganizerCore::testForSteam()
-{
-  size_t currentSize = 1024;
-  std::unique_ptr<DWORD[]> processIDs;
-  DWORD bytesReturned;
-  bool success = false;
-  while (!success) {
-    processIDs.reset(new DWORD[currentSize]);
-    if (!::EnumProcesses(processIDs.get(), currentSize * sizeof(DWORD), &bytesReturned)) {
-      qWarning("failed to determine if steam is running");
-      return true;
-    }
-    if (bytesReturned == (currentSize * sizeof(DWORD))) {
-      // maximum size used, list probably truncated
-      currentSize *= 2;
-    } else {
-      success = true;
-    }
-  }
-  TCHAR processName[MAX_PATH];
-  for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
-    memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
-    if (processIDs[i] != 0) {
-      HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
-
-      if (process != nullptr) {
-        HMODULE module;
-        DWORD ignore;
-
-        // first module in a process is always the binary
-        if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
-          ::GetModuleBaseName(process, module, processName, MAX_PATH);
-          if ((_tcsicmp(processName, TEXT("steam.exe")) == 0) ||
-              (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
-            return true;
-          }
-        }
-      } else {
-        qDebug("can't open process %lu: %lu", processIDs[i], ::GetLastError());
-      }
-    }
-  }
-
-  return false;
-}
-
 static void startSteam(QWidget *widget)
 {
   QSettings steamSettings("HKEY_CURRENT_USER\\Software\\Valve\\Steam", QSettings::NativeFormat);
@@ -153,6 +107,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   : m_GameInfo(new GameInfoImpl())
   , m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
+  , m_GameName()
   , m_CurrentProfile(nullptr)
   , m_Settings(initSettings)
   , m_Updater(NexusInterface::instance())
@@ -188,6 +143,8 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
@@ -217,7 +174,7 @@ OrganizerCore::~OrganizerCore()
 
 void OrganizerCore::storeSettings()
 {
-  QString iniFile = ToQString(GameInfo::instance().getIniFilename());
+  QString iniFile = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName());
   shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow());
 
   QSettings::Status result = QSettings::NoError;
@@ -275,8 +232,57 @@ void OrganizerCore::storeSettings()
   }
 }
 
+bool OrganizerCore::testForSteam()
+{
+  size_t currentSize = 1024;
+  std::unique_ptr<DWORD[]> processIDs;
+  DWORD bytesReturned;
+  bool success = false;
+  while (!success) {
+    processIDs.reset(new DWORD[currentSize]);
+    if (!::EnumProcesses(processIDs.get(), currentSize * sizeof(DWORD), &bytesReturned)) {
+      qWarning("failed to determine if steam is running");
+      return true;
+    }
+    if (bytesReturned == (currentSize * sizeof(DWORD))) {
+      // maximum size used, list probably truncated
+      currentSize *= 2;
+    } else {
+      success = true;
+    }
+  }
+  TCHAR processName[MAX_PATH];
+  for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
+    memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
+    if (processIDs[i] != 0) {
+      HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
+
+      if (process != nullptr) {
+        HMODULE module;
+        DWORD ignore;
+
+        // first module in a process is always the binary
+        if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1, &ignore)) {
+          ::GetModuleBaseName(process, module, processName, MAX_PATH);
+          if ((_tcsicmp(processName, TEXT("steam.exe")) == 0) ||
+              (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 void OrganizerCore::updateExecutablesList(QSettings &settings)
 {
+  if (m_PluginContainer == nullptr) {
+    qCritical("can't update executables list now");
+    return;
+  }
+
   m_ExecutablesList.init(m_PluginContainer->managedGame(ToQString(GameInfo::instance().getGameName())));
 
   qDebug("setting up configured executables");
@@ -337,6 +343,11 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
 {
   m_DownloadManager.setSupportedExtensions(m_InstallationManager.getSupportedExtensions());
   m_PluginContainer = container;
+
+  if (!m_GameName.isEmpty()) {
+    m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
+    emit managedGameChanged(m_GamePlugin);
+  }
 }
 
 void OrganizerCore::disconnectPlugins()
@@ -348,7 +359,17 @@ void OrganizerCore::disconnectPlugins()
   m_PluginList.disconnectSlots();
 
   m_Settings.clearPlugins();
+  m_GamePlugin = nullptr;
   m_PluginContainer = nullptr;
+}
+
+void OrganizerCore::setManagedGame(const QString &gameName)
+{
+  m_GameName = gameName;
+  if (m_PluginContainer != nullptr) {
+    m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
+    emit managedGameChanged(m_GamePlugin);
+  }
 }
 
 Settings &OrganizerCore::settings()
@@ -449,11 +470,19 @@ InstallationManager *OrganizerCore::installationManager()
   return &m_InstallationManager;
 }
 
+void OrganizerCore::createDefaultProfile()
+{
+  QString profilesPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath());
+  qDebug("%d", QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size());
+  if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
+    Profile newProf("Default", managedGame(), false);
+  }
+}
+
 void OrganizerCore::setCurrentProfile(const QString &profileName)
 {
   QString profileDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath()) + "/" + profileName;
-
-  Profile *newProfile = new Profile(QDir(profileDir));
+  Profile *newProfile = new Profile(QDir(profileDir), managedGame());
 
   delete m_CurrentProfile;
   m_CurrentProfile = newProfile;
@@ -576,8 +605,7 @@ void OrganizerCore::setPersistent(const QString &pluginName, const QString &key,
 
 QString OrganizerCore::pluginDataPath() const
 {
-  QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
-  return pluginPath + "/data";
+  return qApp->applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()) + "/data";
 }
 
 MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName, const QString &initModName)
@@ -670,63 +698,6 @@ void OrganizerCore::installDownload(int index)
     } else if (m_InstallationManager.wasCancelled()) {
       QMessageBox::information(qApp->activeWindow(), tr("Installation cancelled"),
                                tr("The mod was not installed completely."), QMessageBox::Ok);
-    }
-  } catch (const std::exception &e) {
-    reportError(e.what());
-  }
-}
-
-void OrganizerCore::installDownload(int downloadIndex)
-{
-  try {
-    QString fileName = m_DownloadManager.getFilePath(downloadIndex);
-    int modID = m_DownloadManager.getModID(downloadIndex);
-    GuessedValue<QString> modName;
-
-    // see if there already are mods with the specified mod id
-    if (modID != 0) {
-      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(modID);
-      for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
-        std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
-        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end()) {
-          modName.update((*iter)->name(), GUESS_PRESET);
-          (*iter)->saveMeta();
-        }
-      }
-    }
-
-    m_CurrentProfile->writeModlistNow();
-
-    bool hasIniTweaks = false;
-    m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
-    if (m_InstallationManager.install(fileName, modName, hasIniTweaks)) {
-      MessageDialog::showMessage(tr("Installation successful"), qApp->activeWindow());
-      refreshModList();
-
-      int modIndex = ModInfo::getIndex(modName);
-      if (modIndex != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-        if (hasIniTweaks
-            && (m_UserInterface != nullptr)
-            && (QMessageBox::question(qApp->activeWindow(), tr("Configure Mod"),
-                                      tr("This mod contains ini tweaks. Do you want to configure them now?"),
-                                      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)) {
-          m_UserInterface->displayModInformation(modInfo, modIndex, ModInfoDialog::TAB_INIFILES);
-        }
-
-        m_ModInstalled(modName);
-      } else {
-        reportError(tr("mod \"%1\" not found").arg(modName));
-      }
-      m_DownloadManager.markInstalled(downloadIndex);
-
-      emit modInstalled(modName);
-    } else if (m_InstallationManager.wasCancelled()) {
-      QMessageBox::information(qApp->activeWindow(),
-                               tr("Installation cancelled"),
-                               tr("The mod was not installed completely."),
-                               QMessageBox::Ok);
     }
   } catch (const std::exception &e) {
     reportError(e.what());
@@ -1011,7 +982,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable, const QStringL
   return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID);
 }
 
-bool OrganizerCore::waitForProcessOrJob(HANDLE handle, LPDWORD exitCode)
+bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
   if (m_UserInterface != nullptr) {
     m_UserInterface->lock();
@@ -1131,7 +1102,7 @@ QStringList OrganizerCore::defaultArchiveList()
     result.append(ToQString(buffer).split(','));
   }
 
-  for (int i = 0; i < m_DefaultArchives.count(); ++i) {
+  for (int i = 0; i < result.count(); ++i) {
     result[i] = result[i].trimmed();
   }
 
@@ -1284,6 +1255,11 @@ PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
   return result;
 }
 
+IPluginGame *OrganizerCore::managedGame() const
+{
+  return m_GamePlugin;
+}
+
 std::set<QString> OrganizerCore::enabledArchives()
 {
   std::set<QString> result;
@@ -1308,8 +1284,6 @@ void OrganizerCore::refreshDirectoryStructure()
     m_DirectoryRefresher.setMods(activeModList, enabledArchives());
 
     QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
-  } else {
-    qDebug("directory update");
   }
 }
 

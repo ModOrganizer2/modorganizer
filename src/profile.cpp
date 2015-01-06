@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <util.h>
 #include <error_report.h>
 #include <appconfig.h>
+#include <iplugingame.h>
 #include <QMessageBox>
 #include <QApplication>
 #include <QSettings>
@@ -55,12 +56,11 @@ void Profile::touchFile(QString fileName)
   }
 }
 
-Profile::Profile(const QString &name, bool useDefaultSettings)
+Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
   : m_SaveTimer(nullptr)
 {
   initTimer();
-  QString profilesDir = qApp->property("datapath").toString() + "/" + ToQString(AppConfig::profilesPath());
-qDebug("pd %s", qPrintable(profilesDir));
+  QString profilesDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath());
   QDir profileBase(profilesDir);
 
   QString fixedName = name;
@@ -79,8 +79,15 @@ qDebug("pd %s", qPrintable(profilesDir));
     touchFile("modlist.txt");
     touchFile("archives.txt");
 
-qDebug("fp %s", qPrintable(fullPath));
-    GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
+    IPluginGame::ProfileSettings settings = IPluginGame::CONFIGURATION
+                                          | IPluginGame::MODS
+                                          | IPluginGame::SAVEGAMES;
+
+    if (useDefaultSettings) {
+      settings |= IPluginGame::PREFER_DEFAULTS;
+    }
+
+    gamePlugin->initializeProfile(fullPath, settings);
   } catch (...) {
     // clean up in case of an error
     shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)));
@@ -90,15 +97,21 @@ qDebug("fp %s", qPrintable(fullPath));
 }
 
 
-Profile::Profile(const QDir &directory)
+Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
   : m_Directory(directory), m_SaveTimer(nullptr)
 {
+  assert(gamePlugin != nullptr);
   initTimer();
+
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
+    touchFile(m_Directory.filePath("modlist.txt"));
   }
 
-  GameInfo::instance().repairProfile(ToWString(m_Directory.absolutePath()));
+  IPluginGame::ProfileSettings settings = IPluginGame::CONFIGURATION
+                                        | IPluginGame::MODS
+                                        | IPluginGame::SAVEGAMES;
+  gamePlugin->initializeProfile(directory, settings);
 
   if (!QFile::exists(getIniFileName())) {
     reportError(QObject::tr("\"%1\" is missing or inaccessible").arg(getIniFileName()));
@@ -492,28 +505,17 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
   writeModlist();
 }
 
-
-Profile Profile::createFrom(const QString &name, const Profile &reference)
+Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin)
 {
-  QString profileDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())).append("/").append(name);
+  QString profileDirectory = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()) + "/" + name;
   reference.copyFilesTo(profileDirectory);
-  return Profile(QDir(profileDirectory));
+  return new Profile(QDir(profileDirectory), gamePlugin);
 }
-
-
-Profile *Profile::createPtrFrom(const QString &name, const Profile &reference)
-{
-  QString profileDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())).append("/").append(name);
-  reference.copyFilesTo(profileDirectory);
-  return new Profile(QDir(profileDirectory));
-}
-
 
 void Profile::copyFilesTo(QString &target) const
 {
   copyDir(m_Directory.absolutePath(), target, false);
 }
-
 
 std::vector<std::wstring> Profile::splitDZString(const wchar_t *buffer) const
 {
@@ -527,7 +529,6 @@ std::vector<std::wstring> Profile::splitDZString(const wchar_t *buffer) const
   }
   return result;
 }
-
 
 void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) const
 {
@@ -787,7 +788,7 @@ QString Profile::getPath() const
 
 void Profile::rename(const QString &newName)
 {
-  QDir profileDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())));
+  QDir profileDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
   profileDir.rename(getName(), newName);
   m_Directory = profileDir.absoluteFilePath(newName);
 }

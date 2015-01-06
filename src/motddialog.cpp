@@ -28,8 +28,6 @@ MotDDialog::MotDDialog(const QString &message, QWidget *parent)
 {
   ui->setupUi(this);
   ui->motdView->setHtml(BBCode::convertToHTML(message));
-//  ui->motdView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-//  connect(ui->motdView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   connect(ui->motdView, SIGNAL(anchorClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
 }
 

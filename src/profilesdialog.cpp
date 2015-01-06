@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profileinputdialog.h"
 #include "mainwindow.h"
 #include <gameinfo.h>
+#include <appconfig.h>
 #include <QListWidgetItem>
 #include <QInputDialog>
 #include <QLineEdit>
@@ -40,12 +41,16 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &gamePath, QWidget *parent)
-  : TutorableDialog("Profiles", parent), ui(new Ui::ProfilesDialog), m_GamePath(gamePath), m_FailState(false)
+ProfilesDialog::ProfilesDialog(const QString &gamePath, MOBase::IPluginGame *gamePlugin, QWidget *parent)
+  : TutorableDialog("Profiles", parent)
+  , ui(new Ui::ProfilesDialog)
+  , m_GamePlugin(gamePlugin)
+  , m_GamePath(gamePath)
+  , m_FailState(false)
 {
   ui->setupUi(this);
 
-  QDir profilesDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())));
+  QDir profilesDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
   m_ProfilesList = findChild<QListWidget*>("profilesList");
 
@@ -93,20 +98,19 @@ void ProfilesDialog::addItem(const QString &name)
   QDir profileDir(name);
   QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
   try {
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir, m_GamePlugin))));
     m_FailState = false;
   } catch (const std::exception& e) {
     reportError(tr("failed to create profile: %1").arg(e.what()));
   }
 }
 
-
 void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
 {
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, useDefaultSettings))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, m_GamePlugin, useDefaultSettings))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -114,14 +118,13 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
     throw;
   }
 }
-
 
 void ProfilesDialog::createProfile(const QString &name, const Profile &reference)
 {
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, m_GamePlugin))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -129,7 +132,6 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
     throw;
   }
 }
-
 
 void ProfilesDialog::on_addProfileButton_clicked()
 {
@@ -178,7 +180,9 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
     QString profilePath;
     if (currentProfile.get() == nullptr) {
-      profilePath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())) + "/" + profilesList->currentItem()->text();
+      profilePath = qApp->property("dataPath").toString()
+                  + "/" + QString::fromStdWString(AppConfig::profilesPath())
+                  + "/" + profilesList->currentItem()->text();
       if (QMessageBox::question(this, tr("Profile broken"),
             tr("This profile you're about to delete seems to be broken or the path is invalid. "
             "I'm about to delete the following folder: \"%1\". Proceed?").arg(profilePath), QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
@@ -315,6 +319,6 @@ void ProfilesDialog::on_localSavesBox_stateChanged(int state)
 void ProfilesDialog::on_transferButton_clicked()
 {
   const Profile::Ptr currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
-  TransferSavesDialog transferDialog(*currentProfile, this);
+  TransferSavesDialog transferDialog(*currentProfile, m_GamePlugin, this);
   transferDialog.exec();
 }

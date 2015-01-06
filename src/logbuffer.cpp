@@ -132,8 +132,12 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
   if (type == QtDebugMsg) {
     fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
   } else {
-    fprintf(stdout, "%s [%c] (%s:%u) %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-            context.file, context.line, qPrintable(message));
+    if (context.line != 0) {
+      fprintf(stdout, "%s [%c] (%s:%u) %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type),
+              context.file, context.line, qPrintable(message));
+    } else {
+      fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
+    }
   }
   fflush(stdout);
 }

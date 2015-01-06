@@ -31,6 +31,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <tuple>
 
 
+namespace MOBase {
+  class IPluginGame;
+}
+
 /**
  * @brief represents a profile
  **/
@@ -59,7 +63,7 @@ public:
    * @param name name of the new profile
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
-  Profile(const QString &name, bool useDefaultSettings);
+  Profile(const QString &name, MOBase::IPluginGame *gamePlugin, bool useDefaultSettings);
   /**
    * @brief constructor
    *
@@ -68,7 +72,7 @@ public:
    * invoking this should always produce a working profile
    * @param directory directory to read the profile from
    **/
-  Profile(const QDir &directory);
+  Profile(const QDir &directory, MOBase::IPluginGame *gamePlugin);
 
   Profile(const Profile &reference);
 
@@ -83,13 +87,7 @@ public:
    * @param name of the new profile
    * @param reference profile to copy from
    **/
-  static Profile createFrom(const QString &name, const Profile &reference);
-
-  /**
-   * @param name of the new profile
-   * @param reference profile to copy from
-   **/
-  static Profile *createPtrFrom(const QString &name, const Profile &reference);
+  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin);
 
   /**
    * @brief write out the modlist.txt

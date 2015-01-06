@@ -31,8 +31,11 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-TransferSavesDialog::TransferSavesDialog(const Profile &profile, QWidget *parent)
-  : TutorableDialog("TransferSaves", parent), ui(new Ui::TransferSavesDialog), m_Profile(profile)
+TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame *gamePlugin, QWidget *parent)
+  : TutorableDialog("TransferSaves", parent)
+  , ui(new Ui::TransferSavesDialog)
+  , m_Profile(profile)
+  , m_GamePlugin(gamePlugin)
 {
   ui->setupUi(this);
   refreshGlobalSaves();
@@ -51,10 +54,10 @@ void TransferSavesDialog::refreshGlobalSaves()
 {
   m_GlobalSaves.clear();
 
-  QDir savesDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getSaveGameDir())));
+  QDir savesDir(m_GamePlugin->savesDirectory());
 
   QStringList filters;
-  filters << ToQString(GameInfo::instance().getSaveGameExtension());
+  filters << m_GamePlugin->savegameExtension();
   savesDir.setNameFilters(filters);
 
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
@@ -71,10 +74,10 @@ void TransferSavesDialog::refreshLocalSaves()
 {
   m_LocalSaves.clear();
 
-  QDir savesDir(m_Profile.getPath().append("/saves"));
+  QDir savesDir(m_Profile.getPath() + "/saves");
 
   QStringList filters;
-  filters << ToQString(GameInfo::instance().getSaveGameExtension());
+  filters << m_GamePlugin->savegameExtension();
   savesDir.setNameFilters(filters);
 
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
@@ -232,7 +235,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
          "that this will mess up the running number of save games.").arg(selectedCharacter),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 
-    QString destination = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getSaveGameDir()));
+    QDir destination = m_GamePlugin->savesDirectory();
     OverwriteMode overwriteMode = OVERWRITE_ASK;
     for (std::vector<SaveGame*>::const_iterator iter = m_LocalSaves.begin();
          iter != m_LocalSaves.end(); ++iter) {
@@ -240,7 +243,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
         QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
-          QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
+          QString destinationFile = destination.filePath(fileInfo.fileName());
           if (QFile::exists(destinationFile)) {
             if (testOverwrite(overwriteMode, destinationFile)) {
               QFile::remove(destinationFile);
@@ -271,7 +274,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
          "that this will mess up the running number of save games.").arg(selectedCharacter),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 
-    QString destination = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getSaveGameDir()));
+    QDir destination = m_GamePlugin->savesDirectory();
     OverwriteMode overwriteMode = OVERWRITE_ASK;
     for (std::vector<SaveGame*>::const_iterator iter = m_LocalSaves.begin();
          iter != m_LocalSaves.end(); ++iter) {
@@ -279,7 +282,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
         QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
-          QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
+          QString destinationFile = destination.filePath(fileInfo.fileName());
           if (QFile::exists(destinationFile)) {
             if (testOverwrite(overwriteMode, destinationFile)) {
               QFile::remove(destinationFile);

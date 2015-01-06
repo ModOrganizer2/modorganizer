@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <gameinfo.h>
 #include <versioninfo.h>
+#include <appconfig.h>
 
 #include <QApplication>
 
@@ -1012,7 +1013,7 @@ bool ModInfoOverwrite::isEmpty() const
 
 QString ModInfoOverwrite::absolutePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOverwriteDir()));
+  return QDir::fromNativeSeparators(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
 }
 
 std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const

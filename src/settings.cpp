@@ -22,10 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialog.h"
 #include "utility.h"
 #include "helper.h"
+#include "json.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
-#include "json.h"
+#include <iplugingame.h>
 
 #include <QCheckBox>
 #include <QLineEdit>
@@ -117,6 +118,11 @@ void Settings::registerAsNXMHandler(bool force)
   }
 }
 
+void Settings::managedGameChanged(IPluginGame *gamePlugin)
+{
+  m_GamePlugin = gamePlugin;
+}
+
 void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);
@@ -176,7 +182,7 @@ bool Settings::automaticLoginEnabled() const
 
 QString Settings::getSteamAppID() const
 {
-  return m_Settings.value("Settings/app_id", ToQString(GameInfo::instance().getSteamAPPId(m_Settings.value("game_edition", 0).toInt()))).toString();
+  return m_Settings.value("Settings/app_id", m_GamePlugin->steamAPPId()).toString();
 }
 
 QString Settings::getDownloadDirectory() const
@@ -691,7 +697,7 @@ void Settings::query(QWidget *parent)
 
     m_Settings.setValue("Settings/log_level", logLevelBox->currentIndex());
 
-    if (appIDEdit->text() != ToQString(GameInfo::instance().getSteamAPPId())) {
+    if (appIDEdit->text() != m_GamePlugin->steamAPPId()) {
       m_Settings.setValue("Settings/app_id", appIDEdit->text());
     } else {
       m_Settings.remove("Settings/app_id");

@@ -102,7 +102,7 @@ HANDLE OrganizerProxy::startApplication(const QString &executable, const QString
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->waitForProcessOrJob(handle, exitCode);
+  return m_Proxied->waitForApplication(handle, exitCode);
 }
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)

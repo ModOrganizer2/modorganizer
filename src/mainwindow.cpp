@@ -137,7 +137,11 @@ using namespace MOShared;
 
 
 
-MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, OrganizerCore &organizerCore, PluginContainer &pluginContainer, QWidget *parent)
+MainWindow::MainWindow(const QString &exeName
+                       , QSettings &initSettings
+                       , OrganizerCore &organizerCore
+                       , PluginContainer &pluginContainer
+                       , QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_Tutorial(this, "MainWindow")
@@ -157,7 +161,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, Organize
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_OrganizerCore.getVersion().displayString());
-
   languageChange(m_OrganizerCore.settings().language());
 
   ui->logList->setModel(LogBuffer::instance());
@@ -280,6 +283,7 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, Organize
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
+  connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
 
@@ -313,7 +317,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, Organize
   ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
 
   m_OrganizerCore.setUserInterface(this, this);
-
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
@@ -325,6 +328,9 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, Organize
   for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
     registerModPage(modPagePlugin);
   }
+
+  // refresh profiles so the current profile can be activated
+  refreshProfiles(false);
 
   ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->getName());
 
@@ -477,7 +483,6 @@ void MainWindow::actionToToolButton(QAction *&sourceAction)
   sourceAction = newAction;
 }
 
-
 void MainWindow::updateToolBar()
 {
   foreach (QAction *action, ui->toolBar->actions()) {
@@ -560,7 +565,7 @@ void MainWindow::updateProblemsButton()
 
 bool MainWindow::errorReported(QString &logFile)
 {
-  QDir dir(ToQString(GameInfo::instance().getLogDir()));
+  QDir dir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()));
   QFileInfoList files = dir.entryInfoList(QStringList("ModOrganizer_??_??_??_??_??.log"),
                                           QDir::Files, QDir::Name | QDir::Reversed);
 
@@ -655,7 +660,7 @@ void MainWindow::createHelpWidget()
   }
 
   std::sort(tutorials.begin(), tutorials.end(),
-            [](const ActionList::value_type &LHS, const ActionList::value_type &RHS) {
+            [] (const ActionList::value_type &LHS, const ActionList::value_type &RHS) {
               return LHS.first < RHS.first; } );
 
   for (auto iter = tutorials.begin(); iter != tutorials.end(); ++iter) {
@@ -813,16 +818,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
   setCursor(Qt::WaitCursor);
 
   m_IntegratedBrowser.close();
-}
-
-
-void MainWindow::createFirstProfile()
-{
-  if (!refreshProfiles(false)) {
-    qDebug("creating default profile");
-    Profile newProf("Default", false);
-    refreshProfiles(false);
-  }
 }
 
 
@@ -1033,9 +1028,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     }
 
     if (ui->profileBox->currentIndex() == 0) {
-      ProfilesDialog(m_GamePath).exec();
+      ProfilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this).exec();
       while (!refreshProfiles()) {
-        ProfilesDialog(m_GamePath).exec();
+        ProfilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this).exec();
       }
       ui->profileBox->setCurrentIndex(previousIndex);
     } else {
@@ -1181,21 +1176,15 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   profileBox->clear();
   profileBox->addItem(QObject::tr("<Manage...>"));
 
-  QDir profilesDir(ToQString(GameInfo::instance().getProfilesDir()));
+  QDir profilesDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
 
   QDirIterator profileIter(profilesDir);
 
-  int newIndex = profileIter.hasNext() ? 1 : 0;
-  int currentIndex = 0;
   while (profileIter.hasNext()) {
     profileIter.next();
-    ++currentIndex;
     try {
       profileBox->addItem(profileIter.fileName());
-      if (currentProfileName == profileIter.fileName()) {
-        newIndex = currentIndex;
-      }
     } catch (const std::runtime_error& error) {
       reportError(QObject::tr("failed to parse profile %1: %2").arg(profileIter.fileName()).arg(error.what()));
     }
@@ -1206,20 +1195,13 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 
   if (selectProfile) {
     if (profileBox->count() > 1) {
-      if (currentProfileName.length() != 0) {
-        if ((newIndex != 0) && (profileBox->count() > newIndex)) {
-          profileBox->setCurrentIndex(newIndex);
-        } else {
-          profileBox->setCurrentIndex(1);
-        }
+      profileBox->setCurrentText(currentProfileName);
+      if (profileBox->currentIndex() == 0) {
+        profileBox->setCurrentIndex(1);
       }
-      return true;
-    } else {
-      return false;
     }
-  } else {
-    return profileBox->count() > 1;
   }
+  return profileBox->count() > 1;
 }
 
 
@@ -1301,7 +1283,7 @@ void MainWindow::refreshSaveList()
     ::GetPrivateProfileStringW(L"General", L"SLocalSavePath", L"Saves",
                                path, MAX_PATH,
                                (ToWString(m_OrganizerCore.currentProfile()->getPath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
-    savesDir.setPath(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getDocumentsDir() + L"\\" + path)));
+    savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
   if (m_SavesWatcher.directories().length() > 0) {
@@ -1310,11 +1292,10 @@ void MainWindow::refreshSaveList()
   m_SavesWatcher.addPath(savesDir.absolutePath());
 
   QStringList filters;
-  filters << ToQString(GameInfo::instance().getSaveGameExtension());
+  filters << QString("*.") + m_OrganizerCore.managedGame()->savegameExtension();
   savesDir.setNameFilters(filters);
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
-
   foreach (const QFileInfo &file, files) {
     QListWidgetItem *item = new QListWidgetItem(file.fileName());
     item->setData(Qt::UserRole, file.absoluteFilePath());
@@ -1414,13 +1395,15 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     subItem->setExpanded(true);
   }
 
-  checkBSAList(defaultArchives);
+  checkBSAList();
 }
 
 
-void MainWindow::checkBSAList(const QStringList &defaultArchives)
+void MainWindow::checkBSAList()
 {
   ui->bsaList->blockSignals(true);
+
+  QStringList defaultArchives = m_OrganizerCore.defaultArchiveList();
 
   bool warning = false;
 
@@ -1512,7 +1495,7 @@ void MainWindow::activateProxy(bool activate)
 
 void MainWindow::readSettings()
 {
-  QSettings settings(ToQString(GameInfo::instance().getIniFilename()), QSettings::IniFormat);
+  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
 
   if (settings.contains("window_geometry")) {
     restoreGeometry(settings.value("window_geometry").toByteArray());
@@ -1791,7 +1774,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
 {
   bool repeat = true;
   while (repeat) {
-    ProfilesDialog profilesDialog(m_GamePath);
+    ProfilesDialog profilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this);
     profilesDialog.exec();
     if (refreshProfiles() && !profilesDialog.failed()) {
       repeat = false;
@@ -1975,7 +1958,7 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 
     //TODO this functionality should be in the Profile class
     QString modlistName = QString("%1/%2/modlist.txt")
-                            .arg(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())))
+                            .arg(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()))
                             .arg(profileName);
 
     QFile modList(modlistName);
@@ -3176,7 +3159,7 @@ void MainWindow::fixMods_clicked()
 
   // search in overwrite
   {
-    QDir overwriteDir(ToQString(GameInfo::instance().getOverwriteDir()));
+    QDir overwriteDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
     QStringList esps = overwriteDir.entryList(espFilter);
     foreach (const QString &esp, esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
@@ -3398,6 +3381,8 @@ void MainWindow::languageChange(const QString &newLanguage)
   updateProblemsButton();
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
+}
+
 void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
 {
   { // list files
@@ -3432,7 +3417,6 @@ void MainWindow::writeDataToFile(QFile &file, const QString &directory, const Di
     }
   }
 }
-
 
 void MainWindow::writeDataToFile()
 {
@@ -4286,62 +4270,6 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
       }
     }
   }
-bool MainWindow::waitForProcessOrJob(HANDLE handle, LPDWORD exitCode)
-{
-  LockedDialog *dialog = new LockedDialog(this);
-  dialog->show();
-  setEnabled(false);
-  ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); setEnabled(true); });
-
-  DWORD retLen;
-  JOBOBJECT_BASIC_PROCESS_ID_LIST info;
-
-  bool isJobHandle = true;
-
-  ULONG lastProcessID = ULONG_MAX;
-  HANDLE processHandle = handle;
-
-  DWORD res = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
-  while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
-    if (isJobHandle) {
-      if (::QueryInformationJobObject(handle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-        if (info.NumberOfProcessIdsInList == 0) {
-          // fake signaled state
-          res = WAIT_OBJECT_0;
-          break;
-        } else {
-          // this is indeed a job handle. Figure out one of the process handles as well.
-          if (lastProcessID != info.ProcessIdList[0]) {
-            lastProcessID = info.ProcessIdList[0];
-            if (processHandle != handle) {
-              ::CloseHandle(processHandle);
-            }
-            processHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, lastProcessID);
-          }
-        }
-      } else {
-        // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-        // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-        // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-        // the right to break out.
-        if (::GetLastError() != ERROR_MORE_DATA) {
-          isJobHandle = false;
-        }
-      }
-    }
-
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::processEvents();
-
-    res = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
-  }
-
-  if (exitCode != NULL) {
-    ::GetExitCodeProcess(processHandle, exitCode);
-  }
-  ::CloseHandle(processHandle);
-
-  return res == WAIT_OBJECT_0;
 }
 
 void MainWindow::on_bossButton_clicked()

@@ -81,20 +81,52 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+bool createAndMakeWritable(const std::wstring &subPath)
+{
+  QString fullPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(subPath);
+
+  if (!QDir(fullPath).exists()) {
+    QDir().mkdir(fullPath);
+  }
+
+  QFileInfo fileInfo(fullPath);
+  if (!fileInfo.exists() || !fileInfo.isWritable()) {
+    if (QMessageBox::question(nullptr, QObject::tr("Permissions required"),
+        QObject::tr("The current user account doesn't have the required access rights to run "
+           "Mod Organizer. The neccessary changes can be made automatically (the MO directory "
+           "will be made writable for the current user account). You will be asked to run "
+           "\"helper.exe\" with administrative rights."),
+           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
+      if (!Helper::init(GameInfo::instance().getOrganizerDirectory())) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+    // no matter which directory didn't exist/wasn't writable, the helper
+    // should have created them all so we don't have to worry this message box would appear repeatedly
+  }
+  return true;
+}
+
 
 bool bootstrap()
 {
-  GameInfo &gameInfo = GameInfo::instance();
-
   // remove the temporary backup directory in case we're restarting after an update
-  QString moDirectory = QDir::fromNativeSeparators(ToQString(gameInfo.getOrganizerDirectory()));
-  QString backupDirectory = moDirectory + "/update_backup";
+  QString backupDirectory = qApp->applicationDirPath() + "/update_backup";
   if (QDir(backupDirectory).exists()) {
     shellDelete(QStringList(backupDirectory));
   }
 
   // cycle logfile
-  removeOldFiles(ToQString(GameInfo::instance().getLogDir()), "ModOrganizer*.log", 5, QDir::Name);
+  removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
+                 "ModOrganizer*.log", 5, QDir::Name);
+
+  createAndMakeWritable(AppConfig::profilesPath());
+  createAndMakeWritable(AppConfig::modsPath());
+  createAndMakeWritable(AppConfig::downloadPath());
+  createAndMakeWritable(AppConfig::overwritePath());
+  createAndMakeWritable(AppConfig::logPath());
 
   // verify the hook-dll exists
   QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
@@ -248,6 +280,7 @@ QString determineProfile(QStringList arguments, const QSettings &settings)
   }
   if (selectedProfileName.isEmpty()) {
     qDebug("no configured profile");
+    selectedProfileName = "Default";
   } else {
     qDebug("configured profile: %s", qPrintable(selectedProfileName));
   }
@@ -304,6 +337,11 @@ int main(int argc, char *argv[])
                    , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
     return 1;
   }
+
+  if (!bootstrap()) { // requires gameinfo to be initialised!
+    return -1;
+  }
+
   LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
@@ -353,8 +391,7 @@ int main(int argc, char *argv[])
       }
     } // we continue for the primary instance OR if MO has been called with parameters
 
-
-    QSettings settings(dataPath + "/ModOrganizer.ini", QSettings::IniFormat);
+    QSettings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
 
     OrganizerCore organizer(settings);
 
@@ -362,7 +399,6 @@ int main(int argc, char *argv[])
     pluginContainer.loadPlugins();
 
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
-
     bool done = false;
     while (!done) {
       if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(dataPath), ToWString(QDir::toNativeSeparators(gamePath)))) {
@@ -418,6 +454,10 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
+    organizer.setManagedGame(ToQString(GameInfo::instance().getGameName()));
+
+    organizer.createDefaultProfile();
+
     if (pluginContainer.managedGame(ToQString(GameInfo::instance().getGameName())) == nullptr) {
       reportError(QObject::tr("Plugin to handle %1 not installed").arg(ToQString(GameInfo::instance().getGameName())));
       return 1;
@@ -443,9 +483,6 @@ int main(int argc, char *argv[])
 
     organizer.updateExecutablesList(settings);
 
-    if (!bootstrap()) { // requires gameinfo to be initialised!
-      return -1;
-    }
 
     QString selectedProfileName = determineProfile(arguments, settings);
     organizer.setCurrentProfile(selectedProfileName);
@@ -468,7 +505,7 @@ int main(int argc, char *argv[])
     }
 
     qDebug("initializing tutorials");
-    TutorialManager::init(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getTutorialDir())).append("/"));
+    TutorialManager::init(qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/");
 
     if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
       // disable invalid stylesheet
@@ -484,8 +521,6 @@ int main(int argc, char *argv[])
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer, SLOT(externalMessage(QString)));
 
       mainWindow.readSettings();
-
-      mainWindow.createFirstProfile();
 
       qDebug("displaying main window");
       mainWindow.show();

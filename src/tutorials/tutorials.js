@@ -52,15 +52,25 @@ function clickNext()
 
 function nextStep()
 {
-    waitingForClick = false;
-    description.continueVisible = false
-    if (step < tutorialSteps.length) {
-        tutorialControl.lockUI(false)
-        step++
-        tutorialSteps[step - 1]()
-    } else {
-        tutorialControl.finish()
-    }
+  waitingForClick = false;
+  description.continueVisible = false
+  if (step < tutorialSteps.length) {
+    tutorialControl.lockUI(false)
+    step++
+    tutorialSteps[step - 1]()
+  } else {
+    tutorialControl.finish()
+  }
+}
+
+function sameStep()
+{
+  tutorialSteps[step - 1]()
+}
+
+function onTabChanged(func)
+{
+  tutToplevel.tabChanged.connect(func)
 }
 
 function init()

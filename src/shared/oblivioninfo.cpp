@@ -86,22 +86,6 @@ bool OblivionInfo::isInvalidationBSA(const std::wstring &bsaName)
   return false;
 }
 
-std::wstring OblivionInfo::getDocumentsDir()
-{
-  std::wostringstream temp;
-  temp << getMyGamesDirectory() << L"\\Oblivion";
-
-  return temp.str();
-}
-
-std::wstring OblivionInfo::getSaveGameDir()
-{
-  std::wostringstream temp;
-  temp << getDocumentsDir() << L"\\Saves";
-  return temp.str();
-}
-
-
 std::vector<std::wstring> OblivionInfo::getPrimaryPlugins()
 {
   return boost::assign::list_of(L"oblivion.esm");
@@ -147,63 +131,6 @@ std::vector<std::wstring> OblivionInfo::getIniFileNames()
 }
 
 
-void OblivionInfo::createProfile(const std::wstring &directory, bool useDefaults)
-{
-  std::wostringstream target;
-
-  // copy plugins.txt
-  target << directory << "\\plugins.txt";
-
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
-    source << getLocalAppFolder() << "\\Oblivion\\plugins.txt";
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-      ::CloseHandle(file);
-    }
-  }
-
-  // copy ini-file
-  target.str(L""); target.clear();
-  target << directory << L"\\oblivion.ini";
-
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
-    if (useDefaults) {
-      source << getGameDirectory() << L"\\oblivion_default.ini";
-    } else {
-      source << getMyGamesDirectory() << L"Oblivion";
-      if (FileExists(source.str(), L"oblivion.ini")) {
-        source << L"\\oblivion.ini";
-      } else {
-        source.str(L"");
-        source << getGameDirectory() << L"\\oblivion_default.ini";
-      }
-    }
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      if (::GetLastError() != ERROR_FILE_EXISTS) {
-        std::ostringstream stream;
-        stream << "failed to copy ini file: " << ToString(source.str(), false);
-        throw windows_error(stream.str());
-      }
-    }
-  }
-
-  { // copy oblivionprefs.ini-file
-    std::wstring target = directory + L"\\oblivionprefs.ini";
-    if (!FileExists(target)) {
-      std::wstring source = getMyGamesDirectory() + L"\\Oblivion\\oblivionprefs.ini";
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        if ((::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr) == INVALID_HANDLE_VALUE) &&
-            (::GetLastError() != ERROR_FILE_EXISTS)) {
-          throw windows_error(std::string("failed to create ini file: ") + ToString(target, false));
-        }
-      }
-    }
-  }
-}
-
-
 std::wstring OblivionInfo::getSEName()
 {
   return L"obse";
@@ -231,13 +158,6 @@ int OblivionInfo::getNexusModIDStatic()
   return 38277;
 }
 
-
-void OblivionInfo::repairProfile(const std::wstring &directory)
-{
-  createProfile(directory, false);
-}
-
-
 bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };
@@ -248,12 +168,6 @@ bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
     }
   }
   return false;
-}
-
-
-std::wstring OblivionInfo::getSaveGameExtension()
-{
-  return L"*.ess";
 }
 
 std::wstring OblivionInfo::getReferenceDataFile()
@@ -268,23 +182,4 @@ std::wstring OblivionInfo::getOMODExt()
 }
 
 
-std::wstring OblivionInfo::getSteamAPPId(int) const
-{
-  return L"22330";
-}
-
-/*
-std::vector<ExecutableInfo> OblivionInfo::getExecutables()
-{
-  std::vector<ExecutableInfo> result;
-  result.push_back(ExecutableInfo(L"OBSE", L"obse_loader.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Oblivion", L"oblivion.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Oblivion Mod Manager", L"OblivionModManager.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Construction Set", L"TESConstructionSet.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Oblivion Launcher", L"OblivionLauncher.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
-  result.push_back(ExecutableInfo(L"BOSS (old)", L"Data/BOSS.exe", L"", L"", NEVER_CLOSE));
-
-  return result;
-}*/
 } // namespace MOShared

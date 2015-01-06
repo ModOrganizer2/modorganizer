@@ -92,14 +92,12 @@ void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, s
   end = m_Executables.end();
 }
 
-
 void ExecutablesList::getExecutables(std::vector<Executable>::const_iterator &begin,
                                      std::vector<Executable>::const_iterator &end) const
 {
   begin = m_Executables.begin();
   end = m_Executables.end();
 }
-
 
 const Executable &ExecutablesList::find(const QString &title) const
 {

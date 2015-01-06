@@ -85,21 +85,6 @@ bool FalloutNVInfo::isInvalidationBSA(const std::wstring &bsaName)
   return false;
 }
 
-std::wstring FalloutNVInfo::getDocumentsDir()
-{
-  std::wostringstream temp;
-  temp << getMyGamesDirectory() << L"\\FalloutNV";
-
-  return temp.str();
-}
-
-std::wstring FalloutNVInfo::getSaveGameDir()
-{
-  std::wostringstream temp;
-  temp << getDocumentsDir() << L"\\Saves";
-  return temp.str();
-}
-
 std::vector<std::wstring> FalloutNVInfo::getPrimaryPlugins()
 {
   return boost::assign::list_of(L"falloutnv.esm");
@@ -139,11 +124,6 @@ std::vector<std::wstring> FalloutNVInfo::getIniFileNames()
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
 }
 
-std::wstring FalloutNVInfo::getSaveGameExtension()
-{
-  return L"*.fos";
-}
-
 std::wstring FalloutNVInfo::getReferenceDataFile()
 {
   return L"Fallout - Meshes.bsa";
@@ -153,61 +133,6 @@ std::wstring FalloutNVInfo::getReferenceDataFile()
 std::wstring FalloutNVInfo::getOMODExt()
 {
   return L"fomod";
-}
-
-
-std::wstring FalloutNVInfo::getSteamAPPId(int) const
-{
-  return L"22380";
-}
-
-
-void FalloutNVInfo::createProfile(const std::wstring &directory, bool useDefaults)
-{
-  std::wstring target = directory + L"\\plugins.txt";
-
-  // copy plugins.txt
-  if (!FileExists(target)) {
-    std::wstring source = getLocalAppFolder() + L"\\FalloutNV\\plugins.txt";
-    if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-      ::CloseHandle(file);
-    }
-  }
-
-  // copy ini-file
-  target = directory + L"\\fallout.ini";
-
-  if (!FileExists(target)) {
-    std::wstring source;
-    if (useDefaults) {
-      source = getGameDirectory() + L"\\fallout_default.ini";
-    } else {
-      source = getMyGamesDirectory() + L"\\FalloutNV";
-      if (FileExists(source, L"fallout.ini")) {
-        source += L"\\fallout.ini";
-      } else {
-        source = getGameDirectory() + L"\\fallout_default.ini";
-      }
-    }
-
-    if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-      if (::GetLastError() != ERROR_FILE_EXISTS) {
-        throw windows_error("failed to copy ini file: " + ToString(source, false));
-      }
-    }
-  }
-  { // copy falloutprefs.ini-file
-    std::wstring target = directory + L"\\falloutprefs.ini";
-    if (!FileExists(target)) {
-      std::wstring source = getMyGamesDirectory() + L"\\FalloutNV\\falloutprefs.ini";
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        if (::GetLastError() != ERROR_FILE_EXISTS) {
-          throw windows_error("failed to copy ini file: " + ToString(source, false));
-        }
-      }
-    }
-  }
 }
 
 
@@ -236,12 +161,6 @@ std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
 int FalloutNVInfo::getNexusModIDStatic()
 {
   return 42572;
-}
-
-
-void FalloutNVInfo::repairProfile(const std::wstring &directory)
-{
-  createProfile(directory, false);
 }
 
 

@@ -33,7 +33,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <map>
 #include "pdll.h"
-#include <BOSS-API.h>
 
 
 template <class C>

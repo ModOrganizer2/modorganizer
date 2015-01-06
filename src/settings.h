@@ -29,6 +29,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QComboBox>
 
 
+namespace MOBase {
+  class IPluginGame;
+}
+
+
 /**
  * manages the settings for Mod Organizer. The settings are not cached
  * inside the class but read/written directly from/to disc
@@ -272,6 +277,11 @@ public:
    *              even if the user said earlier not to
    */
   void registerAsNXMHandler(bool force);
+
+public slots:
+
+  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+
 private:
 
   QString obfuscate(const QString &password) const;
@@ -295,6 +305,8 @@ signals:
 private:
 
   static Settings *s_Instance;
+
+  MOBase::IPluginGame *m_GamePlugin;
 
   QSettings m_Settings;
 

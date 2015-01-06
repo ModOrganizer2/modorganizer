@@ -48,11 +48,6 @@ public:
 
   virtual bool isInvalidationBSA(const std::wstring &bsaName);
 
-  // full path to this games "My Games"-directory
-  virtual std::wstring getDocumentsDir();
-
-  virtual std::wstring getSaveGameDir();
-
   virtual std::vector<std::wstring> getPrimaryPlugins();
 
   virtual std::vector<std::wstring> getVanillaBSAs();
@@ -62,11 +57,8 @@ public:
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();
 
-  virtual std::wstring getSaveGameExtension();
   virtual std::wstring getReferenceDataFile();
   virtual std::wstring getOMODExt();
-
-  virtual std::wstring getSteamAPPId(int variant = 0) const;
 
   virtual std::wstring getSEName();
 
@@ -76,9 +68,6 @@ public:
   static int getNexusModIDStatic();
   virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 101; }
-
-  virtual void createProfile(const std::wstring &directory, bool useDefaults);
-  virtual void repairProfile(const std::wstring &directory);
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
 

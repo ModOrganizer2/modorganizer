@@ -39,7 +39,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <archive.h>
 #include "directoryrefresher.h"
 #include <imoinfo.h>
-#include <iplugingame.h>
 #include "settings.h"
 #include "downloadmanager.h"
 #include "installationmanager.h"
@@ -97,8 +96,6 @@ public:
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
-
-  void createFirstProfile();
 
   bool saveArchiveList();
 
@@ -302,8 +299,6 @@ private:
 
   OrganizerCore &m_OrganizerCore;
   PluginContainer &m_PluginContainer;
-
-  MOBase::IPluginGame *m_ActiveGame;
 
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;

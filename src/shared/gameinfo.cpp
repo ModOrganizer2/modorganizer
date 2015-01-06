@@ -135,56 +135,15 @@ std::wstring GameInfo::getGameDirectory() const
   return m_GameDirectory;
 }
 
-std::wstring GameInfo::getModsDir() const
-{
-  return m_OrganizerDirectory + L"\\mods";
-}
-
-std::wstring GameInfo::getProfilesDir() const
-{
-  return m_OrganizerDirectory + L"\\profiles";
-}
-
-std::wstring GameInfo::getIniFilename() const
-{
-  return m_OrganizerDirectory + L"\\ModOrganizer.ini";
-}
-
-
-std::wstring GameInfo::getOverwriteDir() const
-{
-  return m_OrganizerDirectory + L"\\overwrite";
-}
-
-
-std::wstring GameInfo::getLogDir() const
-{
-  return m_OrganizerDirectory + L"\\logs";
-}
-
-
-std::wstring GameInfo::getLootDir() const
-{
-  return m_OrganizerDirectory + L"\\loot";
-}
-
-
-std::wstring GameInfo::getTutorialDir() const
-{
-  return m_OrganizerDirectory + L"\\tutorials";
-}
-
-
 bool GameInfo::requiresSteam() const
 {
-  return FileExists(getGameDirectory().append(L"\\steam_api.dll"));
+  return FileExists(getGameDirectory() + L"\\steam_api.dll");
 }
 
 std::vector<std::wstring> GameInfo::getSteamVariants() const
 {
   return boost::assign::list_of(L"Regular");
 }
-
 
 std::wstring GameInfo::getLocalAppFolder() const
 {

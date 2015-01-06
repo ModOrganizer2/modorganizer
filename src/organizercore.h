@@ -17,6 +17,7 @@
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
+#include <iplugingame.h>
 #include <versioninfo.h>
 #include <guessedvalue.h>
 #include <boost/signals2.hpp>
@@ -27,6 +28,9 @@
 
 class PluginContainer;
 
+namespace MOBase {
+  class IPluginGame;
+}
 
 class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 {
@@ -68,6 +72,8 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
+  void setManagedGame(const QString &gameName);
+
   void updateExecutablesList(QSettings &settings);
 
   void startMOUpdate();
@@ -92,7 +98,7 @@ public:
   ModListSortProxy *createModListProxyModel();
   PluginListSortProxy *createPluginListProxyModel();
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
+  MOBase::IPluginGame *managedGame() const;
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
@@ -116,6 +122,8 @@ public:
 
   void syncOverwrite();
 
+  void createDefaultProfile();
+
 public:
   MOBase::IGameInfo &gameInfo() const;
   MOBase::IModRepositoryBridge *createNexusBridge() const;
@@ -132,7 +140,7 @@ public:
   QVariant persistent(const QString &pluginName, const QString &key, const QVariant &def) const;
   void setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync);
   QString pluginDataPath() const;
-  virtual MOBase::IModInterface *installMod(const QString &fileName);
+  virtual MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName);
   QString resolvePath(const QString &fileName) const;
   QStringList listDirectories(const QString &directoryName) const;
   QStringList findFiles(const QString &path, const std::function<bool (const QString &)> &filter) const;
@@ -147,6 +155,7 @@ public:
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
+  QStringList defaultArchiveList();
 
 public: // IPluginDiagnose interface
 
@@ -181,6 +190,8 @@ signals:
    */
   void modInstalled(const QString &modName);
 
+  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+
 private:
 
   void storeSettings();
@@ -190,7 +201,6 @@ private:
   void updateModActiveState(int index, bool active);
 
   bool testForSteam();
-  QStringList defaultArchiveList();
 
 private slots:
 
@@ -211,6 +221,8 @@ private:
 
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
+  QString m_GameName;
+  MOBase::IPluginGame *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 

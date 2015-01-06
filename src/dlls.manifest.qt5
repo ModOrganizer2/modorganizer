@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
     <assemblyIdentity type="win32" name="dlls" version="1.0.0.0" processorArchitecture="x86"/>
-    <file name="icuin52.dll"/>
-    <file name="icuuc52.dll"/>
-    <file name="icudt52.dll"/>
+    <file name="icuin53.dll"/>
+    <file name="icuuc53.dll"/>
+    <file name="icudt53.dll"/>
     <file name="Qt5Core.dll"/>
     <file name="Qt5Declarative.dll"/>
     <file name="Qt5Gui.dll"/>
@@ -19,6 +19,7 @@
     <file name="Qt5Script.dll"/>
     <file name="Qt5Sql.dll"/>
     <file name="Qt5Svg.dll"/>
+    <file name="Qt5WebChannel.dll"/>
     <file name="Qt5WebKit.dll"/>
     <file name="Qt5WebKitWidgets.dll"/>
     <file name="Qt5Widgets.dll"/>

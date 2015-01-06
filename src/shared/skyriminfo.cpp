@@ -97,7 +97,7 @@ bool SkyrimInfo::isInvalidationBSA(const std::wstring &bsaName)
 
 GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
 {
-  std::wstring fileName = getGameDirectory().append(L"\\TESV.exe");
+  std::wstring fileName = getGameDirectory() + L"\\TESV.exe";
 
   try {
     VS_FIXEDFILEINFO versionInfo = GetFileVersion(fileName);
@@ -111,21 +111,6 @@ GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
     log("TESV.exe is invalid: %s", e.what());
     return TYPE_FILETIME;
   }
-}
-
-std::wstring SkyrimInfo::getDocumentsDir()
-{
-  std::wostringstream temp;
-  temp << getMyGamesDirectory() << L"\\Skyrim";
-
-  return temp.str();
-}
-
-std::wstring SkyrimInfo::getSaveGameDir()
-{
-  std::wostringstream temp;
-  temp << getDocumentsDir() << L"\\Saves";
-  return temp.str();
 }
 
 std::vector<std::wstring> SkyrimInfo::getPrimaryPlugins()
@@ -170,11 +155,6 @@ std::vector<std::wstring> SkyrimInfo::getIniFileNames()
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");
 }
 
-std::wstring SkyrimInfo::getSaveGameExtension()
-{
-  return L"*.ess";
-}
-
 std::wstring SkyrimInfo::getReferenceDataFile()
 {
   return L"Skyrim - Meshes.bsa";
@@ -185,13 +165,6 @@ std::wstring SkyrimInfo::getOMODExt()
 {
   return L"fomod";
 }
-
-
-std::wstring SkyrimInfo::getSteamAPPId(int) const
-{
-  return L"72850";
-}
-
 
 std::wstring SkyrimInfo::getSEName()
 {
@@ -220,73 +193,6 @@ int SkyrimInfo::getNexusModIDStatic()
   return 1334;
 }
 
-
-void SkyrimInfo::createProfile(const std::wstring &directory, bool useDefaults)
-{
-  { // copy plugins.txt
-    std::wstring target = directory + L"\\plugins.txt";
-    if (!FileExists(target)) {
-      std::wostringstream source;
-      source << getLocalAppFolder() << "\\Skyrim\\plugins.txt";
-      if (!::CopyFileW(source.str().c_str(), target.c_str(), true)) {
-        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-        ::CloseHandle(file);
-      }
-    }
-    target = directory + L"\\loadorder.txt";
-    if (!FileExists(target)) {
-      std::wstring source = getLocalAppFolder() + L"\\Skyrim\\loadorder.txt";
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        HANDLE file = ::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-        ::CloseHandle(file);
-      }
-    }
-  }
-
-  { // copy skyrim.ini-file
-    std::wstring target = directory + L"\\skyrim.ini";
-    if (!FileExists(target)) {
-      std::wstring source;
-      if (useDefaults) {
-        source = getGameDirectory() + L"\\skyrim_default.ini";
-      } else {
-        source = getMyGamesDirectory() + L"\\Skyrim";
-        if (FileExists(source, L"skyrim.ini")) {
-          source += L"\\skyrim.ini";
-        } else {
-          source = getGameDirectory() + L"\\skyrim_default.ini";
-        }
-      }
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        if (::GetLastError() != ERROR_FILE_EXISTS) {
-          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false) + " to " + ToString(target, false));
-        }
-      }
-    }
-  }
-
-  { // copy skyrimprefs.ini-file
-    std::wstring target = directory + L"\\skyrimprefs.ini";
-    if (!FileExists(target)) {
-      std::wstring source = getMyGamesDirectory() + L"\\Skyrim\\skyrimprefs.ini";
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        log("failed to copy ini file %ls", source.c_str());
-        // create empty
-        if (::CreateFileW(target.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) == INVALID_HANDLE_VALUE) {
-          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
-        }
-      }
-    }
-  }
-}
-
-
-void SkyrimInfo::repairProfile(const std::wstring &directory)
-{
-  createProfile(directory, false);
-}
-
-
 bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
 {
   static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };
@@ -305,18 +211,5 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
   return false;
 }
 
-
-/*std::vector<ExecutableInfo> SkyrimInfo::getExecutables()
-{
-  std::vector<ExecutableInfo> result;
-  result.push_back(ExecutableInfo(L"SKSE", L"skse_loader.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"SBW", L"SBW.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Skyrim", L"TESV.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Skyrim Launcher", L"SkyrimLauncher.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", DEFAULT_STAY));
-  result.push_back(ExecutableInfo(L"Creation Kit", L"CreationKit.exe", L"", L"", DEFAULT_STAY, L"202480"));
-
-  return result;
-}*/
 
 } // namespace MOShared

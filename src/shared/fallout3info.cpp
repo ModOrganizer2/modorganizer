@@ -84,21 +84,6 @@ bool Fallout3Info::isInvalidationBSA(const std::wstring &bsaName)
   return false;
 }
 
-std::wstring Fallout3Info::getDocumentsDir()
-{
-  std::wostringstream temp;
-  temp << getMyGamesDirectory() << L"\\Fallout3";
-
-  return temp.str();
-}
-
-std::wstring Fallout3Info::getSaveGameDir()
-{
-  std::wostringstream temp;
-  temp << getDocumentsDir() << L"\\Saves";
-  return temp.str();
-}
-
 std::vector<std::wstring> Fallout3Info::getPrimaryPlugins()
 {
   return boost::assign::list_of(L"fallout3.esm");
@@ -134,11 +119,6 @@ std::vector<std::wstring> Fallout3Info::getIniFileNames()
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
 }
 
-std::wstring Fallout3Info::getSaveGameExtension()
-{
-  return L"*.fos";
-}
-
 std::wstring Fallout3Info::getReferenceDataFile()
 {
   return L"Fallout - Meshes.bsa";
@@ -155,20 +135,10 @@ std::vector<std::wstring> Fallout3Info::getSteamVariants() const
   return boost::assign::list_of(L"Regular")(L"Game Of The Year");
 }
 
-std::wstring Fallout3Info::getSteamAPPId(int variant) const
-{
-  switch (variant) {
-    case 1:  return L"22370";
-    default: return L"22300";
-  }
-}
-
-
 std::wstring Fallout3Info::getSEName()
 {
   return L"fose";
 }
-
 
 std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
 {
@@ -192,68 +162,6 @@ int Fallout3Info::getNexusModIDStatic()
 }
 
 
-void Fallout3Info::createProfile(const std::wstring &directory, bool useDefaults)
-{
-  std::wostringstream target;
-
-  // copy plugins.txt
-  target << directory << "\\plugins.txt";
-
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
-    source << getLocalAppFolder() << "\\Fallout3\\plugins.txt";
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      HANDLE file = ::CreateFileW(target.str().c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-      ::CloseHandle(file);
-    }
-  }
-
-  // copy ini-file
-  target.str(L""); target.clear();
-  target << directory << L"\\fallout.ini";
-
-  if (!FileExists(target.str())) {
-    std::wostringstream source;
-    if (useDefaults) {
-      source << getGameDirectory() << L"\\fallout_default.ini";
-    } else {
-      source << getMyGamesDirectory() << L"\\Fallout3";
-      if (FileExists(source.str(), L"fallout.ini")) {
-        source << L"\\fallout.ini";
-      } else {
-        source.str(L"");
-        source << getGameDirectory() << L"\\fallout_default.ini";
-      }
-    }
-
-    if (!::CopyFileW(source.str().c_str(), target.str().c_str(), true)) {
-      if (::GetLastError() != ERROR_FILE_EXISTS) {
-        std::ostringstream stream;
-        stream << "failed to copy ini file: " << ToString(source.str(), false);
-        throw windows_error(stream.str());
-      }
-    }
-  }
-  { // copy falloutprefs.ini-file
-    std::wstring target = directory + L"\\falloutprefs.ini";
-    if (!FileExists(target)) {
-      std::wstring source = getMyGamesDirectory() + L"\\Fallout3\\falloutprefs.ini";
-      if (!::CopyFileW(source.c_str(), target.c_str(), true)) {
-        if (::GetLastError() != ERROR_FILE_EXISTS) {
-          throw windows_error(std::string("failed to copy ini file: ") + ToString(source, false));
-        }
-      }
-    }
-  }
-}
-
-
-void Fallout3Info::repairProfile(const std::wstring &directory)
-{
-  createProfile(directory, false);
-}
-
-
 bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
@@ -266,17 +174,4 @@ bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
   return false;
 }
 
-
-/*std::vector<ExecutableInfo> Fallout3Info::getExecutables()
-{
-  std::vector<ExecutableInfo> result;
-  result.push_back(ExecutableInfo(L"FOSE", L"fose_loader.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Fallout 3", L"fallout3.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Fallout Mod Manager", L"fomm/fomm.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Construction Kit", L"geck.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Fallout Launcher", L"FalloutLauncher.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
-
-  return result;
-}*/
 } // namespace MOShared

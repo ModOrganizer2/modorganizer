@@ -20,6 +20,9 @@ public:
 
   virtual void disconnectPlugins() = 0;
 
+  virtual bool closeWindow() = 0;
+  virtual void setWindowEnabled(bool enabled) = 0;
+
   virtual void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) = 0;
 
   virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;

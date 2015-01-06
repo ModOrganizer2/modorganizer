@@ -93,18 +93,13 @@ public:
   virtual std::wstring getGameName() const = 0;
   virtual std::wstring getGameShortName() const = 0;
 
-  // full path to this games "My Games"-directory
-  virtual std::wstring getDocumentsDir() = 0;
-
-  virtual std::wstring getSaveGameDir() = 0;
-
   /// determine the load order mechanism used by this game. this may throw an
   /// exception if the mechanism can't be determined
   virtual LoadOrderMechanism getLoadOrderMechanism() const { return TYPE_FILETIME; }
 
   virtual std::wstring getGameDirectory() const;
   // get absolute path to the directory where omo stores its mods
-  virtual std::wstring getModsDir() const;
+/*  virtual std::wstring getModsDir() const;
   // get absolute path to the directory where omo stores its profiles
   virtual std::wstring getProfilesDir() const;
 
@@ -112,7 +107,7 @@ public:
   virtual std::wstring getOverwriteDir() const;
   virtual std::wstring getLogDir() const;
   virtual std::wstring getLootDir() const;
-  virtual std::wstring getTutorialDir() const;
+  virtual std::wstring getTutorialDir() const;*/
 
   virtual bool requiresBSAInvalidation() const { return true; }
   virtual bool requiresSteam() const;
@@ -137,13 +132,11 @@ public:
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;
 
-  virtual std::wstring getSaveGameExtension() = 0;
   virtual std::wstring getReferenceDataFile() = 0;
 
   virtual std::wstring getOMODExt() = 0;
 
   virtual std::vector<std::wstring> getSteamVariants() const;
-  virtual std::wstring getSteamAPPId(int variant = 0) const = 0;
 
   virtual std::wstring getSEName() = 0;
 
@@ -151,10 +144,6 @@ public:
   virtual std::wstring getNexusInfoUrl() = 0;
   virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;
-
-  // clone relevant files to the specified directory
-  virtual void createProfile(const std::wstring &directory, bool useDefaults) = 0;
-  virtual void repairProfile(const std::wstring &directory) = 0;
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 

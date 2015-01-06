@@ -49,16 +49,10 @@ public:
   virtual LoadOrderMechanism getLoadOrderMechanism() const;
 
   virtual bool requiresBSAInvalidation() const { return true; }
-//  virtual bool requiresSteam() const { return true; }
 
   virtual std::wstring getInvalidationBSA();
 
   virtual bool isInvalidationBSA(const std::wstring &bsaName);
-
-  // full path to this games "My Games"-directory
-  virtual std::wstring getDocumentsDir();
-
-  virtual std::wstring getSaveGameDir();
 
   virtual std::vector<std::wstring> getPrimaryPlugins();
 
@@ -70,11 +64,8 @@ public:
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();
 
-  virtual std::wstring getSaveGameExtension();
   virtual std::wstring getReferenceDataFile();
   virtual std::wstring getOMODExt();
-
-  virtual std::wstring getSteamAPPId(int variant = 0) const;
 
   virtual std::wstring getSEName();
 
@@ -87,14 +78,7 @@ public:
   static int getNexusGameIDStatic() { return 110; }
   virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 
-  virtual void createProfile(const std::wstring &directory, bool useDefaults);
-  virtual void repairProfile(const std::wstring &directory);
-
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
-
-  // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
-  // the game directory
-  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SResourceArchiveList"; }
 
