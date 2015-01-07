@@ -271,7 +271,7 @@ void Profile::refreshModStatus()
       modName = QString::fromUtf8(line.trimmed().constData());
     }
     if (modName.size() > 0) {
-      QString lookupName = modName + (line.at(0) == '*' ? ModInfoForeign::INT_IDENTIFIER : "");
+      QString lookupName = modName;
       if (namesRead.find(lookupName) != namesRead.end()) {
         continue;
       } else {

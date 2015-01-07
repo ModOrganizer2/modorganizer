@@ -101,7 +101,7 @@ public:
 
   void changeModPriority(int sourceIndex, int newPriority);
 
-  void modInfoAboutToChange(ModInfo::Ptr info);
+  bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
 
   void disconnectSlots();

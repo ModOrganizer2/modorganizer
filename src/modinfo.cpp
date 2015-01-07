@@ -812,7 +812,7 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
-  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
+  if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if (!isValid()) {
@@ -1012,8 +1012,6 @@ QStringList ModInfoOverwrite::archives() const
   }
   return result;
 }
-
-const char ModInfoForeign::INT_IDENTIFIER[] = "__int__foreign";
 
 QString ModInfoForeign::name() const
 {

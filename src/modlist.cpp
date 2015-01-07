@@ -571,10 +571,15 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit modorder_changed();
 }
 
-void ModList::modInfoAboutToChange(ModInfo::Ptr info)
+bool ModList::modInfoAboutToChange(ModInfo::Ptr info)
 {
-  m_ChangeInfo.name = info->name();
-  m_ChangeInfo.state = state(info->name());
+  if (m_ChangeInfo.name.isEmpty()) {
+    m_ChangeInfo.name = info->name();
+    m_ChangeInfo.state = state(info->name());
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void ModList::modInfoChanged(ModInfo::Ptr info)
@@ -590,6 +595,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
   } else {
     qCritical("modInfoChanged not called after modInfoAboutToChange");
   }
+  m_ChangeInfo.name = QString();
 }
 
 void ModList::disconnectSlots() {

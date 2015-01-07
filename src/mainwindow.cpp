@@ -3313,7 +3313,10 @@ void MainWindow::overwriteClosed(int)
 
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
 {
-  m_ModList.modInfoAboutToChange(modInfo);
+  if (!m_ModList.modInfoAboutToChange(modInfo)) {
+    qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
+    return;
+  }
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
     QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");

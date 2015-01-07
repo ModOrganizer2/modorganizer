@@ -1020,10 +1020,6 @@ class ModInfoForeign : public ModInfoWithConflictInfo
 
 public:
 
-  static const char INT_IDENTIFIER[];
-
-public:
-
   virtual bool updateAvailable() const { return false; }
   virtual bool updateIgnored() const { return false; }
   virtual bool downgradeAvailable() const { return false; }
