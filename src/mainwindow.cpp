@@ -157,8 +157,11 @@ static bool isOnline()
 
 
 MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent)
-  : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
-    m_ExeName(exeName), m_OldProfileIndex(-1),
+  : QMainWindow(parent)
+  , ui(new Ui::MainWindow)
+  , m_WasVisible(false)
+  , m_Tutorial(this, "MainWindow")
+  , m_ExeName(exeName), m_OldProfileIndex(-1),
     m_DirectoryStructure(new DirectoryEntry(L"data", NULL, 0)),
     m_ModList(this), m_ModListGroupingProxy(NULL), m_ModListSortProxy(NULL),
     m_PluginList(this), m_OldExecutableIndex(-1), m_GamePath(ToQString(GameInfo::instance().getGameDirectory())),
@@ -833,39 +836,44 @@ void MainWindow::showEvent(QShowEvent *event)
   refreshFilters();
 
   QMainWindow::showEvent(event);
-  m_Tutorial.registerControl();
 
-  hookUpWindowTutorials();
+  if (!m_WasVisible) {
+    // only the first time the window becomes visible
+    m_Tutorial.registerControl();
 
-  if (m_Settings.directInterface().value("first_start", true).toBool()) {
-    QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
-    if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
-      if (QMessageBox::question(this, tr("Show tutorial?"),
-                                tr("You are starting Mod Organizer for the first time. "
-                                   "Do you want to show a tutorial of its basic features? If you choose "
-                                   "no you can always start the tutorial from the \"Help\"-menu."),
-                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
+    hookUpWindowTutorials();
+
+    if (m_Settings.directInterface().value("first_start", true).toBool()) {
+      QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
+      if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
+        if (QMessageBox::question(this, tr("Show tutorial?"),
+                                  tr("You are starting Mod Organizer for the first time. "
+                                     "Do you want to show a tutorial of its basic features? If you choose "
+                                     "no you can always start the tutorial from the \"Help\"-menu."),
+                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+          TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
+        }
+      } else {
+        qCritical() << firstStepsTutorial << " missing";
+        QPoint pos = ui->toolBar->mapToGlobal(QPoint());
+        pos.rx() += ui->toolBar->width() / 2;
+        pos.ry() += ui->toolBar->height();
+        QWhatsThis::showText(pos,
+            QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
       }
-    } else {
-      qCritical() << firstStepsTutorial << " missing";
-      QPoint pos = ui->toolBar->mapToGlobal(QPoint());
-      pos.rx() += ui->toolBar->width() / 2;
-      pos.ry() += ui->toolBar->height();
-      QWhatsThis::showText(pos,
-          QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
+
+      m_Settings.directInterface().setValue("first_start", false);
     }
 
-    m_Settings.directInterface().setValue("first_start", false);
+    // this has no visible impact when called before the ui is visible
+    int grouping = m_Settings.directInterface().value("group_state").toInt();
+    ui->groupCombo->setCurrentIndex(grouping);
+
+    allowListResize();
+
+    m_Settings.registerAsNXMHandler(false);
+    m_WasVisible = true;
   }
-
-  // this has no visible impact when called before the ui is visible
-  int grouping = m_Settings.directInterface().value("group_state").toInt();
-  ui->groupCombo->setCurrentIndex(grouping);
-
-  allowListResize();
-
-  m_Settings.registerAsNXMHandler(false);
 }
 
 
