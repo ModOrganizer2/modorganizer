@@ -335,9 +335,9 @@ QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\tutorials) $$quote($$DSTDIR
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
 
 CONFIG(debug, debug|release) {
-  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
   QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
   QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
 } else {
-  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$SRCDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
 }
