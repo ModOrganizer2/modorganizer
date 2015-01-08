@@ -4387,6 +4387,17 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   installTranslator("qt");
   installTranslator(ToQString(AppConfig::translationPrefix()));
+  foreach(IPlugin *plugin, m_Settings.plugins()) {
+    QObject *pluginObj = dynamic_cast<QObject*>(plugin);
+    if (pluginObj != NULL) {
+      QVariant fileNameVariant = pluginObj->property("filename");
+      if (fileNameVariant.isValid()) {
+        QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
+        installTranslator(fileName);
+      }
+    }
+  }
+
   ui->retranslateUi(this);
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
