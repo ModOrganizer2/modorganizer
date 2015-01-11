@@ -4371,6 +4371,7 @@ void MainWindow::installTranslator(const QString &name)
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
+
   qApp->installTranslator(translator);
   m_Translators.push_back(translator);
 }
@@ -4523,9 +4524,9 @@ void MainWindow::writeDataToFile()
 int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
 {
   QString extension = targetInfo.completeSuffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive)) ||
-      (extension.compare("com", Qt::CaseInsensitive)) ||
-      (extension.compare("bat", Qt::CaseInsensitive))) {
+  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+      (extension.compare("com", Qt::CaseInsensitive) == 0) ||
+      (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
     binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
     arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     return 1;
