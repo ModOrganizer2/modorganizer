@@ -4395,7 +4395,12 @@ void MainWindow::languageChange(const QString &newLanguage)
       if (fileNameVariant.isValid()) {
         QString fileName = QFileInfo(fileNameVariant.toString()).baseName();
         installTranslator(fileName);
+      } else {
+        qWarning("no filename set for %s", qPrintable(plugin->name()));
       }
+    } else {
+      // this may be caused by the plugin not publicly deriving from one of its bases
+      qWarning("no plugin object for %s", qPrintable(plugin->name()));
     }
   }
 
