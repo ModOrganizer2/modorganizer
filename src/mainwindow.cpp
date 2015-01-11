@@ -4547,14 +4547,15 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &bin
       WCHAR buffer[MAX_PATH];
       if (::FindExecutableW(targetPathW.c_str(), NULL, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", targetPathW.c_str(), ::GetLastError());
+        if (!::GetBinaryTypeW(buffer, &binaryType)) {
+          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
         } else if (binaryType == SCS_32BIT_BINARY) {
           binaryPath = ToQString(buffer);
         }
       }
     }
     if (binaryPath.isEmpty() && (extension == "jar")) {
+      // second attempt: look to the registry
       QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
       if (javaReg.contains("CurrentVersion")) {
         QString currentVersion = javaReg.value("CurrentVersion").toString();
