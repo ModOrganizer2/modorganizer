@@ -61,9 +61,6 @@ Qt::ItemFlags PluginListSortProxy::flags(const QModelIndex &modelIndex) const
 }
 
 
-
-
-
 void PluginListSortProxy::updateFilter(const QString &filter)
 {
   m_CurrentFilter = filter;
