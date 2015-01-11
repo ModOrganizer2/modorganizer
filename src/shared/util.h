@@ -30,6 +30,7 @@ namespace MOShared {
 
 static const int MAXPATH_UNICODE = 32767;
 
+/// Test if a file (or directory) by the specified name exists
 bool FileExists(const std::string &filename);
 bool FileExists(const std::wstring &filename);
 

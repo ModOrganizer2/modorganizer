@@ -32,28 +32,16 @@ namespace MOShared {
 
 bool FileExists(const std::string &filename)
 {
-  WIN32_FIND_DATAA findData;
-  ZeroMemory(&findData, sizeof(WIN32_FIND_DATAA));
-  HANDLE search = ::FindFirstFileExA(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
-  if (search == INVALID_HANDLE_VALUE) {
-    return false;
-  } else {
-    FindClose(search);
-    return true;
-  }
+  DWORD dwAttrib = ::GetFileAttributesA(filename.c_str());
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES);
 }
 
 bool FileExists(const std::wstring &filename)
 {
-  WIN32_FIND_DATAW findData;
-  ZeroMemory(&findData, sizeof(WIN32_FIND_DATAW));
-  HANDLE search = ::FindFirstFileExW(filename.c_str(), FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
-  if (search == INVALID_HANDLE_VALUE) {
-    return false;
-  } else {
-    FindClose(search);
-    return true;
-  }
+  DWORD dwAttrib = ::GetFileAttributesW(filename.c_str());
+
+  return (dwAttrib != INVALID_FILE_ATTRIBUTES);
 }
 
 bool FileExists(const std::wstring &searchPath, const std::wstring &filename)
