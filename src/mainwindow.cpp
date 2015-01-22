@@ -200,6 +200,8 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   updateToolBar();
 
+  languageChange(m_Settings.language());
+
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
 
   // set up mod list
@@ -354,8 +356,6 @@ MainWindow::MainWindow(const QString &exeName, QSettings &initSettings, QWidget 
 
   // before we start loading plugins we, add the dll path to the dll search order
   ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
-
-  languageChange(m_Settings.language());
 
   loadPlugins();
 }
