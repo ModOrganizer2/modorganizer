@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSINTERFACE_H
 
 
-#include "nxmaccessmanager.h"
 
 #include <utility.h>
 #include <gameinfo.h>
@@ -37,7 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class NexusInterface;
-
+class NXMAccessManager;
 
 /**
  * @brief convenience class to make nxm requests easier

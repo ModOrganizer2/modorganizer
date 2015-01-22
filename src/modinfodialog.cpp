@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "bbcode.h"
 #include "questionboxmemory.h"
 #include "settings.h"
+#include "categories.h"
 #include <gameinfo.h>
 
 #include <QDir>
@@ -54,7 +55,7 @@ private:
 };
 
 
-bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS)
+static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS)
 {
   return LHS.m_SortValue < RHS.m_SortValue;
 }

@@ -22,7 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <QSortFilterProxyModel>
-#include "downloadmanager.h"
+
+
+class DownloadManager;
 
 
 class DownloadListSortProxy : public QSortFilterProxyModel

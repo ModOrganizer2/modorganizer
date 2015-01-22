@@ -29,14 +29,14 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-QDataStream &operator<<(QDataStream &out, const Executable &obj)
+static QDataStream &operator<<(QDataStream &out, const Executable &obj)
 {
   out << obj.m_Title << obj.m_BinaryInfo.absoluteFilePath() << obj.m_Arguments << obj.m_CloseMO
       << obj.m_SteamAppID << obj.m_WorkingDirectory << obj.m_Custom << obj.m_Toolbar;
   return out;
 }
 
-QDataStream &operator>>(QDataStream &in, Executable &obj)
+static QDataStream &operator>>(QDataStream &in, Executable &obj)
 {
   QString binaryTemp;
   int closeStyleTemp;

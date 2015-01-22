@@ -81,7 +81,7 @@ using namespace MOShared;
 
 
 // set up required folders (for a first install or after an update or to fix a broken installation)
-bool bootstrap()
+static bool bootstrap()
 {
   GameInfo &gameInfo = GameInfo::instance();
 
@@ -153,7 +153,7 @@ bool bootstrap()
 }
 
 
-void cleanupDir()
+static void cleanupDir()
 {
   // files from previous versions of MO that are no longer
   // required (in that location)
@@ -175,12 +175,12 @@ void cleanupDir()
 }
 
 
-bool isNxmLink(const QString &link)
+static bool isNxmLink(const QString &link)
 {
   return link.left(6).toLower() == "nxm://";
 }
 
-LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
+static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
   typedef BOOL (WINAPI *FuncMiniDumpWriteDump)(HANDLE process, DWORD pid, HANDLE file, MINIDUMP_TYPE dumpType,
                                                const PMINIDUMP_EXCEPTION_INFORMATION exceptionParam,
@@ -241,12 +241,12 @@ LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs
   return result;
 }
 
-void registerMetaTypes()
+static void registerMetaTypes()
 {
   registerExecutable();
 }
 
-bool HaveWriteAccess(const std::wstring &path)
+static bool HaveWriteAccess(const std::wstring &path)
 {
   bool writable = false;
 

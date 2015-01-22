@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "modinfo.h"
-#include "categories.h"
 #include "tutorabledialog.h"
 
 #include <QDialog>
@@ -45,7 +44,7 @@ namespace Ui {
 
 class QFileSystemModel;
 class QTreeView;
-
+class CategoryFactory;
 
 /**
  * this is a larger dialog used to visualise information abount the mod.

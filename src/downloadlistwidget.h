@@ -20,13 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADLISTWIDGET_H
 #define DOWNLOADLISTWIDGET_H
 
+#include "downloadmanager.h"
 #include <QWidget>
 #include <QItemDelegate>
 #include <QLabel>
 #include <QProgressBar>
 #include <QTreeView>
-
-#include "downloadmanager.h"
 
 namespace Ui {
     class DownloadListWidget;

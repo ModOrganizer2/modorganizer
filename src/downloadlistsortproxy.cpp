@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadlistsortproxy.h"
 #include "downloadlist.h"
+#include "downloadmanager.h"
 
 DownloadListSortProxy::DownloadListSortProxy(const DownloadManager *manager, QObject *parent)
   : QSortFilterProxyModel(parent), m_Manager(manager), m_CurrentFilter()

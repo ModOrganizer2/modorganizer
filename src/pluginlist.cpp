@@ -52,11 +52,11 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-bool ByName(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
+static bool ByName(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   return LHS.m_Name.toUpper() < RHS.m_Name.toUpper();
 }
 
-bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
+static bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   if (LHS.m_IsMaster && !RHS.m_IsMaster) {
     return true;
   } else if (!LHS.m_IsMaster && RHS.m_IsMaster) {
@@ -66,7 +66,7 @@ bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) 
   }
 }
 
-bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
+static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
 /*  QString lhsExtension = LHS.m_Name.right(3).toLower();
   QString rhsExtension = RHS.m_Name.right(3).toLower();

@@ -141,48 +141,4 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
 }
 
 
-
-
-std::string GetStack()
-{
-#ifdef _DEBUG
-  HANDLE process = ::GetCurrentProcess();
-  static std::set<DWORD> initialized;
-  if (initialized.find(::GetCurrentProcessId()) == initialized.end()) {
-    static bool firstCall = true;
-    if (firstCall) {
-      ::SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
-      firstCall = false;
-    }
-    if (!::SymInitialize(process, NULL, TRUE)) {
-      log("failed to initialize symbols: %d", ::GetLastError());
-    }
-    initialized.insert(::GetCurrentProcessId());
-  }
-
-  LPVOID stack[32];
-  WORD frames = ::CaptureStackBackTrace(0, 100, stack, NULL);
-
-  char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)];
-  PSYMBOL_INFO symbol = (PSYMBOL_INFO)buffer;
-  symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-  symbol->MaxNameLen = MAX_SYM_NAME;
-
-  std::ostringstream stackStream;
-  for(unsigned int i = 0; i < frames; ++i) {
-    DWORD64 addr = (DWORD64)stack[i];
-    DWORD64 displacement = 0;
-    if (!::SymFromAddr(::GetCurrentProcess(), addr, &displacement, symbol)) {
-      stackStream << frames - i - 1 << ": " << stack[i] << " - " << ::GetLastError() << " (error)\n";
-    } else {
-      stackStream << frames - i - 1 << ": " << symbol->Name << "\n";
-    }
-  }
-  return stackStream.str();
-#else
-  return "";
-#endif
-}
-
-
 } // namespace MOShared

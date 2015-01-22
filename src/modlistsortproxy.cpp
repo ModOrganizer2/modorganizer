@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "modinfo.h"
 #include "profile.h"
-#include "modlist.h"
 #include "messagedialog.h"
 #include <QMenu>
 #include <QCheckBox>

@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
-#include "utility.h"
 #include "json.h"
 #include "selectiondialog.h"
 #include <QApplication>

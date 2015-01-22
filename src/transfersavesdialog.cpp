@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "transfersavesdialog.h"
 #include "ui_transfersavesdialog.h"
+#include "savegamegamebyro.h"
 #include "utility.h"
 #include <gameinfo.h>
 #include <QDir>

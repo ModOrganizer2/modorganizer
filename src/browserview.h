@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSVIEW_H
 #define NEXUSVIEW_H
 
-#include "finddialog.h"
 
 #include <QWebView>
 #include <QWebPage>

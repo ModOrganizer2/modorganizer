@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMenu>
 #include <QMessageBox>
 #include <QSortFilterProxyModel>
-#include "downloadmanager.h"
 
 
 DownloadListWidgetCompact::DownloadListWidgetCompact(QWidget *parent) :

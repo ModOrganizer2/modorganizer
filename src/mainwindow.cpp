@@ -61,6 +61,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "aboutdialog.h"
 #include "safewritefile.h"
 #include "organizerproxy.h"
+#include "nxmaccessmanager.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -1426,7 +1427,7 @@ HANDLE MainWindow::spawnBinaryDirect(const QFileInfo &binary, const QString &arg
   }
 }
 
-std::wstring getProcessName(DWORD processId)
+static std::wstring getProcessName(DWORD processId)
 {
   HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
 
@@ -1948,7 +1949,7 @@ static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const st
 
 
 template <typename InputIterator>
-QStringList toStringList(InputIterator current, InputIterator end)
+static QStringList toStringList(InputIterator current, InputIterator end)
 {
   QStringList result;
   for (; current != end; ++current) {
@@ -2204,7 +2205,7 @@ void MainWindow::readSettings()
 }
 
 
-bool renameFile(const QString &oldName, const QString &newName, bool overwrite = true)
+static bool renameFile(const QString &oldName, const QString &newName, bool overwrite = true)
 {
   if (overwrite && QFile::exists(newName)) {
     QFile::remove(newName);
@@ -3890,7 +3891,7 @@ void MainWindow::exportModListCSV()
   }
 }
 
-void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
+static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 {
   QPushButton *pushBtn = new QPushButton(subMenu->title());
   pushBtn->setMenu(subMenu);

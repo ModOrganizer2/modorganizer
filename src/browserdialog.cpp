@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "browserdialog.h"
 #include "ui_browserdialog.h"
+#include "browserview.h"
 
 #include "messagedialog.h"
 #include "report.h"

@@ -21,10 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SAVEGAMEINFOWIDGETGAMEBRYO_H
 
 
-#include "savegamegamebyro.h"
 #include "savegameinfowidget.h"
 #include "pluginlist.h"
 
+
+class SaveGame;
 
 class SaveGameInfoWidgetGamebryo : public SaveGameInfoWidget
 {

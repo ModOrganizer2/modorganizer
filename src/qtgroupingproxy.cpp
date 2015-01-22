@@ -17,7 +17,7 @@
 // Modifications 2013-03-27 to 2013-03-29 by Sebastian Herbord
 
 
-#include "QtGroupingProxy.h"
+#include "qtgroupingproxy.h"
 
 #include <QDebug>
 #include <QIcon>

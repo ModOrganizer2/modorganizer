@@ -5,12 +5,14 @@
 #include <TlHelp32.h>
 #include <util.h>
 #include <set>
+#include "error_report.h"
+#include <boost/predef.h>
 
 
 using namespace MOShared;
 
 
-void initDbgIfNecess()
+static void initDbgIfNecess()
 {
   HANDLE process = ::GetCurrentProcess();
   static std::set<DWORD> initialized;
@@ -88,8 +90,7 @@ void StackData::load_modules(HANDLE process, DWORD processID) {
   CloseHandle(snap);
 }
 
-#include "error_report.h"
-#include <boost/predef.h>
+#pragma warning( disable : 4748 )
 
 void StackData::initTrace() {
   load_modules(::GetCurrentProcess(), ::GetCurrentProcessId());
@@ -134,6 +135,7 @@ void StackData::initTrace() {
   }
 }
 
+#pragma warning( enable : 4748 )
 
 bool MOShared::operator==(const StackData &LHS, const StackData &RHS) {
   if (LHS.m_Count != RHS.m_Count) {
