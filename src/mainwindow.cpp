@@ -4051,13 +4051,22 @@ void MainWindow::deleteSavegame_clicked()
   QString savesMsgLabel;
   QStringList deleteFiles;
 
+  int count = 0;
+
   foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
-    savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+    if (count < 10) {
+      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+    }
+    ++count;
 
     deleteFiles << save->saveFiles();
+  }
+
+  if (count > 10) {
+    savesMsgLabel += "<li><i>... " + tr("%1 more").arg(count - 10) + "</i></li>";
   }
 
   if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
