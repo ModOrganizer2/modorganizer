@@ -35,9 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-
-static int s_Count = 0;
-
+static const int MAXPATH_UNICODE = 32767;
 
 class OriginConnection {
 
