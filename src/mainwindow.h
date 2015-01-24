@@ -256,6 +256,8 @@ private:
 
   Ui::MainWindow *ui;
 
+  bool m_WasVisible;
+
   MOBase::TutorialControl m_Tutorial;
 
   QString m_ExeName;

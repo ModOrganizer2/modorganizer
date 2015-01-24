@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profilesdialog.h"
 #include "ui_profilesdialog.h"
-#include "profile.h"
 #include "report.h"
 #include "utility.h"
 #include "transfersavesdialog.h"

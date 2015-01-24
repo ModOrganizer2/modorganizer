@@ -413,7 +413,19 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
     }
   }
 
+  // clean up unavailable servers
+  QDate now = QDate::currentDate();
+  foreach (const QString &key, m_Settings.childKeys()) {
+    QVariantMap val = m_Settings.value(key).toMap();
+    QDate lastSeen = val["lastSeen"].toDate();
+    if (lastSeen.daysTo(now) > 30) {
+      qDebug("removing server %s since it hasn't been available for downloads in over a month", qPrintable(key));
+      m_Settings.remove(key);
+    }
+  }
+
   m_Settings.endGroup();
+
   m_Settings.sync();
 }
 

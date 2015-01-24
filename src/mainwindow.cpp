@@ -60,6 +60,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "aboutdialog.h"
 #include "safewritefile.h"
 #include "organizerproxy.h"
+#include "nxmaccessmanager.h
 #include <archive.h>
 #include <gameinfo.h>
 #include <appconfig.h>
@@ -138,15 +139,16 @@ using namespace MOShared;
 
 
 MainWindow::MainWindow(const QString &exeName
-                       , QSettings &initSettings
+  : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
                        , QWidget *parent)
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
+  , m_WasVisible(false)
   , m_Tutorial(this, "MainWindow")
   , m_ExeName(exeName)
-  , m_OldProfileIndex(-1)
+  , m_OldProfileIndex(-1),
   , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
@@ -188,6 +190,8 @@ MainWindow::MainWindow(const QString &exeName
   updateProblemsButton();
 
   updateToolBar();
+
+  languageChange(m_Settings.language());
 
   // set up mod list
   m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
@@ -320,7 +324,6 @@ MainWindow::MainWindow(const QString &exeName
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
-
   for (IPluginTool *toolPlugin : m_PluginContainer.plugins<IPluginTool>()) {
     registerPluginTool(toolPlugin);
   }
@@ -766,39 +769,44 @@ void MainWindow::showEvent(QShowEvent *event)
   refreshFilters();
 
   QMainWindow::showEvent(event);
-  m_Tutorial.registerControl();
 
-  hookUpWindowTutorials();
+  if (!m_WasVisible) {
+    // only the first time the window becomes visible
+    m_Tutorial.registerControl();
 
-  if (m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
-    QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
-    if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
-      if (QMessageBox::question(this, tr("Show tutorial?"),
-                                tr("You are starting Mod Organizer for the first time. "
-                                   "Do you want to show a tutorial of its basic features? If you choose "
-                                   "no you can always start the tutorial from the \"Help\"-menu."),
-                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
+    hookUpWindowTutorials();
+
+    if (m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+      QString firstStepsTutorial = ToQString(AppConfig::firstStepsTutorial());
+      if (TutorialManager::instance().hasTutorial(firstStepsTutorial)) {
+        if (QMessageBox::question(this, tr("Show tutorial?"),
+                                  tr("You are starting Mod Organizer for the first time. "
+                                     "Do you want to show a tutorial of its basic features? If you choose "
+                                     "no you can always start the tutorial from the \"Help\"-menu."),
+                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+          TutorialManager::instance().activateTutorial("MainWindow", firstStepsTutorial);
+        }
+      } else {
+        qCritical() << firstStepsTutorial << " missing";
+        QPoint pos = ui->toolBar->mapToGlobal(QPoint());
+        pos.rx() += ui->toolBar->width() / 2;
+        pos.ry() += ui->toolBar->height();
+        QWhatsThis::showText(pos,
+            QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
       }
-    } else {
-      qCritical() << firstStepsTutorial << " missing";
-      QPoint pos = ui->toolBar->mapToGlobal(QPoint());
-      pos.rx() += ui->toolBar->width() / 2;
-      pos.ry() += ui->toolBar->height();
-      QWhatsThis::showText(pos,
-          QObject::tr("Please use \"Help\" from the toolbar to get usage instructions to all elements"));
-    }
 
     m_OrganizerCore.settings().directInterface().setValue("first_start", false);
+    }
+
+    // this has no visible impact when called before the ui is visible
+    int grouping = m_OrganizerCore.settings().directInterface().value("group_state").toInt();
+    ui->groupCombo->setCurrentIndex(grouping);
+
+    allowListResize();
+
+    m_OrganizerCore.settings().registerAsNXMHandler(false);
+    m_WasVisible = true;
   }
-
-  // this has no visible impact when called before the ui is visible
-  int grouping = m_OrganizerCore.settings().directInterface().value("group_state").toInt();
-  ui->groupCombo->setCurrentIndex(grouping);
-
-  allowListResize();
-
-  m_OrganizerCore.settings().registerAsNXMHandler(false);
 }
 
 
@@ -1309,7 +1317,15 @@ static bool BySortValue(const std::pair<UINT32, QTreeWidgetItem*> &LHS, const st
   return LHS.first < RHS.first;
 }
 
-
+template <typename InputIterator>
+static QStringList toStringList(InputIterator current, InputIterator end)
+{
+  QStringList result;
+  for (; current != end; ++current) {
+    result.append(*current);
+  }
+  return result;
+}
 void MainWindow::updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives)
 {
   m_DefaultArchives = defaultArchives;
@@ -2317,7 +2333,10 @@ void MainWindow::overwriteClosed(int)
 
 void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
 {
-  m_OrganizerCore.modList()->modInfoAboutToChange(modInfo);
+  if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
+    qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
+    return;
+  }
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
     QDialog *dialog = this->findChild<QDialog*>("__overwriteDialog");
@@ -2914,7 +2933,7 @@ void MainWindow::exportModListCSV()
   }
 }
 
-void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
+static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 {
   QPushButton *pushBtn = new QPushButton(subMenu->title());
   pushBtn->setMenu(subMenu);
@@ -3082,13 +3101,22 @@ void MainWindow::deleteSavegame_clicked()
   QString savesMsgLabel;
   QStringList deleteFiles;
 
+  int count = 0;
+
   foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
 
-    savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+    if (count < 10) {
+      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+    }
+    ++count;
 
     deleteFiles << save->saveFiles();
+  }
+
+  if (count > 10) {
+    savesMsgLabel += "<li><i>... " + tr("%1 more").arg(count - 10) + "</i></li>";
   }
 
   if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
@@ -3354,6 +3382,7 @@ void MainWindow::installTranslator(const QString &name)
       qWarning("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
+
   qApp->installTranslator(translator);
   m_Translators.push_back(translator);
 }
@@ -3436,9 +3465,9 @@ void MainWindow::writeDataToFile()
 int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
 {
   QString extension = targetInfo.completeSuffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive)) ||
-      (extension.compare("com", Qt::CaseInsensitive)) ||
-      (extension.compare("bat", Qt::CaseInsensitive))) {
+  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+      (extension.compare("com", Qt::CaseInsensitive) == 0) ||
+      (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
     binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
     arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     return 1;
@@ -3454,14 +3483,15 @@ int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &bin
       WCHAR buffer[MAX_PATH];
       if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
         DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(targetPathW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", targetPathW.c_str(), ::GetLastError());
+        if (!::GetBinaryTypeW(buffer, &binaryType)) {
+          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
         } else if (binaryType == SCS_32BIT_BINARY) {
           binaryPath = ToQString(buffer);
         }
       }
     }
     if (binaryPath.isEmpty() && (extension == "jar")) {
+      // second attempt: look to the registry
       QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
       if (javaReg.contains("CurrentVersion")) {
         QString currentVersion = javaReg.value("CurrentVersion").toString();

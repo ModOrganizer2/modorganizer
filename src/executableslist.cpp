@@ -29,7 +29,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-QDataStream &operator<<(QDataStream &out, const Executable &obj)
+static QDataStream &operator<<(QDataStream &out, const Executable &obj)
 {
   out << obj.m_Title
       << obj.m_BinaryInfo.absoluteFilePath()
@@ -42,7 +42,7 @@ QDataStream &operator<<(QDataStream &out, const Executable &obj)
   return out;
 }
 
-QDataStream &operator>>(QDataStream &in, Executable &obj)
+static QDataStream &operator>>(QDataStream &in, Executable &obj)
 {
   QString binaryTemp;
   int closeStyleTemp;

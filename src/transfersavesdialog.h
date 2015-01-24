@@ -21,13 +21,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define TRANSFERSAVESDIALOG_H
 
 #include "tutorabledialog.h"
-#include "savegamegamebyro.h"
 #include "profile.h"
 #include <iplugingame.h>
 
 namespace Ui {
 class TransferSavesDialog;
 }
+
+class SaveGame;
 
 class TransferSavesDialog : public MOBase::TutorableDialog
 {

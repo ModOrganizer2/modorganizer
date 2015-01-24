@@ -20,12 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modlistsortproxy.h"
 #include "modinfo.h"
 #include "profile.h"
-#include "modlist.h"
 #include "messagedialog.h"
 #include <QMenu>
 #include <QCheckBox>
 #include <QWidgetAction>
 #include <QApplication>
+#include <QMimeData>
 #include <QDebug>
 #include <QTreeView>
 
@@ -347,23 +347,23 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
 bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action,
                                     int row, int column, const QModelIndex &parent)
 {
-    if (sortColumn() != ModList::COL_PRIORITY) {
-      QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");
-      MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), wid);
-      return false;
-    }
-    if ((row == -1) && (column == -1)) {
-      return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
-    }
-    // in the regular model, when dropping between rows, the row-value passed to
-    // the sourceModel is inconsistent between ascending and descending ordering.
-    // This should fix that
-    if (sortOrder() == Qt::DescendingOrder) {
-      --row;
-    }
+  if (!data->hasUrls() && (sortColumn() != ModList::COL_PRIORITY)) {
+    QWidget *wid = qApp->activeWindow()->findChild<QTreeView*>("modList");
+    MessageDialog::showMessage(tr("Drag&Drop is only supported when sorting by priority"), wid);
+    return false;
+  }
+  if ((row == -1) && (column == -1)) {
+    return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
+  }
+  // in the regular model, when dropping between rows, the row-value passed to
+  // the sourceModel is inconsistent between ascending and descending ordering.
+  // This should fix that
+  if (sortOrder() == Qt::DescendingOrder) {
+    --row;
+  }
 
-    QModelIndex proxyIndex = index(row, column, parent);
-    QModelIndex sourceIndex = mapToSource(proxyIndex);
-    return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
-                                             sourceIndex.parent());
+  QModelIndex proxyIndex = index(row, column, parent);
+  QModelIndex sourceIndex = mapToSource(proxyIndex);
+  return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
+                                           sourceIndex.parent());
 }

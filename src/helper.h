@@ -44,15 +44,6 @@ namespace Helper {
 bool init(const std::wstring &moDirectory);
 
 /**
- * @brief set or unset the current instance of ModOrganizer as the global handler for nxm links
- *
- * @param moDirectory absolute path to the modOrganizer base directory
- * @param enable if true, ModOrganizer will become the handler for nxm links. If false, the nxm handler will be unset
- * @return true on success
- **/
-bool setNXMHandler(const std::wstring &moDirectory, bool enable);
-
-/**
  * @brief sets the last modified time for all .bsa-files in the target directory well into the past
  * @param moDirectory absolute path to the modOrganizer base directory
  * @param dataPath the path taht contains the .bsa-files, usually the data directory of the game

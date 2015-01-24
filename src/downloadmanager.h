@@ -20,8 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef DOWNLOADMANAGER_H
 #define DOWNLOADMANAGER_H
 
-#include "nexusinterface.h"
 #include <idownloadmanager.h>
+#include <modrepositoryfileinfo.h>
 #include <set>
 #include <QObject>
 #include <QUrl>
@@ -35,6 +35,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 #include <QSettings>
 
+
+class NexusInterface;
 
 /*!
  * \brief manages downloading of files and provides progress information for gui elements

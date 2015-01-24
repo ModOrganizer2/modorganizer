@@ -22,11 +22,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QWidget>
 #include <QFrame>
-#include "savegame.h"
 
 namespace Ui {
 class SaveGameInfoWidget;
 }
+
+class SaveGame;
 
 class SaveGameInfoWidget : public QWidget
 {

@@ -93,7 +93,7 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
                        0x68, 0xBA, 0xAD, 0xF0, 0x0D, // PUSH imm32 ("Init")
                        0x50,                         // PUSH EAX
                        0xB8, 0xBA, 0xAD, 0xF0, 0x0D, // MOVE EAX, imm32 (GetProcAddress)
-                       0xFF, 0xD0,                   // CALL EAX (GetProcAddress)
+                       0xFF, 0xD0,                   // CALL EAX (=GetProcAddress, leaves address of init function in eax)
                        0x68, 0xBA, 0xAD, 0xF0, 0x0D, // PUSH imm32 (profile name)
                        0x68, 0xBA, 0xAD, 0xF0, 0x0D, // PUSH imm32 (log level)
                        0xFF, 0xD0,                   // CALL EAX (=InitFunction)
@@ -109,9 +109,6 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
     throw windows_error("failed to allocate memory for stub");
   }
   TParameters *remoteParams = reinterpret_cast<TParameters*>(remoteMem);
-  // determine the remote addresses of each of the parameters
-//  ULONG remoteDLLName = reinterpret_cast<ULONG>(remoteMem);
-//  ULONG remoteInitString = remoteDLLName + MAX_PATH * sizeof(char);
 
   // dizzy yet? we still have to calculate the entry point as an address relative to our stub
   ULONG entryPoint = 0;

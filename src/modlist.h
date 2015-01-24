@@ -104,7 +104,7 @@ public:
 
   void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
 
-  void modInfoAboutToChange(ModInfo::Ptr info);
+  bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
 
   void disconnectSlots();

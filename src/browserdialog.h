@@ -20,8 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef BROWSERDIALOG_H
 #define BROWSERDIALOG_H
 
-#include "browserview.h"
-#include "tutorialcontrol.h"
 #include <QDialog>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -36,6 +34,7 @@ namespace Ui {
     class BrowserDialog;
 }
 
+class BrowserView;
 
 /**
  * @brief a dialog containing a webbrowser that is intended to browse the nexus network

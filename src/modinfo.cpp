@@ -244,7 +244,6 @@ void ModInfo::updateIndices()
 {
   s_ModsByName.clear();
   s_ModsByModID.clear();
-  QRegExp backupRegEx(".*backup[0-9]*$");
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
     QString modName = s_Collection[i]->internalName();
@@ -843,7 +842,7 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
-  if ((m_NexusID != -1) && (endorsedState() == ENDORSED_FALSE)) {
+  if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if (!isValid()) {
@@ -1044,8 +1043,6 @@ QStringList ModInfoOverwrite::archives() const
   return result;
 }
 
-const char ModInfoForeign::INT_IDENTIFIER[] = "__int__foreign";
-
 QString ModInfoForeign::name() const
 {
   return m_Name;
@@ -1086,5 +1083,5 @@ ModInfoForeign::ModInfoForeign(const QString &referenceFile, const QStringList &
   , m_Archives(archives)
 {
   m_CreationTime = QFileInfo(referenceFile).created();
-  m_Name = tr("Unmanaged") + ": " + QFileInfo(m_ReferenceFile).baseName();
+  m_Name = "Unmanaged: " + QFileInfo(m_ReferenceFile).baseName();
 }

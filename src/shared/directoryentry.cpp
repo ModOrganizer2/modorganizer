@@ -24,23 +24,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <ctime>
 #include <algorithm>
 #include <bsatk.h>
-#include "error_report.h"
-#include "util.h"
 #include "windows_error.h"
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/foreach.hpp>
-#include "util.h"
 #include "leaktrace.h"
-
 #include <map>
+#include "error_report.h"
 
 
 namespace MOShared {
 
-
-static int s_Count = 0;
-
+static const int MAXPATH_UNICODE = 32767;
 
 class OriginConnection {
 
@@ -155,7 +150,7 @@ void FilesOrigin::removeFile(FileEntry::Index index)
 
 
 
-std::wstring tail(const std::wstring &source, const size_t count)
+static std::wstring tail(const std::wstring &source, const size_t count)
 {
   if (count >= source.length()) {
     return source;

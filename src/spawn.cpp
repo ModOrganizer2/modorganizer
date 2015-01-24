@@ -36,9 +36,9 @@ using namespace MOShared;
 
 static const int BUFSIZE = 4096;
 
-bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended,
-           HANDLE stdOut, HANDLE stdErr,
-           HANDLE& processHandle, HANDLE& threadHandle)
+static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended,
+                  HANDLE stdOut, HANDLE stdErr,
+                  HANDLE& processHandle, HANDLE& threadHandle)
 {
   BOOL inheritHandles = FALSE;
   STARTUPINFO si;

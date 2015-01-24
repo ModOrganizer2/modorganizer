@@ -58,7 +58,8 @@ typedef Archive* (*CreateArchiveType)();
 
 
 
-template <typename T> T resolveFunction(QLibrary &lib, const char *name)
+template <typename T>
+static T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
   if (temp == nullptr) {
@@ -200,7 +201,7 @@ QString InstallationManager::extractFile(const QString &fileName)
 }
 
 
-QString canonicalize(const QString &name)
+static QString canonicalize(const QString &name)
 {
   QString result(name);
   if ((result.startsWith('/')) ||

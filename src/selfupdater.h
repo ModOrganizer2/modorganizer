@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SELFUPDATER_H
 
 
-#include "nexusinterface.h"
 #include <archive.h>
 #include <versioninfo.h>
 
@@ -30,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QProgressDialog>
 
+
+class NexusInterface;
 
 /**
  * @brief manages updates for Mod Organizer itself

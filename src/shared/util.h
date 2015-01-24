@@ -27,9 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-
-static const int MAXPATH_UNICODE = 32767;
-
+/// Test if a file (or directory) by the specified name exists
 bool FileExists(const std::string &filename);
 bool FileExists(const std::wstring &filename);
 
@@ -45,9 +43,6 @@ std::wstring &ToLower(std::wstring &text);
 std::wstring ToLower(const std::wstring &text);
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
-
-/// Get a stack trace as a line-break separated list of function names. This only works in debug builds
-std::string GetStack();
 
 } // namespace MOShared
 

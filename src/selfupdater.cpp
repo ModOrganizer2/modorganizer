@@ -23,7 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "messagedialog.h"
 #include "downloadmanager.h"
-
+#include "nexusinterface.h"
+#include "nxmaccessmanager.h"
 #include <versioninfo.h>
 #include <gameinfo.h>
 #include <skyriminfo.h>
@@ -45,7 +46,7 @@ using namespace MOShared;
 typedef Archive* (*CreateArchiveType)();
 
 
-template <typename T> T resolveFunction(QLibrary &lib, const char *name)
+template <typename T> static T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
   if (temp == nullptr) {

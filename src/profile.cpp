@@ -286,7 +286,7 @@ void Profile::refreshModStatus()
       modName = QString::fromUtf8(line.trimmed().constData());
     }
     if (modName.size() > 0) {
-      QString lookupName = modName + (line.at(0) == '*' ? ModInfoForeign::INT_IDENTIFIER : "");
+      QString lookupName = modName;
       if (namesRead.find(lookupName) != namesRead.end()) {
         continue;
       } else {
@@ -305,14 +305,17 @@ void Profile::refreshModStatus()
             m_ModStatus[modIndex].m_Priority = index++;
           }
         } else {
-          qDebug("mod \"%s\" (profile \"%s\") not found",
-                 modName.toUtf8().constData(), m_Directory.path().toUtf8().constData());
+          qWarning("no mod state for \"%s\" (profile \"%s\")",
+                   qPrintable(modName), m_Directory.path().toUtf8().constData());
           // need to rewrite the modlist to fix this
           modStatusModified = true;
         }
+      } else {
+        qDebug("mod \"%s\" (profile \"%s\") not found",
+               qPrintable(modName), m_Directory.path().toUtf8().constData());
+        // need to rewrite the modlist to fix this
+        modStatusModified = true;
       }
-    } else {
-      // line was empty after trimming
     }
   }
 

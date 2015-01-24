@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfowidget.h"
 #include "ui_savegameinfowidget.h"
 #include "utility.h"
+#include "savegame.h"
 #include <QGraphicsDropShadowEffect>
 
 

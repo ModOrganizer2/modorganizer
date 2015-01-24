@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "pluginlistsortproxy.h"
-#include "pluginlist.h"
 #include "messagedialog.h"
 #include <QMenu>
 #include <QCheckBox>
@@ -59,9 +58,6 @@ Qt::ItemFlags PluginListSortProxy::flags(const QModelIndex &modelIndex) const
   }*/
   return flags;
 }
-
-
-
 
 
 void PluginListSortProxy::updateFilter(const QString &filter)

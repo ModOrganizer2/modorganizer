@@ -18,10 +18,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "savegamegamebyro.h"
+#include "gameinfo.h"
 #include <QFile>
 #include <QBuffer>
 #include <set>
-#include "gameinfo.h"
 #include <QFileInfo>
 #include <QDateTime>
 #include <limits>
@@ -31,7 +31,7 @@ using namespace MOShared;
 
 
 template <typename T>
-void FileRead(QFile &file, T &value)
+static void FileRead(QFile &file, T &value)
 {
   int read = file.read(reinterpret_cast<char*>(&value), sizeof(T));
   if (read != sizeof(T)) {
@@ -41,7 +41,7 @@ void FileRead(QFile &file, T &value)
 
 
 template <typename T>
-void FileSkip(QFile &file, int count = 1)
+static void FileSkip(QFile &file, int count = 1)
 {
   char ignore[sizeof(T)];
   for (int i = 0; i < count; ++i) {
@@ -52,7 +52,7 @@ void FileSkip(QFile &file, int count = 1)
 }
 
 
-QString ReadBString(QFile &file)
+static QString ReadBString(QFile &file)
 {
   char buffer[256];
   file.read(buffer, 1); // size including zero termination
@@ -62,7 +62,7 @@ QString ReadBString(QFile &file)
 }
 
 
-QString ReadFOSString(QFile &file, bool delimiter)
+static QString ReadFOSString(QFile &file, bool delimiter)
 {
   union {
     char lengthBuffer[2];

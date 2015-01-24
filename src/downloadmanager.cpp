@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include "report.h"
 #include "nxmurl.h"
+#include "nexusinterface.h"
+#include "nxmaccessmanager.h"
 #include <gameinfo.h>
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
@@ -1082,7 +1084,7 @@ QDateTime DownloadManager::matchDate(const QString &timeString)
 }
 
 
-EFileCategory convertFileCategory(int id)
+static EFileCategory convertFileCategory(int id)
 {
   // TODO: need to handle file categories in the mod page plugin
   switch (id) {
@@ -1200,7 +1202,7 @@ void DownloadManager::nxmFileInfoAvailable(int modID, int fileID, QVariant userD
   m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(modID, fileID, this, qVariantFromValue(test), QString()));
 }
 
-int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
+static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
 {
   int result = 0;
 

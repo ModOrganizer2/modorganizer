@@ -31,7 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace Helper {
 
 
-bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
+static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 {
   wchar_t fileName[MAX_PATH];
   _snwprintf(fileName, MAX_PATH, L"%ls\\helper.exe", moDirectory);
@@ -73,27 +73,6 @@ bool init(const std::wstring &moDirectory)
 
   _snwprintf(commandLine, 32768, L"init \"%ls\" \"%ls\"",
                moDirectory.c_str(), userName);
-
-  bool res = helperExec(moDirectory.c_str(), commandLine);
-  delete [] commandLine;
-
-  return res;
-}
-
-
-bool setNXMHandler(const std::wstring &moDirectory, bool enable)
-{
-  DWORD userNameLen = UNLEN + 1;
-  wchar_t userName[UNLEN + 1];
-
-  if (!GetUserName(userName, &userNameLen)) {
-    reportError(QObject::tr("failed to determine account name"));
-    return false;
-  }
-
-  wchar_t *commandLine = new wchar_t[32768];
-  _snwprintf(commandLine, 32768, L"handleNXM \"%ls\" %d",
-               moDirectory.c_str(), enable ? 1 : 0);
 
   bool res = helperExec(moDirectory.c_str(), commandLine);
   delete [] commandLine;
