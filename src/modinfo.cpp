@@ -28,8 +28,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 
 #include <gameinfo.h>
+#include <iplugingame.h>
 #include <versioninfo.h>
 #include <appconfig.h>
+#include <scriptextender.h>
 
 #include <QApplication>
 
@@ -862,7 +864,13 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
     result.push_back(CONTENT_PLUGIN);
   }
-  QString sePluginPath = ToQString(GameInfo::instance().getSEName()) + "/plugins";
+
+  ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+
+  if (extender != nullptr) {
+    QString sePluginPath = extender->name() + "/plugins";
+    if (dir.exists(sePluginPath)) result.push_back(CONTENT_SKSE);
+  }
   if (dir.exists("textures"))   result.push_back(CONTENT_TEXTURE);
   if (dir.exists("meshes"))     result.push_back(CONTENT_MESH);
   if (dir.exists("interface")
@@ -870,7 +878,6 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   if (dir.exists("music"))      result.push_back(CONTENT_MUSIC);
   if (dir.exists("sound"))      result.push_back(CONTENT_SOUND);
   if (dir.exists("scripts"))    result.push_back(CONTENT_SCRIPT);
-  if (dir.exists(sePluginPath)) result.push_back(CONTENT_SKSE);
   if (dir.exists("strings"))    result.push_back(CONTENT_STRING);
   if (dir.exists("SkyProc Patchers"))  result.push_back(CONTENT_SKYPROC);
   return result;

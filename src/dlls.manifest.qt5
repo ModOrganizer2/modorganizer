@@ -23,5 +23,7 @@
     <file name="Qt5WebKit.dll"/>
     <file name="Qt5WebKitWidgets.dll"/>
     <file name="Qt5Widgets.dll"/>
+    <file name="Qt5WinExtras.dll"/>
+    <file name="Qt5Xml.dll"/>
     <file name="Qt5XmlPatterns.dll"/>
 </assembly>

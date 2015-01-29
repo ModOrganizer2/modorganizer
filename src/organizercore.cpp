@@ -11,7 +11,9 @@
 #include "spawn.h"
 #include "safewritefile.h"
 #include "syncoverwritedialog.h"
+#include "nxmaccessmanager.h"
 #include <ipluginmodpage.h>
+#include <dataarchives.h>
 #include <directoryentry.h>
 #include <scopeguard.h>
 #include <utility.h>
@@ -184,7 +186,7 @@ void OrganizerCore::storeSettings()
       m_UserInterface->storeSettings(settings);
     }
     if (m_CurrentProfile != nullptr) {
-      settings.setValue("selected_profile", m_CurrentProfile->getName().toUtf8().constData());
+      settings.setValue("selected_profile", m_CurrentProfile->name().toUtf8().constData());
     }
     settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
 
@@ -368,6 +370,7 @@ void OrganizerCore::setManagedGame(const QString &gameName)
   m_GameName = gameName;
   if (m_PluginContainer != nullptr) {
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
+    qApp->setProperty("managed_game", QVariant::fromValue(m_GamePlugin));
     emit managedGameChanged(m_GamePlugin);
   }
 }
@@ -473,7 +476,6 @@ InstallationManager *OrganizerCore::installationManager()
 void OrganizerCore::createDefaultProfile()
 {
   QString profilesPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath());
-  qDebug("%d", QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size());
   if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
     Profile newProf("Default", managedGame(), false);
   }
@@ -506,7 +508,7 @@ MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
 QString OrganizerCore::profileName() const
 {
   if (m_CurrentProfile != nullptr) {
-    return m_CurrentProfile->getName();
+    return m_CurrentProfile->name();
   } else {
     return "";
   }
@@ -515,7 +517,7 @@ QString OrganizerCore::profileName() const
 QString OrganizerCore::profilePath() const
 {
   if (m_CurrentProfile != nullptr) {
-    return m_CurrentProfile->getPath();
+    return m_CurrentProfile->absolutePath();
   } else {
     return "";
   }
@@ -809,7 +811,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
   dialog->show();
   ON_BLOCK_EXIT([&] () { dialog->hide(); dialog->deleteLater(); });
 
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->getName(), currentDirectory, steamAppID);
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID);
   if (processHandle != INVALID_HANDLE_VALUE) {
     if (closeAfterStart && (m_UserInterface != nullptr)) {
       m_UserInterface->closeWindow();
@@ -938,7 +940,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable, const QStringL
   QString profileName = profile;
   if (profile.length() == 0) {
     if (m_CurrentProfile != nullptr) {
-      profileName = m_CurrentProfile->getName();
+      profileName = m_CurrentProfile->name();
     } else {
       throw MyException(tr("No profile set"));
     }
@@ -1081,7 +1083,7 @@ void OrganizerCore::refreshESPList()
 
   // clear list
   try {
-    m_PluginList.refresh(m_CurrentProfile->getName(),
+    m_PluginList.refresh(m_CurrentProfile->name(),
                          *m_DirectoryStructure,
                          m_CurrentProfile->getPluginsFileName(),
                          m_CurrentProfile->getLoadOrderFileName(),
@@ -1091,55 +1093,34 @@ void OrganizerCore::refreshESPList()
   }
 }
 
-QStringList OrganizerCore::defaultArchiveList()
-{
-  QStringList result;
-  wchar_t buffer[256];
-  std::wstring iniFileName = ToWString(QDir::toNativeSeparators(m_CurrentProfile->getIniFileName()));
-
-  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().append(L"2").c_str(),
-                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
-    result.append(ToQString(buffer).split(','));
-  }
-
-  for (int i = 0; i < result.count(); ++i) {
-    result[i] = result[i].trimmed();
-  }
-
-  return result;
-}
-
 void OrganizerCore::refreshBSAList()
 {
-  m_ArchivesInit = false;
+  DataArchives *archives = m_GamePlugin->feature<DataArchives>();
 
-  m_DefaultArchives = defaultArchiveList();
+  if (archives != nullptr) {
+    m_ArchivesInit = false;
 
-  wchar_t buffer[256];
-  std::wstring iniFileName = ToWString(QDir::toNativeSeparators(m_CurrentProfile->getIniFileName()));
-  if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                 L"", buffer, 256, iniFileName.c_str()) != 0) {
-    m_DefaultArchives = ToQString(buffer).split(',');
-  } else {
-    std::vector<std::wstring> vanillaBSAs = GameInfo::instance().getVanillaBSAs();
-    for (auto iter = vanillaBSAs.begin(); iter != vanillaBSAs.end(); ++iter) {
-      m_DefaultArchives.append(ToQString(*iter));
+    // default archives are the ones enabled outside MO. if the list can't be found (which might
+    // happen if ini files are missing) use hard-coded defaults (preferrably the same the game would use)
+    m_DefaultArchives = archives->archives(m_CurrentProfile);
+    if (m_DefaultArchives.length() == 0) {
+      m_DefaultArchives = archives->vanillaArchives();
     }
+
+    m_ActiveArchives.clear();
+
+    auto iter = enabledArchives();
+    m_ActiveArchives = toStringList(iter.begin(), iter.end());
+    if (m_ActiveArchives.isEmpty()) {
+      m_ActiveArchives = m_DefaultArchives;
+    }
+
+    if (m_UserInterface != nullptr) {
+      m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
+    }
+
+    m_ArchivesInit = true;
   }
-
-  m_ActiveArchives.clear();
-
-  auto iter = enabledArchives();
-  m_ActiveArchives = toStringList(iter.begin(), iter.end());
-  if (m_ActiveArchives.isEmpty()) {
-    m_ActiveArchives = m_DefaultArchives;
-  }
-
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
-  }
-
-  m_ArchivesInit = true;
 }
 
 void OrganizerCore::refreshLists()

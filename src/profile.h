@@ -22,7 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "modinfo.h"
-
+#include <iprofile.h>
 #include <QString>
 #include <QDir>
 #include <QMetaType>
@@ -38,7 +38,7 @@ namespace MOBase {
 /**
  * @brief represents a profile
  **/
-class Profile : public QObject
+class Profile : public QObject, public MOBase::IProfile
 {
 
   Q_OBJECT
@@ -112,7 +112,7 @@ public:
   /**
    * @brief deactivate archive invalidation if it was active
    **/
-  void deactivateInvalidation() const;
+  void deactivateInvalidation();
 
   /**
    * @brief activate archive invalidation
@@ -121,7 +121,7 @@ public:
    * @todo passing the data directory as a parameter is useless, the function should
    *       be able to query it from GameInfo
    **/
-  void activateInvalidation(const QString &dataDirectory) const;
+  void activateInvalidation();
 
   /**
    * @return true if this profile uses local save games
@@ -139,7 +139,7 @@ public:
   /**
    * @return name of the profile (this is identical to its directory name)
    **/
-  QString getName() const { return m_Directory.dirName(); }
+  QString name() const { return m_Directory.dirName(); }
 
   /**
    * @return the path of the plugins file in this profile
@@ -188,7 +188,7 @@ public:
   /**
    * @return path to this profile
    **/
-  QString getPath() const;
+  QString absolutePath() const;
 
   void rename(const QString &newName);
 
@@ -315,12 +315,15 @@ private:
 
   QDir m_Directory;
 
+  MOBase::IPluginGame *m_GamePlugin;
+
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
   std::vector<unsigned int> m_ModIndexByPriority;
   unsigned int m_NumRegularMods;
 
   QTimer *m_SaveTimer;
+
 };
 
 Q_DECLARE_METATYPE(Profile)

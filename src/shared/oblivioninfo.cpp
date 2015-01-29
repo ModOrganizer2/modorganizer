@@ -43,11 +43,6 @@ bool OblivionInfo::identifyGame(const std::wstring &searchPath)
          FileExists(searchPath, L"OblivionLauncher.exe");
 }
 
-unsigned long OblivionInfo::getBSAVersion()
-{
-  return 0x67;
-}
-
 std::wstring OblivionInfo::getRegPathStatic()
 {
   HKEY key;
@@ -68,39 +63,14 @@ std::wstring OblivionInfo::getRegPathStatic()
   }
 }
 
-std::wstring OblivionInfo::getInvalidationBSA()
-{
-  return L"Oblivion - Invalidation.bsa";
-}
-
-bool OblivionInfo::isInvalidationBSA(const std::wstring &bsaName)
-{
-  static LPCWSTR invalidation[] = { L"Oblivion - Invalidation.bsa", L"ArchiveInvalidationInvalidated!.bsa",
-                                    L"BSARedirection.bsa", nullptr };
-
-  for (int i = 0; invalidation[i] != nullptr; ++i) {
-    if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::vector<std::wstring> OblivionInfo::getPrimaryPlugins()
-{
-  return boost::assign::list_of(L"oblivion.esm");
-}
 
 
-std::vector<std::wstring> OblivionInfo::getVanillaBSAs()
-{
-  return boost::assign::list_of(L"Oblivion - Meshes.bsa")
-                               (L"Oblivion - Textures - Compressed.bsa")
-                               (L"Oblivion - Sounds.bsa")
-                               (L"Oblivion - Voices1.bsa")
-                               (L"Oblivion - Voices2.bsa")
-                               (L"Oblivion - Misc.bsa");
-}
+
+
+
+
+
+
 
 
 std::vector<std::wstring> OblivionInfo::getDLCPlugins()
@@ -131,10 +101,7 @@ std::vector<std::wstring> OblivionInfo::getIniFileNames()
 }
 
 
-std::wstring OblivionInfo::getSEName()
-{
-  return L"obse";
-}
+
 
 
 std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
@@ -174,12 +141,5 @@ std::wstring OblivionInfo::getReferenceDataFile()
 {
   return L"Oblivion - Meshes.bsa";
 }
-
-
-std::wstring OblivionInfo::getOMODExt()
-{
-  return L"omod";
-}
-
 
 } // namespace MOShared

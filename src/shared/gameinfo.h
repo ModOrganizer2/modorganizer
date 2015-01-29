@@ -28,32 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 
 namespace MOShared {
-/*
-enum CloseMOStyle {
-  DEFAULT_CLOSE,
-  DEFAULT_STAY,
-  NEVER_CLOSE
-};
 
-struct ExecutableInfo {
-
-  ExecutableInfo(const std::wstring &aTitle, const std::wstring &aBinary,
-                 const std::wstring &aArguments, const std::wstring &aWorkingDirectory, CloseMOStyle aCloseMO)
-    : title(aTitle), binary(aBinary), arguments(aArguments), workingDirectory(aWorkingDirectory),
-      closeMO(aCloseMO), steamAppID(L"") {}
-  ExecutableInfo(const std::wstring &aTitle, const std::wstring &aBinary,
-                 const std::wstring &aArguments, const std::wstring &aWorkingDirectory,
-                 CloseMOStyle aCloseMO, const std::wstring &aSteamAppID)
-    : title(aTitle), binary(aBinary), arguments(aArguments), workingDirectory(aWorkingDirectory),
-      closeMO(aCloseMO), steamAppID(aSteamAppID) {}
-  std::wstring title;
-  std::wstring binary;
-  std::wstring arguments;
-  std::wstring workingDirectory;
-  CloseMOStyle closeMO;
-  std::wstring steamAppID;
-};
-*/
 
 /**
   Class to manage information that depends on the used game type. The intention is to keep
@@ -86,8 +61,6 @@ public:
   virtual std::wstring getRegPath() = 0;
   virtual std::wstring getBinaryName() = 0;
 
-  virtual unsigned long getBSAVersion() = 0;
-
   virtual GameInfo::Type getType() = 0;
 
   virtual std::wstring getGameName() const = 0;
@@ -98,30 +71,8 @@ public:
   virtual LoadOrderMechanism getLoadOrderMechanism() const { return TYPE_FILETIME; }
 
   virtual std::wstring getGameDirectory() const;
-  // get absolute path to the directory where omo stores its mods
-/*  virtual std::wstring getModsDir() const;
-  // get absolute path to the directory where omo stores its profiles
-  virtual std::wstring getProfilesDir() const;
 
-  virtual std::wstring getIniFilename() const;
-  virtual std::wstring getOverwriteDir() const;
-  virtual std::wstring getLogDir() const;
-  virtual std::wstring getLootDir() const;
-  virtual std::wstring getTutorialDir() const;*/
-
-  virtual bool requiresBSAInvalidation() const { return true; }
   virtual bool requiresSteam() const;
-
-  virtual std::wstring getInvalidationBSA() = 0;
-
-  virtual bool isInvalidationBSA(const std::wstring &bsaName) = 0;
-
-  // the key in the game's ini-file that defines the list of bsas to load
-  virtual std::wstring archiveListKey() = 0;
-
-  virtual std::vector<std::wstring> getPrimaryPlugins() = 0;
-
-  virtual std::vector<std::wstring> getVanillaBSAs() = 0;
 
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
@@ -134,11 +85,7 @@ public:
 
   virtual std::wstring getReferenceDataFile() = 0;
 
-  virtual std::wstring getOMODExt() = 0;
-
   virtual std::vector<std::wstring> getSteamVariants() const;
-
-  virtual std::wstring getSEName() = 0;
 
   virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
   virtual std::wstring getNexusInfoUrl() = 0;

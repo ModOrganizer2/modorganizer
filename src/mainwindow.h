@@ -229,8 +229,6 @@ private:
 
   bool errorReported(QString &logFile);
 
-  QIcon iconForExecutable(const QString &filePath);
-
   void updateESPLock(bool locked);
 
   static void setupNetworkProxy(bool activate);

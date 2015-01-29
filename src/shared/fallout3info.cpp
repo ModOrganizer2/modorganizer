@@ -42,11 +42,6 @@ bool Fallout3Info::identifyGame(const std::wstring &searchPath)
          FileExists(searchPath, L"FalloutLauncher.exe");
 }
 
-unsigned long Fallout3Info::getBSAVersion()
-{
-  return 0x68;
-}
-
 std::wstring Fallout3Info::getRegPathStatic()
 {
   HKEY key;
@@ -67,37 +62,6 @@ std::wstring Fallout3Info::getRegPathStatic()
   }
 }
 
-std::wstring Fallout3Info::getInvalidationBSA()
-{
-  return L"Fallout - Invalidation.bsa";
-}
-
-bool Fallout3Info::isInvalidationBSA(const std::wstring &bsaName)
-{
-  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
-
-  for (int i = 0; invalidation[i] != nullptr; ++i) {
-    if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::vector<std::wstring> Fallout3Info::getPrimaryPlugins()
-{
-  return boost::assign::list_of(L"fallout3.esm");
-}
-
-std::vector<std::wstring> Fallout3Info::getVanillaBSAs()
-{
-  return boost::assign::list_of (L"Fallout - Textures.bsa")
-                                (L"Fallout - Meshes.bsa")
-                                (L"Fallout - Voices.bsa")
-                                (L"Fallout - Sound.bsa")
-                                (L"Fallout - MenuVoices.bsa")
-                                (L"Fallout - Misc.bsa");
-}
 
 std::vector<std::wstring> Fallout3Info::getDLCPlugins()
 {
@@ -125,20 +89,14 @@ std::wstring Fallout3Info::getReferenceDataFile()
 }
 
 
-std::wstring Fallout3Info::getOMODExt()
-{
-  return L"fomod";
-}
+
 
 std::vector<std::wstring> Fallout3Info::getSteamVariants() const
 {
   return boost::assign::list_of(L"Regular")(L"Game Of The Year");
 }
 
-std::wstring Fallout3Info::getSEName()
-{
-  return L"fose";
-}
+
 
 std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
 {

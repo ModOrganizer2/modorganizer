@@ -60,13 +60,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "aboutdialog.h"
 #include "safewritefile.h"
 #include "organizerproxy.h"
-#include "nxmaccessmanager.h
+#include "nxmaccessmanager.h"
 #include <archive.h>
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <ipluginproxy.h>
+#include <dataarchives.h>
 #include <questionboxmemory.h>
+#include <taskprogressmanager.h>
 #include <util.h>
 #include <map>
 #include <ctime>
@@ -139,7 +141,7 @@ using namespace MOShared;
 
 
 MainWindow::MainWindow(const QString &exeName
-  : QMainWindow(parent), ui(new Ui::MainWindow), m_Tutorial(this, "MainWindow"),
+                       , QSettings &initSettings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
                        , QWidget *parent)
@@ -148,7 +150,7 @@ MainWindow::MainWindow(const QString &exeName
   , m_WasVisible(false)
   , m_Tutorial(this, "MainWindow")
   , m_ExeName(exeName)
-  , m_OldProfileIndex(-1),
+  , m_OldProfileIndex(-1)
   , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
@@ -191,7 +193,7 @@ MainWindow::MainWindow(const QString &exeName
 
   updateToolBar();
 
-  languageChange(m_Settings.language());
+  TaskProgressManager::instance().tryCreateTaskbar();
 
   // set up mod list
   m_ModListSortProxy = m_OrganizerCore.createModListProxyModel();
@@ -335,7 +337,7 @@ MainWindow::MainWindow(const QString &exeName
   // refresh profiles so the current profile can be activated
   refreshProfiles(false);
 
-  ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->getName());
+  ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
 
   refreshExecutablesList();
   updateToolBar();
@@ -1036,9 +1038,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     }
 
     if (ui->profileBox->currentIndex() == 0) {
-      ProfilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this).exec();
+      ProfilesDialog(m_GamePath, this).exec();
       while (!refreshProfiles()) {
-        ProfilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this).exec();
+        ProfilesDialog(m_GamePath, this).exec();
       }
       ui->profileBox->setCurrentIndex(previousIndex);
     } else {
@@ -1213,25 +1215,6 @@ bool MainWindow::refreshProfiles(bool selectProfile)
 }
 
 
-#if QT_VERSION >= 0x050000
-extern QPixmap qt_pixmapFromWinHICON(HICON icon);
-#else
-#define qt_pixmapFromWinHICON(icon) QPixmap::fromWinHICON(icon)
-#endif
-
-QIcon MainWindow::iconForExecutable(const QString &filePath)
-{
-  HICON winIcon;
-  UINT res = ::ExtractIconExW(ToWString(filePath).c_str(), 0, &winIcon, nullptr, 1);
-  if (res == 1) {
-    QIcon result = QIcon(qt_pixmapFromWinHICON(winIcon));
-    ::DestroyIcon(winIcon);
-    return result;
-  } else {
-    return QIcon(":/MO/gui/executable");
-  }
-}
-
 void MainWindow::refreshExecutablesList()
 {
   QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
@@ -1285,12 +1268,12 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir;
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
-    savesDir.setPath(m_OrganizerCore.currentProfile()->getPath() + "/saves");
+    savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
   } else {
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(L"General", L"SLocalSavePath", L"Saves",
                                path, MAX_PATH,
-                               (ToWString(m_OrganizerCore.currentProfile()->getPath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
+                               (ToWString(m_OrganizerCore.currentProfile()->absolutePath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
@@ -1417,42 +1400,46 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
 void MainWindow::checkBSAList()
 {
-  ui->bsaList->blockSignals(true);
+  DataArchives *archives = m_OrganizerCore.managedGame()->feature<DataArchives>();
 
-  QStringList defaultArchives = m_OrganizerCore.defaultArchiveList();
+  if (archives != nullptr) {
+    ui->bsaList->blockSignals(true);
 
-  bool warning = false;
+    QStringList defaultArchives = archives->archives(m_OrganizerCore.currentProfile());
 
-  for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-    bool modWarning = false;
-    QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
-    for (int j = 0; j < tlItem->childCount(); ++j) {
-      QTreeWidgetItem *item = tlItem->child(j);
-      QString filename = item->text(0);
-      item->setIcon(0, QIcon());
-      item->setToolTip(0, QString());
+    bool warning = false;
 
-      if (item->checkState(0) == Qt::Unchecked) {
-        if (defaultArchives.contains(filename)) {
-          item->setIcon(0, QIcon(":/MO/gui/warning"));
-          item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
-          modWarning = true;
+    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+      bool modWarning = false;
+      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
+      for (int j = 0; j < tlItem->childCount(); ++j) {
+        QTreeWidgetItem *item = tlItem->child(j);
+        QString filename = item->text(0);
+        item->setIcon(0, QIcon());
+        item->setToolTip(0, QString());
+
+        if (item->checkState(0) == Qt::Unchecked) {
+          if (defaultArchives.contains(filename)) {
+            item->setIcon(0, QIcon(":/MO/gui/warning"));
+            item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
+            modWarning = true;
+          }
         }
       }
+      if (modWarning) {
+        ui->bsaList->expandItem(ui->bsaList->topLevelItem(i));
+        warning = true;
+      }
     }
-    if (modWarning) {
-      ui->bsaList->expandItem(ui->bsaList->topLevelItem(i));
-      warning = true;
+
+    if (warning) {
+      ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/warning"));
+    } else {
+      ui->tabWidget->setTabIcon(1, QIcon());
     }
-  }
 
-  if (warning) {
-    ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/warning"));
-  } else {
-    ui->tabWidget->setTabIcon(1, QIcon());
+    ui->bsaList->blockSignals(false);
   }
-
-  ui->bsaList->blockSignals(false);
 }
 
 
@@ -1790,7 +1777,7 @@ void MainWindow::on_actionAdd_Profile_triggered()
 {
   bool repeat = true;
   while (repeat) {
-    ProfilesDialog profilesDialog(m_GamePath, m_OrganizerCore.managedGame(), this);
+    ProfilesDialog profilesDialog(m_GamePath, this);
     profilesDialog.exec();
     if (refreshProfiles() && !profilesDialog.failed()) {
       repeat = false;
@@ -3379,7 +3366,7 @@ void MainWindow::installTranslator(const QString &name)
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if ((m_CurrentLanguage != "en-US") && (m_CurrentLanguage != "en_US")) {
-      qWarning("localization file %s not found", qPrintable(fileName));
+      qDebug("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
 
@@ -3659,7 +3646,7 @@ void MainWindow::openDataFile()
     QString arguments;
     switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
       case 1: {
-        m_OrganizerCore.spawnBinaryDirect(binaryInfo, arguments, m_OrganizerCore.currentProfile()->getName(), targetInfo.absolutePath(), "");
+        m_OrganizerCore.spawnBinaryDirect(binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(), targetInfo.absolutePath(), "");
       } break;
       case 2: {
         ::ShellExecuteW(nullptr, L"open", ToWString(targetInfo.absoluteFilePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -4339,7 +4326,7 @@ void MainWindow::on_bossButton_clicked()
     createStdoutPipe(&stdOutRead, &stdOutWrite);
     HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
-                              m_OrganizerCore.currentProfile()->getName(),
+                              m_OrganizerCore.currentProfile()->name(),
                               m_OrganizerCore.settings().logLevel(),
                               qApp->applicationDirPath() + "/loot",
                               true,

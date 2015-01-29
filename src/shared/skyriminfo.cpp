@@ -50,10 +50,7 @@ bool SkyrimInfo::identifyGame(const std::wstring &searchPath)
          FileExists(searchPath, L"SkyrimLauncher.exe");
 }
 
-unsigned long SkyrimInfo::getBSAVersion()
-{
-  return 0x68;
-}
+
 
 
 std::wstring SkyrimInfo::getRegPathStatic()
@@ -76,25 +73,6 @@ std::wstring SkyrimInfo::getRegPathStatic()
   }
 }
 
-
-std::wstring SkyrimInfo::getInvalidationBSA()
-{
-  return L"Skyrim - Invalidation.bsa";
-}
-
-bool SkyrimInfo::isInvalidationBSA(const std::wstring &bsaName)
-{
-  static LPCWSTR invalidation[] = { L"Skyrim - Invalidation.bsa", nullptr };
-
-  for (int i = 0; invalidation[i] != nullptr; ++i) {
-    if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
 GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
 {
   std::wstring fileName = getGameDirectory() + L"\\TESV.exe";
@@ -111,27 +89,6 @@ GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
     log("TESV.exe is invalid: %s", e.what());
     return TYPE_FILETIME;
   }
-}
-
-std::vector<std::wstring> SkyrimInfo::getPrimaryPlugins()
-{
-  return boost::assign::list_of(L"skyrim.esm")(L"update.esm");
-}
-
-std::vector<std::wstring> SkyrimInfo::getVanillaBSAs()
-{
-  return boost::assign::list_of(L"Skyrim - Misc.bsa")
-                               (L"Skyrim - Shaders.bsa")
-                               (L"Skyrim - Textures.bsa")
-                               (L"HighResTexturePack01.bsa")
-                               (L"HighResTexturePack02.bsa")
-                               (L"HighResTexturePack03.bsa")
-                               (L"Skyrim - Interface.bsa")
-                               (L"Skyrim - Animations.bsa")
-                               (L"Skyrim - Meshes.bsa")
-                               (L"Skyrim - Sounds.bsa")
-                               (L"Skyrim - Voices.bsa")
-      (L"Skyrim - VoicesExtra.bsa");
 }
 
 std::vector<std::wstring> SkyrimInfo::getDLCPlugins()
@@ -158,17 +115,6 @@ std::vector<std::wstring> SkyrimInfo::getIniFileNames()
 std::wstring SkyrimInfo::getReferenceDataFile()
 {
   return L"Skyrim - Meshes.bsa";
-}
-
-
-std::wstring SkyrimInfo::getOMODExt()
-{
-  return L"fomod";
-}
-
-std::wstring SkyrimInfo::getSEName()
-{
-  return L"skse";
 }
 
 

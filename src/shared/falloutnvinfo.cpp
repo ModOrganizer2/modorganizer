@@ -43,11 +43,6 @@ bool FalloutNVInfo::identifyGame(const std::wstring &searchPath)
          FileExists(searchPath, L"FalloutNVLauncher.exe");
 }
 
-unsigned long FalloutNVInfo::getBSAVersion()
-{
-  return 0x68;
-}
-
 std::wstring FalloutNVInfo::getRegPathStatic()
 {
   HKEY key;
@@ -66,38 +61,6 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   } else {
     return std::wstring();
   }
-}
-
-std::wstring FalloutNVInfo::getInvalidationBSA()
-{
-  return L"Fallout - Invalidation.bsa";
-}
-
-bool FalloutNVInfo::isInvalidationBSA(const std::wstring &bsaName)
-{
-  static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
-
-  for (int i = 0; invalidation[i] != nullptr; ++i) {
-    if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::vector<std::wstring> FalloutNVInfo::getPrimaryPlugins()
-{
-  return boost::assign::list_of(L"falloutnv.esm");
-}
-
-std::vector<std::wstring> FalloutNVInfo::getVanillaBSAs()
-{
-  return boost::assign::list_of (L"Fallout - Textures.bsa")
-                                (L"Fallout - Textures2.bsa")
-                                (L"Fallout - Meshes.bsa")
-                                (L"Fallout - Voices1.bsa")
-                                (L"Fallout - Sound.bsa")
-                                (L"Fallout - Misc.bsa");
 }
 
 std::vector<std::wstring> FalloutNVInfo::getDLCPlugins()
@@ -128,19 +91,6 @@ std::wstring FalloutNVInfo::getReferenceDataFile()
 {
   return L"Fallout - Meshes.bsa";
 }
-
-
-std::wstring FalloutNVInfo::getOMODExt()
-{
-  return L"fomod";
-}
-
-
-std::wstring FalloutNVInfo::getSEName()
-{
-  return L"nvse";
-}
-
 
 std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme)
 {
@@ -176,17 +126,4 @@ bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
   return false;
 }
 
-/*
-std::vector<ExecutableInfo> FalloutNVInfo::getExecutables()
-{
-  std::vector<ExecutableInfo> result;
-  result.push_back(ExecutableInfo(L"NVSE", L"nvse_loader.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"New Vegas", L"falloutnv.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Fallout Mod Manager", L"fomm/fomm.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Construction Kit", L"geck.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"Fallout Launcher", L"FalloutNVLauncher.exe", L"", L"", DEFAULT_CLOSE));
-  result.push_back(ExecutableInfo(L"BOSS", L"BOSS/BOSS.exe", L"", L"", NEVER_CLOSE));
-
-  return result;
-}*/
 } // namespace MOShared

@@ -155,7 +155,6 @@ public:
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
-  QStringList defaultArchiveList();
 
 public: // IPluginDiagnose interface
 

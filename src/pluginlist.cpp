@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <utility.h>
 #include <gameinfo.h>
+#include <iplugingame.h>
 #include <espfile.h>
 #include <windows_error.h>
 
@@ -126,16 +127,19 @@ QString PluginList::getColumnToolTip(int column)
 }
 
 
-void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseDirectory,
-                         const QString &pluginsFile, const QString &loadOrderFile,
-                         const QString &lockedOrderFile)
+void PluginList::refresh(const QString &profileName
+                         , const DirectoryEntry &baseDirectory
+                         , const QString &pluginsFile
+                         , const QString &loadOrderFile
+                         , const QString &lockedOrderFile)
 {
   ChangeBracket<PluginList> layoutChange(this);
 
   m_ESPsByName.clear();
   m_ESPsByPriority.clear();
   m_ESPs.clear();
-  std::vector<std::wstring> primaryPlugins = GameInfo::instance().getPrimaryPlugins();
+
+  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
 
   m_CurrentProfile = profileName;
 
@@ -150,7 +154,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
     if ((extension == "esp") || (extension == "esm")) {
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
-                            std::find(primaryPlugins.begin(), primaryPlugins.end(), ToWString(filename.toLower())) != primaryPlugins.end();
+                            std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
 
       bool archive = false;
       try {
@@ -321,11 +325,10 @@ bool PluginList::readLoadOrder(const QString &fileName)
 
   int priority = 0;
 
-  std::vector<std::wstring> primaryPlugins = GameInfo::instance().getPrimaryPlugins();
-  for (std::vector<std::wstring>::iterator iter = primaryPlugins.begin();
-       iter != primaryPlugins.end(); ++iter) {
-    if (availableESPs.find(ToQString(*iter)) != availableESPs.end()) {
-      m_ESPLoadOrder[ToQString(*iter)] = priority++;
+  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
+  for (const QString &plugin : primaryPlugins) {
+    if (availableESPs.find(plugin) != availableESPs.end()) {
+      m_ESPLoadOrder[plugin] = priority++;
     }
   }
 

@@ -50,7 +50,7 @@ public:
   * @param parent parent widget
   * @todo the game path could be retrieved from GameInfo just as easily
   **/
- explicit ProfilesDialog(const QString &gamePath, MOBase::IPluginGame *gamePlugin, QWidget *parent = 0);
+ explicit ProfilesDialog(const QString &gamePath, QWidget *parent = 0);
   ~ProfilesDialog();
 
   /**
@@ -91,7 +91,6 @@ private slots:
 
 private:
   Ui::ProfilesDialog *ui;
-  MOBase::IPluginGame *m_GamePlugin;
   QString m_GamePath;
   QListWidget *m_ProfilesList;
   bool m_FailState;

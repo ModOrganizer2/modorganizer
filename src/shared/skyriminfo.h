@@ -35,8 +35,6 @@ public:
 
   virtual ~SkyrimInfo() {}
 
-  virtual unsigned long getBSAVersion();
-
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"TESV.exe"; }
@@ -48,15 +46,6 @@ public:
 
   virtual LoadOrderMechanism getLoadOrderMechanism() const;
 
-  virtual bool requiresBSAInvalidation() const { return true; }
-
-  virtual std::wstring getInvalidationBSA();
-
-  virtual bool isInvalidationBSA(const std::wstring &bsaName);
-
-  virtual std::vector<std::wstring> getPrimaryPlugins();
-
-  virtual std::vector<std::wstring> getVanillaBSAs();
   virtual std::vector<std::wstring> getDLCPlugins();
 
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
@@ -65,9 +54,6 @@ public:
   virtual std::vector<std::wstring> getIniFileNames();
 
   virtual std::wstring getReferenceDataFile();
-  virtual std::wstring getOMODExt();
-
-  virtual std::wstring getSEName();
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
 
@@ -79,8 +65,6 @@ public:
   virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
-
-  virtual std::wstring archiveListKey() { return L"SResourceArchiveList"; }
 
 private:
 

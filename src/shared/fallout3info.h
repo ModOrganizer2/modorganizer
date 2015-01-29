@@ -35,8 +35,6 @@ public:
 
   virtual ~Fallout3Info() {}
 
-  virtual unsigned long getBSAVersion();
-
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Fallout3.exe"; }
@@ -45,14 +43,38 @@ public:
 
   virtual std::wstring getGameName() const { return L"Fallout 3"; }
   virtual std::wstring getGameShortName() const { return L"Fallout3"; }
+/*
+  virtual std::wstring getInvalidationBSA()
+  {
+    return L"Fallout - Invalidation.bsa";
+  }
 
-  virtual std::wstring getInvalidationBSA();
+  virtual bool isInvalidationBSA(const std::wstring &bsaName)
+  {
+    static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
 
-  virtual bool isInvalidationBSA(const std::wstring &bsaName);
+    for (int i = 0; invalidation[i] != nullptr; ++i) {
+      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  virtual std::vector<std::wstring> getPrimaryPlugins();
+  virtual std::vector<std::wstring> getVanillaBSAs()
+  {
+    return boost::assign::list_of (L"Fallout - Textures.bsa")
+        (L"Fallout - Meshes.bsa")
+        (L"Fallout - Voices.bsa")
+        (L"Fallout - Sound.bsa")
+        (L"Fallout - MenuVoices.bsa")
+        (L"Fallout - Misc.bsa");
+  }
 
-  virtual std::vector<std::wstring> getVanillaBSAs();
+  virtual std::vector<std::wstring> getPrimaryPlugins()
+  {
+    return boost::assign::list_of(L"fallout3.esm");
+  }*/
   virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
@@ -60,11 +82,8 @@ public:
   virtual std::vector<std::wstring> getIniFileNames();
 
   virtual std::wstring getReferenceDataFile();
-  virtual std::wstring getOMODExt();
 
   virtual std::vector<std::wstring> getSteamVariants() const;
-
-  virtual std::wstring getSEName();
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();

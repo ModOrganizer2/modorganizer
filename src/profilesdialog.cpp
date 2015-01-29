@@ -24,7 +24,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "transfersavesdialog.h"
 #include "profileinputdialog.h"
 #include "mainwindow.h"
-#include <gameinfo.h>
+#include "aboutdialog.h"
+#include <iplugingame.h>
+#include <bsainvalidation.h>
 #include <appconfig.h>
 #include <QListWidgetItem>
 #include <QInputDialog>
@@ -40,10 +42,9 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &gamePath, MOBase::IPluginGame *gamePlugin, QWidget *parent)
+ProfilesDialog::ProfilesDialog(const QString &gamePath, QWidget *parent)
   : TutorableDialog("Profiles", parent)
   , ui(new Ui::ProfilesDialog)
-  , m_GamePlugin(gamePlugin)
   , m_GamePath(gamePath)
   , m_FailState(false)
 {
@@ -61,7 +62,11 @@ ProfilesDialog::ProfilesDialog(const QString &gamePath, MOBase::IPluginGame *gam
   }
 
   QCheckBox *invalidationBox = findChild<QCheckBox*>("invalidationBox");
-  if (!GameInfo::instance().requiresBSAInvalidation()) {
+
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  BSAInvalidation *invalidation = game->feature<BSAInvalidation>();
+
+  if (invalidation == nullptr) {
     invalidationBox->setToolTip(tr("Archive invalidation isn't required for this game."));
     invalidationBox->setEnabled(false);
   }
@@ -97,7 +102,7 @@ void ProfilesDialog::addItem(const QString &name)
   QDir profileDir(name);
   QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
   try {
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir, m_GamePlugin))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir, qApp->property("managed_game").value<IPluginGame*>()))));
     m_FailState = false;
   } catch (const std::exception& e) {
     reportError(tr("failed to create profile: %1").arg(e.what()));
@@ -109,7 +114,7 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, m_GamePlugin, useDefaultSettings))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, qApp->property("managed_game").value<IPluginGame*>(), useDefaultSettings))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -123,7 +128,7 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, m_GamePlugin))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, qApp->property("managed_game").value<IPluginGame*>()))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -190,7 +195,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     } else {
       // on destruction, the profile object would write the profile.ini file again, so
       // we have to get rid of the it before deleting the directory
-      profilePath = currentProfile->getPath();
+      profilePath = currentProfile->absolutePath();
     }
     QListWidgetItem* item = profilesList->takeItem(profilesList->currentRow());
     if (item != nullptr) {
@@ -216,7 +221,7 @@ void ProfilesDialog::on_renameButton_clicked()
   while (!valid) {
     bool ok = false;
     name = QInputDialog::getText(this, tr("Rename Profile"), tr("New Name"),
-                                 QLineEdit::Normal, currentProfile->getName(),
+                                 QLineEdit::Normal, currentProfile->name(),
                                  &ok);
     valid = fixDirectoryName(name);
     if (!ok) {
@@ -249,7 +254,7 @@ void ProfilesDialog::on_invalidationBox_stateChanged(int state)
     if (state == Qt::Unchecked) {
       currentProfile->deactivateInvalidation();
     } else {
-      currentProfile->activateInvalidation(m_GamePath + "/data");
+      currentProfile->activateInvalidation();
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to change archive invalidation state: %1").arg(e.what()));
@@ -318,6 +323,6 @@ void ProfilesDialog::on_localSavesBox_stateChanged(int state)
 void ProfilesDialog::on_transferButton_clicked()
 {
   const Profile::Ptr currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
-  TransferSavesDialog transferDialog(*currentProfile, m_GamePlugin, this);
+  TransferSavesDialog transferDialog(*currentProfile, qApp->property("managed_game").value<IPluginGame*>(), this);
   transferDialog.exec();
 }

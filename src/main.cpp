@@ -406,28 +406,16 @@ int main(int argc, char *argv[])
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));
         }
-        SelectionDialog selection(QObject::tr("Please select the game to manage"), nullptr);
+        SelectionDialog selection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
 
-        { // add options
-          QString skyrimPath    = ToQString(SkyrimInfo::getRegPathStatic());
-          QString falloutNVPath = ToQString(FalloutNVInfo::getRegPathStatic());
-          QString fallout3Path  = ToQString(Fallout3Info::getRegPathStatic());
-          QString oblivionPath  = ToQString(OblivionInfo::getRegPathStatic());
-          if (skyrimPath.length() != 0) {
-            selection.addChoice(QString("Skyrim"), skyrimPath, skyrimPath);
+        for (const IPluginGame * const game : pluginContainer.plugins<IPluginGame>()) {
+          if (game->isInstalled()) {
+            QString path = game->gameDirectory().absolutePath();
+            selection.addChoice(game->gameIcon(), game->gameName(), path, path);
           }
-          if (falloutNVPath.length() != 0) {
-            selection.addChoice(QString("Fallout NV"), falloutNVPath, falloutNVPath);
-          }
-          if (fallout3Path.length() != 0) {
-            selection.addChoice(QString("Fallout 3"), fallout3Path, fallout3Path);
-          }
-          if (oblivionPath.length() != 0) {
-            selection.addChoice(QString("Oblivion"), oblivionPath, oblivionPath);
-          }
-
-          selection.addChoice(QString("Browse..."), QString(), QString());
         }
+
+        selection.addChoice(QString("Browse..."), QString(), QString());
 
         if (selection.exec() == QDialog::Rejected) {
           gamePath = "";

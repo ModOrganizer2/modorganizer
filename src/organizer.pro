@@ -57,7 +57,6 @@ SOURCES += \
     filedialogmemory.cpp \
     executableslist.cpp \
     editexecutablesdialog.cpp \
-    dummybsa.cpp \
     downloadmanager.cpp \
     downloadlistwidgetcompact.cpp \
     downloadlistwidget.cpp \
@@ -137,7 +136,6 @@ HEADERS  += \
     filedialogmemory.h \
     executableslist.h \
     editexecutablesdialog.h \
-    dummybsa.h \
     downloadmanager.h \
     downloadlistwidgetcompact.h \
     downloadlistwidget.h \
@@ -257,7 +255,7 @@ LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += TEST_MODELS
 
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk "$${LOOTPATH}" "$${BOOSTPATH}"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../plugins/gamefeatures "$${LOOTPATH}" "$${BOOSTPATH}"
 
 LIBS += -L"$${BOOSTPATH}/stage/lib"
 

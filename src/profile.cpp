@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "gameinfo.h"
 #include "windows_error.h"
-#include "dummybsa.h"
 #include "modinfo.h"
 #include "safewritefile.h"
 #include <utility.h>
@@ -29,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <error_report.h>
 #include <appconfig.h>
 #include <iplugingame.h>
+#include <bsainvalidation.h>
+#include <dataarchives.h>
 #include <QMessageBox>
 #include <QApplication>
 #include <QSettings>
@@ -58,6 +59,7 @@ void Profile::touchFile(QString fileName)
 
 Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
   : m_SaveTimer(nullptr)
+  , m_GamePlugin(gamePlugin)
 {
   initTimer();
   QString profilesDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath());
@@ -120,8 +122,9 @@ Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
 }
 
 
-Profile::Profile(const Profile& reference)
-  : m_Directory(reference.m_Directory), m_SaveTimer(nullptr)
+Profile::Profile(const Profile &reference)
+  : m_Directory(reference.m_Directory)
+  , m_SaveTimer(nullptr)
 {
   initTimer();
   refreshModStatus();
@@ -590,35 +593,22 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 
 bool Profile::invalidationActive(bool *supported) const
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
+
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  DataArchives *dataArchives = gamePlugin->feature<DataArchives>();
+
+  if ((invalidation != nullptr) && (dataArchives != nullptr)) {
     if (supported != nullptr) {
       *supported = true;
     }
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    // epic ms fail: GetPrivateProfileString uses errno (for whatever reason) to signal a fail since the return value
-    // has a different meaning (number of bytes copied). HOWEVER, it will not set errno to 0 if NO error occured
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno != 0x02) {
-        if (supported != nullptr) {
-          *supported = false;
-        }
-        return false;
-      } else {
-        QString errorMessage = tr("failed to parse ini file (%1)").arg(ToQString(iniFileName));
-        throw windows_error(errorMessage.toUtf8().constData());
-      }
-    }
-    QStringList archives = ToQString(buffer).split(',');
 
-    for (int i = 0; i < archives.count(); ++i) {
-      QString bsaName = archives.at(i).trimmed();
-      if (GameInfo::instance().isInvalidationBSA(ToWString(bsaName))) {
+    for (const QString &archive : dataArchives->archives(this)) {
+      if (invalidation->isInvalidationBSA(archive)) {
         return true;
       }
     }
+    return false;
   } else {
     *supported = false;
   }
@@ -626,85 +616,26 @@ bool Profile::invalidationActive(bool *supported) const
 }
 
 
-void Profile::deactivateInvalidation() const
+void Profile::deactivateInvalidation()
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno == 0x02) {
-        QString errorMessage = tr("failed to parse ini file (%1): %2").arg(QDir::toNativeSeparators(getIniFileName())).arg(::GetLastError());
-        throw windows_error(errorMessage.toUtf8().constData());
-      } else {
-        return;
-      }
-    }
-    QStringList archives = ToQString(buffer).split(", ");
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
 
-    for (int i = 0; i < archives.count();) {
-      QString bsaName = archives.at(i).trimmed();
-      if (GameInfo::instance().isInvalidationBSA(ToWString(bsaName))) {
-        archives.removeAt(i);
-      } else {
-        ++i;
-      }
-    }
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
 
-    // just to be safe...
-    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
-
-    if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                      ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"0", iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"ArchiveInvalidation.txt", iniFileName.c_str())) {
-      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
-      throw windows_error(errorMessage.toUtf8().constData());
-    }
+  if (invalidation != nullptr) {
+    invalidation->deactivate(this);
   }
 }
 
 
-void Profile::activateInvalidation(const QString& dataDirectory) const
+void Profile::activateInvalidation()
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno == 0x02) {
-        throw windows_error("failed to parse ini file");
-      } else {
-        // ignore. shouldn't have gotten here anyway
-        return;
-      }
-    }
-    QStringList archives = ToQString(buffer).split(", ");
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
 
-    QString invalidationBSA = ToQString(GameInfo::instance().getInvalidationBSA());
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
 
-    if (!archives.contains(invalidationBSA)) {
-      archives.insert(0, invalidationBSA);
-    }
-
-    // just to be safe...
-    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
-
-    if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                      ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"", iniFileName.c_str())) {
-      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
-      throw windows_error(errorMessage.toUtf8().constData());
-    }
-
-    QString bsaFile = dataDirectory + "/" + invalidationBSA;
-    if (!QFile::exists(bsaFile)) {
-      DummyBSA bsa;
-      bsa.write(bsaFile);
-    }
+  if (invalidation != nullptr) {
+    invalidation->activate(this);
   }
 }
 
@@ -784,7 +715,7 @@ QString Profile::getProfileTweaks() const
   return QDir::cleanPath(m_Directory.absoluteFilePath(ToQString(AppConfig::profileTweakIni())));
 }
 
-QString Profile::getPath() const
+QString Profile::absolutePath() const
 {
   return QDir::cleanPath(m_Directory.absolutePath());
 }
@@ -792,6 +723,7 @@ QString Profile::getPath() const
 void Profile::rename(const QString &newName)
 {
   QDir profileDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
-  profileDir.rename(getName(), newName);
+  profileDir.rename(name(), newName);
   m_Directory = profileDir.absoluteFilePath(newName);
 }
+
