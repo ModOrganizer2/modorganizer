@@ -75,7 +75,7 @@ void TransferSavesDialog::refreshLocalSaves()
 {
   m_LocalSaves.clear();
 
-  QDir savesDir(m_Profile.getPath() + "/saves");
+  QDir savesDir(m_Profile.absolutePath() + "/saves");
 
   QStringList filters;
   filters << m_GamePlugin->savegameExtension();
@@ -161,7 +161,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
   if (QMessageBox::question(this, tr("Confirm"),
       tr("Copy all save games of character \"%1\" to the profile?").arg(selectedCharacter),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QString destination = m_Profile.getPath().append("/saves");
+    QString destination = m_Profile.absolutePath() + "/saves";
     OverwriteMode overwriteMode = OVERWRITE_ASK;
 
     for (std::vector<SaveGame*>::const_iterator iter = m_GlobalSaves.begin();
@@ -170,7 +170,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
         QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
-          QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
+          QString destinationFile = destination + "/" + fileInfo.fileName();
           if (QFile::exists(destinationFile)) {
             if (testOverwrite(overwriteMode, destinationFile)) {
               QFile::remove(destinationFile);
@@ -199,7 +199,7 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
   if (QMessageBox::question(this, tr("Confirm"),
       tr("Copy all save games of character \"%1\" to the profile?").arg(selectedCharacter),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    QString destination = m_Profile.getPath().append("/saves");
+    QString destination = m_Profile.absolutePath() + "/saves";
     OverwriteMode overwriteMode = OVERWRITE_ASK;
     for (std::vector<SaveGame*>::const_iterator iter = m_GlobalSaves.begin();
          iter != m_GlobalSaves.end(); ++iter) {
@@ -207,7 +207,7 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
         QStringList files = (*iter)->saveFiles();
         foreach (const QString &file, files) {
           QFileInfo fileInfo(file);
-          QString destinationFile = destination.mid(0).append("/").append(fileInfo.fileName());
+          QString destinationFile = destination + "/" + fileInfo.fileName();
           if (QFile::exists(destinationFile)) {
             if (testOverwrite(overwriteMode, destinationFile)) {
               QFile::remove(destinationFile);

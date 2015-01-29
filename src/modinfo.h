@@ -1087,7 +1087,7 @@ public:
   virtual void endorse(bool) {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;
-  virtual QString internalName() const { return name() + INT_IDENTIFIER; }
+  virtual QString internalName() const { return name(); }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
   virtual QString absolutePath() const;
