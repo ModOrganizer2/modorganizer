@@ -2185,7 +2185,7 @@ void MainWindow::removeMod_clicked()
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
         foreach (QString name, modNames) {
-          m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name));
+          m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
         }
       }
     } else {

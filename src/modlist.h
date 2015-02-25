@@ -95,7 +95,7 @@ public:
    * @brief remove the specified mod without asking for confirmation
    * @param row the row to remove
    */
-  void removeRowForce(int row);
+  void removeRowForce(int row, const QModelIndex &parent);
 
   void notifyChange(int rowStart, int rowEnd = -1);
   static QString getColumnName(int column);
@@ -141,7 +141,7 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
   virtual QStringList mimeTypes() const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-  virtual void removeRow(int row, const QModelIndex &parent);
+  virtual bool removeRows(int row, int count, const QModelIndex &parent);
 
   virtual QModelIndex index(int row, int column,
                             const QModelIndex &parent = QModelIndex()) const;

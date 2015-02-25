@@ -848,27 +848,25 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
 
 }
 
-
-void ModList::removeRowForce(int row)
+void ModList::removeRowForce(int row, const QModelIndex &parent)
 {
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
     return;
   }
   if (m_Profile == nullptr) return;
 
-  m_Profile->setModEnabled(row, false);
-
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
 
   bool wasEnabled = m_Profile->modEnabled(row);
-  beginRemoveRows(QModelIndex(), row, row);
 
+  beginRemoveRows(parent, row, row);
+  m_Profile->setModEnabled(row, false);
   m_Profile->cancelWriteModlist(); // don't write modlist while we're changing it
   ModInfo::removeMod(row);
   m_Profile->refreshModStatus();  // removes the mod from the status list
-  m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
-
   endRemoveRows();
+  m_Profile->writeModlist();      // this ensures the modified list gets written back before new mods can be installed
+
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
   }
@@ -877,24 +875,35 @@ void ModList::removeRowForce(int row)
 }
 
 
-void ModList::removeRow(int row, const QModelIndex&)
+bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 {
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
-    return;
+    return false;
   }
-  if (m_Profile == nullptr) return;
-
-  m_Profile->setModEnabled(row, false);
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  if (!modInfo->isRegular()) return;
-
-  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
-                         QMessageBox::Yes | QMessageBox::No);
-
-  if (confirmBox.exec() == QMessageBox::Yes) {
-    removeRowForce(row);
+  if (m_Profile == nullptr) {
+    return false;
   }
+
+  bool success = false;
+
+  for (int i = 0; i < count; ++i) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(row + i);
+    if (!modInfo->isRegular()) {
+      continue;
+    }
+
+    success = true;
+
+    QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"),
+                           tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
+                           QMessageBox::Yes | QMessageBox::No);
+
+    if (confirmBox.exec() == QMessageBox::Yes) {
+      m_Profile->setModEnabled(row + i, false);
+      removeRowForce(row + i, parent);
+    }
+  }
+  return success;
 }
 
 
