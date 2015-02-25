@@ -46,8 +46,7 @@ void reportError(LPCWSTR format, ...)
   va_list argList;
   va_start(argList, format);
 
-
-  _vsnwprintf(buffer, 1024, format, argList);
+  _vsnwprintf_s(buffer, 1024, format, argList);
   va_end(argList);
 
   MessageBoxW(nullptr, buffer, L"Error", MB_OK | MB_ICONERROR);

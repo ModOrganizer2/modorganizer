@@ -8,7 +8,6 @@ SUBDIRS = bsatk \
           archive \
           helper \
           plugins \
-          proxydll \
           nxmhandler \
           BossDummy \
           pythonRunner \

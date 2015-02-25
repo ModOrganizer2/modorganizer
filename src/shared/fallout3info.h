@@ -43,38 +43,7 @@ public:
 
   virtual std::wstring getGameName() const { return L"Fallout 3"; }
   virtual std::wstring getGameShortName() const { return L"Fallout3"; }
-/*
-  virtual std::wstring getInvalidationBSA()
-  {
-    return L"Fallout - Invalidation.bsa";
-  }
 
-  virtual bool isInvalidationBSA(const std::wstring &bsaName)
-  {
-    static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
-
-    for (int i = 0; invalidation[i] != nullptr; ++i) {
-      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  virtual std::vector<std::wstring> getVanillaBSAs()
-  {
-    return boost::assign::list_of (L"Fallout - Textures.bsa")
-        (L"Fallout - Meshes.bsa")
-        (L"Fallout - Voices.bsa")
-        (L"Fallout - Sound.bsa")
-        (L"Fallout - MenuVoices.bsa")
-        (L"Fallout - Misc.bsa");
-  }
-
-  virtual std::vector<std::wstring> getPrimaryPlugins()
-  {
-    return boost::assign::list_of(L"fallout3.esm");
-  }*/
   virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 

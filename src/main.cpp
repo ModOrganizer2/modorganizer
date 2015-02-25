@@ -69,6 +69,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSplashScreen>
 #include <QDirIterator>
 #include <QDesktopServices>
+#include <QLibraryInfo>
 #include <ShellAPI.h>
 #include <eh.h>
 #include <windows_error.h>
@@ -146,7 +147,7 @@ bool bootstrap()
 
 bool isNxmLink(const QString &link)
 {
-  return link.left(6).toLower() == "nxm://";
+  return link.startsWith("nxm://", Qt::CaseInsensitive);
 }
 
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
@@ -166,7 +167,6 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   if (dbgDLL) {
     FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
     if (funcDump) {
-
       if (QMessageBox::question(nullptr, QObject::tr("Woops"),
                             QObject::tr("ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file "
                                "(%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. "

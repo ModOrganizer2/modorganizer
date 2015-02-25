@@ -49,7 +49,7 @@ static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 
   ::ShellExecuteExW(&execInfo);
 
-  if (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0) {
+  if ((execInfo.hProcess == 0) || (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0)) {
     reportError(QObject::tr("helper failed"));
     return false;
   }

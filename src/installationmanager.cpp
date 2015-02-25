@@ -70,7 +70,8 @@ static T resolveFunction(QLibrary &lib, const char *name)
 
 
 InstallationManager::InstallationManager()
-  : m_InstallationProgress(nullptr)
+  : m_ParentWidget(nullptr)
+  , m_InstallationProgress(nullptr)
   , m_SupportedExtensions({ "zip", "rar", "7z", "fomod", "001" })
 {
   QLibrary archiveLib("dlls\\archive.dll");
@@ -441,7 +442,6 @@ QString InstallationManager::generateBackupName(const QString &directoryName) co
 bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *merge) const
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
-
   while (QDir(targetDirectory).exists()) {
     QueryOverwriteDialog overwriteDialog(m_ParentWidget);
     if (overwriteDialog.exec()) {
@@ -644,7 +644,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   int categoryID = 0;
   QString repository = "Nexus";
 
-  QString metaName = fileName.mid(0).append(".meta");
+  QString metaName = fileName + ".meta";
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
     modID = metaFile.value("modID", 0).toInt();
@@ -697,8 +697,8 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       });
 
   foreach (IPluginInstaller *installer, m_Installers) {
-    // don't use inactive installers
-    if (!installer->isActive()) {
+    // don't use inactive installers (installer can't be null here but vc static code analysis thinks it could)
+    if ((installer == nullptr) || !installer->isActive()) {
       continue;
     }
 

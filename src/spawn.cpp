@@ -61,7 +61,7 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, b
     _snwprintf(commandLine, length, L"\"%ls\" %ls", binary, arguments);
   } else {
     commandLine = new wchar_t[length];
-    _snwprintf(commandLine, length, L"\"%ls\"", binary);
+    _snwprintf_s(commandLine, length, _TRUNCATE, L"\"%ls\"", binary);
   }
 
   QString moPath = QCoreApplication::applicationDirPath();
@@ -75,8 +75,8 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, b
 
   {
     boost::scoped_array<TCHAR> newPath(new TCHAR[offset + moPath.length() + 2]);
-    _tcsncpy(newPath.get(), oldPath.get(), offset - 1);
-    newPath.get()[offset - 1] = L'\0';
+    _tcsncpy(newPath.get(), oldPath.get(), offset);
+    newPath.get()[offset] = '\0';
     _tcsncat(newPath.get(), TEXT(";"), 1);
     _tcsncat(newPath.get(), ToWString(QDir::toNativeSeparators(moPath)).c_str(), moPath.length());
 

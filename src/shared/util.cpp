@@ -55,7 +55,10 @@ std::string ToString(const std::wstring &source, bool utf8)
 {
   std::string result;
   if (source.length() > 0) {
-    UINT codepage = utf8 ? CP_UTF8 : GetACP();
+    UINT codepage = CP_UTF8;
+    if (!utf8) {
+      codepage = AreFileApisANSI() ? GetACP() : GetOEMCP();
+    }
     int sizeRequired = ::WideCharToMultiByte(codepage, 0, &source[0], -1, nullptr, 0, nullptr, nullptr);
     if (sizeRequired == 0) {
       throw windows_error("failed to convert string to multibyte");
@@ -73,7 +76,10 @@ std::wstring ToWString(const std::string &source, bool utf8)
 {
   std::wstring result;
   if (source.length() > 0) {
-    UINT codepage = utf8 ? CP_UTF8 : GetACP();
+    UINT codepage = CP_UTF8;
+    if (!utf8) {
+      codepage = AreFileApisANSI() ? GetACP() : GetOEMCP();
+    }
     int sizeRequired = ::MultiByteToWideChar(codepage, 0, source.c_str(), source.length(), nullptr, 0);
     if (sizeRequired == 0) {
       throw windows_error("failed to convert string to wide character");
@@ -113,7 +119,7 @@ std::wstring ToLower(const std::wstring &text)
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
 {
-  DWORD handle;
+  DWORD handle = 0UL;
   DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
   if (size == 0) {
     throw windows_error("failed to determine file version info size");
@@ -121,6 +127,7 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
 
   void *buffer = new char[size];
   try {
+    handle = 0UL;
     if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer)) {
       throw windows_error("failed to determine file version info");
     }

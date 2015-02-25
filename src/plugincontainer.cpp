@@ -138,7 +138,8 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     IPluginProxy *proxy = qobject_cast<IPluginProxy*>(plugin);
     if (verifyPlugin(proxy)) {
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
-      QStringList pluginNames = proxy->pluginList(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
+      QStringList pluginNames = proxy->pluginList(
+            QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       foreach (const QString &pluginName, pluginNames) {
         try {
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
@@ -146,11 +147,13 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
             if (registerPlugin(proxiedPlugin, pluginName)) {
               qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
             } else {
-              qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
+              qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
+                       "you have to update it or delete it if no update exists.",
+                       qPrintable(pluginName));
             }
           }
         } catch (const std::exception &e) {
-          reportError(QObject::tr("failed to init plugin %1: %2").arg(pluginName).arg(e.what()));
+          reportError(QObject::tr("failed to initialize plugin %1: %2").arg(pluginName).arg(e.what()));
         }
       }
       return true;
@@ -199,7 +202,7 @@ void PluginContainer::unloadPlugins()
   while (!m_PluginLoaders.empty()) {
     QPluginLoader *loader = m_PluginLoaders.back();
     m_PluginLoaders.pop_back();
-    if (!loader->unload()) {
+    if ((loader != nullptr) && !loader->unload()) {
       qDebug("failed to unload %s: %s", qPrintable(loader->fileName()), qPrintable(loader->errorString()));
     }
     delete loader;

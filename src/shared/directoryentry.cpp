@@ -235,7 +235,8 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
     m_Origin = origin;
     m_FileTime = fileTime;
     m_Archive = archive;
-  } else if (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority()) {
+  } else if ((m_Parent != nullptr)
+             && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())) {
     if (std::find(m_Alternatives.begin(), m_Alternatives.end(), m_Origin) == m_Alternatives.end()) {
       m_Alternatives.push_back(m_Origin);
     }
@@ -253,7 +254,8 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
         // already an origin
         return;
       }
-      if (m_Parent->getOriginByID(*iter).getPriority() < m_Parent->getOriginByID(origin).getPriority()) {
+      if ((m_Parent != nullptr)
+          && (m_Parent->getOriginByID(*iter).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
         m_Alternatives.insert(iter, origin);
         found = true;
         break;
@@ -508,7 +510,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
 {
   WIN32_FIND_DATAW findData;
 
-  _snwprintf(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, L"\\*");
+  _snwprintf_s(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, _TRUNCATE, L"\\*");
 
   HANDLE searchHandle = nullptr;
 

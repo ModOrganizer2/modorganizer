@@ -135,7 +135,6 @@ void StackData::initTrace() {
   }
 }
 
-#pragma warning( enable : 4748 )
 
 bool MOShared::operator==(const StackData &LHS, const StackData &RHS) {
   if (LHS.m_Count != RHS.m_Count) {

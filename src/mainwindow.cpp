@@ -138,8 +138,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-
-
 MainWindow::MainWindow(const QString &exeName
                        , QSettings &initSettings
                        , OrganizerCore &organizerCore
@@ -2172,7 +2170,6 @@ void MainWindow::removeMod_clicked()
       QString mods;
       QStringList modNames;
       foreach (QModelIndex idx, selection->selectedRows()) {
-//        QString name = ModInfo::getByIndex(m_ModListGroupProxy->mapToSource(idx).row())->name();
         QString name = idx.data().toString();
         if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
           continue;
@@ -3363,7 +3360,9 @@ void MainWindow::installTranslator(const QString &name)
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if ((m_CurrentLanguage != "en-US") && (m_CurrentLanguage != "en_US")) {
+    if ((m_CurrentLanguage != "en-US")
+        && (m_CurrentLanguage != "en_US")
+        && (m_CurrentLanguage != "en-GB")) {
       qDebug("localization file %s not found", qPrintable(fileName));
     } // we don't actually expect localization files for english
   }
