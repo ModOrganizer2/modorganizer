@@ -301,7 +301,7 @@ private:
   SignalModStateChanged m_ModStateChanged;
   SignalModMoved m_ModMoved;
 
-  std::map<ModInfo::EContent, std::tuple<QIcon, QString, QString> > m_ContentIcons;
+  std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
 
 };
 

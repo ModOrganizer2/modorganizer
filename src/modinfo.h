@@ -72,6 +72,7 @@ public:
     CONTENT_PLUGIN,
     CONTENT_TEXTURE,
     CONTENT_MESH,
+    CONTENT_BSA,
     CONTENT_INTERFACE,
     CONTENT_MUSIC,
     CONTENT_SOUND,
@@ -965,6 +966,9 @@ private:
   EEndorsedState m_EndorsedState;
 
   NexusBridge m_NexusBridge;
+
+  mutable std::vector<ModInfo::EContent> m_CachedContent;
+  mutable QTime m_LastContentCheck;
 
 };
 

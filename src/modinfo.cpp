@@ -90,6 +90,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_PLUGIN:    return tr("Plugins");
     case CONTENT_TEXTURE:   return tr("Textures");
     case CONTENT_MESH:      return tr("Meshes");
+    case CONTENT_BSA:       return tr("BSA");
     case CONTENT_INTERFACE: return tr("UI Changes");
     case CONTENT_MUSIC:     return tr("Music");
     case CONTENT_SOUND:     return tr("Sound Effects");
@@ -151,7 +152,6 @@ bool ModInfo::removeMod(unsigned int index)
   if (index >= s_Collection.size()) {
     throw MyException(tr("invalid index %1").arg(index));
   }
-
   // update the indices first
   ModInfo::Ptr modInfo = s_Collection[index];
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));

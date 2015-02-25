@@ -164,12 +164,14 @@ QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &cont
 
 QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const
 {
-  QString result("<table>");
+  QString result("<table cellspacing=7>");
 
   std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
   for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
     if (contentsSet.find(iter->first) != contentsSet.end()) {
-      result.append(QString("<tr><td><img src=\"%1\" width=32/></td><td valign=\"middle\">%2</td></tr>").arg(std::get<1>(iter->second)).arg(std::get<2>(iter->second)));
+      result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
+                            "<td valign=\"middle\">%2</td></tr>")
+                    .arg(std::get<0>(iter->second)).arg(std::get<1>(iter->second)));
     }
   }
   result.append("</table>");
@@ -968,17 +970,18 @@ QString ModList::getColumnToolTip(int column)
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
-                                 "<img src=\":/MO/gui/content/plugin\" width=32/>Game plugins (esp/esm)<br>"
-                                 "<img src=\":/MO/gui/content/interface\" width=32/>interface<br>"
-                                 "<img src=\":/MO/gui/content/mesh\" width=32/>Meshes<br>"
-                                 "<img src=\":/MO/gui/content/texture\" width=32/>Textures<br>"
-                                 "<img src=\":/MO/gui/content/sound\" width=32/>Sounds<br>"
-                                 "<img src=\":/MO/gui/content/music\" width=32/>Music<br>"
-                                 "<img src=\":/MO/gui/content/string\" width=32/>Strings<br>"
-                                 "<img src=\":/MO/gui/content/script\" width=32/>Scripts (Papyrus)<br>"
-                                 "<img src=\":/MO/gui/content/skse\" width=32/>Script Extender plugins<br>"
-                                 "<img src=\":/MO/gui/content/skyproc\" width=32/>SkyProc Patcher<br>"
-                                 );
+                                 "<table cellspacing=7>"
+                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm)</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/string\" width=32/></td><td>Strings</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/script\" width=32/></td><td>Scripts (Papyrus)</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</tr>"
+                                 "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");
   }
