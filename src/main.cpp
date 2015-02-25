@@ -323,8 +323,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  application.setLibraryPaths(QStringList() << (application.applicationDirPath() + "/dlls"));
-
   SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
   if (!HaveWriteAccess(ToWString(application.applicationDirPath()))) {
@@ -351,6 +349,9 @@ int main(int argc, char *argv[])
   splash.show();
 
   { // extend path to include dll directory so plugins don't need a manifest
+    // (using AddDllDirectory would be an alternative to this but it seems fairly complicated esp.
+    //  since it isn't easily accessible on Windows < 8
+    //  SetDllDirectory replaces other search directories and this seems to propagate to child processes)
     static const int BUFSIZE = 4096;
 
     boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);

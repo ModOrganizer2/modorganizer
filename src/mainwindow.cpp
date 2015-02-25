@@ -319,9 +319,6 @@ MainWindow::MainWindow(const QString &exeName
   m_Tutorial.expose("modList", m_OrganizerCore.modList());
   m_Tutorial.expose("espList", m_OrganizerCore.pluginList());
 
-  // before we start loading plugins we, add the dll path to the dll search order
-  ::SetDllDirectoryW(ToWString(QDir::toNativeSeparators(qApp->applicationDirPath() + "/dlls")).c_str());
-
   m_OrganizerCore.setUserInterface(this, this);
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
