@@ -3053,7 +3053,8 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
   std::vector<int> content;
   foreach (const QModelIndex &index, indices) {
     int filterType = index.data(Qt::UserRole + 1).toInt();
-    if (filterType == ModListSortProxy::TYPE_CATEGORY) {
+    if ((filterType == ModListSortProxy::TYPE_CATEGORY)
+        || (filterType == ModListSortProxy::TYPE_SPECIAL)) {
       int categoryId = index.data(Qt::UserRole).toInt();
       if (categoryId != CategoryFactory::CATEGORY_NONE) {
         categories.push_back(categoryId);
