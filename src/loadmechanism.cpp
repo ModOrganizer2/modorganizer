@@ -65,7 +65,7 @@ void LoadMechanism::removeHintFile(QDir &targetDirectory)
 bool LoadMechanism::isDirectLoadingSupported()
 {
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-  if (game->gameName().compare("oblivion", Qt::CaseInsensitive)) {
+  if (game->gameName().compare("oblivion", Qt::CaseInsensitive) == 0) {
     // oblivion can be loaded directly if it's not the steam variant
     return !game->gameDirectory().exists("steam_api.dll");
   } else {
@@ -87,8 +87,13 @@ bool LoadMechanism::isScriptExtenderSupported()
 
 bool LoadMechanism::isProxyDLLSupported()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-  return game->gameDirectory().exists(QString::fromStdWString(AppConfig::proxyDLLTarget()));
+  // using steam_api.dll as the proxy is way too game specific as many games will have different
+  // versions of that game.
+  // plus: the proxy dll hasn't been working for at least the whole 1.12.x versions of MO and
+  // noone reported it so why maintain an unused feature?
+  return false;
+/*  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  return game->gameDirectory().exists(QString::fromStdWString(AppConfig::proxyDLLTarget()));*/
 }
 
 
