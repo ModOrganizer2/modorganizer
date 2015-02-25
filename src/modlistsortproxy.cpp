@@ -135,11 +135,22 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
         lt = leftMod->getFlags().size() < rightMod->getFlags().size();
     } break;
     case ModList::COL_CONTENT: {
-      int lLen = leftMod->getContents().size();
-      int rLen = rightMod->getContents().size();
-      if (lLen != rLen) {
-        lt = lLen < rLen;
+      std::vector<ModInfo::EContent> lContent = leftMod->getContents();
+      std::vector<ModInfo::EContent> rContent = rightMod->getContents();
+      if (lContent.size() != rContent.size()) {
+        lt = lContent.size() < rContent.size();
       }
+
+      int lValue = 0;
+      int rValue = 0;
+      for (ModInfo::EContent content : lContent) {
+        lValue += 2 << (unsigned int)content;
+      }
+      for (ModInfo::EContent content : rContent) {
+        rValue += 2 << (unsigned int)content;
+      }
+
+      lt = lValue < rValue;
     } break;
     case ModList::COL_NAME: {
       int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
