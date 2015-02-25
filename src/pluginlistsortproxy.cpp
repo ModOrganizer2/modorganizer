@@ -52,11 +52,14 @@ void PluginListSortProxy::setEnabledColumns(unsigned int columns)
 
 Qt::ItemFlags PluginListSortProxy::flags(const QModelIndex &modelIndex) const
 {
-  Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
-/*  if (sortColumn() == PluginList::COL_NAME) {
-    flags &= ~Qt::ItemIsDragEnabled;
-  }*/
-  return flags;
+/*  Qt::ItemFlags flags;
+  QModelIndex index = mapToSource(modelIndex);
+  if (index.isValid()) {
+    flags = sourceModel()->flags(index);
+  }
+  return flags;*/
+
+  return sourceModel()->flags(mapToSource(modelIndex));
 }
 
 
