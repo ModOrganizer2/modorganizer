@@ -40,7 +40,7 @@ public slots:
 
 private:
 
-  virtual QList<QIcon> getIcons(const QModelIndex &index) const = 0;
+  virtual QList<QString> getIcons(const QModelIndex &index) const = 0;
   virtual size_t getNumIcons(const QModelIndex &index) const = 0;
 
 

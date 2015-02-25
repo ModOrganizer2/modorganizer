@@ -859,28 +859,38 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 {
-  std::vector<EContent> result;
-  QDir dir(absolutePath());
-  if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
-    result.push_back(CONTENT_PLUGIN);
+  QTime now = QTime::currentTime();
+  if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
+    m_CachedContent.clear();
+    QDir dir(absolutePath());
+    if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+      m_CachedContent.push_back(CONTENT_PLUGIN);
+    }
+    if (dir.entryList(QStringList() << "*.bsa").size() > 0) {
+      m_CachedContent.push_back(CONTENT_BSA);
+    }
+
+    ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+
+    if (extender != nullptr) {
+      QString sePluginPath = extender->name() + "/plugins";
+      if (dir.exists(sePluginPath)) m_CachedContent.push_back(CONTENT_SKSE);
+    }
+    if (dir.exists("textures"))   m_CachedContent.push_back(CONTENT_TEXTURE);
+    if (dir.exists("meshes"))     m_CachedContent.push_back(CONTENT_MESH);
+    if (dir.exists("interface")
+        || dir.exists("menus"))   m_CachedContent.push_back(CONTENT_INTERFACE);
+    if (dir.exists("music"))      m_CachedContent.push_back(CONTENT_MUSIC);
+    if (dir.exists("sound"))      m_CachedContent.push_back(CONTENT_SOUND);
+    if (dir.exists("scripts"))    m_CachedContent.push_back(CONTENT_SCRIPT);
+    if (dir.exists("strings"))    m_CachedContent.push_back(CONTENT_STRING);
+    if (dir.exists("SkyProc Patchers"))  m_CachedContent.push_back(CONTENT_SKYPROC);
+
+    m_LastContentCheck = QTime::currentTime();
   }
 
-  ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+  return m_CachedContent;
 
-  if (extender != nullptr) {
-    QString sePluginPath = extender->name() + "/plugins";
-    if (dir.exists(sePluginPath)) result.push_back(CONTENT_SKSE);
-  }
-  if (dir.exists("textures"))   result.push_back(CONTENT_TEXTURE);
-  if (dir.exists("meshes"))     result.push_back(CONTENT_MESH);
-  if (dir.exists("interface")
-      || dir.exists("menus"))   result.push_back(CONTENT_INTERFACE);
-  if (dir.exists("music"))      result.push_back(CONTENT_MUSIC);
-  if (dir.exists("sound"))      result.push_back(CONTENT_SOUND);
-  if (dir.exists("scripts"))    result.push_back(CONTENT_SCRIPT);
-  if (dir.exists("strings"))    result.push_back(CONTENT_STRING);
-  if (dir.exists("SkyProc Patchers"))  result.push_back(CONTENT_SKYPROC);
-  return result;
 }
 
 

@@ -24,7 +24,7 @@ public:
 public slots:
   void columnResized(int logicalIndex, int oldSize, int newSize);
 private:
-  virtual QList<QIcon> getIcons(const QModelIndex &index) const;
+  virtual QList<QString> getIcons(const QModelIndex &index) const;
   virtual size_t getNumIcons(const QModelIndex &index) const;
 private:
   int m_Role;

@@ -58,16 +58,17 @@ ModList::ModList(QObject *parent)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(QIcon(":/MO/gui/content/plugin"), ":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
-  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(QIcon(":/MO/gui/content/interface"), ":/MO/gui/content/interface", tr("Interface"));
-  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(QIcon(":/MO/gui/content/mesh"), ":/MO/gui/content/mesh", tr("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(QIcon(":/MO/gui/content/music"), ":/MO/gui/content/music", tr("Music"));
-  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(QIcon(":/MO/gui/content/script"), ":/MO/gui/content/script", tr("Scripts (Papyrus)"));
-  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(QIcon(":/MO/gui/content/skse"), ":/MO/gui/content/skse", tr("Script Extender Plugin"));
-  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(QIcon(":/MO/gui/content/skyproc"), ":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(QIcon(":/MO/gui/content/sound"), ":/MO/gui/content/sound", tr("Sound"));
-  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(QIcon(":/MO/gui/content/string"), ":/MO/gui/content/string", tr("Strings"));
-  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(QIcon(":/MO/gui/content/texture"), ":/MO/gui/content/texture", tr("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
+  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
+  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
+  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(":/MO/gui/content/music", tr("Music"));
+  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
+  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
+  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound"));
+  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(":/MO/gui/content/string", tr("Strings"));
+  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
 }
 
 ModList::~ModList()
@@ -155,7 +156,7 @@ QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &cont
     if (contentsSet.find(iter->first) != contentsSet.end()) {
       result.append(std::get<0>(iter->second));
     } else {
-      result.append(QIcon());
+      result.append(QString());
     }
   }
   return result;

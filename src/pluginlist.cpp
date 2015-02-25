@@ -866,22 +866,22 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     QVariantList result;
     QString nameLower = m_ESPs[index].m_Name.toLower();
     if (m_ESPs[index].m_MasterUnset.size() > 0) {
-      result.append(QIcon(":/MO/gui/warning"));
+      result.append(":/MO/gui/warning");
     }
     if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
-      result.append(QIcon(":/MO/gui/locked"));
+      result.append(":/MO/gui/locked");
     }
     auto bossInfoIter = m_AdditionalInfo.find(nameLower);
     if (bossInfoIter != m_AdditionalInfo.end()) {
       if (!bossInfoIter->second.m_Messages.isEmpty()) {
-        result.append(QIcon(":/MO/gui/information"));
+        result.append(":/MO/gui/information");
       }
     }
     if (m_ESPs[index].m_HasIni) {
-      result.append(QIcon(":/MO/gui/attachment"));
+      result.append(":/MO/gui/attachment");
     }
     if (m_ESPs[index].m_IsDummy && m_ESPs[index].m_Enabled && !m_ESPs[index].m_HasIni) {
-      result.append(QIcon(":/MO/gui/edit_clear"));
+      result.append(":/MO/gui/edit_clear");
     }
     return result;
   }

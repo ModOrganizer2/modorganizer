@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QPainter>
 #include <QDebug>
+#include <QPixmapCache>
 
 
 IconDelegate::IconDelegate(QObject *parent)
@@ -34,7 +35,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 {
   QStyledItemDelegate::paint(painter, option, index);
 
-  QList<QIcon> icons = getIcons(index);
+  QList<QString> icons = getIcons(index);
 
   int x = 4;
   painter->save();
@@ -43,8 +44,14 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   iconWidth = std::min(16, iconWidth);
 
   painter->translate(option.rect.topLeft());
-  for (auto iter = icons.begin(); iter != icons.end(); ++iter) {
-    painter->drawPixmap(x, 2, iconWidth, iconWidth, iter->pixmap(QSize(iconWidth, iconWidth)));
+  for (const QString &iconId : icons) {
+    QPixmap icon;
+    QString fullIconId = QString("%1_%2").arg(iconId).arg(iconWidth);
+    if (!QPixmapCache::find(fullIconId, &icon)) {
+      icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
+      QPixmapCache::insert(fullIconId, icon);
+    }
+    painter->drawPixmap(x, 2, iconWidth, iconWidth, icon);
     x += iconWidth + 4;
   }
 
