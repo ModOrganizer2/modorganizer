@@ -87,10 +87,12 @@ zlib (http://www.zlib.net/)
 Python 2.7 (32-bit)
 - only for pythonrunner
 
-PyQt4 for Python 2.7
+PyQt4 for Python 2.7 (http://www.riverbankcomputing.co.uk/software/pyqt/download)
 - tested: 4.10
 - only for pythonrunner
 
+SIP (http://www.riverbankcomputing.com/software/sip/download)
+- presumably only for pythonrunner as it's needed for PyQT4
 
 Recommended:
 ------------
@@ -170,6 +172,8 @@ Troubleshooting (thanks to Ross):
 	c) currently, there are references to zlibstatic in the following 2 project files:
 		./bsatk/bsatk.pro
 		./hookdll/hookdll.pro
+
+	Please note if building this, you need to switch OFF -DZLIB_WINAPI ...
 
 2) After building, I try to open {MOPROJECTPATH}\outputd\ModOragnizer.exe and get this error
 	"The program can't start because QtDeclaratived4.dll is missing from your computer. Try reinstalling the program to fix this problem."
