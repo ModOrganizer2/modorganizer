@@ -10,7 +10,7 @@ Please note that if you only want to work on and build a plugin you can save you
 Overview:
 ---------
 
-As of Juli 2014 MO consists of the following subprojects:
+As of July 2014 MO consists of the following subprojects:
 - organizer: The main userinterface. heavy usage of various libraries
 - hookdll: core library of the virtual file system
 - uibase: interop between plugins and the main application as well as some reusable functionality
