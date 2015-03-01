@@ -317,7 +317,8 @@ QString PluginContainer::fullDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_PLUGINSNOTLOADED: {
-      QString result = tr("The following plugins could not be loaded. The reason may be missing dependencies (i.e. python) or an outdated version:") + "<ul>";
+      QString result = tr("The following plugins could not be loaded. The reason may be missing "
+                          "dependencies (i.e. python) or an outdated version:") + "<ul>";
       for (const QString &plugin : m_FailedPlugins) {
         result += "<li>" + plugin + "</li>";
       }

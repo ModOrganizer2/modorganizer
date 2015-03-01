@@ -24,6 +24,7 @@
 #include <QDialogButtonBox>
 #include <QApplication>
 #include <Psapi.h>
+#include <functional>
 
 
 using namespace MOShared;
@@ -126,6 +127,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   , m_AskForNexusPW(false)
   , m_DirectoryUpdate(false)
   , m_ArchivesInit(false)
+  , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
 {
   m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
   m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
@@ -140,12 +142,13 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(&m_DirectoryRefresher, SIGNAL(refreshed()), this, SLOT(directory_refreshed()));
 
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this, SLOT(removeOrigin(QString)));
-  connect(&m_PluginList, SIGNAL(saveTimer()), this, SLOT(savePluginList()));
 
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+
+  connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter, &DelayedFileWriterBase::write);
 
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
@@ -319,11 +322,11 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *wid
   m_UserInterface = userInterface;
 
   if (widget != nullptr) {
-    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex,int)), widget, SLOT(modorder_changed()));
+//    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget, SLOT(modorder_changed()));
+    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget, SLOT(modlistChanged(QModelIndex, int)));
     connect(&m_ModList, SIGNAL(showMessage(QString)), widget, SLOT(showMessage(QString)));
     connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), widget, SLOT(modRenamed(QString,QString)));
     connect(&m_ModList, SIGNAL(modUninstalled(QString)), widget, SLOT(modRemoved(QString)));
-    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget, SLOT(modlistChanged(QModelIndex, int)));
     connect(&m_ModList, SIGNAL(removeSelectedMods()), widget, SLOT(removeMod_clicked()));
     connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), widget, SLOT(displayColumnSelection(QPoint)));
     connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), widget, SLOT(fileMoved(QString, QString, QString)));
@@ -920,7 +923,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
 
   // need to make sure all data is saved before we start the application
   if (m_CurrentProfile != nullptr) {
-    m_CurrentProfile->writeModlistNow(true);
+    m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
 
   // TODO: should also pass arguments
@@ -1066,7 +1069,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
 {
   // don't lose changes!
   if (saveChanges) {
-    m_CurrentProfile->writeModlistNow(true);
+    m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
 
@@ -1079,7 +1082,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
 void OrganizerCore::refreshESPList()
 {
-  m_CurrentProfile->writeModlist();
+  m_CurrentProfile->modlistWriter().write();
 
   // clear list
   try {
@@ -1151,8 +1154,7 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   }
   m_PluginList.refreshLoadOrder();
   // immediately save affected lists
-  savePluginList();
-//  refreshBSAList();
+  m_PluginListsWriter.writeImmediately(false);
 }
 
 void OrganizerCore::updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo)
@@ -1172,7 +1174,7 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index, ModInfo::P
   // now we need to refresh the bsa list and save it so there is no confusion about what archives are avaiable and active
   refreshBSAList();
   if (m_UserInterface != nullptr) {
-    m_UserInterface->saveArchiveList();
+    m_UserInterface->archivesWriter().write();
   }
   m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(), enabledArchives());
 
@@ -1257,7 +1259,7 @@ std::set<QString> OrganizerCore::enabledArchives()
 void OrganizerCore::refreshDirectoryStructure()
 {
   if (!m_DirectoryUpdate) {
-    m_CurrentProfile->writeModlistNow(true);
+    m_CurrentProfile->modlistWriter().writeImmediately(true);
 
     m_DirectoryUpdate = true;
     std::vector<std::tuple<QString, QString, int> > activeModList = m_CurrentProfile->getActiveMods();
@@ -1447,7 +1449,7 @@ bool OrganizerCore::saveCurrentLists()
   try {
     savePluginList();
     if (m_UserInterface != nullptr) {
-      m_UserInterface->saveArchiveList();
+      m_UserInterface->archivesWriter().write();
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to save load order: %1").arg(e.what()));
@@ -1470,7 +1472,7 @@ void OrganizerCore::prepareStart() {
   if (m_CurrentProfile == nullptr) {
     return;
   }
-  m_CurrentProfile->writeModlist();
+  m_CurrentProfile->modlistWriter().write();
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
   m_Settings.setupLoadMechanism();

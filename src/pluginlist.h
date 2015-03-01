@@ -262,10 +262,7 @@ signals:
   **/
  void esplist_changed();
 
- /**
-  * @brief emitted when the plugin list should be saved
-  */
- void saveTimer();
+ void writePluginsList();
 
 private:
 
@@ -310,8 +307,6 @@ private:
   void setPluginPriority(int row, int &newPriority);
   void changePluginPriority(std::vector<int> rows, int newPriority);
 
-  void startSaveTime();
-
   void testMasters();
 
 private:
@@ -336,13 +331,10 @@ private:
   QTextCodec *m_Utf8Codec;
   QTextCodec *m_LocalCodec;
 
-  mutable QTimer m_SaveTimer;
-
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
 
   QTemporaryFile m_TempFile;
-
 
 };
 

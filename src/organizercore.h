@@ -20,6 +20,7 @@
 #include <iplugingame.h>
 #include <versioninfo.h>
 #include <guessedvalue.h>
+#include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
 #include <QSettings>
 #include <QString>
@@ -123,6 +124,8 @@ public:
   void syncOverwrite();
 
   void createDefaultProfile();
+
+  MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
 
 public:
   MOBase::IGameInfo &gameInfo() const;
@@ -254,6 +257,8 @@ private:
   bool m_AskForNexusPW;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
+
+  MOBase::DelayedFileWriter m_PluginListsWriter;
 
 };
 

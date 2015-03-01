@@ -40,6 +40,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector>
 
 
+class QSortFilterProxyModel;
+
 /**
  * Model presenting an overview of the installed mod
  * This is used in a view in the main window of MO. It combines general information about
@@ -260,6 +262,12 @@ private:
   bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
 
   ModStates state(unsigned int modIndex) const;
+
+  bool moveSelection(QAbstractItemView *itemView, int direction);
+
+  bool deleteSelection(QAbstractItemView *itemView);
+
+  bool toggleSelection(QAbstractItemView *itemView);
 
 private slots:
 

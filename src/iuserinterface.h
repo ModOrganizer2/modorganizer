@@ -5,6 +5,7 @@
 #include "modinfo.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
+#include <delayedfilewriter.h>
 
 
 class IUserInterface
@@ -27,11 +28,12 @@ public:
 
   virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;
 
-  virtual bool saveArchiveList() = 0;
+  virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
 
   virtual void lock() = 0;
   virtual void unlock() = 0;
   virtual bool unlockClicked() = 0;
+
 
 };
 

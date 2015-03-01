@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfo.h"
 #include <iprofile.h>
+#include <delayedfilewriter.h>
 #include <QString>
 #include <QDir>
 #include <QMetaType>
@@ -89,16 +90,7 @@ public:
    **/
   static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin);
 
-  /**
-   * @brief write out the modlist.txt
-   **/
-  void writeModlist() const;
-
-  /**
-   * cancel any potential request to write modlist.txt. This is used to ensure no invalid modlist is
-   * saved while it's being modified
-   */
-  void cancelWriteModlist() const;
+  MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
 
   /**
    * @brief test if this profile uses archive invalidation
@@ -283,7 +275,7 @@ signals:
 
 public slots:
 
-  void writeModlistNow(bool onlyOnTimer = false) const;
+  void writeModlistNow();
 
 private:
 
@@ -310,6 +302,7 @@ private:
   void mergeTweak(const QString &tweakName, const QString &tweakedIni) const;
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
+  void finishChangeStatus() const;
 
 private:
 
@@ -322,7 +315,7 @@ private:
   std::vector<unsigned int> m_ModIndexByPriority;
   unsigned int m_NumRegularMods;
 
-  QTimer *m_SaveTimer;
+  MOBase::DelayedFileWriter m_ModListWriter;
 
 };
 

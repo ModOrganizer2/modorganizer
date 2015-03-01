@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QSettings>
 #include <QTemporaryFile>
+#include <functional>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -43,10 +44,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+
 Profile::Profile()
-  : m_SaveTimer(nullptr)
+  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
-  initTimer();
 }
 
 void Profile::touchFile(QString fileName)
@@ -58,10 +59,9 @@ void Profile::touchFile(QString fileName)
 }
 
 Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
-  : m_SaveTimer(nullptr)
+  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
   , m_GamePlugin(gamePlugin)
 {
-  initTimer();
   QString profilesDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath());
   QDir profileBase(profilesDir);
 
@@ -100,10 +100,10 @@ Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSe
 
 
 Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
-  : m_Directory(directory), m_SaveTimer(nullptr)
+  : m_Directory(directory)
+  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
   assert(gamePlugin != nullptr);
-  initTimer();
 
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
@@ -124,52 +124,24 @@ Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
 
 Profile::Profile(const Profile &reference)
   : m_Directory(reference.m_Directory)
-  , m_SaveTimer(nullptr)
+  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
-  initTimer();
   refreshModStatus();
 }
 
 
 Profile::~Profile()
 {
-  writeModlistNow();
+  m_ModListWriter.writeImmediately(true);
 }
-
-
-void Profile::initTimer()
-{
-  m_SaveTimer = new QTimer(this);
-  m_SaveTimer->setSingleShot(true);
-  connect(m_SaveTimer, SIGNAL(timeout()), this, SLOT(writeModlistNow()));
-}
-
 
 bool Profile::exists() const
 {
   return m_Directory.exists();
 }
 
-
-void Profile::writeModlist() const
+void Profile::writeModlistNow()
 {
-  if (!m_SaveTimer->isActive()) {
-    m_SaveTimer->start(2000);
-  }
-}
-
-
-void Profile::cancelWriteModlist() const
-{
-  m_SaveTimer->stop();
-}
-
-
-void Profile::writeModlistNow(bool onlyOnTimer) const
-{
-  if (onlyOnTimer && !m_SaveTimer->isActive()) return;
-
-  m_SaveTimer->stop();
   if (!m_Directory.exists()) return;
 
   try {
@@ -366,7 +338,7 @@ void Profile::refreshModStatus()
   file.close();
   updateIndices();
   if (modStatusModified) {
-    writeModlist();
+    m_ModListWriter.write();
   }
 }
 
@@ -456,7 +428,6 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 }
 
-
 bool Profile::modEnabled(unsigned int index) const
 {
   if (index >= m_ModStatus.size()) {
@@ -508,7 +479,7 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
   m_ModStatus.at(index).m_Priority = newPriorityTemp;
 
   updateIndices();
-  writeModlist();
+  m_ModListWriter.write();
 }
 
 Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin)

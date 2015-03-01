@@ -53,6 +53,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iuserinterface.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
+#include <delayedfilewriter.h>
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #endif
@@ -97,7 +98,7 @@ public:
   void setModListSorting(int index);
   void setESPListSorting(int index);
 
-  bool saveArchiveList();
+  void saveArchiveList();
 
   void registerPluginTool(MOBase::IPluginTool *tool);
   void registerModPage(MOBase::IPluginModPage *modPage);
@@ -120,6 +121,8 @@ public:
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
+
+  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
 public slots:
 
@@ -315,6 +318,8 @@ private:
 
   LockedDialog *m_LockDialog { nullptr };
 
+  MOBase::DelayedFileWriter m_ArchiveListWriter;
+
 private slots:
 
   void showMessage(const QString &message);
@@ -389,7 +394,6 @@ private slots:
   void addPrimaryCategoryCandidates();
 
   void modDetailsUpdated(bool success);
-  void modlistChanged(int row);
 
   void modInstalled(const QString &modName);
 

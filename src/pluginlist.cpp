@@ -69,23 +69,12 @@ static bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo
 
 static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
-/*  QString lhsExtension = LHS.m_Name.right(3).toLower();
-  QString rhsExtension = RHS.m_Name.right(3).toLower();
-  if (lhsExtension != rhsExtension) {
-    return lhsExtension == "esm";
-  }
-
-  return ::CompareFileTime(&LHS.m_Time, &RHS.m_Time) < 0;*/
 }
 
 PluginList::PluginList(QObject *parent)
   : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
-  , m_SaveTimer(this)
 {
-  m_SaveTimer.setSingleShot(true);
-  connect(&m_SaveTimer, SIGNAL(timeout()), this, SIGNAL(saveTimer()));
-
   m_Utf8Codec = QTextCodec::codecForName("utf-8");
   m_LocalCodec = QTextCodec::codecForName("Windows-1252");
 
@@ -238,7 +227,8 @@ void PluginList::enableESP(const QString &name, bool enable)
 
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].m_Enabled = enable;
-    startSaveTime();
+
+    emit writePluginsList();
   } else {
     reportError(tr("esp not found: %1").arg(name));
   }
@@ -252,7 +242,7 @@ void PluginList::enableAll()
     for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
       iter->m_Enabled = true;
     }
-    startSaveTime();
+    emit writePluginsList();
   }
 }
 
@@ -266,7 +256,7 @@ void PluginList::disableAll()
         iter->m_Enabled = false;
       }
     }
-    startSaveTime();
+    emit writePluginsList();
   }
 }
 
@@ -382,7 +372,7 @@ void PluginList::readEnabledFrom(const QString &fileName)
         m_ESPs[iter->second].m_Enabled = true;
       } else {
         qWarning("plugin %s not found", modName.toUtf8().constData());
-        startSaveTime();
+        emit writePluginsList();
       }
     }
   }
@@ -503,8 +493,6 @@ void PluginList::saveTo(const QString &pluginFileName
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
   }
-
-  m_SaveTimer.stop();
 }
 
 
@@ -581,7 +569,8 @@ void PluginList::lockESPIndex(int index, bool lock)
       m_LockedOrder.erase(iter);
     }
   }
-  startSaveTime();
+qDebug(__FUNCTION__);
+  emit writePluginsList();
 }
 
 
@@ -631,7 +620,7 @@ void PluginList::refreshLoadOrder()
         setPluginPriority(index, temp);
         m_ESPs[index].m_LoadOrder = iter->first;
         syncLoadOrder();
-        startSaveTime();
+        emit writePluginsList();
       }
     }
   }
@@ -897,7 +886,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
     emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
-    startSaveTime();
+    emit writePluginsList();
 
     result = true;
   } else if (role == Qt::EditRole) {
@@ -1034,20 +1023,7 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
   layoutChange.finish();
   refreshLoadOrder();
-
-  startSaveTime();
 }
-
-
-void PluginList::startSaveTime()
-{
-  testMasters();
-
-  if (!m_SaveTimer.isActive()) {
-    m_SaveTimer.start(2000);
-  }
-}
-
 
 bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
 {

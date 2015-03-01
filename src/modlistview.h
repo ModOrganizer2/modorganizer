@@ -19,7 +19,6 @@ public slots:
 private:
 
   ViewMarkingScrollBar *m_Scrollbar;
-  
 };
 
 #endif // MODLISTVIEW_H

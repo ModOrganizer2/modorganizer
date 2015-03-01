@@ -160,6 +160,7 @@ MainWindow::MainWindow(const QString &exeName
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
+  , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
 {
   ui->setupUi(this);
   this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_OrganizerCore.getVersion().displayString());
@@ -1846,8 +1847,8 @@ void MainWindow::modorder_changed()
     }
   }
   m_OrganizerCore.refreshBSAList();
-  m_OrganizerCore.currentProfile()->writeModlist();
-  saveArchiveList();
+  m_OrganizerCore.currentProfile()->modlistWriter().write();
+  m_ArchiveListWriter.write();
   m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
 
   { // refresh selection
@@ -1980,13 +1981,6 @@ void MainWindow::modRenamed(const QString &oldName, const QString &newName)
     reportError(tr("failed to change origin name: %1").arg(e.what()));
   }
 }
-
-
-void MainWindow::modlistChanged(int)
-{
-  m_ModListSortProxy->invalidate();
-}
-
 
 void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName)
 {
@@ -2139,7 +2133,7 @@ void MainWindow::restoreBackup_clicked()
 
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
-  m_OrganizerCore.currentProfile()->writeModlist();
+  m_OrganizerCore.currentProfile()->modlistWriter().write();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
@@ -2150,10 +2144,10 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
   } else {
     m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
-  if ((m_ModListSortProxy != nullptr)
+/*  if ((m_ModListSortProxy != nullptr)
       && !m_ModListSortProxy->beingInvalidated()) {
     m_ModListSortProxy->invalidate();
-  }
+  }*/
   ui->modList->verticalScrollBar()->repaint();
 }
 
@@ -2727,7 +2721,7 @@ void MainWindow::savePrimaryCategory()
   }
 }
 
-bool MainWindow::saveArchiveList()
+void MainWindow::saveArchiveList()
 {
   if (m_OrganizerCore.isArchivesInit()) {
     SafeWriteFile archiveFile(m_OrganizerCore.currentProfile()->getArchivesFileName());
@@ -2746,12 +2740,10 @@ bool MainWindow::saveArchiveList()
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
       qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
-      return true;
     }
   } else {
     qWarning("archive list not initialised");
   }
-  return false;
 }
 
 void MainWindow::checkModsForUpdates()
@@ -3191,7 +3183,7 @@ void MainWindow::fixMods_clicked()
       }
     }
 
-    m_OrganizerCore.currentProfile()->writeModlist();
+    m_OrganizerCore.currentProfile()->modlistWriter().write();
     m_OrganizerCore.refreshLists();
 
     std::set<QString> espsToActivate = dialog.getESPsToActivate();
@@ -4005,14 +3997,14 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::bsaList_itemMoved()
 {
-  saveArchiveList();
+  m_ArchiveListWriter.write();
   m_CheckBSATimer.start(500);
 }
 
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 {
-  saveArchiveList();
+  m_ArchiveListWriter.write();
   m_CheckBSATimer.start(500);
 }
 
@@ -4528,12 +4520,13 @@ void MainWindow::on_restoreButton_clicked()
 
 void MainWindow::on_saveModsButton_clicked()
 {
-  m_OrganizerCore.currentProfile()->writeModlistNow(true);
+  m_OrganizerCore.currentProfile()->modlistWriter().writeImmediately(true);
   QDateTime now = QDateTime::currentDateTime();
   if (createBackup(m_OrganizerCore.currentProfile()->getModlistFileName(), now)) {
     MessageDialog::showMessage(tr("Backup of modlist created"), this);
   }
 }
+
 void MainWindow::on_restoreModsButton_clicked()
 {
   QString modlistName = m_OrganizerCore.currentProfile()->getModlistFileName();
