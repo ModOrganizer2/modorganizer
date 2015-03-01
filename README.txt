@@ -7,8 +7,6 @@ Intro:
 Building Mod Organizer can be a rather daunting task especially if you're not very comfortable with C++ development under windows.
 Please note that if you only want to work on and build a plugin you can save yourself a lot of trouble
 
-small and pointless change
-
 Overview:
 ---------
 
