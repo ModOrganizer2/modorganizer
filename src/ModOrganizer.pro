@@ -49,3 +49,7 @@ for(QTNAME, QTLIBNAMES) {
 }
 
 INSTALLS += qtlibs otherlibs
+
+OTHER_FILES +=\
+    ../SConstruct\
+    SConscript

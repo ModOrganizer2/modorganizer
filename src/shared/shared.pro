@@ -73,3 +73,6 @@ DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
 # QMAKE_CXXFLAGS += /analyze
 
 INCLUDEPATH += ../bsatk "$${BOOSTPATH}"
+
+OTHER_FILES += \
+    SConscript

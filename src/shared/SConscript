@@ -1,0 +1,39 @@
+import os.path
+
+Import('qt_env')
+
+env = qt_env.Clone()
+
+modules = [
+    'Core',
+    'Gui'
+]
+
+env.EnableQt4Modules(['Qt' + n for n in modules], debug = env['CONFIG'] == 'debug')
+
+#CONFIG(debug, debug|release) {
+#  LIBS += -L$$OUT_PWD/../bsatk/debug
+#  LIBS += -lDbgHelp
+#  QMAKE_CXXFLAGS_DEBUG -= -Zi
+#  QMAKE_CXXFLAGS += -Z7
+#  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
+#} else {
+#  LIBS += -L$$OUT_PWD/../bsatk/release
+#  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
+#}
+
+env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
+
+env.AppendUnique(CPPDEFINES = [
+    'UNICODE',
+    '_UNICODE',
+    '_CRT_SECURE_NO_WARNINGS',
+    'BOOST_DISABLE_ASSERTS',
+    'NDEBUG'
+])
+
+env.AppendUnique(CPPPATH = [
+    '../bsatk',
+    '$BOOST_PATH',
+    '.' # Seriously!
+])
