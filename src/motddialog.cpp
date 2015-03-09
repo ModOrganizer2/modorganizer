@@ -28,8 +28,6 @@ MotDDialog::MotDDialog(const QString &message, QWidget *parent)
 {
   ui->setupUi(this);
   ui->motdView->setHtml(BBCode::convertToHTML(message));
-//  ui->motdView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-//  connect(ui->motdView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   connect(ui->motdView, SIGNAL(anchorClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
 }
 
@@ -45,5 +43,5 @@ void MotDDialog::on_okButton_clicked()
 
 void MotDDialog::linkClicked(const QUrl &url)
 {
-  ::ShellExecuteW(NULL, L"open", MOBase::ToWString(url.toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", MOBase::ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }

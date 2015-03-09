@@ -254,7 +254,7 @@ void DownloadListWidgetDelegate::issueResume()
 
 void DownloadListWidgetDelegate::issueDeleteAll()
 {
-  if (QMessageBox::question(NULL, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
                             tr("This will remove all finished downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, true);
@@ -263,7 +263,7 @@ void DownloadListWidgetDelegate::issueDeleteAll()
 
 void DownloadListWidgetDelegate::issueDeleteCompleted()
 {
-  if (QMessageBox::question(NULL, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
                             tr("This will remove all installed downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, true);
@@ -272,7 +272,7 @@ void DownloadListWidgetDelegate::issueDeleteCompleted()
 
 void DownloadListWidgetDelegate::issueRemoveFromViewAll()
 {
-  if (QMessageBox::question(NULL, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
                             tr("This will remove all finished downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, false);
@@ -281,7 +281,7 @@ void DownloadListWidgetDelegate::issueRemoveFromViewAll()
 
 void DownloadListWidgetDelegate::issueRemoveFromViewCompleted()
 {
-  if (QMessageBox::question(NULL, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
                             tr("This will remove all installed downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, false);

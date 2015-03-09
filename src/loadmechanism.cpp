@@ -20,7 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loadmechanism.h"
 #include "utility.h"
 #include "util.h"
-#include <gameinfo.h>
+#include <iplugingame.h>
+#include <scriptextender.h>
 #include <appconfig.h>
 #include <QFile>
 #include <QFileInfo>
@@ -28,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 #include <QMessageBox>
 #include <QCryptographicHash>
+#include <QCoreApplication>
 
 
 using namespace MOBase;
@@ -49,7 +51,7 @@ void LoadMechanism::writeHintFile(const QDir &targetDirectory)
   if (!hintFile.open(QIODevice::WriteOnly)) {
     throw MyException(QObject::tr("failed to open %1: %2").arg(hintFilePath).arg(hintFile.errorString()));
   }
-  hintFile.write(ToString(GameInfo::instance().getOrganizerDirectory(), true).c_str());
+  hintFile.write(qApp->applicationDirPath().toUtf8().constData());
   hintFile.close();
 }
 
@@ -62,38 +64,36 @@ void LoadMechanism::removeHintFile(QDir &targetDirectory)
 
 bool LoadMechanism::isDirectLoadingSupported()
 {
-  if (GameInfo::instance().getType() == GameInfo::TYPE_OBLIVION) {
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  if (game->gameName().compare("oblivion", Qt::CaseInsensitive) == 0) {
     // oblivion can be loaded directly if it's not the steam variant
-    QString gamePath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
-    QDir gameDir(gamePath);
-    // test if this is the steam version of oblivion
-    if (QFile(gameDir.absoluteFilePath("steam_api.dll")).exists()) {
-      return false;
-    }
+    return !game->gameDirectory().exists("steam_api.dll");
+  } else {
+    // all other games work afaik
+    return true;
   }
-
-  // all other games work afaik
-  return true;
 }
-
 
 bool LoadMechanism::isScriptExtenderSupported()
 {
-  QString targetPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
-  if ((QFile(targetPath.mid(0).append("/").append(ToQString(GameInfo::instance().getSEName())).append("_loader.exe")).exists()) ||
-      (QFile(targetPath.mid(0).append("/").append(ToQString(GameInfo::instance().getSEName())).append("_steam_loader.dll")).exists())) {
-    return true;
-  } else {
-    return false;
-  }
-}
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  ScriptExtender *extender = game->feature<ScriptExtender>();
 
+  // test if there even is an extender for the managed game and if so whether it's installed
+  return (extender != nullptr)
+      && (game->gameDirectory().exists(extender->name() + "_loader.exe")
+          || game->gameDirectory().exists(extender->name() + "_steam_loader.dll"));
+}
 
 bool LoadMechanism::isProxyDLLSupported()
 {
-  QString targetPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
-  targetPath.append("/").append(ToQString(AppConfig::proxyDLLTarget()));
-  return QFile(targetPath).exists();
+  // using steam_api.dll as the proxy is way too game specific as many games will have different
+  // versions of that game.
+  // plus: the proxy dll hasn't been working for at least the whole 1.12.x versions of MO and
+  // noone reported it so why maintain an unused feature?
+  return false;
+/*  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  return game->gameDirectory().exists(QString::fromStdWString(AppConfig::proxyDLLTarget()));*/
 }
 
 
@@ -124,12 +124,13 @@ bool LoadMechanism::hashIdentical(const QString &fileNameLHS, const QString &fil
 void LoadMechanism::deactivateScriptExtender()
 {
   try {
-    QString gameDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    ScriptExtender *extender = game->feature<ScriptExtender>();
+    if (extender == nullptr) {
+      throw MyException(QObject::tr("game doesn't support a script extender"));
+    }
 
-    QString pluginsDirPath = gameDirectory;
-    pluginsDirPath.append("/data/").append(ToQString(GameInfo::instance().getSEName())).append("/plugins");
-
-    QDir pluginsDir(pluginsDirPath);
+    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->name() + "/plugins");
 
     QString hookDLLName = ToQString(AppConfig::hookDLLName());
     if (QFile(pluginsDir.absoluteFilePath(hookDLLName)).exists()) {
@@ -141,7 +142,7 @@ void LoadMechanism::deactivateScriptExtender()
 
     removeHintFile(pluginsDir);
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to deactivate script extender loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate script extender loading"), e.what());
   }
 }
 
@@ -149,14 +150,13 @@ void LoadMechanism::deactivateScriptExtender()
 void LoadMechanism::deactivateProxyDLL()
 {
   try {
-    QString gameDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-    QString targetPath = gameDirectory;
-    targetPath.append("/").append(ToQString(AppConfig::proxyDLLTarget()));
+    QString targetPath = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLTarget()));
 
     QFile targetDLL(targetPath);
     if (targetDLL.exists()) {
-      QString origFile = gameDirectory.mid(0).append(ToQString(AppConfig::proxyDLLOrig()));
+      QString origFile = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLOrig()));
       // determine if a proxy-dll is installed
       // this is a very crude way of making this decision but it should be good enough
       if ((targetDLL.size() < 24576) && (QFile(origFile).exists())) {
@@ -169,10 +169,9 @@ void LoadMechanism::deactivateProxyDLL()
       }
     }
 
-    QDir dir(gameDirectory);
-    removeHintFile(dir);
+    removeHintFile(game->gameDirectory());
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to deactivate proxy-dll loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate proxy-dll loading"), e.what());
   }
 }
 
@@ -180,19 +179,20 @@ void LoadMechanism::deactivateProxyDLL()
 void LoadMechanism::activateScriptExtender()
 {
   try {
-    QString gameDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    ScriptExtender *extender = game->feature<ScriptExtender>();
+    if (extender == nullptr) {
+      throw MyException(QObject::tr("game doesn't support a script extender"));
+    }
 
-    QString pluginsDirPath = gameDirectory;
-    pluginsDirPath.append("/data/").append(ToQString(GameInfo::instance().getSEName())).append("/plugins");
-
-    QDir pluginsDir(pluginsDirPath);
+    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->name() + "/plugins");
 
     if (!pluginsDir.exists()) {
       pluginsDir.mkpath(".");
     }
 
     QString targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::hookDLLName()));
-    QString hookDLLPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())).append("/").append(ToQString(AppConfig::hookDLLName()));
+    QString hookDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::hookDLLName());
 
     QFile dllFile(targetPath);
 
@@ -211,7 +211,7 @@ void LoadMechanism::activateScriptExtender()
     }
     writeHintFile(pluginsDir);
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to set up script extender loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to set up script extender loading"), e.what());
   }
 }
 
@@ -219,17 +219,16 @@ void LoadMechanism::activateScriptExtender()
 void LoadMechanism::activateProxyDLL()
 {
   try {
-    QString gameDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
-    QString targetPath = gameDirectory;
-    targetPath.append("/").append(ToQString(AppConfig::proxyDLLTarget()));
+    QString targetPath = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLTarget()));
+
     QFile targetDLL(targetPath);
     if (!targetDLL.exists()) {
       return;
     }
 
-    QString sourcePath = QDir::fromNativeSeparators(
-          ToQString(GameInfo::instance().getOrganizerDirectory())).append("/").append(ToQString(AppConfig::proxyDLLSource()));
+    QString sourcePath = qApp->applicationDirPath() + "/" + ToQString(AppConfig::proxyDLLSource());
 
     // this is a very crude way of making this decision but it should be good enough
     if (targetDLL.size() < 24576) {
@@ -246,8 +245,7 @@ void LoadMechanism::activateProxyDLL()
     } else {
       // no proxy dll installed yet. move the original and insert proxy-dll
 
-      QString origFile = gameDirectory;
-      origFile.append("/").append(ToQString(AppConfig::proxyDLLOrig()));
+      QString origFile = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLOrig()));
 
       if (QFile(origFile).exists()) {
         // orig-file exists. this may happen if the steam-api was updated or the user messed with the
@@ -263,9 +261,9 @@ void LoadMechanism::activateProxyDLL()
         throw MyException(QObject::tr("Failed to copy %1 to %2").arg(sourcePath).arg(targetPath));
       }
     }
-    writeHintFile(QDir(gameDirectory));
+    writeHintFile(game->gameDirectory());
   } catch (const std::exception &e) {
-    QMessageBox::critical(NULL, QObject::tr("Failed to set up proxy-dll loading"), e.what());
+    QMessageBox::critical(nullptr, QObject::tr("Failed to set up proxy-dll loading"), e.what());
   }
 }
 

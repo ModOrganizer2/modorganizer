@@ -33,7 +33,7 @@ void reportError(QString message)
     QMessageBox messageBox(QMessageBox::Warning, QObject::tr("Error"), message, QMessageBox::Ok);
     messageBox.exec();
   } else {
-    ::MessageBoxW(NULL, ToWString(message).c_str(), ToWString(QObject::tr("Error")).c_str(), MB_ICONERROR | MB_OK);
+    ::MessageBoxW(nullptr, ToWString(message).c_str(), ToWString(QObject::tr("Error")).c_str(), MB_ICONERROR | MB_OK);
   }
 }
 

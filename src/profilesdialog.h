@@ -29,6 +29,10 @@ namespace Ui {
     class ProfilesDialog;
 }
 
+namespace MOBase {
+  class IPluginGame;
+}
+
 
 /**
  * @brief Dialog that can be used to create/delete/modify profiles

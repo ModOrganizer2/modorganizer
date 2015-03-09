@@ -245,12 +245,12 @@ public:
 
   /** retrieve a file in this directory by name.
     * @param name name of the file
-    * @return fileentry object for the file or NULL if no file matches
+    * @return fileentry object for the file or nullptr if no file matches
     */
   const FileEntry::Ptr findFile(const std::wstring &name) const;
 
   /** search through this directory and all subdirectories for a file by the specified name (relative path).
-      if directory is not NULL, the referenced variable will be set to the path containing the file */
+      if directory is not nullptr, the referenced variable will be set to the path containing the file */
   const FileEntry::Ptr searchFile(const std::wstring &path, const DirectoryEntry **directory) const;
 
   void insertFile(const std::wstring &filePath, FilesOrigin &origin, FILETIME fileTime);
@@ -258,7 +258,7 @@ public:
   void removeFile(FileEntry::Index index);
 
   // remove the specified file from the tree. This can be a path leading to a file in a subdirectory
-  bool removeFile(const std::wstring &filePath, int *origin = NULL);
+  bool removeFile(const std::wstring &filePath, int *origin = nullptr);
 
   /**
    * @brief remove the specified directory
@@ -269,9 +269,9 @@ public:
   bool remove(const std::wstring &fileName, int *origin) {
     auto iter = m_Files.find(ToLower(fileName));
     if (iter != m_Files.end()) {
-      if (origin != NULL) {
+      if (origin != nullptr) {
         FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
-        if (entry.get() != NULL) {
+        if (entry.get() != nullptr) {
           bool ignore;
           *origin = entry->getOrigin(ignore);
         }

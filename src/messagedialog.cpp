@@ -52,7 +52,7 @@ MessageDialog::MessageDialog(const QString &text, QWidget *reference) :
   this->setFocusPolicy(Qt::NoFocus);
   this->setAttribute(Qt::WA_ShowWithoutActivating);
   QTimer::singleShot(1000 + (text.length() * 40), this, SLOT(hide()));
-  if (reference != NULL) {
+  if (reference != nullptr) {
     QPoint position = reference->mapToGlobal(QPoint(reference->width() / 2, reference->height()));
     position.rx() -= this->width() / 2;
     position.ry() -= this->height() + 5;
@@ -70,7 +70,7 @@ MessageDialog::~MessageDialog()
 void MessageDialog::resizeEvent(QResizeEvent *event)
 {
   QWidget *par = parentWidget();
-  if (par != NULL) {
+  if (par != nullptr) {
     QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height()));
     position.rx() -= event->size().width() / 2;
     position.ry() -= event->size().height() + 5;
@@ -82,8 +82,8 @@ void MessageDialog::resizeEvent(QResizeEvent *event)
 void MessageDialog::showMessage(const QString &text, QWidget *reference, bool bringToFront)
 {
   qDebug("%s", qPrintable(text));
-  if (reference != NULL) {
-    if (bringToFront || (qApp->activeWindow() != NULL)) {
+  if (reference != nullptr) {
+    if (bringToFront || (qApp->activeWindow() != nullptr)) {
       MessageDialog *dialog = new MessageDialog(text, reference);
       dialog->show();
       reference->activateWindow();

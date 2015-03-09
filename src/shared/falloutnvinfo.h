@@ -35,8 +35,6 @@ public:
 
   virtual ~FalloutNVInfo() {}
 
-  virtual unsigned long getBSAVersion();
-
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"FalloutNV.exe"; }
@@ -48,31 +46,44 @@ public:
 
 //  virtual bool requiresSteam() const { return true; }
 
-  virtual std::wstring getInvalidationBSA();
+/*  virtual std::wstring getInvalidationBSA()
+  {
+    return L"Fallout - Invalidation.bsa";
+  }
 
-  virtual bool isInvalidationBSA(const std::wstring &bsaName);
+  virtual bool isInvalidationBSA(const std::wstring &bsaName)
+  {
+    static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
 
-  // full path to this games "My Games"-directory
-  virtual std::wstring getDocumentsDir();
+    for (int i = 0; invalidation[i] != nullptr; ++i) {
+      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  virtual std::wstring getSaveGameDir();
+  virtual std::vector<std::wstring> getVanillaBSAs()
+  {
+    return boost::assign::list_of (L"Fallout - Textures.bsa")
+        (L"Fallout - Textures2.bsa")
+        (L"Fallout - Meshes.bsa")
+        (L"Fallout - Voices1.bsa")
+        (L"Fallout - Sound.bsa")
+        (L"Fallout - Misc.bsa");
+  }
 
-  virtual std::vector<std::wstring> getPrimaryPlugins();
-
-  virtual std::vector<std::wstring> getVanillaBSAs();
+  virtual std::vector<std::wstring> getPrimaryPlugins()
+  {
+    return boost::assign::list_of(L"falloutnv.esm");
+  }*/
   virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();
 
-  virtual std::wstring getSaveGameExtension();
   virtual std::wstring getReferenceDataFile();
-  virtual std::wstring getOMODExt();
-
-  virtual std::wstring getSteamAPPId(int variant = 0) const;
-
-  virtual std::wstring getSEName();
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
@@ -81,20 +92,17 @@ public:
   virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 130; }
 
-  virtual void createProfile(const std::wstring &directory, bool useDefaults);
-  virtual void repairProfile(const std::wstring &directory);
-
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
-  virtual std::vector<ExecutableInfo> getExecutables();
+  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SArchiveList"; }
 
 private:
 
-  FalloutNVInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  FalloutNVInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 };

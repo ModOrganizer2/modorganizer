@@ -40,7 +40,7 @@ static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 
   execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
   execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-  execInfo.hwnd = NULL;
+  execInfo.hwnd = nullptr;
   execInfo.lpVerb = L"runas";
   execInfo.lpFile = fileName;
   execInfo.lpParameters = commandLine;
@@ -49,7 +49,7 @@ static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 
   ::ShellExecuteExW(&execInfo);
 
-  if (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0) {
+  if ((execInfo.hProcess == 0) || (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0)) {
     reportError(QObject::tr("helper failed"));
     return false;
   }

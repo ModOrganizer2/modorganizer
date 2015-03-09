@@ -49,16 +49,20 @@ typedef Archive* (*CreateArchiveType)();
 template <typename T> static T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
-  if (temp == NULL) {
+  if (temp == nullptr) {
     throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1").arg(lib.errorString()).toLatin1().constData());
   }
   return temp;
 }
 
 
-SelfUpdater::SelfUpdater(NexusInterface *nexusInterface, QWidget *parent)
-  : QObject(parent), m_Parent(parent), m_Interface(nexusInterface), m_UpdateRequestID(-1),
-    m_Reply(NULL), m_Progress(parent), m_Attempts(3)
+SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
+  : m_Parent(nullptr)
+  , m_Interface(nexusInterface)
+  , m_UpdateRequestID(-1)
+  , m_Reply(nullptr)
+  , m_Progress(nullptr)
+  , m_Attempts(3)
 {
   m_Progress.setMaximum(100);
 
@@ -89,6 +93,10 @@ SelfUpdater::~SelfUpdater()
   delete m_CurrentArchive;
 }
 
+void SelfUpdater::setUserInterface(QWidget *widget)
+{
+  m_Parent = widget;
+}
 
 void SelfUpdater::testForUpdate()
 {
@@ -126,6 +134,16 @@ void SelfUpdater::startUpdate()
 }
 
 
+void SelfUpdater::showProgress()
+{
+  m_Progress.setModal(true);
+  m_Progress.setParent(m_Parent, Qt::Dialog);
+  m_Progress.show();
+  m_Progress.setValue(0);
+  m_Progress.setWindowTitle(tr("Update"));
+  m_Progress.setLabelText(tr("Download in progress"));
+}
+
 void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 {
   QNetworkAccessManager *accessManager = m_Interface->getAccessManager();
@@ -135,11 +153,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
   m_Reply = accessManager->get(request);
   m_UpdateFile.setFileName(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()).append("\\").append(fileName)));
   m_UpdateFile.open(QIODevice::WriteOnly);
-  m_Progress.setModal(true);
-  m_Progress.show();
-  m_Progress.setValue(0);
-  m_Progress.setWindowTitle(tr("Update"));
-  m_Progress.setLabelText(tr("Download in progress"));
+  showProgress();
 
   connect(m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
   connect(m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
@@ -149,7 +163,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
 
 void SelfUpdater::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     if (m_Canceled) {
       m_Reply->abort();
     } else {
@@ -163,7 +177,7 @@ void SelfUpdater::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
 void SelfUpdater::downloadReadyRead()
 {
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     m_UpdateFile.write(m_Reply->readAll());
   }
 }
@@ -173,7 +187,7 @@ void SelfUpdater::downloadFinished()
 {
   int error = QNetworkReply::NoError;
 
-  if (m_Reply != NULL) {
+  if (m_Reply != nullptr) {
     m_UpdateFile.write(m_Reply->readAll());
 
     error = m_Reply->error();
@@ -185,7 +199,7 @@ void SelfUpdater::downloadFinished()
     m_Progress.hide();
     m_Reply->close();
     m_Reply->deleteLater();
-    m_Reply = NULL;
+    m_Reply = nullptr;
   }
 
   m_UpdateFile.close();

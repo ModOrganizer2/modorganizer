@@ -40,6 +40,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVector>
 
 
+class QSortFilterProxyModel;
+
 /**
  * Model presenting an overview of the installed mod
  * This is used in a view in the main window of MO. It combines general information about
@@ -54,6 +56,7 @@ public:
   enum EColumn {
     COL_NAME,
     COL_FLAGS,
+    COL_CONTENT,
     COL_CATEGORY,
     COL_MODID,
     COL_VERSION,
@@ -72,7 +75,7 @@ public:
    * @brief constructor
    * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
    **/
-  ModList(QObject *parent = NULL);
+  ModList(QObject *parent = nullptr);
 
   ~ModList();
 
@@ -94,12 +97,14 @@ public:
    * @brief remove the specified mod without asking for confirmation
    * @param row the row to remove
    */
-  void removeRowForce(int row);
+  void removeRowForce(int row, const QModelIndex &parent);
 
   void notifyChange(int rowStart, int rowEnd = -1);
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
+
+  void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -138,7 +143,7 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
   virtual QStringList mimeTypes() const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
-  virtual void removeRow(int row, const QModelIndex &parent);
+  virtual bool removeRows(int row, int count, const QModelIndex &parent);
 
   virtual QModelIndex index(int row, int column,
                             const QModelIndex &parent = QModelIndex()) const;
@@ -245,6 +250,8 @@ private:
 
   QString contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const;
 
+  ModList::EColumn getEnabledColumn(int index) const;
+
   QVariant categoryData(int categoryID, int column, int role) const;
   QVariant modData(int modID, int modelColumn, int role) const;
 
@@ -255,6 +262,12 @@ private:
   bool dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent);
 
   ModStates state(unsigned int modIndex) const;
+
+  bool moveSelection(QAbstractItemView *itemView, int direction);
+
+  bool deleteSelection(QAbstractItemView *itemView);
+
+  bool toggleSelection(QAbstractItemView *itemView);
 
 private slots:
 
@@ -288,12 +301,15 @@ private:
 
   bool m_DropOnItems;
 
+  std::set<unsigned int> m_Overwrite;
+  std::set<unsigned int> m_Overwritten;
+
   TModInfoChange m_ChangeInfo;
 
   SignalModStateChanged m_ModStateChanged;
   SignalModMoved m_ModMoved;
 
-  std::map<ModInfo::EContent, std::tuple<QIcon, QString, QString> > m_ContentIcons;
+  std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
 
 };
 

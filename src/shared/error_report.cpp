@@ -35,7 +35,7 @@ void reportError(LPCSTR format, ...)
   vsnprintf(buffer, 1024, format, argList);
   va_end(argList);
 
-  MessageBoxA(NULL, buffer, "Error", MB_OK | MB_ICONERROR);
+  MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
 }
 
 void reportError(LPCWSTR format, ...)
@@ -46,22 +46,21 @@ void reportError(LPCWSTR format, ...)
   va_list argList;
   va_start(argList, format);
 
-
-  _vsnwprintf(buffer, 1024, format, argList);
+  _vsnwprintf_s(buffer, 1024, format, argList);
   va_end(argList);
 
-  MessageBoxW(NULL, buffer, L"Error", MB_OK | MB_ICONERROR);
+  MessageBoxW(nullptr, buffer, L"Error", MB_OK | MB_ICONERROR);
 }
 
 
 std::string getCurrentErrorStringA()
 {
-  LPSTR buffer = NULL;
+  LPSTR buffer = nullptr;
 
   DWORD errorCode = ::GetLastError();
 
   if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                    NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, NULL) == 0) {
+                    nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
     ::SetLastError(errorCode);
     return std::string();
   } else {
@@ -78,12 +77,12 @@ std::string getCurrentErrorStringA()
 
 std::wstring getCurrentErrorStringW()
 {
-  LPWSTR buffer = NULL;
+  LPWSTR buffer = nullptr;
 
   DWORD errorCode = ::GetLastError();
 
   if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                    NULL, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&buffer, 0, NULL) == 0) {
+                    nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&buffer, 0, nullptr) == 0) {
     ::SetLastError(errorCode);
     return std::wstring();
   } else {

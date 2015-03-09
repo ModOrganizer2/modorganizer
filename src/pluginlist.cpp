@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <utility.h>
 #include <gameinfo.h>
+#include <iplugingame.h>
 #include <espfile.h>
 #include <windows_error.h>
 
@@ -68,27 +69,16 @@ static bool ByPriority(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo
 
 static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RHS) {
   return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
-/*  QString lhsExtension = LHS.m_Name.right(3).toLower();
-  QString rhsExtension = RHS.m_Name.right(3).toLower();
-  if (lhsExtension != rhsExtension) {
-    return lhsExtension == "esm";
-  }
-
-  return ::CompareFileTime(&LHS.m_Time, &RHS.m_Time) < 0;*/
 }
 
 PluginList::PluginList(QObject *parent)
   : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
-  , m_SaveTimer(this)
 {
-  m_SaveTimer.setSingleShot(true);
-  connect(&m_SaveTimer, SIGNAL(timeout()), this, SIGNAL(saveTimer()));
-
   m_Utf8Codec = QTextCodec::codecForName("utf-8");
   m_LocalCodec = QTextCodec::codecForName("Windows-1252");
 
-  if (m_LocalCodec == NULL) {
+  if (m_LocalCodec == nullptr) {
     qCritical("required 8-bit string-encoding not supported.");
     m_LocalCodec = m_Utf8Codec;
   }
@@ -126,23 +116,26 @@ QString PluginList::getColumnToolTip(int column)
 }
 
 
-void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseDirectory,
-                         const QString &pluginsFile, const QString &loadOrderFile,
-                         const QString &lockedOrderFile)
+void PluginList::refresh(const QString &profileName
+                         , const DirectoryEntry &baseDirectory
+                         , const QString &pluginsFile
+                         , const QString &loadOrderFile
+                         , const QString &lockedOrderFile)
 {
   ChangeBracket<PluginList> layoutChange(this);
 
   m_ESPsByName.clear();
   m_ESPsByPriority.clear();
   m_ESPs.clear();
-  std::vector<std::wstring> primaryPlugins = GameInfo::instance().getPrimaryPlugins();
+
+  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
 
   m_CurrentProfile = profileName;
 
   std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (auto iter = files.begin(); iter != files.end(); ++iter) {
     FileEntry::Ptr current = *iter;
-    if (current.get() == NULL) {
+    if (current.get() == nullptr) {
       continue;
     }
     QString filename = ToQString(current->getName());
@@ -150,14 +143,14 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
 
     if ((extension == "esp") || (extension == "esm")) {
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
-                            std::find(primaryPlugins.begin(), primaryPlugins.end(), ToWString(filename.toLower())) != primaryPlugins.end();
+                            std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
 
       bool archive = false;
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
-        bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != NULL;
+        bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
 
         QString originName = ToQString(origin.getName());
         unsigned int modIndex = ModInfo::getIndex(originName);
@@ -166,7 +159,7 @@ void PluginList::refresh(const QString &profileName, const DirectoryEntry &baseD
           originName = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, current->getFileTime(), originName, ToQString(current->getFullPath()), hasIni));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni));
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
@@ -234,7 +227,8 @@ void PluginList::enableESP(const QString &name, bool enable)
 
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].m_Enabled = enable;
-    startSaveTime();
+
+    emit writePluginsList();
   } else {
     reportError(tr("esp not found: %1").arg(name));
   }
@@ -243,26 +237,26 @@ void PluginList::enableESP(const QString &name, bool enable)
 
 void PluginList::enableAll()
 {
-  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really enable all plugins?"),
+  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
       iter->m_Enabled = true;
     }
-    startSaveTime();
+    emit writePluginsList();
   }
 }
 
 
 void PluginList::disableAll()
 {
-  if (QMessageBox::question(NULL, tr("Confirm"), tr("Really disable all plugins?"),
+  if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
       if (!iter->m_ForceEnabled) {
         iter->m_Enabled = false;
       }
     }
-    startSaveTime();
+    emit writePluginsList();
   }
 }
 
@@ -321,11 +315,10 @@ bool PluginList::readLoadOrder(const QString &fileName)
 
   int priority = 0;
 
-  std::vector<std::wstring> primaryPlugins = GameInfo::instance().getPrimaryPlugins();
-  for (std::vector<std::wstring>::iterator iter = primaryPlugins.begin();
-       iter != primaryPlugins.end(); ++iter) {
-    if (availableESPs.find(ToQString(*iter)) != availableESPs.end()) {
-      m_ESPLoadOrder[ToQString(*iter)] = priority++;
+  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
+  for (const QString &plugin : primaryPlugins) {
+    if (availableESPs.find(plugin) != availableESPs.end()) {
+      m_ESPLoadOrder[plugin] = priority++;
     }
   }
 
@@ -379,7 +372,7 @@ void PluginList::readEnabledFrom(const QString &fileName)
         m_ESPs[iter->second].m_Enabled = true;
       } else {
         qWarning("plugin %s not found", modName.toUtf8().constData());
-        startSaveTime();
+        emit writePluginsList();
       }
     }
   }
@@ -469,6 +462,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
+  qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
 }
 
 
@@ -499,8 +493,6 @@ void PluginList::saveTo(const QString &pluginFileName
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
   }
-
-  m_SaveTimer.stop();
 }
 
 
@@ -514,14 +506,14 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
   for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
     std::wstring espName = ToWString(iter->m_Name);
     const FileEntry::Ptr fileEntry = directoryStructure.findFile(espName);
-    if (fileEntry.get() != NULL) {
+    if (fileEntry.get() != nullptr) {
       QString fileName;
       bool archive = false;
       int originid = fileEntry->getOrigin(archive);
       fileName = QString("%1\\%2").arg(QDir::toNativeSeparators(ToQString(directoryStructure.getOriginByID(originid).getPath()))).arg(iter->m_Name);
 
       HANDLE file = ::CreateFile(ToWString(fileName).c_str(), GENERIC_READ | GENERIC_WRITE,
-                                 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                                 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
       if (file == INVALID_HANDLE_VALUE) {
         if (::GetLastError() == ERROR_SHARING_VIOLATION) {
           // file is locked, probably the game is running
@@ -540,7 +532,7 @@ bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
       newWriteTime.dwHighDateTime = (DWORD)(temp >> 32);
       iter->m_Time = newWriteTime;
       fileEntry->setFileTime(newWriteTime);
-      if (!::SetFileTime(file, NULL, NULL, &newWriteTime)) {
+      if (!::SetFileTime(file, nullptr, nullptr, &newWriteTime)) {
         throw windows_error(QObject::tr("failed to set file time %1").arg(fileName).toUtf8().constData());
       }
 
@@ -577,7 +569,8 @@ void PluginList::lockESPIndex(int index, bool lock)
       m_LockedOrder.erase(iter);
     }
   }
-  startSaveTime();
+qDebug(__FUNCTION__);
+  emit writePluginsList();
 }
 
 
@@ -627,7 +620,7 @@ void PluginList::refreshLoadOrder()
         setPluginPriority(index, temp);
         m_ESPs[index].m_LoadOrder = iter->first;
         syncLoadOrder();
-        startSaveTime();
+        emit writePluginsList();
       }
     }
   }
@@ -862,22 +855,22 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     QVariantList result;
     QString nameLower = m_ESPs[index].m_Name.toLower();
     if (m_ESPs[index].m_MasterUnset.size() > 0) {
-      result.append(QIcon(":/MO/gui/warning"));
+      result.append(":/MO/gui/warning");
     }
     if (m_LockedOrder.find(nameLower) != m_LockedOrder.end()) {
-      result.append(QIcon(":/MO/gui/locked"));
+      result.append(":/MO/gui/locked");
     }
     auto bossInfoIter = m_AdditionalInfo.find(nameLower);
     if (bossInfoIter != m_AdditionalInfo.end()) {
       if (!bossInfoIter->second.m_Messages.isEmpty()) {
-        result.append(QIcon(":/MO/gui/information"));
+        result.append(":/MO/gui/information");
       }
     }
     if (m_ESPs[index].m_HasIni) {
-      result.append(QIcon(":/MO/gui/attachment"));
+      result.append(":/MO/gui/attachment");
     }
     if (m_ESPs[index].m_IsDummy && m_ESPs[index].m_Enabled && !m_ESPs[index].m_HasIni) {
-      result.append(QIcon(":/MO/gui/edit_clear"));
+      result.append(":/MO/gui/edit_clear");
     }
     return result;
   }
@@ -887,14 +880,13 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 
 bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)
 {
-  bool result = true;
-
+  bool result = false;
   if (role == Qt::CheckStateRole) {
     m_ESPs[modIndex.row()].m_Enabled = value.toInt() == Qt::Checked;
     emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
-    startSaveTime();
+    emit writePluginsList();
 
     result = true;
   } else if (role == Qt::EditRole) {
@@ -943,6 +935,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
     if (modelIndex.column() == COL_PRIORITY) {
       result |= Qt::ItemIsEditable;
     }
+    result &= ~Qt::ItemIsDropEnabled;
   } else {
     result |= Qt::ItemIsDropEnabled;
   }
@@ -1031,20 +1024,7 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
   layoutChange.finish();
   refreshLoadOrder();
-
-  startSaveTime();
 }
-
-
-void PluginList::startSaveTime()
-{
-  testMasters();
-
-  if (!m_SaveTimer.isActive()) {
-    m_SaveTimer.start(2000);
-  }
-}
-
 
 bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
 {
@@ -1102,8 +1082,8 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
   if (event->type() == QEvent::KeyPress) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
 
-    if (itemView == NULL) {
-      return QObject::eventFilter(obj, event);
+    if (itemView == nullptr) {
+      return QAbstractItemModel::eventFilter(obj, event);
     }
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
@@ -1112,7 +1092,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
         ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
-      if (proxyModel != NULL) {
+      if (proxyModel != nullptr) {
         int diff = -1;
         if (((keyEvent->key() == Qt::Key_Up) && (proxyModel->sortOrder() == Qt::DescendingOrder)) ||
             ((keyEvent->key() == Qt::Key_Down) && (proxyModel->sortOrder() == Qt::AscendingOrder))) {
@@ -1131,7 +1111,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
             rows.swap(i, rows.size() - i - 1);
           }
         }
-        foreach (QModelIndex idx, rows) {
+        for (QModelIndex idx : rows) {
           idx = proxyModel->mapToSource(idx);
           int newPriority = m_ESPs[idx.row()].m_Priority + diff;
           if ((newPriority >= 0) && (newPriority < rowCount())) {
@@ -1147,7 +1127,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 
       QModelIndex minRow, maxRow;
       foreach (QModelIndex idx, selectionModel->selectedRows()) {
-        if (proxyModel != NULL) {
+        if (proxyModel != nullptr) {
           idx = proxyModel->mapToSource(idx);
         }
         if (!minRow.isValid() || (idx.row() < minRow.row())) {
@@ -1164,11 +1144,11 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
       return true;
     }
   }
-  return QObject::eventFilter(obj, event);
+  return QAbstractItemModel::eventFilter(obj, event);
 }
 
 
-PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled, FILETIME time,
+PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),

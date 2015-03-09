@@ -26,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidget>
 #include <QTimer>
 #include <QTemporaryFile>
+#pragma warning(push)
+#pragma warning(disable: 4100)
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -33,7 +35,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <map>
 #include "pdll.h"
-#include <BOSS-API.h>
 
 
 template <class C>
@@ -96,7 +97,7 @@ public:
    *
    * @param parent parent object
    **/
-  PluginList(QObject *parent = NULL);
+  PluginList(QObject *parent = nullptr);
 
   ~PluginList();
 
@@ -263,16 +264,13 @@ signals:
   **/
  void esplist_changed();
 
- /**
-  * @brief emitted when the plugin list should be saved
-  */
- void saveTimer();
+ void writePluginsList();
 
 private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, FILETIME time, const QString &originName, const QString &fullPath, bool hasIni);
+    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;
@@ -311,8 +309,6 @@ private:
   void setPluginPriority(int row, int &newPriority);
   void changePluginPriority(std::vector<int> rows, int newPriority);
 
-  void startSaveTime();
-
   void testMasters();
 
 private:
@@ -337,14 +333,13 @@ private:
   QTextCodec *m_Utf8Codec;
   QTextCodec *m_LocalCodec;
 
-  mutable QTimer m_SaveTimer;
-
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
 
   QTemporaryFile m_TempFile;
 
-
 };
+
+#pragma warning(pop)
 
 #endif // PLUGINLIST_H

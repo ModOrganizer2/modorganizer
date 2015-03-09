@@ -64,8 +64,8 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
-  m_DeleteAction(NULL), m_RenameAction(NULL), m_OpenAction(NULL),
-  m_Directory(directory), m_Origin(NULL)
+  m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr),
+  m_Directory(directory), m_Origin(nullptr)
 {
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
@@ -91,7 +91,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));
     if (m_Origin->isDisabled()) {
-      m_Origin = NULL;
+      m_Origin = nullptr;
     }
   }
 
@@ -103,17 +103,20 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
   } else {
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
   }
   initINITweaks();
 
-  ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
-  ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
-  ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
-  ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != NULL);
+  ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
   if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
     activateNexusTab();
@@ -246,7 +249,7 @@ void ModInfoDialog::refreshLists()
   ui->overwriteTree->clear();
   ui->overwrittenTree->clear();
 
-  if (m_Origin != NULL) {
+  if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
     for (auto iter = files.begin(); iter != files.end(); ++iter) {
       QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
@@ -690,7 +693,7 @@ void ModInfoDialog::linkClicked(const QUrl &url)
     this->close();
     emit nexusLinkActivated(url.toString());
   } else {
-    ::ShellExecuteW(NULL, L"open", ToWString(url.toString()).c_str(), NULL, NULL, SW_SHOWNORMAL);
+    ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   }
 }
 
@@ -979,7 +982,7 @@ void ModInfoDialog::openFile(const QModelIndex &index)
 {
   QString fileName = m_FileSystemModel->filePath(index);
 
-  HINSTANCE res = ::ShellExecuteW(NULL, L"open", ToWString(fileName).c_str(), NULL, NULL, SW_SHOW);
+  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
   if ((int)res <= 32) {
     qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
   }
@@ -1063,7 +1066,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
 void ModInfoDialog::on_categoriesTree_itemChanged(QTreeWidgetItem *item, int)
 {
   QTreeWidgetItem *parent = item->parent();
-  while ((parent != NULL) && ((parent->flags() & Qt::ItemIsUserCheckable) != 0) && (parent->checkState(0) == Qt::Unchecked)) {
+  while ((parent != nullptr) && ((parent->flags() & Qt::ItemIsUserCheckable) != 0) && (parent->checkState(0) == Qt::Unchecked)) {
     parent->setCheckState(0, Qt::Checked);
     parent = parent->parent();
   }
@@ -1182,7 +1185,7 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
 {
   m_ConflictsContextItem = ui->overwriteTree->itemAt(pos.x(), pos.y());
 
-  if (m_ConflictsContextItem != NULL) {
+  if (m_ConflictsContextItem != nullptr) {
     // offer to hide/unhide file, but not for files from archives
     if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
       QMenu menu;

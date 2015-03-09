@@ -8,10 +8,10 @@ SUBDIRS = bsatk \
           archive \
           helper \
           plugins \
-          proxydll \
           nxmhandler \
           BossDummy \
           pythonRunner \
+          loot_cli \
           esptk
 
 pythonRunner.depends = uibase

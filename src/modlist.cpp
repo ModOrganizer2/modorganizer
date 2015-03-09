@@ -23,7 +23,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "installationtester.h"
 #include "qtgroupingproxy.h"
+#include "viewmarkingscrollbar.h"
 #include <gameinfo.h>
+#include <appconfig.h>
 #include <utility.h>
 #include <QFileInfo>
 #include <QDir>
@@ -40,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidgetAction>
 #include <QAbstractItemView>
 #include <QSortFilterProxyModel>
+#include <QApplication>
 #include <sstream>
 #include <algorithm>
 
@@ -49,12 +52,23 @@ using namespace MOBase;
 
 ModList::ModList(QObject *parent)
   : QAbstractItemModel(parent)
-  , m_Profile(NULL)
-  , m_NexusInterface(NULL)
+  , m_Profile(nullptr)
+  , m_NexusInterface(nullptr)
   , m_Modified(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
 {
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
+  m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
+  m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
+  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(":/MO/gui/content/music", tr("Music"));
+  m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
+  m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
+  m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound"));
+  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(":/MO/gui/content/string", tr("Strings"));
+  m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
 }
 
 ModList::~ModList()
@@ -67,7 +81,6 @@ void ModList::setProfile(Profile *profile)
 {
   m_Profile = profile;
 }
-
 int ModList::rowCount(const QModelIndex &parent) const
 {
   if (!parent.isValid()) {
@@ -135,9 +148,40 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
 }
 
 
+QVariantList ModList::contentsToIcons(const std::vector<ModInfo::EContent> &contents) const
+{
+  QVariantList result;
+  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
+  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
+    if (contentsSet.find(iter->first) != contentsSet.end()) {
+      result.append(std::get<0>(iter->second));
+    } else {
+      result.append(QString());
+    }
+  }
+  return result;
+}
+
+QString ModList::contentsToToolTip(const std::vector<ModInfo::EContent> &contents) const
+{
+  QString result("<table cellspacing=7>");
+
+  std::set<ModInfo::EContent> contentsSet(contents.begin(), contents.end());
+  for (auto iter = m_ContentIcons.begin(); iter != m_ContentIcons.end(); ++iter) {
+    if (contentsSet.find(iter->first) != contentsSet.end()) {
+      result.append(QString("<tr><td><img src=\"%1\" width=32/></td>"
+                            "<td valign=\"middle\">%2</td></tr>")
+                    .arg(std::get<0>(iter->second)).arg(std::get<1>(iter->second)));
+    }
+  }
+  result.append("</table>");
+  return result;
+}
+
+
 QVariant ModList::data(const QModelIndex &modelIndex, int role) const
 {
-  if (m_Profile == NULL) return QVariant();
+  if (m_Profile == nullptr) return QVariant();
   if (!modelIndex.isValid()) return QVariant();
   unsigned int modIndex = modelIndex.row();
   int column = modelIndex.column();
@@ -145,7 +189,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
   if ((role == Qt::DisplayRole) ||
       (role == Qt::EditRole)) {
-    if (column == COL_FLAGS) {
+    if ((column == COL_FLAGS)
+        || (column == COL_CONTENT)) {
       return QVariant();
     } else if (column == COL_NAME) {
       return modInfo->name();
@@ -257,6 +302,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       case COL_PRIORITY: return QtGroupingProxy::AGGR_MIN;
       default: return QtGroupingProxy::AGGR_NONE;
     }
+  } else if (role == Qt::UserRole + 3) {
+    return contentsToIcons(modInfo->getContents());
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -297,6 +344,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return QVariant();
+  } else if ((role == Qt::BackgroundRole)
+             || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
+      return QColor(0, 255, 0, 64);
+    } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
+      return QColor(255, 0, 0, 64);
+    } else {
+      return QVariant();
+    }
   } else if (role == Qt::ToolTipRole) {
     if (column == COL_FLAGS) {
       QString result;
@@ -309,6 +365,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return result;
+    } else if (column == COL_CONTENT) {
+      return contentsToToolTip(modInfo->getContents());
     } else if (column == COL_NAME) {
       try {
         return modInfo->getDescription();
@@ -356,7 +414,7 @@ bool ModList::renameMod(int index, const QString &newName)
 {
   QString nameFixed = newName;
   if (!fixDirectoryName(nameFixed) || nameFixed.isEmpty()) {
-    MessageDialog::showMessage(tr("Invalid name"), NULL);
+    MessageDialog::showMessage(tr("Invalid name"), nullptr);
     return false;
   }
 
@@ -379,7 +437,7 @@ bool ModList::renameMod(int index, const QString &newName)
 
 bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-  if (m_Profile == NULL) return false;
+  if (m_Profile == nullptr) return false;
 
   if (static_cast<unsigned int>(index.row()) >= ModInfo::getNumMods()) {
     return false;
@@ -400,6 +458,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       emit modlist_changed(index, role);
     }
     result = true;
+    emit dataChanged(index, index);
   } else if (role == Qt::EditRole) {
     switch (index.column()) {
       case COL_NAME: {
@@ -411,7 +470,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         if (ok) {
           m_Profile->setModPriority(modID, newPriority);
 
-          emit modlist_changed(index, role);
+          emit modorder_changed();
           result = true;
         } else {
           result = false;
@@ -527,7 +586,7 @@ QStringList ModList::mimeTypes() const
 
 void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   emit layoutAboutToBeChanged();
   Profile *profile = m_Profile;
@@ -561,7 +620,7 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
 void ModList::changeModPriority(int sourceIndex, int newPriority)
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
   emit layoutAboutToBeChanged();
 
   m_Profile->setModPriority(sourceIndex, newPriority);
@@ -569,6 +628,13 @@ void ModList::changeModPriority(int sourceIndex, int newPriority)
   emit layoutChanged();
 
   emit modorder_changed();
+}
+
+void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_Overwrite = overwrite;
+  m_Overwritten = overwritten;
+  notifyChange(0, rowCount() - 1);
 }
 
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)
@@ -696,7 +762,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDirectory(modInfo->absolutePath());
-  QDir gameDirectory(QDir::fromNativeSeparators(ToQString(MOShared::GameInfo::instance().getOverwriteDir())));
+  QDir gameDirectory(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
 
   unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
@@ -774,7 +840,7 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
     return true;
   }
 
-  if (m_Profile == NULL) return false;
+  if (m_Profile == nullptr) return false;
   if (mimeData->hasUrls()) {
     return dropURLs(mimeData, row, parent);
   } else {
@@ -783,27 +849,26 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
 
 }
 
-
-void ModList::removeRowForce(int row)
+void ModList::removeRowForce(int row, const QModelIndex &parent)
 {
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
     return;
   }
-  if (m_Profile == NULL) return;
-
-  m_Profile->setModEnabled(row, false);
+  if (m_Profile == nullptr) return;
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
 
   bool wasEnabled = m_Profile->modEnabled(row);
-  beginRemoveRows(QModelIndex(), row, row);
 
-  m_Profile->cancelWriteModlist(); // don't write modlist while we're changing it
+  m_Profile->setModEnabled(row, false);
+
+  m_Profile->modlistWriter().cancel();
+  beginRemoveRows(parent, row, row);
   ModInfo::removeMod(row);
-  m_Profile->refreshModStatus();  // removes the mod from the status list
-  m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
-
   endRemoveRows();
+  m_Profile->refreshModStatus();  // removes the mod from the status list
+  m_Profile->modlistWriter().write(); // this ensures the modified list gets written back before new mods can be installed
+
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
   }
@@ -811,35 +876,49 @@ void ModList::removeRowForce(int row)
   emit modUninstalled(modInfo->getInstallationFile());
 }
 
-
-void ModList::removeRow(int row, const QModelIndex&)
+bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 {
   if (static_cast<unsigned int>(row) >= ModInfo::getNumMods()) {
-    return;
+    return false;
   }
-  if (m_Profile == NULL) return;
-
-  m_Profile->setModEnabled(row, false);
-
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  if (!modInfo->isRegular()) return;
-
-  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
-                         QMessageBox::Yes | QMessageBox::No);
-
-  if (confirmBox.exec() == QMessageBox::Yes) {
-    removeRowForce(row);
+  if (m_Profile == nullptr) {
+    return false;
   }
+
+  bool success = false;
+
+  for (int i = 0; i < count; ++i) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(row + i);
+    if (!modInfo->isRegular()) {
+      continue;
+    }
+
+    success = true;
+
+    QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"),
+                           tr("Are you sure you want to remove \"%1\"?").arg(modInfo->name()),
+                           QMessageBox::Yes | QMessageBox::No);
+
+    if (confirmBox.exec() == QMessageBox::Yes) {
+      m_Profile->setModEnabled(row + i, false);
+      removeRowForce(row + i, parent);
+    }
+  }
+
+  return success;
 }
 
 
 void ModList::notifyChange(int rowStart, int rowEnd)
 {
   if (rowStart < 0) {
+    m_Overwrite.clear();
+    m_Overwritten.clear();
     beginResetModel();
     endResetModel();
   } else {
-    if (rowEnd == -1) rowEnd = rowStart;
+    if (rowEnd == -1)
+      rowEnd = rowStart;
     emit dataChanged(this->index(rowStart, 0), this->index(rowEnd, this->columnCount() - 1));
   }
 }
@@ -880,6 +959,7 @@ QString ModList::getColumnName(int column)
 {
   switch (column) {
     case COL_FLAGS:    return tr("Flags");
+    case COL_CONTENT:  return tr("Content");
     case COL_NAME:     return tr("Mod Name");
     case COL_VERSION:  return tr("Version");
     case COL_PRIORITY: return tr("Priority");
@@ -901,93 +981,119 @@ QString ModList::getColumnToolTip(int column)
     case COL_CATEGORY: return tr("Category of the mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
+    case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
+                                 "<table cellspacing=7>"
+                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm)</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/string\" width=32/></td><td>Strings</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/script\" width=32/></td><td>Scripts (Papyrus)</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</tr>"
+                                 "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");
   }
 }
 
 
+bool ModList::moveSelection(QAbstractItemView *itemView, int direction)
+{
+  QItemSelectionModel *selectionModel = itemView->selectionModel();
+
+  const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
+  const QSortFilterProxyModel *filterModel = nullptr;
+
+  while ((filterModel == nullptr) && (proxyModel != nullptr)) {
+    filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
+    if (filterModel == nullptr) {
+      proxyModel = qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel());
+    }
+  }
+  if (filterModel == nullptr) {
+    return true;
+  }
+
+  int offset = -1;
+  if (((direction < 0) && (filterModel->sortOrder() == Qt::DescendingOrder)) ||
+      ((direction > 0) && (filterModel->sortOrder() == Qt::AscendingOrder))) {
+    offset = 1;
+  }
+
+  QModelIndexList rows = selectionModel->selectedRows();
+  if (direction > 0) {
+    for (int i = 0; i < rows.size() / 2; ++i) {
+      rows.swap(i, rows.size() - i - 1);
+    }
+  }
+  for (QModelIndex idx : rows) {
+    if (filterModel != nullptr) {
+      idx = filterModel->mapToSource(idx);
+    }
+    int newPriority = m_Profile->getModPriority(idx.row()) + offset;
+    if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {
+      m_Profile->setModPriority(idx.row(), newPriority);
+      notifyChange(idx.row());
+    }
+  }
+  emit modorder_changed();
+  return true;
+}
+
+bool ModList::deleteSelection(QAbstractItemView *itemView)
+{
+  QItemSelectionModel *selectionModel = itemView->selectionModel();
+
+  QModelIndexList rows = selectionModel->selectedRows();
+  if (rows.count() > 1) {
+    emit removeSelectedMods();
+  } else if (rows.count() == 1) {
+    removeRow(rows[0].data(Qt::UserRole + 1).toInt(), QModelIndex());
+  }
+  return true;
+}
+
+bool ModList::toggleSelection(QAbstractItemView *itemView)
+{
+  QAbstractItemModel *model = itemView->model();
+  QItemSelectionModel *selectionModel = itemView->selectionModel();
+
+  for (QModelIndex idx : selectionModel->selectedRows()) {
+    int oldState = idx.data(Qt::CheckStateRole).toInt();
+    model->setData(idx, oldState == Qt::Unchecked ? Qt::Checked
+                                                  : Qt::Unchecked,
+                   Qt::CheckStateRole);
+  }
+  return true;
+}
+
 bool ModList::eventFilter(QObject *obj, QEvent *event)
 {
   if (event->type() == QEvent::ContextMenu) {
     QContextMenuEvent *contextEvent = static_cast<QContextMenuEvent*>(event);
     QWidget *object = qobject_cast<QWidget*>(obj);
-    if ((object != NULL) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
+    if ((object != nullptr) && (contextEvent->reason() == QContextMenuEvent::Mouse)) {
       emit requestColumnSelect(object->mapToGlobal(contextEvent->pos()));
 
       return true;
     }
-  } else if ((event->type() == QEvent::KeyPress) && (m_Profile != NULL)) {
+  } else if ((event->type() == QEvent::KeyPress) && (m_Profile != nullptr)) {
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
-    if ((itemView != NULL) &&
-        (keyEvent->modifiers() == Qt::ControlModifier) &&
-        ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QAbstractProxyModel *proxyModel = qobject_cast<const QAbstractProxyModel*>(selectionModel->model());
-      const QSortFilterProxyModel *filterModel = NULL;
-      while ((filterModel == NULL) && (proxyModel != NULL)) {
-        filterModel = qobject_cast<const QSortFilterProxyModel*>(proxyModel);
-        if (filterModel == NULL) {
-          proxyModel = qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel());
-        }
-      }
-      if (filterModel == NULL) {
-        return true;
-      }
-      int diff = -1;
-      if (((keyEvent->key() == Qt::Key_Up) && (filterModel->sortOrder() == Qt::DescendingOrder)) ||
-          ((keyEvent->key() == Qt::Key_Down) && (filterModel->sortOrder() == Qt::AscendingOrder))) {
-        diff = 1;
-      }
-      QModelIndexList rows = selectionModel->selectedRows();
-      if (keyEvent->key() == Qt::Key_Down) {
-        for (int i = 0; i < rows.size() / 2; ++i) {
-          rows.swap(i, rows.size() - i - 1);
-        }
-      }
-      foreach (QModelIndex idx, rows) {
-        if (filterModel != NULL) {
-          idx = filterModel->mapToSource(idx);
-        }
-        int newPriority = m_Profile->getModPriority(idx.row()) + diff;
-        if ((newPriority >= 0) && (newPriority < static_cast<int>(m_Profile->numRegularMods()))) {
-          m_Profile->setModPriority(idx.row(), newPriority);
-          notifyChange(idx.row());
-        }
-      }
-      emit modorder_changed();
-      return true;
-    } else if (keyEvent->key() == Qt::Key_Delete) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      QModelIndexList rows = selectionModel->selectedRows();
-      if (rows.count() > 1) {
-        emit removeSelectedMods();
-      } else if (rows.count() == 1) {
-        removeRow(rows[0].data(Qt::UserRole + 1).toInt(), QModelIndex());
-      }
-      return true;
-    } else if (keyEvent->key() == Qt::Key_Space) {
-      QItemSelectionModel *selectionModel = itemView->selectionModel();
-      const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
 
-      QModelIndex minRow, maxRow;
-      foreach (QModelIndex idx, selectionModel->selectedRows()) {
-        if (proxyModel != NULL) {
-          idx = proxyModel->mapToSource(idx);
-        }
-        if (!minRow.isValid() || (idx.row() < minRow.row())) {
-          minRow = idx;
-        }
-        if (!maxRow.isValid() || (idx.row() > maxRow.row())) {
-          maxRow = idx;
-        }
-        int oldState = idx.data(Qt::CheckStateRole).toInt();
-        setData(idx, oldState == Qt::Unchecked ? Qt::Checked : Qt::Unchecked, Qt::CheckStateRole);
-      }
-      emit dataChanged(minRow, maxRow);
-      return true;
+    if ((itemView != nullptr)
+        && (keyEvent->modifiers() == Qt::ControlModifier)
+        && ((keyEvent->key() == Qt::Key_Up) || (keyEvent->key() == Qt::Key_Down))) {
+      return moveSelection(itemView, keyEvent->key() == Qt::Key_Up ? -1 : 1);
+    } else if (keyEvent->key() == Qt::Key_Delete) {
+      return deleteSelection(itemView);
+    } else if (keyEvent->key() == Qt::Key_Space) {
+      return toggleSelection(itemView);
     }
   }
-  return QObject::eventFilter(obj, event);
+  return QAbstractItemModel::eventFilter(obj, event);
 }

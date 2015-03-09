@@ -15,8 +15,9 @@ Rectangle {
     border.color: "black"
     border.width: 3
     smooth: true
-    opacity: 0.9
-    color: "#707070"
+    //opacity: 0.9
+    z: 10000
+    color: "#FF707070"
 
     Image {
         id: continueIcon

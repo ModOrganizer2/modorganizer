@@ -33,7 +33,7 @@ class SelectionDialog : public QDialog
   
 public:
 
-  explicit SelectionDialog(const QString &description, QWidget *parent = 0);
+  explicit SelectionDialog(const QString &description, QWidget *parent = 0, const QSize &iconSize = QSize());
 
   ~SelectionDialog();
 
@@ -45,6 +45,8 @@ public:
    *             all buttons that contain no data will be treated as "cancel" buttons
    */
   void addChoice(const QString &buttonText, const QString &description, const QVariant &data);
+
+  void addChoice(const QIcon &icon, const QString &buttonText, const QString &description, const QVariant &data);
 
   int numChoices() const;
 
@@ -62,6 +64,7 @@ private:
   Ui::SelectionDialog *ui;
   QAbstractButton *m_Choice;
   bool m_ValidateByData;
+  QSize m_IconSize;
 
 };
 

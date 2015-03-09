@@ -30,7 +30,7 @@ QMutex LogBuffer::s_Mutex;
 
 
 LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outputFileName)
-  : QAbstractItemModel(NULL), m_OutFileName(outputFileName), m_ShutDown(false),
+  : QAbstractItemModel(nullptr), m_OutFileName(outputFileName), m_ShutDown(false),
     m_MinMsgType(minMsgType), m_NumMessages(0)
 {
   m_Messages.resize(messageCount);
@@ -132,8 +132,12 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
   if (type == QtDebugMsg) {
     fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
   } else {
-    fprintf(stdout, "%s [%c] (%s:%u) %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-            context.file, context.line, qPrintable(message));
+    if (context.line != 0) {
+      fprintf(stdout, "%s [%c] (%s:%u) %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type),
+              context.file, context.line, qPrintable(message));
+    } else {
+      fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
+    }
   }
   fflush(stdout);
 }

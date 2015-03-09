@@ -227,15 +227,16 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 
 void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &archive)
 {
-  m_LastAccessed = time(NULL);
-  if (m_Parent != NULL) {
+  m_LastAccessed = time(nullptr);
+  if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
   }
   if (m_Origin == -1) {
     m_Origin = origin;
     m_FileTime = fileTime;
     m_Archive = archive;
-  } else if (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority()) {
+  } else if ((m_Parent != nullptr)
+             && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())) {
     if (std::find(m_Alternatives.begin(), m_Alternatives.end(), m_Origin) == m_Alternatives.end()) {
       m_Alternatives.push_back(m_Origin);
     }
@@ -253,7 +254,8 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
         // already an origin
         return;
       }
-      if (m_Parent->getOriginByID(*iter).getPriority() < m_Parent->getOriginByID(origin).getPriority()) {
+      if ((m_Parent != nullptr)
+          && (m_Parent->getOriginByID(*iter).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
         m_Alternatives.insert(iter, origin);
         found = true;
         break;
@@ -285,8 +287,8 @@ bool FileEntry::removeOrigin(int origin)
       // now we need to update the file time...
       std::wstring filePath = getFullPath();
       HANDLE file = ::CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                                 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-      if (!::GetFileTime(file, NULL, NULL, &m_FileTime)) {
+                                 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+      if (!::GetFileTime(file, nullptr, nullptr, &m_FileTime)) {
         // maybe this file is in a bsa, but there is no easy way to find out which. User should refresh
         // the view to find out
         m_Archive = L"bsa?";
@@ -319,13 +321,13 @@ static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
 
 
 FileEntry::FileEntry()
-  : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(NULL), m_LastAccessed(time(NULL))
+  : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr), m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Origin(-1), m_Parent(parent), m_Archive(L""), m_LastAccessed(time(NULL))
+  : m_Index(index), m_Name(name), m_Origin(-1), m_Parent(parent), m_Archive(L""), m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
@@ -346,7 +348,7 @@ void FileEntry::sortOrigins()
 
 bool FileEntry::recurseParents(std::wstring &path, const DirectoryEntry *parent) const
 {
-  if (parent == NULL) {
+  if (parent == nullptr) {
     return false;
   } else {
     // don't append the topmost parent because it is the virtual data-root
@@ -475,7 +477,7 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
 void DirectoryEntry::propagateOrigin(int origin)
 {
   m_Origins.insert(origin);
-  if (m_Parent != NULL) {
+  if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
   }
 }
@@ -508,15 +510,15 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
 {
   WIN32_FIND_DATAW findData;
 
-  _snwprintf(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, L"\\*");
+  _snwprintf_s(buffer + bufferOffset, MAXPATH_UNICODE - bufferOffset, _TRUNCATE, L"\\*");
 
-  HANDLE searchHandle = NULL;
+  HANDLE searchHandle = nullptr;
 
   if (SupportOptimizedFind()) {
-    searchHandle = ::FindFirstFileExW(buffer, FindExInfoBasic, &findData, FindExSearchNameMatch, NULL,
+    searchHandle = ::FindFirstFileExW(buffer, FindExInfoBasic, &findData, FindExSearchNameMatch, nullptr,
                                       FIND_FIRST_EX_LARGE_FETCH);
   } else {
-    searchHandle = ::FindFirstFileExW(buffer, FindExInfoStandard, &findData, FindExSearchNameMatch, NULL, 0);
+    searchHandle = ::FindFirstFileExW(buffer, FindExInfoStandard, &findData, FindExSearchNameMatch, nullptr, 0);
   }
 
   if (searchHandle != INVALID_HANDLE_VALUE) {
@@ -567,7 +569,7 @@ bool DirectoryEntry::removeFile(const std::wstring &filePath, int *origin)
     std::wstring dirName = filePath.substr(0, pos);
     std::wstring rest = filePath.substr(pos + 1);
     DirectoryEntry *entry = getSubDirectoryRecursive(dirName, false);
-    if (entry != NULL) {
+    if (entry != nullptr) {
       return entry->removeFile(rest, origin);
     } else {
       return false;
@@ -605,7 +607,7 @@ void DirectoryEntry::removeDir(const std::wstring &path)
     std::wstring dirName = path.substr(0, pos);
     std::wstring rest = path.substr(pos + 1);
     DirectoryEntry *entry = getSubDirectoryRecursive(dirName, false);
-    if (entry != NULL) {
+    if (entry != nullptr) {
       entry->removeDir(rest);
     }
   }
@@ -704,12 +706,12 @@ FilesOrigin &DirectoryEntry::getOriginByName(const std::wstring &name) const
 
 int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
 {
-  const DirectoryEntry *directory = NULL;
+  const DirectoryEntry *directory = nullptr;
   const FileEntry::Ptr file = searchFile(path, &directory);
-  if (file.get() != NULL) {
+  if (file.get() != nullptr) {
     return file->getOrigin(archive);
   } else {
-    if (directory != NULL) {
+    if (directory != nullptr) {
       return directory->anyOrigin();
     } else {
       return -1;
@@ -729,13 +731,13 @@ std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
 
 const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const DirectoryEntry **directory) const
 {
-  if (directory != NULL) {
-    *directory = NULL;
+  if (directory != nullptr) {
+    *directory = nullptr;
   }
 
   if ((path.length() == 0) || (path == L"*")) {
     // no file name -> the path ended on a (back-)slash
-    if (directory != NULL) {
+    if (directory != nullptr) {
       *directory = this;
     }
     return FileEntry::Ptr();
@@ -748,9 +750,9 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     auto iter = m_Files.find(ToLower(path));
     if (iter != m_Files.end()) {
       return m_FileRegister->getFile(iter->second);
-    } else if (directory != NULL) {
+    } else if (directory != nullptr) {
       DirectoryEntry *temp = findSubDirectory(path);
-      if (temp != NULL) {
+      if (temp != nullptr) {
         *directory = temp;
       }
     }
@@ -758,7 +760,7 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     // file is in in a subdirectory, recurse into the matching subdirectory
     std::wstring pathComponent = path.substr(0, len);
     DirectoryEntry *temp = findSubDirectory(pathComponent);
-    if (temp != NULL) {
+    if (temp != nullptr) {
       return temp->searchFile(path.substr(len + 1), directory);
     }
   }
@@ -773,7 +775,7 @@ DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
       return *iter;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 
@@ -805,7 +807,7 @@ DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool c
         new DirectoryEntry(name, this, originID, m_FileRegister, m_OriginConnection));
     return *iter;
   } else {
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -822,8 +824,8 @@ DirectoryEntry *DirectoryEntry::getSubDirectoryRecursive(const std::wstring &pat
     return getSubDirectory(path, create);
   } else {
     DirectoryEntry *nextChild = getSubDirectory(path.substr(0, pos), create, originID);
-    if (nextChild == NULL) {
-      return NULL;
+    if (nextChild == nullptr) {
+      return nullptr;
     } else {
       return nextChild->getSubDirectoryRecursive(path.substr(pos + 1), create, originID);
     }
@@ -885,7 +887,7 @@ void FileRegister::unregisterFile(FileEntry::Ptr file)
   }
 
   // unregister from directory
-  if (file->getParent() != NULL) {
+  if (file->getParent() != nullptr) {
     file->getParent()->removeFile(file->getIndex());
   }
 }
@@ -943,7 +945,7 @@ void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int ori
   // only when disabling an origin that is probably frequently the case
   std::set<DirectoryEntry*> parents;
   BOOST_FOREACH (const FileEntry::Ptr &file, removedFiles) {
-    if (file->getParent() != NULL) {
+    if (file->getParent() != nullptr) {
       parents.insert(file->getParent());
     }
   }

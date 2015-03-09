@@ -77,5 +77,9 @@
         <file alias="script">resources/contents/tinker.png</file>
         <file alias="mesh">resources/contents/breastplate.png</file>
         <file alias="string">resources/contents/conversation.png</file>
+        <file alias="bsa">resources/contents/locked-chest.png</file>
+    </qresource>
+    <qresource prefix="/qt/etc">
+        <file>qt.conf</file>
     </qresource>
 </RCC>

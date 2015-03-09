@@ -7,45 +7,35 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-OrganizerProxy::OrganizerProxy(MainWindow *window, const QString &pluginName)
-  : m_Proxied(window)
+OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, const QString &pluginName)
+  : m_Proxied(organizer)
   , m_PluginName(pluginName)
 {
 }
 
 IGameInfo &OrganizerProxy::gameInfo() const
 {
-  return *m_Proxied->m_GameInfo;
+  return m_Proxied->gameInfo();
 }
-
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
 {
   return new NexusBridge(m_PluginName);
 }
 
-
 QString OrganizerProxy::profileName() const
 {
-  if (m_Proxied->m_CurrentProfile != NULL) {
-    return m_Proxied->m_CurrentProfile->getName();
-  } else {
-    return "";
-  }
+  return m_Proxied->profileName();
 }
 
 QString OrganizerProxy::profilePath() const
 {
-  if (m_Proxied->m_CurrentProfile != NULL) {
-    return m_Proxied->m_CurrentProfile->getPath();
-  } else {
-    return "";
-  }
+  return m_Proxied->profilePath();
 }
 
 QString OrganizerProxy::downloadsPath() const
 {
-  return QDir::fromNativeSeparators(m_Proxied->m_Settings.getDownloadDirectory());
+  return m_Proxied->downloadsPath();
 }
 
 QString OrganizerProxy::overwritePath() const
@@ -57,7 +47,7 @@ QString OrganizerProxy::overwritePath() const
 
 VersionInfo OrganizerProxy::appVersion() const
 {
-  return m_Proxied->m_Updater.getVersion();
+  return m_Proxied->appVersion();
 }
 
 IModInterface *OrganizerProxy::getMod(const QString &name)
@@ -75,35 +65,34 @@ bool OrganizerProxy::removeMod(IModInterface *mod)
   return m_Proxied->removeMod(mod);
 }
 
-void OrganizerProxy::modDataChanged(IModInterface*)
+void OrganizerProxy::modDataChanged(IModInterface *mod)
 {
-  m_Proxied->refreshModList();
+  m_Proxied->modDataChanged(mod);
 }
 
 QVariant OrganizerProxy::pluginSetting(const QString &pluginName, const QString &key) const
 {
-  return m_Proxied->m_Settings.pluginSetting(pluginName, key);
+  return m_Proxied->pluginSetting(pluginName, key);
 }
 
 void OrganizerProxy::setPluginSetting(const QString &pluginName, const QString &key, const QVariant &value)
 {
-  m_Proxied->m_Settings.setPluginSetting(pluginName, key, value);
+  m_Proxied->setPluginSetting(pluginName, key, value);
 }
 
 QVariant OrganizerProxy::persistent(const QString &pluginName, const QString &key, const QVariant &def) const
 {
-  return m_Proxied->m_Settings.pluginPersistent(pluginName, key, def);
+  return m_Proxied->persistent(pluginName, key, def);
 }
 
 void OrganizerProxy::setPersistent(const QString &pluginName, const QString &key, const QVariant &value, bool sync)
 {
-  m_Proxied->m_Settings.setPluginPersistent(pluginName, key, value, sync);
+  m_Proxied->setPersistent(pluginName, key, value, sync);
 }
 
 QString OrganizerProxy::pluginDataPath() const
 {
-  QString pluginPath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory())) + "/" + ToQString(AppConfig::pluginPath());
-  return pluginPath + "/data";
+  return m_Proxied->pluginDataPath();
 }
 
 HANDLE OrganizerProxy::startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile)
@@ -113,19 +102,22 @@ HANDLE OrganizerProxy::startApplication(const QString &executable, const QString
 
 bool OrganizerProxy::waitForApplication(HANDLE handle, LPDWORD exitCode) const
 {
-  return m_Proxied->waitForProcessOrJob(handle, exitCode);
+  return m_Proxied->waitForApplication(handle, exitCode);
 }
 
 bool OrganizerProxy::onAboutToRun(const std::function<bool (const QString &)> &func)
 {
-  auto conn = m_Proxied->m_AboutToRun.connect(func);
-  return conn.connected();
+  return m_Proxied->onAboutToRun(func);
+}
+
+bool OrganizerProxy::onFinishedRun(const std::function<void (const QString &, unsigned int)> &func)
+{
+  return m_Proxied->onFinishedRun(func);
 }
 
 bool OrganizerProxy::onModInstalled(const std::function<void (const QString &)> &func)
 {
-  auto conn = m_Proxied->m_ModInstalled.connect(func);
-  return conn.connected();
+  return m_Proxied->onModInstalled(func);
 }
 
 void OrganizerProxy::refreshModList(bool saveChanges)
@@ -135,67 +127,27 @@ void OrganizerProxy::refreshModList(bool saveChanges)
 
 IModInterface *OrganizerProxy::installMod(const QString &fileName)
 {
-  return m_Proxied->installMod(fileName);
+  return m_Proxied->installMod(fileName, QString());
 }
 
 QString OrganizerProxy::resolvePath(const QString &fileName) const
 {
-  if (m_Proxied->m_DirectoryStructure == NULL) {
-    return QString();
-  }
-  const FileEntry::Ptr file = m_Proxied->m_DirectoryStructure->searchFile(ToWString(fileName), NULL);
-  if (file.get() != NULL) {
-    return ToQString(file->getFullPath());
-  } else {
-    return QString();
-  }
+  return m_Proxied->resolvePath(fileName);
 }
 
 QStringList OrganizerProxy::listDirectories(const QString &directoryName) const
 {
-  QStringList result;
-  DirectoryEntry *dir = m_Proxied->m_DirectoryStructure->findSubDirectoryRecursive(ToWString(directoryName));
-  if (dir != NULL) {
-    std::vector<DirectoryEntry*>::iterator current, end;
-    dir->getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      result.append(ToQString((*current)->getName()));
-    }
-  }
-  return result;
+  return m_Proxied->listDirectories(directoryName);
 }
 
 QStringList OrganizerProxy::findFiles(const QString &path, const std::function<bool(const QString&)> &filter) const
 {
-  QStringList result;
-  DirectoryEntry *dir = m_Proxied->m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
-  if (dir != NULL) {
-    std::vector<FileEntry::Ptr> files = dir->getFiles();
-    foreach (FileEntry::Ptr file, files) {
-      if (filter(ToQString(file->getFullPath()))) {
-        result.append(ToQString(file->getFullPath()));
-      }
-    }
-  } else {
-    qWarning("directory %s not found", qPrintable(path));
-  }
-  return result;
+  return m_Proxied->findFiles(path, filter);
 }
 
 QStringList OrganizerProxy::getFileOrigins(const QString &fileName) const
 {
-  QStringList result;
-  const FileEntry::Ptr file = m_Proxied->m_DirectoryStructure->searchFile(ToWString(QFileInfo(fileName).fileName()), NULL);
-
-  if (file.get() != NULL) {
-    result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
-    foreach (int i, file->getAlternatives()) {
-      result.append(ToQString(m_Proxied->m_DirectoryStructure->getOriginByID(i).getName()));
-    }
-  } else {
-    qDebug("%s not found", qPrintable(fileName));
-  }
-  return result;
+  return m_Proxied->getFileOrigins(fileName);
 }
 
 QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const
@@ -205,15 +157,15 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
 
 MOBase::IDownloadManager *OrganizerProxy::downloadManager()
 {
-  return &m_Proxied->m_DownloadManager;
+  return m_Proxied->downloadManager();
 }
 
 MOBase::IPluginList *OrganizerProxy::pluginList()
 {
-  return &m_Proxied->m_PluginList;
+  return m_Proxied->pluginList();
 }
 
 MOBase::IModList *OrganizerProxy::modList()
 {
-  return &m_Proxied->m_ModList;
+  return m_Proxied->modList();
 }

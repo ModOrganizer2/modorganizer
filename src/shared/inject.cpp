@@ -57,13 +57,13 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
   _snprintf(parameters.initstr, 5, "Init"); //this is the name of thie initialisation function we want to call in the target process
 
   HMODULE k32mod = ::LoadLibrary(__TEXT("kernel32.dll"));
-  TLoadLibraryType loadLibraryFunc = NULL;
-  TGetProcAddressType getProcAddressFunc = NULL;
+  TLoadLibraryType loadLibraryFunc = nullptr;
+  TGetProcAddressType getProcAddressFunc = nullptr;
   // ansi binaries
-  if (k32mod != NULL) {
+  if (k32mod != nullptr) {
     loadLibraryFunc = reinterpret_cast<TLoadLibraryType>(::GetProcAddress(k32mod, "LoadLibraryA"));
     getProcAddressFunc = reinterpret_cast<TGetProcAddressType>(::GetProcAddress(k32mod, "GetProcAddress"));
-    if ((loadLibraryFunc == NULL) || (getProcAddressFunc == NULL)) {
+    if ((loadLibraryFunc == nullptr) || (getProcAddressFunc == nullptr)) {
       throw windows_error("failed to determine address for required functions");
     }
   } else {
@@ -71,8 +71,8 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
   }
 
   // allocate memory in the target process and write the parameter-block there
-  LPVOID remoteMem = ::VirtualAllocEx(processHandle, NULL, sizeof(TParameters), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-  if (remoteMem == NULL) {
+  LPVOID remoteMem = ::VirtualAllocEx(processHandle, nullptr, sizeof(TParameters), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+  if (remoteMem == nullptr) {
     throw windows_error("failed to allocate memory in target process");
   }
   SIZE_T written;
@@ -104,8 +104,8 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
                     };
 
   // reserve memory for the stub
-  PBYTE stubRemote = reinterpret_cast<PBYTE>(::VirtualAllocEx(processHandle, NULL, sizeof(stubLocal), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-  if (stubRemote == NULL) {
+  PBYTE stubRemote = reinterpret_cast<PBYTE>(::VirtualAllocEx(processHandle, nullptr, sizeof(stubLocal), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+  if (stubRemote == nullptr) {
     throw windows_error("failed to allocate memory for stub");
   }
   TParameters *remoteParams = reinterpret_cast<TParameters*>(remoteMem);

@@ -65,9 +65,11 @@ public:
    * @param parent parent widget
    * @todo passing the nexus interface is unneccessary
    **/
-  SelfUpdater(NexusInterface *nexusInterface, QWidget *parent);
+  SelfUpdater(NexusInterface *nexusInterface);
 
   virtual ~SelfUpdater();
+
+  void setUserInterface(QWidget *widget);
 
   /**
    * @brief start the update process
@@ -118,6 +120,7 @@ private:
   void updateProgressFile(LPCWSTR fileName);
   void report7ZipError(LPCWSTR errorMessage);
   QString retrieveNews(const QString &description);
+  void showProgress();
 
 private slots:
 

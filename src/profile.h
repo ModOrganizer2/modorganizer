@@ -22,7 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "modinfo.h"
-
+#include <iprofile.h>
+#include <delayedfilewriter.h>
 #include <QString>
 #include <QDir>
 #include <QMetaType>
@@ -31,10 +32,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <tuple>
 
 
+namespace MOBase {
+  class IPluginGame;
+}
+
 /**
  * @brief represents a profile
  **/
-class Profile : public QObject
+class Profile : public QObject, public MOBase::IProfile
 {
 
   Q_OBJECT
@@ -59,7 +64,7 @@ public:
    * @param name name of the new profile
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
-  Profile(const QString &name, bool useDefaultSettings);
+  Profile(const QString &name, MOBase::IPluginGame *gamePlugin, bool useDefaultSettings);
   /**
    * @brief constructor
    *
@@ -68,7 +73,7 @@ public:
    * invoking this should always produce a working profile
    * @param directory directory to read the profile from
    **/
-  Profile(const QDir &directory);
+  Profile(const QDir &directory, MOBase::IPluginGame *gamePlugin);
 
   Profile(const Profile &reference);
 
@@ -83,24 +88,9 @@ public:
    * @param name of the new profile
    * @param reference profile to copy from
    **/
-  static Profile createFrom(const QString &name, const Profile &reference);
+  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin);
 
-  /**
-   * @param name of the new profile
-   * @param reference profile to copy from
-   **/
-  static Profile *createPtrFrom(const QString &name, const Profile &reference);
-
-  /**
-   * @brief write out the modlist.txt
-   **/
-  void writeModlist() const;
-
-  /**
-   * cancel any potential request to write modlist.txt. This is used to ensure no invalid modlist is
-   * saved while it's being modified
-   */
-  void cancelWriteModlist() const;
+  MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
 
   /**
    * @brief test if this profile uses archive invalidation
@@ -114,7 +104,7 @@ public:
   /**
    * @brief deactivate archive invalidation if it was active
    **/
-  void deactivateInvalidation() const;
+  void deactivateInvalidation();
 
   /**
    * @brief activate archive invalidation
@@ -123,7 +113,7 @@ public:
    * @todo passing the data directory as a parameter is useless, the function should
    *       be able to query it from GameInfo
    **/
-  void activateInvalidation(const QString &dataDirectory) const;
+  void activateInvalidation();
 
   /**
    * @return true if this profile uses local save games
@@ -141,7 +131,7 @@ public:
   /**
    * @return name of the profile (this is identical to its directory name)
    **/
-  QString getName() const { return m_Directory.dirName(); }
+  QString name() const { return m_Directory.dirName(); }
 
   /**
    * @return the path of the plugins file in this profile
@@ -190,7 +180,7 @@ public:
   /**
    * @return path to this profile
    **/
-  QString getPath() const;
+  QString absolutePath() const;
 
   void rename(const QString &newName);
 
@@ -285,7 +275,7 @@ signals:
 
 public slots:
 
-  void writeModlistNow(bool onlyOnTimer = false) const;
+  void writeModlistNow();
 
 private:
 
@@ -312,17 +302,21 @@ private:
   void mergeTweak(const QString &tweakName, const QString &tweakedIni) const;
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
+  void finishChangeStatus() const;
 
 private:
 
   QDir m_Directory;
+
+  MOBase::IPluginGame *m_GamePlugin;
 
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
   std::vector<unsigned int> m_ModIndexByPriority;
   unsigned int m_NumRegularMods;
 
-  QTimer *m_SaveTimer;
+  MOBase::DelayedFileWriter m_ModListWriter;
+
 };
 
 Q_DECLARE_METATYPE(Profile)

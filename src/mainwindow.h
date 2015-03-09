@@ -33,14 +33,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableslist.h"
 #include "modlist.h"
 #include "pluginlist.h"
+#include "plugincontainer.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <archive.h>
 #include "directoryrefresher.h"
 #include <imoinfo.h>
-#include <iplugintool.h>
-#include <iplugindiagnose.h>
-#include <ipluginmodpage.h>
 #include "settings.h"
 #include "downloadmanager.h"
 #include "installationmanager.h"
@@ -52,8 +50,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfowidgetgamebryo.h"
 #include "previewgenerator.h"
 #include "browserdialog.h"
+#include "iuserinterface.h"
 #include <guessedvalue.h>
 #include <directoryentry.h>
+#include <delayedfilewriter.h>
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #endif
@@ -62,47 +62,34 @@ namespace Ui {
     class MainWindow;
 }
 
+class LockedDialog;
 class QToolButton;
 class ModListSortProxy;
 class ModListGroupCategoriesProxy;
 
 
-class MainWindow : public QMainWindow, public MOBase::IPluginDiagnose
+class MainWindow : public QMainWindow, public IUserInterface
 {
   Q_OBJECT
-  Q_INTERFACES(MOBase::IPluginDiagnose)
 
   friend class OrganizerProxy;
 
-private:
-
-  struct SignalCombinerAnd
-  {
-    typedef bool result_type;
-    template<typename InputIterator>
-    bool operator()(InputIterator first, InputIterator last) const
-    {
-      while (first != last) {
-        if (!(*first)) {
-          return false;
-        }
-        ++first;
-      }
-      return true;
-    }
-  };
-
-  typedef boost::signals2::signal<bool (const QString&), SignalCombinerAnd> SignalAboutToRunApplication;
-  typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
-  explicit MainWindow(const QString &exeName, QSettings &initSettings, QWidget *parent = 0);
+  explicit MainWindow(const QString &exeName, QSettings &initSettings,
+                      OrganizerCore &organizerCore, PluginContainer &pluginContainer,
+                      QWidget *parent = 0);
   ~MainWindow();
 
+  void storeSettings(QSettings &settings) override;
   void readSettings();
 
+  virtual void lock() override;
+  virtual void unlock() override;
+  virtual bool unlockClicked() override;
+
   bool addProfile();
-  void refreshBSAList();
+  void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
   void refreshSaveList();
 
@@ -111,45 +98,36 @@ public:
   void setModListSorting(int index);
   void setESPListSorting(int index);
 
-  bool setCurrentProfile(int index);
-  bool setCurrentProfile(const QString &name);
+  void saveArchiveList();
 
-  void createFirstProfile();
-
-/*  void spawnProgram(const QString &fileName, const QString &argumentsArg,
-                    const QString &profileName, const QDir &currentDirectory);*/
-
-  void loadPlugins();
-
-  virtual std::vector<unsigned int> activeProblems() const;
-  virtual QString shortDescription(unsigned int key) const;
-  virtual QString fullDescription(unsigned int key) const;
-  virtual bool hasGuidedFix(unsigned int key) const;
-  virtual void startGuidedFix(unsigned int key) const;
+  void registerPluginTool(MOBase::IPluginTool *tool);
+  void registerModPage(MOBase::IPluginModPage *modPage);
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
 
-  bool saveArchiveList();
-
   void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
   std::string readFromPipe(HANDLE stdOutRead);
-  void processLOOTOut(const std::string &lootOut, std::string &reportURL, std::string &errorMessages, QProgressDialog &dialog);
-
-  HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
-
-  bool waitForProcessOrJob(HANDLE processHandle, LPDWORD exitCode = NULL);
+  void processLOOTOut(const std::string &lootOut, std::string &errorMessages, QProgressDialog &dialog);
 
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
   QString getOriginDisplayName(int originID);
-  void unloadPlugins();
-public slots:
 
-  void refreshLists();
+  void installTranslator(const QString &name);
+
+  virtual void disconnectPlugins();
+
+  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+
+  virtual bool closeWindow();
+  virtual void setWindowEnabled(bool enabled);
+
+  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
+
+public slots:
 
   void displayColumnSelection(const QPoint &pos);
 
-  void externalMessage(const QString &message);
   void modorder_changed();
   void refresher_progress(int percent);
   void directory_refreshed();
@@ -159,11 +137,6 @@ public slots:
 
 signals:
 
-  /**
-   * @brief emitted after a mod has been installed
-   * @node this is currently only used for tutorials
-   */
-  void modInstalled();
 
   /**
    * @brief emitted after the information dialog has been closed
@@ -187,41 +160,23 @@ protected:
 
 private:
 
-  void refreshESPList();
-  void refreshModList(bool saveChanges = true);
-
   void actionToToolButton(QAction *&sourceAction);
-  bool verifyPlugin(MOBase::IPlugin *plugin);
-  void registerPluginTool(MOBase::IPluginTool *tool);
-  void registerModPage(MOBase::IPluginModPage *modPage);
-  bool registerPlugin(QObject *pluginObj, const QString &fileName);
-  bool unregisterPlugin(QObject *pluginObj, const QString &fileName);
 
   void updateToolBar();
   void activateSelectedProfile();
 
   void setExecutableIndex(int index);
 
-  bool testForSteam();
   void startSteam();
 
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
-
   void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
-  void refreshDirectoryStructure();
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
-  void installMod();
-  MOBase::IModInterface *installMod(const QString &fileName, const QString &initModName = QString());
-  MOBase::IModInterface *getMod(const QString &name);
-  MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
-  bool removeMod(MOBase::IModInterface *mod);
+  void installMod(QString fileName = "");
 
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
   void displayModInformation(int row, int tab = 0);
   void testExtractBSA(int modIndex);
 
@@ -255,10 +210,6 @@ private:
   // remove invalid category-references from mods
   void fixCategories();
 
-  void storeSettings();
-
-  bool queryLogin(QString &username, QString &password);
-
   void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
@@ -266,7 +217,8 @@ private:
   int checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
-  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID);
+  QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type);
+  void addContentFilters();
   void addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID);
 
   void setCategoryListVisible(bool visible);
@@ -280,13 +232,10 @@ private:
 
   bool errorReported(QString &logFile);
 
-  QIcon iconForExecutable(const QString &filePath);
-
   void updateESPLock(bool locked);
 
   static void setupNetworkProxy(bool activate);
   void activateProxy(bool activate);
-  void installTranslator(const QString &name);
   void setBrowserGeometry(const QByteArray &geometry);
 
   bool createBackup(const QString &filePath, const QDateTime &time);
@@ -298,12 +247,7 @@ private:
 
   void scheduleUpdateButton();
 
-  void updateModActiveState(int index, bool active);
-
 private:
-
-  static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;
-  static const unsigned int PROBLEM_TOOMANYPLUGINS = 2;
 
   static const char *PATTERN_BACKUP_GLOB;
   static const char *PATTERN_BACKUP_REGEX;
@@ -321,21 +265,17 @@ private:
 
   int m_OldProfileIndex;
 
-  QThread m_RefresherThread;
-  DirectoryRefresher m_DirectoryRefresher;
-  MOShared::DirectoryEntry *m_DirectoryStructure;
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
   QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
-  ModList m_ModList;
+  QStringList m_DefaultArchives;
+
   QAbstractItemModel *m_ModListGroupingProxy;
   ModListSortProxy *m_ModListSortProxy;
 
-  PluginList m_PluginList;
   PluginListSortProxy *m_PluginListSortProxy;
 
-  ExecutablesList m_ExecutablesList;
   int m_OldExecutableIndex;
 
   QString m_GamePath;
@@ -347,28 +287,12 @@ private:
 
   //int m_SelectedSaveGame;
 
-  Settings m_Settings;
-
-  DownloadManager m_DownloadManager;
-  InstallationManager m_InstallationManager;
-
-  SelfUpdater m_Updater;
-
   CategoryFactory &m_CategoryFactory;
-
-  Profile *m_CurrentProfile;
 
   int m_ModsToUpdate;
 
-  QStringList m_PendingDownloads;
-  QList<boost::function<void (MainWindow*)> > m_PostLoginTasks;
-  bool m_AskForNexusPW;
   bool m_LoginAttempted;
 
-  QStringList m_DefaultArchives;
-  QStringList m_ActiveArchives;
-  bool m_DirectoryUpdate;
-  bool m_ArchivesInit;
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
@@ -376,23 +300,12 @@ private:
   QTime m_StartTime;
   SaveGameInfoWidget *m_CurrentSaveView;
 
-  MOBase::IGameInfo *m_GameInfo;
-
-  std::vector<MOBase::IPluginDiagnose*> m_DiagnosisPlugins;
-  std::vector<boost::signals2::connection> m_DiagnosisConnections;
-  std::vector<MOBase::IPluginModPage*> m_ModPages;
-  std::vector<QString> m_FailedPlugins;
-  std::vector<QPluginLoader*> m_PluginLoaders;
-
-  QFile m_PluginsCheck;
-
-  SignalAboutToRunApplication m_AboutToRun;
-  SignalModInstalled m_ModInstalled;
+  OrganizerCore &m_OrganizerCore;
+  PluginContainer &m_PluginContainer;
 
   QString m_CurrentLanguage;
   std::vector<QTranslator*> m_Translators;
 
-  PreviewGenerator m_PreviewGenerator;
   BrowserDialog m_IntegratedBrowser;
 
   QFileSystemWatcher m_SavesWatcher;
@@ -402,6 +315,10 @@ private:
   QByteArray m_ArchiveListHash;
 
   bool m_DidUpdateMasterList;
+
+  LockedDialog *m_LockDialog { nullptr };
+
+  MOBase::DelayedFileWriter m_ArchiveListWriter;
 
 private slots:
 
@@ -444,20 +361,13 @@ private slots:
   void linkMenu();
 
   void languageChange(const QString &newLanguage);
-  void modStatusChanged(unsigned int index);
   void saveSelectionChanged(QListWidgetItem *newItem);
-
-  bool saveCurrentLists();
 
   void windowTutorialFinished(const QString &windowName);
 
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
-  void syncOverwrite();
-
   void createModFromOverwrite();
-
-  void removeOrigin(const QString &name);
 
   void procError(QProcess::ProcessError error);
   void procFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -466,19 +376,10 @@ private slots:
   void checkModsForUpdates();
   void nexusLinkActivated(const QString &link);
 
+  void loginFailed(const QString &message);
+
   void linkClicked(const QString &url);
 
-  bool nexusLogin();
-
-  void loginSuccessful(bool necessary);
-  void loginSuccessfulUpdate(bool necessary);
-  void loginFailed(const QString &message);
-  void loginFailedUpdate(const QString &message);
-
-  void downloadRequestedNXM(const QString &url);
-  void downloadRequested(QNetworkReply *reply, int modID, const QString &fileName);
-
-  void installDownload(int index);
   void updateAvailable();
 
   void motdReceived(const QString &motd);
@@ -493,7 +394,8 @@ private slots:
   void addPrimaryCategoryCandidates();
 
   void modDetailsUpdated(bool success);
-  void modlistChanged(int row);
+
+  void modInstalled(const QString &modName);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
@@ -538,7 +440,6 @@ private slots:
   void modlistChanged(const QModelIndex &index, int role);
   void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
 
-  void savePluginList();
 
   void modFilterActive(bool active);
   void espFilterChanged(const QString &filter);
@@ -556,8 +457,6 @@ private slots:
    */
   void allowListResize();
 
-  void downloadSpeed(const QString &serverName, int bytesPerSecond);
-
   void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
   void overwriteClosed(int);
@@ -571,10 +470,10 @@ private slots:
   void about();
   void delayedRemove();
 
-  void requestDownload(const QUrl &url, QNetworkReply *reply);
+  void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
+  void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 
 private slots: // ui slots
-  void profileRefresh();
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();
@@ -617,6 +516,7 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
   void on_manageArchivesBox_toggled(bool checked);
+
 };
 
 

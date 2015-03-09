@@ -28,7 +28,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 
 #include <gameinfo.h>
+#include <iplugingame.h>
 #include <versioninfo.h>
+#include <appconfig.h>
+#include <scriptextender.h>
 
 #include <QApplication>
 
@@ -72,7 +75,6 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
   return result;
 }
 
-
 ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList &bsaNames
                                        , DirectoryEntry ** directoryStructure)
 {
@@ -82,6 +84,23 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList
   return result;
 }
 
+QString ModInfo::getContentTypeName(int contentType)
+{
+  switch (contentType) {
+    case CONTENT_PLUGIN:    return tr("Plugins");
+    case CONTENT_TEXTURE:   return tr("Textures");
+    case CONTENT_MESH:      return tr("Meshes");
+    case CONTENT_BSA:       return tr("BSA");
+    case CONTENT_INTERFACE: return tr("UI Changes");
+    case CONTENT_MUSIC:     return tr("Music");
+    case CONTENT_SOUND:     return tr("Sound Effects");
+    case CONTENT_SCRIPT:    return tr("Scripts");
+    case CONTENT_SKSE:      return tr("SKSE Plugins");
+    case CONTENT_SKYPROC:   return tr("SkyProc Tools");
+    case CONTENT_STRING:    return tr("Strings");
+    default: throw MyException(tr("invalid content type %1").arg(contentType));
+  }
+}
 
 void ModInfo::createFromOverwrite()
 {
@@ -89,7 +108,6 @@ void ModInfo::createFromOverwrite()
 
   s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite));
 }
-
 
 unsigned int ModInfo::getNumMods()
 {
@@ -134,7 +152,6 @@ bool ModInfo::removeMod(unsigned int index)
   if (index >= s_Collection.size()) {
     throw MyException(tr("invalid index %1").arg(index));
   }
-
   // update the indices first
   ModInfo::Ptr modInfo = s_Collection[index];
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));
@@ -231,7 +248,7 @@ void ModInfo::updateIndices()
   s_ModsByModID.clear();
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
-    QString modName = s_Collection[i]->name();
+    QString modName = s_Collection[i]->internalName();
     int modID = s_Collection[i]->getNexusID();
     s_ModsByName[modName] = i;
     s_ModsByModID[modID].push_back(i);
@@ -287,6 +304,11 @@ bool ModInfo::hasFlag(ModInfo::EFlag flag) const
   return std::find(flags.begin(), flags.end(), flag) != flags.end();
 }
 
+bool ModInfo::hasContent(ModInfo::EContent content) const
+{
+  std::vector<EContent> contents = getContents();
+  return std::find(contents.begin(), contents.end(), content) != contents.end();
+}
 
 bool ModInfo::categorySet(int categoryID) const
 {
@@ -358,62 +380,72 @@ std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
 }
 
 
-ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
+void ModInfoWithConflictInfo::doConflictCheck() const
 {
-  // this is costy so cache the result
-  QTime now = QTime::currentTime();
-  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
-    bool overwrite = false;
-    bool overwritten = false;
-    bool regular = false;
+  m_OverwriteList.clear();
+  m_OverwrittenList.clear();
+  bool regular = false;
 
-    int dataID = 0;
-    if ((*m_DirectoryStructure)->originExists(L"data")) {
-      dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
-    }
+  int dataID = 0;
+  if ((*m_DirectoryStructure)->originExists(L"data")) {
+    dataID = (*m_DirectoryStructure)->getOriginByName(L"data").getID();
+  }
 
-    std::wstring name = ToWString(this->name());
-    if ((*m_DirectoryStructure)->originExists(name)) {
-      FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
-      std::vector<FileEntry::Ptr> files = origin.getFiles();
-      for (auto iter = files.begin(); iter != files.end() && (!overwrite || !overwritten || !regular); ++iter) {
-        const std::vector<int> &alternatives = (*iter)->getAlternatives();
-        if (alternatives.size() == 0) {
-          // no alternatives -> no conflict
-          regular = true;
-        } else {
-          for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-            // don't treat files overwritten in data as "conflict"
-            if (*altIter != dataID) {
-              bool ignore = false;
-              if ((*iter)->getOrigin(ignore) == origin.getID()) {
-                overwrite = true;
-                break;
-              } else {
-                overwritten = true;
-                break;
-              }
-            } else if (alternatives.size() == 1) {
-              // only alternative is data -> no conflict
-              regular = true;
+  std::wstring name = ToWString(this->name());
+  if ((*m_DirectoryStructure)->originExists(name)) {
+    FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
+    std::vector<FileEntry::Ptr> files = origin.getFiles();
+    // for all files in this origin
+    for (auto iter = files.begin(); iter != files.end(); ++iter) {
+      const std::vector<int> &alternatives = (*iter)->getAlternatives();
+      if ((alternatives.size() == 0)
+          || (alternatives[0] == dataID)) {
+        // no alternatives -> no conflict
+        regular = true;
+      } else {
+        if ((*iter)->getOrigin() != origin.getID()) {
+          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID((*iter)->getOrigin());
+          unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
+          m_OverwrittenList.insert(altIndex);
+        }
+        // for all non-providing alternative origins
+        for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
+          if ((*altIter != dataID) && (*altIter != origin.getID())) {
+            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(*altIter);
+            unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
+            if (origin.getPriority() > altOrigin.getPriority()) {
+              m_OverwriteList.insert(altIndex);
+            } else {
+              m_OverwrittenList.insert(altIndex);
             }
           }
         }
       }
     }
+  }
 
-    m_LastConflictCheck = QTime::currentTime();
+  m_LastConflictCheck = QTime::currentTime();
 
-    if (overwrite && overwritten) m_CurrentConflictState = CONFLICT_MIXED;
-    else if (overwrite) m_CurrentConflictState = CONFLICT_OVERWRITE;
-    else if (overwritten) {
-      if (!regular) {
-        m_CurrentConflictState = CONFLICT_REDUNDANT;
-      } else {
-        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
-      }
+  if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
+    m_CurrentConflictState = CONFLICT_MIXED;
+  else if (!m_OverwriteList.empty())
+    m_CurrentConflictState = CONFLICT_OVERWRITE;
+  else if (!m_OverwrittenList.empty()) {
+    if (!regular) {
+      m_CurrentConflictState = CONFLICT_REDUNDANT;
+    } else {
+      m_CurrentConflictState = CONFLICT_OVERWRITTEN;
     }
-    else m_CurrentConflictState = CONFLICT_NONE;
+  }
+  else m_CurrentConflictState = CONFLICT_NONE;
+}
+
+ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
+{
+  // this is costy so cache the result
+  QTime now = QTime::currentTime();
+  if (m_LastConflictCheck.isNull() || (m_LastConflictCheck.secsTo(now) > 10)) {
+    doConflictCheck();
   }
 
   return m_CurrentConflictState;
@@ -447,6 +479,7 @@ ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStruc
   , m_Repository()
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
+  , m_NexusBridge()
 {
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
@@ -628,7 +661,7 @@ void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
     fullMessage += "\nNexus will reject endorsements within 15 Minutes of a failed attempt, the error message may be misleading.";
   }
-  if (QApplication::activeWindow() != NULL) {
+  if (QApplication::activeWindow() != nullptr) {
     MessageDialog::showMessage(fullMessage, QApplication::activeWindow());
   }
   emit modDetailsUpdated(false);
@@ -826,23 +859,38 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 
 std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 {
-  std::vector<EContent> result;
-  QDir dir(absolutePath());
-  if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
-    result.push_back(CONTENT_PLUGIN);
+  QTime now = QTime::currentTime();
+  if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
+    m_CachedContent.clear();
+    QDir dir(absolutePath());
+    if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+      m_CachedContent.push_back(CONTENT_PLUGIN);
+    }
+    if (dir.entryList(QStringList() << "*.bsa").size() > 0) {
+      m_CachedContent.push_back(CONTENT_BSA);
+    }
+
+    ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+
+    if (extender != nullptr) {
+      QString sePluginPath = extender->name() + "/plugins";
+      if (dir.exists(sePluginPath)) m_CachedContent.push_back(CONTENT_SKSE);
+    }
+    if (dir.exists("textures"))   m_CachedContent.push_back(CONTENT_TEXTURE);
+    if (dir.exists("meshes"))     m_CachedContent.push_back(CONTENT_MESH);
+    if (dir.exists("interface")
+        || dir.exists("menus"))   m_CachedContent.push_back(CONTENT_INTERFACE);
+    if (dir.exists("music"))      m_CachedContent.push_back(CONTENT_MUSIC);
+    if (dir.exists("sound"))      m_CachedContent.push_back(CONTENT_SOUND);
+    if (dir.exists("scripts"))    m_CachedContent.push_back(CONTENT_SCRIPT);
+    if (dir.exists("strings"))    m_CachedContent.push_back(CONTENT_STRING);
+    if (dir.exists("SkyProc Patchers"))  m_CachedContent.push_back(CONTENT_SKYPROC);
+
+    m_LastContentCheck = QTime::currentTime();
   }
-  QString sePluginPath = ToQString(GameInfo::instance().getSEName()) + "/plugins";
-  if (dir.exists("textures"))   result.push_back(CONTENT_TEXTURE);
-  if (dir.exists("meshes"))     result.push_back(CONTENT_MESH);
-  if (dir.exists("interface")
-      || dir.exists("menus"))   result.push_back(CONTENT_INTERFACE);
-  if (dir.exists("music"))      result.push_back(CONTENT_MUSIC);
-  if (dir.exists("sound"))      result.push_back(CONTENT_SOUND);
-  if (dir.exists("scripts"))    result.push_back(CONTENT_SCRIPT);
-  if (dir.exists(sePluginPath)) result.push_back(CONTENT_SKSE);
-  if (dir.exists("strings"))    result.push_back(CONTENT_STRING);
-  if (dir.exists("SkyProc Patchers"))  result.push_back(CONTENT_SKYPROC);
-  return result;
+
+  return m_CachedContent;
+
 }
 
 
@@ -981,7 +1029,7 @@ bool ModInfoOverwrite::isEmpty() const
 
 QString ModInfoOverwrite::absolutePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOverwriteDir()));
+  return QDir::fromNativeSeparators(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
 }
 
 std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const

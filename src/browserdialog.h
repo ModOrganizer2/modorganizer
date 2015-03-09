@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define BROWSERDIALOG_H
 
 #include <QDialog>
-#include <QProgressBar>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTimer>

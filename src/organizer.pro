@@ -9,7 +9,7 @@ TARGET = ModOrganizer
 TEMPLATE = app
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-	QT       += core gui widgets network xml sql xmlpatterns qml quick script webkit webkitwidgets
+  QT       += core gui widgets network xml sql xmlpatterns qml declarative script webkit webkitwidgets
 } else {
   QT       += core gui network xml declarative script sql xmlpatterns webkit
 }
@@ -57,7 +57,6 @@ SOURCES += \
     filedialogmemory.cpp \
     executableslist.cpp \
     editexecutablesdialog.cpp \
-    dummybsa.cpp \
     downloadmanager.cpp \
     downloadlistwidgetcompact.cpp \
     downloadlistwidget.cpp \
@@ -93,7 +92,10 @@ SOURCES += \
     safewritefile.cpp \
     modflagicondelegate.cpp \
     genericicondelegate.cpp \
-    organizerproxy.cpp
+    organizerproxy.cpp \
+    viewmarkingscrollbar.cpp \
+    plugincontainer.cpp \
+    organizercore.cpp
 
 
 HEADERS  += \
@@ -134,7 +136,6 @@ HEADERS  += \
     filedialogmemory.h \
     executableslist.h \
     editexecutablesdialog.h \
-    dummybsa.h \
     downloadmanager.h \
     downloadlistwidgetcompact.h \
     downloadlistwidget.h \
@@ -172,7 +173,11 @@ HEADERS  += \
     pdll.h \
     modflagicondelegate.h \
     genericicondelegate.h \
-    organizerproxy.h
+    organizerproxy.h \
+    viewmarkingscrollbar.h \
+    plugincontainer.h \
+    organizercore.h \
+    iuserinterface.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -242,7 +247,7 @@ LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
 
 # custom leak detection
-LIBS += -lDbgHelp
+#LIBS += -lDbgHelp
 
 # model tests
 #SOURCES += modeltest.cpp
@@ -250,7 +255,7 @@ LIBS += -lDbgHelp
 #DEFINES += TEST_MODELS
 
 
-INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../boss_modified/boss-api "$${BOOSTPATH}"
+INCLUDEPATH += ../shared ../archive ../uibase ../bsatk ../esptk ../plugins/gamefeatures "$${LOOTPATH}" "$${BOOSTPATH}"
 
 LIBS += -L"$${BOOSTPATH}/stage/lib"
 
@@ -277,6 +282,7 @@ CONFIG(debug, debug|release) {
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
 #QMAKE_CXXFLAGS_WARN_ON += -W4
+QMAKE_CXXFLAGS -= -w34100 -w34189
 QMAKE_CXXFLAGS += -wd4100 -wd4127 -wd4512 -wd4189
 
 CONFIG += embed_manifest_exe
@@ -309,7 +315,7 @@ LIBS += -L"$${ZLIBPATH}/build" -lzlibstatic
 
 DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS NOMINMAX
 
-DEFINES += BOOST_DISABLE_ASSERTS NDEBUG
+DEFINES += BOOST_DISABLE_ASSERTS NDEBUG QT_MESSAGELOGCONTEXT
 #DEFINES += QMLJSDEBUGGER
 
 HGID = $$system(hg id -i)
@@ -329,15 +335,32 @@ SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
 DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 
 QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
-QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.exe) $$quote($$DSTDIR) $$escape_expand(\\n)
+QMAKE_POST_LINK += xcopy /y /I $$quote($$SRCDIR\\ModOrganizer*.pdb) $$quote($$DSTDIR) $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\stylesheets) $$quote($$DSTDIR)\\stylesheets $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\tutorials) $$quote($$DSTDIR)\\tutorials $$escape_expand(\\n)
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
 
 CONFIG(debug, debug|release) {
-  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
-  QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
-  QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
+  greaterThan(QT_MAJOR_VERSION, 4) {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.debug.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug.qt5 $$escape_expand(\\n)
+  } else {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.debug) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$quote($$DSTDIR)\\dlls\\dlls.manifest $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.debug $$escape_expand(\\n)
+  }
 } else {
-  QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  greaterThan(QT_MAJOR_VERSION, 4) {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest.qt5) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+    QMAKE_POST_LINK += copy /y $$quote($$DSTDIR\\dlls\\dlls.manifest.qt5) $$quote($$DSTDIR\\dlls\\dlls.manifest) $$escape_expand(\\n)
+    QMAKE_POST_LINK += del $$quote($$DSTDIR)\\dlls\\dlls.manifest.qt5 $$escape_expand(\\n)
+  } else {
+    QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
+  }
 }
+
+DISTFILES += \
+    tutorials/tutorial_primer_main.js \
+    tutorials/Tooltip.qml \
+    tutorials/TooltipArea.qml

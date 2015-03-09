@@ -47,9 +47,9 @@ void SaveGameInfoWidget::setSave(const SaveGame *saveGame)
   ui->levelLabel->setText(QString("%1").arg(saveGame->pcLevel()));
   ui->dateLabel->setText(MOBase::ToString(saveGame->creationTime()));
   ui->screenshotLabel->setPixmap(QPixmap::fromImage(saveGame->screenshot()));
-  if (ui->gameFrame->layout() != NULL) {
-    QLayoutItem *item = NULL;
-    while ((item = ui->gameFrame->layout()->takeAt(0)) != NULL) {
+  if (ui->gameFrame->layout() != nullptr) {
+    QLayoutItem *item = nullptr;
+    while ((item = ui->gameFrame->layout()->takeAt(0)) != nullptr) {
       delete item->widget();
       delete item;
     }

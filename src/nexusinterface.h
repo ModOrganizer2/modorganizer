@@ -108,6 +108,10 @@ public slots:
 
 private:
 
+  QString url();
+
+private:
+
   NexusInterface *m_Interface;
   QString m_Url;
   QString m_SubModule;

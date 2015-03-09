@@ -21,17 +21,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "gameinfo.h"
 #include "windows_error.h"
-#include "dummybsa.h"
 #include "modinfo.h"
 #include "safewritefile.h"
 #include <utility.h>
 #include <util.h>
 #include <error_report.h>
 #include <appconfig.h>
+#include <iplugingame.h>
+#include <bsainvalidation.h>
+#include <dataarchives.h>
 #include <QMessageBox>
 #include <QApplication>
 #include <QSettings>
 #include <QTemporaryFile>
+#include <functional>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -41,10 +44,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+
 Profile::Profile()
-  : m_SaveTimer(NULL)
+  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
-  initTimer();
 }
 
 void Profile::touchFile(QString fileName)
@@ -55,11 +58,11 @@ void Profile::touchFile(QString fileName)
   }
 }
 
-Profile::Profile(const QString &name, bool useDefaultSettings)
-  : m_SaveTimer(NULL)
+Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
+  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_GamePlugin(gamePlugin)
 {
-  initTimer();
-  QString profilesDir = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir()));
+  QString profilesDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath());
   QDir profileBase(profilesDir);
 
   QString fixedName = name;
@@ -78,7 +81,15 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
     touchFile("modlist.txt");
     touchFile("archives.txt");
 
-    GameInfo::instance().createProfile(ToWString(fullPath), useDefaultSettings);
+    IPluginGame::ProfileSettings settings = IPluginGame::CONFIGURATION
+                                          | IPluginGame::MODS
+                                          | IPluginGame::SAVEGAMES;
+
+    if (useDefaultSettings) {
+      settings |= IPluginGame::PREFER_DEFAULTS;
+    }
+
+    gamePlugin->initializeProfile(fullPath, settings);
   } catch (...) {
     // clean up in case of an error
     shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)));
@@ -88,15 +99,21 @@ Profile::Profile(const QString &name, bool useDefaultSettings)
 }
 
 
-Profile::Profile(const QDir& directory)
-  : m_Directory(directory), m_SaveTimer(NULL)
+Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
+  : m_Directory(directory)
+  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
-  initTimer();
+  assert(gamePlugin != nullptr);
+
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
+    touchFile(m_Directory.filePath("modlist.txt"));
   }
 
-  GameInfo::instance().repairProfile(ToWString(m_Directory.absolutePath()));
+  IPluginGame::ProfileSettings settings = IPluginGame::CONFIGURATION
+                                        | IPluginGame::MODS
+                                        | IPluginGame::SAVEGAMES;
+  gamePlugin->initializeProfile(directory, settings);
 
   if (!QFile::exists(getIniFileName())) {
     reportError(QObject::tr("\"%1\" is missing or inaccessible").arg(getIniFileName()));
@@ -105,53 +122,26 @@ Profile::Profile(const QDir& directory)
 }
 
 
-Profile::Profile(const Profile& reference)
-  : m_Directory(reference.m_Directory), m_SaveTimer(NULL)
+Profile::Profile(const Profile &reference)
+  : m_Directory(reference.m_Directory)
+  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
-  initTimer();
   refreshModStatus();
 }
 
 
 Profile::~Profile()
 {
-  writeModlistNow();
+  m_ModListWriter.writeImmediately(true);
 }
-
-
-void Profile::initTimer()
-{
-  m_SaveTimer = new QTimer(this);
-  m_SaveTimer->setSingleShot(true);
-  connect(m_SaveTimer, SIGNAL(timeout()), this, SLOT(writeModlistNow()));
-}
-
 
 bool Profile::exists() const
 {
   return m_Directory.exists();
 }
 
-
-void Profile::writeModlist() const
+void Profile::writeModlistNow()
 {
-  if (!m_SaveTimer->isActive()) {
-    m_SaveTimer->start(2000);
-  }
-}
-
-
-void Profile::cancelWriteModlist() const
-{
-  m_SaveTimer->stop();
-}
-
-
-void Profile::writeModlistNow(bool onlyOnTimer) const
-{
-  if (onlyOnTimer && !m_SaveTimer->isActive()) return;
-
-  m_SaveTimer->stop();
   if (!m_Directory.exists()) return;
 
   try {
@@ -348,7 +338,7 @@ void Profile::refreshModStatus()
   file.close();
   updateIndices();
   if (modStatusModified) {
-    writeModlist();
+    m_ModListWriter.write();
   }
 }
 
@@ -391,7 +381,7 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
        iter != m_ModIndexByPriority.end(); ++iter) {
     if ((*iter != UINT_MAX) && m_ModStatus[*iter].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(*iter);
-      result.push_back(std::make_tuple(modInfo->name(), modInfo->absolutePath(), m_ModStatus[*iter].m_Priority));
+      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[*iter].m_Priority));
     }
   }
 
@@ -437,7 +427,6 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
     emit modStatusChanged(index);
   }
 }
-
 
 bool Profile::modEnabled(unsigned int index) const
 {
@@ -490,31 +479,20 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
   m_ModStatus.at(index).m_Priority = newPriorityTemp;
 
   updateIndices();
-  writeModlist();
+  m_ModListWriter.write();
 }
 
-
-Profile Profile::createFrom(const QString &name, const Profile &reference)
+Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin)
 {
-  QString profileDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())).append("/").append(name);
+  QString profileDirectory = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()) + "/" + name;
   reference.copyFilesTo(profileDirectory);
-  return Profile(QDir(profileDirectory));
+  return new Profile(QDir(profileDirectory), gamePlugin);
 }
-
-
-Profile *Profile::createPtrFrom(const QString &name, const Profile &reference)
-{
-  QString profileDirectory = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())).append("/").append(name);
-  reference.copyFilesTo(profileDirectory);
-  return new Profile(QDir(profileDirectory));
-}
-
 
 void Profile::copyFilesTo(QString &target) const
 {
   copyDir(m_Directory.absolutePath(), target, false);
 }
-
 
 std::vector<std::wstring> Profile::splitDZString(const wchar_t *buffer) const
 {
@@ -528,7 +506,6 @@ std::vector<std::wstring> Profile::splitDZString(const wchar_t *buffer) const
   }
   return result;
 }
-
 
 void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) const
 {
@@ -555,7 +532,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
   for (std::vector<std::wstring>::iterator iter = sections.begin();
        iter != sections.end(); ++iter) {
     // retrieve the names of all keys
-    size = ::GetPrivateProfileStringW(iter->c_str(), NULL, NULL, buffer.data(),
+    size = ::GetPrivateProfileStringW(iter->c_str(), nullptr, nullptr, buffer.data(),
                                       bufferSize, tweakNameW.c_str());
     if (size == bufferSize - 2) {
       throw MyException(QString("Buffer too small. Please report this as a bug. "
@@ -568,7 +545,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
          keyIter != keys.end(); ++keyIter) {
       //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
-                                 NULL, buffer.data(), bufferSize, ToWString(tweakName).c_str());
+                                 nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
       ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                    buffer.data(), tweakedIniW.c_str());
     }
@@ -587,35 +564,22 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 
 bool Profile::invalidationActive(bool *supported) const
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
-    if (supported != NULL) {
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
+
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  DataArchives *dataArchives = gamePlugin->feature<DataArchives>();
+
+  if ((invalidation != nullptr) && (dataArchives != nullptr)) {
+    if (supported != nullptr) {
       *supported = true;
     }
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    // epic ms fail: GetPrivateProfileString uses errno (for whatever reason) to signal a fail since the return value
-    // has a different meaning (number of bytes copied). HOWEVER, it will not set errno to 0 if NO error occured
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno != 0x02) {
-        if (supported != NULL) {
-          *supported = false;
-        }
-        return false;
-      } else {
-        QString errorMessage = tr("failed to parse ini file (%1)").arg(ToQString(iniFileName));
-        throw windows_error(errorMessage.toUtf8().constData());
-      }
-    }
-    QStringList archives = ToQString(buffer).split(',');
 
-    for (int i = 0; i < archives.count(); ++i) {
-      QString bsaName = archives.at(i).trimmed();
-      if (GameInfo::instance().isInvalidationBSA(ToWString(bsaName))) {
+    for (const QString &archive : dataArchives->archives(this)) {
+      if (invalidation->isInvalidationBSA(archive)) {
         return true;
       }
     }
+    return false;
   } else {
     *supported = false;
   }
@@ -623,85 +587,26 @@ bool Profile::invalidationActive(bool *supported) const
 }
 
 
-void Profile::deactivateInvalidation() const
+void Profile::deactivateInvalidation()
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno == 0x02) {
-        QString errorMessage = tr("failed to parse ini file (%1): %2").arg(QDir::toNativeSeparators(getIniFileName())).arg(::GetLastError());
-        throw windows_error(errorMessage.toUtf8().constData());
-      } else {
-        return;
-      }
-    }
-    QStringList archives = ToQString(buffer).split(", ");
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
 
-    for (int i = 0; i < archives.count();) {
-      QString bsaName = archives.at(i).trimmed();
-      if (GameInfo::instance().isInvalidationBSA(ToWString(bsaName))) {
-        archives.removeAt(i);
-      } else {
-        ++i;
-      }
-    }
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
 
-    // just to be safe...
-    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
-
-    if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                      ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"0", iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"ArchiveInvalidation.txt", iniFileName.c_str())) {
-      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
-      throw windows_error(errorMessage.toUtf8().constData());
-    }
+  if (invalidation != nullptr) {
+    invalidation->deactivate(this);
   }
 }
 
 
-void Profile::activateInvalidation(const QString& dataDirectory) const
+void Profile::activateInvalidation()
 {
-  if (GameInfo::instance().requiresBSAInvalidation()) {
-    wchar_t buffer[1024];
-    std::wstring iniFileName = ToWString(QDir::toNativeSeparators(getIniFileName()));
-    errno = 0;
-    if (::GetPrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                   L"", buffer, 1024, iniFileName.c_str()) == 0) {
-      if (errno == 0x02) {
-        throw windows_error("failed to parse ini file");
-      } else {
-        // ignore. shouldn't have gotten here anyway
-        return;
-      }
-    }
-    QStringList archives = ToQString(buffer).split(", ");
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
 
-    QString invalidationBSA = ToQString(GameInfo::instance().getInvalidationBSA());
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
 
-    if (!archives.contains(invalidationBSA)) {
-      archives.insert(0, invalidationBSA);
-    }
-
-    // just to be safe...
-    ::SetFileAttributesW(iniFileName.c_str(), FILE_ATTRIBUTE_NORMAL);
-
-    if (!::WritePrivateProfileStringW(L"Archive", GameInfo::instance().archiveListKey().c_str(),
-                                      ToWString(archives.join(", ").toUtf8()).c_str(), iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", iniFileName.c_str()) ||
-        !::WritePrivateProfileStringW(L"Archive", L"SInvalidationFile", L"", iniFileName.c_str())) {
-      QString errorMessage = tr("failed to modify \"%1\"").arg(ToQString(iniFileName));
-      throw windows_error(errorMessage.toUtf8().constData());
-    }
-
-    QString bsaFile = dataDirectory + "/" + invalidationBSA;
-    if (!QFile::exists(bsaFile)) {
-      DummyBSA bsa;
-      bsa.write(bsaFile);
-    }
+  if (invalidation != nullptr) {
+    invalidation->activate(this);
   }
 }
 
@@ -781,14 +686,15 @@ QString Profile::getProfileTweaks() const
   return QDir::cleanPath(m_Directory.absoluteFilePath(ToQString(AppConfig::profileTweakIni())));
 }
 
-QString Profile::getPath() const
+QString Profile::absolutePath() const
 {
   return QDir::cleanPath(m_Directory.absolutePath());
 }
 
 void Profile::rename(const QString &newName)
 {
-  QDir profileDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getProfilesDir())));
-  profileDir.rename(getName(), newName);
+  QDir profileDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
+  profileDir.rename(name(), newName);
   m_Directory = profileDir.absoluteFilePath(newName);
 }
+

@@ -33,35 +33,34 @@ using namespace MOShared;
 
 NexusBridge::NexusBridge(const QString &subModule)
   : m_Interface(NexusInterface::instance())
-  , m_Url(MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()))
+  , m_Url() // lazy initialized
   , m_SubModule(subModule)
 {
 }
 
-
 void NexusBridge::requestDescription(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestFiles(int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule, m_Url));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule, url()));
 }
 
 void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
@@ -135,6 +134,13 @@ void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int
     m_RequestIDs.erase(iter);
     emit requestFailed(modID, fileID, userData, errorMessage);
   }
+}
+
+QString NexusBridge::url() {
+  if (m_Url.isEmpty()) {
+    m_Url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl());
+  }
+  return m_Url;
 }
 
 
@@ -211,8 +217,8 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
         QString r3Highlight(fileName);
         r3Highlight.insert(result.position(3) + result.length(3), "* ").insert(result.position(3), " *");
 
-        selection.addChoice(candidate.c_str(), r3Highlight, strtol(candidate.c_str(), NULL, 10));
-        selection.addChoice(candidate2.c_str() + offset, r2Highlight, abs(strtol(candidate2.c_str() + offset, NULL, 10)));
+        selection.addChoice(candidate.c_str(), r3Highlight, strtol(candidate.c_str(), nullptr, 10));
+        selection.addChoice(candidate2.c_str() + offset, r2Highlight, abs(strtol(candidate2.c_str() + offset, nullptr, 10)));
         if (selection.exec() == QDialog::Accepted) {
           modID = selection.getChoiceData().toInt();
         } else {
@@ -222,7 +228,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
         modID = -1;
       }
     } else {
-      modID = strtol(candidate.c_str(), NULL, 10);
+      modID = strtol(candidate.c_str(), nullptr, 10);
     }
     qDebug("mod id guessed: %s -> %d", qPrintable(fileName), modID);
   } else if (std::tr1::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
@@ -535,7 +541,7 @@ void NexusInterface::requestFinished()
 void NexusInterface::requestError(QNetworkReply::NetworkError)
 {
   QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-  if (reply == NULL) {
+  if (reply == nullptr) {
     qWarning("invalid sender type");
     return;
   }
@@ -548,7 +554,7 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
 void NexusInterface::requestTimeout()
 {
   QTimer *timer =  qobject_cast<QTimer*>(sender());
-  if (timer == NULL) {
+  if (timer == nullptr) {
     qWarning("invalid sender type");
     return;
   }
@@ -570,10 +576,10 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , int nexusGameId)
   : m_ModID(modID)
   , m_FileID(0)
-  , m_Reply(NULL)
+  , m_Reply(nullptr)
   , m_Type(type)
   , m_UserData(userData)
-  , m_Timeout(NULL)
+  , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)
@@ -591,10 +597,10 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   : m_ModID(-1)
   , m_ModIDList(modIDList)
   , m_FileID(0)
-  , m_Reply(NULL)
+  , m_Reply(nullptr)
   , m_Type(type)
   , m_UserData(userData)
-  , m_Timeout(NULL)
+  , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)
@@ -612,10 +618,10 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , int nexusGameId)
   : m_ModID(modID)
   , m_FileID(fileID)
-  , m_Reply(NULL)
+  , m_Reply(nullptr)
   , m_Type(type)
   , m_UserData(userData)
-  , m_Timeout(NULL)
+  , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
   , m_URL(url)

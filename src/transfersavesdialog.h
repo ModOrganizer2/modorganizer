@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include "profile.h"
+#include <iplugingame.h>
 
 namespace Ui {
 class TransferSavesDialog;
@@ -34,7 +35,7 @@ class TransferSavesDialog : public MOBase::TutorableDialog
   Q_OBJECT
   
 public:
-  explicit TransferSavesDialog(const Profile &profile, QWidget *parent = 0);
+  explicit TransferSavesDialog(const Profile &profile, MOBase::IPluginGame *gamePlugin, QWidget *parent = 0);
   ~TransferSavesDialog();
   
 private slots:
@@ -74,6 +75,8 @@ private:
   Ui::TransferSavesDialog *ui;
 
   Profile m_Profile;
+
+  MOBase::IPluginGame *m_GamePlugin;
 
   std::vector<SaveGame*> m_GlobalSaves;
   std::vector<SaveGame*> m_LocalSaves;

@@ -1,9 +1,9 @@
 #include "stackdata.h"
 
+#include "util.h"
 #include <DbgHelp.h>
 #include <sstream>
 #include <TlHelp32.h>
-#include <util.h>
 #include <set>
 #include "error_report.h"
 #include <boost/predef.h>
@@ -135,7 +135,6 @@ void StackData::initTrace() {
   }
 }
 
-#pragma warning( enable : 4748 )
 
 bool MOShared::operator==(const StackData &LHS, const StackData &RHS) {
   if (LHS.m_Count != RHS.m_Count) {

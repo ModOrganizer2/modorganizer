@@ -31,7 +31,7 @@ using namespace MOShared;
 
 
 DirectoryRefresher::DirectoryRefresher()
-  : m_DirectoryStructure(NULL)
+  : m_DirectoryStructure(nullptr)
 {
 }
 
@@ -44,7 +44,7 @@ DirectoryEntry *DirectoryRefresher::getDirectoryStructure()
 {
   QMutexLocker locker(&m_RefreshLock);
   DirectoryEntry *result = m_DirectoryStructure;
-  m_DirectoryStructure = NULL;
+  m_DirectoryStructure = nullptr;
   return result;
 }
 
@@ -65,12 +65,12 @@ void DirectoryRefresher::setMods(const std::vector<std::tuple<QString, QString, 
 
 void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
 {
-  static wchar_t *files[] = { L"meta.ini", L"readme.txt" };
+  static const wchar_t *files[] = { L"meta.ini", L"readme.txt" };
   for (int i = 0; i < sizeof(files) / sizeof(wchar_t*); ++i) {
     structure->removeFile(files[i]);
   }
 
-  static wchar_t *dirs[] = { L"fomod" };
+  static const wchar_t *dirs[] = { L"fomod" };
   for (int i = 0; i < sizeof(dirs) / sizeof(wchar_t*); ++i) {
     structure->removeDir(std::wstring(dirs[i]));
   }
@@ -104,7 +104,7 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
     foreach (const QString &filename, stealFiles) {
       QFileInfo fileInfo(filename);
       FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
-      if (file.get() != NULL) {
+      if (file.get() != nullptr) {
         if (file->getOrigin() == 0) {
           // replace data as the origin on this bsa
           file->removeOrigin(0);
@@ -134,7 +134,7 @@ void DirectoryRefresher::refresh()
 
   delete m_DirectoryStructure;
 
-  m_DirectoryStructure = new DirectoryEntry(L"data", NULL, 0);
+  m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
 
   std::wstring dataDirectory = GameInfo::instance().getGameDirectory() + L"\\data";
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);

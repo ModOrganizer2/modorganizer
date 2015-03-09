@@ -1,6 +1,7 @@
 #include "genericicondelegate.h"
 #include "pluginlist.h"
 #include <QList>
+#include <QPixmapCache>
 
 
 GenericIconDelegate::GenericIconDelegate(QObject *parent, int role, int logicalIndex, int compactSize)
@@ -19,14 +20,13 @@ void GenericIconDelegate::columnResized(int logicalIndex, int, int newSize)
   }
 }
 
-QList<QIcon> GenericIconDelegate::getIcons(const QModelIndex &index) const
+QList<QString> GenericIconDelegate::getIcons(const QModelIndex &index) const
 {
-  QList<QIcon> result;
+  QList<QString> result;
   if (index.isValid()) {
     foreach (const QVariant &var, index.data(m_Role).toList()) {
-      QIcon icon = var.value<QIcon>();
-      if (!m_Compact || !icon.isNull()) {
-        result.append(icon);
+      if (!m_Compact || !var.toString().isEmpty()) {
+        result.append(var.toString());
       }
     }
   }

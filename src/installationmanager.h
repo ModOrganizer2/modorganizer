@@ -53,9 +53,11 @@ public:
    *
    * @param parent parent object.
    **/
-  explicit InstallationManager(QWidget *parent);
+  explicit InstallationManager();
 
   virtual ~InstallationManager();
+
+  void setParentWidget(QWidget *widget);
 
   /**
    * @brief update the directory where mods are to be installed
@@ -141,7 +143,7 @@ public:
    * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
    * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
    */
-  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = NULL) const;
+  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr) const;
 
 private:
 
@@ -166,7 +168,7 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = NULL);
+  //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = nullptr);
 
   bool doInstall(MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);

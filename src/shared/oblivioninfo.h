@@ -33,8 +33,6 @@ public:
 
   virtual ~OblivionInfo() {}
 
-  virtual unsigned long getBSAVersion();
-
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Oblivion.exe"; }
@@ -43,32 +41,47 @@ public:
 
   virtual std::wstring getGameName() const { return L"Oblivion"; }
   virtual std::wstring getGameShortName() const { return L"Oblivion"; }
+/*
+  virtual std::wstring getInvalidationBSA()
+  {
+    return L"Oblivion - Invalidation.bsa";
+  }
 
-  virtual std::wstring getInvalidationBSA();
+  virtual bool isInvalidationBSA(const std::wstring &bsaName)
+  {
+    static LPCWSTR invalidation[] = { L"Oblivion - Invalidation.bsa", L"ArchiveInvalidationInvalidated!.bsa",
+                                      L"BSARedirection.bsa", nullptr };
 
-  virtual bool isInvalidationBSA(const std::wstring &bsaName);
+    for (int i = 0; invalidation[i] != nullptr; ++i) {
+      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  // full path to this games "My Games"-directory
-  virtual std::wstring getDocumentsDir();
+  virtual std::vector<std::wstring> getVanillaBSAs()
+  {
+    return boost::assign::list_of(L"Oblivion - Meshes.bsa")
+        (L"Oblivion - Textures - Compressed.bsa")
+        (L"Oblivion - Sounds.bsa")
+        (L"Oblivion - Voices1.bsa")
+        (L"Oblivion - Voices2.bsa")
+        (L"Oblivion - Misc.bsa");
+  }
 
-  virtual std::wstring getSaveGameDir();
+  virtual std::vector<std::wstring> getPrimaryPlugins()
+  {
+    return boost::assign::list_of(L"oblivion.esm");
+  }*/
 
-  virtual std::vector<std::wstring> getPrimaryPlugins();
-
-  virtual std::vector<std::wstring> getVanillaBSAs();
   virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames();
 
-  virtual std::wstring getSaveGameExtension();
   virtual std::wstring getReferenceDataFile();
-  virtual std::wstring getOMODExt();
-
-  virtual std::wstring getSteamAPPId(int variant = 0) const;
-
-  virtual std::wstring getSEName();
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
@@ -77,20 +90,17 @@ public:
   virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 101; }
 
-  virtual void createProfile(const std::wstring &directory, bool useDefaults);
-  virtual void repairProfile(const std::wstring &directory);
-
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
-  virtual std::vector<ExecutableInfo> getExecutables();
+  //virtual std::vector<ExecutableInfo> getExecutables();
 
   virtual std::wstring archiveListKey() { return L"SArchiveList"; }
 
 private:
 
-  OblivionInfo(const std::wstring &omoDirectory, const std::wstring &gameDirectory);
+  OblivionInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

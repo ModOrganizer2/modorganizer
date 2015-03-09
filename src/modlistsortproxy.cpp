@@ -54,13 +54,20 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  m_FilterActive = (m_CategoryFilter.size() > 0) || !m_CurrentFilter.isEmpty();
+  m_FilterActive = (m_CategoryFilter.size() > 0) || (m_ContentFilter.size() > 0) || !m_CurrentFilter.isEmpty();
   emit filterActive(m_FilterActive);
 }
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
   m_CategoryFilter = categories;
+  updateFilterActive();
+  this->invalidate();
+}
+
+void ModListSortProxy::setContentFilter(const std::vector<int> &content)
+{
+  m_ContentFilter = content;
   updateFilterActive();
   this->invalidate();
 }
@@ -74,10 +81,9 @@ Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 
   return flags;
 }
-
 void ModListSortProxy::enableAllVisible()
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
@@ -88,7 +94,7 @@ void ModListSortProxy::enableAllVisible()
 
 void ModListSortProxy::disableAllVisible()
 {
-  if (m_Profile == NULL) return;
+  if (m_Profile == nullptr) return;
 
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
@@ -127,6 +133,24 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
     case ModList::COL_FLAGS: {
       if (leftMod->getFlags().size() != rightMod->getFlags().size())
         lt = leftMod->getFlags().size() < rightMod->getFlags().size();
+    } break;
+    case ModList::COL_CONTENT: {
+      std::vector<ModInfo::EContent> lContent = leftMod->getContents();
+      std::vector<ModInfo::EContent> rContent = rightMod->getContents();
+      if (lContent.size() != rContent.size()) {
+        lt = lContent.size() < rContent.size();
+      }
+
+      int lValue = 0;
+      int rValue = 0;
+      for (ModInfo::EContent content : lContent) {
+        lValue += 2 << (unsigned int)content;
+      }
+      for (ModInfo::EContent content : rContent) {
+        rValue += 2 << (unsigned int)content;
+      }
+
+      lt = lValue < rValue;
     } break;
     case ModList::COL_NAME: {
       int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
@@ -228,6 +252,11 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
       } break;
     }
   }
+
+  foreach (int content, m_ContentFilter) {
+    if (!info->hasContent(static_cast<ModInfo::EContent>(content))) return false;
+  }
+
   return true;
 }
 
@@ -265,6 +294,11 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       } break;
     }
   }
+
+  foreach (int content, m_ContentFilter) {
+    if (info->hasContent(static_cast<ModInfo::EContent>(content))) return true;
+  }
+
   return false;
 }
 
@@ -278,7 +312,7 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
   if (m_FilterMode == FILTER_AND) {
     return filterMatchesModAnd(info, enabled);
   } else {
-    return (m_CategoryFilter.size() == 0) || filterMatchesModOr(info, enabled);
+    return filterMatchesModOr(info, enabled);
   }
 }
 
@@ -292,7 +326,7 @@ void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
 
 bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) const
 {
-  if (m_Profile == NULL) {
+  if (m_Profile == nullptr) {
     return false;
   }
 
