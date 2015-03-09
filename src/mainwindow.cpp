@@ -1367,7 +1367,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
   std::sort(items.begin(), items.end(), BySortValue);
 
-  for (std::vector<std::pair<UINT32, QTreeWidgetItem*> >::iterator iter = items.begin(); iter != items.end(); ++iter) {
+  for (auto iter = items.begin(); iter != items.end(); ++iter) {
     int originID = iter->second->data(1, Qt::UserRole).toInt();
 
     FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
@@ -1400,6 +1400,7 @@ void MainWindow::checkBSAList()
 
   if (archives != nullptr) {
     ui->bsaList->blockSignals(true);
+    ON_BLOCK_EXIT([&] () { ui->bsaList->blockSignals(false); });
 
     QStringList defaultArchives = archives->archives(m_OrganizerCore.currentProfile());
 
@@ -1433,8 +1434,6 @@ void MainWindow::checkBSAList()
     } else {
       ui->tabWidget->setTabIcon(1, QIcon());
     }
-
-    ui->bsaList->blockSignals(false);
   }
 }
 

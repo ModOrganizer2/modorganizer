@@ -634,7 +634,7 @@ void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const
 {
   m_Overwrite = overwrite;
   m_Overwritten = overwritten;
-  notifyChange(0, rowCount());
+  notifyChange(0, rowCount() - 1);
 }
 
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)
@@ -917,7 +917,8 @@ void ModList::notifyChange(int rowStart, int rowEnd)
     beginResetModel();
     endResetModel();
   } else {
-    if (rowEnd == -1) rowEnd = rowStart;
+    if (rowEnd == -1)
+      rowEnd = rowStart;
     emit dataChanged(this->index(rowStart, 0), this->index(rowEnd, this->columnCount() - 1));
   }
 }
@@ -985,6 +986,7 @@ QString ModList::getColumnToolTip(int column)
                                  "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm)</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</tr>"
@@ -1093,5 +1095,5 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
       return toggleSelection(itemView);
     }
   }
-  return QObject::eventFilter(obj, event);
+  return QAbstractItemModel::eventFilter(obj, event);
 }
