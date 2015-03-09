@@ -1138,13 +1138,16 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QDir dir(modInfo->absolutePath());
-  foreach (const QString &esm, dir.entryList(QStringList("*.esm"), QDir::Files)) {
+  foreach (const QString &esm, dir.entryList(QStringList() << "*.esm", QDir::Files)) {
     m_PluginList.enableESP(esm, active);
   }
   int enabled = 0;
-  QStringList esps = dir.entryList(QStringList("*.esp"), QDir::Files);
-  foreach (const QString &esp, esps) {
-    if (active != m_PluginList.isEnabled(esp)) {
+  QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
+  for (const QString &esp : esps) {
+    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
+
+    if (active != m_PluginList.isEnabled(esp)
+        && file->getAlternatives().empty()) {
       m_PluginList.enableESP(esp, active);
       ++enabled;
     }
@@ -1392,9 +1395,7 @@ void OrganizerCore::syncOverwrite()
     modInfo->testValid();
     refreshDirectoryStructure();
   }
-
 }
-
 
 std::vector<unsigned int> OrganizerCore::activeProblems() const
 {
