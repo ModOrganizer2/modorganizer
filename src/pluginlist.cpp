@@ -935,6 +935,7 @@ Qt::ItemFlags PluginList::flags(const QModelIndex &modelIndex) const
     if (modelIndex.column() == COL_PRIORITY) {
       result |= Qt::ItemIsEditable;
     }
+    result &= ~Qt::ItemIsDropEnabled;
   } else {
     result |= Qt::ItemIsDropEnabled;
   }
@@ -1082,7 +1083,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
     QAbstractItemView *itemView = qobject_cast<QAbstractItemView*>(obj);
 
     if (itemView == nullptr) {
-      return QObject::eventFilter(obj, event);
+      return QAbstractItemModel::eventFilter(obj, event);
     }
 
     QKeyEvent *keyEvent = static_cast<QKeyEvent*>(event);
@@ -1110,7 +1111,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
             rows.swap(i, rows.size() - i - 1);
           }
         }
-        foreach (QModelIndex idx, rows) {
+        for (QModelIndex idx : rows) {
           idx = proxyModel->mapToSource(idx);
           int newPriority = m_ESPs[idx.row()].m_Priority + diff;
           if ((newPriority >= 0) && (newPriority < rowCount())) {
@@ -1143,7 +1144,7 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
       return true;
     }
   }
-  return QObject::eventFilter(obj, event);
+  return QAbstractItemModel::eventFilter(obj, event);
 }
 
 

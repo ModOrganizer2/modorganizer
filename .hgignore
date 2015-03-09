@@ -34,6 +34,10 @@ html
 source/organizer/resources/contents/icons
 source/plugins/build-*
 */GeneratedFiles/*
+translations/*
+source/*/Win32/Debug/*
+source/plugins/*/Win32/Debug/*
+*~
 syntax: regexp
 Makefile\.(Debug|Release)
 source/.*/debug/.*

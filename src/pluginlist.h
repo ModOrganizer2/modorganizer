@@ -26,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidget>
 #include <QTimer>
 #include <QTemporaryFile>
+#pragma warning(push)
+#pragma warning(disable: 4100)
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
@@ -337,5 +339,7 @@ private:
   QTemporaryFile m_TempFile;
 
 };
+
+#pragma warning(pop)
 
 #endif // PLUGINLIST_H
