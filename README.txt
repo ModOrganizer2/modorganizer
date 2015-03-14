@@ -230,3 +230,32 @@ Troubleshooting (thanks to Ross):
 	   Unlocker: http://www.filehippo.com/download_unlocker/ or http://www.emptyloop.com/unlocker/
 	   Warning: With Unlocker v1.9.2, you must select "Advanced" then uncheck everything to
 	   avoid having some Delta toolbar garbage installed...
+
+5) Problem TT has seen:
+    Complains about 'qtwebkit4' missing. FOr some reason this seems to insist on
+    living with modorganiser.exe
+
+-------------------
+Building with scons
+-------------------
+
+1) Download scons from www.scons.org and install
+2) Download QT4 (and/or QT5) from https://bitbucket.org/dirkbaechle/scons_qt4 and 
+    https://bitbucket.org/dirkbaechle/scons_qt5. Install as per instructions
+3) Copy scons_configure_template.py to scons_configure.py. Edit to point to your
+   boost/python/zlib paths as appropriate
+4) Create build kits as follows:
+       Custom Process step:
+          Command: <python path>\Scripts\scons.bat
+          Arguments: -u
+          Working directory: %{sourcedir}
+
+    For the release build, add 'CONFIG=release' to the arguments.
+    
+    If you want to do parallel builds, add -j and a number to the arguments.
+    However you may need to install pywin32 (but it seems to work OK for me).
+
+    You can do this in the main project (probably should), but if you want to build just
+    a particular subproject, you can do it in the subproject instead (or as well).
+   
+This isn't complete by any means but..

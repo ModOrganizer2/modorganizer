@@ -52,4 +52,5 @@ INSTALLS += qtlibs otherlibs
 
 OTHER_FILES +=\
     ../SConstruct\
+    ../scons_configure.py\
     SConscript

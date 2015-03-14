@@ -9,18 +9,8 @@ modules = [
     'Gui'
 ]
 
-env.EnableQt4Modules(['Qt' + n for n in modules], debug = env['CONFIG'] == 'debug')
-
-#CONFIG(debug, debug|release) {
-#  LIBS += -L$$OUT_PWD/../bsatk/debug
-#  LIBS += -lDbgHelp
-#  QMAKE_CXXFLAGS_DEBUG -= -Zi
-#  QMAKE_CXXFLAGS += -Z7
-#  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
-#} else {
-#  LIBS += -L$$OUT_PWD/../bsatk/release
-#  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
-#}
+env.EnableQt4Modules(['Qt' + n for n in modules],
+                     debug = env['CONFIG'] == 'debug')
 
 env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
 

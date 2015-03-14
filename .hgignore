@@ -34,3 +34,5 @@ html
 syntax: regexp
 Makefile\.(Debug|Release)
 source/.*/debug/.*
+scons_configure.py
+scons-ModOrganizer-*

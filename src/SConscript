@@ -1,5 +1,4 @@
 import os
-#import subprocess
 
 Import('qt_env')
 
@@ -28,17 +27,18 @@ else:
         'Declarative'
     ]
 
-env.EnableQt4Modules(['Qt' + n for n in modules], debug = env['CONFIG'] == 'debug')
+env.EnableQt4Modules(['Qt' + n for n in modules],
+                     debug = env['CONFIG'] == 'debug')
 env.Uic4(Glob('*.ui'))
 
 #  modeltest is optional and it doesn't compile anyway...
 cpp_files = [ x for x in Glob('*.cpp') if not str(x).endswith('modeltest.cpp') ]
 
 env.AppendUnique(LIBPATH = [
-    '../uibase',
-    '../shared',
-    '../bsatk',
-    '../esptk'
+    '..\\uibase',
+    '..\\shared',
+    '..\\bsatk',
+    '..\\esptk'
 ])
 
 env.AppendUnique(LIBS = [
@@ -58,21 +58,14 @@ env.AppendUnique(LIBS = [
 
 # We have to 'persuade' moc to generate certain other targets and inject them into
 # the list of cpps
-other_sources = []
-for file in env.Glob('*.h'):
-    target = str(file)[:-1] + 'cpp'
-    if not os.path.exists(target):
-        if 'Q_OBJECT' in file.get_contents():
-            header = os.path.basename(str(file))
-            target = env.ExplicitMoc4('moc_' + header[:-1] + 'cpp', header)
-            other_sources.append(target)
+other_sources = env.AddExtraMoc(env.Glob('*.h'))
 
 for file in env.Glob('*.rc'):
     if str(file).endswith('version.rc'):
         continue
     other_sources.append(env.RES(file))
 
-# Add the translate in here too
+# FIXME Add the translate in here too
 
 # Note the order of this is important, or you can pick up the wrong report.h...
 # Doing appendunique seems to throw the moc code into a tizzy
@@ -88,7 +81,6 @@ env['CPPPATH'] += [
 ]
 
 env.AppendUnique(CPPDEFINES = [
-    'UNICODE',
     '_UNICODE',
     '_CRT_SECURE_NO_WARNINGS',
     '_SCL_SECURE_NO_WARNINGS',
@@ -108,9 +100,23 @@ env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
 
 env['WINDOWS_EMBED_MANIFEST'] = True
 
-program = env.Program('ModOrganizer', cpp_files + env.Glob('*.qrc') + other_sources)
-# Dodgy. just get the exe
-env.Install(env['INSTALL_PATH'], program[0])
+env.AppendUnique(LINKFLAGS = [
+    '/SUBSYSTEM:WINDOWS',
+    '${EXE_MANIFEST_DEPENDENCY}'
+])
+
+prog = env.Program('ModOrganizer',
+                   cpp_files + env.Glob('*.qrc') + other_sources)
+env.Depends(prog, env.Value(env['ENV']['DLLSPATH']))
+
+# FIXME scons bug doesn't provide pdb for executable.
+if env['CONFIG'] == 'debug':
+    x = env.File('ModOrganizer.pdb')
+    env.Depends(x, prog)
+    prog.append(x)
+
+env.Install(env['INSTALL_PATH'],
+            filter(lambda x: str(x).endswith('.exe') or str(x).endswith('.pdb'), prog))
 
 for subdir in ('tutorials', 'stylesheets'):
     env.Install(os.path.join(env['INSTALL_PATH'], subdir),
@@ -118,45 +124,15 @@ for subdir in ('tutorials', 'stylesheets'):
 
 """
 CONFIG(debug, debug|release) {
-  LIBS += -L$$OUT_PWD/../shared/debug
-  LIBS += -L$$OUT_PWD/../bsatk/debug
-  LIBS += -L$$OUT_PWD/../uibase/debug
-  LIBS += -L$$OUT_PWD/../boss_modified/debug
-  LIBS += -lDbgHelp
-  PRE_TARGETDEPS += \
-    $$OUT_PWD/../shared/debug/mo_shared.lib \
-    $$OUT_PWD/../bsatk/debug/bsatk.lib
 } else {
-  LIBS += -L$$OUT_PWD/../shared/release
-  LIBS += -L$$OUT_PWD/../bsatk/release
-  LIBS += -L$$OUT_PWD/../uibase/release
-  LIBS += -L$$OUT_PWD/../boss_modified/release
   QMAKE_CXXFLAGS += /Zi /GL
   QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
-  PRE_TARGETDEPS += \
-    $$OUT_PWD/../shared/release/mo_shared.lib \
-    $$OUT_PWD/../bsatk/release/bsatk.lib
 }
 
 CONFIG += embed_manifest_exe
 
 TRANSLATIONS = organizer_en.ts
 
-HGID = $$system(hg id -i)
-DEFINES += HGID=\\\"$${HGID}\\\"
-
-CONFIG(debug, debug|release) {
-  SRCDIR = $$OUT_PWD/debug
-  DSTDIR = $$PWD/../../outputd
-} else {
-  SRCDIR = $$OUT_PWD/release
-  DSTDIR = $$PWD/../../output
-}
-
-BASEDIR = $$PWD
-BASEDIR ~= s,/,$$QMAKE_DIR_SEP,g
-SRCDIR ~= s,/,$$QMAKE_DIR_SEP,g
-DSTDIR ~= s,/,$$QMAKE_DIR_SEP,g
 
 QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
 
@@ -172,7 +148,6 @@ CONFIG(debug, debug|release) {
 
 """ compile/link output
 -DHGID=\"dfd7e875f973+\" -DQT_DECLARATIVE_DEBUG
-link /LIBPATH:"c:\Apps\Qt\4.8.6\lib" /NOLOGO /DYNAMICBASE /NXCOMPAT /DEBUG /MANIFEST /MANIFESTFILE:"debug\ModOrganizer.intermediate.manifest" /SUBSYSTEM:WINDOWS "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" /OUT:debug\ModOrganizer.exe @C:\Users\Dad\AppData\Local\Temp\nm237A.tmp
 LINK : debug\ModOrganizer.exe not found or not built by the last incremental link; performing full link
 mt.exe -nologo -manifest "debug\ModOrganizer.intermediate.manifest" -outputresource:debug\ModOrganizer.exe;1
 """
@@ -189,4 +164,10 @@ link /nologo /OUT:build-ModOrganizer-scons\debug\organizer\ModOrganizer.exe /LIB
 link @c:\users\dad\appdata\local\temp\tmpozwyw_.lnk
 Using tempfile c:\users\dad\appdata\local\temp\tmpuzxnwy.lnk for command line:
 link /nologo /OUT:build-ModOrganizer-scons\debug\organizer\ModOrganizer.exe /LIBPATH:C:\Apps\boost_1_55_0\lib32-msvc-10.0 /LIBPATH:C:\Apps\Qt\4.8.6\lib /LIBPATH:build-ModOrganizer-scons\debug\uibase /LIBPATH:source\uibase /LIBPATH:build-ModOrganizer-scons\debug\shared /LIBPATH:source\shared /LIBPATH:build-ModOrganizer-scons\debug\bsatk /LIBPATH:source\bsatk /LIBPATH:build-ModOrganizer-scons\debug\esptk /LIBPATH:source\esptk qtmaind.lib QtCored4.lib QtGuid4.lib QtNetworkd4.lib QtScriptd4.lib QtSqld4.lib QtWebKitd4.lib QtXmld4.lib QtXmlPatternsd4.lib QtDeclaratived4.lib uibase.lib mo_shared.lib bsatk.lib esptk.lib shell32.lib user32.lib ole32.lib advapi32.lib gdi32.lib shlwapi.lib Psapi.lib Version.lib build-ModOrganizer-scons\debug\organizer\aboutdialog.obj build-ModOrganizer-scons\debug\organizer\activatemodsdialog.obj build-ModOrganizer-scons\debug\organizer\bbcode.obj build-ModOrganizer-scons\debug\organizer\browserdialog.obj build-ModOrganizer-scons\debug\organizer\browserview.obj build-ModOrganizer-scons\debug\organizer\categories.obj build-ModOrganizer-scons\debug\organizer\categoriesdialog.obj build-ModOrganizer-scons\debug\organizer\credentialsdialog.obj build-ModOrganizer-scons\debug\organizer\csvbuilder.obj build-ModOrganizer-scons\debug\organizer\directoryrefresher.obj build-ModOrganizer-scons\debug\organizer\downloadlist.obj build-ModOrganizer-scons\debug\organizer\downloadlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\downloadlistwidget.obj build-ModOrganizer-scons\debug\organizer\downloadlistwidgetcompact.obj build-ModOrganizer-scons\debug\organizer\downloadmanager.obj build-ModOrganizer-scons\debug\organizer\dummybsa.obj build-ModOrganizer-scons\debug\organizer\editexecutablesdialog.obj build-ModOrganizer-scons\debug\organizer\executableslist.obj build-ModOrganizer-scons\debug\organizer\filedialogmemory.obj build-ModOrganizer-scons\debug\organizer\gameinfoimpl.obj build-ModOrganizer-scons\debug\organizer\genericicondelegate.obj build-ModOrganizer-scons\debug\organizer\helper.obj build-ModOrganizer-scons\debug\organizer\icondelegate.obj build-ModOrganizer-scons\debug\organizer\installationmanager.obj build-ModOrganizer-scons\debug\organizer\json.obj build-ModOrganizer-scons\debug\organizer\loadmechanism.obj build-ModOrganizer-scons\debug\organizer\lockeddialog.obj build-ModOrganizer-scons\debug\organizer\logbuffer.obj build-ModOrganizer-scons\debug\organizer\loghighlighter.obj build-ModOrganizer-scons\debug\organizer\main.obj build-ModOrganizer-scons\debug\organizer\mainwindow.obj build-ModOrganizer-scons\debug\organizer\messagedialog.obj build-ModOrganizer-scons\debug\organizer\moapplication.obj build-ModOrganizer-scons\debug\organizer\moc_aboutdialog.obj build-ModOrganizer-scons\debug\organizer\moc_activatemodsdialog.obj build-ModOrganizer-scons\debug\organizer\moc_browserdialog.obj build-ModOrganizer-scons\debug\organizer\moc_browserview.obj build-ModOrganizer-scons\debug\organizer\moc_categoriesdialog.obj build-ModOrganizer-scons\debug\organizer\moc_credentialsdialog.obj build-ModOrganizer-scons\debug\organizer\moc_directoryrefresher.obj build-ModOrganizer-scons\debug\organizer\moc_downloadlist.obj build-ModOrganizer-scons\debug\organizer\moc_downloadlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\moc_downloadlistwidget.obj build-ModOrganizer-scons\debug\organizer\moc_downloadlistwidgetcompact.obj build-ModOrganizer-scons\debug\organizer\moc_downloadmanager.obj build-ModOrganizer-scons\debug\organizer\moc_editexecutablesdialog.obj build-ModOrganizer-scons\debug\organizer\moc_genericicondelegate.obj build-ModOrganizer-scons\debug\organizer\moc_icondelegate.obj build-ModOrganizer-scons\debug\organizer\moc_installationmanager.obj build-ModOrganizer-scons\debug\organizer\moc_lockeddialog.obj build-ModOrganizer-scons\debug\organizer\moc_logbuffer.obj build-ModOrganizer-scons\debug\organizer\moc_loghighlighter.obj build-ModOrganizer-scons\debug\organizer\moc_mainwindow.obj build-ModOrganizer-scons\debug\organizer\moc_messagedialog.obj build-ModOrganizer-scons\debug\organizer\moc_moapplication.obj build-ModOrganizer-scons\debug\organizer\moc_modinfo.obj build-ModOrganizer-scons\debug\organizer\moc_modinfodialog.obj build-ModOrganizer-scons\debug\organizer\moc_modlist.obj build-ModOrganizer-scons\debug\organizer\moc_modlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\moc_modlistview.obj build-ModOrganizer-scons\debug\organizer\moc_motddialog.obj build-ModOrganizer-scons\debug\organizer\moc_nexusinterface.obj build-ModOrganizer-scons\debug\organizer\moc_nxmaccessmanager.obj build-ModOrganizer-scons\debug\organizer\moc_overwriteinfodialog.obj build-ModOrganizer-scons\debug\organizer\moc_pluginlist.obj build-ModOrganizer-scons\debug\organizer\moc_pluginlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\moc_previewdialog.obj build-ModOrganizer-scons\debug\organizer\moc_problemsdialog.obj build-ModOrganizer-scons\debug\organizer\moc_profile.obj build-ModOrganizer-scons\debug\organizer\moc_profileinputdialog.obj build-ModOrganizer-scons\debug\organizer\moc_profilesdialog.obj build-ModOrganizer-scons\debug\organizer\moc_qtgroupingproxy.obj build-ModOrganizer-scons\debug\organizer\moc_queryoverwritedialog.obj build-ModOrganizer-scons\debug\organizer\moc_savegame.obj build-ModOrganizer-scons\debug\organizer\moc_savegamegamebyro.obj build-ModOrganizer-scons\debug\organizer\moc_savegameinfowidget.obj build-ModOrganizer-scons\debug\organizer\moc_savetextasdialog.obj build-ModOrganizer-scons\debug\organizer\moc_selectiondialog.obj build-ModOrganizer-scons\debug\organizer\moc_selfupdater.obj build-ModOrganizer-scons\debug\organizer\moc_settings.obj build-ModOrganizer-scons\debug\organizer\moc_settingsdialog.obj build-ModOrganizer-scons\debug\organizer\moc_singleinstance.obj build-ModOrganizer-scons\debug\organizer\moc_spawn.obj build-ModOrganizer-scons\debug\organizer\moc_syncoverwritedialog.obj build-ModOrganizer-scons\debug\organizer\moc_transfersavesdialog.obj build-ModOrganizer-scons\debug\organizer\modflagicondelegate.obj build-ModOrganizer-scons\debug\organizer\modinfo.obj build-ModOrganizer-scons\debug\organizer\modinfodialog.obj build-ModOrganizer-scons\debug\organizer\modlist.obj build-ModOrganizer-scons\debug\organizer\modlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\modlistview.obj build-ModOrganizer-scons\debug\organizer\motddialog.obj build-ModOrganizer-scons\debug\organizer\nexusinterface.obj build-ModOrganizer-scons\debug\organizer\noeditdelegate.obj build-ModOrganizer-scons\debug\organizer\nxmaccessmanager.obj build-ModOrganizer-scons\debug\organizer\organizerproxy.obj build-ModOrganizer-scons\debug\organizer\overwriteinfodialog.obj build-ModOrganizer-scons\debug\organizer\persistentcookiejar.obj build-ModOrganizer-scons\debug\organizer\pluginlist.obj build-ModOrganizer-scons\debug\organizer\pluginlistsortproxy.obj build-ModOrganizer-scons\debug\organizer\previewdialog.obj build-ModOrganizer-scons\debug\organizer\previewgenerator.obj build-ModOrganizer-scons\debug\organizer\problemsdialog.obj build-ModOrganizer-scons\debug\organizer\profile.obj build-ModOrganizer-scons\debug\organizer\profileinputdialog.obj build-ModOrganizer-scons\debug\organizer\profilesdialog.obj build-ModOrganizer-scons\debug\organizer\qrc_resources.obj build-ModOrganizer-scons\debug\organizer\qrc_stylesheet_resource.obj build-ModOrganizer-scons\debug\organizer\qtgroupingproxy.obj build-ModOrganizer-scons\debug\organizer\queryoverwritedialog.obj build-ModOrganizer-scons\debug\organizer\report.obj build-ModOrganizer-scons\debug\organizer\safewritefile.obj build-ModOrganizer-scons\debug\organizer\savegame.obj build-ModOrganizer-scons\debug\organizer\savegamegamebryo.obj build-ModOrganizer-scons\debug\organizer\savegameinfowidget.obj build-ModOrganizer-scons\debug\organizer\savegameinfowidgetgamebryo.obj build-ModOrganizer-scons\debug\organizer\savetextasdialog.obj build-ModOrganizer-scons\debug\organizer\selectiondialog.obj build-ModOrganizer-scons\debug\organizer\selfupdater.obj build-ModOrganizer-scons\debug\organizer\serverinfo.obj build-ModOrganizer-scons\debug\organizer\settings.obj build-ModOrganizer-scons\debug\organizer\settingsdialog.obj build-ModOrganizer-scons\debug\organizer\singleinstance.obj build-ModOrganizer-scons\debug\organizer\spawn.obj build-ModOrganizer-scons\debug\organizer\syncoverwritedialog.obj build-ModOrganizer-scons\debug\organizer\transfersavesdialog.obj
+"""
+"""
+/MANIFESTFILE:"debug\ModOrganizer.intermediate.manifest" /SUBSYSTEM:WINDOWS "/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" /OUT:debug\ModOrganizer.exe @C:\Users\Dad\AppData\Local\Temp\nm8681.tmp
+"""
+"""
+mt /nologo -manifest scons-ModOrganizer-QT_4_8_6_for_vs_2010_32bit-Debug\organizer\ModOrganizer.exe.manifest -outputresource:scons-ModOrganizer-QT_4_8_6_for_vs_2010_32bit-Debug\organizer\ModOrganizer.exe;1
 """
