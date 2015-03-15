@@ -232,7 +232,7 @@ Troubleshooting (thanks to Ross):
 	   avoid having some Delta toolbar garbage installed...
 
 5) Problem TT has seen:
-    Complains about 'qtwebkit4' missing. FOr some reason this seems to insist on
+    Complains about 'qtwebkit4' missing. For some reason this seems to insist on
     living with modorganiser.exe
 
 -------------------

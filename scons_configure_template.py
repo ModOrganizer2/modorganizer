@@ -1,6 +1,11 @@
 # This python script contains the configuration for scons
 # Copy this to scons_configure.py and adjust to taste.
 
+# Path to your boost install - it should have a boost/ subdirectory and a stage/
+# subdirectory. The scons script will use stage/lib if there, or the appropriate
+# version for your compiler, if you installed the multiple-build version
+BOOST_PATH = 'C:\\Apps\\boost_1_55_0'
+
 # Version of Visual Studio to use, if you wish to use a specific version. If you
 # don't specify a version, the latest will be picked.. See the scons manual for
 # supported values.
@@ -11,14 +16,12 @@
 # 64-bit python install and scons has been installed for the 64 bit version
 #PYTHONPATH=C:\Apps\Python
 
-# Path to your boost install - it should have a boost/ subdirectory and a stage/
-# subdirectory. The scons script will use stage/lib if there, or the appropriate
-# version for your compiler, if you installed the multiple-build version
-BOOST_PATH = 'C:\\Apps\\boost_1_55_0'
-
 # Path to your QT install. This might constrain the version of MSVC you can use.
 # This seems to be set by QTCreator
 #QTDIR = 'C:\\Apps\\Qt\\4.8.6'
+
+# Path to 7-zip sources
+SEVENZIP_PATH = 'C:\\Apps\\7-Zip\\7z920'
 
 # Path to zlib. Please read the README file for more information about how this
 # needs to be set up
