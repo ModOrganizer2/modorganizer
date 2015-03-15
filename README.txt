@@ -243,11 +243,16 @@ Building with scons
 2) Download QT4 (and/or QT5) from https://bitbucket.org/dirkbaechle/scons_qt4 and 
     https://bitbucket.org/dirkbaechle/scons_qt5. Install as per instructions
 3) Copy scons_configure_template.py to scons_configure.py. Edit to point to your
-   boost/python/zlib paths as appropriate
+   boost/python/zlib/7zip paths as appropriate
 4) Create build kits as follows:
        Custom Process step:
           Command: <python path>\Scripts\scons.bat
-          Arguments: -u
+          Arguments: -u .
+          Working directory: %{sourcedir}
+
+       Clean Custom Process step:
+          Command: <python path>\Scripts\scons.bat
+          Arguments: -c -u .
           Working directory: %{sourcedir}
 
     For the release build, add 'CONFIG=release' to the arguments.
@@ -255,7 +260,12 @@ Building with scons
     If you want to do parallel builds, add -j and a number to the arguments.
     However you may need to install pywin32 (but it seems to work OK for me).
 
-    You can do this in the main project (probably should), but if you want to build just
-    a particular subproject, you can do it in the subproject instead (or as well).
+    Note. If you want to build a sub project separately, it seems to be better
+    to open the subproject, set that up with the scons kit and build that as a
+    project.
+    
+    Please note: the generated (runnable) output files end up in the build directory,
+    in the '_ModOrganizer' subdirectory (not at the top level). Named like that
+    so you can see it!
    
 This isn't complete by any means but..
