@@ -107,9 +107,7 @@ cpp_files = [ x for x in Glob('*.cpp') if not str(x).endswith('modeltest.cpp') ]
 prog = env.Program('ModOrganizer',
                    cpp_files + env.Glob('*.qrc') + other_sources)
 
-env.Install(env['INSTALL_PATH'],
-            filter(lambda x: str(x).endswith('.exe') or str(x).endswith('.pdb'),
-                   prog))
+env.InstallModule(prog)
 
 for subdir in ('tutorials', 'stylesheets'):
     env.Install(os.path.join(env['INSTALL_PATH'], subdir),
