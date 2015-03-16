@@ -1,132 +1,32 @@
 import os
 
-Import('qt_env')
+Import('env qt_env')
 
-env = qt_env.Clone()
+def InstallModule(self, arg):
+    # Ensure we install this when built from here, not just from top level build
+    self.Pseudo('install')
+    self.Depends('install',
+        self.Install('${INSTALL_PATH}',
+                     filter(lambda x: str(x).endswith('.dll') or
+                                      str(x).endswith('.pdb') or
+                                      str(x).endswith('.exe'),
+                            arg)))
 
-modules = [ 
-    'Core', 
-    'Gui', 
-    'Network', 
-    'Script', 
-    'Sql', 
-    'WebKit', 
-    'Xml', 
-    'XmlPatterns' 
-]
+qt_env = qt_env.Clone()
+qt_env.AddMethod(InstallModule)
 
-if env['QT_MAJOR_VERSION'] > 4:
-    modules += [ 
-        'Widgets',
-        'Qml',
-        'Quick',
-        'WebKitWidgets'
-    ]
-else:
-    modules += [
-        'Declarative'
-    ]
+env = env.Clone()
+env.AddMethod(InstallModule)
 
-env.EnableQt4Modules(['Qt' + n for n in modules],
-                     debug = env['CONFIG'] == 'debug')
+Export('env qt_env')
 
-env.Uic4(Glob('*.ui'))
+for file in env.Glob('*/SConscript'):
+    env.SConscript(file)
 
-env.AppendUnique(LIBPATH = [
-    '..\\uibase',
-    '..\\shared',
-    '..\\bsatk',
-    '..\\esptk'
-])
-
-env.AppendUnique(LIBS = [
-    'uibase',
-    'mo_shared',
-    'bsatk',
-    'esptk',
-    'shell32',
-    'user32',
-    'ole32',
-    'advapi32',
-    'gdi32',
-    'shlwapi',
-    'Psapi',
-    'Version'
-])
-
-# We have to 'persuade' moc to generate certain other targets and inject them
-# into the list of cpps
-other_sources = env.AddExtraMoc(env.Glob('*.h'))
-
-for file in env.Glob('*.rc'):
-    if str(file).endswith('version.rc'):
-        continue
-    other_sources.append(env.RES(file))
-
-# FIXME Add the translate in here too
-
-# Note the order of this is important, or you can pick up the wrong report.h...
-# Doing appendunique seems to throw the moc code into a tizzy
-env['CPPPATH'] += [
-    '../shared',
-    '../archive',
-    '../uibase',
-    '../bsatk',
-    '../esptk',
-    '../boss_modified/boss-api',
-    '.',            # Why is this necessary?
-    '$BOOST_PATH',
-]
-
-env.AppendUnique(CPPDEFINES = [
-    '_UNICODE',
-    '_CRT_SECURE_NO_WARNINGS',
-    '_SCL_SECURE_NO_WARNINGS',
-    'NOMINMAX',
-    'BOOST_DISABLE_ASSERTS',
-# Although the .pro file says it adds this, the compile line doesn't seem to
-# have it (unless it's in the annoying '@' file
-#    'NDEBUG'
-])
-
-# Umf. This changes everytime you do something with your repository.
-# I don't think this is necessary with scons
-# hgid = subprocess.check_output(['hg', 'id', '-i'])
-# env.AppendUnique(CPPDEFINES = [ 'HGID="%s"' % hgid ])
-
-env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
-
-env.AppendUnique(LINKFLAGS = [
-    '/SUBSYSTEM:WINDOWS',
-    '${EXE_MANIFEST_DEPENDENCY}'
-])
-
-#  modeltest is optional and it doesn't compile anyway...
-cpp_files = [ x for x in Glob('*.cpp') if not str(x).endswith('modeltest.cpp') ]
-
-prog = env.Program('ModOrganizer',
-                   cpp_files + env.Glob('*.qrc') + other_sources)
-
-env.InstallModule(prog)
-
-for subdir in ('tutorials', 'stylesheets'):
-    env.Install(os.path.join(env['INSTALL_PATH'], subdir),
-                env.Glob(os.path.join(subdir, '*')))
-
-"""
-CONFIG(debug, debug|release) {
-} else {
-  QMAKE_CXXFLAGS += /Zi /GL
-  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
-}
-
-TRANSLATIONS = organizer_en.ts
-
-
-QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
-
-"""
-
-"""
-/IC:\Apps\Qt\4.8.6\include (twice)
-"""
+dll_manifest = 'dlls.manifest'
+if qt_env['CONFIG'] == 'debug':
+    dll_manifest += '.debug'
+if qt_env['QT_MAJOR_VERSION'] > 4:
+    dll_manifest += '.q%d' % qt_env['QT_MAJOR_VERSION']
+qt_env.InstallAs(os.path.join(qt_env['INSTALL_PATH'], 'DLLs', 'dlls.manifest'),
+                 dll_manifest)
