@@ -24,6 +24,6 @@ env.AppendUnique(CPPDEFINES = [
 
 env.AppendUnique(CPPPATH = [
     '../bsatk',
-    '$BOOST_PATH',
+    '${BOOSTPATH}',
     '.' # Seriously!
 ])
