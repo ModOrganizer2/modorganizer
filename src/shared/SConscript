@@ -1,18 +1,8 @@
-import os.path
-
 Import('qt_env')
 
 env = qt_env.Clone()
 
-modules = [
-    'Core',
-    'Gui'
-]
-
-env.EnableQt4Modules(['Qt' + n for n in modules],
-                     debug = env['CONFIG'] == 'debug')
-
-env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
+env.EnableQtModules('Core', 'Gui')
 
 env.AppendUnique(CPPDEFINES = [
     'UNICODE',
@@ -27,3 +17,6 @@ env.AppendUnique(CPPPATH = [
     '${BOOSTPATH}',
     '.' # Seriously!
 ])
+
+# Not sure if renaming this helps much as it's static
+env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
