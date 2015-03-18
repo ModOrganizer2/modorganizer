@@ -634,13 +634,14 @@ bool ModInfoRegular::downgradeAvailable() const
 void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
 {
   QVariantMap result = resultData.toMap();
-  m_NewestVersion.parse(result["version"].toString());
-  m_NexusDescription = result["description"].toString();
+  setNewestVersion(VersionInfo(result["version"].toString()));
+  setNexusDescription(result["description"].toString());
+
   if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("voted_by_user"))) {
-    m_EndorsedState = result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+    setEndorsedState(result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE);
   }
   m_LastNexusQuery = QDateTime::currentDateTime();
-  m_MetaInfoChanged = true;
+  //m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);
 }
@@ -774,14 +775,26 @@ void ModInfoRegular::setVersion(const VersionInfo &version)
 
 void ModInfoRegular::setNewestVersion(const VersionInfo &version)
 {
-  m_NewestVersion = version;
-  m_MetaInfoChanged = true;
+  if (version != m_NewestVersion) {
+    m_NewestVersion = version;
+    m_MetaInfoChanged = true;
+  }
 }
 
 void ModInfoRegular::setNexusDescription(const QString &description)
 {
-  m_NexusDescription = description;
-  m_MetaInfoChanged = true;
+  if (qHash(description) != qHash(m_NexusDescription)) {
+    m_NexusDescription = description;
+    m_MetaInfoChanged = true;
+  }
+}
+
+void ModInfoRegular::setEndorsedState(EEndorsedState endorsedState)
+{
+  if (endorsedState != m_EndorsedState) {
+    m_EndorsedState = endorsedState;
+    m_MetaInfoChanged = true;
+  }
 }
 
 void ModInfoRegular::setInstallationFile(const QString &fileName)

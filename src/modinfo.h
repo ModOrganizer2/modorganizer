@@ -934,6 +934,10 @@ public:
 
   void readMeta();
 
+private:
+
+  void setEndorsedState(EEndorsedState endorsedState);
+
 private slots:
 
   void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
