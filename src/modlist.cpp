@@ -347,9 +347,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
-      return QColor(0, 255, 0, 64);
+      return QColor(0, 255, 0, 32);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
-      return QColor(255, 0, 0, 64);
+      return QColor(255, 0, 0, 32);
     } else {
       return QVariant();
     }
@@ -917,8 +917,9 @@ void ModList::notifyChange(int rowStart, int rowEnd)
     beginResetModel();
     endResetModel();
   } else {
-    if (rowEnd == -1)
+    if (rowEnd == -1) {
       rowEnd = rowStart;
+    }
     emit dataChanged(this->index(rowStart, 0), this->index(rowEnd, this->columnCount() - 1));
   }
 }

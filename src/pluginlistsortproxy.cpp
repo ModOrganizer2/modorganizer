@@ -85,9 +85,24 @@ bool PluginListSortProxy::lessThan(const QModelIndex &left,
     case PluginList::COL_NAME: {
       return QString::compare(plugins->getName(left.row()), plugins->getName(right.row()), Qt::CaseInsensitive) < 0;
     } break;
-    case PluginList::COL_PRIORITY:
+    case PluginList::COL_FLAGS: {
+      QVariantList lhsList = left.data(Qt::UserRole + 1).toList();
+      QVariantList rhsList = right.data(Qt::UserRole + 1).toList();
+      if (lhsList.size() != rhsList.size()) {
+        return lhsList.size() < rhsList.size();
+      } else {
+        for (int i = 0; i < lhsList.size(); ++i) {
+          if (lhsList.at(i) != rhsList.at(i)) {
+            return lhsList.at(i) < rhsList.at(i);
+          }
+        }
+        return false;
+      }
+    } break;
     case PluginList::COL_MODINDEX: {
-      return plugins->getPriority(left.row()) < plugins->getPriority(right.row());
+      int leftVal = plugins->isEnabled(left.row()) ? plugins->getPriority(left.row()) : -1;
+      int rightVal = plugins->isEnabled(right.row()) ? plugins->getPriority(right.row()) : -1;
+      return leftVal < rightVal;
     } break;
     default: {
       return plugins->getPriority(left.row()) < plugins->getPriority(right.row());

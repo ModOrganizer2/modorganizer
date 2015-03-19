@@ -54,7 +54,9 @@ void ModListSortProxy::setProfile(Profile *profile)
 
 void ModListSortProxy::updateFilterActive()
 {
-  m_FilterActive = (m_CategoryFilter.size() > 0) || (m_ContentFilter.size() > 0) || !m_CurrentFilter.isEmpty();
+  m_FilterActive = ((m_CategoryFilter.size() > 0)
+                    || (m_ContentFilter.size() > 0)
+                    || !m_CurrentFilter.isEmpty());
   emit filterActive(m_FilterActive);
 }
 
@@ -62,25 +64,23 @@ void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
   m_CategoryFilter = categories;
   updateFilterActive();
-  this->invalidate();
+  invalidate();
 }
 
 void ModListSortProxy::setContentFilter(const std::vector<int> &content)
 {
   m_ContentFilter = content;
   updateFilterActive();
-  this->invalidate();
+  invalidate();
 }
 
 Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
 {
   Qt::ItemFlags flags = sourceModel()->flags(mapToSource(modelIndex));
-/*  if (sortColumn() != ModList::COL_PRIORITY) {
-    flags &= ~Qt::ItemIsDragEnabled;
-  }*/
 
   return flags;
 }
+
 void ModListSortProxy::enableAllVisible()
 {
   if (m_Profile == nullptr) return;

@@ -256,6 +256,7 @@ MainWindow::MainWindow(const QString &exeName
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
+
   connect(ui->modList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(modlistSelectionChanged(QModelIndex,QModelIndex)));
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
@@ -674,11 +675,10 @@ void MainWindow::createHelpWidget()
   buttonMenu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
-
 void MainWindow::modFilterActive(bool filterActive)
 {
   if (filterActive) {
-    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+//    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
   } else if (ui->groupCombo->currentIndex() != 0) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
@@ -1818,7 +1818,7 @@ void MainWindow::setESPListSorting(int index)
 void MainWindow::refresher_progress(int percent)
 {
   if (percent == 100) {
-    m_RefreshProgress->setVisible(false);
+//    m_RefreshProgress->setVisible(false);
   } else if (!m_RefreshProgress->isVisible()) {
     m_RefreshProgress->setVisible(true);
     m_RefreshProgress->setRange(0, 100);
@@ -3784,7 +3784,7 @@ void MainWindow::modDetailsUpdated(bool)
         break;
       }
     }
-//    m_RefreshProgress->setVisible(false);
+    m_RefreshProgress->setVisible(false);
   } else {
     m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
   }
