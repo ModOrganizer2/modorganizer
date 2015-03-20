@@ -20,3 +20,6 @@ env.AppendUnique(CPPPATH = [
 
 # Not sure if renaming this helps much as it's static
 env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
+
+res = env['QT_USED_MODULES']
+Return('res')
