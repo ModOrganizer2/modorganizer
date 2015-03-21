@@ -145,6 +145,41 @@ bool bootstrap()
   return true;
 }
 
+void cleanupDir()
+{
+  // files from previous versions of MO that are no longer
+  // required (in that location)
+  QStringList fileNames {
+    "imageformats/",
+    "loot/resources/",
+    "plugins/previewDDS.dll",
+    "dlls/boost_python-vc100-mt-1_55.dll",
+    "dlls/QtCore4.dll",
+    "dlls/QtDeclarative4.dll",
+    "dlls/QtGui4.dll",
+    "dlls/QtNetwork4.dll",
+    "dlls/QtOpenGL4.dll",
+    "dlls/QtScript4.dll",
+    "dlls/QtSql4.dll",
+    "dlls/QtSvg4.dll",
+    "dlls/QtWebKit4.dll",
+    "dlls/QtXml4.dll",
+    "dlls/QtXmlPatterns4.dll",
+    "msvcp100.dll",
+    "msvcr100.dll",
+    "proxy.dll"
+  };
+
+  for (const QString &fileName : fileNames) {
+    QString fullPath = qApp->applicationDirPath() + "/" + fileName;
+    if (QFile::exists(fullPath)
+        && !shellDelete(QStringList(fullPath), true)) {
+      qDebug("failed to remove obsolete %s", qPrintable(fullPath));
+    }
+  }
+}
+
+
 bool isNxmLink(const QString &link)
 {
   return link.startsWith("nxm://", Qt::CaseInsensitive);
@@ -308,6 +343,7 @@ int main(int argc, char *argv[])
 #else
                            QDesktopServices::storageLocation(QDesktopServices::DataLocation)
 #endif
+                               + "/" + instanceID
                              );
   application.setProperty("dataPath", dataPath);
 
@@ -347,6 +383,8 @@ int main(int argc, char *argv[])
   QPixmap pixmap(":/MO/gui/splash");
   QSplashScreen splash(pixmap);
   splash.show();
+
+  cleanupDir();
 
   { // extend path to include dll directory so plugins don't need a manifest
     // (using AddDllDirectory would be an alternative to this but it seems fairly complicated esp.
