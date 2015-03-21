@@ -2274,6 +2274,7 @@ void MainWindow::overwriteClosed(int)
     m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
     dialog->deleteLater();
   }
+  m_OrganizerCore.refreshDirectoryStructure();
 }
 
 
@@ -3196,9 +3197,8 @@ void MainWindow::linkToolbar()
 
 void MainWindow::linkDesktop()
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
-
-  const Executable &selectedExecutable = executablesList->itemData(executablesList->currentIndex()).value<Executable>();
+  const Executable &selectedExecutable =
+      ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
   QString linkName = getDesktopDirectory() + "\\" + selectedExecutable.m_Title + ".lnk";
 
   if (QFile::exists(linkName)) {
@@ -3208,7 +3208,7 @@ void MainWindow::linkDesktop()
       reportError(tr("failed to remove %1").arg(linkName));
     }
   } else {
-    QFileInfo exeInfo(qApp->arguments().at(0));
+    QFileInfo exeInfo(qApp->applicationFilePath());
     // create link
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
     std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()))
@@ -3242,7 +3242,7 @@ void MainWindow::linkMenu()
       reportError(tr("failed to remove %1").arg(linkName));
     }
   } else {
-    QFileInfo exeInfo(qApp->arguments().at(0));
+    QFileInfo exeInfo(qApp->applicationFilePath());
     // create link
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
     std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()))
