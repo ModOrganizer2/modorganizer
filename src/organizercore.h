@@ -121,8 +121,6 @@ public:
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
 
-  void syncOverwrite();
-
   void createDefaultProfile();
 
   MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
@@ -171,6 +169,8 @@ public slots:
 
   void profileRefresh();
   void externalMessage(const QString &message);
+
+  void syncOverwrite();
 
   void savePluginList();
 
