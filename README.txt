@@ -23,7 +23,7 @@ As of July 2014 MO consists of the following subprojects:
 - archive: small wrapper library around 7zip for dealing with mod archives. Requires 7zip
 - NCC: extension to NMM to provide a binary with command line interface for fomod installation. This is c# code and does not build with the rest of the project. Requires the rest of NMM
 - bossdummy: dummy dll that looks like the boss.dll. This is used instead of the real boss dlls in NCC to save some disk space
-- pythonrunner: library for embedding python code. Requires boost_python, python 2.7 and pyqt4
+- pythonrunner: library for embedding python code. Requires boost_python, python 2.7 and pyqt5
 - loot_cli: this is a command line client of loot. This can be better integrated with MO than the official loot client.
 
 And various plugins:
@@ -51,27 +51,19 @@ There are a few more plugins that are either broken or samples
 Requirements:
 -------------
 
-Visual C++ compiler 2010 (VC 10.0) or up
-- Included in visual c++ express 2010 or windows sdk 7.x
+Visual C++ compiler 2013 (VC 12.0) or up
+- Included in visual c++ express 2013
 - Do install windows sdk too if only for the cdb debugger which is included in that package
 Note: If you're having trouble installing the windows sdk, you may be affected by this bug: http://support.microsoft.com/kb/2717426
 
-Qt Libraries 4.8.x (http://qt-project.org/downloads)
-- i.e. "Qt libraries 4.8.6 for Windows (VS 2010, 235 MB)"
-- tested: 4.8.6
+Qt Libraries 5.4.x (http://www.qt.io/download-open-source/#section-2)
+- i.e. "Qt libraries 5.4.0 for Windows (VS 2013, 722 MB)"
+- tested: 5.4.0 for Windows 32-bit (VS 2013, OpenGL, 695 MB)
 - Install according to instruction
 
-Qt 5 Compatibility:
-MO compiles and mostly runs correctly built with Qt 5.3 and VC++ 2013 but
-- python plugins haven't been rewritten to use qt5 yet
-- pyqt5 isn't distributed as binaries for python 2.7 so this needs to be set up and built first
-- tutorial doesn't work because it seems to be impossible to create a transparent Qt Quick control...
-- the previewdds plugin only compiles with the opengl variant of the qt 5 distribution
-- Qt5 is a bi*** to distribute
-
 boost libraries (http://www.boost.org/)
-- tested: 1.55
-- Build according to their instructions (using vc++): http://www.boost.org/doc/libs/1_54_0/more/getting_started/windows.html
+- tested: 1.56
+- Build according to their instructions (using vc++): http://www.boost.org/doc/libs/1_57_0/more/getting_started/windows.html
 - A few of the boost libraries need to be built (the rest is header-only). The only compiled libs MO needs (at the time of writing) are
   boost_thread (for everything that links agains bsatk) and boost_python (for pythonrunner). You can disable the others to save yourself compile time (even on a modern system compiling boost can easily take an hour)
 
@@ -87,28 +79,27 @@ zlib (http://www.zlib.net/)
 Python 2.7 (32-bit)
 - only for pythonrunner
 
-PyQt4 for Python 2.7 (http://www.riverbankcomputing.co.uk/software/pyqt/download)
-- tested: 4.10
+PyQt5 for Python 2.7 (http://www.riverbankcomputing.co.uk/software/pyqt/download)
+- tested: PyQt-gpl-5.4.zip
 - only for pythonrunner
 
 SIP (http://www.riverbankcomputing.com/software/sip/download)
-- presumably only for pythonrunner as it's needed for PyQT4
+- presumably only for pythonrunner as it's needed for PyQT5
 
 Recommended:
 ------------
 
 Qt Creator
-- http://qt-project.org/downloads#qt-creator
-- I.e. "Qt Creator 2.8.1 for Windows (53 MB)"
+- included in Qt SDK
 - With Qt Creator usually the rule is "the newer the better"
 - Start Qt Creator and check if things are set up correctly:
   1) Go to Tools > Options > Build & Run > Qt Versions
-	2.1) If the QtSDK 4.8.x you installed earlier is not auto-detected, click "Add" to add it manually
-	2.2) Navigate to your <your qt4 installation>\bin\qmake.exe
+	2.1) If the QtSDK 5.4.x you installed earlier is not auto-detected, click "Add" to add it manually
+	2.2) Navigate to your <your qt5 installation>\bin\qmake.exe
 	2.3) Restart qt creator
 	3) Go to Tools > Options > Build & Run > Kits
 	3.1) If no Kit is auto-detected (or the auto-detected ones have picked up the wrong qt or vc++ installation) click "Add"
-	3.2) Enter a Name (i.e. "Qt 4.8.5 MSVC2010 32bit")
+	3.2) Enter a Name (i.e. "Qt 5.4 MSVC2013 32bit")
 	3.3) In Compiler select the visual studio compiler installed earlier (may show up as "Microsoft Windows SDK for Windows x). Make sure you select the x86 variant
 	3.4) CDB should be auto-detected
 	3.5) Select the qt version set up earlier
@@ -117,25 +108,26 @@ Qt Creator
 Set up (using Qt Creator):
 --------------------------
 
-1. Using Qt Creator open source/ModOrganizer.pro from your working copy
-2. Open the "Projects" tab, open the "Details" for "Build Environment"
-3a. Click "Add" to add a variable called "BOOSTPATH" with the path of your boost installation as the value (i.e. C:\code\boost_1_49_0)
-3b. Click "Add" to add a variable called "ZLIBPATH" with the path of your zlib installation as the value (i.e. C:\code\zlib-1.2.7)
-3c. Click "Add" to add a variable called "SEVENZIPPATH" with the path of your 7zip installation as the value (i.e. C:\code\7zip)
-3d. Click "Add" to add a variable called "PYTHONPATH" with the path of your python installation as the value (i.e. C:\code\python)
-4. Switch the build configuration at the very top of the same page from "debug" to "release" (or vice versa) and repeat step 3
-5. Compile the configuration(s) you want to use (debug and/or release) (Build All). This should compile correctly.
-6. <reserved for future use. Maybe grab a coffee?>
-7. return to the "projects" tab and switch to "Run Settings"
-8. Determine the folder of the qt binaries in the package you downloaded. This could be "QtSDK\Desktop\Qt\4.8.5\msvc2010\bin" or "Qt4.8.5\bin"
+1. Create a file called "LocalPaths.pri" in your ModOrganizer\source directory
+2. Open that file with any text editor and enter (one entry per line)
+2a. BOOSTPATH=<path to your boost installation> (i.e. C:\code\boost_1_56_0)
+2b. LOOTPATH=C:/Users/Tannin/Documents/Projects/loot_api
+2c. PYTHONPATH=D:/Python278
+2d. SEVENZIPPATH=D:/Documents/Projects/7zip
+2e. ZLIBPATH=D:/Documents/Projects/zlib-1.2.7
+3. Using Qt Creator open source/ModOrganizer.pro from your working copy
+4. Compile the configuration(s) you want to use (debug and/or release) (Build All). This should compile correctly (though right now it produces a lot of warnings in boost headers).
+5. <reserved for future use. Maybe grab a coffee?>
+6. return to the "projects" tab and switch to "Run Settings"
+7. Determine the folder of the qt binaries in the package you downloaded. This could be "QtSDK\Desktop\Qt\5.4.0\msvc2013\bin" or "Qt5.4.0\bin"
 For Release build:
-9r. Add a "Run configuration" that points to <your working copy>\output\ModOrganizer.exe
-10r. Copy "7z.dll" to <your working copy>\output\dlls
-11r. From the qt binaries directory, copy the following files to <your working copy>\output\dlls: QtCore4.dll, QtDeclarative4.dll, QtGui4.dll, QtNetwork4.dll, QtScript4.dll, QtSql4.dll, QtWebkit4.dll, QtXml4.dll, QtXmlPatterns4.dll
+8r. Add a "Run configuration" that points to <your working copy>\output\ModOrganizer.exe
+9r. Copy "7z.dll" to <your working copy>\output\dlls
+10r. From the qt binaries directory, copy the following files to <your working copy>\output\dlls: Qt5Core.dll, Qt5Declarative.dll, Qt5Gui.dll, Qt5Network.dll, Qt5Script.dll, Qt5Sql.dll, Qt5Webkit.dll, Qt5Xml.dll, Qt5XmlPatterns.dll
 For Debug build:
-9d. Add a "Run configuration" that points to <your working copy>\outputd\ModOrganizer.exe
-10d. Copy "7z.dll" to <your working copy>\outputd\dlls
-11d. From the qt binaries copy the following files to <your working copy>\outputd\dlls: QtCored4.dll, QtDeclaratived4.dll, QtGuid4.dll, QtNetworkd4.dll, QtScriptd4.dll, QtSqld4.dll, QtWebkitd4.dll, QtXmld4.dll, QtXmlPatternsd4.dll
+8d. Add a "Run configuration" that points to <your working copy>\outputd\ModOrganizer.exe
+9d. Copy "7z.dll" to <your working copy>\outputd\dlls
+10d. From the qt binaries copy the following files to <your working copy>\outputd\dlls: Qt5Cored.dll, Qt5Declaratived.dll, Qt5Guid.dll, Qt5Networkd.dll, Qt5Scriptd.dll, Qt5Sqld.dll, Qt5Webkitd.dll, Qt5Xmld.dll, Qt5XmlPatternsd.dll
 
 Now you should be able to compile and run Mod Organizer.
 Please note that when you change anything apart from the "organizer" subproject, qt creator may not pick up on the changes
