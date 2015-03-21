@@ -37,7 +37,6 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_CurrentFilter()
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
-  , m_BeingInvalidated(false)
 {
   m_EnabledColumns.set(ModList::COL_FLAGS);
   m_EnabledColumns.set(ModList::COL_NAME);
@@ -198,10 +197,9 @@ void ModListSortProxy::updateFilter(const QString &filter)
 {
   m_CurrentFilter = filter;
   updateFilterActive();
-  // workaround because qt throws a fit if, as a result of this invalidation, another invalidate is called
-  m_BeingInvalidated = true;
-  invalidateFilter();
-  m_BeingInvalidated = false;
+  // using invalidateFilter here should be enough but that crashes the application? WTF?
+  // invalidateFilter();
+  invalidate();
 }
 
 bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const
