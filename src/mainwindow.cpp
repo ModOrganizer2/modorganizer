@@ -204,7 +204,6 @@ MainWindow::MainWindow(const QString &exeName
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
-  //ui->modList->setAcceptDrops(true);
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
   if (initSettings.contains("mod_list_state")) {
     ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
@@ -362,17 +361,10 @@ void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
 {
   if (!modListCustom) {
     // resize mod list to fit content
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
     for (int i = 0; i < ui->modList->header()->count(); ++i) {
       ui->modList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
     }
     ui->modList->header()->setSectionResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-#else
-    for (int i = 0; i < ui->modList->header()->count(); ++i) {
-      ui->modList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-    }
-    ui->modList->header()->setResizeMode(ModList::COL_NAME, QHeaderView::Stretch);
-#endif
   }
 
   // ensure the columns aren't so small you can't see them any more
@@ -384,17 +376,10 @@ void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
 
   if (!pluginListCustom) {
     // resize plugin list to fit content
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
     for (int i = 0; i < ui->espList->header()->count(); ++i) {
       ui->espList->header()->setSectionResizeMode(i, QHeaderView::ResizeToContents);
     }
     ui->espList->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-#else
-    for (int i = 0; i < ui->espList->header()->count(); ++i) {
-      ui->espList->header()->setResizeMode(i, QHeaderView::ResizeToContents);
-    }
-    ui->espList->header()->setResizeMode(0, QHeaderView::Stretch);
-#endif
   }
 }
 
@@ -402,32 +387,19 @@ void MainWindow::resizeLists(bool modListCustom, bool pluginListCustom)
 void MainWindow::allowListResize()
 {
   // allow resize on mod list
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   for (int i = 0; i < ui->modList->header()->count(); ++i) {
     ui->modList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
   }
-  ui->modList->header()->setSectionResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
-#else
-  for (int i = 0; i < ui->modList->header()->count(); ++i) {
-    ui->modList->header()->setResizeMode(i, QHeaderView::Interactive);
-  }
-  ui->modList->header()->setResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
-#endif
+  //ui->modList->header()->setSectionResizeMode(ui->modList->header()->count() - 1, QHeaderView::Stretch);
+  ui->modList->header()->setStretchLastSection(true);
 
 
   // allow resize on plugin list
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   for (int i = 0; i < ui->espList->header()->count(); ++i) {
     ui->espList->header()->setSectionResizeMode(i, QHeaderView::Interactive);
   }
-  ui->espList->header()->setSectionResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
-#else
-  for (int i = 0; i < ui->espList->header()->count(); ++i) {
-    ui->espList->header()->setResizeMode(i, QHeaderView::Interactive);
-  }
-  ui->espList->header()->setResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
-#endif
-
+  //ui->espList->header()->setSectionResizeMode(ui->espList->header()->count() - 1, QHeaderView::Stretch);
+  ui->espList->header()->setStretchLastSection(true);
 }
 
 void MainWindow::updateStyle(const QString&)
