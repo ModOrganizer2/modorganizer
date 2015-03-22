@@ -266,7 +266,7 @@ void PluginContainer::loadPlugins()
     loadCheck.flush();
     QString pluginName = iter.filePath();
     if (QLibrary::isLibrary(pluginName)) {
-      QPluginLoader *pluginLoader = new QPluginLoader(pluginName, this);
+      std::unique_ptr<QPluginLoader> pluginLoader(new QPluginLoader(pluginName, this));
       if (pluginLoader->instance() == nullptr) {
         m_FailedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
@@ -274,7 +274,7 @@ void PluginContainer::loadPlugins()
       } else {
         if (registerPlugin(pluginLoader->instance(), pluginName)) {
           qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
-          m_PluginLoaders.push_back(pluginLoader);
+          m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);
           qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));

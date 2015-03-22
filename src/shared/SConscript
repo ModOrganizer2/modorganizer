@@ -1,0 +1,25 @@
+Import('qt_env')
+
+env = qt_env.Clone()
+
+env.EnableQtModules('Core', 'Gui')
+
+env.AppendUnique(CPPDEFINES = [
+    'UNICODE',
+    '_UNICODE',
+    '_CRT_SECURE_NO_WARNINGS',
+    'BOOST_DISABLE_ASSERTS',
+    'NDEBUG'
+])
+
+env.AppendUnique(CPPPATH = [
+    '../bsatk',
+    '${BOOSTPATH}',
+    '.' # Seriously!
+])
+
+# Not sure if renaming this helps much as it's static
+env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
+
+res = env['QT_USED_MODULES']
+Return('res')

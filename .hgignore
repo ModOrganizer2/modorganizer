@@ -1,4 +1,6 @@
 syntax: glob
+scons_configure.py
+scons-ModOrganizer-*
 ModOrganizer-build-desktop*
 outputd/*
 output/*

@@ -360,6 +360,9 @@ CONFIG(debug, debug|release) {
   }
 }
 
+OTHER_FILES += \
+    SConscript
+
 DISTFILES += \
     tutorials/tutorial_primer_main.js \
     tutorials/Tooltip.qml \
