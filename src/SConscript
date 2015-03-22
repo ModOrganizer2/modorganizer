@@ -66,9 +66,9 @@ env.AppendUnique(CPPDEFINES = [
     '_UNICODE',
     '_CRT_SECURE_NO_WARNINGS',
     '_SCL_SECURE_NO_WARNINGS',
-    'NOMINMAX',
     'BOOST_DISABLE_ASSERTS',
-    'NDEBUG'
+    'NDEBUG',
+    'QT_MESSAGELOGCONTEXT'
 ])
 
 env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
