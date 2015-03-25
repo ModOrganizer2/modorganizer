@@ -26,7 +26,7 @@ if env['QT_MAJOR_VERSION'] > 4:
 
 env.EnableQtModules(*modules)
 
-env.Uic4(env.Glob('*.ui'))
+env.Uic(env.Glob('*.ui'))
 
 env.RequireLibraries('uibase', 'shared', 'bsatk', 'esptk')
 
@@ -47,6 +47,7 @@ env.AppendUnique(LIBS = [
 other_sources = env.AddExtraMoc(env.Glob('*.h'))
 
 for file in env.Glob('*.rc'):
+    # version.rc is included in app_icon.rc. Not sure why it's a separate file.
     if file.name == 'version.rc':
         continue
     other_sources.append(env.RES(file))
