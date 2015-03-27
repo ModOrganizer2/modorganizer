@@ -85,12 +85,12 @@ public:
   MOShared::DirectoryEntry *directoryStructure() { return m_DirectoryStructure; }
   DirectoryRefresher *directoryRefresher() { return &m_DirectoryRefresher; }
   ExecutablesList *executablesList() { return &m_ExecutablesList; }
-  void setExecutablesDialog(const ExecutablesList &executablesList) { m_ExecutablesList = executablesList; }
+  void setExecutablesList(const ExecutablesList &executablesList) {
+    m_ExecutablesList = executablesList;
+  }
 
   Profile *currentProfile() { return m_CurrentProfile; }
   void setCurrentProfile(const QString &profileName);
-
-  void setExecutablesList(const ExecutablesList &executablesList);
 
   std::set<QString> enabledArchives();
 

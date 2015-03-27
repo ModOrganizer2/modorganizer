@@ -225,7 +225,7 @@ void OrganizerCore::storeSettings()
       // make a second attempt using qt functions but if that fails print the error from the first attempt
       if (!renameFile(iniFile + ".new", iniFile)) {
         QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
-                              tr("An error occured trying to write back MO settings: %1").arg(windowsErrorString(err)));
+                              tr("An error occured trying to write back MO settings to %1: %2").arg(iniFile + ".new", windowsErrorString(err)));
       }
     }
   } else {
@@ -233,7 +233,7 @@ void OrganizerCore::storeSettings()
                    : result == QSettings::FormatError ? tr("Invalid file format (probably a bug)")
                    : tr("Unknown error %1").arg(result);
     QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
-                          tr("An error occured trying to write back MO settings: %1").arg(reason));
+                          tr("An error occured trying to write back MO settings to %1: %2").arg(iniFile + ".new", reason));
   }
 }
 
@@ -322,7 +322,6 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *wid
   m_UserInterface = userInterface;
 
   if (widget != nullptr) {
-//    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget, SLOT(modorder_changed()));
     connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget, SLOT(modlistChanged(QModelIndex, int)));
     connect(&m_ModList, SIGNAL(showMessage(QString)), widget, SLOT(showMessage(QString)));
     connect(&m_ModList, SIGNAL(modRenamed(QString,QString)), widget, SLOT(modRenamed(QString,QString)));
