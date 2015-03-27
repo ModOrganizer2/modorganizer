@@ -182,13 +182,16 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
 
   if (existingExe != m_Executables.end()) {
     existingExe->m_Title = title;
-    existingExe->m_CloseMO = closeMO;
-    existingExe->m_BinaryInfo = file;
-    existingExe->m_Arguments = arguments;
-    existingExe->m_WorkingDirectory = workingDirectory;
-    existingExe->m_SteamAppID = steamAppID;
     existingExe->m_Custom = custom;
+    existingExe->m_CloseMO = closeMO;
     existingExe->m_Toolbar = toolbar;
+    if (custom) {
+      // for pre-configured executables don't overwrite settings we didn't store
+      existingExe->m_BinaryInfo = file;
+      existingExe->m_Arguments = arguments;
+      existingExe->m_WorkingDirectory = workingDirectory;
+      existingExe->m_SteamAppID = steamAppID;
+    }
     if (pos >= 0) {
       Executable temp = *existingExe;
       m_Executables.erase(existingExe);

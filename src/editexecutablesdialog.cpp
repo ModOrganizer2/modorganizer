@@ -287,8 +287,8 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
       ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
     }
     ui->removeButton->setEnabled(selectedExecutable.m_Custom);
-    ui->overwriteAppIDBox->setChecked(selectedExecutable.m_SteamAppID != 0);
-    if (selectedExecutable.m_SteamAppID != 0) {
+    ui->overwriteAppIDBox->setChecked(!selectedExecutable.m_SteamAppID.isEmpty());
+    if (!selectedExecutable.m_SteamAppID.isEmpty()) {
       ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
     } else {
       ui->appIDOverwriteEdit->clear();
