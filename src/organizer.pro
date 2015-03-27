@@ -363,4 +363,5 @@ CONFIG(debug, debug|release) {
 DISTFILES += \
     tutorials/tutorial_primer_main.js \
     tutorials/Tooltip.qml \
-    tutorials/TooltipArea.qml
+    tutorials/TooltipArea.qml \
+    SConscript
