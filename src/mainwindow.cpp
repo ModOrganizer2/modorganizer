@@ -1676,7 +1676,7 @@ bool MainWindow::modifyExecutablesDialog()
   try {
     EditExecutablesDialog dialog(*m_OrganizerCore.executablesList());
     if (dialog.exec() == QDialog::Accepted) {
-      m_OrganizerCore.setExecutablesDialog(dialog.getExecutablesList());
+      m_OrganizerCore.setExecutablesList(dialog.getExecutablesList());
       result = true;
     }
     refreshExecutablesList();

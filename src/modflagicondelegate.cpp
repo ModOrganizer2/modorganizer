@@ -41,8 +41,8 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
 {
   switch (flag) {
     case ModInfo::FLAG_BACKUP: return ":/MO/gui/emblem_backup";
-    case ModInfo::FLAG_INVALID: return ":/MO/gui/emblem_problem";
-    case ModInfo::FLAG_NOTENDORSED: return "MO/gui/emblem_notendorsed";
+    case ModInfo::FLAG_INVALID: return ":/MO/gui/problem";
+    case ModInfo::FLAG_NOTENDORSED: return ":/MO/gui/emblem_notendorsed";
     case ModInfo::FLAG_NOTES: return ":/MO/gui/emblem_notes";
     case ModInfo::FLAG_CONFLICT_OVERWRITE: return ":/MO/gui/emblem_conflict_overwrite";
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return ":/MO/gui/emblem_conflict_overwritten";

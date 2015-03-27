@@ -45,10 +45,16 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
 
   painter->translate(option.rect.topLeft());
   for (const QString &iconId : icons) {
+    if (iconId.isEmpty()) {
+      continue;
+    }
     QPixmap icon;
     QString fullIconId = QString("%1_%2").arg(iconId).arg(iconWidth);
     if (!QPixmapCache::find(fullIconId, &icon)) {
       icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
+      if (icon.isNull()) {
+        qWarning("failed to load icon %s", qPrintable(iconId));
+      }
       QPixmapCache::insert(fullIconId, icon);
     }
     painter->drawPixmap(x, 2, iconWidth, iconWidth, icon);
