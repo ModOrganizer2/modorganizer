@@ -241,6 +241,9 @@ void EditExecutablesDialog::on_closeButton_clicked()
       return;
     } else if (res == QMessageBox::Yes) {
       saveExecutable();
+      // the executable list returned to callers is generated from the user data in the widgets,
+      // NOT the list we just saved
+      refreshExecutablesWidget();
     }
   }
   this->accept();
