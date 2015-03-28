@@ -341,3 +341,6 @@ CONFIG(debug, debug|release) {
 } else {
   QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\..\\dlls.*manifest) $$quote($$DSTDIR)\\dlls $$escape_expand(\\n)
 }
+
+OTHER_FILES += \
+    SConscript
