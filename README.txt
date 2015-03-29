@@ -227,6 +227,18 @@ Troubleshooting (thanks to Ross):
     Complains about 'qtwebkit4' missing. For some reason this seems to insist on
     living with modorganiser.exe
 
+6) Setting up so that you can use python proxy from the debug version. This is
+   necessary as PYQT5 build doesn't supply debug- and non-debug versions and it
+   appears the debug- and non-debug versions of the QT5 dlls don't play nicely
+   together.
+   Firstly, go to your build and run configuration in QTCreator, and *remove* 
+   the qt bin dir from your build environment's PATH.
+   Then, in the DLLs directory, copy QT5Cored.dll to QT5Core.dll. Similary for
+   QT5Guid.gll and QT5Widgetsd.dll.
+   If you don't do both of these, then the program will die silently (if double
+   clicked) or print an obscure message about complaining you called QPixmap before 
+   calling QApplication.
+
 -------------------
 Building with scons
 -------------------
@@ -235,8 +247,7 @@ Building with scons
 2) Download QT4 (and/or QT5) from https://bitbucket.org/dirkbaechle/scons_qt4 and 
     https://bitbucket.org/dirkbaechle/scons_qt5. Install as per instructions
 3) Copy scons_configure_template.py to scons_configure.py. Edit to point to your
-   boost/python/zlib/7zip paths as appropriate (you can create an empty one if
-   you set up the params in qt creator)
+   boost/python/zlib/7zip/loot directories as appropriate.
 4) Create build kits as follows:
        Custom Process step:
           Command: <python path>\Scripts\scons.bat
@@ -262,4 +273,6 @@ Building with scons
     
     Please note: the generated (runnable) output files end up in the build directory,
     in the '_ModOrganizer' subdirectory (not at the top level). Named like that
-    so you can see it!
+    so you can see it! The scons build will also populate the directory with
+    all the necessary DLLs (but see note 6 above about your build tool path if
+    trying to debug).
