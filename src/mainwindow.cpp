@@ -2014,7 +2014,6 @@ void MainWindow::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &
   }
 }
 
-
 void MainWindow::refreshFilters()
 {
   QItemSelection currentSelection = ui->modList->selectionModel()->selection();
@@ -2038,11 +2037,10 @@ void MainWindow::refreshFilters()
   addFilterItem(nullptr, tr("<Not Endorsed>"), CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED, ModListSortProxy::TYPE_SPECIAL);
 
   addContentFilters();
-
   std::set<int> categoriesUsed;
   for (unsigned int modIdx = 0; modIdx < ModInfo::getNumMods(); ++modIdx) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIdx);
-    BOOST_FOREACH (int categoryID, modInfo->getCategories()) {
+    for (int categoryID : modInfo->getCategories()) {
       int currentID = categoryID;
       // also add parents so they show up in the tree
       while (currentID != 0) {
@@ -2061,7 +2059,11 @@ void MainWindow::refreshFilters()
     }
   }
   ui->modList->selectionModel()->select(currentSelection, QItemSelectionModel::Select);
-  QModelIndexList matchList = ui->modList->model()->match(ui->modList->model()->index(0, 0), Qt::DisplayRole, currentIndexName);
+  QModelIndexList matchList;
+  if (currentIndexName.isValid()) {
+    matchList = ui->modList->model()->match(ui->modList->model()->index(0, 0), Qt::DisplayRole, currentIndexName);
+  }
+
   if (matchList.size() > 0) {
     ui->modList->setCurrentIndex(matchList.at(0));
   }
