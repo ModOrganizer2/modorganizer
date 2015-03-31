@@ -46,6 +46,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
   painter->translate(option.rect.topLeft());
   for (const QString &iconId : icons) {
     if (iconId.isEmpty()) {
+      x += iconWidth + 4;
       continue;
     }
     QPixmap icon;
