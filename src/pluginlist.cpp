@@ -446,8 +446,12 @@ void PluginList::writePlugins(const QString &fileName, bool writeUnchecked) cons
                    "Please see mo_interface.log for a list of affected plugins and rename them."));
   }
 
-  if (file.commitIfDifferent(m_LastSaveHash[fileName])) {
-    qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+  if (writtenCount == 0) {
+    qWarning("plugin list would be empty, this is almost certainly wrong. Not saving.");
+  } else {
+    if (file.commitIfDifferent(m_LastSaveHash[fileName])) {
+      qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+    }
   }
 }
 
