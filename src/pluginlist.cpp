@@ -89,8 +89,8 @@ PluginList::~PluginList()
 {
   m_Refreshed.disconnect_all_slots();
   m_PluginMoved.disconnect_all_slots();
+  m_PluginStateChanged.disconnect_all_slots();
 }
-
 
 QString PluginList::getColumnName(int column)
 {
@@ -297,12 +297,10 @@ void PluginList::addInformation(const QString &name, const QString &message)
   }
 }
 
-
 bool PluginList::isEnabled(int index)
 {
   return m_ESPs.at(index).m_Enabled;
 }
-
 
 bool PluginList::readLoadOrder(const QString &fileName)
 {
@@ -562,7 +560,6 @@ bool PluginList::isESPLocked(int index) const
   return m_LockedOrder.find(m_ESPs.at(index).m_Name.toLower()) != m_LockedOrder.end();
 }
 
-
 void PluginList::lockESPIndex(int index, bool lock)
 {
   if (lock) {
@@ -576,7 +573,6 @@ void PluginList::lockESPIndex(int index, bool lock)
 qDebug(__FUNCTION__);
   emit writePluginsList();
 }
-
 
 void PluginList::syncLoadOrder()
 {
@@ -630,10 +626,13 @@ void PluginList::refreshLoadOrder()
   }
 }
 
+void PluginList::disconnectSlots() {
+  m_PluginMoved.disconnect_all_slots();
+  m_Refreshed.disconnect_all_slots();
+  m_PluginStateChanged.disconnect_all_slots();
+}
 
-
-
-IPluginList::PluginState PluginList::state(const QString &name) const
+IPluginList::PluginStates PluginList::state(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
   if (iter == m_ESPsByName.end()) {
@@ -695,6 +694,12 @@ QString PluginList::origin(const QString &name) const
   } else {
     return m_ESPs[iter->second].m_OriginName;
   }
+}
+
+bool PluginList::onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func)
+{
+  auto conn = m_PluginStateChanged.connect(func);
+  return conn.connected();
 }
 
 bool PluginList::onRefreshed(const std::function<void ()> &callback)
@@ -765,15 +770,13 @@ void PluginList::testMasters()
 //  emit layoutChanged();
 }
 
-
 QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 {
   int index = modelIndex.row();
-
   if ((role == Qt::DisplayRole)
       || (role == Qt::EditRole)) {
     switch (modelIndex.column()) {
-      case COL_NAME: {
+    case COL_NAME: {
         return m_ESPs[index].m_Name;
       } break;
       case COL_PRIORITY: {
@@ -884,7 +887,11 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
 
 bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int role)
 {
+  QString modName = modIndex.data().toString();
+  IPluginList::PluginStates oldState = state(modName);
+
   bool result = false;
+
   if (role == Qt::CheckStateRole) {
     m_ESPs[modIndex.row()].m_Enabled = value.toInt() == Qt::Checked;
     emit dataChanged(modIndex, modIndex);
@@ -904,6 +911,20 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
       refreshLoadOrder();
     }
   }
+
+  IPluginList::PluginStates newState = state(modName);
+  if (oldState != newState) {
+    try {
+      m_PluginStateChanged(modName, newState);
+      testMasters();
+      emit dataChanged(this->index(0, 0), this->index(m_ESPs.size(), columnCount()));
+    } catch (const std::exception &e) {
+      qCritical("failed to invoke state changed notification: %s", e.what());
+    } catch (...) {
+      qCritical("failed to invoke state changed notification: unknown exception");
+    }
+  }
+
   return result;
 }
 

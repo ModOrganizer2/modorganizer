@@ -89,6 +89,7 @@ public:
 
   typedef boost::signals2::signal<void ()> SignalRefreshed;
   typedef boost::signals2::signal<void (const QString &, int, int)> SignalPluginMoved;
+  typedef boost::signals2::signal<void (const QString &, PluginStates)> SignalPluginStateChanged;
 
 public:
 
@@ -214,14 +215,11 @@ public:
 
   void refreshLoadOrder();
 
-  void disconnectSlots() {
-    m_PluginMoved.disconnect_all_slots();
-    m_Refreshed.disconnect_all_slots();
-  }
+  void disconnectSlots();
 
 public:
 
-  virtual PluginState state(const QString &name) const;
+  virtual PluginStates state(const QString &name) const;
   virtual int priority(const QString &name) const;
   virtual int loadOrder(const QString &name) const;
   virtual bool isMaster(const QString &name) const;
@@ -229,6 +227,7 @@ public:
   virtual QString origin(const QString &name) const;
   virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func);
+  virtual bool onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func) override;
 
 public: // implementation of the QAbstractTableModel interface
 
@@ -335,6 +334,7 @@ private:
 
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
+  SignalPluginStateChanged m_PluginStateChanged;
 
   QTemporaryFile m_TempFile;
 
