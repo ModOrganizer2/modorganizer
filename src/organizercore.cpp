@@ -1460,6 +1460,10 @@ bool OrganizerCore::saveCurrentLists()
 
 void OrganizerCore::savePluginList()
 {
+  if (m_DirectoryUpdate) {
+    qWarning("Can't save plugin lists now, might outdated");
+    return;
+  }
   m_PluginList.saveTo(m_CurrentProfile->getPluginsFileName(),
                       m_CurrentProfile->getLoadOrderFileName(),
                       m_CurrentProfile->getLockedOrderFileName(),
