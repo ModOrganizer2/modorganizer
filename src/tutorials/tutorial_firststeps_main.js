@@ -61,6 +61,7 @@ function getTutorialSteps()
     },
 
     function() {
+        unhighlight()
         tutorial.text = qsTr("Now it's time to install a few mods!"
                             + "Please go along with this because we need a few mods installed to demonstrate other features")
         waitForClick()
@@ -86,13 +87,13 @@ function getTutorialSteps()
 
     function() {
         tutorial.text = qsTr("Downloads will appear on the \"Downloads\"-tab here. You have to download and install at least one mod to proceed.")
-        applicationWindow.modInstalled.connect(nextStep)
+        organizer.modInstalled.connect(nextStep)
         highlightItem("tabWidget", true)
     },
 
     function() {
         unhighlight()
-        applicationWindow.modInstalled.disconnect(nextStep)
+        organizer.modInstalled.disconnect(nextStep)
         tutorial.text = qsTr("Great, you just installed your first mod. Please note that the installation procedure may differ based on how a mod was packaged.")
         waitForClick()
     },

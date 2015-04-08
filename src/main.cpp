@@ -347,11 +347,6 @@ int main(int argc, char *argv[])
                              );
   application.setProperty("dataPath", dataPath);
 
-#if QT_VERSION >= 0x050000
-  qDebug("ssl support: %d", QSslSocket::supportsSsl());
-#endif
-
-  qDebug("data path: %s", qPrintable(dataPath));
   if (!QDir(dataPath).exists()) {
     if (!QDir().mkpath(dataPath)) {
       qCritical("failed to create %s", qPrintable(dataPath));
@@ -377,6 +372,10 @@ int main(int argc, char *argv[])
   }
 
   LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+
+#if QT_VERSION >= 0x050000
+  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#endif
 
   qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
@@ -510,7 +509,6 @@ int main(int argc, char *argv[])
 
     organizer.updateExecutablesList(settings);
 
-
     QString selectedProfileName = determineProfile(arguments, settings);
     organizer.setCurrentProfile(selectedProfileName);
 
@@ -532,7 +530,8 @@ int main(int argc, char *argv[])
     }
 
     qDebug("initializing tutorials");
-    TutorialManager::init(qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/");
+    TutorialManager::init(qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
+                          &organizer);
 
     if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
       // disable invalid stylesheet
