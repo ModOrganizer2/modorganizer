@@ -54,16 +54,12 @@ TransferSavesDialog::~TransferSavesDialog()
 void TransferSavesDialog::refreshGlobalSaves()
 {
   m_GlobalSaves.clear();
-
   QDir savesDir(m_GamePlugin->savesDirectory());
-
-  QStringList filters;
-  filters << m_GamePlugin->savegameExtension();
-  savesDir.setNameFilters(filters);
+  savesDir.setNameFilters(QStringList() << QString("*.%1").arg(m_GamePlugin->savegameExtension()));
 
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
-  foreach (const QString &filename, files) {
+  for (const QString &filename : files) {
     SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
     save->setParent(this);
     m_GlobalSaves.push_back(save);
@@ -77,9 +73,7 @@ void TransferSavesDialog::refreshLocalSaves()
 
   QDir savesDir(m_Profile.absolutePath() + "/saves");
 
-  QStringList filters;
-  filters << m_GamePlugin->savegameExtension();
-  savesDir.setNameFilters(filters);
+  savesDir.setNameFilters(QStringList() << QString("*.%1").arg(m_GamePlugin->savegameExtension()));
 
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
