@@ -543,7 +543,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
 
     for (std::vector<std::wstring>::iterator keyIter = keys.begin();
          keyIter != keys.end(); ++keyIter) {
-      //TODO this treats everything as strings but how could I differentiate the type?
+       //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                  nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
       ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),

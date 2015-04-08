@@ -434,7 +434,6 @@ bool ModList::renameMod(int index, const QString &newName)
   return true;
 }
 
-
 bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 {
   if (m_Profile == nullptr) return false;
@@ -521,9 +520,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 
   return result;
 }
-
-
-
 
 
 QVariant ModList::headerData(int section, Qt::Orientation orientation,
@@ -846,7 +842,6 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
   } else {
     return dropMod(mimeData, row, parent);
   }
-
 }
 
 void ModList::removeRowForce(int row, const QModelIndex &parent)

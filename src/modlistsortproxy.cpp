@@ -338,7 +338,7 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
     qDebug("invalid index");
     return false;
   }
-  if (idx.isValid() && sourceModel()->hasChildren(idx)) {
+  if (sourceModel()->hasChildren(idx)) {
     for (int i = 0; i < sourceModel()->rowCount(idx); ++i) {
       if (filterAcceptsRow(i, idx)) {
         return true;
