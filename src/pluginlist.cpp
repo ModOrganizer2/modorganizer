@@ -595,9 +595,11 @@ void PluginList::refreshLoadOrder()
   // set priorities according to locked load order
   std::map<int, QString> lockedLoadOrder;
   std::for_each(m_LockedOrder.begin(), m_LockedOrder.end(),
-                [&lockedLoadOrder] (const std::pair<QString, int> &ele) { lockedLoadOrder[ele.second] = ele.first; });
+                [&lockedLoadOrder] (const std::pair<QString, int> &ele) {
+    lockedLoadOrder[ele.second] = ele.first; });
 
   int targetPrio = 0;
+  bool savePluginsList = false;
   // this is guaranteed to iterate from lowest key (load order) to highest
   for (auto iter = lockedLoadOrder.begin(); iter != lockedLoadOrder.end(); ++iter) {
     auto nameIter = m_ESPsByName.find(iter->second);
@@ -620,9 +622,12 @@ void PluginList::refreshLoadOrder()
         setPluginPriority(index, temp);
         m_ESPs[index].m_LoadOrder = iter->first;
         syncLoadOrder();
-        emit writePluginsList();
+        savePluginsList = true;
       }
     }
+  }
+  if (savePluginsList) {
+    emit writePluginsList();
   }
 }
 
@@ -1049,6 +1054,7 @@ void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 
   layoutChange.finish();
   refreshLoadOrder();
+  emit writePluginsList();
 }
 
 bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int row, int, const QModelIndex &parent)
