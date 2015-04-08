@@ -177,58 +177,76 @@ OrganizerCore::~OrganizerCore()
   delete m_DirectoryStructure;
 }
 
+QString OrganizerCore::commitSettings(const QString &iniFile)
+{
+  if (!shellRename(iniFile + ".new", iniFile, true, qApp->activeWindow())) {
+    DWORD err = ::GetLastError();
+    // make a second attempt using qt functions but if that fails print the error from the first attempt
+    if (!renameFile(iniFile + ".new", iniFile)) {
+      return windowsErrorString(err);
+    }
+  }
+  return QString();
+}
+
+QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
+{
+  QSettings settings(fileName, QSettings::IniFormat);
+  if (m_UserInterface != nullptr) {
+    m_UserInterface->storeSettings(settings);
+  }
+  if (m_CurrentProfile != nullptr) {
+    settings.setValue("selected_profile", m_CurrentProfile->name().toUtf8().constData());
+  }
+  settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
+
+  settings.remove("customExecutables");
+  settings.beginWriteArray("customExecutables");
+  std::vector<Executable>::const_iterator current, end;
+  m_ExecutablesList.getExecutables(current, end);
+  int count = 0;
+  for (; current != end; ++current) {
+    const Executable &item = *current;
+    settings.setArrayIndex(count++);
+    settings.setValue("title", item.m_Title);
+    settings.setValue("custom", item.m_Custom);
+    settings.setValue("toolbar", item.m_Toolbar);
+    if (item.m_Custom) {
+      settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
+      settings.setValue("arguments", item.m_Arguments);
+      settings.setValue("workingDirectory", item.m_WorkingDirectory);
+      settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
+      settings.setValue("steamAppID", item.m_SteamAppID);
+    }
+  }
+  settings.endArray();
+
+  FileDialogMemory::save(settings);
+
+  settings.sync();
+  return settings.status();
+}
+
 void OrganizerCore::storeSettings()
 {
   QString iniFile = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName());
-  shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow());
-
-  QSettings::Status result = QSettings::NoError;
-  {
-    QSettings settings(iniFile + ".new", QSettings::IniFormat);
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->storeSettings(settings);
-    }
-    if (m_CurrentProfile != nullptr) {
-      settings.setValue("selected_profile", m_CurrentProfile->name().toUtf8().constData());
-    }
-    settings.setValue("ask_for_nexuspw", m_AskForNexusPW);
-
-    settings.remove("customExecutables");
-    settings.beginWriteArray("customExecutables");
-    std::vector<Executable>::const_iterator current, end;
-    m_ExecutablesList.getExecutables(current, end);
-    int count = 0;
-    for (; current != end; ++current) {
-      const Executable &item = *current;
-      settings.setArrayIndex(count++);
-      settings.setValue("title", item.m_Title);
-      settings.setValue("custom", item.m_Custom);
-      settings.setValue("toolbar", item.m_Toolbar);
-      if (item.m_Custom) {
-        settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-        settings.setValue("arguments", item.m_Arguments);
-        settings.setValue("workingDirectory", item.m_WorkingDirectory);
-        settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
-        settings.setValue("steamAppID", item.m_SteamAppID);
-      }
-    }
-    settings.endArray();
-
-    FileDialogMemory::save(settings);
-
-    settings.sync();
-    result = settings.status();
+  if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
+    QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
+                          tr("An error occured trying to update MO settings to %1: %2").arg(
+                            iniFile, windowsErrorString(::GetLastError())));
+    return;
   }
+
+  QSettings::Status result = storeSettings(iniFile + ".new");
+
   if (result == QSettings::NoError) {
-    if (!shellRename(iniFile + ".new", iniFile, true, qApp->activeWindow())) {
-      DWORD err = ::GetLastError();
-      // make a second attempt using qt functions but if that fails print the error from the first attempt
-      if (!renameFile(iniFile + ".new", iniFile)) {
-        QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
-                              tr("An error occured trying to write back MO settings to %1: %2").arg(iniFile + ".new", windowsErrorString(err)));
-      }
+    QString errMsg = commitSettings(iniFile);
+    if (!errMsg.isEmpty()) {
+      qWarning("settings file not writable, may be locked by another application, trying direct write");
+      result = storeSettings(iniFile);
     }
-  } else {
+  }
+  if (result != QSettings::NoError) {
     QString reason = result == QSettings::AccessError ? tr("File is write protected")
                    : result == QSettings::FormatError ? tr("Invalid file format (probably a bug)")
                    : tr("Unknown error %1").arg(result);

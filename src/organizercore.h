@@ -198,6 +198,10 @@ private:
 
   void storeSettings();
 
+  QSettings::Status storeSettings(const QString &fileName);
+
+  QString commitSettings(const QString &iniFile);
+
   bool queryLogin(QString &username, QString &password);
 
   void updateModActiveState(int index, bool active);
