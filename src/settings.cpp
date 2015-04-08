@@ -140,7 +140,6 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-
 QString Settings::obfuscate(const QString &password) const
 {
   QByteArray temp = password.toUtf8();
@@ -152,7 +151,6 @@ QString Settings::obfuscate(const QString &password) const
   return buffer.toBase64();
 }
 
-
 QString Settings::deObfuscate(const QString &password) const
 {
   QByteArray temp(QByteArray::fromBase64(password.toUtf8()));
@@ -163,7 +161,6 @@ QString Settings::deObfuscate(const QString &password) const
   }
   return QString::fromUtf8(buffer.constData());
 }
-
 
 bool Settings::hideUncheckedPlugins() const
 {
@@ -189,7 +186,6 @@ QString Settings::getDownloadDirectory() const
 {
   return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()));
 }
-
 
 void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
 {
@@ -687,9 +683,24 @@ void Settings::query(QWidget *parent)
         QDir().mkpath(modDirEdit->text());
       }
 
-      m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));
-      m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(cacheDirEdit->text()));
-      m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
+      if (QFileInfo(downloadDirEdit->text()) !=
+          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::downloadPath()))) {
+        m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));
+      } else {
+        m_Settings.remove("Settings/download_directory");
+      }
+      if (QFileInfo(cacheDirEdit->text()) !=
+          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::cachePath()))) {
+        m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(cacheDirEdit->text()));
+      } else {
+        m_Settings.remove("Settings/cache_directory");
+      }
+      if (QFileInfo(modDirEdit->text()) !=
+          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::modsPath()))) {
+        m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
+      } else {
+        m_Settings.remove("Settings/mod_directory");
+      }
     }
 
 
