@@ -73,7 +73,7 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
-  void setManagedGame(const QString &gameName);
+  void setManagedGame(const QString &gameName, const QString &gamePath);
 
   void updateExecutablesList(QSettings &settings);
 

@@ -385,11 +385,12 @@ void OrganizerCore::disconnectPlugins()
   m_PluginContainer = nullptr;
 }
 
-void OrganizerCore::setManagedGame(const QString &gameName)
+void OrganizerCore::setManagedGame(const QString &gameName, const QString &gamePath)
 {
   m_GameName = gameName;
   if (m_PluginContainer != nullptr) {
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
+    m_GamePlugin->setGamePath(gamePath);
     qApp->setProperty("managed_game", QVariant::fromValue(m_GamePlugin));
     emit managedGameChanged(m_GamePlugin);
   }
