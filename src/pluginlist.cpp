@@ -1159,9 +1159,13 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
     } else if (keyEvent->key() == Qt::Key_Space) {
       QItemSelectionModel *selectionModel = itemView->selectionModel();
       const QSortFilterProxyModel *proxyModel = qobject_cast<const QSortFilterProxyModel*>(selectionModel->model());
+      QList<QPersistentModelIndex> indices;
+      for (QModelIndex idx : selectionModel->selectedRows()) {
+        indices.append(idx);
+      }
 
       QModelIndex minRow, maxRow;
-      foreach (QModelIndex idx, selectionModel->selectedRows()) {
+      for (QModelIndex idx : indices) {
         if (proxyModel != nullptr) {
           idx = proxyModel->mapToSource(idx);
         }
