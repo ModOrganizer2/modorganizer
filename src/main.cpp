@@ -461,8 +461,10 @@ int main(int argc, char *argv[])
         } else {
           gamePath = QDir::cleanPath(selection.getChoiceData().toString());
           if (gamePath.isEmpty()) {
-            gamePath = QFileDialog::getExistingDirectory(nullptr, QObject::tr("Please select the game to manage"), QString(),
-                                                         QFileDialog::ShowDirsOnly);
+            gamePath = QFileDialog::getExistingDirectory(
+                  nullptr, QObject::tr("Please select the game to manage"), QString(),
+                  QFileDialog::ShowDirsOnly);
+            qDebug() << "manually selected path " << gamePath;
           }
         }
       } else {
@@ -480,7 +482,7 @@ int main(int argc, char *argv[])
       settings.setValue("gamePath", gamePath.toUtf8().constData());
     }
 
-    organizer.setManagedGame(ToQString(GameInfo::instance().getGameName()));
+    organizer.setManagedGame(ToQString(GameInfo::instance().getGameName()), gamePath);
 
     organizer.createDefaultProfile();
 
