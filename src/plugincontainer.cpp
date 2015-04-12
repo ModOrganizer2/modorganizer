@@ -140,12 +140,12 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
       bf::at_key<IPluginProxy>(m_Plugins).push_back(proxy);
       QStringList pluginNames = proxy->pluginList(
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
-      foreach (const QString &pluginName, pluginNames) {
+      for (const QString &pluginName : pluginNames) {
         try {
           QObject *proxiedPlugin = proxy->instantiate(pluginName);
           if (proxiedPlugin != nullptr) {
             if (registerPlugin(proxiedPlugin, pluginName)) {
-              qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
+              qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
             } else {
               qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
                        "you have to update it or delete it if no update exists.",
@@ -273,7 +273,7 @@ void PluginContainer::loadPlugins()
                   qPrintable(pluginName), qPrintable(pluginLoader->errorString()));
       } else {
         if (registerPlugin(pluginLoader->instance(), pluginName)) {
-          qDebug("loaded plugin \"%s\"", qPrintable(pluginName));
+          qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
           m_PluginLoaders.push_back(pluginLoader);
         } else {
           m_FailedPlugins.push_back(pluginName);

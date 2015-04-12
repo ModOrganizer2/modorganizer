@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <QFileInfo>
 #include <QDir>
+#include <QDebug>
 #include "utility.h"
 #include <algorithm>
 
