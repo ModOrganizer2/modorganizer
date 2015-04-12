@@ -1229,11 +1229,8 @@ void MainWindow::refreshSavesIfOpen()
   }
 }
 
-
-void MainWindow::refreshSaveList()
+QDir MainWindow::currentSavesDir() const
 {
-  ui->savegameList->clear();
-
   QDir savesDir;
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
     savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
@@ -1245,13 +1242,35 @@ void MainWindow::refreshSaveList()
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
+  return savesDir;
+}
+
+void MainWindow::startMonitorSaves()
+{
+  stopMonitorSaves();
+
+  QDir savesDir = currentSavesDir();
+
+  m_SavesWatcher.addPath(savesDir.absolutePath());
+}
+
+void MainWindow::stopMonitorSaves()
+{
   if (m_SavesWatcher.directories().length() > 0) {
     m_SavesWatcher.removePaths(m_SavesWatcher.directories());
   }
-  m_SavesWatcher.addPath(savesDir.absolutePath());
+}
+
+void MainWindow::refreshSaveList()
+{
+  ui->savegameList->clear();
+
+  startMonitorSaves(); // re-starts monitoring
 
   QStringList filters;
   filters << QString("*.") + m_OrganizerCore.managedGame()->savegameExtension();
+
+  QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
@@ -1745,7 +1764,11 @@ void MainWindow::on_actionAdd_Profile_triggered()
   bool repeat = true;
   while (repeat) {
     ProfilesDialog profilesDialog(m_GamePath, this);
+    // workaround: need to disable monitoring of the saves directory, otherwise the active
+    // profile directory is locked
+    stopMonitorSaves();
     profilesDialog.exec();
+    refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
     if (refreshProfiles() && !profilesDialog.failed()) {
       repeat = false;
     }
@@ -4409,6 +4432,7 @@ void MainWindow::on_bossButton_clicked()
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
     if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      qDebug("removing loadorder.txt");
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
