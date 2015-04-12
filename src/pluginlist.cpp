@@ -324,6 +324,10 @@ bool PluginList::readLoadOrder(const QString &fileName)
   if (!file.open(QIODevice::ReadOnly)) {
     return false;
   }
+  if (file.size() == 0) {
+    // MO stores at least a header in the file. if it's completely empty the file is broken
+    return false;
+  }
   while (!file.atEnd()) {
     QByteArray line = file.readLine().trimmed();
     QString modName;
