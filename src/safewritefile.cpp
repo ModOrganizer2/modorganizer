@@ -50,7 +50,8 @@ void SafeWriteFile::commit() {
 
 bool SafeWriteFile::commitIfDifferent(QByteArray &inHash) {
   QByteArray newHash = hash();
-  if (newHash != inHash) {
+  if (newHash != inHash
+      || !QFile::exists(m_FileName)) {
     commit();
     inHash = newHash;
     return true;
