@@ -4436,6 +4436,10 @@ void MainWindow::on_bossButton_clicked()
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
+    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      // the load order should have been retrieved from file time, now save it to our own format
+      m_OrganizerCore.savePluginList();
+    }
   }
 }
 

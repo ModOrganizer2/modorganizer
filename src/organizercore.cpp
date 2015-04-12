@@ -892,8 +892,13 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
       if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+        qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
-        refreshESPList();
+      }
+      refreshESPList();
+      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+        // the load order should have been retrieved from file time, now save it to our own format
+        savePluginList();
       }
 
       m_FinishedRun(binary.absoluteFilePath(), processExitCode);
@@ -1311,6 +1316,9 @@ void OrganizerCore::directory_refreshed()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
     modInfo->clearCaches();
   }
+  for (auto task : m_PostRefreshTasks) {
+    task();
+  }
 }
 
 void OrganizerCore::profileRefresh()
@@ -1480,7 +1488,8 @@ bool OrganizerCore::saveCurrentLists()
 void OrganizerCore::savePluginList()
 {
   if (m_DirectoryUpdate) {
-    qWarning("Can't save plugin lists now, might outdated");
+    // delay save till after directory update
+    m_PostRefreshTasks.append([&] () { this->savePluginList(); });
     return;
   }
   m_PluginList.saveTo(m_CurrentProfile->getPluginsFileName(),

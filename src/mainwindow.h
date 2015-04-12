@@ -247,6 +247,11 @@ private:
 
   void scheduleUpdateButton();
 
+  QDir currentSavesDir() const;
+
+  void startMonitorSaves();
+  void stopMonitorSaves();
+
 private:
 
   static const char *PATTERN_BACKUP_GLOB;

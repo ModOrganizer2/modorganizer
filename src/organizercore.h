@@ -244,6 +244,7 @@ private:
   PluginList m_PluginList;
 
   QList<std::function<void()>> m_PostLoginTasks;
+  QList<std::function<void()>> m_PostRefreshTasks;
 
   ExecutablesList m_ExecutablesList;
   QStringList m_PendingDownloads;
