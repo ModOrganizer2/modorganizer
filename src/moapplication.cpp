@@ -73,7 +73,7 @@ public:
 };
 
 
-MOApplication::MOApplication(int argc, char **argv)
+MOApplication::MOApplication(int &argc, char **argv)
   : QApplication(argc, argv)
 {
   connect(&m_StyleWatcher, SIGNAL(fileChanged(QString)), SLOT(updateStyle(QString)));

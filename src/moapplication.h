@@ -28,7 +28,7 @@ class MOApplication : public QApplication {
 Q_OBJECT
 public:
 
-  MOApplication(int argc, char **argv);
+  MOApplication(int &argc, char **argv);
 
   virtual bool notify (QObject *receiver, QEvent *event);
 
