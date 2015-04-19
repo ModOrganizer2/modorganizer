@@ -60,7 +60,7 @@ bool DownloadListSortProxy::filterAcceptsRow(int source_row, const QModelIndex&)
   if (m_CurrentFilter.length() == 0) {
     return true;
   } else if (source_row < m_Manager->numTotalDownloads()) {
-    return m_Manager->getFileName(source_row).contains(m_CurrentFilter, Qt::CaseInsensitive);
+    return sourceModel()->index(source_row, 0).data().toString().contains(m_CurrentFilter, Qt::CaseInsensitive);
   } else {
     return false;
   }
