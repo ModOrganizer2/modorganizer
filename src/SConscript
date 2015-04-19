@@ -1,56 +1,127 @@
 import os
+import subprocess
 
-Import('env qt_env')
+Import('qt_env')
 
-def InstallModule(self, arg, subdir = None):
-    install_dir = '${INSTALL_PATH}'
-    if subdir is not None:
-        install_dir = os.path.join(install_dir, subdir)
-    # Ensure we install this when built from here, not just from top level build    
-    self.Pseudo('install')
-    self.Depends('install',
-        self.Install(install_dir,
-                     filter(lambda x: x.suffix in ('.dll', '.pdb', '.exe'),
-                            arg)))
+env = qt_env.Clone()
 
-def RequireLibraries(self, *libraries):
-    # Cannot use env.AppendUnique because it confuses moc
-#    self['CPPPATH'] += [
- #       os.path.join('..', '..', library) for library in libraries
-  #  ]
-    self.AppendUnique(CPPPATH = [
-        os.path.join('..', library) for library in libraries
-    ])
+modules = [ 
+    'Core', 
+    'Gui', 
+    'Network', 
+    'Script', 
+    'Sql', 
+    'WebKit', 
+    'Xml', 
+    'XmlPatterns',
+    'Declarative'
+]
 
-    self.AppendUnique(LIBPATH = [
-        os.path.join('..', library) for library in libraries
-    ])
+if env['QT_MAJOR_VERSION'] > 4:
+    modules += [ 
+        'Widgets',
+        'Qml',
+        'WebKitWidgets'
+    ]
 
-    libs = list(libraries)
-    try:
-        idx = libs.index('shared')
-        libs[idx] = 'mo_shared'
-    except:
-        pass
+env.EnableQtModules(*modules)
 
-    self.AppendUnique(LIBS = [ library for library in libs ])
+env.Uic(env.Glob('*.ui'))
 
-qt_env = qt_env.Clone()
-qt_env.AddMethod(InstallModule)
-qt_env.AddMethod(RequireLibraries)
+env.RequireLibraries('uibase', 'shared', 'bsatk', 'esptk')
 
-env = env.Clone()
-env.AddMethod(InstallModule)
-env.AddMethod(RequireLibraries)
 
-libs_to_install = env.SConscript(env.Glob('*/SConscript'),
-                                 exports = 'env qt_env')
-dll_manifest = 'dlls.manifest'
-if qt_env['CONFIG'] == 'debug':
-    dll_manifest += '.debug'
-if qt_env['QT_MAJOR_VERSION'] > 4:
-    dll_manifest += '.qt%d' % qt_env['QT_MAJOR_VERSION']
-qt_env.InstallAs(os.path.join(qt_env['INSTALL_PATH'], 'DLLs', 'dlls.manifest'),
-                 dll_manifest)
+env.AppendUnique(LIBS = [
+    'shell32',
+    'user32',
+    'ole32',
+    'advapi32',
+    'gdi32',
+    'shlwapi',
+    'Psapi',
+    'Version'
+])
 
-Return('libs_to_install')
+# We have to 'persuade' moc to generate certain other targets and inject them
+# into the list of cpps
+other_sources = env.AddExtraMoc(env.Glob('*.h'))
+
+for file in env.Glob('*.rc'):
+    # version.rc is included in app_icon.rc. Not sure why it's a separate file.
+    if file.name == 'version.rc':
+        continue
+    other_sources.append(env.RES(file))
+
+# Note the order of this is important, or you can pick up the wrong report.h...
+# Doing appendunique seems to throw the moc code into a tizzy
+env['CPPPATH'] += [
+    '../archive',
+#    '../boss_modified/boss-api',
+    '../plugins/gamefeatures',
+    '.',            # Why is this necessary?
+    '${LOOTPATH}',
+    '${BOOSTPATH}',
+]
+
+env.AppendUnique(CPPDEFINES = [
+    '_UNICODE',
+    '_CRT_SECURE_NO_WARNINGS',
+    '_SCL_SECURE_NO_WARNINGS',
+    'BOOST_DISABLE_ASSERTS',
+    'NDEBUG',
+    'QT_MESSAGELOGCONTEXT'
+])
+
+env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
+
+env.AppendUnique(LINKFLAGS = [
+    '/SUBSYSTEM:WINDOWS',
+    '${EXE_MANIFEST_DEPENDENCY}'
+])
+
+#  modeltest is optional and it doesn't compile anyway...
+cpp_files = [
+    x for x in Glob('*.cpp')
+        if x.name != 'modeltest.cpp' and x.name != 'aboutdialog.cpp'
+]
+
+about_env = env.Clone()
+try:
+    hgid = subprocess.check_output(['hg', 'id', '-i']).rstrip()
+except:
+    hgid = 'Unknown version'
+
+# FIXME: It'd be much easier to stringify this in the source code
+about_env.AppendUnique(CPPDEFINES = [ 'HGID=\\"%s\\"' % hgid ])
+other_sources.append(about_env.StaticObject('aboutdialog.cpp'))
+
+env.AppendUnique(LIBPATH = "${ZLIBPATH}/build")
+env.AppendUnique(LIBS = 'zlibstatic')
+
+prog = env.Program('ModOrganizer',
+                   cpp_files + env.Glob('*.qrc') + other_sources)
+
+env.InstallModule(prog)
+
+for subdir in ('tutorials', 'stylesheets'):
+    env.Install(os.path.join(env['INSTALL_PATH'], subdir),
+                env.Glob(os.path.join(subdir, '*')))
+
+# FIXME Sort the translations. Except they don't exist on the 1.2 branch
+
+res = env['QT_USED_MODULES']
+Return('res')
+
+"""
+CONFIG(debug, debug|release) {
+} else {
+  QMAKE_CXXFLAGS += /Zi /GL
+  QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
+}
+
+TRANSLATIONS = organizer_en.ts
+
+
+QMAKE_POST_LINK += xcopy /y /s /I $$quote($$BASEDIR\\*.qm) $$quote($$DSTDIR)\\translations $$escape_expand(\\n)
+
+"""

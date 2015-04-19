@@ -227,17 +227,12 @@ Troubleshooting (thanks to Ross):
     Complains about 'qtwebkit4' missing. For some reason this seems to insist on
     living with modorganiser.exe
 
-6) Setting up so that you can use python proxy from the debug version. This is
-   necessary as PYQT5 build doesn't supply debug- and non-debug versions and it
-   appears the debug- and non-debug versions of the QT5 dlls don't play nicely
-   together.
-   Firstly, go to your build and run configuration in QTCreator, and *remove* 
-   the qt bin dir from your build environment's PATH.
-   Then, in the DLLs directory, copy QT5Cored.dll to QT5Core.dll. Similary for
-   QT5Guid.gll and QT5Widgetsd.dll.
-   If you don't do both of these, then the program will die silently (if double
-   clicked) or print an obscure message about complaining you called QPixmap before 
-   calling QApplication.
+6) Debugging the python proxy: I (TT) don't think this is possible unless you have a debug
+   build of PyQt. However, a debug build of PyQt requires a debug build of python. There doesn't
+   appear to be a half way house which is build wiht normal python but debug versions of QT libraries.
+   You can confuse pyqt by copying the debug QT DLLs to appropriate named files in the DLLs
+   directory, and removing QT from your project run path, which results in the python proxy
+   initialising succesfully, but causes mod organiser to crash in strange places.
 
 -------------------
 Building with scons
