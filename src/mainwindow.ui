@@ -10,6 +10,9 @@
     <height>710</height>
    </rect>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string notr="true">Mod Organizer</string>
   </property>
@@ -1140,11 +1143,14 @@ p, li { white-space: pre-wrap; }
                     <property name="contextMenuPolicy">
                      <enum>Qt::PreventContextMenu</enum>
                     </property>
+                    <property name="acceptDrops">
+                     <bool>true</bool>
+                    </property>
                     <property name="toolTip">
                      <string/>
                     </property>
                     <property name="whatsThis">
-                     <string>This is a list of mods you downloaded from Nexus. Double click one to install it.</string>
+                     <string>This is a list of mods you downloaded from Nexus. Double click one to install it. You can also drag an archive into here.</string>
                     </property>
                     <property name="verticalScrollBarPolicy">
                      <enum>Qt::ScrollBarAlwaysOn</enum>

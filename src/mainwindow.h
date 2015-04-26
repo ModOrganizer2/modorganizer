@@ -157,6 +157,8 @@ protected:
   virtual void closeEvent(QCloseEvent *event);
   virtual bool eventFilter(QObject *obj, QEvent *event);
   virtual void resizeEvent(QResizeEvent *event);
+  virtual void dragEnterEvent(QDragEnterEvent *event);
+  virtual void dropEvent(QDropEvent *event);
 
 private:
 
