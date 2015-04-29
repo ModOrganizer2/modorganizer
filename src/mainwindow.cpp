@@ -4610,9 +4610,6 @@ void MainWindow::dropEvent(QDropEvent *event)
     QString target = output_dir + "/" + file.fileName();
     //FIXME: Check here if the file exists and offer a rename
     if (QFile::exists(target)) {
-      //Make this box have 2 buttons:
-      //'overwrite' and 'rename'
-      //for copy it's ok to add a 'do nothing' button
       QMessageBox box(QMessageBox::Question,
                       file.fileName(),
                       tr("A file with the same name has already been downloaded. "
@@ -4657,10 +4654,6 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
     //Something has gone horribly wrong here
     qDebug("error %d", GetLastError());
-    if (action == Qt::MoveAction) {
-      //Don't let the original source get deleted on a move
-      event->setDropAction(Qt::TargetMoveAction);
-    }
   }
   event->accept();
 }
