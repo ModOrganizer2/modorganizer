@@ -4608,7 +4608,6 @@ void MainWindow::dropEvent(QDropEvent *event)
   for (auto url : event->mimeData()->urls()) {
     QFileInfo file(url.toLocalFile());
     QString target = output_dir + "/" + file.fileName();
-    //FIXME: Check here if the file exists and offer a rename
     if (QFile::exists(target)) {
       QMessageBox box(QMessageBox::Question,
                       file.fileName(),
