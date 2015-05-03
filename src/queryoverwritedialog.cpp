@@ -20,11 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "queryoverwritedialog.h"
 #include "ui_queryoverwritedialog.h"
 
-QueryOverwriteDialog::QueryOverwriteDialog(QWidget *parent)
+QueryOverwriteDialog::QueryOverwriteDialog(QWidget *parent, Backup b)
   : QDialog(parent), ui(new Ui::QueryOverwriteDialog),
     m_Action(ACT_NONE)
 {
   ui->setupUi(this);
+  ui->backupBox->setChecked(b == BACKUP_YES);
   QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxQuestion);
   ui->iconLabel->setPixmap(icon.pixmap(128));
 

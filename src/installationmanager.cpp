@@ -439,8 +439,12 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
   while (QDir(targetDirectory).exists()) {
-    QueryOverwriteDialog overwriteDialog(m_ParentWidget);
+    Settings &settings(Settings::instance());
+    bool backup = settings.directInterface().value("backup_install", false).toBool();
+    QueryOverwriteDialog overwriteDialog(m_ParentWidget,
+                                         backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
     if (overwriteDialog.exec()) {
+      settings.directInterface().setValue("backup_install", overwriteDialog.backup());
       if (overwriteDialog.backup()) {
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
