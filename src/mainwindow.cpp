@@ -4635,19 +4635,13 @@ void MainWindow::dropEvent(QDropEvent *event)
       }
     }
 
-    //We should really show progress and add a cancel button for these in case
-    //the operation takes a long time.
     if (action == Qt::MoveAction) {
-      if (MoveFileExW(file.absoluteFilePath().toStdWString().c_str(),
-                      target.toStdWString().c_str(),
-                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING) != 0) {
+      if (shellMove(file.absoluteFilePath(), target, true, this)) {
         continue;
       }
     }
     else {
-        if (CopyFileW(file.absoluteFilePath().toStdWString().c_str(),
-                      target.toStdWString().c_str(),
-                      FALSE) != 0) {
+        if (shellCopy(file.absoluteFilePath(), target, true, this)) {
           continue;
         }
     }
