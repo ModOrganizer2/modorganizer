@@ -13,26 +13,23 @@ modules = [
     'Sql', 
     'WebKit', 
     'Xml', 
-    'XmlPatterns' 
+    'XmlPatterns',
+    'Declarative'
 ]
 
 if env['QT_MAJOR_VERSION'] > 4:
     modules += [ 
         'Widgets',
         'Qml',
-        'Quick',
         'WebKitWidgets'
-    ]
-else:
-    modules += [
-        'Declarative'
     ]
 
 env.EnableQtModules(*modules)
 
-env.Uic4(env.Glob('*.ui'))
+env.Uic(env.Glob('*.ui'))
 
 env.RequireLibraries('uibase', 'shared', 'bsatk', 'esptk')
+
 
 env.AppendUnique(LIBS = [
     'shell32',
@@ -50,6 +47,7 @@ env.AppendUnique(LIBS = [
 other_sources = env.AddExtraMoc(env.Glob('*.h'))
 
 for file in env.Glob('*.rc'):
+    # version.rc is included in app_icon.rc. Not sure why it's a separate file.
     if file.name == 'version.rc':
         continue
     other_sources.append(env.RES(file))
@@ -58,8 +56,10 @@ for file in env.Glob('*.rc'):
 # Doing appendunique seems to throw the moc code into a tizzy
 env['CPPPATH'] += [
     '../archive',
-    '../boss_modified/boss-api',
+#    '../boss_modified/boss-api',
+    '../plugins/gamefeatures',
     '.',            # Why is this necessary?
+    '${LOOTPATH}',
     '${BOOSTPATH}',
 ]
 
@@ -67,11 +67,9 @@ env.AppendUnique(CPPDEFINES = [
     '_UNICODE',
     '_CRT_SECURE_NO_WARNINGS',
     '_SCL_SECURE_NO_WARNINGS',
-    'NOMINMAX',
     'BOOST_DISABLE_ASSERTS',
-# Although the .pro file says it adds this, the compile line doesn't seem to
-# have it (unless it's in the annoying '@' file
-#    'NDEBUG'
+    'NDEBUG',
+    'QT_MESSAGELOGCONTEXT'
 ])
 
 env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
@@ -88,10 +86,17 @@ cpp_files = [
 ]
 
 about_env = env.Clone()
-hgid = subprocess.check_output(['hg', 'id', '-i']).rstrip()
+try:
+    hgid = subprocess.check_output(['hg', 'id', '-i']).rstrip()
+except:
+    hgid = 'Unknown version'
+
 # FIXME: It'd be much easier to stringify this in the source code
 about_env.AppendUnique(CPPDEFINES = [ 'HGID=\\"%s\\"' % hgid ])
 other_sources.append(about_env.StaticObject('aboutdialog.cpp'))
+
+env.AppendUnique(LIBPATH = "${ZLIBPATH}/build")
+env.AppendUnique(LIBS = 'zlibstatic')
 
 prog = env.Program('ModOrganizer',
                    cpp_files + env.Glob('*.qrc') + other_sources)
@@ -103,6 +108,9 @@ for subdir in ('tutorials', 'stylesheets'):
                 env.Glob(os.path.join(subdir, '*')))
 
 # FIXME Sort the translations. Except they don't exist on the 1.2 branch
+
+res = env['QT_USED_MODULES']
+Return('res')
 
 """
 CONFIG(debug, debug|release) {

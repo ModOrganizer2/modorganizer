@@ -37,8 +37,13 @@ public:
     ACT_RENAME
   };
 
+  enum Backup {
+    BACKUP_NO,
+    BACKUP_YES
+  };
+
 public:
-  explicit QueryOverwriteDialog(QWidget *parent = 0);
+  QueryOverwriteDialog(QWidget *parent, Backup b);
   ~QueryOverwriteDialog();
   bool backup() const;
   Action action() const { return m_Action; }

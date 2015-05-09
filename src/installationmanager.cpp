@@ -414,11 +414,7 @@ void InstallationManager::updateProgressFile(LPCWSTR fileName)
 
 void InstallationManager::report7ZipError(LPCWSTR errorMessage)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  m_InstallationProgress.setLabelText(QString::fromWCharArray(errorMessage));
-#else
-  reportError(QString::fromUtf16(errorMessage));
-#endif
+  reportError(QString::fromWCharArray(errorMessage));
   m_CurrentArchive->cancel();
 }
 
@@ -443,8 +439,12 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
 {
   QString targetDirectory = QDir::fromNativeSeparators(m_ModsDirectory + "\\" + modName);
   while (QDir(targetDirectory).exists()) {
-    QueryOverwriteDialog overwriteDialog(m_ParentWidget);
+    Settings &settings(Settings::instance());
+    bool backup = settings.directInterface().value("backup_install", false).toBool();
+    QueryOverwriteDialog overwriteDialog(m_ParentWidget,
+                                         backup ? QueryOverwriteDialog::BACKUP_YES : QueryOverwriteDialog::BACKUP_NO);
     if (overwriteDialog.exec()) {
+      settings.directInterface().setValue("backup_install", overwriteDialog.backup());
       if (overwriteDialog.backup()) {
         QString backupDirectory = generateBackupName(targetDirectory);
         if (!copyDir(targetDirectory, backupDirectory, false)) {
@@ -545,7 +545,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress.setValue(0);
   m_InstallationProgress.setWindowModality(Qt::WindowModal);
   m_InstallationProgress.show();
-  if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(targetDirectory)).c_str(),
+  if (!m_CurrentArchive->extract(ToWString("\\\\?\\" + QDir::toNativeSeparators(targetDirectory)).c_str(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {

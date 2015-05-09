@@ -22,10 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "savegame.h"
-#include <gameinfo.h>
+
 #include <QString>
 #include <QObject>
-#include <QImage>
 #include <QMetaType>
 #include <QFile>
 

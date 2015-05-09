@@ -71,4 +71,10 @@ void SaveGameInfoWidgetGamebryo::setSave(const SaveGame *saveGame)
     dotDotLabel->setFont(contentFont);
     layout->addWidget(dotDotLabel);
   }
+  if (count == 0) {
+    QLabel *dotDotLabel = new QLabel(tr("None"));
+    dotDotLabel->setIndent(10);
+    dotDotLabel->setFont(contentFont);
+    layout->addWidget(dotDotLabel);
+  }
 }

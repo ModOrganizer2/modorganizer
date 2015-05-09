@@ -1,6 +1,6 @@
 #include "savetextasdialog.h"
 #include "ui_savetextasdialog.h"
-#include <report.h>
+#include "report.h"
 #include <QClipboard>
 #include <QFileDialog>
 
@@ -37,7 +37,7 @@ void SaveTextAsDialog::on_saveAsBtn_clicked()
   if (!fileName.isEmpty()) {
     QFile file(fileName);
     if (!file.open(QIODevice::WriteOnly)) {
-      MOBase::reportError(tr("failed to open \"%1\" for writing").arg(fileName));
+      reportError(tr("failed to open \"%1\" for writing").arg(fileName));
       return;
     }
 

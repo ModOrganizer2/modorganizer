@@ -110,6 +110,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QMimeData>
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
@@ -4576,4 +4577,106 @@ void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
 void MainWindow::on_manageArchivesBox_toggled(bool)
 {
   m_OrganizerCore.refreshBSAList();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+  //Accept copy or move drags to the download window. Link drags are not
+  //meaningful (Well, they are - we could drop a link in the download folder,
+  //but you need privileges to do that).
+  if (ui->downloadTab->isVisible() &&
+      (event->proposedAction() == Qt::CopyAction ||
+       event->proposedAction() == Qt::MoveAction) &&
+      event->answerRect().intersects(ui->downloadTab->rect())) {
+
+    //If I read the documentation right, this won't work under a motif windows
+    //manager and the check needs to be done at the drop. However, that means
+    //the user might be allowed to drop things which we can't sanely process
+    QMimeData const *data = event->mimeData();
+
+    if (data->hasUrls()) {
+      QStringList extensions =
+                m_OrganizerCore.installationManager()->getSupportedExtensions();
+
+      //This is probably OK - scan to see if these are moderately sane archive
+      //types
+      QList<QUrl> urls = data->urls();
+      bool ok = true;
+      for (auto url : urls) {
+        if (url.isLocalFile()) {
+          QString local = url.toLocalFile();
+          bool fok = false;
+          for (auto ext : extensions) {
+            if (local.endsWith(ext, Qt::CaseInsensitive)) {
+              fok = true;
+              break;
+            }
+          }
+          if (! fok) {
+            ok = false;
+            break;
+          }
+        }
+        //We should probably allow the user to drop urls here and remember the
+        //url for installing later.
+      }
+      if (ok) {
+        event->accept();
+      }
+    }
+  }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+  Qt::DropAction action = event->proposedAction();
+  QString output_dir = m_OrganizerCore.downloadManager()->getOutputDirectory();
+  if (action == Qt::MoveAction) {
+    //Tell windows I'm taking control and will delete the source of a move.
+    event->setDropAction(Qt::TargetMoveAction);
+  }
+  for (auto url : event->mimeData()->urls()) {
+    QFileInfo file(url.toLocalFile());
+    QString target = output_dir + "/" + file.fileName();
+    if (QFile::exists(target)) {
+      QMessageBox box(QMessageBox::Question,
+                      file.fileName(),
+                      tr("A file with the same name has already been downloaded. "
+                         "What would you like to do?"));
+      box.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+      box.addButton(tr("Rename new file"), QMessageBox::YesRole);
+      box.addButton(tr("Ignore file"), QMessageBox::RejectRole);
+
+      box.exec();
+      QMessageBox::ButtonRole role = box.buttonRole(box.clickedButton());
+      switch (role)
+      {
+        case QMessageBox::RejectRole:
+          continue;
+
+        case QMessageBox::ActionRole:
+          break;
+
+        default:
+        case QMessageBox::YesRole:
+          target = m_OrganizerCore.downloadManager()->getDownloadFileName(file.fileName());
+          break;
+
+      }
+    }
+
+    if (action == Qt::MoveAction) {
+      if (shellMove(file.absoluteFilePath(), target, true, this)) {
+        continue;
+      }
+    }
+    else {
+        if (shellCopy(file.absoluteFilePath(), target, true, this)) {
+          continue;
+        }
+    }
+    //Something has gone horribly wrong here
+    qDebug("error %d", GetLastError());
+  }
+  event->accept();
 }

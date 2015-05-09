@@ -426,7 +426,21 @@ private slots:
 private:
 
   void createMetaFile(DownloadInfo *info);
+
+public:
+
+  /** Get a unique filename for a download.
+   *
+   * This allows you multiple versions of download files, useful if the file
+   * comes from a web site with no version control
+   *
+   * @param basename: Name of the file
+   *
+   * @return Unique(ish) name
+   */
   QString getDownloadFileName(const QString &baseName) const;
+
+private:
 
   void startDownload(QNetworkReply *reply, DownloadInfo *newDownload, bool resume);
   void resumeDownloadInt(int index);

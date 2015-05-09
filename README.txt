@@ -227,6 +227,13 @@ Troubleshooting (thanks to Ross):
     Complains about 'qtwebkit4' missing. For some reason this seems to insist on
     living with modorganiser.exe
 
+6) Debugging the python proxy: I (TT) don't think this is possible unless you have a debug
+   build of PyQt. However, a debug build of PyQt requires a debug build of python. There doesn't
+   appear to be a half way house which is build wiht normal python but debug versions of QT libraries.
+   You can confuse pyqt by copying the debug QT DLLs to appropriate named files in the DLLs
+   directory, and removing QT from your project run path, which results in the python proxy
+   initialising succesfully, but causes mod organiser to crash in strange places.
+
 -------------------
 Building with scons
 -------------------
@@ -235,8 +242,7 @@ Building with scons
 2) Download QT4 (and/or QT5) from https://bitbucket.org/dirkbaechle/scons_qt4 and 
     https://bitbucket.org/dirkbaechle/scons_qt5. Install as per instructions
 3) Copy scons_configure_template.py to scons_configure.py. Edit to point to your
-   boost/python/zlib/7zip paths as appropriate (you can create an empty one if
-   you set up the params in qt creator)
+   boost/python/zlib/7zip/loot directories as appropriate.
 4) Create build kits as follows:
        Custom Process step:
           Command: <python path>\Scripts\scons.bat
@@ -262,4 +268,6 @@ Building with scons
     
     Please note: the generated (runnable) output files end up in the build directory,
     in the '_ModOrganizer' subdirectory (not at the top level). Named like that
-    so you can see it!
+    so you can see it! The scons build will also populate the directory with
+    all the necessary DLLs (but see note 6 above about your build tool path if
+    trying to debug).
