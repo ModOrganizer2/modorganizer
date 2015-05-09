@@ -261,6 +261,20 @@ bool Settings::getNexusLogin(QString &username, QString &password) const
   }
 }
 
+bool Settings::getSteamLogin(QString &username, QString &password) const
+{
+  if (m_Settings.contains("Settings/steam_username")) {
+    username = m_Settings.value("Settings/steam_username", "").toString();
+    if (m_Settings.contains("Settings/steam_password")) {
+      password = deObfuscate(m_Settings.value("Settings/steam_password", "").toString());
+    } else {
+      password = "";
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
 bool Settings::compactDownloads() const
 {
   return m_Settings.value("Settings/compact_downloads", false).toBool();
@@ -289,6 +303,20 @@ void Settings::setNexusLogin(QString username, QString password)
   m_Settings.setValue("Settings/nexus_password", obfuscate(password));
 }
 
+void Settings::setSteamLogin(QString username, QString password)
+{
+  if (username == "") {
+    m_Settings.remove("Settings/steam_username");
+    password = "";
+  } else {
+    m_Settings.setValue("Settings/steam_username", username);
+  }
+  if (password == "") {
+    m_Settings.remove("Settings/steam_password");
+  } else {
+    m_Settings.setValue("Settings/steam_password", obfuscate(password));
+  }
+}
 
 LoadMechanism::EMechanism Settings::getLoadMechanism() const
 {
@@ -542,6 +570,9 @@ void Settings::query(QWidget *parent)
   QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
   QCheckBox *displayForeignBox = dialog.findChild<QCheckBox*>("displayForeignBox");
 
+  // steam login page
+  QLineEdit *steamUserEdit = dialog.findChild<QLineEdit*>("steamUserEdit");
+  QLineEdit *steamPassEdit = dialog.findChild<QLineEdit*>("steamPassEdit");
 
   //
   // set up current settings
@@ -607,6 +638,13 @@ void Settings::query(QWidget *parent)
     loginCheckBox->setChecked(true);
     usernameEdit->setText(m_Settings.value("Settings/nexus_username", "").toString());
     passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
+  }
+
+  if (m_Settings.contains("Settings/steam_username")) {
+    steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
+    if (m_Settings.contains("Settings/steam_password")) {
+      steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
+    }
   }
 
   downloadDirEdit->setText(getDownloadDirectory());
@@ -723,6 +761,7 @@ void Settings::query(QWidget *parent)
       m_Settings.remove("Settings/nexus_username");
       m_Settings.remove("Settings/nexus_password");
     }
+    setSteamLogin(steamUserEdit->text(), steamPassEdit->text());
     m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
     m_Settings.setValue("Settings/use_proxy", proxyBox->isChecked());
     m_Settings.setValue("Settings/display_foreign", displayForeignBox->isChecked());
