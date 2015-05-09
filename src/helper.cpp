@@ -18,14 +18,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "helper.h"
-#include "report.h"
 #include "utility.h"
+#include <report.h>
 #include <LMCons.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #include <QDir>
+
+using MOBase::reportError;
 
 
 namespace Helper {

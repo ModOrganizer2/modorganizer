@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "pluginlist.h"
-#include "report.h"
 #include "inject.h"
 #include "settings.h"
 #include "safewritefile.h"
@@ -28,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <iplugingame.h>
 #include <espfile.h>
+#include <report.h>
 #include <windows_error.h>
 
 #include <QtDebug>

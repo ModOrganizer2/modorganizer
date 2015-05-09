@@ -19,7 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "categories.h"
 #include <utility.h>
-#include "report.h"
+#include <report.h>
 #include <gameinfo.h>
 #include <QObject>
 #include <QFile>

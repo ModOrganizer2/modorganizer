@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "downloadmanager.h"
-#include "report.h"
 #include "nxmurl.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
@@ -30,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>
+#include <report.h>
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>

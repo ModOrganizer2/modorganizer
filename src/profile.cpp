@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "profile.h"
-#include "report.h"
 #include "gameinfo.h"
 #include "windows_error.h"
 #include "modinfo.h"
@@ -28,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <error_report.h>
 #include <appconfig.h>
 #include <iplugingame.h>
+#include <report.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
 #include <QMessageBox>

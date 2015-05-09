@@ -18,12 +18,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "logbuffer.h"
-#include "report.h"
+#include <report.h>
 #include <QMutexLocker>
 #include <QFile>
 #include <QIcon>
 #include <QDateTime>
 #include <Windows.h>
+
+
+using MOBase::reportError;
 
 QScopedPointer<LogBuffer> LogBuffer::s_Instance;
 QMutex LogBuffer::s_Mutex;

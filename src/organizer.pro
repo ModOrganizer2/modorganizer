@@ -31,7 +31,6 @@ SOURCES += \
     savegameinfowidget.cpp \
     savegamegamebryo.cpp \
     savegame.cpp \
-    report.cpp \
     queryoverwritedialog.cpp \
     profilesdialog.cpp \
     profile.cpp \
@@ -111,7 +110,6 @@ HEADERS  += \
     savegameinfowidget.h \
     savegamegamebyro.h \
     savegame.h \
-    report.h \
     queryoverwritedialog.h \
     profilesdialog.h \
     profile.h \

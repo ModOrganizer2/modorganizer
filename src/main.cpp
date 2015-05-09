@@ -45,7 +45,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scopeguard.h>
 #include <stdexcept>
 #include "mainwindow.h"
-#include "report.h"
+#include <report.h>
 #include "modlist.h"
 #include "profile.h"
 #include "gameinfo.h"
@@ -398,12 +398,12 @@ int main(int argc, char *argv[])
       ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
     }
 
-    std::tstring newPath(oldPath.get());
-    newPath += TEXT(";");
+    std::wstring newPath(oldPath.get());
+    newPath += L";";
     newPath += ToWString(QDir::toNativeSeparators(QCoreApplication::applicationDirPath())).c_str();
-    newPath += TEXT("\\dlls");
+    newPath += L"\\dlls";
 
-    ::SetEnvironmentVariable(TEXT("PATH"), newPath.c_str());
+    ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
   }
 
   registerMetaTypes();

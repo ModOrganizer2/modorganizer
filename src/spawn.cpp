@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <boost/scoped_array.hpp>
 #include <gameinfo.h>
+#include <report.h>
 #include <inject.h>
 #include <Shellapi.h>
 #include <appconfig.h>

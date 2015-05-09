@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selfupdater.h"
 #include "utility.h"
 #include "installationmanager.h"
-#include "report.h"
 #include "messagedialog.h"
 #include "downloadmanager.h"
 #include "nexusinterface.h"
@@ -28,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <versioninfo.h>
 #include <gameinfo.h>
 #include <skyriminfo.h>
+#include <report.h>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>

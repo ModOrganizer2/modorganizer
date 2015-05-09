@@ -18,7 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "moapplication.h"
-#include "report.h"
+#include <report.h>
 #include <utility.h>
 #include <appconfig.h>
 #include <QFile>
@@ -34,6 +34,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <QDebug>
+
+
+using MOBase::reportError;
 
 
 class ProxyStyle : public QProxyStyle {

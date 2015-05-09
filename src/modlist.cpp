@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modlist.h"
 
-#include "report.h"
 #include "messagedialog.h"
 #include "installationtester.h"
 #include "qtgroupingproxy.h"
@@ -27,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
+#include <report.h>
 #include <QFileInfo>
 #include <QDir>
 #include <QDirIterator>

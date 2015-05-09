@@ -7,7 +7,6 @@
 #include "filedialogmemory.h"
 #include "lockeddialog.h"
 #include "modinfodialog.h"
-#include "report.h"
 #include "spawn.h"
 #include "safewritefile.h"
 #include "syncoverwritedialog.h"
@@ -18,6 +17,7 @@
 #include <scopeguard.h>
 #include <utility.h>
 #include <appconfig.h>
+#include <report.h>
 #include <questionboxmemory.h>
 #include <QNetworkInterface>
 #include <QMessageBox>
