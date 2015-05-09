@@ -181,12 +181,16 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
   auto existingExe = findExe(title);
 
   if (existingExe != m_Executables.end()) {
+    //A note: If this isn't customised, we want to leave
+    //the directory and so on WELL alone
+    if (custom) {
+      existingExe->m_BinaryInfo = file;
+      existingExe->m_Arguments = arguments;
+      existingExe->m_WorkingDirectory = workingDirectory;
+      existingExe->m_SteamAppID = steamAppID;
+    }
     existingExe->m_Title = title;
     existingExe->m_CloseMO = closeMO;
-    existingExe->m_BinaryInfo = file;
-    existingExe->m_Arguments = arguments;
-    existingExe->m_WorkingDirectory = workingDirectory;
-    existingExe->m_SteamAppID = steamAppID;
     existingExe->m_Custom = custom;
     existingExe->m_Toolbar = toolbar;
     if (pos >= 0) {
