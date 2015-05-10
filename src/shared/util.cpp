@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "error_report.h"
 
 #include <sstream>
+#include <locale>
 #include <algorithm>
 #include <DbgHelp.h>
 #include <set>
@@ -91,29 +92,38 @@ std::wstring ToWString(const std::string &source, bool utf8)
   return result;
 }
 
+static std::locale loc("");
+static auto locToLowerW = [] (wchar_t in) -> wchar_t {
+  return std::tolower(in, loc);
+};
+
+static auto locToLower = [] (char in) -> char {
+  return std::tolower(in, loc);
+};
+
 std::string &ToLower(std::string &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), ::tolower);
+  std::transform(text.begin(), text.end(), text.begin(), locToLower);
   return text;
 }
 
 std::string ToLower(const std::string &text)
 {
   std::string result = text;
-  std::transform(result.begin(), result.end(), result.begin(), ::tolower);
+  std::transform(result.begin(), result.end(), result.begin(), locToLower);
   return result;
 }
 
 std::wstring &ToLower(std::wstring &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), ::towlower);
+  std::transform(text.begin(), text.end(), text.begin(), locToLowerW);
   return text;
 }
 
 std::wstring ToLower(const std::wstring &text)
 {
   std::wstring result = text;
-  std::transform(result.begin(), result.end(), result.begin(), ::towlower);
+  std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
   return result;
 }
 
