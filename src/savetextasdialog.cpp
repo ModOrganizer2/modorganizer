@@ -1,8 +1,12 @@
 #include "savetextasdialog.h"
 #include "ui_savetextasdialog.h"
-#include "report.h"
+#include <report.h>
 #include <QClipboard>
 #include <QFileDialog>
+
+
+using MOBase::reportError;
+
 
 SaveTextAsDialog::SaveTextAsDialog(QWidget *parent)
   : QDialog(parent), ui(new Ui::SaveTextAsDialog)
