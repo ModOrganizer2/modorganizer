@@ -301,7 +301,7 @@ static bool HaveWriteAccess(const std::wstring &path)
 }
 
 
-QString determineProfile(QStringList arguments, const QSettings &settings)
+QString determineProfile(QStringList &arguments, const QSettings &settings)
 {
   QString selectedProfileName = QString::fromUtf8(settings.value("selected_profile", "").toByteArray());
   { // see if there is a profile on the command line
