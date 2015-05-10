@@ -86,7 +86,18 @@ static void startSteam(QWidget *widget)
   QString exe = steamSettings.value("SteamExe", "").toString();
   if (!exe.isEmpty()) {
     QString temp = QString("\"%1\"").arg(exe);
-    if (!QProcess::startDetached(temp)) {
+    //See if username and password supplied. If so, pass them into steam.
+    QStringList args;
+    QString username;
+    QString password;
+    if (Settings::instance().getSteamLogin(username, password)) {
+      args << "-login";
+      args << username;
+      if (password != "") {
+        args << password;
+      }
+    }
+    if (!QProcess::startDetached(temp, args)) {
       reportError(QObject::tr("Failed to start \"%1\"").arg(temp));
     } else {
       QMessageBox::information(widget, QObject::tr("Waiting"),
