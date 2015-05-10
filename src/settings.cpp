@@ -445,7 +445,7 @@ void Settings::writePluginBlacklist()
 
 void Settings::addLanguages(QComboBox *languageBox)
 {
-  languageBox->addItem("English", "en_US");
+  std::vector<std::pair<QString, QString>> languages;
 
   QDirIterator langIter(QCoreApplication::applicationDirPath() + "/translations", QDir::Files);
   QString pattern = ToQString(AppConfig::translationPrefix()) +  "_([a-z]{2,3}(_[A-Z]{2,2})?).qm";
@@ -456,7 +456,7 @@ void Settings::addLanguages(QComboBox *languageBox)
     if (exp.exactMatch(file)) {
       QString languageCode = exp.cap(1);
       QLocale locale(languageCode);
-      QString languageString = QLocale::languageToString(locale.language());
+      QString languageString = QString("%1 (%2)").arg(locale.nativeLanguageName()).arg(locale.nativeCountryName());  //QLocale::languageToString(locale.language());
       if (locale.language() == QLocale::Chinese) {
         if (languageCode == "zh_TW") {
           languageString = "Chinese (traditional)";
@@ -464,8 +464,17 @@ void Settings::addLanguages(QComboBox *languageBox)
           languageString = "Chinese (simplified)";
         }
       }
-      languageBox->addItem(QString("%1").arg(languageString), exp.cap(1));
+      languages.push_back(std::make_pair(QString("%1").arg(languageString), exp.cap(1)));
+      //languageBox->addItem(QString("%1").arg(languageString), exp.cap(1));
     }
+  }
+  if (!languageBox->findText("English")) {
+    languages.push_back(std::make_pair(QString("English"), QString("en_US")));
+    //languageBox->addItem("English", "en_US");
+  }
+  std::sort(languages.begin(), languages.end());
+  for (const auto &lang : languages) {
+    languageBox->addItem(lang.first, lang.second);
   }
 }
 
