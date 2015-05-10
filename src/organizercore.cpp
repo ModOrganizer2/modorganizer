@@ -1105,6 +1105,11 @@ void OrganizerCore::refreshModList(bool saveChanges)
 
 void OrganizerCore::refreshESPList()
 {
+  if (m_DirectoryUpdate) {
+    // don't mess up the esp list if we're currently updating the directory structure
+    m_PostRefreshTasks.append([this] () { this->refreshESPList(); });
+    return;
+  }
   m_CurrentProfile->modlistWriter().write();
 
   // clear list
