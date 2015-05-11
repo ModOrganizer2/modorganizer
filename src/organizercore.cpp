@@ -504,6 +504,10 @@ void OrganizerCore::createDefaultProfile()
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
 {
+  if ((m_CurrentProfile != nullptr) &&
+      (profileName == m_CurrentProfile->name())) {
+    return;
+  }
   QString profileDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath()) + "/" + profileName;
   Profile *newProfile = new Profile(QDir(profileDir), managedGame());
 

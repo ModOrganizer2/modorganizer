@@ -1011,11 +1011,11 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     }
 
     if (ui->profileBox->currentIndex() == 0) {
-      ProfilesDialog(m_GamePath, this).exec();
-      while (!refreshProfiles()) {
-        ProfilesDialog(m_GamePath, this).exec();
-      }
       ui->profileBox->setCurrentIndex(previousIndex);
+      ProfilesDialog(ui->profileBox->currentText(), this).exec();
+      while (!refreshProfiles()) {
+        ProfilesDialog(ui->profileBox->currentText(), this).exec();
+      }
     } else {
       activateSelectedProfile();
     }

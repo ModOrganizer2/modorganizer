@@ -42,10 +42,9 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &gamePath, QWidget *parent)
+ProfilesDialog::ProfilesDialog(const QString &profileName, QWidget *parent)
   : TutorableDialog("Profiles", parent)
   , ui(new Ui::ProfilesDialog)
-  , m_GamePath(gamePath)
   , m_FailState(false)
 {
   ui->setupUi(this);
@@ -58,7 +57,10 @@ ProfilesDialog::ProfilesDialog(const QString &gamePath, QWidget *parent)
 
   while (profileIter.hasNext()) {
     profileIter.next();
-    addItem(profileIter.filePath());
+    QListWidgetItem *item = addItem(profileIter.filePath());
+    if (profileName == profileIter.fileName()) {
+      m_ProfilesList->setCurrentItem(item);
+    }
   }
 
   QCheckBox *invalidationBox = findChild<QCheckBox*>("invalidationBox");
@@ -97,7 +99,7 @@ void ProfilesDialog::on_closeButton_clicked()
 }
 
 
-void ProfilesDialog::addItem(const QString &name)
+QListWidgetItem *ProfilesDialog::addItem(const QString &name)
 {
   QDir profileDir(name);
   QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
@@ -107,6 +109,7 @@ void ProfilesDialog::addItem(const QString &name)
   } catch (const std::exception& e) {
     reportError(tr("failed to create profile: %1").arg(e.what()));
   }
+  return newItem;
 }
 
 void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)

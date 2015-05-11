@@ -46,11 +46,11 @@ public:
  /**
   * @brief constructor
   *
-  * @param gamePath the path to the game directory
+  * @param profileName currently enabled profile
   * @param parent parent widget
   * @todo the game path could be retrieved from GameInfo just as easily
   **/
- explicit ProfilesDialog(const QString &gamePath, QWidget *parent = 0);
+ explicit ProfilesDialog(const QString &profileName, QWidget *parent = 0);
   ~ProfilesDialog();
 
   /**
@@ -65,7 +65,7 @@ protected:
 
 private:
 
-  void addItem(const QString &name);
+  QListWidgetItem *addItem(const QString &name);
   void createProfile(const QString &name, bool useDefaultSettings);
   void createProfile(const QString &name, const Profile &reference);
 
@@ -91,7 +91,6 @@ private slots:
 
 private:
   Ui::ProfilesDialog *ui;
-  QString m_GamePath;
   QListWidget *m_ProfilesList;
   bool m_FailState;
 
