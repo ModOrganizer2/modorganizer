@@ -1854,6 +1854,14 @@ void MainWindow::modorder_changed()
     QModelIndex current = ui->modList->currentIndex();
     if (current.isValid()) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
+      // clear caches on all mods conflicting with the moved mod
+      for (int i :  modInfo->getModOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i :  modInfo->getModOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      // update conflict check on the moved mod
       modInfo->doConflictCheck();
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
       if (m_ModListSortProxy != nullptr) {

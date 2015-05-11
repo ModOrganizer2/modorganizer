@@ -347,6 +347,7 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *wid
     connect(&m_ModList, SIGNAL(removeSelectedMods()), widget, SLOT(removeMod_clicked()));
     connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), widget, SLOT(displayColumnSelection(QPoint)));
     connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), widget, SLOT(fileMoved(QString, QString, QString)));
+    connect(&m_ModList, SIGNAL(modorder_changed()), widget, SLOT(modorder_changed()));
     connect(&m_DownloadManager, SIGNAL(showMessage(QString)), widget, SLOT(showMessage(QString)));
   }
 
