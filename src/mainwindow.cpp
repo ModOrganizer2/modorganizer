@@ -891,13 +891,15 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 void MainWindow::toolPluginInvoke()
 {
   QAction *triggeredAction = qobject_cast<QAction*>(sender());
-  IPluginTool *plugin = (IPluginTool*)triggeredAction->data().value<void*>();
-  try {
-    plugin->display();
-  } catch (const std::exception &e) {
-    reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
-  } catch (...) {
-    reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
+  IPluginTool *plugin = qobject_cast<IPluginTool*>(triggeredAction->data().value<QObject*>());
+  if (plugin != nullptr) {
+    try {
+      plugin->display();
+    } catch (const std::exception &e) {
+      reportError(tr("Plugin \"%1\" failed: %2").arg(plugin->name()).arg(e.what()));
+    } catch (...) {
+      reportError(tr("Plugin \"%1\" failed").arg(plugin->name()));
+    }
   }
 }
 
@@ -905,11 +907,13 @@ void MainWindow::modPagePluginInvoke()
 {
   QAction *triggeredAction = qobject_cast<QAction*>(sender());
   IPluginModPage *plugin = qobject_cast<IPluginModPage*>(triggeredAction->data().value<QObject*>());
-  if (plugin->useIntegratedBrowser()) {
-    m_IntegratedBrowser.setWindowTitle(plugin->displayName());
-    m_IntegratedBrowser.openUrl(plugin->pageURL());
-  } else {
-    ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  if (plugin != nullptr) {
+    if (plugin->useIntegratedBrowser()) {
+      m_IntegratedBrowser.setWindowTitle(plugin->displayName());
+      m_IntegratedBrowser.openUrl(plugin->pageURL());
+    } else {
+      ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
   }
 }
 
@@ -918,7 +922,7 @@ void MainWindow::registerPluginTool(IPluginTool *tool)
   QAction *action = new QAction(tool->icon(), tool->displayName(), ui->toolBar);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
-  action->setData(qVariantFromValue((void*)tool));
+  action->setData(qVariantFromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
   QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
   toolBtn->menu()->addAction(action);
