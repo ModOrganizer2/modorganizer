@@ -26,7 +26,7 @@ namespace AppConfig {
 
 
 #define PARWSTRING wstring
-#define APPPARAM(partype, parid, value) partype parid ## ();
+#define APPPARAM(partype, parid, value) partype parid ();
 #include "appconfig.inc"
 
 namespace MOShared {

@@ -1681,8 +1681,11 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
     result = shellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&persistFile);
     if (SUCCEEDED(result)) {
       wchar_t linkFileNameW[MAX_PATH];
-      MultiByteToWideChar(CP_ACP, 0, linkFileName, -1, linkFileNameW, MAX_PATH);
-      result = persistFile->Save(linkFileNameW, TRUE);
+      if (MultiByteToWideChar(CP_ACP, 0, linkFileName, -1, linkFileNameW, MAX_PATH) > 0) {
+        result = persistFile->Save(linkFileNameW, TRUE);
+      } else {
+        qCritical("failed to create link: %s", linkFileName);
+      }
       persistFile->Release();
     } else {
       qCritical("failed to create IPersistFile instance");

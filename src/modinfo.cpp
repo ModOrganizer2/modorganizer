@@ -322,7 +322,6 @@ bool ModInfo::categorySet(int categoryID) const
   return false;
 }
 
-
 void ModInfo::testValid()
 {
   m_Valid = false;

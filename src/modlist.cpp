@@ -760,13 +760,16 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QDir modDirectory(modInfo->absolutePath());
   QDir gameDirectory(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
 
-  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
+  unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
     return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
 
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
-  foreach (const QUrl &url, mimeData->urls()) {
+  for (const QUrl &url : mimeData->urls()) {
+    if (!url.isLocalFile()) {
+      continue;
+    }
     QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
     if (relativePath.startsWith("..")) {
       qDebug("%s drop ignored", qPrintable(url.toLocalFile()));
