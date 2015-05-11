@@ -4606,7 +4606,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
       //types
       QList<QUrl> urls = data->urls();
       bool ok = true;
-      for (auto url : urls) {
+      for (const QUrl &url : urls) {
         if (url.isLocalFile()) {
           QString local = url.toLocalFile();
           bool fok = false;
@@ -4621,8 +4621,6 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
             break;
           }
         }
-        //We should probably allow the user to drop urls here and remember the
-        //url for installing later.
       }
       if (ok) {
         event->accept();
@@ -4631,56 +4629,61 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
   }
 }
 
+void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool move)
+{
+  QFileInfo file(url.toLocalFile());
+  if (!file.exists()) {
+    qWarning("invalid source file %s", qPrintable(file.absoluteFilePath()));
+    return;
+  }
+  QString target = outputDir + "/" + file.fileName();
+  if (QFile::exists(target)) {
+    QMessageBox box(QMessageBox::Question,
+                    file.fileName(),
+                    tr("A file with the same name has already been downloaded. "
+                       "What would you like to do?"));
+    box.addButton(tr("Overwrite"), QMessageBox::ActionRole);
+    box.addButton(tr("Rename new file"), QMessageBox::YesRole);
+    box.addButton(tr("Ignore file"), QMessageBox::RejectRole);
+
+    box.exec();
+    switch (box.buttonRole(box.clickedButton())) {
+      case QMessageBox::RejectRole:
+        return;
+      case QMessageBox::ActionRole:
+        break;
+      default:
+      case QMessageBox::YesRole:
+        target = m_OrganizerCore.downloadManager()->getDownloadFileName(file.fileName());
+        break;
+    }
+  }
+
+  bool success = false;
+  if (move) {
+    success = shellMove(file.absoluteFilePath(), target, true, this);
+  } else {
+    success = shellCopy(file.absoluteFilePath(), target, true, this);
+  }
+  if (!success) {
+    qCritical("file operation failed: %s", qPrintable(windowsErrorString(::GetLastError())));
+  }
+}
+
 void MainWindow::dropEvent(QDropEvent *event)
 {
   Qt::DropAction action = event->proposedAction();
-  QString output_dir = m_OrganizerCore.downloadManager()->getOutputDirectory();
+  QString outputDir = m_OrganizerCore.downloadManager()->getOutputDirectory();
   if (action == Qt::MoveAction) {
     //Tell windows I'm taking control and will delete the source of a move.
     event->setDropAction(Qt::TargetMoveAction);
   }
-  for (auto url : event->mimeData()->urls()) {
-    QFileInfo file(url.toLocalFile());
-    QString target = output_dir + "/" + file.fileName();
-    if (QFile::exists(target)) {
-      QMessageBox box(QMessageBox::Question,
-                      file.fileName(),
-                      tr("A file with the same name has already been downloaded. "
-                         "What would you like to do?"));
-      box.addButton(tr("Overwrite"), QMessageBox::ActionRole);
-      box.addButton(tr("Rename new file"), QMessageBox::YesRole);
-      box.addButton(tr("Ignore file"), QMessageBox::RejectRole);
-
-      box.exec();
-      QMessageBox::ButtonRole role = box.buttonRole(box.clickedButton());
-      switch (role)
-      {
-        case QMessageBox::RejectRole:
-          continue;
-
-        case QMessageBox::ActionRole:
-          break;
-
-        default:
-        case QMessageBox::YesRole:
-          target = m_OrganizerCore.downloadManager()->getDownloadFileName(file.fileName());
-          break;
-
-      }
+  for (const QUrl &url : event->mimeData()->urls()) {
+    if (url.isLocalFile()) {
+      dropLocalFile(url, outputDir, action == Qt::MoveAction);
+    } else {
+      m_OrganizerCore.downloadManager()->startDownloadURLs(QStringList() << url.url());
     }
-
-    if (action == Qt::MoveAction) {
-      if (shellMove(file.absoluteFilePath(), target, true, this)) {
-        continue;
-      }
-    }
-    else {
-        if (shellCopy(file.absoluteFilePath(), target, true, this)) {
-          continue;
-        }
-    }
-    //Something has gone horribly wrong here
-    qDebug("error %d", GetLastError());
   }
   event->accept();
 }

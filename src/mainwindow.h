@@ -254,6 +254,8 @@ private:
   void startMonitorSaves();
   void stopMonitorSaves();
 
+  void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
+
 private:
 
   static const char *PATTERN_BACKUP_GLOB;

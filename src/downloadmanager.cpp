@@ -358,7 +358,6 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
   DownloadInfo *newDownload = DownloadInfo::createNew(fileInfo, URLs);
 
   QString baseName = fileName;
-
   if (!fileInfo->fileName.isEmpty()) {
     baseName = fileInfo->fileName;
   } else {
@@ -368,7 +367,6 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
       baseName = dispoName;
     }
   }
-
   if (QFile::exists(m_OutputDirectory + "/" + baseName) &&
       (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
                              "Do you want to download it again? The new file will receive a different name."),
@@ -377,11 +375,9 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
     delete newDownload;
     return false;
   }
-
   newDownload->setName(getDownloadFileName(baseName), false);
 
   startDownload(reply, newDownload, false);
-
 //  emit update(-1);
   return true;
 }
@@ -1234,7 +1230,8 @@ bool DownloadManager::ServerByPreference(const std::map<QString, int> &preferred
 
 int DownloadManager::startDownloadURLs(const QStringList &urls)
 {
-  addDownload(urls, -1, -1, nullptr);
+  ModRepositoryFileInfo info;
+  addDownload(urls, -1, -1, &info);
   return m_ActiveDownloads.size() - 1;
 }
 
