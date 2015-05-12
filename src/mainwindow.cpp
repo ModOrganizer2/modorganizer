@@ -2538,6 +2538,12 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   if (!index.isValid()) {
     return;
   }
+
+  if (m_OrganizerCore.modList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
+    // don't interpret double click if we only just checked a mod
+    return;
+  }
+
   QModelIndex sourceIdx = mapToModel(m_OrganizerCore.modList(), index);
   if (!sourceIdx.isValid()) {
     return;
@@ -2545,7 +2551,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
 
   try {
     m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-//    displayModInformation(m_ModListSortProxy->mapToSource(index).row());
     displayModInformation(sourceIdx.row());
     // workaround to cancel the editor that might have opened because of
     // selection-click

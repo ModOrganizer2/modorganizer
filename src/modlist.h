@@ -111,6 +111,8 @@ public:
 
   void disconnectSlots();
 
+  int timeElapsedSinceLastChecked() const;
+
 public:
 
   /// \copydoc MOBase::IModList::displayName
@@ -310,6 +312,8 @@ private:
   SignalModMoved m_ModMoved;
 
   std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
+
+  QTime m_LastCheck;
 
 };
 

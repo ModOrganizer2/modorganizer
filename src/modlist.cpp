@@ -454,6 +454,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
     if (m_Profile->modEnabled(modID) != enabled) {
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
+      m_LastCheck.restart();
       emit modlist_changed(index, role);
     }
     result = true;
@@ -663,6 +664,11 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
 void ModList::disconnectSlots() {
   m_ModMoved.disconnect_all_slots();
   m_ModStateChanged.disconnect_all_slots();
+}
+
+int ModList::timeElapsedSinceLastChecked() const
+{
+  return m_LastCheck.elapsed();
 }
 
 IModList::ModStates ModList::state(unsigned int modIndex) const
