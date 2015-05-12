@@ -259,13 +259,10 @@ bool Settings::getNexusLogin(QString &username, QString &password) const
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
-  if (m_Settings.contains("Settings/steam_username")) {
-    username = m_Settings.value("Settings/steam_username", "").toString();
-    if (m_Settings.contains("Settings/steam_password")) {
-      password = deObfuscate(m_Settings.value("Settings/steam_password", "").toString());
-    } else {
-      password = "";
-    }
+  if (m_Settings.contains("Settings/steam_username")
+      && m_Settings.contains("Settings/steam_password")) {
+    username = m_Settings.value("Settings/steam_username").toString();
+    password = deObfuscate(m_Settings.value("Settings/steam_password").toString());
     return true;
   } else {
     return false;
