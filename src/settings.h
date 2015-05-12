@@ -143,6 +143,15 @@ public:
   bool getNexusLogin(QString &username, QString &password) const;
 
   /**
+   * @brief retrieve the login information for steam
+   *
+   * @param username (out) receives the user name for nexus
+   * @param password (out) received the password for nexus
+   * @return true if a username has been specified, false otherwise
+   **/
+  bool getSteamLogin(QString &username, QString &password) const;
+
+  /**
    * @return true if the user disabled internet features
    */
   bool offlineMode() const;
@@ -169,6 +178,14 @@ public:
    * @param password password
    */
   void setNexusLogin(QString username, QString password);
+
+  /**
+   * @brief set the steam login information
+   *
+   * @param username username
+   * @param password password
+   */
+  void setSteamLogin(QString username, QString password);
 
   /**
    * @return the load mechanism to be used
