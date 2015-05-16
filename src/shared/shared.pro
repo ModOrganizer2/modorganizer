@@ -9,7 +9,7 @@ QT       -= gui core
 
 TARGET = mo_shared
 TEMPLATE = lib
-CONFIG += staticlib
+CONFIG += staticlib c++11
 
 
 !include(../LocalPaths.pri) {
@@ -52,17 +52,19 @@ HEADERS += \
 #DEFINES += TRACE_LEAKS
 #LIBS += -lDbgHelp
 
+msvc:QMAKE_CXXFLAGS_DEBUG -= -Zi
+msvc:QMAKE_CXXFLAGS_DEBUG += -Z7
 
 CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../bsatk/debug
   LIBS += -lDbgHelp
-  QMAKE_CXXFLAGS_DEBUG -= -Zi
-  QMAKE_CXXFLAGS += -Z7
-  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
+  msvc:PRE_TARGETDEPS += $$OUT_PWD/../bsatk/debug/bsatk.lib
 } else {
   LIBS += -L$$OUT_PWD/../bsatk/release
-  PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
+  msvc:PRE_TARGETDEPS += $$OUT_PWD/../bsatk/release/bsatk.lib
 }
+
+gcc:QMAKE_CXXFLAGS += -Wno-unknown-pragmas -march=i686 -fno-tree-vectorize
 
 LIBS += -lbsatk
 

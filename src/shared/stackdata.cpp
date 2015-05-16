@@ -11,6 +11,7 @@
 
 using namespace MOShared;
 
+#ifdef _MSC_VER
 
 static void initDbgIfNecess()
 {
@@ -162,3 +163,4 @@ bool MOShared::operator<(const StackData &LHS, const StackData &RHS) {
   }
   return false;
 }
+#endif

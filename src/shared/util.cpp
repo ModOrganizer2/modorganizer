@@ -135,24 +135,22 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
     throw windows_error("failed to determine file version info size");
   }
 
-  void *buffer = new char[size];
+  boost::scoped_array<char> buffer(new char[size]);
   try {
     handle = 0UL;
-    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer)) {
+    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer.get())) {
       throw windows_error("failed to determine file version info");
     }
 
     void *versionInfoPtr = nullptr;
     UINT versionInfoLength = 0;
-    if (!::VerQueryValue(buffer, L"\\", &versionInfoPtr, &versionInfoLength)) {
+    if (!::VerQueryValue(buffer.get(), L"\\", &versionInfoPtr, &versionInfoLength)) {
       throw windows_error("failed to determine file version");
     }
 
     VS_FIXEDFILEINFO result = *(VS_FIXEDFILEINFO*)versionInfoPtr;
-    delete [] buffer;
     return result;
   } catch (...) {
-    delete [] buffer;
     throw;
   }
 }
