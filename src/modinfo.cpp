@@ -272,6 +272,10 @@ void ModInfo::checkChunkForUpdate(const std::vector<int> &modIDs, QObject *recei
 
 int ModInfo::checkAllForUpdate(QObject *receiver)
 {
+  // technically this should be 255 but those requests can take nexus fairly long, produce
+  // large output and may have been the cause of issue #1166
+  static const int chunkSize = 64;
+
   int result = 0;
   std::vector<int> modIDs;
 
