@@ -864,7 +864,7 @@ public:
   /**
    * @return true if the mod can be updated
    */
-  virtual bool canBeUpdated() const { return m_NexusID >= 0; }
+  virtual bool canBeUpdated() const { return m_NexusID > 0; }
 
   /**
    * @return true if the mod can be enabled/disabled
