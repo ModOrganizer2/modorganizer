@@ -109,7 +109,7 @@ std::string &ToLower(std::string &text)
 
 std::string ToLower(const std::string &text)
 {
-  std::string result = text;
+  std::string result(text);
   std::transform(result.begin(), result.end(), result.begin(), locToLower);
   return result;
 }
@@ -122,9 +122,24 @@ std::wstring &ToLower(std::wstring &text)
 
 std::wstring ToLower(const std::wstring &text)
 {
-  std::wstring result = text;
+  std::wstring result(text);
   std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
   return result;
+}
+
+bool CaseInsenstiveComparePred(wchar_t lhs, wchar_t rhs)
+{
+  return std::tolower(lhs, loc) == std::tolower(rhs, loc);
+}
+
+bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs)
+{
+  return (lhs.length() == rhs.length())
+      && std::equal(lhs.begin(), lhs.end(),
+                    rhs.begin(),
+                    [] (wchar_t lhs, wchar_t rhs) -> bool {
+                      return std::tolower(lhs, loc) == std::tolower(rhs, loc);
+                    });
 }
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)

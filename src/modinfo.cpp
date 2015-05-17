@@ -277,11 +277,10 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
 
   modIDs.push_back(GameInfo::instance().getNexusModID());
 
-  for (std::vector<ModInfo::Ptr>::iterator iter = s_Collection.begin();
-       iter != s_Collection.end(); ++iter) {
-    if ((*iter)->canBeUpdated()) {
-      modIDs.push_back((*iter)->getNexusID());
-      if (modIDs.size() >= 255) {
+  for (const ModInfo::Ptr &mod : s_Collection) {
+    if (mod->canBeUpdated()) {
+      modIDs.push_back(mod->getNexusID());
+      if (modIDs.size() >= chunkSize) {
         checkChunkForUpdate(modIDs, receiver);
         modIDs.clear();
       }

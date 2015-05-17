@@ -236,7 +236,8 @@ public:
 
   std::vector<FileEntry::Ptr> getFiles() const;
 
-  void getSubDirectories(std::vector<DirectoryEntry*>::const_iterator &begin, std::vector<DirectoryEntry*>::const_iterator &end) const {
+  void getSubDirectories(std::vector<DirectoryEntry*>::const_iterator &begin
+                         , std::vector<DirectoryEntry*>::const_iterator &end) const {
     begin = m_SubDirectories.begin(); end = m_SubDirectories.end();
   }
 

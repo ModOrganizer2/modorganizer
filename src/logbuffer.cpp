@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "logbuffer.h"
+#include <scopeguard.h>
 #include <report.h>
 #include <QMutexLocker>
 #include <QFile>
@@ -127,7 +128,15 @@ char LogBuffer::msgTypeID(QtMsgType type)
 
 void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
-  QMutexLocker guard(&s_Mutex);
+  // QMutexLocker doesn't support timeout...
+  if (!s_Mutex.tryLock(50)) {
+    fprintf(stderr, "failed to log: %s", qPrintable(message));
+    return;
+  }
+  ON_BLOCK_EXIT([] () {
+    s_Mutex.unlock();
+  });
+
   if (!s_Instance.isNull()) {
     s_Instance->logMessage(type, message);
   }
@@ -192,9 +201,9 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
   switch (role) {
     case Qt::DisplayRole: {
       if (index.column() == 0) {
-        return m_Messages.at(msgIndex).time;
+        return m_Messages[msgIndex].time;
       } else if (index.column() == 1) {
-        const QString &msg = m_Messages.at(msgIndex).message;
+        const QString &msg = m_Messages[msgIndex].message;
         if (msg.length() < 200) {
           return msg;
         } else {
@@ -204,7 +213,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
     } break;
     case Qt::DecorationRole: {
       if (index.column() == 1) {
-        switch (m_Messages.at(msgIndex).type) {
+        switch (m_Messages[msgIndex].type) {
           case QtDebugMsg: return QIcon(":/MO/gui/information");
           case QtWarningMsg: return QIcon(":/MO/gui/warning");
           case QtCriticalMsg: return QIcon(":/MO/gui/important");
@@ -214,7 +223,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
     } break;
     case Qt::UserRole: {
       if (index.column() == 1) {
-        switch (m_Messages.at(msgIndex).type) {
+        switch (m_Messages[msgIndex].type) {
           case QtDebugMsg: return "D";
           case QtWarningMsg: return "W";
           case QtCriticalMsg: return "C";

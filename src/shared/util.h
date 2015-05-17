@@ -42,6 +42,8 @@ std::string ToLower(const std::string &text);
 std::wstring &ToLower(std::wstring &text);
 std::wstring ToLower(const std::wstring &text);
 
+bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
+
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
 
 } // namespace MOShared

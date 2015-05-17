@@ -18,19 +18,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "directoryentry.h"
+#include "windows_error.h"
+#include "leaktrace.h"
+#include "error_report.h"
+#include <bsatk.h>
+#include <boost/bind.hpp>
+#include <boost/scoped_array.hpp>
+#include <boost/foreach.hpp>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <sstream>
 #include <ctime>
 #include <algorithm>
-#include <bsatk.h>
-#include "windows_error.h"
-#include <boost/bind.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/foreach.hpp>
-#include "leaktrace.h"
 #include <map>
-#include "error_report.h"
+#include <atomic>
 
 
 namespace MOShared {
@@ -327,7 +328,7 @@ FileEntry::FileEntry()
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Origin(-1), m_Parent(parent), m_Archive(L""), m_LastAccessed(time(nullptr))
+  : m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L""), m_Parent(parent), m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
@@ -414,8 +415,8 @@ const std::wstring &DirectoryEntry::getName() const
 void DirectoryEntry::clear()
 {
   m_Files.clear();
-  for (std::vector<DirectoryEntry*>::iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    delete *iter;
+  for (DirectoryEntry *entry : m_SubDirectories) {
+    delete entry;
   }
   m_SubDirectories.clear();
 }
@@ -583,11 +584,11 @@ void DirectoryEntry::removeDirRecursive()
     m_FileRegister->removeFile(m_Files.begin()->second);
   }
 
-  for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    (*iter)->removeDirRecursive();
-    delete *iter;
+  for (DirectoryEntry *entry : m_SubDirectories) {
+    entry->removeDirRecursive();
+    delete entry;
   }
-    m_SubDirectories.clear();
+  m_SubDirectories.clear();
 }
 
 void DirectoryEntry::removeDir(const std::wstring &path)
@@ -595,8 +596,8 @@ void DirectoryEntry::removeDir(const std::wstring &path)
   size_t pos = path.find_first_of(L"\\/");
   if (pos == std::string::npos) {
     for (auto iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-      if (_wcsicmp((*iter)->getName().c_str(), path.c_str()) == 0) {
-        DirectoryEntry *entry = *iter;
+      DirectoryEntry *entry = *iter;
+      if (CaseInsensitiveEqual(entry->getName(), path)) {
         entry->removeDirRecursive();
         m_SubDirectories.erase(iter);
         delete entry;
@@ -622,7 +623,7 @@ void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origi
 {
   size_t pos = filePath.find_first_of(L"\\/");
   if (pos == std::string::npos) {
-    this->insert(filePath, origin, fileTime, L"");
+    this->insert(filePath, origin, fileTime, std::wstring());
   } else {
     std::wstring dirName = filePath.substr(0, pos);
     std::wstring rest = filePath.substr(pos + 1);
@@ -669,15 +670,15 @@ int DirectoryEntry::anyOrigin() const
   bool ignore;
   for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
     FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
-    if (!entry->isFromArchive()) {
+    if ((entry.get() != nullptr) && !entry->isFromArchive()) {
       return entry->getOrigin(ignore);
     }
   }
 
   // if we got here, no file directly within this directory is a valid indicator for a mod, thus
   // we continue looking in subdirectories
-  for (std::vector<DirectoryEntry*>::const_iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    int res = (*iter)->anyOrigin();
+  for (DirectoryEntry *entry : m_SubDirectories) {
+    int res = entry->anyOrigin();
     if (res != -1){
       return res;
     }
@@ -761,6 +762,10 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
     std::wstring pathComponent = path.substr(0, len);
     DirectoryEntry *temp = findSubDirectory(pathComponent);
     if (temp != nullptr) {
+      if (len >= path.size()) {
+        log("unexpected end of path");
+        return FileEntry::Ptr();
+      }
       return temp->searchFile(path.substr(len + 1), directory);
     }
   }
@@ -770,9 +775,9 @@ const FileEntry::Ptr DirectoryEntry::searchFile(const std::wstring &path, const 
 
 DirectoryEntry *DirectoryEntry::findSubDirectory(const std::wstring &name) const
 {
-  for (std::vector<DirectoryEntry*>::const_iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    if (_wcsicmp((*iter)->getName().c_str(), name.c_str()) == 0) {
-      return *iter;
+  for (DirectoryEntry *entry : m_SubDirectories) {
+    if (CaseInsensitiveEqual(entry->getName(), name)) {
+      return entry;
     }
   }
   return nullptr;
@@ -797,14 +802,14 @@ const FileEntry::Ptr DirectoryEntry::findFile(const std::wstring &name) const
 
 DirectoryEntry *DirectoryEntry::getSubDirectory(const std::wstring &name, bool create, int originID)
 {
-  for (std::vector<DirectoryEntry*>::iterator iter = m_SubDirectories.begin(); iter != m_SubDirectories.end(); ++iter) {
-    if (_wcsicmp((*iter)->getName().c_str(), name.c_str()) == 0) {
-      return *iter;
+  for (DirectoryEntry *entry : m_SubDirectories) {
+    if (CaseInsensitiveEqual(entry->getName(), name)) {
+      return entry;
     }
   }
   if (create) {
     std::vector<DirectoryEntry*>::iterator iter = m_SubDirectories.insert(m_SubDirectories.end(),
-        new DirectoryEntry(name, this, originID, m_FileRegister, m_OriginConnection));
+          new DirectoryEntry(name, this, originID, m_FileRegister, m_OriginConnection));
     return *iter;
   } else {
     return nullptr;
@@ -849,7 +854,7 @@ FileRegister::~FileRegister()
 
 FileEntry::Index FileRegister::generateIndex()
 {
-  static FileEntry::Index sIndex = 0;
+  static std::atomic<FileEntry::Index> sIndex(0);
   return sIndex++;
 }
 
@@ -871,8 +876,9 @@ FileEntry::Ptr FileRegister::getFile(FileEntry::Index index) const
   auto iter = m_Files.find(index);
   if (iter != m_Files.end()) {
     return iter->second;
+  } else {
+    return FileEntry::Ptr();
   }
-  return FileEntry::Ptr();
 }
 
 void FileRegister::unregisterFile(FileEntry::Ptr file)

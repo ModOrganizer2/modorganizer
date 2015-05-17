@@ -1182,7 +1182,7 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QDir dir(modInfo->absolutePath());
-  foreach (const QString &esm, dir.entryList(QStringList() << "*.esm", QDir::Files)) {
+  for (const QString &esm : dir.entryList(QStringList() << "*.esm", QDir::Files)) {
     m_PluginList.enableESP(esm, active);
   }
   int enabled = 0;

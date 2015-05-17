@@ -113,9 +113,9 @@ const Executable &ExecutablesList::find(const QString &title) const
 
 Executable &ExecutablesList::find(const QString &title)
 {
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (QString::compare(iter->m_Title, title, Qt::CaseInsensitive) == 0) {
-      return *iter;
+  for (Executable &exe : m_Executables) {
+    if (QString::compare(exe.m_Title, title, Qt::CaseInsensitive) == 0) {
+      return exe;
     }
   }
   throw std::runtime_error("invalid name");
@@ -124,9 +124,9 @@ Executable &ExecutablesList::find(const QString &title)
 
 Executable &ExecutablesList::findByBinary(const QFileInfo &info)
 {
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (info == iter->m_BinaryInfo) {
-      return *iter;
+  for (Executable &exe : m_Executables) {
+    if (info == exe.m_BinaryInfo) {
+      return exe;
     }
   }
   throw std::runtime_error("invalid info");
