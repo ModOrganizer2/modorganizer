@@ -116,22 +116,28 @@ public:
 public:
 
   /// \copydoc MOBase::IModList::displayName
-  virtual QString displayName(const QString &internalName) const;
+  virtual QString displayName(const QString &internalName) const override;
+
+  /// \copydoc MOBase::IModList::allMods
+  virtual QStringList allMods() const override;
 
   /// \copydoc MOBase::IModList::state
-  virtual ModStates state(const QString &name) const;
+  virtual ModStates state(const QString &name) const override;
+
+  /// \copydoc MOBase::IModList::setActive
+  virtual bool setActive(const QString &name, bool active) override;
 
   /// \copydoc MOBase::IModList::priority
-  virtual int priority(const QString &name) const;
+  virtual int priority(const QString &name) const override;
 
   /// \copydoc MOBase::IModList::setPriority
-  virtual bool setPriority(const QString &name, int newPriority);
+  virtual bool setPriority(const QString &name, int newPriority) override;
 
   /// \copydoc MOBase::IModList::onModStateChanged
-  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func);
+  virtual bool onModStateChanged(const std::function<void (const QString &, ModStates)> &func) override;
 
   /// \copydoc MOBase::IModList::onModMoved
-  virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func);
+  virtual bool onModMoved(const std::function<void (const QString &, int, int)> &func) override;
 
 public: // implementation of virtual functions of QAbstractItemModel
 

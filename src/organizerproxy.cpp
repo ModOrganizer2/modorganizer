@@ -125,9 +125,9 @@ void OrganizerProxy::refreshModList(bool saveChanges)
   m_Proxied->refreshModList(saveChanges);
 }
 
-IModInterface *OrganizerProxy::installMod(const QString &fileName)
+IModInterface *OrganizerProxy::installMod(const QString &fileName, const QString &nameSuggestion)
 {
-  return m_Proxied->installMod(fileName, QString());
+  return m_Proxied->installMod(fileName, nameSuggestion);
 }
 
 QString OrganizerProxy::resolvePath(const QString &fileName) const

@@ -708,11 +708,34 @@ QString ModList::displayName(const QString &internalName) const
   }
 }
 
+QStringList ModList::allMods() const
+{
+  QStringList result;
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+    result.append(ModInfo::getByIndex(i)->internalName());
+  }
+  return result;
+}
+
 IModList::ModStates ModList::state(const QString &name) const
 {
   unsigned int modIndex = ModInfo::getIndex(name);
 
   return state(modIndex);
+}
+
+bool ModList::setActive(const QString &name, bool active)
+{
+  unsigned int modIndex = ModInfo::getIndex(name);
+  if (modIndex == UINT_MAX) {
+    return false;
+  } else {
+    m_Profile->setModEnabled(modIndex, active);
+
+    IModList::ModStates newState = state(modIndex);
+    m_ModStateChanged(name, newState);
+    return true;
+  }
 }
 
 int ModList::priority(const QString &name) const
