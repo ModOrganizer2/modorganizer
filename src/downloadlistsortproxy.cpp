@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlistsortproxy.h"
 #include "downloadlist.h"
 #include "downloadmanager.h"
+#include "settings.h"
 
 DownloadListSortProxy::DownloadListSortProxy(const DownloadManager *manager, QObject *parent)
   : QSortFilterProxyModel(parent), m_Manager(manager), m_CurrentFilter()
@@ -55,12 +56,17 @@ bool DownloadListSortProxy::lessThan(const QModelIndex &left,
 }
 
 
-bool DownloadListSortProxy::filterAcceptsRow(int source_row, const QModelIndex&) const
+bool DownloadListSortProxy::filterAcceptsRow(int sourceRow, const QModelIndex&) const
 {
   if (m_CurrentFilter.length() == 0) {
     return true;
-  } else if (source_row < m_Manager->numTotalDownloads()) {
-    return sourceModel()->index(source_row, 0).data().toString().contains(m_CurrentFilter, Qt::CaseInsensitive);
+  } else if (sourceRow < m_Manager->numTotalDownloads()) {
+    int downloadIndex = sourceModel()->index(sourceRow, 0).data().toInt();
+
+    QString displayedName = Settings::instance().metaDownloads()
+        ? m_Manager->getDisplayName(downloadIndex)
+        : m_Manager->getFileName(downloadIndex);
+    return displayedName.contains(m_CurrentFilter, Qt::CaseInsensitive);
   } else {
     return false;
   }
