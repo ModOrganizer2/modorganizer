@@ -29,7 +29,6 @@ QCheckBox, QGroupBox {
 /*
  * GroupBox and CheckBox
  */
-
 QGroupBox {
     border-top: 1px solid #2d2d2d;
     margin-top: 0.5em;
@@ -54,15 +53,13 @@ QGroupBox::indicator:indeterminate:pressed {
     background-color: #22bb22;
 }
 
-
 QLineEdit, QAbstractSpinBox, QComboBox, QPushButton {
     background-color: #45494a;
 
     background-origin: border;
     border: 1px solid #646464;
     color: #bbbbbb;
-    min-width: 3em;
-    padding: 0px 1px 2px 3px;
+    padding: 0.1em 0.5em 0.1em 0.5em;
     selection-background-color: #4b6eaf;
 }
 :read-only {
@@ -74,21 +71,22 @@ QLineEdit, QAbstractSpinBox, QComboBox, QPushButton {
     border-width: 0;
 }
 
-
 /*
  * PushButton
  *
  */
 
 QPushButton {
-    min-height: 1.33em;
-    min-width: 4.25em;
     outline: 0;
 }
 QPushButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #515658, stop: 1.0 #44494b);
     border: 1px solid #5f6161;
     border-radius: 2px;
+	margin: 1px;
+}
+QPushButton:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop:0 #64686b, stop:1 #494c4e);
 }
 QPushButton:pressed {
     border-style: inset;
@@ -104,7 +102,7 @@ QPushButton:open {
     background-color: #4b6eaf;
 }
 QPushButton::menu-indicator  {
-    subcontrol-origin: content;
+    subcontrol-origin: padding;
     subcontrol-position: bottom right;
 }
 
@@ -117,8 +115,6 @@ QComboBox {
     padding: 0px 1px 2px 3px;
 }
 QComboBox:!editable {
-    /*background-color: rgba(63, 113, 73, 0.2);*/
-    /*background-color: #45494a;*/
     background-color: rgba(255, 255, 255, 0.05);
 }
 QComboBox::drop-down {
@@ -131,13 +127,11 @@ QComboBox::down-arrow
 }
 
 QComboBox QAbstractItemView {
-    border: 1px solid red;/*black;*/
-    /*selection-background-color: #d2d2d2;
+    border: 1px solid red;
+    selection-background-color: #d2d2d2;
     selection-color: #404040;
-    show-decoration-selected: 1; /* make the selection span the entire width of the view */
+    show-decoration-selected: 1;
 }
-
-
 
 
 /*
@@ -161,7 +155,6 @@ QTabWidget::pane:left {
 }
 QTabBar::tab {
     border: 1px solid #292b2d;
-    min-width: 8ex;
     padding: 4px;
 }
 QTabBar::tab:top {
@@ -217,10 +210,6 @@ QTableView {
     border: 1px solid #323232;
     alternate-background-color: #414547;
 }
-QTableView QTableCornerButton::section {
-    background-color: green; /*FIXME*/
-    border: 2px outset blue; /*FIXME*/
-}
 QHeaderView::section {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop:0 #54585b, stop:1 #393c3e);
     color: #bbbbbb;
@@ -240,16 +229,6 @@ QHeaderView::section:first {
 }
 QHeaderView::section:last {
     border-right-width: 0;
-}
-QHeaderView::section:checked {
-    background-color: red;
-}
-QHeaderView::down-arrow {
-    right: 7px;
-}
-QHeaderView::up-arrow {
-    height: 7px;
-    width: 7px;
 }
 
 /*
@@ -299,7 +278,7 @@ QMenu::separator {
 QScrollBar {
     background-color: transparent;
     margin: 0;
-    height: 12px;
+    height: 1px;
     width: 12px;
 }
 QScrollBar::handle {
@@ -362,29 +341,21 @@ QTreeView::branch:selected:active,
 QAbstractItemView::item:selected {
     background-color: #4b6eaf;
 }
-/* No way due to another bug :(
-QTreeView::branch:selected:active,
-QAbstractItemView::item:selected:active {
-    background-color: #4b6eaf;
-}
-QTreeView::branch:selected:!active,
-QAbstractItemView::item:selected:!active {
-    background-color: #0d293e;
-}
-*/
+
 QTreeView::branch:has-siblings:adjoins-item,
 QTreeView::branch:has-siblings:!adjoins-item,
 QTreeView::branch:!has-children:!has-siblings:adjoins-item {
     border-image: none;
-    image: none;
 }
 QTreeView::branch:has-children:!has-siblings:closed,
 QTreeView::branch:closed:has-children:has-siblings {
     border-image: none;
+    image: url(:/stylesheet/branch-closed.png);
 }
 QTreeView::branch:open:has-children:!has-siblings,
 QTreeView::branch:open:has-children:has-siblings {
     border-image: none;
+    image: url(:/stylesheet/branch-open.png);
 }
 
 /*
