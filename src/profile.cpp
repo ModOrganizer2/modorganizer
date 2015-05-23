@@ -272,7 +272,7 @@ void Profile::refreshModStatus()
         ModInfo::Ptr info = ModInfo::getByIndex(modIndex);
         if ((modIndex < m_ModStatus.size())
             && (info->getFixedPriority() == INT_MIN)) {
-          m_ModStatus[modIndex].m_Enabled = enabled || info->alwaysEnabled();
+          m_ModStatus[modIndex].m_Enabled = enabled;
           if (m_ModStatus[modIndex].m_Priority == -1) {
             if (static_cast<size_t>(index) >= m_ModStatus.size()) {
               throw MyException(tr("invalid index %1").arg(index));
@@ -302,6 +302,10 @@ void Profile::refreshModStatus()
   // give priorities to mods not referenced in the profile
   for (size_t i = 0; i < m_ModStatus.size(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+    if (modInfo->alwaysEnabled()) {
+      m_ModStatus[i].m_Enabled = true;
+    }
+
     if (modInfo->getFixedPriority() == INT_MAX) {
       continue;
     }
