@@ -92,7 +92,7 @@ public:
   Profile *currentProfile() { return m_CurrentProfile; }
   void setCurrentProfile(const QString &profileName);
 
-  std::set<QString> enabledArchives();
+  std::vector<QString> enabledArchives();
 
   MOBase::VersionInfo getVersion() const { return m_Updater.getVersion(); }
 

@@ -1301,6 +1301,7 @@ static QStringList toStringList(InputIterator current, InputIterator end)
   }
   return result;
 }
+
 void MainWindow::updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives)
 {
   m_DefaultArchives = defaultArchives;
@@ -1311,33 +1312,31 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   ui->bsaList->header()->setResizeMode(QHeaderView::ResizeToContents);
 #endif
 
-  std::vector<std::pair<UINT32, QTreeWidgetItem*> > items;
+  std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
-  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
-  for (auto iter = files.begin(); iter != files.end(); ++iter) {
-    FileEntry::Ptr current = *iter;
+  for (FileEntry::Ptr current : m_OrganizerCore.directoryStructure()->getFiles()) {
+    QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
-    QString filename = ToQString(current->getName().c_str());
-    QString extension = filename.right(3).toLower();
-
-    if (extension == "bsa") {
-      int index = activeArchives.indexOf(filename);
+    if (fileInfo.suffix().toLower() == "bsa") {
+      int index = activeArchives.indexOf(fileInfo.fileName());
       if (index == -1) {
         index = 0xFFFF;
       }
-      QString basename = filename.left(filename.indexOf("."));
-      QStringList strings(filename);
-      bool isArchive = false;
-      int origin = current->getOrigin(isArchive);
-      strings.append(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()));
-      QTreeWidgetItem *newItem = new QTreeWidgetItem(strings);
+
+      QString basename = fileInfo.baseName();
+      int originId = current->getOrigin();
+      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
+
+      QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList()
+                                                     << fileInfo.fileName()
+                                                     << ToQString(origin.getName()));
       newItem->setData(0, Qt::UserRole, index);
-      newItem->setData(1, Qt::UserRole, origin);
+      newItem->setData(1, Qt::UserRole, originId);
       newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       newItem->setData(0, Qt::UserRole, false);
       if (m_OrganizerCore.settings().forceEnableCoreFiles()
-          && defaultArchives.contains(filename)) {
+          && defaultArchives.contains(fileInfo.fileName())) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
         newItem->setData(0, Qt::UserRole, true);
@@ -1356,7 +1355,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
       if (index < 0) index = 0;
 
-      UINT32 sortValue = ((m_OrganizerCore.directoryStructure()->getOriginByID(origin).getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
+      UINT32 sortValue = ((origin.getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
       items.push_back(std::make_pair(sortValue, newItem));
     }
   }

@@ -528,7 +528,6 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   m_ModList.setProfile(newProfile);
 
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
-
   refreshDirectoryStructure();
 }
 
@@ -928,7 +927,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
   prepareStart();
 
   if (!binary.exists()) {
-    reportError(tr("Executable \"%1\" not found").arg(binary.fileName()));
+    reportError(tr("Executable \"%1\" not found").arg(binary.absoluteFilePath()));
     return INVALID_HANDLE_VALUE;
   }
 
@@ -1223,7 +1222,9 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index, ModInfo::P
   if (m_UserInterface != nullptr) {
     m_UserInterface->archivesWriter().write();
   }
-  m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(), enabledArchives());
+  std::vector<QString> archives = enabledArchives();
+  m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(),
+                               std::set<QString>(archives.begin(), archives.end()));
 
   // finally also add files from bsas to the directory structure
   m_DirectoryRefresher.addModBSAToStructure(m_DirectoryStructure
@@ -1290,13 +1291,13 @@ IPluginGame *OrganizerCore::managedGame() const
   return m_GamePlugin;
 }
 
-std::set<QString> OrganizerCore::enabledArchives()
+std::vector<QString> OrganizerCore::enabledArchives()
 {
-  std::set<QString> result;
+  std::vector<QString> result;
   QFile archiveFile(m_CurrentProfile->getArchivesFileName());
   if (archiveFile.open(QIODevice::ReadOnly)) {
     while (!archiveFile.atEnd()) {
-      result.insert(QString::fromUtf8(archiveFile.readLine()).trimmed());
+      result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
     }
     archiveFile.close();
   }
@@ -1310,8 +1311,9 @@ void OrganizerCore::refreshDirectoryStructure()
 
     m_DirectoryUpdate = true;
     std::vector<std::tuple<QString, QString, int> > activeModList = m_CurrentProfile->getActiveMods();
-
-    m_DirectoryRefresher.setMods(activeModList, enabledArchives());
+    auto archives = enabledArchives();
+    m_DirectoryRefresher.setMods(activeModList,
+                                 std::set<QString>(archives.begin(), archives.end()));
 
     QTimer::singleShot(0, &m_DirectoryRefresher, SLOT(refresh()));
   }
