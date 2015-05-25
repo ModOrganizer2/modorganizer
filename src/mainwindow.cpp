@@ -2060,7 +2060,7 @@ void MainWindow::refreshFilters()
   ui->modList->setCurrentIndex(QModelIndex());
 
   QStringList selectedItems;
-  foreach (QTreeWidgetItem *item, ui->categoriesList->selectedItems()) {
+  for (QTreeWidgetItem *item : ui->categoriesList->selectedItems()) {
     selectedItems.append(item->text(0));
   }
 
@@ -2090,7 +2090,7 @@ void MainWindow::refreshFilters()
 
   addCategoryFilters(nullptr, categoriesUsed, 0);
 
-  foreach (const QString &item, selectedItems) {
+  for (const QString &item : selectedItems) {
     QList<QTreeWidgetItem*> matches = ui->categoriesList->findItems(item, Qt::MatchFixedString | Qt::MatchRecursive);
     if (matches.size() > 0) {
       matches.at(0)->setSelected(true);
@@ -2617,7 +2617,7 @@ void MainWindow::addRemoveCategoriesFromMenu(QMenu *menu, int modRow, int refere
 {
   if (referenceRow != -1 && referenceRow != modRow) {
     ModInfo::Ptr editedModInfo = ModInfo::getByIndex(referenceRow);
-    foreach (QAction* action, menu->actions()) {
+    for (QAction* action : menu->actions()) {
       if (action->menu() != nullptr) {
         addRemoveCategoriesFromMenu(action->menu(), modRow, referenceRow);
       } else {
@@ -2647,25 +2647,29 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     return;
   }
 
-  QModelIndexList selectedTemp = ui->modList->selectionModel()->selectedRows();
   QList<QPersistentModelIndex> selected;
-  foreach (const QModelIndex &idx, selectedTemp) {
+  for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
     selected.append(QPersistentModelIndex(idx));
   }
 
   if (selected.size() > 0) {
-    foreach (const QPersistentModelIndex &idx, selected) {
-      qDebug("change categories on: %s (ref: %s)", qPrintable(idx.data().toString()), qPrintable(m_ContextIdx.data().toString()));
+    int minRow = INT_MAX;
+    int maxRow = -1;
+
+    for (const QPersistentModelIndex &idx : selected) {
+      qDebug("change categories on: %s", qPrintable(idx.data().toString()));
       QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
       }
+      if (idx.row() < minRow) minRow = idx.row();
+      if (idx.row() > maxRow) maxRow = idx.row();
     }
     replaceCategoriesFromMenu(menu, m_ContextIdx.row());
 
-    m_OrganizerCore.modList()->notifyChange(-1);
+    m_OrganizerCore.modList()->notifyChange(minRow, maxRow + 1);
 
-    foreach (const QPersistentModelIndex &idx, selected) {
+    for (const QPersistentModelIndex &idx : selected) {
       ui->modList->selectionModel()->select(idx, QItemSelectionModel::Select | QItemSelectionModel::Rows);
     }
   } else {
@@ -2684,21 +2688,28 @@ void MainWindow::replaceCategories_MenuHandler() {
     return;
   }
 
-  QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
+  QList<QPersistentModelIndex> selected;
+  for (const QModelIndex &idx : ui->modList->selectionModel()->selectedRows()) {
+    selected.append(QPersistentModelIndex(idx));
+  }
 
   if (selected.size() > 0) {
     QStringList selectedMods;
+    int minRow = INT_MAX;
+    int maxRow = -1;
     for (int i = 0; i < selected.size(); ++i) {
       QModelIndex temp = mapToModel(m_OrganizerCore.modList(), selected.at(i));
       selectedMods.append(temp.data().toString());
       replaceCategoriesFromMenu(menu, mapToModel(m_OrganizerCore.modList(), selected.at(i)).row());
+      if (temp.row() < minRow) minRow = temp.row();
+      if (temp.row() > maxRow) maxRow = temp.row();
     }
 
-    m_OrganizerCore.modList()->notifyChange(-1);
+    m_OrganizerCore.modList()->notifyChange(minRow, maxRow + 1);
 
     // find mods by their name because indices are invalidated
     QAbstractItemModel *model = ui->modList->model();
-    Q_FOREACH(const QString &mod, selectedMods) {
+    for (const QString &mod : selectedMods) {
       QModelIndexList matches = model->match(model->index(0, 0), Qt::DisplayRole, mod, 1,
                                              Qt::MatchFixedString | Qt::MatchCaseSensitive | Qt::MatchRecursive);
       if (matches.size() > 0) {
