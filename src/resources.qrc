@@ -25,7 +25,7 @@
         <file alias="refresh">resources/view-refresh_16.png</file>
         <file alias="update_available">resources/software-update-available.png</file>
         <file alias="important">resources/emblem-important.png</file>
-        <file>resources/check.png</file>
+        <file alias="check">resources/check.png</file>
         <file>mo_icon.ico</file>
         <file alias="warning">resources/dialog-warning.png</file>
         <file alias="emblem_backup">resources/symbol-backup.png</file>
@@ -65,6 +65,9 @@
         <file alias="badge_8">resources/badge_8.png</file>
         <file alias="badge_9">resources/badge_9.png</file>
         <file alias="badge_more">resources/badge_more.png</file>
+        <file alias="active">resources/status_active.png</file>
+        <file alias="awaiting">resources/status_awaiting.png</file>
+        <file alias="inactive">resources/status_inactive.png</file>
     </qresource>
     <qresource prefix="/MO/gui/content">
         <file alias="plugin">resources/contents/jigsaw-piece.png</file>

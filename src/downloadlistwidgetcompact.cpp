@@ -53,7 +53,8 @@ DownloadListWidgetCompactDelegate::DownloadListWidgetCompactDelegate(DownloadMan
 
   m_DoneLabel->setVisible(false);
 
-  connect(manager, SIGNAL(stateChanged(int,DownloadManager::DownloadState)), this, SLOT(stateChanged(int,DownloadManager::DownloadState)));
+  connect(manager, SIGNAL(stateChanged(int,DownloadManager::DownloadState)),
+          this, SLOT(stateChanged(int,DownloadManager::DownloadState)));
   connect(manager, SIGNAL(downloadRemoved(int)), this, SLOT(resetCache(int)));
 }
 
@@ -116,24 +117,20 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
   if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
     m_DoneLabel->setVisible(true);
     m_Progress->setVisible(false);
-    m_DoneLabel->setText(tr("Paused"));
-    m_DoneLabel->setForegroundRole(QPalette::Link);
+    m_DoneLabel->setText(QString("%1<img src=\":/MO/gui/inactive\">").arg(tr("Paused")));
   } else if (state == DownloadManager::STATE_FETCHINGMODINFO) {
-    m_DoneLabel->setText(tr("Fetching Info 1"));
+    m_DoneLabel->setText(QString("%1").arg(tr("Fetching Info 1")));
   } else if (state == DownloadManager::STATE_FETCHINGFILEINFO) {
-    m_DoneLabel->setText(tr("Fetching Info 2"));
+    m_DoneLabel->setText(QString("%1").arg(tr("Fetching Info 2")));
   } else if (state >= DownloadManager::STATE_READY) {
     m_DoneLabel->setVisible(true);
     m_Progress->setVisible(false);
     if (state == DownloadManager::STATE_INSTALLED) {
-      m_DoneLabel->setText(tr("Installed"));
-      m_DoneLabel->setForegroundRole(QPalette::Mid);
+      m_DoneLabel->setText(QString("%1<img src=\":/MO/gui/check\">").arg(tr("Installed")));
     } else if (state == DownloadManager::STATE_UNINSTALLED) {
-      m_DoneLabel->setText(tr("Uninstalled"));
-      m_DoneLabel->setForegroundRole(QPalette::Dark);
+      m_DoneLabel->setText(QString("%1<img src=\":/MO/gui/awaiting\">").arg(tr("Uninstalled")));
     } else {
-      m_DoneLabel->setText(tr("Done"));
-      m_DoneLabel->setForegroundRole(QPalette::WindowText);
+      m_DoneLabel->setText(QString("%1<img src=\":/MO/gui/active\">").arg(tr("Done")));
     }
     if (m_Manager->isInfoIncomplete(downloadIndex)) {
       m_NameLabel->setText("<img src=\":/MO/gui/warning_16\"/> " + m_NameLabel->text());
