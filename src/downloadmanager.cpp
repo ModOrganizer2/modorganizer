@@ -1354,7 +1354,9 @@ void DownloadManager::downloadFinished()
     if (info->m_State == STATE_CANCELING) {
       setState(info, STATE_CANCELED);
     } else if (info->m_State == STATE_PAUSING) {
-      info->m_Output.write(info->m_Reply->readAll());
+      if (info->m_Output.isOpen()) {
+        info->m_Output.write(info->m_Reply->readAll());
+      }
 
       if (error) {
         setState(info, STATE_ERROR);
@@ -1426,7 +1428,10 @@ void DownloadManager::downloadFinished()
 void DownloadManager::downloadError(QNetworkReply::NetworkError error)
 {
   if (error != QNetworkReply::OperationCanceledError) {
-    qWarning("Download error occured: %d", error);
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    qWarning("%s (%d)", reply != nullptr ? qPrintable(reply->errorString())
+                                         : "Download error occured",
+             error);
   }
 }
 
