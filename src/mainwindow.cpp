@@ -2245,8 +2245,9 @@ void MainWindow::resumeDownload(int downloadIndex)
   } else {
     QString username, password;
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
-      //m_PostLoginTasks.push_back(boost::bind(&MainWindow::resumeDownload, _1, downloadIndex));
-      m_OrganizerCore.doAfterLogin([this, downloadIndex] () { this->resumeDownload(downloadIndex); });
+      m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
+        this->resumeDownload(downloadIndex);
+      });
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);

@@ -129,7 +129,7 @@ char LogBuffer::msgTypeID(QtMsgType type)
 void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
   // QMutexLocker doesn't support timeout...
-  if (!s_Mutex.tryLock(50)) {
+  if (!s_Mutex.tryLock(100)) {
     fprintf(stderr, "failed to log: %s", qPrintable(message));
     return;
   }

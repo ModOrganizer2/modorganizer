@@ -142,7 +142,6 @@ void MOApplication::updateStyle(const QString &fileName)
     setStyleSheet("");
 #endif
   } else {
-    qDebug("restore default style: %s", qPrintable(m_DefaultStyle));
     setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));

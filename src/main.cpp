@@ -516,7 +516,8 @@ int main(int argc, char *argv[])
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
-    if ((arguments.size() > 1) && (!isNxmLink(arguments.at(1)))) {
+    if ((arguments.size() > 1)
+        && !isNxmLink(arguments.at(1))) {
       QString exeName = arguments.at(1);
       qDebug("starting %s from command line", qPrintable(exeName));
       arguments.removeFirst(); // remove application name (ModOrganizer.exe)
@@ -553,8 +554,8 @@ int main(int argc, char *argv[])
       qDebug("displaying main window");
       mainWindow.show();
 
-      if ((arguments.size() > 1) &&
-          (isNxmLink(arguments.at(1)))) {
+      if ((arguments.size() > 1)
+          && isNxmLink(arguments.at(1))) {
         qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
         organizer.externalMessage(arguments.at(1));
       }

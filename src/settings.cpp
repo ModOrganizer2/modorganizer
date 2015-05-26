@@ -182,11 +182,6 @@ QString Settings::getSteamAppID() const
   return m_Settings.value("Settings/app_id", m_GamePlugin->steamAPPId()).toString();
 }
 
-QString Settings::getDownloadDirectory() const
-{
-  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()));
-}
-
 void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
 {
   m_Settings.beginGroup("Servers");
@@ -223,7 +218,12 @@ std::map<QString, int> Settings::getPreferredServers()
 
 QString Settings::getConfigurablePath(const QString &key, const QString &def) const
 {
-  return m_Settings.value(QString("settings/") + key, qApp->property("dataPath").toString() + "/" + def).toString();
+  return QDir::fromNativeSeparators(m_Settings.value(QString("settings/") + key, qApp->property("dataPath").toString() + "/" + def).toString());
+}
+
+QString Settings::getDownloadDirectory() const
+{
+  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()));
 }
 
 QString Settings::getCacheDirectory() const

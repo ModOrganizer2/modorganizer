@@ -25,11 +25,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 SaveGameInfoWidget::SaveGameInfoWidget(QWidget *parent)
-  : QWidget(parent), ui(new Ui::SaveGameInfoWidget)
+  : QWidget(parent)
+  , ui(new Ui::SaveGameInfoWidget)
 {
   ui->setupUi(this);
   this->setWindowFlags(Qt::ToolTip | Qt::BypassGraphicsProxyWidget);
   setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / qreal(255.0));
+  ui->gameFrame->setBackgroundRole(QPalette::ToolTipBase);
 //  installEventFilter(this);
 }
 

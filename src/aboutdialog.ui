@@ -46,7 +46,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="about">
         <attribute name="title">
@@ -183,6 +183,11 @@
                 <string>Ren (Korean)</string>
                </property>
               </item>
+              <item>
+               <property name="text">
+                <string>... more (Can't track)</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -247,6 +252,11 @@
               <item>
                <property name="text">
                 <string notr="true">z929669</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>thosrtanner</string>
                </property>
               </item>
              </widget>

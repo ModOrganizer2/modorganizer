@@ -576,7 +576,6 @@ void PluginList::lockESPIndex(int index, bool lock)
       m_LockedOrder.erase(iter);
     }
   }
-qDebug(__FUNCTION__);
   emit writePluginsList();
 }
 

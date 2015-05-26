@@ -84,6 +84,7 @@ QPushButton {
     border: 1px solid #5f6161;
     border-radius: 2px;
 	margin: 1px;
+    padding: 0.2em 0.8em 0.2em 0.8em;
 }
 QPushButton:hover {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop:0 #64686b, stop:1 #494c4e);
@@ -155,7 +156,7 @@ QTabWidget::pane:left {
 }
 QTabBar::tab {
     border: 1px solid #292b2d;
-    padding: 4px;
+    padding: 0.2em 0.8em 0.2em 0.8em;
 }
 QTabBar::tab:top {
     border-top-left-radius: 4px;

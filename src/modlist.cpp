@@ -83,6 +83,7 @@ void ModList::setProfile(Profile *profile)
 {
   m_Profile = profile;
 }
+
 int ModList::rowCount(const QModelIndex &parent) const
 {
   if (!parent.isValid()) {
