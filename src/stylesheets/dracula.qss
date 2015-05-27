@@ -2,7 +2,7 @@
  * Drop background color of most widgets
  */
 
-QWidget, QStackedWidget,
+QWidget, QStackedWidget, 
 QScrollArea, QAbstractScrollArea {
     background-color: transparent;
     color: #bbbbbb;
@@ -378,4 +378,8 @@ QToolTip, QTipLabel {
     color: #bbbbbb;
     margin: 0;
     padding: 0;
+}
+
+SaveGameInfoWidget {
+    background-color: qlineargradient(x1: 0, y1: 0.6, x2: 0, y2: 1, stop: 0 rgba(52,74,100,100%), stop: 1.0 rgba(38,53,73,10%));
 }

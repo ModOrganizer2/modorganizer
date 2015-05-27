@@ -31,7 +31,7 @@ SaveGameInfoWidget::SaveGameInfoWidget(QWidget *parent)
   ui->setupUi(this);
   this->setWindowFlags(Qt::ToolTip | Qt::BypassGraphicsProxyWidget);
   setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / qreal(255.0));
-  ui->gameFrame->setBackgroundRole(QPalette::ToolTipBase);
+  ui->gameFrame->setStyleSheet("background-color: transparent;");
 //  installEventFilter(this);
 }
 
