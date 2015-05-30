@@ -169,7 +169,7 @@ void NXMAccessManager::loginTimeout()
   emit loginFailed(tr("timeout"));
   m_LoginReply->deleteLater();
   m_LoginReply = nullptr;
-  m_LoginAttempted = false; // this usually means we might have usccess later
+  m_LoginAttempted = false; // this usually means we might have success later
   m_LoginTimeout.stop();
   m_Username.clear();
   m_Password.clear();
