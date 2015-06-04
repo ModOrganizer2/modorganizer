@@ -26,7 +26,7 @@
       <enum>QAbstractItemView::InternalMove</enum>
      </property>
      <property name="defaultDropAction">
-      <enum>Qt::MoveAction</enum>
+      <enum>Qt::TargetMoveAction</enum>
      </property>
      <property name="selectionMode">
       <enum>QAbstractItemView::ExtendedSelection</enum>
