@@ -395,7 +395,6 @@ const int ModInfoDialog::getModID() const
   return m_Settings->value("modid", 0).toInt();
 }
 
-
 void ModInfoDialog::openTab(int tab)
 {
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
@@ -407,15 +406,15 @@ void ModInfoDialog::openTab(int tab)
 void ModInfoDialog::thumbnailClicked(const QString &fileName)
 {
   QLabel *imageLabel = findChild<QLabel*>("imageLabel");
+  imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   QImage image(fileName);
   if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-    image = image.scaledToWidth(imageLabel->width());
+    image = image.scaledToWidth(imageLabel->geometry().width());
   } else {
-    image = image.scaledToHeight(imageLabel->height());
+    image = image.scaledToHeight(imageLabel->geometry().height());
   }
   imageLabel->setPixmap(QPixmap::fromImage(image));
 }
-
 
 bool ModInfoDialog::allowNavigateFromTXT()
 {

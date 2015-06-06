@@ -170,6 +170,8 @@ void cleanupDir()
     "proxy.dll"
   };
 
+  qDebug("removing obsolete files");
+
   for (const QString &fileName : fileNames) {
     QString fullPath = qApp->applicationDirPath() + "/" + fileName;
     if (QFile::exists(fullPath)
@@ -430,9 +432,9 @@ int main(int argc, char *argv[])
     } // we continue for the primary instance OR if MO has been called with parameters
 
     QSettings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
-
+    qDebug("initializing core");
     OrganizerCore organizer(settings);
-
+    qDebug("initialize plugins");
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();
 
