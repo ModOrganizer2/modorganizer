@@ -1188,6 +1188,10 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
   for (const QString &esp : esps) {
     const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
+    if (file.get() == nullptr) {
+      qWarning("failed to activate %s", qPrintable(esp));
+      continue;
+    }
 
     if (active != m_PluginList.isEnabled(esp)
         && file->getAlternatives().empty()) {
