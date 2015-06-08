@@ -4361,7 +4361,7 @@ void MainWindow::on_bossButton_clicked()
     if (loot != INVALID_HANDLE_VALUE) {
       bool isJobHandle = true;
       ULONG lastProcessID;
-      DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
+      DWORD res = ::MsgWaitForMultipleObjects(1, &loot, false, 100, QS_KEY | QS_MOUSE);
       while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) {
         if (isJobHandle) {
           if (::QueryInformationJobObject(loot, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
@@ -4401,7 +4401,7 @@ void MainWindow::on_bossButton_clicked()
         std::string lootOut = readFromPipe(stdOutRead);
         processLOOTOut(lootOut, errorMessages, dialog);
 
-        res = ::MsgWaitForMultipleObjects(1, &loot, false, 1000, QS_KEY | QS_MOUSE);
+        res = ::MsgWaitForMultipleObjects(1, &loot, false, 100, QS_KEY | QS_MOUSE);
       }
 
       std::string remainder = readFromPipe(stdOutRead).c_str();
