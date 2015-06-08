@@ -50,6 +50,7 @@ public:
   void setProfile(Profile *profile);
 
   void setCategoryFilter(const std::vector<int> &categories);
+  std::vector<int> categoryFilter() const { return m_CategoryFilter; }
 
   void setContentFilter(const std::vector<int> &content);
 

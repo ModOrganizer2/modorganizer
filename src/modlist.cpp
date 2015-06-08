@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "installationtester.h"
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
+#include "modlistsortproxy.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
@@ -1091,14 +1092,33 @@ bool ModList::deleteSelection(QAbstractItemView *itemView)
 bool ModList::toggleSelection(QAbstractItemView *itemView)
 {
   QAbstractItemModel *model = itemView->model();
+
+  // having a filter active when dataChanged is called caused a crash
+  // (at least with some Qt versions)
+  ModListSortProxy *filterModel = qobject_cast<ModListSortProxy*>(model);
+  std::vector<int> filter;
+  if (filterModel != nullptr) {
+    filter = filterModel->categoryFilter();
+    filterModel->setCategoryFilter(std::vector<int>());
+  }
+
   QItemSelectionModel *selectionModel = itemView->selectionModel();
 
   for (QModelIndex idx : selectionModel->selectedRows()) {
-    int oldState = idx.data(Qt::CheckStateRole).toInt();
-    model->setData(idx, oldState == Qt::Unchecked ? Qt::Checked
-                                                  : Qt::Unchecked,
-                   Qt::CheckStateRole);
+    int modId = idx.data(Qt::UserRole + 1).toInt();
+    m_Profile->setModEnabled(modId, !m_Profile->modEnabled(modId));
+    emit modlist_changed(idx, 0);
   }
+
+  m_Modified = true;
+  m_LastCheck.restart();
+
+  emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
+
+  if (filterModel != nullptr) {
+    filterModel->setCategoryFilter(filter);
+  }
+
   return true;
 }
 
