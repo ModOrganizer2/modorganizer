@@ -119,17 +119,17 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wst
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
     data[iter->getIndex()]->setSkip(false);
-    std::wstring temp = path.substr().append(ToWString(iter->getName()));
+    std::wstring temp = path.substr().append(iter->getName().toStdWString());
     data[iter->getIndex()]->setOutputFileName(temp.c_str());
   }
 
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
     if ((*iter)->getData().index != -1) {
       data[(*iter)->getData().index]->setSkip(false);
-      std::wstring temp = path.substr().append(ToWString((*iter)->getData().name));
+      std::wstring temp = path.substr().append((*iter)->getData().name.toStdWString());
       data[(*iter)->getData().index]->setOutputFileName(temp.c_str());
     }
-    mapToArchive(*iter, path.substr().append(ToWString((*iter)->getData().name)), data);
+    mapToArchive(*iter, path.substr().append((*iter)->getData().name.toStdWString()), data);
   }
 }
 

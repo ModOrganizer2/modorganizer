@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "modinfo.h"
+
 #include "utility.h"
 #include "installationtester.h"
 #include "categories.h"
@@ -26,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "overwriteinfodialog.h"
 #include "json.h"
 #include "messagedialog.h"
+#include "filenamestring.h"
 
 #include <gameinfo.h>
 #include <iplugingame.h>
