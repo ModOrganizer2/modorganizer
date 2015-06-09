@@ -114,22 +114,28 @@ void InstallationManager::queryPassword(LPSTR password)
 void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wstring path, FileData * const *data)
 {
   if (path.length() > 0) {
-    path.append(L"\\");
+    // when using a long windows path (starting with \\?\) we apparently can have redundant
+    // . components in the path. This wasn't a problem with "regular" path names.
+    if (path == L".") {
+      path.clear();
+    } else {
+      path.append(L"\\");
+    }
   }
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
     data[iter->getIndex()]->setSkip(false);
-    std::wstring temp = path.substr().append(iter->getName().toStdWString());
+    std::wstring temp = path + iter->getName().toStdWString();
     data[iter->getIndex()]->setOutputFileName(temp.c_str());
   }
 
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
     if ((*iter)->getData().index != -1) {
       data[(*iter)->getData().index]->setSkip(false);
-      std::wstring temp = path.substr().append((*iter)->getData().name.toStdWString());
+      std::wstring temp = path + (*iter)->getData().name.toStdWString();
       data[(*iter)->getData().index]->setOutputFileName(temp.c_str());
     }
-    mapToArchive(*iter, path.substr().append((*iter)->getData().name.toStdWString()), data);
+    mapToArchive(*iter, path + (*iter)->getData().name.toStdWString(), data);
   }
 }
 
@@ -535,8 +541,8 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
     return false;
   }
 
-  QString targetDirectoryNative = m_ModsDirectory + "\\" + modName;
-  QString targetDirectory = QDir::fromNativeSeparators(targetDirectoryNative);
+  QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
+  QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
   qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
 
@@ -545,7 +551,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress.setValue(0);
   m_InstallationProgress.setWindowModality(Qt::WindowModal);
   m_InstallationProgress.show();
-  if (!m_CurrentArchive->extract(ToWString("\\\\?\\" + QDir::toNativeSeparators(targetDirectory)).c_str(),
+  if (!m_CurrentArchive->extract(ToWString("\\\\?\\" + targetDirectoryNative).c_str(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),
          new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
@@ -629,7 +635,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
 {
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
-    reportError(tr("File format \"%1\" not supported").arg(fileInfo.completeSuffix()));
+    reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
     return false;
   }
 
