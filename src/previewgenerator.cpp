@@ -34,7 +34,7 @@ PreviewGenerator::PreviewGenerator()
 
 void PreviewGenerator::registerPlugin(MOBase::IPluginPreview *plugin)
 {
-  foreach (const QString &extension, plugin->supportedExtensions()) {
+  for (const QString &extension : plugin->supportedExtensions()) {
     m_PreviewPlugins.insert(std::make_pair(extension, plugin));
   }
 }
@@ -46,7 +46,7 @@ bool PreviewGenerator::previewSupported(const QString &fileExtension) const
 
 QWidget *PreviewGenerator::genPreview(const QString &fileName) const
 {
-  auto iter = m_PreviewPlugins.find(QFileInfo(fileName).completeSuffix().toLower());
+  auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
   if (iter != m_PreviewPlugins.end()) {
     return iter->second->genFilePreview(fileName, m_MaxSize);
   } else {

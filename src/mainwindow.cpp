@@ -3468,7 +3468,7 @@ void MainWindow::writeDataToFile()
 
 int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
 {
-  QString extension = targetInfo.completeSuffix();
+  QString extension = targetInfo.suffix();
   if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
       (extension.compare("com", Qt::CaseInsensitive) == 0) ||
       (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
@@ -3723,7 +3723,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
 
     QString fileName = m_ContextItem->text(0);
-    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).completeSuffix())) {
+    if (m_PluginContainer.previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
 
