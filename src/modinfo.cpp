@@ -388,7 +388,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 {
   m_OverwriteList.clear();
   m_OverwrittenList.clear();
-  bool regular = false;
+
+  bool providesAnything = false;
 
   int dataID = 0;
   if ((*m_DirectoryStructure)->originExists(L"data")) {
@@ -400,22 +401,24 @@ void ModInfoWithConflictInfo::doConflictCheck() const
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
     std::vector<FileEntry::Ptr> files = origin.getFiles();
     // for all files in this origin
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      const std::vector<int> &alternatives = (*iter)->getAlternatives();
-      if ((alternatives.size() == 0)
-          || (alternatives[0] == dataID)) {
+    for (FileEntry::Ptr file : files) {
+      const std::vector<int> &alternatives = file->getAlternatives();
+      if ((alternatives.size() == 0) || (alternatives[0] == dataID)) {
         // no alternatives -> no conflict
-        regular = true;
+        providesAnything = true;
       } else {
-        if ((*iter)->getOrigin() != origin.getID()) {
-          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID((*iter)->getOrigin());
+        if (file->getOrigin() != origin.getID()) {
+          FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(file->getOrigin());
           unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
           m_OverwrittenList.insert(altIndex);
+        } else {
+          providesAnything = true;
         }
+
         // for all non-providing alternative origins
-        for (auto altIter = alternatives.begin(); altIter != alternatives.end(); ++altIter) {
-          if ((*altIter != dataID) && (*altIter != origin.getID())) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(*altIter);
+        for (int altId : alternatives) {
+          if ((altId != dataID) && (altId != origin.getID())) {
+            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altId);
             unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
             if (origin.getPriority() > altOrigin.getPriority()) {
               m_OverwriteList.insert(altIndex);
@@ -430,16 +433,14 @@ void ModInfoWithConflictInfo::doConflictCheck() const
 
   m_LastConflictCheck = QTime::currentTime();
 
-  if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
+  if (!providesAnything)
+    m_CurrentConflictState = CONFLICT_REDUNDANT;
+  else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
     m_CurrentConflictState = CONFLICT_MIXED;
   else if (!m_OverwriteList.empty())
     m_CurrentConflictState = CONFLICT_OVERWRITE;
   else if (!m_OverwrittenList.empty()) {
-    if (!regular) {
-      m_CurrentConflictState = CONFLICT_REDUNDANT;
-    } else {
-      m_CurrentConflictState = CONFLICT_OVERWRITTEN;
-    }
+    m_CurrentConflictState = CONFLICT_OVERWRITTEN;
   }
   else m_CurrentConflictState = CONFLICT_NONE;
 }
