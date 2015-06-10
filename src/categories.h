@@ -80,6 +80,8 @@ public:
    **/
   void saveCategories();
 
+  int addCategory(const QString &name, const std::vector<int> &nexusIDs, int parentID);
+
   /**
    * @brief retrieve the number of available categories
    *
@@ -141,6 +143,12 @@ public:
    * @return int id of the category
    **/
   int getCategoryID(unsigned int index) const;
+
+  /**
+   * @brief look up the id of a category by its name
+   * @note O(n)
+   */
+  int getCategoryID(const QString &name) const;
 
   /**
    * @brief look up the index of a category by its id

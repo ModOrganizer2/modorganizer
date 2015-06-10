@@ -166,22 +166,32 @@ void CategoryFactory::saveCategories()
 unsigned int CategoryFactory::countCategories(std::tr1::function<bool (const Category &category)> filter)
 {
   unsigned int result = 0;
-  for (auto iter = m_Categories.begin(); iter != m_Categories.end(); ++iter) {
-    if (filter(*iter)) {
+  for (const Category &cat : m_Categories) {
+    if (filter(cat)) {
       ++result;
     }
   }
   return result;
 }
 
+int CategoryFactory::addCategory(const QString &name, const std::vector<int> &nexusIDs, int parentID)
+{
+  int id = 1;
+  while (m_IDMap.find(id) != m_IDMap.end()) {
+    ++id;
+  }
+  addCategory(id, name, nexusIDs, parentID);
+
+  saveCategories();
+  return id;
+}
 
 void CategoryFactory::addCategory(int id, const QString &name, const std::vector<int> &nexusIDs, int parentID)
 {
   int index = m_Categories.size();
   m_Categories.push_back(Category(index, id, name, nexusIDs, parentID));
-  for (std::vector<int>::const_iterator iter = nexusIDs.begin();
-       iter != nexusIDs.end(); ++iter) {
-    m_NexusMap[*iter] = index;
+  for (int nexusID : nexusIDs) {
+    m_NexusMap[nexusID] = index;
   }
   m_IDMap[id] = index;
 }
@@ -304,6 +314,18 @@ int CategoryFactory::getCategoryIndex(int ID) const
   return iter->second;
 }
 
+
+int CategoryFactory::getCategoryID(const QString &name) const
+{
+  auto iter = std::find_if(m_Categories.begin(), m_Categories.end(), [name] (const Category &cat) -> bool {
+    return cat.m_Name == name;
+  });
+  if (iter != m_Categories.end()) {
+    return iter->m_ID;
+  } else {
+    return -1;
+  }
+}
 
 
 unsigned int CategoryFactory::resolveNexusID(int nexusID) const

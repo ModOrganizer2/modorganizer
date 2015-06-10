@@ -303,6 +303,40 @@ void ModInfo::setVersion(const VersionInfo &version)
   m_Version = version;
 }
 
+void ModInfo::addCategory(const QString &categoryName)
+{
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
+  if (id == -1) {
+    id = CategoryFactory::instance().addCategory(categoryName, std::vector<int>(), 0);
+  }
+  setCategory(id, true);
+}
+
+bool ModInfo::removeCategory(const QString &categoryName)
+{
+  int id = CategoryFactory::instance().getCategoryID(categoryName);
+  if (id == -1) {
+    return false;
+  }
+  if (!categorySet(id)) {
+    return false;
+  }
+  setCategory(id, false);
+  return true;
+}
+
+QStringList ModInfo::categories()
+{
+  QStringList result;
+
+  CategoryFactory &catFac = CategoryFactory::instance();
+  for (int id : m_Categories) {
+    result.append(catFac.getCategoryName(catFac.getCategoryIndex(id)));
+  }
+
+  return result;
+}
+
 bool ModInfo::hasFlag(ModInfo::EFlag flag) const
 {
   std::vector<EFlag> flags = getFlags();

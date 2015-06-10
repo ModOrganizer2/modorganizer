@@ -300,6 +300,10 @@ public:
    */
   virtual void addNexusCategory(int categoryID) = 0;
 
+  virtual void addCategory(const QString &categoryName) override;
+  virtual bool removeCategory(const QString &categoryName) override;
+  virtual QStringList categories() override;
+
   /**
    * update the endorsement state for the mod. This only changes the
    * buffered state, it does not sync with Nexus
