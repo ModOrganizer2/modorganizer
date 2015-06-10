@@ -100,16 +100,19 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
   if (stealFiles.length() > 0) {
     // instead of adding all the files of the target directory, we just change the root of the specified
     // files to this mod
-    FilesOrigin origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
-    foreach (const QString &filename, stealFiles) {
+    FilesOrigin &origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
+    for (const QString &filename : stealFiles) {
       QFileInfo fileInfo(filename);
       FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
       if (file.get() != nullptr) {
         if (file->getOrigin() == 0) {
           // replace data as the origin on this bsa
           file->removeOrigin(0);
-          file->addOrigin(origin.getID(), file->getFileTime(), L"");
         }
+        origin.addFile(file->getIndex());
+        file->addOrigin(origin.getID(), file->getFileTime(), L"");
+      } else {
+        qWarning("%s not found", qPrintable(fileInfo.fileName()));
       }
     }
   } else {
