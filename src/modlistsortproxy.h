@@ -58,6 +58,8 @@ public:
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action,
                             int row, int column, const QModelIndex &parent);
 
+  virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
+
   /**
    * @brief enable all mods visible under the current filter
    **/
@@ -112,6 +114,11 @@ private:
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;
   bool filterMatchesModOr(ModInfo::Ptr info, bool enabled) const;
 
+private slots:
+
+  void aboutToChangeData();
+  void postDataChanged();
+
 private:
 
   Profile *m_Profile;
@@ -123,6 +130,8 @@ private:
 
   bool m_FilterActive;
   FilterMode m_FilterMode;
+
+  std::vector<int> m_PreChangeFilters;
 
 };
 

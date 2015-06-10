@@ -453,6 +453,8 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 
   bool result = false;
 
+  emit aboutToChangeData();
+
   if (role == Qt::CheckStateRole) {
     bool enabled = value.toInt() == Qt::Checked;
     if (m_Profile->modEnabled(modID) != enabled) {
@@ -511,6 +513,8 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       emit dataChanged(index, index);
     }
   }
+
+  emit postDataChanged();
 
   IModList::ModStates newState = state(modID);
   if (oldState != newState) {
@@ -1091,16 +1095,7 @@ bool ModList::deleteSelection(QAbstractItemView *itemView)
 
 bool ModList::toggleSelection(QAbstractItemView *itemView)
 {
-  QAbstractItemModel *model = itemView->model();
-
-  // having a filter active when dataChanged is called caused a crash
-  // (at least with some Qt versions)
-  ModListSortProxy *filterModel = qobject_cast<ModListSortProxy*>(model);
-  std::vector<int> filter;
-  if (filterModel != nullptr) {
-    filter = filterModel->categoryFilter();
-    filterModel->setCategoryFilter(std::vector<int>());
-  }
+  emit aboutToChangeData();
 
   QItemSelectionModel *selectionModel = itemView->selectionModel();
 
@@ -1115,9 +1110,7 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
 
   emit dataChanged(index(0, 0), index(rowCount() - 1, columnCount() - 1));
 
-  if (filterModel != nullptr) {
-    filterModel->setCategoryFilter(filter);
-  }
+  emit postDataChanged();
 
   return true;
 }

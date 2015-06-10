@@ -237,6 +237,10 @@ signals:
    */
   void fileMoved(const QString &relativePath, const QString &oldOriginName, const QString &newOriginName);
 
+  void aboutToChangeData();
+
+  void postDataChanged();
+
 protected:
 
   // event filter, handles event from the header and the tree view itself

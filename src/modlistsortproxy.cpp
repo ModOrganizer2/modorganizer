@@ -376,3 +376,26 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
   return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
                                            sourceIndex.parent());
 }
+
+void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
+{
+  QSortFilterProxyModel::setSourceModel(sourceModel);
+
+  connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()));
+  connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()));
+}
+
+void ModListSortProxy::aboutToChangeData()
+{
+  // having a filter active when dataChanged is called caused a crash
+  // (at least with some Qt versions)
+  m_PreChangeFilters = categoryFilter();
+  setCategoryFilter(std::vector<int>());
+}
+
+void ModListSortProxy::postDataChanged()
+{
+  setCategoryFilter(m_PreChangeFilters);
+  m_PreChangeFilters.clear();
+}
+
