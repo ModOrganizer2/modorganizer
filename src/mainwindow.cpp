@@ -2363,7 +2363,8 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     m_OrganizerCore.modList()->modInfoChanged(modInfo);
   }
 
-  if (m_OrganizerCore.currentProfile()->modEnabled(index)) {
+  if (m_OrganizerCore.currentProfile()->modEnabled(index)
+      && !modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
     FilesOrigin& origin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(modInfo->name()));
     origin.enable(false);
 
