@@ -247,7 +247,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     } else if (column == COL_INSTALLTIME) {
       // display installation time for mods that can be updated
-      if (modInfo->canBeUpdated()) {
+      if (modInfo->creationTime().isValid()) {
         return modInfo->creationTime();
       } else {
         return QVariant();
@@ -660,6 +660,7 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
     if (m_ChangeInfo.state != newState) {
       m_ModStateChanged(info->name(), newState);
     }
+
     int row = ModInfo::getIndex(info->name());
     info->testValid();
     emit dataChanged(index(row, 0), index(row, columnCount()));

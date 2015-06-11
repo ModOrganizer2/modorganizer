@@ -1045,7 +1045,7 @@ public:
   virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }
   virtual QString notes() const { return ""; }
-  virtual QDateTime creationTime() const { return m_StartupTime; }
+  virtual QDateTime creationTime() const { return QDateTime(); }
   virtual QString absolutePath() const;
   virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
   virtual QString getInstallationFile() const { return ""; }
@@ -1063,10 +1063,6 @@ public:
 private:
 
   ModInfoOverwrite();
-
-private:
-
-  QDateTime m_StartupTime;
 
 };
 
