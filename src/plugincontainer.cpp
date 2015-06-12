@@ -228,7 +228,7 @@ void PluginContainer::loadPlugins()
 {
   unloadPlugins();
 
-  foreach (QObject *plugin, QPluginLoader::staticInstances()) {
+  for (QObject *plugin : QPluginLoader::staticInstances()) {
     registerPlugin(plugin, "");
   }
 

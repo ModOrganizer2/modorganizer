@@ -214,8 +214,8 @@ void FilesOrigin::setName(const std::wstring &name)
 std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 {
   std::vector<FileEntry::Ptr> result;
-  for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
-    result.push_back(m_FileRegister.lock()->getFile(*iter));
+  for (FileEntry::Index fileIdx : m_Files) {
+    result.push_back(m_FileRegister.lock()->getFile(fileIdx));
   }
 
   return result;
