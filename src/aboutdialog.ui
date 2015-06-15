@@ -83,7 +83,7 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">Copyright 2011-2014 Sebastian Herbord</string>
+            <string notr="true">Copyright 2011-2015 Sebastian Herbord</string>
            </property>
           </widget>
          </item>
@@ -180,12 +180,18 @@
               </item>
               <item>
                <property name="text">
-                <string>Ren (Korean)</string>
+                <string notr="true">Ren (Korean)</string>
+               </property>
+               <property name="toolTip">
+                <string/>
                </property>
               </item>
               <item>
                <property name="text">
                 <string>... more (Can't track)</string>
+               </property>
+               <property name="toolTip">
+                <string/>
                </property>
               </item>
              </widget>
@@ -226,12 +232,12 @@
               </item>
               <item>
                <property name="text">
-                <string>GamerPoet</string>
+                <string notr="true">GamerPoet</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>Gopher</string>
+                <string notr="true">Gopher</string>
                </property>
               </item>
               <item>
@@ -256,7 +262,7 @@
               </item>
               <item>
                <property name="text">
-                <string>thosrtanner</string>
+                <string notr="true">thosrtanner</string>
                </property>
               </item>
              </widget>
