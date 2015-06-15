@@ -187,8 +187,6 @@ MainWindow::MainWindow(const QString &exeName
 
   ui->actionEndorseMO->setVisible(false);
 
-  MOBase::QuestionBoxMemory::init(initSettings.fileName());
-
   updateProblemsButton();
 
   updateToolBar();

@@ -146,6 +146,8 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
   NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
 
+  MOBase::QuestionBoxMemory::init(initSettings.fileName());
+
   m_InstallationManager.setModsDirectory(m_Settings.getModDirectory());
   m_InstallationManager.setDownloadDirectory(m_Settings.getDownloadDirectory());
 
