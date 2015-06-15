@@ -463,20 +463,21 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         }
       }
     }
-  }
+    m_LastConflictCheck = QTime::currentTime();
 
-  m_LastConflictCheck = QTime::currentTime();
-
-  if (!providesAnything)
-    m_CurrentConflictState = CONFLICT_REDUNDANT;
-  else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
-    m_CurrentConflictState = CONFLICT_MIXED;
-  else if (!m_OverwriteList.empty())
-    m_CurrentConflictState = CONFLICT_OVERWRITE;
-  else if (!m_OverwrittenList.empty()) {
-    m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+    if (!providesAnything)
+      m_CurrentConflictState = CONFLICT_REDUNDANT;
+    else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
+      m_CurrentConflictState = CONFLICT_MIXED;
+    else if (!m_OverwriteList.empty())
+      m_CurrentConflictState = CONFLICT_OVERWRITE;
+    else if (!m_OverwrittenList.empty()) {
+      m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+    }
+    else m_CurrentConflictState = CONFLICT_NONE;
+  } else {
+    m_CurrentConflictState = CONFLICT_NONE;
   }
-  else m_CurrentConflictState = CONFLICT_NONE;
 }
 
 ModInfoWithConflictInfo::EConflictType ModInfoWithConflictInfo::isConflicted() const
