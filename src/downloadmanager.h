@@ -86,7 +86,7 @@ private:
 
     quint32 m_TaskProgressId;
 
-    MOBase::ModRepositoryFileInfo *m_FileInfo;
+    MOBase::ModRepositoryFileInfo *m_FileInfo { nullptr };
 
     bool m_Hidden;
 

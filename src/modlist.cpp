@@ -361,11 +361,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     if (column == COL_FLAGS) {
       QString result;
 
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-      for (auto iter = flags.begin(); iter != flags.end(); ++iter) {
+      for (ModInfo::EFlag flag : modInfo->getFlags()) {
         if (result.length() != 0) result += "<br>";
-        result += getFlagText(*iter, modInfo);
+        result += getFlagText(flag, modInfo);
       }
 
       return result;
@@ -571,7 +569,8 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
       }
     }
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-    if ((m_DropOnItems) && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
+    if (m_DropOnItems
+        && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
       result |= Qt::ItemIsDropEnabled;
     }
   } else {
