@@ -369,23 +369,29 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (!bootstrap()) { // requires gameinfo to be initialised!
-    return -1;
-  }
-
-  LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
-
-#if QT_VERSION >= 0x050000
-  qDebug("ssl support: %d", QSslSocket::supportsSsl());
-#endif
-
-  qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
-  qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
   QPixmap pixmap(":/MO/gui/splash");
   QSplashScreen splash(pixmap);
-  splash.show();
 
-  cleanupDir();
+  try {
+    if (!bootstrap()) { // requires gameinfo to be initialised!
+      return -1;
+    }
+
+    LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+
+#if QT_VERSION >= 0x050000
+    qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#endif
+
+    qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
+    qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
+    splash.show();
+
+    cleanupDir();
+  } catch (const std::exception &e) {
+    reportError(e.what());
+    return 1;
+  }
 
   { // extend path to include dll directory so plugins don't need a manifest
     // (using AddDllDirectory would be an alternative to this but it seems fairly complicated esp.
