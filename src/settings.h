@@ -33,6 +33,8 @@ namespace MOBase {
   class IPluginGame;
 }
 
+class SettingsDialog;
+class QCheckBox;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -301,14 +303,92 @@ public slots:
 
 private:
 
-  QString obfuscate(const QString &password) const;
-  QString deObfuscate(const QString &password) const;
+  static QString obfuscate(const QString &password);
+  static QString deObfuscate(const QString &password);
 
   void addLanguages(QComboBox *languageBox);
   void addStyles(QComboBox *styleBox);
   void readPluginBlacklist();
   void writePluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def) const;
+
+  class GeneralTab
+  {
+  public:
+    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
+    ~GeneralTab();
+
+  private:
+    Settings *m_parent;
+    QSettings &m_Settings;
+    SettingsDialog &m_dialog;
+    QComboBox *m_languageBox;
+    QComboBox *m_styleBox;
+    QComboBox *m_logLevelBox;
+    QLineEdit *m_downloadDirEdit;
+    QLineEdit *m_modDirEdit;
+    QLineEdit *m_cacheDirEdit;
+    QCheckBox *m_compactBox;
+    QCheckBox *m_showMetaBox;
+  };
+
+  class NexusTab
+  {
+  public:
+    NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
+    /*:
+      m_parent(m_parent),
+      m_settings(m_parent->m_Settings),
+      m_dialog(m_dialog)
+    {}
+    */
+    ~NexusTab();
+    /*
+  {
+    if (m_dialog.result() != QDialog::Accepted) {
+      return;
+    }
+  }
+*/
+  private:
+    Settings *m_parent;
+    QSettings &m_Settings;
+    SettingsDialog &m_dialog;
+    QCheckBox *m_loginCheckBox;
+    QLineEdit *m_usernameEdit;
+    QLineEdit *m_passwordEdit;
+    QCheckBox *m_offlineBox;
+    QCheckBox *m_proxyBox;
+    QListWidget *m_knownServersList;
+    QListWidget *m_preferredServersList;
+  };
+
+  class PluginsTab
+  {
+  public:
+    PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
+    /*:
+      m_parent(m_parent),
+      m_Settings(m_parent->m_Settings),
+      m_dialog(m_dialog)
+    {
+    }
+    */
+    ~PluginsTab();
+    /*
+  {
+    if (m_dialog.result() != QDialog::Accepted) {
+      return;
+    }
+  }
+*/
+  private:
+    Settings *m_parent;
+    QSettings &m_Settings;
+    SettingsDialog &m_dialog;
+    QListWidget *m_pluginsList;
+    QListWidget *m_pluginBlacklistList;
+  };
 
 private slots:
 

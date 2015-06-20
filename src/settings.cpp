@@ -140,7 +140,7 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-QString Settings::obfuscate(const QString &password) const
+QString Settings::obfuscate(const QString &password)
 {
   QByteArray temp = password.toUtf8();
 
@@ -151,7 +151,7 @@ QString Settings::obfuscate(const QString &password) const
   return buffer.toBase64();
 }
 
-QString Settings::deObfuscate(const QString &password) const
+QString Settings::deObfuscate(const QString &password)
 {
   QByteArray temp(QByteArray::fromBase64(password.toUtf8()));
 
@@ -539,31 +539,14 @@ void Settings::query(QWidget *parent)
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
-  // General Page
-  QComboBox *languageBox = dialog.findChild<QComboBox*>("languageBox");
-  QComboBox *styleBox = dialog.findChild<QComboBox*>("styleBox");
-  QComboBox *logLevelBox = dialog.findChild<QComboBox*>("logLevelBox");
-  QCheckBox *compactBox = dialog.findChild<QCheckBox*>("compactBox");
-  QCheckBox *showMetaBox = dialog.findChild<QCheckBox*>("showMetaBox");
-
-  QLineEdit *downloadDirEdit = dialog.findChild<QLineEdit*>("downloadDirEdit");
-  QLineEdit *modDirEdit = dialog.findChild<QLineEdit*>("modDirEdit");
-  QLineEdit *cacheDirEdit = dialog.findChild<QLineEdit*>("cacheDirEdit");
-
-  // nexus page
-  QCheckBox *loginCheckBox = dialog.findChild<QCheckBox*>("loginCheckBox");
-  QLineEdit *usernameEdit = dialog.findChild<QLineEdit*>("usernameEdit");
-  QLineEdit *passwordEdit = dialog.findChild<QLineEdit*>("passwordEdit");
-  QCheckBox *offlineBox = dialog.findChild<QCheckBox*>("offlineBox");
-  QCheckBox *proxyBox = dialog.findChild<QCheckBox*>("proxyBox");
-
-  QListWidget *knownServersList = dialog.findChild<QListWidget*>("knownServersList");
-  QListWidget *preferredServersList = dialog.findChild<QListWidget*>("preferredServersList");
-
-  // plugis page
+  GeneralTab general_tab(this, dialog);
+  NexusTab nexus_tab(this, dialog);
+  PluginsTab plugins_tab(this, dialog);
+#if 0
+  // plugins page
   QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
   QListWidget *pluginBlacklistList = dialog.findChild<QListWidget*>("pluginBlacklist");
-
+#endif
   // workarounds page
   QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
   QComboBox *mechanismBox = dialog.findChild<QComboBox*>("mechanismBox");
@@ -605,58 +588,20 @@ void Settings::query(QWidget *parent)
 
   mechanismBox->setCurrentIndex(index);
 
-  {
-    addLanguages(languageBox);
-    QString languageCode = language();
-    int currentID = languageBox->findData(languageCode);
-    // I made a mess. :( Most languages are stored with only the iso country code (2 characters like "de") but chinese
-    // with the exact language variant (zh_TW) so I have to search for both variants
-    if (currentID == -1) {
-      currentID = languageBox->findData(languageCode.mid(0, 2));
-    }
-    if (currentID != -1) {
-      languageBox->setCurrentIndex(currentID);
-    }
-  }
-
-  {
-    addStyles(styleBox);
-    int currentID = styleBox->findData(m_Settings.value("Settings/style", "").toString());
-    if (currentID != -1) {
-      styleBox->setCurrentIndex(currentID);
-    }
-  }
-
-  compactBox->setChecked(compactDownloads());
-  showMetaBox->setChecked(metaDownloads());
-
   hideUncheckedBox->setChecked(hideUncheckedPlugins());
   displayForeignBox->setChecked(displayForeign());
   forceEnableBox->setChecked(forceEnableCoreFiles());
 
   appIDEdit->setText(getSteamAppID());
-
-  if (automaticLoginEnabled()) {
-    loginCheckBox->setChecked(true);
-    usernameEdit->setText(m_Settings.value("Settings/nexus_username", "").toString());
-    passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
-  }
-
   if (m_Settings.contains("Settings/steam_username")) {
     steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
     if (m_Settings.contains("Settings/steam_password")) {
       steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
     }
   }
-
-  downloadDirEdit->setText(getDownloadDirectory());
-  modDirEdit->setText(getModDirectory());
-  cacheDirEdit->setText(getCacheDirectory());
-  offlineBox->setChecked(offlineMode());
-  proxyBox->setChecked(useProxy());
   nmmVersionEdit->setText(getNMMVersion());
-  logLevelBox->setCurrentIndex(logLevel());
 
+#if 0
   // display plugin settings
   foreach (IPlugin *plugin, m_Plugins) {
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), pluginsList);
@@ -670,32 +615,7 @@ void Settings::query(QWidget *parent)
   foreach (const QString &pluginName, m_PluginBlacklist) {
     pluginBlacklistList->addItem(pluginName);
   }
-
-  // display server preferences
-  m_Settings.beginGroup("Servers");
-  foreach (const QString &key, m_Settings.childKeys()) {
-    QVariantMap val = m_Settings.value(key).toMap();
-    QString type = val["premium"].toBool() ? "(premium)" : "(free)";
-
-    QString descriptor = key + " " + type;
-    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
-      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
-      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
-    }
-
-    QListWidgetItem *newItem = new QListWidgetItemEx<int>(descriptor, Qt::UserRole + 1);
-
-    newItem->setData(Qt::UserRole, key);
-    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
-    if (val["preferred"].toInt() > 0) {
-      preferredServersList->addItem(newItem);
-    } else {
-      knownServersList->addItem(newItem);
-    }
-    preferredServersList->sortItems(Qt::DescendingOrder);
-  }
-  m_Settings.endGroup();
-
+#endif
   if (dialog.exec() == QDialog::Accepted) {
     //
     // transfer modified settings to configuration file
@@ -703,88 +623,19 @@ void Settings::query(QWidget *parent)
 
     m_Settings.setValue("Settings/hide_unchecked_plugins", hideUncheckedBox->checkState() ? true : false);
     m_Settings.setValue("Settings/force_enable_core_files", forceEnableBox->checkState() ? true : false);
-    m_Settings.setValue("Settings/compact_downloads", compactBox->isChecked());
-    m_Settings.setValue("Settings/meta_downloads", showMetaBox->isChecked());
     m_Settings.setValue("Settings/load_mechanism", mechanismBox->itemData(mechanismBox->currentIndex()).toInt());
-
-
-    { // advanced settings
-      if ((QDir::fromNativeSeparators(modDirEdit->text()) != QDir::fromNativeSeparators(getModDirectory())) &&
-          (QMessageBox::question(nullptr, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
-                                                         "Mods not present (or named differently) in the new location will be disabled in all profiles. "
-                                                         "There is no way to undo this unless you backed up your profiles manually. Proceed?"),
-                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
-        modDirEdit->setText(getModDirectory());
-      }
-
-      if (!QDir(downloadDirEdit->text()).exists()) {
-        QDir().mkpath(downloadDirEdit->text());
-      }
-      if (!QDir(cacheDirEdit->text()).exists()) {
-        QDir().mkpath(cacheDirEdit->text());
-      }
-      if (!QDir(modDirEdit->text()).exists()) {
-        QDir().mkpath(modDirEdit->text());
-      }
-
-      if (QFileInfo(downloadDirEdit->text()) !=
-          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::downloadPath()))) {
-        m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(downloadDirEdit->text()));
-      } else {
-        m_Settings.remove("Settings/download_directory");
-      }
-      if (QFileInfo(cacheDirEdit->text()) !=
-          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::cachePath()))) {
-        m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(cacheDirEdit->text()));
-      } else {
-        m_Settings.remove("Settings/cache_directory");
-      }
-      if (QFileInfo(modDirEdit->text()) !=
-          QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::modsPath()))) {
-        m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(modDirEdit->text()));
-      } else {
-        m_Settings.remove("Settings/mod_directory");
-      }
-    }
-
-
-    QString oldLanguage = m_Settings.value("Settings/language", "en_US").toString();
-    QString newLanguage = languageBox->itemData(languageBox->currentIndex()).toString();
-    if (newLanguage != oldLanguage) {
-      m_Settings.setValue("Settings/language", newLanguage);
-      emit languageChanged(newLanguage);
-    }
-
-    QString oldStyle = m_Settings.value("Settings/style", "").toString();
-    QString newStyle = styleBox->itemData(styleBox->currentIndex()).toString();
-    if (oldStyle != newStyle) {
-      m_Settings.setValue("Settings/style", newStyle);
-      emit styleChanged(newStyle);
-    }
-
-    m_Settings.setValue("Settings/log_level", logLevelBox->currentIndex());
 
     if (appIDEdit->text() != m_GamePlugin->steamAPPId()) {
       m_Settings.setValue("Settings/app_id", appIDEdit->text());
     } else {
       m_Settings.remove("Settings/app_id");
     }
-    if (loginCheckBox->isChecked()) {
-      m_Settings.setValue("Settings/nexus_login", true);
-      m_Settings.setValue("Settings/nexus_username", usernameEdit->text());
-      m_Settings.setValue("Settings/nexus_password", obfuscate(passwordEdit->text()));
-    } else {
-      m_Settings.setValue("Settings/nexus_login", false);
-      m_Settings.remove("Settings/nexus_username");
-      m_Settings.remove("Settings/nexus_password");
-    }
     setSteamLogin(steamUserEdit->text(), steamPassEdit->text());
-    m_Settings.setValue("Settings/offline_mode", offlineBox->isChecked());
-    m_Settings.setValue("Settings/use_proxy", proxyBox->isChecked());
     m_Settings.setValue("Settings/display_foreign", displayForeignBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
 
+#if 0
     // transfer plugin settings to in-memory structure
     for (int i = 0; i < pluginsList->count(); ++i) {
       QListWidgetItem *item = pluginsList->item(i);
@@ -803,22 +654,246 @@ void Settings::query(QWidget *parent)
       m_PluginBlacklist.insert(item->text());
     }
     writePluginBlacklist();
-
-    // store server preference
-    m_Settings.beginGroup("Servers");
-    for (int i = 0; i < knownServersList->count(); ++i) {
-      QString key = knownServersList->item(i)->data(Qt::UserRole).toString();
-      QVariantMap val = m_Settings.value(key).toMap();
-      val["preferred"] = 0;
-      m_Settings.setValue(key, val);
-    }
-    int count = preferredServersList->count();
-    for (int i = 0; i < count; ++i) {
-      QString key = preferredServersList->item(i)->data(Qt::UserRole).toString();
-      QVariantMap val = m_Settings.value(key).toMap();
-      val["preferred"] = count - i;
-      m_Settings.setValue(key, val);
-    }
-    m_Settings.endGroup();
+#endif
   }
+}
+
+Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  m_parent(m_parent),
+  m_Settings(m_parent->m_Settings),
+  m_dialog(m_dialog),
+  m_languageBox(m_dialog.findChild<QComboBox*>("languageBox")),
+  m_styleBox(m_dialog.findChild<QComboBox*>("styleBox")),
+  m_logLevelBox(m_dialog.findChild<QComboBox*>("logLevelBox")),
+  m_downloadDirEdit(m_dialog.findChild<QLineEdit*>("downloadDirEdit")),
+  m_modDirEdit(m_dialog.findChild<QLineEdit*>("modDirEdit")),
+  m_cacheDirEdit(m_dialog.findChild<QLineEdit*>("cacheDirEdit")),
+  m_compactBox(m_dialog.findChild<QCheckBox*>("compactBox")),
+  m_showMetaBox(m_dialog.findChild<QCheckBox*>("showMetaBox"))
+  {
+    //FIXME I think 'this function 'addLanguages' lives in here not in parent
+    m_parent->addLanguages(m_languageBox);
+    {
+      QString languageCode = m_parent->language();
+      int currentID = m_languageBox->findData(languageCode);
+      // I made a mess. :( Most languages are stored with only the iso country code (2 characters like "de") but chinese
+      // with the exact language variant (zh_TW) so I have to search for both variants
+      if (currentID == -1) {
+        currentID = m_languageBox->findData(languageCode.mid(0, 2));
+      }
+      if (currentID != -1) {
+        m_languageBox->setCurrentIndex(currentID);
+      }
+    }
+
+    //FIXME I think addStyles lives in here not in parent
+    m_parent->addStyles(m_styleBox);
+    {
+      int currentID = m_styleBox->findData(m_Settings.value("Settings/style", "").toString());
+      if (currentID != -1) {
+        m_styleBox->setCurrentIndex(currentID);
+      }
+    }
+
+    m_logLevelBox->setCurrentIndex(m_parent->logLevel());
+    m_downloadDirEdit->setText(m_parent->getDownloadDirectory());
+    m_modDirEdit->setText(m_parent->getModDirectory());
+    m_cacheDirEdit->setText(m_parent->getCacheDirectory());
+    m_compactBox->setChecked(m_parent->compactDownloads());
+    m_showMetaBox->setChecked(m_parent->metaDownloads());
+}
+
+Settings::GeneralTab::~GeneralTab()
+{
+  if (m_dialog.result() != QDialog::Accepted) {
+    return;
+  }
+
+  QString oldLanguage = m_Settings.value("Settings/language", "en_US").toString();
+  QString newLanguage = m_languageBox->itemData(m_languageBox->currentIndex()).toString();
+  if (newLanguage != oldLanguage) {
+    m_Settings.setValue("Settings/language", newLanguage);
+    emit m_parent->languageChanged(newLanguage);
+  }
+
+  QString oldStyle = m_Settings.value("Settings/style", "").toString();
+  QString newStyle = m_styleBox->itemData(m_styleBox->currentIndex()).toString();
+  if (oldStyle != newStyle) {
+    m_Settings.setValue("Settings/style", newStyle);
+    emit m_parent->styleChanged(newStyle);
+  }
+
+  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentIndex());
+
+  { // advanced settings
+    if ((QDir::fromNativeSeparators(m_modDirEdit->text()) != QDir::fromNativeSeparators(m_parent->getModDirectory())) &&
+        (QMessageBox::question(nullptr, tr("Confirm"), tr("Changing the mod directory affects all your profiles! "
+                                                       "Mods not present (or named differently) in the new location will be disabled in all profiles. "
+                                                       "There is no way to undo this unless you backed up your profiles manually. Proceed?"),
+                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
+      m_modDirEdit->setText(m_parent->getModDirectory());
+    }
+
+    if (!QDir(m_downloadDirEdit->text()).exists()) {
+      QDir().mkpath(m_downloadDirEdit->text());
+    }
+    if (QFileInfo(m_downloadDirEdit->text()) !=
+        QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::downloadPath()))) {
+      m_Settings.setValue("Settings/download_directory", QDir::toNativeSeparators(m_downloadDirEdit->text()));
+    } else {
+      m_Settings.remove("Settings/download_directory");
+    }
+
+    if (!QDir(m_modDirEdit->text()).exists()) {
+      QDir().mkpath(m_modDirEdit->text());
+    }
+    if (QFileInfo(m_modDirEdit->text()) !=
+        QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::modsPath()))) {
+      m_Settings.setValue("Settings/mod_directory", QDir::toNativeSeparators(m_modDirEdit->text()));
+    } else {
+      m_Settings.remove("Settings/mod_directory");
+    }
+
+    if (!QDir(m_cacheDirEdit->text()).exists()) {
+      QDir().mkpath(m_cacheDirEdit->text());
+    }
+    if (QFileInfo(m_cacheDirEdit->text()) !=
+        QFileInfo(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::cachePath()))) {
+      m_Settings.setValue("Settings/cache_directory", QDir::toNativeSeparators(m_cacheDirEdit->text()));
+    } else {
+      m_Settings.remove("Settings/cache_directory");
+    }
+  }
+
+  m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
+  m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
+}
+
+Settings::NexusTab::NexusTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  m_parent(m_parent),
+  m_Settings(m_parent->m_Settings),
+  m_dialog(m_dialog),
+  m_loginCheckBox(m_dialog.findChild<QCheckBox*>("loginCheckBox")),
+  m_usernameEdit(m_dialog.findChild<QLineEdit*>("usernameEdit")),
+  m_passwordEdit(m_dialog.findChild<QLineEdit*>("passwordEdit")),
+  m_offlineBox(m_dialog.findChild<QCheckBox*>("offlineBox")),
+  m_proxyBox(m_dialog.findChild<QCheckBox*>("proxyBox")),
+  m_knownServersList(m_dialog.findChild<QListWidget*>("knownServersList")),
+  m_preferredServersList(m_dialog.findChild<QListWidget*>("preferredServersList"))
+{
+  if (m_parent->automaticLoginEnabled()) {
+    m_loginCheckBox->setChecked(true);
+    m_usernameEdit->setText(m_Settings.value("Settings/nexus_username", "").toString());
+    m_passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
+  }
+
+  m_offlineBox->setChecked(m_parent->offlineMode());
+  m_proxyBox->setChecked(m_parent->useProxy());
+
+  // display server preferences
+  m_Settings.beginGroup("Servers");
+  for (const QString &key : m_Settings.childKeys()) {
+    QVariantMap val = m_Settings.value(key).toMap();
+    QString type = val["premium"].toBool() ? "(premium)" : "(free)";
+
+    QString descriptor = key + " " + type;
+    if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
+      int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
+      descriptor += QString(" (%1 kbps)").arg(bps / 1024);
+    }
+
+    QListWidgetItem *newItem = new QListWidgetItemEx<int>(descriptor, Qt::UserRole + 1);
+
+    newItem->setData(Qt::UserRole, key);
+    newItem->setData(Qt::UserRole + 1, val["preferred"].toInt());
+    if (val["preferred"].toInt() > 0) {
+      m_preferredServersList->addItem(newItem);
+    } else {
+      m_knownServersList->addItem(newItem);
+    }
+    m_preferredServersList->sortItems(Qt::DescendingOrder);
+  }
+  m_Settings.endGroup();
+}
+
+Settings::NexusTab::~NexusTab()
+{
+  if (m_dialog.result() != QDialog::Accepted) {
+    return;
+  }
+  if (m_loginCheckBox->isChecked()) {
+    m_Settings.setValue("Settings/nexus_login", true);
+    m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
+    m_Settings.setValue("Settings/nexus_password", obfuscate(m_passwordEdit->text()));
+  } else {
+    m_Settings.setValue("Settings/nexus_login", false);
+    m_Settings.remove("Settings/nexus_username");
+    m_Settings.remove("Settings/nexus_password");
+  }
+  m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
+  m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
+
+  // store server preference
+  m_Settings.beginGroup("Servers");
+  for (int i = 0; i < m_knownServersList->count(); ++i) {
+    QString key = m_knownServersList->item(i)->data(Qt::UserRole).toString();
+    QVariantMap val = m_Settings.value(key).toMap();
+    val["preferred"] = 0;
+    m_Settings.setValue(key, val);
+  }
+  int count = m_preferredServersList->count();
+  for (int i = 0; i < count; ++i) {
+    QString key = m_preferredServersList->item(i)->data(Qt::UserRole).toString();
+    QVariantMap val = m_Settings.value(key).toMap();
+    val["preferred"] = count - i;
+    m_Settings.setValue(key, val);
+  }
+  m_Settings.endGroup();
+}
+
+Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  m_parent(m_parent),
+  m_Settings(m_parent->m_Settings),
+  m_dialog(m_dialog),
+  m_pluginsList(m_dialog.findChild<QListWidget*>("pluginsList")),
+  m_pluginBlacklistList(m_dialog.findChild<QListWidget*>("pluginBlacklist"))
+{
+  // display plugin settings
+  for (IPlugin *plugin : m_parent->m_Plugins) {
+    QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), m_pluginsList);
+    listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
+    listItem->setData(Qt::UserRole + 1, m_parent->m_PluginSettings[plugin->name()]);
+    listItem->setData(Qt::UserRole + 2, m_parent->m_PluginDescriptions[plugin->name()]);
+    m_pluginsList->addItem(listItem);
+  }
+
+  // display plugin blacklist
+  for (const QString &pluginName : m_parent->m_PluginBlacklist) {
+    m_pluginBlacklistList->addItem(pluginName);
+  }
+}
+
+Settings::PluginsTab:: ~PluginsTab()
+{
+  if (m_dialog.result() != QDialog::Accepted) {
+    return;
+  }
+  // transfer plugin settings to in-memory structure
+  for (int i = 0; i < m_pluginsList->count(); ++i) {
+    QListWidgetItem *item = m_pluginsList->item(i);
+    m_parent->m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
+  }
+  // store plugin settings on disc
+  for (auto iterPlugins = m_parent->m_PluginSettings.begin(); iterPlugins != m_parent->m_PluginSettings.end(); ++iterPlugins) {
+    for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end(); ++iterSettings) {
+      m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
+    }
+  }
+
+  // store plugin blacklist
+  m_parent->m_PluginBlacklist.clear();
+  foreach (QListWidgetItem *item, m_pluginBlacklistList->findItems("*", Qt::MatchWildcard)) {
+    m_parent->m_PluginBlacklist.insert(item->text());
+  }
+  m_parent->writePluginBlacklist();
 }
