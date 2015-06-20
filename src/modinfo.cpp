@@ -431,6 +431,9 @@ void ModInfoWithConflictInfo::doConflictCheck() const
   }
 
   std::wstring name = ToWString(this->name());
+
+  m_CurrentConflictState = CONFLICT_NONE;
+
   if ((*m_DirectoryStructure)->originExists(name)) {
     FilesOrigin &origin = (*m_DirectoryStructure)->getOriginByName(name);
     std::vector<FileEntry::Ptr> files = origin.getFiles();
@@ -465,18 +468,16 @@ void ModInfoWithConflictInfo::doConflictCheck() const
     }
     m_LastConflictCheck = QTime::currentTime();
 
-    if (!providesAnything)
-      m_CurrentConflictState = CONFLICT_REDUNDANT;
-    else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
-      m_CurrentConflictState = CONFLICT_MIXED;
-    else if (!m_OverwriteList.empty())
-      m_CurrentConflictState = CONFLICT_OVERWRITE;
-    else if (!m_OverwrittenList.empty()) {
-      m_CurrentConflictState = CONFLICT_OVERWRITTEN;
+    if (files.size() != 0) {
+      if (!providesAnything)
+        m_CurrentConflictState = CONFLICT_REDUNDANT;
+      else if (!m_OverwriteList.empty() && !m_OverwrittenList.empty())
+        m_CurrentConflictState = CONFLICT_MIXED;
+      else if (!m_OverwriteList.empty())
+        m_CurrentConflictState = CONFLICT_OVERWRITE;
+      else if (!m_OverwrittenList.empty())
+        m_CurrentConflictState = CONFLICT_OVERWRITTEN;
     }
-    else m_CurrentConflictState = CONFLICT_NONE;
-  } else {
-    m_CurrentConflictState = CONFLICT_NONE;
   }
 }
 
