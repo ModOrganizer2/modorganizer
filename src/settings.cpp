@@ -36,6 +36,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QDesktopServices>
 
+#include <memory>
+
 
 using namespace MOBase;
 using namespace MOShared;
@@ -539,14 +541,14 @@ void Settings::query(QWidget *parent)
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
-  GeneralTab general_tab(this, dialog);
-  NexusTab nexus_tab(this, dialog);
-  PluginsTab plugins_tab(this, dialog);
-#if 0
-  // plugins page
-  QListWidget *pluginsList = dialog.findChild<QListWidget*>("pluginsList");
-  QListWidget *pluginBlacklistList = dialog.findChild<QListWidget*>("pluginBlacklist");
-#endif
+  std::vector<std::unique_ptr<SettingsTab>> tabs;
+  //Don't you love C++?
+  //tabs.push_back(new GeneralTab(this, dialog));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new NexusTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
+
   // workarounds page
   QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
   QComboBox *mechanismBox = dialog.findChild<QComboBox*>("mechanismBox");
@@ -554,11 +556,6 @@ void Settings::query(QWidget *parent)
   QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
   QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
   QCheckBox *displayForeignBox = dialog.findChild<QCheckBox*>("displayForeignBox");
-
-  // steam login page
-  QLineEdit *steamUserEdit = dialog.findChild<QLineEdit*>("steamUserEdit");
-  QLineEdit *steamPassEdit = dialog.findChild<QLineEdit*>("steamPassEdit");
-
   //
   // set up current settings
   //
@@ -593,30 +590,12 @@ void Settings::query(QWidget *parent)
   forceEnableBox->setChecked(forceEnableCoreFiles());
 
   appIDEdit->setText(getSteamAppID());
-  if (m_Settings.contains("Settings/steam_username")) {
-    steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
-    if (m_Settings.contains("Settings/steam_password")) {
-      steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
-    }
-  }
   nmmVersionEdit->setText(getNMMVersion());
 
-#if 0
-  // display plugin settings
-  foreach (IPlugin *plugin, m_Plugins) {
-    QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), pluginsList);
-    listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
-    listItem->setData(Qt::UserRole + 1, m_PluginSettings[plugin->name()]);
-    listItem->setData(Qt::UserRole + 2, m_PluginDescriptions[plugin->name()]);
-    pluginsList->addItem(listItem);
-  }
-
-  // display plugin blacklist
-  foreach (const QString &pluginName, m_PluginBlacklist) {
-    pluginBlacklistList->addItem(pluginName);
-  }
-#endif
   if (dialog.exec() == QDialog::Accepted) {
+    for (std::unique_ptr<SettingsTab> const &tab: tabs) {
+      tab->update();
+    }
     //
     // transfer modified settings to configuration file
     //
@@ -630,38 +609,25 @@ void Settings::query(QWidget *parent)
     } else {
       m_Settings.remove("Settings/app_id");
     }
-    setSteamLogin(steamUserEdit->text(), steamPassEdit->text());
     m_Settings.setValue("Settings/display_foreign", displayForeignBox->isChecked());
 
     m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
 
-#if 0
-    // transfer plugin settings to in-memory structure
-    for (int i = 0; i < pluginsList->count(); ++i) {
-      QListWidgetItem *item = pluginsList->item(i);
-      m_PluginSettings[item->text()] = item->data(Qt::UserRole + 1).toMap();
-    }
-    // store plugin settings on disc
-    for (auto iterPlugins = m_PluginSettings.begin(); iterPlugins != m_PluginSettings.end(); ++iterPlugins) {
-      for (auto iterSettings = iterPlugins->begin(); iterSettings != iterPlugins->end(); ++iterSettings) {
-        m_Settings.setValue("Plugins/" + iterPlugins.key() + "/" + iterSettings.key(), iterSettings.value());
-      }
-    }
-
-    // store plugin blacklist
-    m_PluginBlacklist.clear();
-    foreach (QListWidgetItem *item, pluginBlacklistList->findItems("*", Qt::MatchWildcard)) {
-      m_PluginBlacklist.insert(item->text());
-    }
-    writePluginBlacklist();
-#endif
   }
 }
 
-Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog) :
+Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog) :
   m_parent(m_parent),
   m_Settings(m_parent->m_Settings),
-  m_dialog(m_dialog),
+  m_dialog(m_dialog)
+{
+}
+
+Settings::SettingsTab::~SettingsTab()
+{}
+
+Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  Settings::SettingsTab(m_parent, m_dialog),
   m_languageBox(m_dialog.findChild<QComboBox*>("languageBox")),
   m_styleBox(m_dialog.findChild<QComboBox*>("styleBox")),
   m_logLevelBox(m_dialog.findChild<QComboBox*>("logLevelBox")),
@@ -671,7 +637,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog) :
   m_compactBox(m_dialog.findChild<QCheckBox*>("compactBox")),
   m_showMetaBox(m_dialog.findChild<QCheckBox*>("showMetaBox"))
   {
-    //FIXME I think 'this function 'addLanguages' lives in here not in parent
+    //FIXME I think 'addLanguages' lives in here not in parent
     m_parent->addLanguages(m_languageBox);
     {
       QString languageCode = m_parent->language();
@@ -703,12 +669,8 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog) :
     m_showMetaBox->setChecked(m_parent->metaDownloads());
 }
 
-Settings::GeneralTab::~GeneralTab()
+void Settings::GeneralTab::update()
 {
-  if (m_dialog.result() != QDialog::Accepted) {
-    return;
-  }
-
   QString oldLanguage = m_Settings.value("Settings/language", "en_US").toString();
   QString newLanguage = m_languageBox->itemData(m_languageBox->currentIndex()).toString();
   if (newLanguage != oldLanguage) {
@@ -770,9 +732,7 @@ Settings::GeneralTab::~GeneralTab()
 }
 
 Settings::NexusTab::NexusTab(Settings *m_parent, SettingsDialog &m_dialog) :
-  m_parent(m_parent),
-  m_Settings(m_parent->m_Settings),
-  m_dialog(m_dialog),
+  Settings::SettingsTab(m_parent, m_dialog),
   m_loginCheckBox(m_dialog.findChild<QCheckBox*>("loginCheckBox")),
   m_usernameEdit(m_dialog.findChild<QLineEdit*>("usernameEdit")),
   m_passwordEdit(m_dialog.findChild<QLineEdit*>("passwordEdit")),
@@ -816,11 +776,8 @@ Settings::NexusTab::NexusTab(Settings *m_parent, SettingsDialog &m_dialog) :
   m_Settings.endGroup();
 }
 
-Settings::NexusTab::~NexusTab()
+void Settings::NexusTab::update()
 {
-  if (m_dialog.result() != QDialog::Accepted) {
-    return;
-  }
   if (m_loginCheckBox->isChecked()) {
     m_Settings.setValue("Settings/nexus_login", true);
     m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
@@ -851,10 +808,28 @@ Settings::NexusTab::~NexusTab()
   m_Settings.endGroup();
 }
 
+
+Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  Settings::SettingsTab(m_parent, m_dialog),
+  m_steamUserEdit(m_dialog.findChild<QLineEdit*>("steamUserEdit")),
+  m_steamPassEdit(m_dialog.findChild<QLineEdit*>("steamPassEdit"))
+{
+  if (m_Settings.contains("Settings/steam_username")) {
+    m_steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
+    if (m_Settings.contains("Settings/steam_password")) {
+      m_steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
+    }
+  }
+}
+
+void Settings::SteamTab::update()
+{
+  //FIXME this should be inlined here?
+  m_parent->setSteamLogin(m_steamUserEdit->text(), m_steamPassEdit->text());
+}
+
 Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog) :
-  m_parent(m_parent),
-  m_Settings(m_parent->m_Settings),
-  m_dialog(m_dialog),
+  Settings::SettingsTab(m_parent, m_dialog),
   m_pluginsList(m_dialog.findChild<QListWidget*>("pluginsList")),
   m_pluginBlacklistList(m_dialog.findChild<QListWidget*>("pluginBlacklist"))
 {
@@ -873,11 +848,8 @@ Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog) :
   }
 }
 
-Settings::PluginsTab:: ~PluginsTab()
+void Settings::PluginsTab::update()
 {
-  if (m_dialog.result() != QDialog::Accepted) {
-    return;
-  }
   // transfer plugin settings to in-memory structure
   for (int i = 0; i < m_pluginsList->count(); ++i) {
     QListWidgetItem *item = m_pluginsList->item(i);

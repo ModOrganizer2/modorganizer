@@ -312,16 +312,30 @@ private:
   void writePluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def) const;
 
-  class GeneralTab
+  class SettingsTab
   {
   public:
-    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
-    ~GeneralTab();
+    SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+    virtual ~SettingsTab();
 
-  private:
+    virtual void update() = 0;
+
+  protected:
     Settings *m_parent;
     QSettings &m_Settings;
     SettingsDialog &m_dialog;
+
+  };
+
+  /** Display/store the configuration in the 'general' tab of the settings dialogue */
+  class GeneralTab : SettingsTab
+  {
+  public:
+    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
     QComboBox *m_languageBox;
     QComboBox *m_styleBox;
     QComboBox *m_logLevelBox;
@@ -332,28 +346,15 @@ private:
     QCheckBox *m_showMetaBox;
   };
 
-  class NexusTab
+  /** Display/store the configuration in the 'nexus' tab of the settings dialogue */
+  class NexusTab : SettingsTab
   {
   public:
     NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
-    /*:
-      m_parent(m_parent),
-      m_settings(m_parent->m_Settings),
-      m_dialog(m_dialog)
-    {}
-    */
-    ~NexusTab();
-    /*
-  {
-    if (m_dialog.result() != QDialog::Accepted) {
-      return;
-    }
-  }
-*/
+
+    void update();
+
   private:
-    Settings *m_parent;
-    QSettings &m_Settings;
-    SettingsDialog &m_dialog;
     QCheckBox *m_loginCheckBox;
     QLineEdit *m_usernameEdit;
     QLineEdit *m_passwordEdit;
@@ -363,32 +364,32 @@ private:
     QListWidget *m_preferredServersList;
   };
 
-  class PluginsTab
+  /** Display/store the configuration in the 'steam' tab of the settings dialogue */
+  class SteamTab : SettingsTab
+  {
+  public:
+    SteamTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QLineEdit *m_steamUserEdit;
+    QLineEdit *m_steamPassEdit;
+  };
+
+  /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
+  class PluginsTab : SettingsTab
   {
   public:
     PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
-    /*:
-      m_parent(m_parent),
-      m_Settings(m_parent->m_Settings),
-      m_dialog(m_dialog)
-    {
-    }
-    */
-    ~PluginsTab();
-    /*
-  {
-    if (m_dialog.result() != QDialog::Accepted) {
-      return;
-    }
-  }
-*/
+
+    void update();
+
   private:
-    Settings *m_parent;
-    QSettings &m_Settings;
-    SettingsDialog &m_dialog;
     QListWidget *m_pluginsList;
     QListWidget *m_pluginBlacklistList;
   };
+
 
 private slots:
 
