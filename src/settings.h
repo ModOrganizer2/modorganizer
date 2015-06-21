@@ -390,6 +390,22 @@ private:
     QListWidget *m_pluginBlacklistList;
   };
 
+  /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
+  class WorkaroundsTab : SettingsTab
+  {
+  public:
+    WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QLineEdit *m_appIDEdit;
+    QComboBox *m_mechanismBox;
+    QLineEdit *m_nmmVersionEdit;
+    QCheckBox *m_hideUncheckedBox;
+    QCheckBox *m_forceEnableBox;
+    QCheckBox *m_displayForeignBox;
+  };
 
 private slots:
 

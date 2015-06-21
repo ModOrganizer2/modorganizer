@@ -542,77 +542,18 @@ void Settings::query(QWidget *parent)
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
-  //Don't you love C++?
-  //tabs.push_back(new GeneralTab(this, dialog));
+
   tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
-
-  // workarounds page
-  QCheckBox *forceEnableBox = dialog.findChild<QCheckBox*>("forceEnableBox");
-  QComboBox *mechanismBox = dialog.findChild<QComboBox*>("mechanismBox");
-  QLineEdit *appIDEdit = dialog.findChild<QLineEdit*>("appIDEdit");
-  QLineEdit *nmmVersionEdit = dialog.findChild<QLineEdit*>("nmmVersionEdit");
-  QCheckBox *hideUncheckedBox = dialog.findChild<QCheckBox*>("hideUncheckedBox");
-  QCheckBox *displayForeignBox = dialog.findChild<QCheckBox*>("displayForeignBox");
-  //
-  // set up current settings
-  //
-  LoadMechanism::EMechanism mechanismID = getLoadMechanism();
-  int index = 0;
-
-  if (m_LoadMechanism.isDirectLoadingSupported()) {
-    mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
-    if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
-      index = mechanismBox->count() - 1;
-    }
-  }
-
-  if (m_LoadMechanism.isScriptExtenderSupported()) {
-    mechanismBox->addItem(QObject::tr("Script Extender"), LoadMechanism::LOAD_SCRIPTEXTENDER);
-    if (mechanismID == LoadMechanism::LOAD_SCRIPTEXTENDER) {
-      index = mechanismBox->count() - 1;
-    }
-  }
-
-  if (m_LoadMechanism.isProxyDLLSupported()) {
-    mechanismBox->addItem(QObject::tr("Proxy DLL"), LoadMechanism::LOAD_PROXYDLL);
-    if (mechanismID == LoadMechanism::LOAD_PROXYDLL) {
-      index = mechanismBox->count() - 1;
-    }
-  }
-
-  mechanismBox->setCurrentIndex(index);
-
-  hideUncheckedBox->setChecked(hideUncheckedPlugins());
-  displayForeignBox->setChecked(displayForeign());
-  forceEnableBox->setChecked(forceEnableCoreFiles());
-
-  appIDEdit->setText(getSteamAppID());
-  nmmVersionEdit->setText(getNMMVersion());
+  tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
   if (dialog.exec() == QDialog::Accepted) {
+    // transfer modified settings to configuration file
     for (std::unique_ptr<SettingsTab> const &tab: tabs) {
       tab->update();
     }
-    //
-    // transfer modified settings to configuration file
-    //
-
-    m_Settings.setValue("Settings/hide_unchecked_plugins", hideUncheckedBox->checkState() ? true : false);
-    m_Settings.setValue("Settings/force_enable_core_files", forceEnableBox->checkState() ? true : false);
-    m_Settings.setValue("Settings/load_mechanism", mechanismBox->itemData(mechanismBox->currentIndex()).toInt());
-
-    if (appIDEdit->text() != m_GamePlugin->steamAPPId()) {
-      m_Settings.setValue("Settings/app_id", appIDEdit->text());
-    } else {
-      m_Settings.remove("Settings/app_id");
-    }
-    m_Settings.setValue("Settings/display_foreign", displayForeignBox->isChecked());
-
-    m_Settings.setValue("Settings/nmm_version", nmmVersionEdit->text());
-
   }
 }
 
@@ -620,8 +561,7 @@ Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
   m_parent(m_parent),
   m_Settings(m_parent->m_Settings),
   m_dialog(m_dialog)
-{
-}
+{}
 
 Settings::SettingsTab::~SettingsTab()
 {}
@@ -868,4 +808,62 @@ void Settings::PluginsTab::update()
     m_parent->m_PluginBlacklist.insert(item->text());
   }
   m_parent->writePluginBlacklist();
+}
+
+Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog) :
+  Settings::SettingsTab(m_parent, m_dialog),
+  m_appIDEdit(m_dialog.findChild<QLineEdit*>("appIDEdit")),
+  m_mechanismBox(m_dialog.findChild<QComboBox*>("mechanismBox")),
+  m_nmmVersionEdit(m_dialog.findChild<QLineEdit*>("nmmVersionEdit")),
+  m_hideUncheckedBox(m_dialog.findChild<QCheckBox*>("hideUncheckedBox")),
+  m_forceEnableBox(m_dialog.findChild<QCheckBox*>("forceEnableBox")),
+  m_displayForeignBox(m_dialog.findChild<QCheckBox*>("displayForeignBox"))
+{
+  m_appIDEdit->setText(m_parent->getSteamAppID());
+
+  LoadMechanism::EMechanism mechanismID = m_parent->getLoadMechanism();
+  int index = 0;
+
+  if (m_parent->m_LoadMechanism.isDirectLoadingSupported()) {
+    m_mechanismBox->addItem(QObject::tr("Mod Organizer"), LoadMechanism::LOAD_MODORGANIZER);
+    if (mechanismID == LoadMechanism::LOAD_MODORGANIZER) {
+      index = m_mechanismBox->count() - 1;
+    }
+  }
+
+  if (m_parent->m_LoadMechanism.isScriptExtenderSupported()) {
+    m_mechanismBox->addItem(QObject::tr("Script Extender"), LoadMechanism::LOAD_SCRIPTEXTENDER);
+    if (mechanismID == LoadMechanism::LOAD_SCRIPTEXTENDER) {
+      index = m_mechanismBox->count() - 1;
+    }
+  }
+
+  if (m_parent->m_LoadMechanism.isProxyDLLSupported()) {
+    m_mechanismBox->addItem(QObject::tr("Proxy DLL"), LoadMechanism::LOAD_PROXYDLL);
+    if (mechanismID == LoadMechanism::LOAD_PROXYDLL) {
+      index = m_mechanismBox->count() - 1;
+    }
+  }
+
+  m_mechanismBox->setCurrentIndex(index);
+
+  m_nmmVersionEdit->setText(m_parent->getNMMVersion());
+  m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
+  m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
+  m_displayForeignBox->setChecked(m_parent->displayForeign());
+
+}
+
+void Settings::WorkaroundsTab::update()
+{
+  if (m_appIDEdit->text() != m_parent->m_GamePlugin->steamAPPId()) {
+    m_Settings.setValue("Settings/app_id", m_appIDEdit->text());
+  } else {
+    m_Settings.remove("Settings/app_id");
+  }
+  m_Settings.setValue("Settings/load_mechanism", m_mechanismBox->itemData(m_mechanismBox->currentIndex()).toInt());
+  m_Settings.setValue("Settings/nmm_version", m_nmmVersionEdit->text());
+  m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
+  m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
+  m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
 }
