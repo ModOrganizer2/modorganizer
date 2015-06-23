@@ -330,12 +330,12 @@ void Settings::setupLoadMechanism()
 }
 
 
-bool Settings::useProxy()
+bool Settings::useProxy() const
 {
   return m_Settings.value("Settings/use_proxy", false).toBool();
 }
 
-bool Settings::displayForeign()
+bool Settings::displayForeign() const
 {
   return m_Settings.value("Settings/display_foreign", true).toBool();
 }

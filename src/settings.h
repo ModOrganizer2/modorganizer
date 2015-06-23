@@ -202,12 +202,12 @@ public:
   /**
    * @return true if the user configured the use of a network proxy
    */
-  bool useProxy();
+  bool useProxy() const;
 
   /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
-  bool displayForeign();
+  bool displayForeign() const;
 
   /**
    * @brief sets the new motd hash
