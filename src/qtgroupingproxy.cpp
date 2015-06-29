@@ -877,9 +877,12 @@ QtGroupingProxy::dropMimeData(const QMimeData *data, Qt::DropAction action, int 
     QModelIndex newIdx = mapToSource(index(max, column, idx));
     return sourceModel()->dropMimeData(data, action, max, column, newIdx);
   } else {
-    QModelIndex idx = mapToSource(index(row, column, parent));
-
-    return sourceModel()->dropMimeData(data, action, idx.row(), idx.column(), idx.parent());
+    if (row == -1) {
+      return sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
+    } else {
+      QModelIndex idx = mapToSource(index(row, column, parent));
+      return sourceModel()->dropMimeData(data, action, idx.row(), idx.column(), idx.parent());
+    }
   }
 }
 

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "profile.h"
 #include "messagedialog.h"
+#include "qtgroupingproxy.h"
 #include <QMenu>
 #include <QCheckBox>
 #include <QWidgetAction>
@@ -362,7 +363,7 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
     return false;
   }
   if ((row == -1) && (column == -1)) {
-    return this->sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
+    return sourceModel()->dropMimeData(data, action, -1, -1, mapToSource(parent));
   }
   // in the regular model, when dropping between rows, the row-value passed to
   // the sourceModel is inconsistent between ascending and descending ordering.
