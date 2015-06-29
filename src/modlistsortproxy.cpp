@@ -380,9 +380,12 @@ bool ModListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction action
 void ModListSortProxy::setSourceModel(QAbstractItemModel *sourceModel)
 {
   QSortFilterProxyModel::setSourceModel(sourceModel);
-
-  connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()));
-  connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()));
+  QtGroupingProxy *proxy = qobject_cast<QtGroupingProxy*>(sourceModel);
+  if (proxy != nullptr) {
+    sourceModel = proxy->sourceModel();
+  }
+  connect(sourceModel, SIGNAL(aboutToChangeData()), this, SLOT(aboutToChangeData()), Qt::UniqueConnection);
+  connect(sourceModel, SIGNAL(postDataChanged()), this, SLOT(postDataChanged()), Qt::UniqueConnection);
 }
 
 void ModListSortProxy::aboutToChangeData()
