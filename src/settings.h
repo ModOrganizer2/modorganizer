@@ -33,6 +33,8 @@ namespace MOBase {
   class IPluginGame;
 }
 
+class SettingsDialog;
+class QCheckBox;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -200,12 +202,12 @@ public:
   /**
    * @return true if the user configured the use of a network proxy
    */
-  bool useProxy();
+  bool useProxy() const;
 
   /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
-  bool displayForeign();
+  bool displayForeign() const;
 
   /**
    * @brief sets the new motd hash
@@ -301,14 +303,109 @@ public slots:
 
 private:
 
-  QString obfuscate(const QString &password) const;
-  QString deObfuscate(const QString &password) const;
+  static QString obfuscate(const QString &password);
+  static QString deObfuscate(const QString &password);
 
   void addLanguages(QComboBox *languageBox);
   void addStyles(QComboBox *styleBox);
   void readPluginBlacklist();
   void writePluginBlacklist();
   QString getConfigurablePath(const QString &key, const QString &def) const;
+
+  class SettingsTab
+  {
+  public:
+    SettingsTab(Settings *m_parent, SettingsDialog &m_dialog);
+    virtual ~SettingsTab();
+
+    virtual void update() = 0;
+
+  protected:
+    Settings *m_parent;
+    QSettings &m_Settings;
+    SettingsDialog &m_dialog;
+
+  };
+
+  /** Display/store the configuration in the 'general' tab of the settings dialogue */
+  class GeneralTab : SettingsTab
+  {
+  public:
+    GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QComboBox *m_languageBox;
+    QComboBox *m_styleBox;
+    QComboBox *m_logLevelBox;
+    QLineEdit *m_downloadDirEdit;
+    QLineEdit *m_modDirEdit;
+    QLineEdit *m_cacheDirEdit;
+    QCheckBox *m_compactBox;
+    QCheckBox *m_showMetaBox;
+  };
+
+  /** Display/store the configuration in the 'nexus' tab of the settings dialogue */
+  class NexusTab : SettingsTab
+  {
+  public:
+    NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QCheckBox *m_loginCheckBox;
+    QLineEdit *m_usernameEdit;
+    QLineEdit *m_passwordEdit;
+    QCheckBox *m_offlineBox;
+    QCheckBox *m_proxyBox;
+    QListWidget *m_knownServersList;
+    QListWidget *m_preferredServersList;
+  };
+
+  /** Display/store the configuration in the 'steam' tab of the settings dialogue */
+  class SteamTab : SettingsTab
+  {
+  public:
+    SteamTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QLineEdit *m_steamUserEdit;
+    QLineEdit *m_steamPassEdit;
+  };
+
+  /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
+  class PluginsTab : SettingsTab
+  {
+  public:
+    PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QListWidget *m_pluginsList;
+    QListWidget *m_pluginBlacklistList;
+  };
+
+  /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
+  class WorkaroundsTab : SettingsTab
+  {
+  public:
+    WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
+
+    void update();
+
+  private:
+    QLineEdit *m_appIDEdit;
+    QComboBox *m_mechanismBox;
+    QLineEdit *m_nmmVersionEdit;
+    QCheckBox *m_hideUncheckedBox;
+    QCheckBox *m_forceEnableBox;
+    QCheckBox *m_displayForeignBox;
+  };
 
 private slots:
 
