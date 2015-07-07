@@ -529,6 +529,12 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   m_CurrentProfile = newProfile;
   m_ModList.setProfile(newProfile);
 
+  if (m_CurrentProfile->invalidationActive(nullptr)) {
+    m_CurrentProfile->activateInvalidation();
+  } else {
+    m_CurrentProfile->deactivateInvalidation();
+  }
+
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
   refreshDirectoryStructure();
 }
