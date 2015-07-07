@@ -2027,6 +2027,7 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
+  item->setData(0, Qt::ToolTipRole, name);
   item->setData(0, Qt::UserRole, categoryID);
   item->setData(0, Qt::UserRole + 1, type);
   if (root != nullptr) {
