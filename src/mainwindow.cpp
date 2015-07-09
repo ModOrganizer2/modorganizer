@@ -67,6 +67,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include <ipluginproxy.h>
 #include <dataarchives.h>
+#include <bsainvalidation.h>
 #include <questionboxmemory.h>
 #include <taskprogressmanager.h>
 #include <util.h>
@@ -1307,13 +1308,21 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
+
+  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+
   for (FileEntry::Ptr current : m_OrganizerCore.directoryStructure()->getFiles()) {
     QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
     if (fileInfo.suffix().toLower() == "bsa") {
-      int index = activeArchives.indexOf(fileInfo.fileName());
+      int index = activeArchives.indexOf(fileInfo.fileName()) + 2;
       if (index == -1) {
         index = 0xFFFF;
+      }
+
+      if ((invalidation != nullptr) && invalidation->isInvalidationBSA(fileInfo.fileName())) {
+        index = 1;
       }
 
       QString basename = fileInfo.baseName();
@@ -2009,6 +2018,7 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 QTreeWidgetItem *MainWindow::addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(name));
+  item->setData(0, Qt::ToolTipRole, name);
   item->setData(0, Qt::UserRole, categoryID);
   item->setData(0, Qt::UserRole + 1, type);
   if (root != nullptr) {

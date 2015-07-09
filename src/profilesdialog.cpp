@@ -239,9 +239,7 @@ void ProfilesDialog::on_renameButton_clicked()
 
 void ProfilesDialog::on_invalidationBox_stateChanged(int state)
 {
-  QListWidget *profilesList = findChild<QListWidget*>("profilesList");
-
-  QListWidgetItem *currentItem = profilesList->currentItem();
+  QListWidgetItem *currentItem = ui->profilesList->currentItem();
   if (currentItem == nullptr) {
     return;
   }

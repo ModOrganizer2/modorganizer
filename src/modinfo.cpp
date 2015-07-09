@@ -1010,7 +1010,7 @@ QStringList ModInfoRegular::archives() const
 {
   QStringList result;
   QDir dir(this->absolutePath());
-  foreach (const QString &archive, dir.entryList(QStringList("*.bsa"))) {
+  for (const QString &archive : dir.entryList(QStringList("*.bsa"))) {
     result.append(this->absolutePath() + "/" + archive);
   }
   return result;

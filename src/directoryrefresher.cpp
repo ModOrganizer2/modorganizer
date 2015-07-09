@@ -76,11 +76,12 @@ void DirectoryRefresher::cleanStructure(DirectoryEntry *structure)
   }
 }
 
-void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &archives)
+void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure, const QString &modName,
+                                              int priority, const QString &directory, const QStringList &archives)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
 
-  foreach (const QString &archive, archives) {
+  for (const QString &archive : archives) {
     QFileInfo fileInfo(archive);
     if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
       try {
@@ -93,7 +94,8 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
   }
 }
 
-void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructure, const QString &modName, int priority, const QString &directory, const QStringList &stealFiles)
+void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructure, const QString &modName,
+                                                int priority, const QString &directory, const QStringList &stealFiles)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
 
