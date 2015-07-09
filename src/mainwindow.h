@@ -30,7 +30,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressBar>
 #include <QTranslator>
 #include <QPluginLoader>
-#include "executableslist.h"
 #include "modlist.h"
 #include "pluginlist.h"
 #include "plugincontainer.h"
@@ -92,8 +91,6 @@ public:
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
   void refreshSaveList();
-
-  void setExecutablesList(const ExecutablesList &executablesList);
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
@@ -328,6 +325,17 @@ private:
   LockedDialog *m_LockDialog { nullptr };
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
+
+  enum class Shortcut_Type {
+    Toolbar,
+    Windows_Desktop,
+    Windows_StartMenu
+  };
+
+  void addWindowsLink(Shortcut_Type const);
+
+  Executable const &getSelectedExecutable() const;
+  Executable &getSelectedExecutable();
 
 private slots:
 

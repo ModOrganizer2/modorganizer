@@ -42,10 +42,6 @@ struct Executable {
   bool m_Custom;
   bool m_Toolbar;
 };
-Q_DECLARE_METATYPE(Executable)
-
-
-void registerExecutable();
 
 
 /*!
@@ -83,7 +79,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  const Executable &find(const QString &tilte) const;
+  const Executable &find(const QString &title) const;
 
   /**
    * @brief find an executable by its name
@@ -92,7 +88,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  Executable &find(const QString &tilte);
+  Executable &find(const QString &title);
 
   /**
    * @brief find an executable by a fileinfo structure
@@ -158,6 +154,13 @@ public:
    * @param end iterator one past the last executable
    **/
   void getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end);
+
+  /**
+   * @brief get the number of executables (custom or otherwise)
+   **/
+  size_t size() const {
+    return m_Executables.size();
+  }
 
 private:
 

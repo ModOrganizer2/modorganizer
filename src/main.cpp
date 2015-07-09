@@ -248,11 +248,6 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   return result;
 }
 
-static void registerMetaTypes()
-{
-  registerExecutable();
-}
-
 static bool HaveWriteAccess(const std::wstring &path)
 {
   bool writable = false;
@@ -413,8 +408,6 @@ int main(int argc, char *argv[])
 
     ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
   }
-
-  registerMetaTypes();
 
   QStringList arguments = application.arguments();
 

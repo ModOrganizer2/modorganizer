@@ -55,14 +55,6 @@ static QDataStream &operator>>(QDataStream &in, Executable &obj)
   return in;
 }
 
-
-void registerExecutable()
-{
-  qRegisterMetaType<Executable>("Executable");
-  qRegisterMetaTypeStreamOperators<Executable>("Executable");
-}
-
-
 ExecutablesList::ExecutablesList()
 {
 }
@@ -102,23 +94,23 @@ void ExecutablesList::getExecutables(std::vector<Executable>::const_iterator &be
 
 const Executable &ExecutablesList::find(const QString &title) const
 {
-  for (std::vector<Executable>::const_iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Title == title) {
-      return *iter;
+  for (Executable const &exe : m_Executables) {
+    if (exe.m_Title == title) {
+      return exe;
     }
   }
-  throw std::runtime_error("invalid name");
+  throw std::runtime_error("invalid name " + title.toStdString());
 }
 
 
 Executable &ExecutablesList::find(const QString &title)
 {
   for (Executable &exe : m_Executables) {
-    if (QString::compare(exe.m_Title, title, Qt::CaseInsensitive) == 0) {
+    if (exe.m_Title == title) {
       return exe;
     }
   }
-  throw std::runtime_error("invalid name");
+  throw std::runtime_error("invalid name " + title.toStdString());
 }
 
 
@@ -220,7 +212,7 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
 void ExecutablesList::remove(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Custom && (iter->m_Title == title)) {
+    if (iter->m_Custom && iter->m_Title == title) {
       m_Executables.erase(iter);
       break;
     }
