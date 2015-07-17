@@ -170,13 +170,14 @@ void cleanupDir()
     "proxy.dll"
   };
 
-  qDebug("removing obsolete files");
-
   for (const QString &fileName : fileNames) {
     QString fullPath = qApp->applicationDirPath() + "/" + fileName;
-    if (QFile::exists(fullPath)
-        && !shellDelete(QStringList(fullPath), true)) {
-      qDebug("failed to remove obsolete %s", qPrintable(fullPath));
+    if (QFile::exists(fullPath)) {
+      if (shellDelete(QStringList(fullPath), true)) {
+        qDebug("removed obsolete file %s", qPrintable(fullPath));
+      } else {
+        qDebug("failed to remove obsolete %s", qPrintable(fullPath));
+      }
     }
   }
 }
