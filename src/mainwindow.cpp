@@ -486,7 +486,7 @@ void MainWindow::updateToolBar()
       std::vector<Executable>::iterator begin, end;
       m_OrganizerCore.executablesList()->getExecutables(begin, end);
       for (auto iter = begin; iter != end; ++iter) {
-        if (iter->m_Toolbar) {
+        if (iter->shownOnToolbar()) {
           QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
                                            iter->m_Title,
                                            ui->toolBar);
@@ -3256,8 +3256,8 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 void MainWindow::linkToolbar()
 {
   Executable &exe(getSelectedExecutable());
-  exe.m_Toolbar = !exe.m_Toolbar;
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(exe.m_Toolbar ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
+  exe.showOnToolbar(!exe.shownOnToolbar());
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(exe.shownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
 }
 
@@ -3306,7 +3306,7 @@ void MainWindow::addWindowsLink(Shortcut_Type const mapping)
                        , parameter.c_str()
                        , QDir::toNativeSeparators(linkName).toUtf8().constData()
                        , description.c_str()
-                       , (selectedExecutable.m_UseOwnIcon ? iconFile.c_str() : nullptr), 0
+                       , (selectedExecutable.usesOwnIcon() ? iconFile.c_str() : nullptr), 0
                        , currentDirectory.c_str()) == 0) {
       ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/remove"));
     } else {
@@ -3541,10 +3541,15 @@ void MainWindow::addAsExecutable()
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
         if (!name.isEmpty()) {
-          m_OrganizerCore.executablesList()->addExecutable(name, binaryInfo.absoluteFilePath(),
-                                          arguments, targetInfo.absolutePath(),
-                                          ExecutableInfo::CloseMOStyle::DEFAULT_STAY, QString(),
-                                          true, false, false);
+          m_OrganizerCore.executablesList()->addExecutable(name,
+                                                           binaryInfo.absoluteFilePath(),
+                                                           arguments,
+                                                           targetInfo.absolutePath(),
+                                                           ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                                           QString(),
+                                                           Executable::Type::Custom,
+                                                           Executable::Toolbar::Disabled,
+                                                           Executable::Icon::MO);
           refreshExecutablesList();
         }
       } break;
@@ -4121,7 +4126,7 @@ void MainWindow::removeFromToolbar()
 {
   try {
     Executable &exe = m_OrganizerCore.executablesList()->find(m_ContextAction->text());
-    exe.m_Toolbar = false;
+    exe.showOnToolbar(false);
   } catch (const std::runtime_error&) {
     qDebug("executable doesn't exist any more");
   }
@@ -4240,7 +4245,7 @@ void MainWindow::on_linkButton_pressed()
   QFileInfo const linkDesktopFile(getDesktopLinkfile(selectedExecutable));
   QFileInfo const linkMenuFile(getStartMenuLinkfile(selectedExecutable));
 
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(selectedExecutable.m_Toolbar ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(selectedExecutable.shownOnToolbar() ? removeIcon : addIcon);
   ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
   ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }

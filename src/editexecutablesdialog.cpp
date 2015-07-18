@@ -60,7 +60,7 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 
   for(; current != end; ++current) {
     QListWidgetItem *newItem = new QListWidgetItem(current->m_Title);
-    newItem->setTextColor(current->m_Custom ? QColor(Qt::black) : QColor(Qt::darkGray));
+    newItem->setTextColor(current->m_Type == Executable::Type::Custom ? QColor(Qt::black) : QColor(Qt::darkGray));
     ui->executablesListBox->addItem(newItem);
   }
 
@@ -100,9 +100,10 @@ void EditExecutablesDialog::saveExecutable()
                                       : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
                                   ui->overwriteAppIDBox->isChecked() ?
                                       ui->appIDOverwriteEdit->text() : "",
-                                  true,
-                                  false,
-                                  ui->useAppIconCheckBox->isChecked());
+                                  Executable::Type::Custom,
+                                  Executable::Toolbar::Disabled,
+                                  ui->useAppIconCheckBox->isChecked() ?
+                                      Executable::Icon::Application : Executable::Icon::MO);
 }
 
 
@@ -215,7 +216,7 @@ bool EditExecutablesDialog::executableChanged()
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
         || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked()
-        || selectedExecutable.m_UseOwnIcon != ui->useAppIconCheckBox->isChecked();
+        || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
   } else {
     return false;
   }
@@ -289,13 +290,13 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
       ui->closeCheckBox->setEnabled(true);
       ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
     }
-    ui->removeButton->setEnabled(selectedExecutable.m_Custom);
+    ui->removeButton->setEnabled(selectedExecutable.isCustom());
     ui->overwriteAppIDBox->setChecked(!selectedExecutable.m_SteamAppID.isEmpty());
     if (!selectedExecutable.m_SteamAppID.isEmpty()) {
       ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
     } else {
       ui->appIDOverwriteEdit->clear();
     }
-    ui->useAppIconCheckBox->setChecked(selectedExecutable.m_UseOwnIcon);
+    ui->useAppIconCheckBox->setChecked(selectedExecutable.usesOwnIcon());
   }
 }
