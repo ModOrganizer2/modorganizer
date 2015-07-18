@@ -84,18 +84,25 @@ void EditExecutablesDialog::resetInput()
   ui->appIDOverwriteEdit->clear();
   ui->overwriteAppIDBox->setChecked(false);
   ui->closeCheckBox->setChecked(false);
+  ui->useAppIconCheckBox->setChecked(false);
   m_CurrentItem = nullptr;
 }
 
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.addExecutable(ui->titleEdit->text(), QDir::fromNativeSeparators(ui->binaryEdit->text()),
-        ui->argumentsEdit->text(), QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-        (ui->closeCheckBox->checkState() == Qt::Checked) ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
-                                                         : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
-        ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
-        true, false);
+  m_ExecutablesList.addExecutable(ui->titleEdit->text(),
+                                  QDir::fromNativeSeparators(ui->binaryEdit->text()),
+                                  ui->argumentsEdit->text(),
+                                  QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+                                  (ui->closeCheckBox->checkState() == Qt::Checked) ?
+                                      ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
+                                      : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                  ui->overwriteAppIDBox->isChecked() ?
+                                      ui->appIDOverwriteEdit->text() : "",
+                                  true,
+                                  false,
+                                  ui->useAppIconCheckBox->isChecked());
 }
 
 
@@ -207,7 +214,8 @@ bool EditExecutablesDialog::executableChanged()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
-        || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked();
+        || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked()
+        || selectedExecutable.m_UseOwnIcon != ui->useAppIconCheckBox->isChecked();
   } else {
     return false;
   }
@@ -288,5 +296,6 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     } else {
       ui->appIDOverwriteEdit->clear();
     }
+    ui->useAppIconCheckBox->setChecked(selectedExecutable.m_UseOwnIcon);
   }
 }

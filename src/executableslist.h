@@ -41,6 +41,7 @@ struct Executable {
 
   bool m_Custom;
   bool m_Toolbar;
+  bool m_UseOwnIcon;
 };
 
 
@@ -121,7 +122,7 @@ public:
    **/
   void addExecutable(const QString &title, const QString &executableName, const QString &arguments,
                      const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID,
-                     bool custom, bool toolbar, int pos = -1);
+                     bool custom, bool toolbar, bool ownicon);
 
   /**
    * @brief change position of an executable which is expected to exist

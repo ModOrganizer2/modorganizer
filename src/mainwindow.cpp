@@ -1626,6 +1626,7 @@ void MainWindow::on_startButton_clicked()
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
                               LPCSTR linkFileName, LPCWSTR description,
+                              LPCTSTR iconFileName, int iconNumber,
                               LPCWSTR currentDirectory)
 {
   HRESULT result = E_INVALIDARG;
@@ -1671,6 +1672,15 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
       result = shellLink->SetWorkingDirectory(currentDirectory);
       if (!SUCCEEDED(result)) {
         qCritical("failed to set working directory: %ls", currentDirectory);
+        shellLink->Release();
+        return result;
+      }
+    }
+
+    if (iconFileName != nullptr) {
+      result = shellLink->SetIconLocation(iconFileName, iconNumber);
+      if (!SUCCEEDED(result)) {
+        qCritical("failed to load program icon: %ls %d", iconFileName, iconNumber);
         shellLink->Release();
         return result;
       }
@@ -3283,16 +3293,20 @@ void MainWindow::addWindowsLink(Shortcut_Type const mapping)
   } else {
     QFileInfo const exeInfo(qApp->applicationFilePath());
     // create link
+    QString executable = QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath());
+
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()))
+    std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(executable)
                                                                   .arg(selectedExecutable.m_Arguments));
     std::wstring description      = ToWString(selectedExecutable.m_BinaryInfo.fileName());
+    std::wstring iconFile         = ToWString(executable);
     std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(exeInfo.absolutePath()));
 
     if (CreateShortcut(targetFile.c_str()
                        , parameter.c_str()
                        , QDir::toNativeSeparators(linkName).toUtf8().constData()
                        , description.c_str()
+                       , (selectedExecutable.m_UseOwnIcon ? iconFile.c_str() : nullptr), 0
                        , currentDirectory.c_str()) == 0) {
       ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/remove"));
     } else {
@@ -3530,7 +3544,7 @@ void MainWindow::addAsExecutable()
           m_OrganizerCore.executablesList()->addExecutable(name, binaryInfo.absoluteFilePath(),
                                           arguments, targetInfo.absolutePath(),
                                           ExecutableInfo::CloseMOStyle::DEFAULT_STAY, QString(),
-                                          true, false);
+                                          true, false, false);
           refreshExecutablesList();
         }
       } break;

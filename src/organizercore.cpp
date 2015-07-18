@@ -230,6 +230,7 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
       settings.setValue("workingDirectory", item.m_WorkingDirectory);
       settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
       settings.setValue("steamAppID", item.m_SteamAppID);
+      settings.setValue("ownicon", item.m_UseOwnIcon);
     }
   }
   settings.endArray();
@@ -336,7 +337,8 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
                                     closeMO,
                                     settings.value("steamAppID", "").toString(),
                                     settings.value("custom", true).toBool(),
-                                    settings.value("toolbar", false).toBool());
+                                    settings.value("toolbar", false).toBool(),
+                                    settings.value("ownicon", false).toBool());
   }
 
   settings.endArray();

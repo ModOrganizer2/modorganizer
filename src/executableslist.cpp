@@ -39,7 +39,7 @@ static QDataStream &operator<<(QDataStream &out, const Executable &obj)
       << obj.m_SteamAppID
       << obj.m_WorkingDirectory
       << obj.m_Custom
-      << obj.m_Toolbar;
+      << obj.m_Toolbar << obj.m_UseOwnIcon;
   return out;
 }
 
@@ -48,7 +48,7 @@ static QDataStream &operator>>(QDataStream &in, Executable &obj)
   QString binaryTemp;
   int closeStyleTemp;
   in >> obj.m_Title >> binaryTemp >> obj.m_Arguments >> closeStyleTemp
-     >> obj.m_SteamAppID >> obj.m_WorkingDirectory >> obj.m_Custom >> obj.m_Toolbar;
+     >> obj.m_SteamAppID >> obj.m_WorkingDirectory >> obj.m_Custom >> obj.m_Toolbar >> obj.m_UseOwnIcon;
 
   obj.m_CloseMO = static_cast<ExecutableInfo::CloseMOStyle>(closeStyleTemp);
   obj.m_BinaryInfo.setFile(binaryTemp);
@@ -166,9 +166,15 @@ void ExecutablesList::position(const QString &title, bool toolbar, int pos)
 }
 
 
-void ExecutablesList::addExecutable(const QString &title, const QString &executableName, const QString &arguments,
-                                    const QString &workingDirectory, ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID,
-                                    bool custom, bool toolbar, int pos)
+void ExecutablesList::addExecutable(const QString &title,
+                                    const QString &executableName,
+                                    const QString &arguments,
+                                    const QString &workingDirectory,
+                                    ExecutableInfo::CloseMOStyle closeMO,
+                                    const QString &steamAppID,
+                                    bool custom,
+                                    bool toolbar,
+                                    bool ownicon)
 {
   QFileInfo file(executableName);
   auto existingExe = findExe(title);
@@ -184,11 +190,7 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
       existingExe->m_Arguments = arguments;
       existingExe->m_WorkingDirectory = workingDirectory;
       existingExe->m_SteamAppID = steamAppID;
-    }
-    if (pos >= 0) {
-      Executable temp = *existingExe;
-      m_Executables.erase(existingExe);
-      m_Executables.insert(m_Executables.begin() + pos, temp);
+      existingExe->m_UseOwnIcon = ownicon;
     }
   } else {
     Executable newExe;
@@ -200,11 +202,8 @@ void ExecutablesList::addExecutable(const QString &title, const QString &executa
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = true;
     newExe.m_Toolbar = toolbar;
-    if ((pos < 0) || (pos >= static_cast<int>(m_Executables.size()))) {
-      m_Executables.push_back(newExe);
-    } else {
-      m_Executables.insert(m_Executables.begin() + pos, newExe);
-    }
+    newExe.m_UseOwnIcon = ownicon;
+    m_Executables.push_back(newExe);
   }
 }
 
@@ -235,6 +234,7 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
     newExe.m_SteamAppID = steamAppID;
     newExe.m_Custom = false;
     newExe.m_Toolbar = false;
+    newExe.m_UseOwnIcon = false;
     m_Executables.push_back(newExe);
   }
 }
