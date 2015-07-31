@@ -1378,6 +1378,9 @@ void OrganizerCore::modStatusChanged(unsigned int index)
         FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
       }
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->archivesWriter().write();
+      }
     }
     modInfo->clearCaches();
 
