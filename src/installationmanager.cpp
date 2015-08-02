@@ -124,23 +124,16 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wst
   }
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
-    if (! data[iter->getIndex()]->getSkip()) {
-      std::wstring newp((path + iter->getName().toStdWString()));
-      std::wstring oldp(data[iter->getIndex()]->getOutputFileName());
-      qDebug() << "outputting to " << QString::fromStdWString(newp) << " but already outputting to " << QString::fromStdWString(oldp);
-    }
-    data[iter->getIndex()]->setSkip(false);
     std::wstring temp = path + iter->getName().toStdWString();
-    data[iter->getIndex()]->setOutputFileName(temp.c_str());
+    data[iter->getIndex()]->addOutputFileName(temp.c_str());
   }
 
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
+    std::wstring temp = path + (*iter)->getData().name.toStdWString();
     if ((*iter)->getData().index != -1) {
-      data[(*iter)->getData().index]->setSkip(false);
-      std::wstring temp = path + (*iter)->getData().name.toStdWString();
-      data[(*iter)->getData().index]->setOutputFileName(temp.c_str());
+      data[(*iter)->getData().index]->addOutputFileName(temp.c_str());
     }
-    mapToArchive(*iter, path + (*iter)->getData().name.toStdWString(), data);
+    mapToArchive(*iter, temp, data);
   }
 }
 
@@ -150,11 +143,6 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *baseNode)
   FileData* const *data;
   size_t size;
   m_CurrentArchive->getFileList(data, size);
-
-  // first disable all files + folders, we will re-enable those present in baseNode
-  for (size_t i = 0; i < size; ++i) {
-    data[i]->setSkip(true);
-  }
 
   std::wstring currentPath;
 
@@ -174,32 +162,29 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   for (size_t i = 0; i < size; ++i) {
     if (_wcsicmp(data[i]->getFileName(), ToWString(fileName).c_str()) == 0) {
       available = true;
-      data[i]->setSkip(false);
-      data[i]->setOutputFileName(ToWString(baseName).c_str());
+      data[i]->addOutputFileName(ToWString(baseName).c_str());
       m_TempFilesToDelete.insert(baseName);
-    } else {
-      data[i]->setSkip(true);
     }
   }
 
-  if (available) {
-    m_InstallationProgress.setWindowTitle(tr("Extracting files"));
-    m_InstallationProgress.setLabelText(QString());
-    m_InstallationProgress.setValue(0);
-    m_InstallationProgress.setWindowModality(Qt::WindowModal);
-    m_InstallationProgress.show();
-
-    bool res = m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
-                                  new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-                                  new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
-                                  new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError));
-
-    m_InstallationProgress.hide();
-
-    return res;
-  } else {
+  if (!available) {
     return false;
   }
+
+  m_InstallationProgress.setWindowTitle(tr("Extracting files"));
+  m_InstallationProgress.setLabelText(QString());
+  m_InstallationProgress.setValue(0);
+  m_InstallationProgress.setWindowModality(Qt::WindowModal);
+  m_InstallationProgress.show();
+
+  bool res = m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
+                                new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+                                new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
+                                new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError));
+
+  m_InstallationProgress.hide();
+
+  return res;
 }
 
 
@@ -256,14 +241,11 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
           ++targetFile;
         }
       }
-      data[i]->setOutputFileName(targetFile);
+      data[i]->addOutputFileName(targetFile);
 
       result.append(QDir::tempPath().append("/").append(ToQString(targetFile)));
 
-      data[i]->setSkip(false);
       m_TempFilesToDelete.insert(ToQString(targetFile));
-    } else {
-      data[i]->setSkip(true);
     }
   }
 

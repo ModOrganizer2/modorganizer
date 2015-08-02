@@ -255,9 +255,9 @@ void SelfUpdater::installUpdate()
     QString outputName = ToQString(data[i]->getFileName());
     if (outputName.startsWith("ModOrganizer\\", Qt::CaseInsensitive)) {
       outputName = outputName.mid(13);
-      data[i]->setOutputFileName(ToWString(outputName).c_str());
-    } else if (outputName == "ModOrganizer") {
-      data[i]->setSkip(true);
+      data[i]->addOutputFileName(ToWString(outputName).c_str());
+    } else if (outputName != "ModOrganizer") {
+      data[i]->addOutputFileName(ToWString(outputName).c_str());
     }
     QFileInfo file(mopath.mid(0).append("/").append(outputName));
     if (file.exists() && file.isFile()) {
