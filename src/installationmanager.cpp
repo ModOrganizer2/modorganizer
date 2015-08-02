@@ -124,6 +124,11 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wst
   }
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
+    if (! data[iter->getIndex()]->getSkip()) {
+      std::wstring newp((path + iter->getName().toStdWString()));
+      std::wstring oldp(data[iter->getIndex()]->getOutputFileName());
+      qDebug() << "outputting to " << QString::fromStdWString(newp) << " but already outputting to " << QString::fromStdWString(oldp);
+    }
     data[iter->getIndex()]->setSkip(false);
     std::wstring temp = path + iter->getName().toStdWString();
     data[iter->getIndex()]->setOutputFileName(temp.c_str());

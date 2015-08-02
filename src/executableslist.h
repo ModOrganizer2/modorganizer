@@ -39,13 +39,33 @@ struct Executable {
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
-  bool m_Custom;
-  bool m_Toolbar;
+  enum class Type {
+    Game,
+    Custom
+  };
+
+  enum class Toolbar {
+    Disabled,
+    Enabled
+  };
+
+  enum class Icon {
+    MO,
+    Application
+  };
+
+  Type m_Type;
+  Toolbar m_Toolbar;
+  Icon m_Icon;
+
+  bool isCustom() const { return m_Type == Type::Custom; }
+
+  bool shownOnToolbar() const { return m_Toolbar == Toolbar::Enabled; }
+
+  void showOnToolbar(bool state) { m_Toolbar = state ? Toolbar::Enabled : Toolbar::Disabled; }
+
+  bool usesOwnIcon() const { return m_Icon == Icon::Application; }
 };
-Q_DECLARE_METATYPE(Executable)
-
-
-void registerExecutable();
 
 
 /*!
@@ -83,7 +103,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  const Executable &find(const QString &tilte) const;
+  const Executable &find(const QString &title) const;
 
   /**
    * @brief find an executable by its name
@@ -92,7 +112,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  Executable &find(const QString &tilte);
+  Executable &find(const QString &title);
 
   /**
    * @brief find an executable by a fileinfo structure
@@ -123,17 +143,15 @@ public:
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title, const QString &executableName, const QString &arguments,
-                     const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID,
-                     bool custom, bool toolbar, int pos = -1);
-
-  /**
-   * @brief change position of an executable which is expected to exist
-   * @param title title of the executable
-   * @param toolbar enable/disable placement on the toolbar
-   * @param pos new position for the executable
-   */
-  void position(const QString &title, bool toolbar, int pos);
+  void addExecutable(const QString &title,
+                     const QString &executableName,
+                     const QString &arguments,
+                     const QString &workingDirectory,
+                     MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                     const QString &steamAppID,
+                     Executable::Type custom,
+                     Executable::Toolbar toolbar,
+                     Executable::Icon ownicon);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -158,6 +176,13 @@ public:
    * @param end iterator one past the last executable
    **/
   void getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end);
+
+  /**
+   * @brief get the number of executables (custom or otherwise)
+   **/
+  size_t size() const {
+    return m_Executables.size();
+  }
 
 private:
 

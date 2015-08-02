@@ -486,13 +486,10 @@ void MainWindow::updateToolBar()
       std::vector<Executable>::iterator begin, end;
       m_OrganizerCore.executablesList()->getExecutables(begin, end);
       for (auto iter = begin; iter != end; ++iter) {
-        if (iter->m_Toolbar) {
+        if (iter->shownOnToolbar()) {
           QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
                                            iter->m_Title,
                                            ui->toolBar);
-          QVariant temp;
-          temp.setValue(*iter);
-          exeAction->setData(temp);
           exeAction->setObjectName(QString("custom__") + iter->m_Title);
           if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
             qDebug("failed to connect trigger?");
@@ -956,7 +953,7 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    Executable selectedExecutable = action->data().value<Executable>();
+    Executable const &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
     m_OrganizerCore.spawnBinary(
           selectedExecutable.m_BinaryInfo,
           selectedExecutable.m_Arguments,
@@ -1199,10 +1196,8 @@ void MainWindow::refreshExecutablesList()
   std::vector<Executable>::const_iterator current, end;
   m_OrganizerCore.executablesList()->getExecutables(current, end);
   for(int i = 0; current != end; ++current, ++i) {
-    QVariant temp;
-    temp.setValue(*current);
     QIcon icon = iconForExecutable(current->m_BinaryInfo.filePath());
-    executablesList->addItem(icon, current->m_Title, temp);
+    executablesList->addItem(icon, current->m_Title);
     model->setData(model->index(i, 0), QSize(0, executablesList->iconSize().height() + 4), Qt::SizeHintRole);
   }
 
@@ -1617,9 +1612,7 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked()
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
-
-  Executable selectedExecutable = executablesList->itemData(executablesList->currentIndex()).value<Executable>();
+  Executable const &selectedExecutable(getSelectedExecutable());
 
   m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo,
@@ -1633,6 +1626,7 @@ void MainWindow::on_startButton_clicked()
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
                               LPCSTR linkFileName, LPCWSTR description,
+                              LPCTSTR iconFileName, int iconNumber,
                               LPCWSTR currentDirectory)
 {
   HRESULT result = E_INVALIDARG;
@@ -1683,6 +1677,15 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
       }
     }
 
+    if (iconFileName != nullptr) {
+      result = shellLink->SetIconLocation(iconFileName, iconNumber);
+      if (!SUCCEEDED(result)) {
+        qCritical("failed to load program icon: %ls %d", iconFileName, iconNumber);
+        shellLink->Release();
+        return result;
+      }
+    }
+
     IPersistFile *persistFile;
     result = shellLink->QueryInterface(IID_IPersistFile, (LPVOID*)&persistFile);
     if (SUCCEEDED(result)) {
@@ -1727,11 +1730,10 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
   m_OldExecutableIndex = index;
 
   if (executablesList->isEnabled()) {
-
-    if (executablesList->itemData(index).isNull()) {
+    //I think the 2nd test is impossible
+    if (index == 0 || index > static_cast<int>(m_OrganizerCore.executablesList()->size())) {
       if (modifyExecutablesDialog()) {
         setExecutableIndex(previousIndex);
-//        executablesList->setCurrentIndex(previousIndex);
       }
     } else {
       setExecutableIndex(index);
@@ -1746,7 +1748,6 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-//  ::ShellExecuteW(nullptr, L"open", L"http://issue.tannin.eu/tbg/wiki/Modorganizer%3AMainPage", nullptr, nullptr, SW_SHOWNORMAL);
   ::ShellExecuteW(nullptr, L"open", L"http://wiki.step-project.com/Guide:Mod_Organizer", nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -3254,76 +3255,74 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::linkToolbar()
 {
-  const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
-  Executable &exe = m_OrganizerCore.executablesList()->find(selectedExecutable.m_Title);
-  exe.m_Toolbar = !exe.m_Toolbar;
-  ui->linkButton->menu()->actions().at(2)->setIcon(exe.m_Toolbar ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
+  Executable &exe(getSelectedExecutable());
+  exe.showOnToolbar(!exe.shownOnToolbar());
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(exe.shownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
 }
 
-void MainWindow::linkDesktop()
+namespace {
+QString getLinkfile(QString const &dir, Executable const &exec)
 {
-  const Executable &selectedExecutable =
-      ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
-  QString linkName = getDesktopDirectory() + "\\" + selectedExecutable.m_Title + ".lnk";
+  return QDir::fromNativeSeparators(dir) + "/" + exec.m_Title + ".lnk";
+}
+
+QString getDesktopLinkfile(Executable const &exec)
+{
+  return getLinkfile(getDesktopDirectory(), exec);
+}
+
+QString getStartMenuLinkfile(Executable const &exec)
+{
+  return getLinkfile(getStartMenuDirectory(), exec);
+}
+}
+
+void MainWindow::addWindowsLink(Shortcut_Type const mapping)
+{
+  Executable const &selectedExecutable(getSelectedExecutable());
+  QString const linkName = getLinkfile(mapping == Shortcut_Type::Windows_Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
+                                       selectedExecutable);
 
   if (QFile::exists(linkName)) {
     if (QFile::remove(linkName)) {
-      ui->linkButton->menu()->actions().at(0)->setIcon(QIcon(":/MO/gui/link"));
+      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/link"));
     } else {
       reportError(tr("failed to remove %1").arg(linkName));
     }
   } else {
-    QFileInfo exeInfo(qApp->applicationFilePath());
+    QFileInfo const exeInfo(qApp->applicationFilePath());
     // create link
+    QString executable = QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath());
+
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()))
+    std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(executable)
                                                                   .arg(selectedExecutable.m_Arguments));
     std::wstring description      = ToWString(selectedExecutable.m_BinaryInfo.fileName());
+    std::wstring iconFile         = ToWString(executable);
     std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(exeInfo.absolutePath()));
 
     if (CreateShortcut(targetFile.c_str()
                        , parameter.c_str()
-                       , linkName.toUtf8().constData()
+                       , QDir::toNativeSeparators(linkName).toUtf8().constData()
                        , description.c_str()
-                       , currentDirectory.c_str()) != E_INVALIDARG) {
-      ui->linkButton->menu()->actions().at(0)->setIcon(QIcon(":/MO/gui/remove"));
+                       , (selectedExecutable.usesOwnIcon() ? iconFile.c_str() : nullptr), 0
+                       , currentDirectory.c_str()) == 0) {
+      ui->linkButton->menu()->actions().at(static_cast<int>(mapping))->setIcon(QIcon(":/MO/gui/remove"));
     } else {
       reportError(tr("failed to create %1").arg(linkName));
     }
   }
 }
 
+void MainWindow::linkDesktop()
+{
+  addWindowsLink(Shortcut_Type::Windows_Desktop);
+}
+
 void MainWindow::linkMenu()
 {
-  QComboBox* executablesList = findChild<QComboBox*>("executablesListBox");
-
-  const Executable &selectedExecutable = executablesList->itemData(executablesList->currentIndex()).value<Executable>();
-  QString linkName = getStartMenuDirectory() + "\\" + selectedExecutable.m_Title + ".lnk";
-
-  if (QFile::exists(linkName)) {
-    if (QFile::remove(linkName)) {
-      ui->linkButton->menu()->actions().at(1)->setIcon(QIcon(":/MO/gui/link"));
-    } else {
-      reportError(tr("failed to remove %1").arg(linkName));
-    }
-  } else {
-    QFileInfo exeInfo(qApp->applicationFilePath());
-    // create link
-    std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(QString("\"%1\" %2").arg(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()))
-                                                                  .arg(selectedExecutable.m_Arguments));
-    std::wstring description      = ToWString(selectedExecutable.m_BinaryInfo.fileName());
-    std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(exeInfo.absolutePath()));
-
-    if (CreateShortcut(targetFile.c_str(), parameter.c_str(),
-                       linkName.toUtf8().constData(),
-                       description.c_str(), currentDirectory.c_str()) != E_INVALIDARG) {
-      ui->linkButton->menu()->actions().at(1)->setIcon(QIcon(":/MO/gui/remove"));
-    } else {
-      reportError(tr("failed to create %1").arg(linkName));
-    }
-  }
+  addWindowsLink(Shortcut_Type::Windows_StartMenu);
 }
 
 void MainWindow::on_actionSettings_triggered()
@@ -3542,10 +3541,15 @@ void MainWindow::addAsExecutable()
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
         if (!name.isEmpty()) {
-          m_OrganizerCore.executablesList()->addExecutable(name, binaryInfo.absoluteFilePath(),
-                                          arguments, targetInfo.absolutePath(),
-                                          ExecutableInfo::CloseMOStyle::DEFAULT_STAY, QString(),
-                                          true, false);
+          m_OrganizerCore.executablesList()->addExecutable(name,
+                                                           binaryInfo.absoluteFilePath(),
+                                                           arguments,
+                                                           targetInfo.absolutePath(),
+                                                           ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                                           QString(),
+                                                           Executable::Type::Custom,
+                                                           Executable::Toolbar::Disabled,
+                                                           Executable::Icon::MO);
           refreshExecutablesList();
         }
       } break;
@@ -4122,7 +4126,7 @@ void MainWindow::removeFromToolbar()
 {
   try {
     Executable &exe = m_OrganizerCore.executablesList()->find(m_ContextAction->text());
-    exe.m_Toolbar = false;
+    exe.showOnToolbar(false);
   } catch (const std::runtime_error&) {
     qDebug("executable doesn't exist any more");
   }
@@ -4219,19 +4223,31 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
   modFilterActive(m_ModListSortProxy->isFilterActive());
 }
 
+const Executable &MainWindow::getSelectedExecutable() const
+{
+  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->find(name);
+}
+
+Executable &MainWindow::getSelectedExecutable()
+{
+  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->find(name);
+}
+
 void MainWindow::on_linkButton_pressed()
 {
-  const Executable &selectedExecutable = ui->executablesListBox->itemData(ui->executablesListBox->currentIndex()).value<Executable>();
+  Executable const &selectedExecutable(getSelectedExecutable());
 
-  QIcon addIcon(":/MO/gui/link");
-  QIcon removeIcon(":/MO/gui/remove");
+  QIcon const addIcon(":/MO/gui/link");
+  QIcon const removeIcon(":/MO/gui/remove");
 
-  QFileInfo linkDesktopFile(QDir::fromNativeSeparators(getDesktopDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
-  QFileInfo linkMenuFile(QDir::fromNativeSeparators(getStartMenuDirectory()) + "/" + selectedExecutable.m_Title + ".lnk");
+  QFileInfo const linkDesktopFile(getDesktopLinkfile(selectedExecutable));
+  QFileInfo const linkMenuFile(getStartMenuLinkfile(selectedExecutable));
 
-  ui->linkButton->menu()->actions().at(0)->setIcon(selectedExecutable.m_Toolbar ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(1)->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(2)->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(selectedExecutable.shownOnToolbar() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)

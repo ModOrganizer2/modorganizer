@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>384</width>
-    <height>362</height>
+    <height>446</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -165,20 +165,27 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="closeCheckBox">
+     <property name="toolTip">
+      <string>If checked, MO will be closed once the specified executable is run.</string>
+     </property>
+     <property name="whatsThis">
+      <string>If checked, MO will be closed once the specified executable is run.</string>
+     </property>
+     <property name="text">
+      <string>Close MO when started</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="useAppIconCheckBox">
+     <property name="text">
+      <string>Use Application's Icon for shortcuts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QCheckBox" name="closeCheckBox">
-       <property name="toolTip">
-        <string>If checked, MO will be closed once the specified executable is run.</string>
-       </property>
-       <property name="whatsThis">
-        <string>If checked, MO will be closed once the specified executable is run.</string>
-       </property>
-       <property name="text">
-        <string>Close MO when started</string>
-       </property>
-      </widget>
-     </item>
      <item>
       <widget class="QPushButton" name="addButton">
        <property name="toolTip">
@@ -240,6 +247,10 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </layout>
    </item>
   </layout>
+  <zorder>executablesListBox</zorder>
+  <zorder>closeButton</zorder>
+  <zorder>closeCheckBox</zorder>
+  <zorder>useAppIconCheckBox</zorder>
  </widget>
  <resources/>
  <connections/>

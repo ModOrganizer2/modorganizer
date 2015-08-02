@@ -222,9 +222,10 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
     const Executable &item = *current;
     settings.setArrayIndex(count++);
     settings.setValue("title", item.m_Title);
-    settings.setValue("custom", item.m_Custom);
-    settings.setValue("toolbar", item.m_Toolbar);
-    if (item.m_Custom) {
+    settings.setValue("custom", item.isCustom());
+    settings.setValue("toolbar", item.shownOnToolbar());
+    settings.setValue("ownicon", item.usesOwnIcon());
+    if (item.isCustom()) {
       settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
       settings.setValue("arguments", item.m_Arguments);
       settings.setValue("workingDirectory", item.m_WorkingDirectory);
@@ -329,14 +330,21 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     ExecutableInfo::CloseMOStyle closeMO =
         settings.value("closeOnStart").toBool() ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
                                                 : ExecutableInfo::CloseMOStyle::DEFAULT_STAY;
+    Executable::Type type =
+        settings.value("custom", true).toBool() ? Executable::Type::Custom : Executable::Type::Game;
+    Executable::Toolbar toolbar =
+        settings.value("toolbar", false).toBool() ? Executable::Toolbar::Enabled : Executable::Toolbar::Disabled;
+    Executable::Icon icon =
+        settings.value("ownicon", false).toBool() ? Executable::Icon::Application : Executable::Icon::MO;
     m_ExecutablesList.addExecutable(settings.value("title").toString(),
                                     settings.value("binary").toString(),
                                     settings.value("arguments").toString(),
                                     settings.value("workingDirectory", "").toString(),
                                     closeMO,
                                     settings.value("steamAppID", "").toString(),
-                                    settings.value("custom", true).toBool(),
-                                    settings.value("toolbar", false).toBool());
+                                    type,
+                                    toolbar,
+                                    icon);
   }
 
   settings.endArray();

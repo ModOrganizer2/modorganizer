@@ -170,13 +170,14 @@ void cleanupDir()
     "proxy.dll"
   };
 
-  qDebug("removing obsolete files");
-
   for (const QString &fileName : fileNames) {
     QString fullPath = qApp->applicationDirPath() + "/" + fileName;
-    if (QFile::exists(fullPath)
-        && !shellDelete(QStringList(fullPath), true)) {
-      qDebug("failed to remove obsolete %s", qPrintable(fullPath));
+    if (QFile::exists(fullPath)) {
+      if (shellDelete(QStringList(fullPath), true)) {
+        qDebug("removed obsolete file %s", qPrintable(fullPath));
+      } else {
+        qDebug("failed to remove obsolete %s", qPrintable(fullPath));
+      }
     }
   }
 }
@@ -246,11 +247,6 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   QMessageBox::critical(nullptr, QObject::tr("Woops"),
                         QObject::tr("ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1").arg(errorBuffer));
   return result;
-}
-
-static void registerMetaTypes()
-{
-  registerExecutable();
 }
 
 static bool HaveWriteAccess(const std::wstring &path)
@@ -413,8 +409,6 @@ int main(int argc, char *argv[])
 
     ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
   }
-
-  registerMetaTypes();
 
   QStringList arguments = application.arguments();
 
