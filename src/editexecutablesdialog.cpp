@@ -60,7 +60,8 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 
   for(; current != end; ++current) {
     QListWidgetItem *newItem = new QListWidgetItem(current->m_Title);
-    newItem->setTextColor(current->m_Type == Executable::Type::Custom ? QColor(Qt::black) : QColor(Qt::darkGray));
+    newItem->setTextColor((current->m_Flags & Executable::CustomExecutable) ? QColor(Qt::black)
+                                                                            : QColor(Qt::darkGray));
     ui->executablesListBox->addItem(newItem);
   }
 
@@ -100,10 +101,8 @@ void EditExecutablesDialog::saveExecutable()
                                       : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
                                   ui->overwriteAppIDBox->isChecked() ?
                                       ui->appIDOverwriteEdit->text() : "",
-                                  Executable::Type::Custom,
-                                  Executable::Toolbar::Disabled,
                                   ui->useAppIconCheckBox->isChecked() ?
-                                      Executable::Icon::Application : Executable::Icon::MO);
+                                      Executable::UseApplicationIcon : Executable::Flags());
 }
 
 

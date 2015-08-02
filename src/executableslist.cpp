@@ -74,7 +74,7 @@ const Executable &ExecutablesList::find(const QString &title) const
       return exe;
     }
   }
-  throw std::runtime_error("invalid name " + title.toStdString());
+  throw std::runtime_error(QString("invalid name %1").arg(title).toLocal8Bit().constData());
 }
 
 
@@ -85,7 +85,7 @@ Executable &ExecutablesList::find(const QString &title)
       return exe;
     }
   }
-  throw std::runtime_error("invalid name " + title.toStdString());
+  throw std::runtime_error(QString("invalid name %1").arg(title).toLocal8Bit().constData());
 }
 
 
@@ -135,25 +135,21 @@ void ExecutablesList::addExecutable(const QString &title,
                                     const QString &workingDirectory,
                                     ExecutableInfo::CloseMOStyle closeMO,
                                     const QString &steamAppID,
-                                    Executable::Type custom,
-                                    Executable::Toolbar toolbar,
-                                    Executable::Icon ownicon)
+                                    Executable::Flags flags)
 {
   QFileInfo file(executableName);
   auto existingExe = findExe(title);
 
   if (existingExe != m_Executables.end()) {
     existingExe->m_Title = title;
-    existingExe->m_Type = custom;
     existingExe->m_CloseMO = closeMO;
-    existingExe->m_Toolbar = toolbar;
-    if (custom == Executable::Type::Custom) {
+    existingExe->m_Flags = flags;
+    if (flags & Executable::CustomExecutable) {
       // for pre-configured executables don't overwrite settings we didn't store
       existingExe->m_BinaryInfo = file;
       existingExe->m_Arguments = arguments;
       existingExe->m_WorkingDirectory = workingDirectory;
       existingExe->m_SteamAppID = steamAppID;
-      existingExe->m_Icon = ownicon;
     }
   } else {
     Executable newExe;
@@ -163,9 +159,7 @@ void ExecutablesList::addExecutable(const QString &title,
     newExe.m_Arguments = arguments;
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
-    newExe.m_Type = Executable::Type::Custom;
-    newExe.m_Toolbar = toolbar;
-    newExe.m_Icon = ownicon;
+    newExe.m_Flags = Executable::CustomExecutable | flags;
     m_Executables.push_back(newExe);
   }
 }
@@ -174,7 +168,7 @@ void ExecutablesList::addExecutable(const QString &title,
 void ExecutablesList::remove(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->isCustom() && iter->m_Title == title) {
+    if (iter->isCustom() && (iter->m_Title == title)) {
       m_Executables.erase(iter);
       break;
     }
@@ -195,9 +189,16 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
     newExe.m_Arguments = arguments;
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
-    newExe.m_Type = Executable::Type::Game;
-    newExe.m_Toolbar = Executable::Toolbar::Disabled;
-    newExe.m_Icon = Executable::Icon::MO;
+    newExe.m_Flags = 0;
     m_Executables.push_back(newExe);
   }
+}
+
+
+void Executable::showOnToolbar(bool state)
+{
+  if (state)
+    m_Flags |= ShowInToolbar;
+  else
+    m_Flags ^= ShowInToolbar;
 }

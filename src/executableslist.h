@@ -39,32 +39,23 @@ struct Executable {
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
-  enum class Type {
-    Game,
-    Custom
+  enum Flag {
+    CustomExecutable = 0x01,
+    ShowInToolbar = 0x02,
+    UseApplicationIcon = 0x04
   };
 
-  enum class Toolbar {
-    Disabled,
-    Enabled
-  };
+  Q_DECLARE_FLAGS(Flags, Flag)
 
-  enum class Icon {
-    MO,
-    Application
-  };
+  Flags m_Flags;
 
-  Type m_Type;
-  Toolbar m_Toolbar;
-  Icon m_Icon;
+  bool isCustom() const { return m_Flags.testFlag(CustomExecutable); }
 
-  bool isCustom() const { return m_Type == Type::Custom; }
+  bool shownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
 
-  bool shownOnToolbar() const { return m_Toolbar == Toolbar::Enabled; }
+  void showOnToolbar(bool state);
 
-  void showOnToolbar(bool state) { m_Toolbar = state ? Toolbar::Enabled : Toolbar::Disabled; }
-
-  bool usesOwnIcon() const { return m_Icon == Icon::Application; }
+  bool usesOwnIcon() const { return  m_Flags.testFlag(UseApplicationIcon); }
 };
 
 
@@ -149,9 +140,7 @@ public:
                      const QString &workingDirectory,
                      MOBase::ExecutableInfo::CloseMOStyle closeMO,
                      const QString &steamAppID,
-                     Executable::Type custom,
-                     Executable::Toolbar toolbar,
-                     Executable::Icon ownicon);
+                     Executable::Flags flags);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -197,5 +186,7 @@ private:
   std::vector<Executable> m_Executables;
 
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)
 
 #endif // EXECUTABLESLIST_H

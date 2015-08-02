@@ -330,21 +330,19 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     ExecutableInfo::CloseMOStyle closeMO =
         settings.value("closeOnStart").toBool() ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
                                                 : ExecutableInfo::CloseMOStyle::DEFAULT_STAY;
-    Executable::Type type =
-        settings.value("custom", true).toBool() ? Executable::Type::Custom : Executable::Type::Game;
-    Executable::Toolbar toolbar =
-        settings.value("toolbar", false).toBool() ? Executable::Toolbar::Enabled : Executable::Toolbar::Disabled;
-    Executable::Icon icon =
-        settings.value("ownicon", false).toBool() ? Executable::Icon::Application : Executable::Icon::MO;
+
+    Executable::Flags flags;
+    if (settings.value("custom", true).toBool())   flags |= Executable::CustomExecutable;
+    if (settings.value("toolbar", false).toBool()) flags |= Executable::ShowInToolbar;
+    if (settings.value("ownicon", false).toBool()) flags |= Executable::UseApplicationIcon;
+
     m_ExecutablesList.addExecutable(settings.value("title").toString(),
                                     settings.value("binary").toString(),
                                     settings.value("arguments").toString(),
                                     settings.value("workingDirectory", "").toString(),
                                     closeMO,
                                     settings.value("steamAppID", "").toString(),
-                                    type,
-                                    toolbar,
-                                    icon);
+                                    flags);
   }
 
   settings.endArray();

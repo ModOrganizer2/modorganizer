@@ -326,13 +326,13 @@ private:
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
-  enum class Shortcut_Type {
+  enum class ShortcutType {
     Toolbar,
-    Windows_Desktop,
-    Windows_StartMenu
+    Desktop,
+    StartMenu
   };
 
-  void addWindowsLink(Shortcut_Type const);
+  void addWindowsLink(ShortcutType const);
 
   Executable const &getSelectedExecutable() const;
   Executable &getSelectedExecutable();

@@ -459,7 +459,7 @@ void MainWindow::actionToToolButton(QAction *&sourceAction)
 
 void MainWindow::updateToolBar()
 {
-  foreach (QAction *action, ui->toolBar->actions()) {
+  for (QAction *action : ui->toolBar->actions()) {
     if (action->objectName().startsWith("custom__")) {
       ui->toolBar->removeAction(action);
     }
@@ -478,7 +478,7 @@ void MainWindow::updateToolBar()
   actionToToolButton(ui->actionHelp);
   createHelpWidget();
 
-  foreach (QAction *action, ui->toolBar->actions()) {
+  for (QAction *action : ui->toolBar->actions()) {
     if (action->isSeparator()) {
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
@@ -953,7 +953,7 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    Executable const &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
+    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
     m_OrganizerCore.spawnBinary(
           selectedExecutable.m_BinaryInfo,
           selectedExecutable.m_Arguments,
@@ -1612,7 +1612,7 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked()
 {
-  Executable const &selectedExecutable(getSelectedExecutable());
+  const Executable &selectedExecutable(getSelectedExecutable());
 
   m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo,
@@ -1731,7 +1731,7 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
 
   if (executablesList->isEnabled()) {
     //I think the 2nd test is impossible
-    if (index == 0 || index > static_cast<int>(m_OrganizerCore.executablesList()->size())) {
+    if ((index == 0) || (index >= static_cast<int>(m_OrganizerCore.executablesList()->size()))) {
       if (modifyExecutablesDialog()) {
         setExecutableIndex(previousIndex);
       }
@@ -3257,31 +3257,31 @@ void MainWindow::linkToolbar()
 {
   Executable &exe(getSelectedExecutable());
   exe.showOnToolbar(!exe.shownOnToolbar());
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(exe.shownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.shownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
 }
 
 namespace {
-QString getLinkfile(QString const &dir, Executable const &exec)
+QString getLinkfile(const QString &dir, const Executable &exec)
 {
   return QDir::fromNativeSeparators(dir) + "/" + exec.m_Title + ".lnk";
 }
 
-QString getDesktopLinkfile(Executable const &exec)
+QString getDesktopLinkfile(const Executable &exec)
 {
   return getLinkfile(getDesktopDirectory(), exec);
 }
 
-QString getStartMenuLinkfile(Executable const &exec)
+QString getStartMenuLinkfile(const Executable &exec)
 {
   return getLinkfile(getStartMenuDirectory(), exec);
 }
 }
 
-void MainWindow::addWindowsLink(Shortcut_Type const mapping)
+void MainWindow::addWindowsLink(const ShortcutType mapping)
 {
   Executable const &selectedExecutable(getSelectedExecutable());
-  QString const linkName = getLinkfile(mapping == Shortcut_Type::Windows_Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
+  QString const linkName = getLinkfile(mapping == ShortcutType::Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
                                        selectedExecutable);
 
   if (QFile::exists(linkName)) {
@@ -3317,12 +3317,12 @@ void MainWindow::addWindowsLink(Shortcut_Type const mapping)
 
 void MainWindow::linkDesktop()
 {
-  addWindowsLink(Shortcut_Type::Windows_Desktop);
+  addWindowsLink(ShortcutType::Desktop);
 }
 
 void MainWindow::linkMenu()
 {
-  addWindowsLink(Shortcut_Type::Windows_StartMenu);
+  addWindowsLink(ShortcutType::StartMenu);
 }
 
 void MainWindow::on_actionSettings_triggered()
@@ -3547,9 +3547,7 @@ void MainWindow::addAsExecutable()
                                                            targetInfo.absolutePath(),
                                                            ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
                                                            QString(),
-                                                           Executable::Type::Custom,
-                                                           Executable::Toolbar::Disabled,
-                                                           Executable::Icon::MO);
+                                                           Executable::CustomExecutable);
           refreshExecutablesList();
         }
       } break;
@@ -3691,8 +3689,7 @@ void MainWindow::openDataFile()
 
 void MainWindow::updateAvailable()
 {
-  QToolBar *toolBar = findChild<QToolBar*>("toolBar");
-  foreach (QAction *action, toolBar->actions()) {
+  for (QAction *action : ui->toolBar->actions()) {
     if (action->text() == tr("Update")) {
       action->setEnabled(true);
       action->setToolTip(tr("Update available"));
@@ -4159,7 +4156,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   bool hasLocked = false;
   bool hasUnlocked = false;
-  Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
+  for (const QModelIndex &idx : currentSelection.indexes()) {
     int row = m_PluginListSortProxy->mapToSource(idx).row();
     if (m_OrganizerCore.pluginList()->isEnabled(row)) {
       if (m_OrganizerCore.pluginList()->isESPLocked(row)) {
@@ -4237,17 +4234,17 @@ Executable &MainWindow::getSelectedExecutable()
 
 void MainWindow::on_linkButton_pressed()
 {
-  Executable const &selectedExecutable(getSelectedExecutable());
+  const Executable &selectedExecutable(getSelectedExecutable());
 
-  QIcon const addIcon(":/MO/gui/link");
-  QIcon const removeIcon(":/MO/gui/remove");
+  const QIcon addIcon(":/MO/gui/link");
+  const QIcon removeIcon(":/MO/gui/remove");
 
-  QFileInfo const linkDesktopFile(getDesktopLinkfile(selectedExecutable));
-  QFileInfo const linkMenuFile(getStartMenuLinkfile(selectedExecutable));
+  const QFileInfo linkDesktopFile(getDesktopLinkfile(selectedExecutable));
+  const QFileInfo linkMenuFile(getStartMenuLinkfile(selectedExecutable));
 
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Toolbar))->setIcon(selectedExecutable.shownOnToolbar() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
-  ui->linkButton->menu()->actions().at(static_cast<int>(Shortcut_Type::Windows_StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(selectedExecutable.shownOnToolbar() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }
 
 void MainWindow::on_showHiddenBox_toggled(bool checked)
