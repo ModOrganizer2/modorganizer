@@ -150,6 +150,7 @@ public: // implementation of virtual functions of QAbstractItemModel
   virtual Qt::ItemFlags flags(const QModelIndex &modelIndex) const;
   virtual Qt::DropActions supportedDropActions() const { return Qt::MoveAction | Qt::CopyAction; }
   virtual QStringList mimeTypes() const;
+  virtual QMimeData *mimeData(const QModelIndexList &indexes) const;
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
   virtual bool removeRows(int row, int count, const QModelIndex &parent);
 

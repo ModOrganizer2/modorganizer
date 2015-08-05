@@ -587,6 +587,12 @@ QStringList ModList::mimeTypes() const
   return result;
 }
 
+QMimeData *ModList::mimeData(const QModelIndexList &indexes) const
+{
+  QMimeData *result = QAbstractItemModel::mimeData(indexes);
+  result->setData("text/plain", "mod");
+  return result;
+}
 
 void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 {
@@ -824,7 +830,6 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   return true;
 }
 
-
 bool ModList::dropMod(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
 
@@ -877,9 +882,10 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
   }
 
   if (m_Profile == nullptr) return false;
+
   if (mimeData->hasUrls()) {
     return dropURLs(mimeData, row, parent);
-  } else {
+  } else if (mimeData->hasText()) {
     return dropMod(mimeData, row, parent);
   }
 }
@@ -1141,3 +1147,4 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   }
   return QAbstractItemModel::eventFilter(obj, event);
 }
+
