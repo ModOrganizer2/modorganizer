@@ -35,27 +35,38 @@ struct Executable {
   QString m_Title;
   QFileInfo m_BinaryInfo;
   QString m_Arguments;
-  MOBase::ExecutableInfo::CloseMOStyle m_CloseMO;
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
-  enum Flag {
+  //These flags are set by other parts of the system and can't be
+  //changed when modifying from the custom executable window
+  enum OtherFlag__ {
     CustomExecutable = 0x01,
-    ShowInToolbar = 0x02,
-    UseApplicationIcon = 0x04
+    ShowInToolbar = 0x02
   };
+  Q_DECLARE_FLAGS(OtherFlags, OtherFlag__)
 
-  Q_DECLARE_FLAGS(Flags, Flag)
+  OtherFlags m_OtherFlags;
 
-  Flags m_Flags;
+  //These flags can be changed from the Custom Executable window.
+  enum SettableFlag__ {
+    CloseOnExecution = 0x01,
+    UseApplicationIcon = 0x02
+  };
+  Q_DECLARE_FLAGS(SettableFlags, SettableFlag__)
 
-  bool isCustom() const { return m_Flags.testFlag(CustomExecutable); }
+  SettableFlags m_SettableFlags;
 
-  bool shownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
+  bool isCustom() const { return m_OtherFlags.testFlag(CustomExecutable); }
+
+  bool shownOnToolbar() const { return m_OtherFlags.testFlag(ShowInToolbar); }
 
   void showOnToolbar(bool state);
 
-  bool usesOwnIcon() const { return  m_Flags.testFlag(UseApplicationIcon); }
+  bool usesOwnIcon() const { return m_SettableFlags.testFlag(UseApplicationIcon); }
+
+  bool closeOnExecution() const { return m_SettableFlags.testFlag(CloseOnExecution); }
+
 };
 
 
@@ -138,9 +149,24 @@ public:
                      const QString &executableName,
                      const QString &arguments,
                      const QString &workingDirectory,
-                     MOBase::ExecutableInfo::CloseMOStyle closeMO,
                      const QString &steamAppID,
-                     Executable::Flags flags);
+                     Executable::SettableFlags settable
+                     )
+  {
+    addExecutable(title, executableName, arguments, workingDirectory, steamAppID, settable, false, 0);
+  }
+
+  void addExecutable(const QString &title,
+                     const QString &executableName,
+                     const QString &arguments,
+                     const QString &workingDirectory,
+                     const QString &steamAppID,
+                     Executable::SettableFlags settable,
+                     Executable::OtherFlags other
+                     )
+  {
+    addExecutable(title, executableName, arguments, workingDirectory, steamAppID, settable, true, other);
+  }
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path
@@ -177,8 +203,18 @@ private:
 
   std::vector<Executable>::iterator findExe(const QString &title);
 
+  void addExecutable(const QString &title,
+                     const QString &executableName,
+                     const QString &arguments,
+                     const QString &workingDirectory,
+                     const QString &steamAppID,
+                     Executable::SettableFlags settable,
+                     bool set_other,
+                     Executable::OtherFlags other
+                     );
+
   void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
-                             const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                             const QString &workingDirectory,
                              const QString &steamAppID);
 
 private:
@@ -187,6 +223,7 @@ private:
 
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::OtherFlags)
+Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::SettableFlags)
 
 #endif // EXECUTABLESLIST_H
