@@ -207,22 +207,28 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
     FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
     if (funcDump) {
       if (QMessageBox::question(nullptr, QObject::tr("Woops"),
-                            QObject::tr("ModOrganizer has crashed! Should a diagnostic file be created? If you send me this file "
-                               "(%1) to sherb@gmx.net, the bug is a lot more likely to be fixed. "
-                               "Please include a short description of what you were doing when the crash happened").arg(qApp->applicationFilePath().append(".dmp")),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+                                QObject::tr("ModOrganizer has crashed! "
+                                            "Should a diagnostic file be created? "
+                                            "If you send me this file (%1) to sherb@gmx.net, "
+                                            "the bug is a lot more likely to be fixed. "
+                                            "Please include a short description of what you were "
+                                            "doing when the crash happened"
+                                            ).arg(qApp->applicationFilePath().append(".dmp")),
+                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
 
         std::wstring dumpName = ToWString(qApp->applicationFilePath().append(".dmp"));
 
         HANDLE dumpFile = ::CreateFile(dumpName.c_str(),
-                                       GENERIC_WRITE, FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+                                       GENERIC_WRITE, FILE_SHARE_WRITE, nullptr,
+                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (dumpFile != INVALID_HANDLE_VALUE) {
           _MINIDUMP_EXCEPTION_INFORMATION exceptionInfo;
           exceptionInfo.ThreadId = ::GetCurrentThreadId();
           exceptionInfo.ExceptionPointers = exceptionPtrs;
           exceptionInfo.ClientPointers = false;
 
-          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile, MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
+          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile,
+                                  MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
 
           ::FlushFileBuffers(dumpFile);
           ::CloseHandle(dumpFile);
@@ -337,13 +343,9 @@ int main(int argc, char *argv[])
   QString dataPath =
       instanceID.isEmpty() ? application.applicationDirPath()
                            : QDir::fromNativeSeparators(
-#if QT_VERSION >= 0x050000
-                           QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-#else
-                           QDesktopServices::storageLocation(QDesktopServices::DataLocation)
-#endif
+                               QStandardPaths::writableLocation(QStandardPaths::DataLocation)
                                + "/" + instanceID
-                             );
+                               );
   application.setProperty("dataPath", dataPath);
 
   if (!QDir(dataPath).exists()) {

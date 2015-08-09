@@ -229,17 +229,10 @@ void NXMAccessManager::pageLogin()
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
 
   QByteArray postDataQuery;
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   QUrlQuery postData;
   postData.addQueryItem("username", m_Username);
   postData.addQueryItem("password", m_Password);
   postDataQuery = postData.query(QUrl::FullyEncoded).toUtf8();
-#else
-  QUrl postData;
-  postData.addQueryItem("username", m_Username);
-  postData.addQueryItem("password", m_Password);
-  postDataQuery = postData.encodedQuery();
-#endif
 
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 

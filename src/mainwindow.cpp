@@ -175,8 +175,10 @@ MainWindow::MainWindow(const QString &exeName
   ui->logList->addAction(ui->actionCopy_Log_to_Clipboard);
   int splitterSize = this->size().height(); // actually total window size, but the splitter doesn't seem to return the true value
   ui->topLevelSplitter->setSizes(QList<int>() << splitterSize - 100 << 100);
-  connect(ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)), ui->logList, SLOT(scrollToBottom()));
-  connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)), ui->logList, SLOT(scrollToBottom()));
+  connect(ui->logList->model(), SIGNAL(rowsInserted(const QModelIndex &, int, int)),
+          ui->logList, SLOT(scrollToBottom()));
+  connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
+          ui->logList, SLOT(scrollToBottom()));
 
   m_RefreshProgress = new QProgressBar(statusBar());
   m_RefreshProgress->setTextVisible(true);
@@ -929,7 +931,8 @@ void MainWindow::modPagePluginInvoke()
       m_IntegratedBrowser.setWindowTitle(plugin->displayName());
       m_IntegratedBrowser.openUrl(plugin->pageURL());
     } else {
-      ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(),
+                      nullptr, nullptr, SW_SHOWNORMAL);
     }
   }
 }
@@ -2328,8 +2331,9 @@ void MainWindow::unendorse_clicked()
   }
 }
 
-void MainWindow::loginFailed(const QString&)
+void MainWindow::loginFailed(const QString &error)
 {
+  qDebug("login failed: %s", qPrintable(error));
   statusBar()->hide();
 }
 
@@ -4757,3 +4761,4 @@ void MainWindow::dropEvent(QDropEvent *event)
   }
   event->accept();
 }
+

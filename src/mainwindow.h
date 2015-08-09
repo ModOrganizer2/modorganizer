@@ -534,7 +534,6 @@ private slots: // ui slots
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
   void on_manageArchivesBox_toggled(bool checked);
-
 };
 
 
