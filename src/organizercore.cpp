@@ -1570,3 +1570,43 @@ void OrganizerCore::prepareStart() {
   storeSettings();
 }
 
+std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping()
+{
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  return fileMapping(game->dataDirectory().absolutePath(),
+                     directoryStructure(),
+                     directoryStructure());
+}
+
+
+std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping(
+    const QString &dataPath,
+    const DirectoryEntry *base,
+    const DirectoryEntry *directoryEntry)
+{
+  std::vector<std::pair<QString, QString>> result;
+
+  for (FileEntry::Ptr current : directoryEntry->getFiles()) {
+    bool isArchive = false;
+    int origin = current->getOrigin(isArchive);
+    if (isArchive || (origin == 0)) {
+      continue;
+    }
+
+    QString fileName = ToQString(current->getRelativePath());
+    QString source = ToQString(base->getOriginByID(origin).getPath()) + fileName;
+    QString target = QDir::toNativeSeparators(dataPath) + fileName;
+    result.push_back(std::make_pair(source, target));
+  }
+
+  // recurse into subdirectories
+  std::vector<DirectoryEntry*>::const_iterator current, end;
+  directoryEntry->getSubDirectories(current, end);
+  for (; current != end; ++current) {
+    std::vector<std::pair<QString, QString>> subRes = fileMapping(dataPath, base, *current);
+    result.insert(result.end(), subRes.begin(), subRes.end());
+  }
+  return result;
+}
+
+

@@ -157,6 +157,8 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
 
+  std::vector<std::pair<QString, QString> > fileMapping();
+
 public: // IPluginDiagnose interface
 
   virtual std::vector<unsigned int> activeProblems() const;
@@ -207,6 +209,10 @@ private:
   void updateModActiveState(int index, bool active);
 
   bool testForSteam();
+
+  std::vector<std::pair<QString, QString>> fileMapping(const QString &dataPath,
+                                                       const MOShared::DirectoryEntry *base,
+                                                       const MOShared::DirectoryEntry *directoryEntry);
 
 private slots:
 

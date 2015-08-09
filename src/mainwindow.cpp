@@ -3451,36 +3451,26 @@ void MainWindow::languageChange(const QString &newLanguage)
 
 void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
 {
-  { // list files
-//    std::set<FileEntry>::const_iterator current, end;
-//    directoryEntry.getFiles(current, end);
-//    for (; current != end; ++current) {
-
-    std::vector<FileEntry::Ptr> files = directoryEntry.getFiles();
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      FileEntry::Ptr current = *iter;
-      bool isArchive = false;
-      int origin = current->getOrigin(isArchive);
-      if (isArchive) {
-        // TODO: don't list files from archives. maybe make this an option?
-        continue;
-      }
-      QString fullName = directory;
-      fullName.append("\\").append(ToQString(current->getName()));
-      file.write(fullName.toUtf8());
-
-      file.write("\t(");
-      file.write(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()).toUtf8());
-      file.write(")\r\n");
+  for (FileEntry::Ptr current : directoryEntry.getFiles()) {
+    bool isArchive = false;
+    int origin = current->getOrigin(isArchive);
+    if (isArchive) {
+      // TODO: don't list files from archives. maybe make this an option?
+      continue;
     }
+    QString fullName = directory + "\\" + ToQString(current->getName());
+    file.write(fullName.toUtf8());
+
+    file.write("\t(");
+    file.write(ToQString(m_OrganizerCore.directoryStructure()->getOriginByID(origin).getName()).toUtf8());
+    file.write(")\r\n");
   }
 
-  { // recurse into subdirectories
-    std::vector<DirectoryEntry*>::const_iterator current, end;
-    directoryEntry.getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      writeDataToFile(file, directory.mid(0).append("\\").append(ToQString((*current)->getName())), **current);
-    }
+  // recurse into subdirectories
+  std::vector<DirectoryEntry*>::const_iterator current, end;
+  directoryEntry.getSubDirectories(current, end);
+  for (; current != end; ++current) {
+    writeDataToFile(file, directory + "\\" + ToQString((*current)->getName()), **current);
   }
 }
 
