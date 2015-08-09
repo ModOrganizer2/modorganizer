@@ -121,6 +121,7 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
+  void updateWindowTitle(const QString &accountName, bool premium);
 public slots:
 
   void displayColumnSelection(const QPoint &pos);

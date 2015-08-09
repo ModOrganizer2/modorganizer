@@ -165,7 +165,7 @@ MainWindow::MainWindow(const QString &exeName
   , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
 {
   ui->setupUi(this);
-  this->setWindowTitle(ToQString(GameInfo::instance().getGameName()) + " Mod Organizer v" + m_OrganizerCore.getVersion().displayString());
+  updateWindowTitle(QString(), false);
   languageChange(m_OrganizerCore.settings().language());
 
   ui->logList->setModel(LogBuffer::instance());
@@ -286,6 +286,11 @@ MainWindow::MainWindow(const QString &exeName
   connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(NexusInterface::instance()->getAccessManager(), &NXMAccessManager::credentialsReceived,
+          [this] (const QString &accountName, bool premium) {
+    qDebug("user %s premium", premium ? "is" : "is not");
+    updateWindowTitle(accountName, premium);
+  });
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -346,6 +351,22 @@ MainWindow::~MainWindow()
   m_OrganizerCore.setUserInterface(nullptr, nullptr);
   m_IntegratedBrowser.close();
   delete ui;
+}
+
+
+void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
+{
+  QString title = QString("%1 Mod Organizer v%2").arg(
+        ToQString(GameInfo::instance().getGameName()),
+        m_OrganizerCore.getVersion().displayString());
+
+  if (accountName.isEmpty()) {
+    title.append(" (not logged in)");
+  } else {
+    title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
+  }
+
+  this->setWindowTitle(title);
 }
 
 
