@@ -24,6 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selfupdater.h"
 #include "persistentcookiejar.h"
 #include "settings.h"
+#include <gameinfo.h>
+#include <json.h>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>
@@ -32,14 +34,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkCookieJar>
 #include <QCoreApplication>
 #include <QDir>
-#include <gameinfo.h>
-
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QUrlQuery>
-#endif
+#include <QThread>
+#include <QJsonDocument>
+#include <QJsonArray>
+
 
 using namespace MOBase;
 using namespace MOShared;
+
+
+// unfortunately Nexus doesn't seem to document these states, all I know is all these listed
+// are considered premium (27 should be lifetime premium)
+const std::set<int> NXMAccessManager::s_PremiumAccountStates { 4, 6, 13, 27, 31, 32 };
 
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
@@ -47,9 +54,9 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   , m_LoginReply(nullptr)
   , m_ProgressDialog()
   , m_MOVersion(moVersion)
-  , m_LoginAttempted(false)
 {
-
+  m_LoginTimeout.setSingleShot(true);
+  m_LoginTimeout.setInterval(30000);
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 }
@@ -88,19 +95,95 @@ QNetworkReply *NXMAccessManager::createRequest(
 }
 
 
-void NXMAccessManager::showCookies()
+void NXMAccessManager::showCookies() const
 {
-  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage()) + "/"));
-  foreach (QNetworkCookie cookie, cookies) {
-    qDebug("%s - %s", cookie.name().constData(), cookie.value().constData());
+  QUrl url(ToQString(GameInfo::instance().getNexusPage()) + "/");
+
+  for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
+    qDebug("%s - %s (expires: %s)",
+           cookie.name().constData(), cookie.value().constData(),
+           qPrintable(cookie.expirationDate().toString()));
   }
+}
+
+
+void NXMAccessManager::startLoginCheck()
+{
+  if (hasLoginCookies()) {
+    QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Validate");
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+    request.setRawHeader("User-Agent", userAgent().toUtf8());
+
+    m_LoginReply = get(request);
+    m_LoginTimeout.start();
+    m_LoginState = LOGIN_CHECKING;
+    connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginChecked()));
+    connect(m_LoginReply, SIGNAL(error(QNetworkReply::NetworkError)),
+            this, SLOT(loginError(QNetworkReply::NetworkError)));
+  }
+}
+
+
+void NXMAccessManager::retrieveCredentials()
+{
+  QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage())
+                          + QString("/Core/Libs/Flamework/Entities/User?GetCredentials&game_id=%1"
+                                    ).arg(GameInfo::instance().getNexusGameID()));
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+  request.setRawHeader("User-Agent", userAgent().toUtf8());
+
+  QNetworkReply *reply = get(request);
+  QTimer timeout;
+  connect(&timeout, &QTimer::timeout, [reply] () {
+    reply->deleteLater();
+  });
+  timeout.start();
+
+  connect(reply, &QNetworkReply::finished, [reply, this] () {
+    QJsonDocument jdoc = QJsonDocument::fromJson(reply->readAll());
+    QJsonArray credentialsData = jdoc.array();
+    emit credentialsReceived(credentialsData.at(2).toString(),
+                             s_PremiumAccountStates.find(credentialsData.at(1).toInt())
+                                                         != s_PremiumAccountStates.end());
+    reply->deleteLater();
+  });
+
+  connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+          [=] (QNetworkReply::NetworkError) {
+    qDebug("failed to retrieve account credentials: %s", qPrintable(reply->errorString()));
+    reply->deleteLater();
+  });
 }
 
 
 bool NXMAccessManager::loggedIn() const
 {
-  return hasLoginCookies();
+  if (m_LoginState == LOGIN_CHECKING) {
+    QProgressDialog progress;
+    progress.setLabelText(tr("Verifying Nexus login"));
+    progress.show();
+    while (m_LoginState == LOGIN_CHECKING) {
+      QCoreApplication::processEvents();
+      QThread::msleep(100);
+    }
+    progress.hide();
+  }
+
+  return m_LoginState == LOGIN_VALID;
 }
+
+
+void NXMAccessManager::refuseLogin()
+{
+  m_LoginState = LOGIN_REFUSED;
+}
+
+
+bool NXMAccessManager::loginAttempted() const
+{
+  return m_LoginState != LOGIN_NOT_CHECKED;
+}
+
 
 bool NXMAccessManager::loginWaiting() const
 {
@@ -114,16 +197,26 @@ void NXMAccessManager::login(const QString &username, const QString &password)
     return;
   }
 
-  if (hasLoginCookies()) {
+  if (m_LoginState == LOGIN_VALID) {
     emit loginSuccessful(false);
     return;
   }
 
-  m_LoginAttempted = true;
-
   m_Username = username;
   m_Password = password;
   pageLogin();
+}
+
+
+QString NXMAccessManager::userAgent(const QString &subModule) const
+{
+  QStringList comments;
+  comments << "compatible to Nexus Client v" + m_NMMVersion;
+  if (!subModule.isEmpty()) {
+    comments << "module: " + subModule;
+  }
+
+  return  QString("Mod Organizer v%1 (%2)").arg(m_MOVersion, comments.join("; "));
 }
 
 
@@ -148,8 +241,7 @@ void NXMAccessManager::pageLogin()
   postDataQuery = postData.encodedQuery();
 #endif
 
-  QString userAgent = QString("Mod Organizer v%1 (compatible to Nexus Client v%2)").arg(m_MOVersion).arg(m_NMMVersion);
-  request.setRawHeader("User-Agent", userAgent.toUtf8());
+  request.setRawHeader("User-Agent", userAgent().toUtf8());
 
   m_ProgressDialog.setLabelText(tr("Logging into Nexus"));
   QList<QPushButton*> buttons = m_ProgressDialog.findChildren<QPushButton*>();
@@ -159,6 +251,7 @@ void NXMAccessManager::pageLogin()
 
   m_LoginReply = post(request, postDataQuery);
   m_LoginTimeout.start();
+  m_LoginState = LOGIN_CHECKING;
   connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginFinished()));
   connect(m_LoginReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(loginError(QNetworkReply::NetworkError)));
 }
@@ -166,37 +259,41 @@ void NXMAccessManager::pageLogin()
 
 void NXMAccessManager::loginTimeout()
 {
-  emit loginFailed(tr("timeout"));
   m_LoginReply->deleteLater();
   m_LoginReply = nullptr;
   m_LoginAttempted = false; // this usually means we might have success later
-  m_LoginTimeout.stop();
   m_Username.clear();
   m_Password.clear();
+  m_LoginState = LOGIN_NOT_VALID;
+
+  emit loginFailed(tr("timeout"));
 }
 
 
 void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 {
+  qDebug("login error");
   m_ProgressDialog.hide();
-  m_LoginTimeout.stop();
+  m_Username.clear();
+  m_Password.clear();
+  m_LoginState = LOGIN_NOT_VALID;
+
   if (m_LoginReply != nullptr) {
-    emit loginFailed(m_LoginReply->errorString());
     m_LoginReply->deleteLater();
     m_LoginReply = nullptr;
+    emit loginFailed(m_LoginReply->errorString());
   } else {
     emit loginFailed(tr("Unknown error"));
   }
-  m_Username.clear();
-  m_Password.clear();
 }
 
 
 bool NXMAccessManager::hasLoginCookies() const
 {
   bool sidCookie = false;
-  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(QUrl(ToQString(GameInfo::instance().getNexusPage()) + "/"));
-  foreach (QNetworkCookie cookie, cookies) {
+  QUrl url(ToQString(GameInfo::instance().getNexusPage()) + "/");
+  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(url);
+  for (const QNetworkCookie &cookie : cookies) {
     if (cookie.name() == "sid") {
       sidCookie = true;
     }
@@ -208,15 +305,35 @@ bool NXMAccessManager::hasLoginCookies() const
 void NXMAccessManager::loginFinished()
 {
   m_ProgressDialog.hide();
-  if (hasLoginCookies()) {
-    emit loginSuccessful(true);
-  } else {
-    emit loginFailed(tr("Please check your password"));
-  }
 
-  m_LoginTimeout.stop();
   m_LoginReply->deleteLater();
   m_LoginReply = nullptr;
   m_Username.clear();
   m_Password.clear();
+
+  if (hasLoginCookies()) {
+    m_LoginState = LOGIN_VALID;
+    retrieveCredentials();
+    emit loginSuccessful(true);
+  } else {
+    m_LoginState = LOGIN_NOT_VALID;
+    emit loginFailed(tr("Please check your password"));
+  }
 }
+
+
+void NXMAccessManager::loginChecked()
+{
+  QNetworkReply *reply = static_cast<QNetworkReply*>(sender());
+  QByteArray data = reply->readAll();
+  m_LoginState = data == "null" ? LOGIN_NOT_VALID
+                                : LOGIN_VALID;
+  if (m_LoginState == LOGIN_VALID) {
+    retrieveCredentials();
+  } else {
+    qDebug("cookies seem to be invalid");
+  }
+  m_LoginReply->deleteLater();
+  m_LoginReply = nullptr;
+}
+

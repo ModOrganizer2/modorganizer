@@ -182,7 +182,7 @@ public slots:
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
 
-  bool nexusLogin();
+  bool nexusLogin(bool retry = false);
 
 signals:
 

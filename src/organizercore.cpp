@@ -373,11 +373,13 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *wid
   m_InstallationManager.setParentWidget(widget);
   m_Updater.setUserInterface(widget);
 
-  // this currently wouldn't work reliably if the ui isn't initialized yet to display the result
-  if (isOnline() && !m_Settings.offlineMode()) {
-    m_Updater.testForUpdate();
-  } else {
-    qDebug("user doesn't seem to be connected to the internet");
+  if (userInterface != nullptr) {
+    // this currently wouldn't work reliably if the ui isn't initialized yet to display the result
+    if (isOnline() && !m_Settings.offlineMode()) {
+      m_Updater.testForUpdate();
+    } else {
+      qDebug("user doesn't seem to be connected to the internet");
+    }
   }
 }
 
@@ -421,21 +423,28 @@ Settings &OrganizerCore::settings()
   return m_Settings;
 }
 
-bool OrganizerCore::nexusLogin()
+bool OrganizerCore::nexusLogin(bool retry)
 {
-  QString username, password;
-
   NXMAccessManager *accessManager = NexusInterface::instance()->getAccessManager();
 
-  if (!accessManager->loginAttempted()
-      && !accessManager->loggedIn()
-      && (m_Settings.getNexusLogin(username, password)
-          || (m_AskForNexusPW
-              && queryLogin(username, password)))) {
-    accessManager->login(username, password);
-    return true;
-  } else {
+  if ((accessManager->loginAttempted()
+       || accessManager->loggedIn())
+      && !retry) {
+    // previous attempt, maybe even successful
     return false;
+  } else {
+    QString username, password;
+    if ((!retry && m_Settings.getNexusLogin(username, password))
+        || (m_AskForNexusPW && queryLogin(username, password))) {
+      // credentials stored or user entered them manually
+      qDebug("attempt login with username %s", qPrintable(username));
+      accessManager->login(username, password);
+      return true;
+    } else {
+      // no credentials stored and user didn't enter them
+      accessManager->refuseLogin();
+      return false;
+    }
   }
 }
 
@@ -1433,9 +1442,15 @@ void OrganizerCore::loginSuccessfulUpdate(bool necessary)
 
 void OrganizerCore::loginFailed(const QString &message)
 {
+  if (QMessageBox::question(qApp->activeWindow(), tr("Login failed"), tr("Login failed, try again?")) == QMessageBox::Yes) {
+    if (nexusLogin(true)) {
+      return;
+    }
+  }
+
   if (!m_PendingDownloads.isEmpty()) {
-    MessageDialog::showMessage(tr("login failed: %1. Trying to download anyway").arg(message), qApp->activeWindow());
-    foreach (QString url, m_PendingDownloads) {
+    MessageDialog::showMessage(tr("login failed: %1. Download will not be associated with an account").arg(message), qApp->activeWindow());
+    for (QString url : m_PendingDownloads) {
       downloadRequestedNXM(url);
     }
     m_PendingDownloads.clear();

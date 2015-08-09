@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include <QNetworkReply>
 #include <QProgressDialog>
+#include <set>
 
 
 /**
@@ -43,12 +44,18 @@ public:
 
   bool loggedIn() const;
 
-  bool loginAttempted() const { return m_LoginAttempted; }
+  bool loginAttempted() const;
   bool loginWaiting() const;
 
   void login(const QString &username, const QString &password);
 
-  void showCookies();
+  void showCookies() const;
+
+  QString userAgent(const QString &subModule = QString()) const;
+
+  void startLoginCheck();
+
+  void refuseLogin();
 
 signals:
 
@@ -68,11 +75,14 @@ signals:
 
   void loginFailed(const QString &message);
 
- private slots:
+  void credentialsReceived(const QString &userName, bool premium);
 
-   void loginFinished();
-   void loginError(QNetworkReply::NetworkError errorCode);
-   void loginTimeout();
+private slots:
+
+  void loginChecked();
+  void loginFinished();
+  void loginError(QNetworkReply::NetworkError errorCode);
+  void loginTimeout();
 
 public slots:
 
@@ -84,10 +94,16 @@ protected:
 
 private:
 
- void pageLogin();
+  void pageLogin();
 // void dlLogin();
 
- bool hasLoginCookies() const;
+  bool hasLoginCookies() const;
+
+  void retrieveCredentials();
+
+private:
+
+  static const std::set<int> s_PremiumAccountStates;
 
 private:
 
@@ -102,6 +118,14 @@ private:
   QString m_Password;
 
   bool m_LoginAttempted;
+  enum {
+    LOGIN_NOT_CHECKED,
+    LOGIN_CHECKING,
+    LOGIN_NOT_VALID,
+    LOGIN_ATTEMPT_FAILED,
+    LOGIN_REFUSED,
+    LOGIN_VALID
+  } m_LoginState = LOGIN_NOT_CHECKED;
 
 };
 

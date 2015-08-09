@@ -391,8 +391,7 @@ void NexusInterface::nextRequest()
     return;
   }
 
-  if (!getAccessManager()->loggedIn()
-      && requiresLogin(m_RequestQueue.head())) {
+  if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->loggedIn()) {
     if (!getAccessManager()->loginAttempted()) {
       emit needLogin();
       return;
@@ -438,16 +437,7 @@ void NexusInterface::nextRequest()
   }
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-  QStringList comments;
-  comments << "compatible to Nexus Client v" + m_NMMVersion;
-  if (!info.m_SubModule.isEmpty()) {
-    comments << "module: " + info.m_SubModule;
-  }
-
-  QString userAgent = QString("Mod Organizer v%1 (%2)")
-                          .arg(m_MOVersion.displayString())
-                          .arg(comments.join("; "));
-  request.setRawHeader("User-Agent", userAgent.toUtf8());
+  request.setRawHeader("User-Agent", m_AccessManager->userAgent(info.m_SubModule).toUtf8());
 
   info.m_Reply = m_AccessManager->get(request);
 

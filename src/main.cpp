@@ -62,6 +62,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selectiondialog.h"
 #include "moapplication.h"
 #include "tutorialmanager.h"
+#include "nxmaccessmanager.h"
 #include <iostream>
 #include <QMessageBox>
 #include <QSharedMemory>
@@ -533,6 +534,8 @@ int main(int argc, char *argv[])
         return 1;
       }
     }
+
+    NexusInterface::instance()->getAccessManager()->startLoginCheck();
 
     qDebug("initializing tutorials");
     TutorialManager::init(qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
