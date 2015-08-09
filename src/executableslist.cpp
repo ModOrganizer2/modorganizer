@@ -48,7 +48,6 @@ void ExecutablesList::init(IPluginGame *game)
                             info.binary().absoluteFilePath(),
                             info.arguments().join(" "),
                             info.workingDirectory().absolutePath(),
-                            info.closeMO(),
                             info.steamAppID());
     }
   }
@@ -133,19 +132,22 @@ void ExecutablesList::addExecutable(const QString &title,
                                     const QString &executableName,
                                     const QString &arguments,
                                     const QString &workingDirectory,
-                                    ExecutableInfo::CloseMOStyle closeMO,
                                     const QString &steamAppID,
-                                    Executable::Flags flags)
+                                    Executable::SettableFlags settable,
+                                    bool set_other,
+                                    Executable::OtherFlags other)
 {
   QFileInfo file(executableName);
   auto existingExe = findExe(title);
 
   if (existingExe != m_Executables.end()) {
     existingExe->m_Title = title;
-    existingExe->m_CloseMO = closeMO;
-    existingExe->m_Flags = flags;
-    if (flags & Executable::CustomExecutable) {
-      // for pre-configured executables don't overwrite settings we didn't store
+    existingExe->m_SettableFlags = settable;
+    if (set_other) {
+      existingExe->m_OtherFlags = other;
+    }
+    // for pre-configured executables don't overwrite settings we didn't store
+    if (existingExe->isCustom()) {
       existingExe->m_BinaryInfo = file;
       existingExe->m_Arguments = arguments;
       existingExe->m_WorkingDirectory = workingDirectory;
@@ -154,12 +156,12 @@ void ExecutablesList::addExecutable(const QString &title,
   } else {
     Executable newExe;
     newExe.m_Title = title;
-    newExe.m_CloseMO = closeMO;
     newExe.m_BinaryInfo = file;
     newExe.m_Arguments = arguments;
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
-    newExe.m_Flags = Executable::CustomExecutable | flags;
+    newExe.m_SettableFlags = settable;
+    newExe.m_OtherFlags = Executable::CustomExecutable | other;
     m_Executables.push_back(newExe);
   }
 }
@@ -176,20 +178,22 @@ void ExecutablesList::remove(const QString &title)
 }
 
 
-void ExecutablesList::addExecutableInternal(const QString &title, const QString &executableName,
-                                            const QString &arguments, const QString &workingDirectory,
-                                            ExecutableInfo::CloseMOStyle closeMO, const QString &steamAppID)
+void ExecutablesList::addExecutableInternal(const QString &title,
+                                            const QString &executableName,
+                                            const QString &arguments,
+                                            const QString &workingDirectory,
+                                            const QString &steamAppID)
 {
   QFileInfo file(executableName);
   if (file.exists()) {
     Executable newExe;
-    newExe.m_CloseMO = closeMO;
     newExe.m_BinaryInfo = file;
     newExe.m_Title = title;
     newExe.m_Arguments = arguments;
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
-    newExe.m_Flags = 0;
+    newExe.m_SettableFlags = 0;
+    newExe.m_OtherFlags = 0;
     m_Executables.push_back(newExe);
   }
 }
@@ -197,8 +201,9 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
 
 void Executable::showOnToolbar(bool state)
 {
-  if (state)
-    m_Flags |= ShowInToolbar;
-  else
-    m_Flags ^= ShowInToolbar;
+  if (state) {
+    m_OtherFlags |= ShowInToolbar;
+  } else {
+    m_OtherFlags &= ~ShowInToolbar;
+  }
 }
