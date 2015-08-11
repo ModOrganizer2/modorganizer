@@ -234,7 +234,7 @@ void SelfUpdater::installUpdate()
 {
   const QString mopath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()));
 
-  QString backupPath = mopath.mid(0).append("/update_backup");
+  QString backupPath = mopath + "/update_backup";
   QDir().mkdir(backupPath);
 
   // rename files that are currently open so we can unpack the update
@@ -259,10 +259,10 @@ void SelfUpdater::installUpdate()
     } else if (outputName != "ModOrganizer") {
       data[i]->addOutputFileName(ToWString(outputName).c_str());
     }
-    QFileInfo file(mopath.mid(0).append("/").append(outputName));
+    QFileInfo file(mopath + "/" + outputName);
     if (file.exists() && file.isFile()) {
-      if (!shellMove(QStringList(mopath.mid(0).append("/").append(outputName)),
-                     QStringList(backupPath.mid(0).append("/").append(outputName)))) {
+      if (!shellMove(QStringList(mopath + "/" + outputName),
+                     QStringList(backupPath + "/" + outputName))) {
         reportError(tr("failed to move outdated files: %1. Please update manually.").arg(windowsErrorString(::GetLastError())));
         return;
       }
@@ -284,10 +284,10 @@ void SelfUpdater::installUpdate()
   QMessageBox::information(m_Parent, tr("Update"), tr("Update installed, Mod Organizer will now be restarted."));
 
   QProcess newProcess;
-  if (QFile::exists(mopath.mid(0).append("/ModOrganizer.exe"))) {
-    newProcess.startDetached(mopath.mid(0).append("/ModOrganizer.exe"), QStringList("update"));
+  if (QFile::exists(mopath + "/ModOrganizer.exe")) {
+    newProcess.startDetached(mopath + "/ModOrganizer.exe", QStringList("update"));
   } else {
-    newProcess.startDetached(mopath.mid(0).append("/ModOrganiser.exe"), QStringList("update"));
+    newProcess.startDetached(mopath + "/ModOrganiser.exe", QStringList("update"));
   }
   emit restart();
 }
@@ -378,7 +378,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
   QString mainFileName;
   int mainFileSize = 0;
 
-  foreach(QVariant file, result) {
+  for(QVariant file : result) {
     QVariantMap fileInfo = file.toMap();
     if (!fileInfo["uri"].toString().endsWith(".7z")) {
       continue;
