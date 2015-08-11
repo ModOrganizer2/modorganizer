@@ -887,6 +887,8 @@ bool ModList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, int
     return dropURLs(mimeData, row, parent);
   } else if (mimeData->hasText()) {
     return dropMod(mimeData, row, parent);
+  } else {
+    return false;
   }
 }
 
