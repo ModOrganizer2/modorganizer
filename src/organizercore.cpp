@@ -229,7 +229,7 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
       settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
       settings.setValue("arguments", item.m_Arguments);
       settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("closeOnStart", item.closeOnExecution());
+      settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
       settings.setValue("steamAppID", item.m_SteamAppID);
     }
   }
@@ -328,21 +328,22 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   for (int i = 0; i < numCustomExecutables; ++i) {
     settings.setArrayIndex(i);
 
-    Executable::OtherFlags other;
-    if (settings.value("custom", true).toBool())   other |= Executable::CustomExecutable;
-    if (settings.value("toolbar", false).toBool()) other |= Executable::ShowInToolbar;
+    ExecutableInfo::CloseMOStyle closeMO =
+        settings.value("closeOnStart").toBool() ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
+                                                : ExecutableInfo::CloseMOStyle::DEFAULT_STAY;
 
-    Executable::SettableFlags settable;
-    if (settings.value("closeOnStart", false).toBool()) settable |= Executable::CloseOnExecution;
-    if (settings.value("ownicon", false).toBool()) settable |= Executable::UseApplicationIcon;
+    Executable::Flags flags;
+    if (settings.value("custom", true).toBool())   flags |= Executable::CustomExecutable;
+    if (settings.value("toolbar", false).toBool()) flags |= Executable::ShowInToolbar;
+    if (settings.value("ownicon", false).toBool()) flags |= Executable::UseApplicationIcon;
 
     m_ExecutablesList.addExecutable(settings.value("title").toString(),
                                     settings.value("binary").toString(),
                                     settings.value("arguments").toString(),
                                     settings.value("workingDirectory", "").toString(),
+                                    closeMO,
                                     settings.value("steamAppID", "").toString(),
-                                    settable,
-                                    other);
+                                    flags);
   }
 
   settings.endArray();
