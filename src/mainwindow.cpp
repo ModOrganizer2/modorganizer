@@ -983,7 +983,7 @@ void MainWindow::startExeAction()
           selectedExecutable.m_Arguments,
           selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
                                                               : selectedExecutable.m_BinaryInfo.absolutePath(),
-          selectedExecutable.closeOnExecution(),
+          selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE,
           selectedExecutable.m_SteamAppID);
   } else {
     qCritical("not an action?");
@@ -1643,7 +1643,7 @@ void MainWindow::on_startButton_clicked()
         selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
                                                             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.closeOnExecution(),
+        selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE,
         selectedExecutable.m_SteamAppID);
 }
 
@@ -3560,8 +3560,9 @@ void MainWindow::addAsExecutable()
                                                            binaryInfo.absoluteFilePath(),
                                                            arguments,
                                                            targetInfo.absolutePath(),
+                                                           ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
                                                            QString(),
-                                                           Executable::SettableFlags());
+                                                           Executable::CustomExecutable);
           refreshExecutablesList();
         }
       } break;
