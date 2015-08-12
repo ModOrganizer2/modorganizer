@@ -2113,9 +2113,14 @@ void MainWindow::refreshFilters()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIdx);
     for (int categoryID : modInfo->getCategories()) {
       int currentID = categoryID;
+      std::set<int> cycleTest;
       // also add parents so they show up in the tree
       while (currentID != 0) {
         categoriesUsed.insert(currentID);
+        if (!cycleTest.insert(currentID).second) {
+          qWarning("cycle in categories: %s", qPrintable(SetJoin(cycleTest, ", ")));
+          break;
+        }
         currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
       }
     }
