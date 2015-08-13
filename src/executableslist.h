@@ -42,7 +42,9 @@ struct Executable {
   enum Flag {
     CustomExecutable = 0x01,
     ShowInToolbar = 0x02,
-    UseApplicationIcon = 0x04
+    UseApplicationIcon = 0x04,
+
+    AllFlags = 0xff //I know, I know
   };
 
   Q_DECLARE_FLAGS(Flags, Flag)
@@ -127,36 +129,40 @@ public:
   void addExecutable(const Executable &executable);
 
   /**
-   * @brief update an existing executable or add a new one to the list
+   * @brief add a new executable to the list
    *
    * @param title name displayed in the UI
    * @param executableName the actual filename to execute
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void updateOrAddExecutable(const QString &title,
-                             const QString &executableName,
-                             const QString &arguments,
-                             const QString &workingDirectory,
-                             MOBase::ExecutableInfo::CloseMOStyle closeMO,
-                             const QString &steamAppID,
-                             bool usesApplicationIcon);
+  void addExecutable(const QString &title,
+                     const QString &executableName,
+                     const QString &arguments,
+                     const QString &workingDirectory,
+                     MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                     const QString &steamAppID,
+                     Executable::Flags flags)
+  {
+    updateExecutable(title, executableName, arguments, workingDirectory, closeMO, steamAppID, Executable::AllFlags, flags);
+  }
 
   /**
-   * @brief U[date executable list with configured settings
+   * @brief Update an executable to the list
    *
    * @param title name displayed in the UI
    * @param executableName the actual filename to execute
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void configureExecutable(const QString &title,
-                           const QString &executableName,
-                           const QString &arguments,
-                           const QString &workingDirectory,
-                           MOBase::ExecutableInfo::CloseMOStyle closeMO,
-                           const QString &steamAppID,
-                           Executable::Flags flags);
+  void updateExecutable(const QString &title,
+                        const QString &executableName,
+                        const QString &arguments,
+                        const QString &workingDirectory,
+                        MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                        const QString &steamAppID,
+                        Executable::Flags mask,
+                        Executable::Flags flags);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path

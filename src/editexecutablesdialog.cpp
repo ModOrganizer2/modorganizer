@@ -91,7 +91,7 @@ void EditExecutablesDialog::resetInput()
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.updateOrAddExecutable(ui->titleEdit->text(),
+  m_ExecutablesList.updateExecutable(ui->titleEdit->text(),
                                           QDir::fromNativeSeparators(ui->binaryEdit->text()),
                                           ui->argumentsEdit->text(),
                                           QDir::fromNativeSeparators(ui->workingDirEdit->text()),
@@ -100,6 +100,7 @@ void EditExecutablesDialog::saveExecutable()
                                               : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
                                           ui->overwriteAppIDBox->isChecked() ?
                                               ui->appIDOverwriteEdit->text() : "",
+                                          Executable::UseApplicationIcon,
                                           ui->useAppIconCheckBox->isChecked() ?
                                               Executable::UseApplicationIcon : Executable::Flags());
   }
