@@ -1755,7 +1755,8 @@ void MainWindow::on_executablesListBox_currentIndexChanged(int index)
 
   if (executablesList->isEnabled()) {
     //I think the 2nd test is impossible
-    if ((index == 0) || (index > static_cast<int>(m_OrganizerCore.executablesList()->size()))) {
+    if (index == 0 ||
+        index > static_cast<int>(m_OrganizerCore.executablesList()->size())) {
       if (modifyExecutablesDialog()) {
         setExecutableIndex(previousIndex);
       }
@@ -3561,13 +3562,14 @@ void MainWindow::addAsExecutable()
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
         if (!name.isEmpty()) {
-          m_OrganizerCore.executablesList()->addExecutable(name,
-                                                           binaryInfo.absoluteFilePath(),
-                                                           arguments,
-                                                           targetInfo.absolutePath(),
-                                                           ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
-                                                           QString(),
-                                                           Executable::CustomExecutable);
+          //Note: If this already exists, you'll lose custom settings
+          m_OrganizerCore.executablesList()->configureExecutable(name,
+                                                                 binaryInfo.absoluteFilePath(),
+                                                                 arguments,
+                                                                 targetInfo.absolutePath(),
+                                                                 ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                                                 QString(),
+                                                                 Executable::CustomExecutable);
           refreshExecutablesList();
         }
       } break;

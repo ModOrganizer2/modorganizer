@@ -91,18 +91,18 @@ void EditExecutablesDialog::resetInput()
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.addExecutable(ui->titleEdit->text(),
-                                  QDir::fromNativeSeparators(ui->binaryEdit->text()),
-                                  ui->argumentsEdit->text(),
-                                  QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-                                  (ui->closeCheckBox->checkState() == Qt::Checked) ?
-                                      ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
-                                      : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
-                                  ui->overwriteAppIDBox->isChecked() ?
-                                      ui->appIDOverwriteEdit->text() : "",
-                                  ui->useAppIconCheckBox->isChecked() ?
-                                      Executable::UseApplicationIcon : Executable::Flags());
-}
+  m_ExecutablesList.updateOrAddExecutable(ui->titleEdit->text(),
+                                          QDir::fromNativeSeparators(ui->binaryEdit->text()),
+                                          ui->argumentsEdit->text(),
+                                          QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+                                          (ui->closeCheckBox->checkState() == Qt::Checked) ?
+                                              ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
+                                              : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                          ui->overwriteAppIDBox->isChecked() ?
+                                              ui->appIDOverwriteEdit->text() : "",
+                                          ui->useAppIconCheckBox->isChecked() ?
+                                              Executable::UseApplicationIcon : Executable::Flags());
+  }
 
 
 void EditExecutablesDialog::delayedRefresh()

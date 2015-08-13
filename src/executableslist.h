@@ -127,20 +127,36 @@ public:
   void addExecutable(const Executable &executable);
 
   /**
-   * @brief add a new executable to the list
+   * @brief update an existing executable or add a new one to the list
    *
    * @param title name displayed in the UI
    * @param executableName the actual filename to execute
    * @param arguments arguments to pass to the executable
    * @param closeMO if true, MO will be closed when the binary is started
    **/
-  void addExecutable(const QString &title,
-                     const QString &executableName,
-                     const QString &arguments,
-                     const QString &workingDirectory,
-                     MOBase::ExecutableInfo::CloseMOStyle closeMO,
-                     const QString &steamAppID,
-                     Executable::Flags flags);
+  void updateOrAddExecutable(const QString &title,
+                             const QString &executableName,
+                             const QString &arguments,
+                             const QString &workingDirectory,
+                             MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                             const QString &steamAppID,
+                             bool usesApplicationIcon);
+
+  /**
+   * @brief U[date executable list with configured settings
+   *
+   * @param title name displayed in the UI
+   * @param executableName the actual filename to execute
+   * @param arguments arguments to pass to the executable
+   * @param closeMO if true, MO will be closed when the binary is started
+   **/
+  void configureExecutable(const QString &title,
+                           const QString &executableName,
+                           const QString &arguments,
+                           const QString &workingDirectory,
+                           MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                           const QString &steamAppID,
+                           Executable::Flags flags);
 
   /**
    * @brief remove the executable with the specified file name. This needs to be an absolute file path

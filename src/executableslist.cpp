@@ -129,13 +129,13 @@ void ExecutablesList::addExecutable(const Executable &executable)
 }
 
 
-void ExecutablesList::addExecutable(const QString &title,
-                                    const QString &executableName,
-                                    const QString &arguments,
-                                    const QString &workingDirectory,
-                                    ExecutableInfo::CloseMOStyle closeMO,
-                                    const QString &steamAppID,
-                                    Executable::Flags flags)
+void ExecutablesList::configureExecutable(const QString &title,
+                                          const QString &executableName,
+                                          const QString &arguments,
+                                          const QString &workingDirectory,
+                                          ExecutableInfo::CloseMOStyle closeMO,
+                                          const QString &steamAppID,
+                                          Executable::Flags flags)
 {
   QFileInfo file(executableName);
   auto existingExe = findExe(title);
@@ -163,6 +163,49 @@ void ExecutablesList::addExecutable(const QString &title,
     m_Executables.push_back(newExe);
   }
 }
+
+void ExecutablesList::updateOrAddExecutable(const QString &title,
+                                            const QString &executableName,
+                                            const QString &arguments,
+                                            const QString &workingDirectory,
+                                            ExecutableInfo::CloseMOStyle closeMO,
+                                            const QString &steamAppID,
+                                            bool usesApplicationIcon)
+{
+  QFileInfo file(executableName);
+  auto existingExe = findExe(title);
+
+  if (existingExe != m_Executables.end()) {
+    existingExe->m_Title = title;
+    existingExe->m_CloseMO = closeMO;
+    if (usesApplicationIcon) {
+      existingExe->m_Flags |= Executable::UseApplicationIcon;
+    } else {
+      existingExe->m_Flags &= ~Executable::UseApplicationIcon;
+    }
+    // for pre-configured executables don't overwrite settings we didn't store
+    if (existingExe->isCustom()) {
+      existingExe->m_BinaryInfo = file;
+      existingExe->m_Arguments = arguments;
+      existingExe->m_WorkingDirectory = workingDirectory;
+      existingExe->m_SteamAppID = steamAppID;
+    }
+  } else {
+    Executable newExe;
+    newExe.m_Title = title;
+    newExe.m_CloseMO = closeMO;
+    newExe.m_BinaryInfo = file;
+    newExe.m_Arguments = arguments;
+    newExe.m_WorkingDirectory = workingDirectory;
+    newExe.m_SteamAppID = steamAppID;
+    newExe.m_Flags = Executable::CustomExecutable;
+    if (usesApplicationIcon) {
+      newExe.m_Flags |= Executable::UseApplicationIcon;
+    }
+    m_Executables.push_back(newExe);
+  }
+}
+
 
 
 void ExecutablesList::remove(const QString &title)
@@ -197,8 +240,9 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
 
 void Executable::showOnToolbar(bool state)
 {
-  if (state)
+  if (state) {
     m_Flags |= ShowInToolbar;
-  else
+  } else {
     m_Flags &= ~ShowInToolbar;
+  }
 }

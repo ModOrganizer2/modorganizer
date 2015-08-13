@@ -336,13 +336,14 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     if (settings.value("toolbar", false).toBool()) flags |= Executable::ShowInToolbar;
     if (settings.value("ownicon", false).toBool()) flags |= Executable::UseApplicationIcon;
 
+    if (settings.value("ownicon", false).toBool()) flags |= Executable::UseApplicationIcon;
 
-    m_ExecutablesList.addExecutable(settings.value("title").toString(),
-                                    settings.value("binary").toString(),
-                                    settings.value("arguments").toString(),
-                                    settings.value("workingDirectory", "").toString(),
+    m_ExecutablesList.configureExecutable(settings.value("title").toString(),
+                                          settings.value("binary").toString(),
+                                          settings.value("arguments").toString(),
+                                          settings.value("workingDirectory", "").toString(),
                                     closeMO,
-                                    settings.value("steamAppID", "").toString(),
+                                          settings.value("steamAppID", "").toString(),
                                     flags);
   }
 
