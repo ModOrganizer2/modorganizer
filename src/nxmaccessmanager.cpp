@@ -110,6 +110,7 @@ void NXMAccessManager::showCookies() const
 void NXMAccessManager::startLoginCheck()
 {
   if (hasLoginCookies()) {
+    qDebug("validating login cookies");
     QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Validate");
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     request.setRawHeader("User-Agent", userAgent().toUtf8());
@@ -126,6 +127,7 @@ void NXMAccessManager::startLoginCheck()
 
 void NXMAccessManager::retrieveCredentials()
 {
+  qDebug("retrieving credentials");
   QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage())
                           + QString("/Core/Libs/Flamework/Entities/User?GetCredentials&game_id=%1"
                                     ).arg(GameInfo::instance().getNexusGameID()));
@@ -222,6 +224,7 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 
 void NXMAccessManager::pageLogin()
 {
+  qDebug("logging %s in on Nexus", qPrintable(m_Username));
   QString requestString = (ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Login&uri=%1")
                              .arg(QString(QUrl::toPercentEncoding(ToQString(GameInfo::instance().getNexusPage()))));
 
