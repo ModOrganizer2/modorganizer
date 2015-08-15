@@ -2827,6 +2827,8 @@ void MainWindow::checkModsForUpdates()
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
       NexusInterface::instance()->getAccessManager()->login(username, password);
     } else { // otherwise there will be no endorsement info
+      MessageDialog::showMessage(tr("Not logged in, endorsement information will be wrong"),
+                                  this, true);
       m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
     }
   }
@@ -4321,7 +4323,7 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
   std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
   std::tr1::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
-  foreach (const std::string &line, lines) {
+  for (const std::string &line : lines) {
     if (line.length() > 0) {
       size_t progidx    = line.find("[progress]");
       size_t erroridx   = line.find("[error]");
