@@ -496,21 +496,26 @@ int main(int argc, char *argv[])
       return 1;
     }
 
+    IPluginGame *game = organizer.managedGame();
+
     if (!settings.contains("game_edition")) {
-      std::vector<std::wstring> editions = GameInfo::instance().getSteamVariants();
+      QStringList editions = game->gameVariants();
       if (editions.size() > 1) {
         SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), nullptr);
         int index = 0;
-        for (auto iter = editions.begin(); iter != editions.end(); ++iter) {
-          selection.addChoice(ToQString(*iter), "", index++);
+        for (const QString &edition : editions) {
+          selection.addChoice(edition, "", index++);
         }
         if (selection.exec() == QDialog::Rejected) {
           return -1;
         } else {
-          settings.setValue("game_edition", selection.getChoiceData().toInt());
+          settings.setValue("game_edition", selection.getChoiceString());
         }
       }
     }
+    game->setGameVariant(settings.value("game_edition").toString());
+
+
 #pragma message("edition isn't used?")
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
 

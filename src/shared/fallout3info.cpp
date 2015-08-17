@@ -88,16 +88,6 @@ std::wstring Fallout3Info::getReferenceDataFile()
   return L"Fallout - Meshes.bsa";
 }
 
-
-
-
-std::vector<std::wstring> Fallout3Info::getSteamVariants() const
-{
-  return boost::assign::list_of(L"Regular")(L"Game Of The Year");
-}
-
-
-
 std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
 {
   if (nmmScheme) {
@@ -107,18 +97,15 @@ std::wstring Fallout3Info::getNexusPage(bool nmmScheme)
   }
 }
 
-
 std::wstring Fallout3Info::getNexusInfoUrlStatic()
 {
   return L"http://nmm.nexusmods.com/fallout3";
 }
 
-
 int Fallout3Info::getNexusModIDStatic()
 {
   return 16348;
 }
-
 
 bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
