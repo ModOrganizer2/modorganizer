@@ -140,11 +140,6 @@ bool GameInfo::requiresSteam() const
   return FileExists(getGameDirectory() + L"\\steam_api.dll");
 }
 
-std::vector<std::wstring> GameInfo::getSteamVariants() const
-{
-  return boost::assign::list_of(L"Regular");
-}
-
 std::wstring GameInfo::getLocalAppFolder() const
 {
   wchar_t localAppFolder[MAX_PATH];

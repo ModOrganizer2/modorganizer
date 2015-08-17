@@ -52,8 +52,6 @@ public:
 
   virtual std::wstring getReferenceDataFile();
 
-  virtual std::vector<std::wstring> getSteamVariants() const;
-
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
