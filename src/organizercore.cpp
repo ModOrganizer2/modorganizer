@@ -244,11 +244,13 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
 void OrganizerCore::storeSettings()
 {
   QString iniFile = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName());
-  if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
-    QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
-                          tr("An error occured trying to update MO settings to %1: %2").arg(
-                            iniFile, windowsErrorString(::GetLastError())));
-    return;
+  if (QFileInfo(iniFile).exists()) {
+    if (!shellCopy(iniFile, iniFile + ".new", true, qApp->activeWindow())) {
+      QMessageBox::critical(qApp->activeWindow(), tr("Failed to write settings"),
+                            tr("An error occured trying to update MO settings to %1: %2").arg(
+                              iniFile, windowsErrorString(::GetLastError())));
+      return;
+    }
   }
 
   QSettings::Status result = storeSettings(iniFile + ".new");
