@@ -275,9 +275,9 @@ void NXMAccessManager::loginError(QNetworkReply::NetworkError)
   m_LoginState = LOGIN_NOT_VALID;
 
   if (m_LoginReply != nullptr) {
+    emit loginFailed(m_LoginReply->errorString());
     m_LoginReply->deleteLater();
     m_LoginReply = nullptr;
-    emit loginFailed(m_LoginReply->errorString());
   } else {
     emit loginFailed(tr("Unknown error"));
   }
