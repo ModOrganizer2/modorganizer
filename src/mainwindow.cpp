@@ -1340,9 +1340,11 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
     QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
     if (fileInfo.suffix().toLower() == "bsa") {
-      int index = activeArchives.indexOf(fileInfo.fileName()) + 2;
+      int index = activeArchives.indexOf(fileInfo.fileName());
       if (index == -1) {
         index = 0xFFFF;
+      } else {
+        index += 2;
       }
 
       if ((invalidation != nullptr) && invalidation->isInvalidationBSA(fileInfo.fileName())) {
