@@ -591,7 +591,7 @@ bool InstallationManager::wasCancelled()
 }
 
 
-void InstallationManager::postInstallCleanup() const
+void InstallationManager::postInstallCleanup()
 {
   m_CurrentArchive->close();
 
@@ -605,11 +605,13 @@ void InstallationManager::postInstallCleanup() const
 
   // clean up temp files
   // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
-  foreach (const QString &tempFile, m_TempFilesToDelete) {
+  for (const QString &tempFile : m_TempFilesToDelete) {
     QFileInfo fileInfo(QDir::tempPath() + "/" + tempFile);
     QFile::remove(fileInfo.absoluteFilePath());
     directoriesToRemove.insert(fileInfo.absolutePath());
   }
+
+  m_TempFilesToDelete.clear();
 
   // try to delete each directory we had temporary files in. the call fails for non-empty directories which is ok
   foreach (const QString &dir, directoriesToRemove) {

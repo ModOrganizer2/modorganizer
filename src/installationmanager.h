@@ -177,7 +177,7 @@ private:
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
-  void postInstallCleanup() const;
+  void postInstallCleanup();
 
 private:
 
