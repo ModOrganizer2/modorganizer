@@ -30,8 +30,10 @@ using namespace MOBase;
 using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
-  : TutorableDialog("EditExecutables", parent),
-  ui(new Ui::EditExecutablesDialog), m_CurrentItem(nullptr), m_ExecutablesList(executablesList)
+  : TutorableDialog("EditExecutables", parent)
+  , ui(new Ui::EditExecutablesDialog)
+  , m_CurrentItem(nullptr)
+  , m_ExecutablesList(executablesList)
 {
   ui->setupUi(this);
 
@@ -69,9 +71,9 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 }
 
 
-void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &arg1)
+void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &name)
 {
-  QFileInfo fileInfo(arg1);
+  QFileInfo fileInfo(name);
   ui->addButton->setEnabled(fileInfo.exists() && fileInfo.isFile());
 }
 

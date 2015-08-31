@@ -509,7 +509,7 @@ void MainWindow::updateToolBar()
       std::vector<Executable>::iterator begin, end;
       m_OrganizerCore.executablesList()->getExecutables(begin, end);
       for (auto iter = begin; iter != end; ++iter) {
-        if (iter->shownOnToolbar()) {
+        if (iter->isShownOnToolbar()) {
           QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
                                            iter->m_Title,
                                            ui->toolBar);
@@ -3290,8 +3290,8 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 void MainWindow::linkToolbar()
 {
   Executable &exe(getSelectedExecutable());
-  exe.showOnToolbar(!exe.shownOnToolbar());
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.shownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
+  exe.showOnToolbar(!exe.isShownOnToolbar());
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.isShownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updateToolBar();
 }
 
@@ -4267,7 +4267,7 @@ void MainWindow::on_linkButton_pressed()
   const QFileInfo linkDesktopFile(getDesktopLinkfile(selectedExecutable));
   const QFileInfo linkMenuFile(getStartMenuLinkfile(selectedExecutable));
 
-  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(selectedExecutable.shownOnToolbar() ? removeIcon : addIcon);
+  ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(selectedExecutable.isShownOnToolbar() ? removeIcon : addIcon);
   ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Desktop))->setIcon(linkDesktopFile.exists() ? removeIcon : addIcon);
   ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::StartMenu))->setIcon(linkMenuFile.exists() ? removeIcon : addIcon);
 }

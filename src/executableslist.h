@@ -53,7 +53,7 @@ struct Executable {
 
   bool isCustom() const { return m_Flags.testFlag(CustomExecutable); }
 
-  bool shownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
+  bool isShownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
 
   void showOnToolbar(bool state);
 
@@ -79,15 +79,6 @@ public:
    * @brief initialise the list with the executables preconfigured for this game
    **/
   void init(MOBase::IPluginGame *game);
-
-  /**
-   * @brief retrieve an executable by index
-   *
-   * @param index index of the executable to look up
-   * @return reference to the executable
-   * @exception out_of_range will throw an exception if the index is invalid
-   **/
-  const Executable &get(int index) const { return m_Executables.at(index); }
 
   /**
    * @brief find an executable by its name

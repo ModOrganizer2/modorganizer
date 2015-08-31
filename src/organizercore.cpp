@@ -223,7 +223,7 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
     settings.setArrayIndex(count++);
     settings.setValue("title", item.m_Title);
     settings.setValue("custom", item.isCustom());
-    settings.setValue("toolbar", item.shownOnToolbar());
+    settings.setValue("toolbar", item.isShownOnToolbar());
     settings.setValue("ownicon", item.usesOwnIcon());
     if (item.isCustom()) {
       settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
@@ -338,7 +338,6 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     if (settings.value("toolbar", false).toBool()) flags |= Executable::ShowInToolbar;
     if (settings.value("ownicon", false).toBool()) flags |= Executable::UseApplicationIcon;
 
-
     m_ExecutablesList.addExecutable(settings.value("title").toString(),
                                     settings.value("binary").toString(),
                                     settings.value("arguments").toString(),
@@ -349,7 +348,6 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   }
 
   settings.endArray();
-
 
   // TODO this has nothing to do with executables list move to an appropriate function!
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
@@ -1027,7 +1025,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable, const QStringL
     try {
       const Executable &exe = m_ExecutablesList.findByBinary(binary);
       steamAppID = exe.m_SteamAppID;
-    } catch (const std::runtime_error&)  {
+    } catch (const std::runtime_error&) {
       // nop
     }
   } else {
