@@ -30,8 +30,10 @@ using namespace MOBase;
 using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
-  : TutorableDialog("EditExecutables", parent),
-  ui(new Ui::EditExecutablesDialog), m_CurrentItem(nullptr), m_ExecutablesList(executablesList)
+  : TutorableDialog("EditExecutables", parent)
+  , ui(new Ui::EditExecutablesDialog)
+  , m_CurrentItem(nullptr)
+  , m_ExecutablesList(executablesList)
 {
   ui->setupUi(this);
 
@@ -69,9 +71,9 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 }
 
 
-void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &arg1)
+void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &name)
 {
-  QFileInfo fileInfo(arg1);
+  QFileInfo fileInfo(name);
   ui->addButton->setEnabled(fileInfo.exists() && fileInfo.isFile());
 }
 
@@ -92,17 +94,18 @@ void EditExecutablesDialog::resetInput()
 void EditExecutablesDialog::saveExecutable()
 {
   m_ExecutablesList.updateExecutable(ui->titleEdit->text(),
-                                          QDir::fromNativeSeparators(ui->binaryEdit->text()),
-                                          ui->argumentsEdit->text(),
-                                          QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-                                          (ui->closeCheckBox->checkState() == Qt::Checked) ?
-                                              ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
-                                              : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
-                                          ui->overwriteAppIDBox->isChecked() ?
-                                              ui->appIDOverwriteEdit->text() : "",
-                                          Executable::UseApplicationIcon,
-                                          ui->useAppIconCheckBox->isChecked() ?
-                                              Executable::UseApplicationIcon : Executable::Flags());
+                                     QDir::fromNativeSeparators(ui->binaryEdit->text()),
+                                     ui->argumentsEdit->text(),
+                                     QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+                                     (ui->closeCheckBox->checkState() == Qt::Checked) ?
+                                       ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
+                                     : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
+                                     ui->overwriteAppIDBox->isChecked() ?
+                                       ui->appIDOverwriteEdit->text() : "",
+                                     Executable::UseApplicationIcon | Executable::CustomExecutable,
+                                     (ui->useAppIconCheckBox->isChecked() ?
+                                       Executable::UseApplicationIcon : Executable::Flags())
+                                     | Executable::CustomExecutable);
   }
 
 
@@ -117,7 +120,9 @@ void EditExecutablesDialog::delayedRefresh()
 
 void EditExecutablesDialog::on_addButton_clicked()
 {
-  saveExecutable();
+  if (executableChanged()) {
+    saveExecutable();
+  }
 
   resetInput();
   refreshExecutablesWidget();
