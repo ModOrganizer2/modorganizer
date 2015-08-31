@@ -120,7 +120,9 @@ void EditExecutablesDialog::delayedRefresh()
 
 void EditExecutablesDialog::on_addButton_clicked()
 {
-  saveExecutable();
+  if (executableChanged()) {
+    saveExecutable();
+  }
 
   resetInput();
   refreshExecutablesWidget();
