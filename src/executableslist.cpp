@@ -148,8 +148,11 @@ void ExecutablesList::updateExecutable(const QString &title,
     existingExe->m_Flags &= ~mask;
     existingExe->m_Flags |= flags;
     // for pre-configured executables don't overwrite settings we didn't store
-    if (existingExe->isCustom()) {
-      existingExe->m_BinaryInfo = file;
+    if (flags & Executable::CustomExecutable) {
+      if (file.exists()) {
+        // don't overwrite a valid binary with an invalid one
+        existingExe->m_BinaryInfo = file;
+      }
       existingExe->m_Arguments = arguments;
       existingExe->m_WorkingDirectory = workingDirectory;
       existingExe->m_SteamAppID = steamAppID;
