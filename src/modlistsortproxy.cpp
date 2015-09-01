@@ -205,7 +205,7 @@ void ModListSortProxy::updateFilter(const QString &filter)
 
 bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const
 {
-  foreach (ModInfo::EFlag flag, flags) {
+  for (ModInfo::EFlag flag : flags) {
     if ((flag == ModInfo::FLAG_CONFLICT_MIXED) ||
         (flag == ModInfo::FLAG_CONFLICT_OVERWRITE) ||
         (flag == ModInfo::FLAG_CONFLICT_OVERWRITTEN) ||
@@ -393,13 +393,20 @@ void ModListSortProxy::aboutToChangeData()
 {
   // having a filter active when dataChanged is called caused a crash
   // (at least with some Qt versions)
+  // this may be related to the fact that the item being edited may disappear from the view as a
+  // result of the edit
   m_PreChangeFilters = categoryFilter();
   setCategoryFilter(std::vector<int>());
 }
 
 void ModListSortProxy::postDataChanged()
 {
-  setCategoryFilter(m_PreChangeFilters);
-  m_PreChangeFilters.clear();
+  // if the filter is re-activated right away the editor can't be deleted but becomes invisible
+  // or at least the view continues to think it's being edited. As a result no new editor can be
+  // opened
+  QTimer::singleShot(10, [this] () {
+    setCategoryFilter(m_PreChangeFilters);
+    m_PreChangeFilters.clear();
+  });
 }
 
