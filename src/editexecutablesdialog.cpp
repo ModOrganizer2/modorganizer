@@ -222,7 +222,12 @@ bool EditExecutablesDialog::executableChanged()
         || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked()
         || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
   } else {
-    return false;
+    return ! ui->argumentsEdit->text().isEmpty()
+        || ! ui->appIDOverwriteEdit->text().isEmpty()
+        || ! ui->workingDirEdit->text().isEmpty()
+        || ! ui->binaryEdit->text().isEmpty()
+        || ui->closeCheckBox->isChecked()
+        || ui->useAppIconCheckBox->isChecked();
   }
 }
 
