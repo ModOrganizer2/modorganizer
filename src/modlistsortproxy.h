@@ -109,6 +109,7 @@ protected:
 
 private:
 
+  unsigned long flagsId(const std::vector<ModInfo::EFlag> &flags) const;
   bool hasConflictFlag(const std::vector<ModInfo::EFlag> &flags) const;
   void updateFilterActive();
   bool filterMatchesModAnd(ModInfo::Ptr info, bool enabled) const;

@@ -103,6 +103,18 @@ void ModListSortProxy::disableAllVisible()
   invalidate();
 }
 
+unsigned long ModListSortProxy::flagsId(const std::vector<ModInfo::EFlag> &flags) const
+{
+  unsigned long result = 0;
+  for (ModInfo::EFlag flag : flags) {
+    if ((flag != ModInfo::FLAG_FOREIGN)
+        && (flag != ModInfo::FLAG_OVERWRITE)) {
+      result += 1 << (int)flag;
+    }
+  }
+  return result;
+}
+
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
@@ -135,8 +147,13 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
 
   switch (left.column()) {
     case ModList::COL_FLAGS: {
-      if (leftMod->getFlags().size() != rightMod->getFlags().size())
-        lt = leftMod->getFlags().size() < rightMod->getFlags().size();
+      std::vector<ModInfo::EFlag> leftFlags = leftMod->getFlags();
+      std::vector<ModInfo::EFlag> rightFlags = rightMod->getFlags();
+      if (leftFlags.size() != rightFlags.size()) {
+        lt = leftFlags.size() < rightFlags.size();
+      } else {
+        lt = flagsId(leftFlags) < flagsId(rightFlags);
+      }
     } break;
     case ModList::COL_CONTENT: {
       std::vector<ModInfo::EContent> lContent = leftMod->getContents();
