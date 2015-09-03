@@ -106,6 +106,10 @@ void ModListSortProxy::disableAllVisible()
 bool ModListSortProxy::lessThan(const QModelIndex &left,
                                 const QModelIndex &right) const
 {
+  if (sourceModel()->hasChildren(left) || sourceModel()->hasChildren(right)) {
+    return QSortFilterProxyModel::lessThan(left, right);
+  }
+
   bool lOk, rOk;
   int leftIndex  = left.data(Qt::UserRole + 1).toInt(&lOk);
   int rightIndex = right.data(Qt::UserRole + 1).toInt(&rOk);
