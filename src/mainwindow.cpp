@@ -1333,10 +1333,26 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
   IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
   BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
-  for (FileEntry::Ptr current : m_OrganizerCore.directoryStructure()->getFiles()) {
+  QStringList plugins = m_OrganizerCore.findFiles("", [] (const QString &fileName) -> bool {
+    return fileName.endsWith(".esp", Qt::CaseInsensitive)
+        || fileName.endsWith(".esm", Qt::CaseInsensitive);
+  });
+
+  auto hasAssociatedPlugin = [&](const QString &bsaName) -> bool {
+    for (const QString &pluginName : plugins) {
+      QFileInfo pluginInfo(pluginName);
+      if (bsaName.startsWith(QFileInfo(pluginName).baseName(), Qt::CaseInsensitive)
+          && (m_OrganizerCore.pluginList()->state(pluginInfo.fileName()) == IPluginList::STATE_ACTIVE)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for (FileEntry::Ptr current : files) {
     QFileInfo fileInfo(ToQString(current->getName().c_str()));
 
     if (fileInfo.suffix().toLower() == "bsa") {
@@ -1351,7 +1367,6 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
         index = 1;
       }
 
-      QString basename = fileInfo.baseName();
       int originId = current->getOrigin();
       FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
 
@@ -1368,8 +1383,10 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
         newItem->setData(0, Qt::UserRole, true);
-      } else if ((m_OrganizerCore.pluginList()->state(basename + ".esp") == IPluginList::STATE_ACTIVE)
-                 || (m_OrganizerCore.pluginList()->state(basename + ".esm") == IPluginList::STATE_ACTIVE)) {
+      } else if (fileInfo.fileName().compare("update.bsa", Qt::CaseInsensitive) == 0) {
+        newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+      } else if (hasAssociatedPlugin(fileInfo.fileName())) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
       } else {
