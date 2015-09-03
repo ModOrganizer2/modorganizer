@@ -214,7 +214,6 @@ bool EditExecutablesDialog::executableChanged()
 {
   if (m_CurrentItem != nullptr) {
     Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
-
     return selectedExecutable.m_Arguments != ui->argumentsEdit->text()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
@@ -222,7 +221,11 @@ bool EditExecutablesDialog::executableChanged()
         || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked()
         || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
   } else {
-    return false;
+    QFileInfo fileInfo(ui->binaryEdit->text());
+    return !ui->binaryEdit->text().isEmpty()
+        && !ui->titleEdit->text().isEmpty()
+        && fileInfo.exists()
+        && fileInfo.isFile();
   }
 }
 
