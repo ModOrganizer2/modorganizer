@@ -111,10 +111,10 @@ void EditExecutablesDialog::saveExecutable()
 
 void EditExecutablesDialog::delayedRefresh()
 {
-  int index = ui->executablesListBox->currentIndex().row();
+  QModelIndex index = ui->executablesListBox->currentIndex();
   resetInput();
   refreshExecutablesWidget();
-  ui->executablesListBox->setCurrentRow(index);
+  on_executablesListBox_clicked(index);
 }
 
 
@@ -263,23 +263,25 @@ void EditExecutablesDialog::on_closeButton_clicked()
 void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
 {
   if (current.isValid()) {
-    ui->executablesListBox->selectionModel()->clearSelection();
-    ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
 
     if (executableChanged()) {
       QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
                                                               tr("You made changes to the current executable, do you want to save them?"),
-                                                              QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-      if (res == QMessageBox::Cancel) {
-        return;
-      } else if (res == QMessageBox::Yes) {
-        // this invalidates the item passed as a a parameter
+                                                              QMessageBox::Yes | QMessageBox::No);
+      if (res == QMessageBox::Yes) {
         saveExecutable();
 
+        //This is necessary if we're adding a new item, but it doesn't look very nice.
+        //Ideally we'd end up with the correct row displayed
+        ui->executablesListBox->selectionModel()->clearSelection();
+        ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
         QTimer::singleShot(50, this, SLOT(delayedRefresh()));
         return;
       }
     }
+
+    ui->executablesListBox->selectionModel()->clearSelection();
+    ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
 
     m_CurrentItem = ui->executablesListBox->item(current.row());
 
