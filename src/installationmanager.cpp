@@ -676,6 +676,11 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   }
   qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));
 
+  //If there's an archive already open, close it. This happens with the bundle
+  //installer when it uncompresses a split archive, then finds it has a real archive
+  //to deal with.
+  m_CurrentArchive->close();
+
   // open the archive and construct the directory tree the installers work on
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
