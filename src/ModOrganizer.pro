@@ -3,6 +3,7 @@ TEMPLATE = subdirs
 SUBDIRS = bsatk \
           shared \
           uibase \
+          esptk \
           organizer \
           hookdll \
           archive \
@@ -11,8 +12,7 @@ SUBDIRS = bsatk \
           nxmhandler \
           BossDummy \
           pythonRunner \
-          loot_cli \
-          esptk
+          loot_cli
 
 pythonRunner.depends = uibase
 plugins.depends = pythonRunner uibase

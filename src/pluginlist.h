@@ -34,7 +34,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include <vector>
 #include <map>
-#include "pdll.h"
 
 
 template <class C>
