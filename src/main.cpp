@@ -23,18 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vld.h>
 #endif // LEAK_CHECK_WITH_VLD
 
-#include <QApplication>
-#include <QPushButton>
-#include <QListWidget>
-#include <QComboBox>
-#include <QCheckBox>
-#include <QDir>
-#include <QFileInfo>
-#include <QSettings>
-#include <QWhatsThis>
-#include <QToolBar>
-#include <QFileDialog>
-#include <QDesktopServices>
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <DbgHelp.h>
@@ -64,6 +52,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
 #include <iostream>
+#include <ShellAPI.h>
+#include <eh.h>
+#include <windows_error.h>
+#include <boost/scoped_array.hpp>
+#include <QApplication>
+#include <QPushButton>
+#include <QListWidget>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QDir>
+#include <QFileInfo>
+#include <QSettings>
+#include <QWhatsThis>
+#include <QToolBar>
+#include <QFileDialog>
+#include <QDesktopServices>
 #include <QMessageBox>
 #include <QSharedMemory>
 #include <QBuffer>
@@ -71,10 +75,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QDesktopServices>
 #include <QLibraryInfo>
-#include <ShellAPI.h>
-#include <eh.h>
-#include <windows_error.h>
-#include <boost/scoped_array.hpp>
+#include <QSslSocket>
 
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
@@ -236,10 +237,10 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
             return EXCEPTION_EXECUTE_HANDLER;
           }
           _snprintf(errorBuffer, errorLen, "failed to save minidump to %ls (error %lu)",
-                     dumpName.c_str(), ::GetLastError());
+                    dumpName.c_str(), ::GetLastError());
         } else {
           _snprintf(errorBuffer, errorLen, "failed to create %ls (error %lu)",
-                     dumpName.c_str(), ::GetLastError());
+                    dumpName.c_str(), ::GetLastError());
         }
       } else {
         return result;
@@ -378,7 +379,7 @@ int main(int argc, char *argv[])
 
     LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= 0x050000 && !defined(QT_NO_SSL)
     qDebug("ssl support: %d", QSslSocket::supportsSsl());
 #endif
 

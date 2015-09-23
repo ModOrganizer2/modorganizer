@@ -91,7 +91,7 @@ private:
   QString m_OutFileName;
   bool m_ShutDown;
   QtMsgType m_MinMsgType;
-  unsigned int m_NumMessages;
+  size_t m_NumMessages;
   std::vector<Message> m_Messages;
   
 };

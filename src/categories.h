@@ -87,7 +87,7 @@ public:
    *
    * @return unsigned int number of categories
    **/
-  unsigned numCategories() const { return m_Categories.size(); }
+   size_t numCategories() const { return m_Categories.size(); }
 
   /**
    * @brief count all categories that match a specified filter

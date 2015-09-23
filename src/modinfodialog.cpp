@@ -348,7 +348,7 @@ void ModInfoDialog::refreshLists()
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
 {
-  for (unsigned int i = 0; i < factory.numCategories(); ++i) {
+  for (size_t i = 0; i < factory.numCategories(); ++i) {
     if (factory.getParentID(i) != rootLevel) {
       continue;
     }
