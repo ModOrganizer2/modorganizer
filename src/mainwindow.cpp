@@ -2091,7 +2091,7 @@ void MainWindow::addContentFilters()
 
 void MainWindow::addCategoryFilters(QTreeWidgetItem *root, const std::set<int> &categoriesUsed, int targetID)
 {
-  for (unsigned i = 1; i < m_CategoryFactory.numCategories(); ++i) {
+  for (size_t i = 1; i < m_CategoryFactory.numCategories(); ++i) {
     if ((m_CategoryFactory.getParentID(i) == targetID)) {
       int categoryID = m_CategoryFactory.getCategoryID(i);
       if (categoriesUsed.find(categoryID) != categoriesUsed.end()) {
@@ -2626,7 +2626,7 @@ bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 
   bool childEnabled = false;
 
-  for (unsigned i = 1; i < m_CategoryFactory.numCategories(); ++i) {
+  for (size_t i = 1; i < m_CategoryFactory.numCategories(); ++i) {
     if (m_CategoryFactory.getParentID(i) == targetID) {
       QMenu *targetMenu = menu;
       if (m_CategoryFactory.hasChildren(i)) {

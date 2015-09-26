@@ -11,7 +11,7 @@
 
 using namespace MOShared;
 
-#ifdef _MSC_VER
+#if defined _MSC_VER
 
 static void initDbgIfNecess()
 {
@@ -94,6 +94,7 @@ void StackData::load_modules(HANDLE process, DWORD processID) {
 #pragma warning( disable : 4748 )
 
 void StackData::initTrace() {
+#ifdef _X86_
   load_modules(::GetCurrentProcess(), ::GetCurrentProcessId());
   CONTEXT context;
   std::memset(&context, 0, sizeof(CONTEXT));
@@ -134,6 +135,7 @@ void StackData::initTrace() {
 
     m_Stack[m_Count++] = reinterpret_cast<void *>(stackFrame.AddrPC.Offset);
   }
+#endif
 }
 
 

@@ -113,6 +113,8 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
   // dizzy yet? we still have to calculate the entry point as an address relative to our stub
   ULONG entryPoint = 0;
 
+  // not implemented on 64 bit systems
+#ifdef _X86_
   CONTEXT threadContext;
   threadContext.ContextFlags = CONTEXT_CONTROL;
   if (::GetThreadContext(threadHandle, &threadContext) == 0) {
@@ -139,6 +141,7 @@ void injectDLL(HANDLE processHandle, HANDLE threadHandle, const std::string &dll
   if (::SetThreadContext(threadHandle, &threadContext) == 0) {
     throw windows_error("failed to overwrite thread context");
   }
+#endif
 }
 
 } // namespace MOShared
