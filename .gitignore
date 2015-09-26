@@ -1,3 +1,5 @@
+*.user
+Thumbs.db
 src/moc_*.cpp
 src/ui_*.h
 src/*.qrc.depends

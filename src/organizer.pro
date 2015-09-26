@@ -77,9 +77,6 @@ SOURCES += \
     modlistview.cpp \
     problemsdialog.cpp \
     serverinfo.cpp \
-    ../esptk/record.cpp \
-    ../esptk/espfile.cpp \
-    ../esptk/subrecord.cpp \
     browserview.cpp \
     browserdialog.cpp \
     persistentcookiejar.cpp \
@@ -155,10 +152,6 @@ HEADERS  += \
     modlistview.h \
     problemsdialog.h \
     serverinfo.h \
-    ../esptk/record.h \
-    ../esptk/espfile.h \
-    ../esptk/subrecord.h \
-    ../esptk/espexceptions.h \
     browserview.h \
     browserdialog.h \
     persistentcookiejar.h \
@@ -168,7 +161,6 @@ HEADERS  += \
     aboutdialog.h \
     json.h \
     safewritefile.h\
-    pdll.h \
     modflagicondelegate.h \
     genericicondelegate.h \
     organizerproxy.h \
@@ -193,14 +185,12 @@ FORMS    += \
     mainwindow.ui \
     lockeddialog.ui \
     installdialog.ui \
-    fomodinstallerdialog.ui \
     finddialog.ui \
     editexecutablesdialog.ui \
     downloadlistwidgetcompact.ui \
     downloadlistwidget.ui \
     credentialsdialog.ui \
     categoriesdialog.ui \
-    baincomplexinstallerdialog.ui \
     activatemodsdialog.ui \
     profileinputdialog.ui \
     savetextasdialog.ui \
@@ -260,22 +250,26 @@ LIBS += -L"$${BOOSTPATH}/stage/lib"
 CONFIG(debug, debug|release) {
   LIBS += -L$$OUT_PWD/../shared/debug
   LIBS += -L$$OUT_PWD/../bsatk/debug
+  LIBS += -L$$OUT_PWD/../esptk/debug
   LIBS += -L$$OUT_PWD/../uibase/debug
   LIBS += -L$$OUT_PWD/../boss_modified/debug
   LIBS += -lDbgHelp
   PRE_TARGETDEPS += \
     $$OUT_PWD/../shared/debug/mo_shared.lib \
-    $$OUT_PWD/../bsatk/debug/bsatk.lib
+    $$OUT_PWD/../bsatk/debug/bsatk.lib \
+    $$OUT_PWD/../esptk/debug/esptk.lib
 } else {
   LIBS += -L$$OUT_PWD/../shared/release
   LIBS += -L$$OUT_PWD/../bsatk/release
+  LIBS += -L$$OUT_PWD/../esptk/release
   LIBS += -L$$OUT_PWD/../uibase/release
   LIBS += -L$$OUT_PWD/../boss_modified/release
   QMAKE_CXXFLAGS += /Zi /GL
   QMAKE_LFLAGS += /DEBUG /LTCG /OPT:REF /OPT:ICF
   PRE_TARGETDEPS += \
     $$OUT_PWD/../shared/release/mo_shared.lib \
-    $$OUT_PWD/../bsatk/release/bsatk.lib
+    $$OUT_PWD/../bsatk/release/bsatk.lib \
+    $$OUT_PWD/../esptk/release/esptk.lib
 }
 
 #QMAKE_CXXFLAGS_WARN_ON -= -W3
@@ -307,7 +301,7 @@ TRANSLATIONS = organizer_en.ts
 #  PRE_TARGETDEPS += compiler_TSQM_make_all
 #} else:message(No translation files in project)
 
-LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lshlwapi
+LIBS += -lmo_shared -luibase -lshell32 -lole32 -luser32 -ladvapi32 -lgdi32 -lPsapi -lVersion -lbsatk -lesptk -lshlwapi
 
 LIBS += -L"$${ZLIBPATH}/build" -lzlibstatic
 
