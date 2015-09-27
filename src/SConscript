@@ -72,7 +72,11 @@ env.AppendUnique(CPPDEFINES = [
     'QT_MESSAGELOGCONTEXT'
 ])
 
-env.AppendUnique(CPPFLAGS = [ '-wd4100', '-wd4127', '-wd4512', '-wd4189' ])
+# Boost produces very long names with msvc truncates. Doesn't seem to cause
+# problems.
+# Also note to remove the -wd4100 I hacked the boost headers (tagged_argument.hpp)
+# appropriately.
+env.AppendUnique(CPPFLAGS = [ '-wd4503' ])
 
 env.AppendUnique(LINKFLAGS = [
     '/SUBSYSTEM:WINDOWS',

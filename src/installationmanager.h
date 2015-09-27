@@ -147,12 +147,10 @@ public:
 
 private:
 
-  void queryPassword(LPSTR password);
+  void queryPassword(QString *password);
   void updateProgress(float percentage);
-  void updateProgressFile(LPCWSTR fileName);
-  void report7ZipError(LPCWSTR errorMessage);
-
-  void dummyProgressFile(LPCWSTR) {}
+  void updateProgressFile(const QString &fileName);
+  void report7ZipError(const QString &errorMessage);
 
   MOBase::DirectoryTree *createFilesTree();
 
@@ -161,7 +159,7 @@ private:
   void mapToArchive(const MOBase::DirectoryTree::Node *baseNode);
 
   // recursive worker function for mapToArchive
-  void mapToArchive(const MOBase::DirectoryTree::Node *node, std::wstring path, FileData * const *data);
+  void mapToArchive(const MOBase::DirectoryTree::Node *node, QString path, FileData * const *data);
   bool unpackSingleFile(const QString &fileName);
 
 
@@ -205,7 +203,7 @@ private:
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
-  Archive *m_CurrentArchive;
+  Archive *m_ArchiveHandler;
   QString m_CurrentFile;
 
   QProgressDialog m_InstallationProgress;
