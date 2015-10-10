@@ -52,7 +52,6 @@ const std::set<int> NXMAccessManager::s_PremiumAccountStates { 4, 6, 13, 27, 31,
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
   , m_LoginReply(nullptr)
-  , m_ProgressDialog()
   , m_MOVersion(moVersion)
 {
   m_LoginTimeout.setSingleShot(true);
@@ -239,10 +238,11 @@ void NXMAccessManager::pageLogin()
 
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 
-  m_ProgressDialog.setLabelText(tr("Logging into Nexus"));
-  QList<QPushButton*> buttons = m_ProgressDialog.findChildren<QPushButton*>();
+  m_ProgressDialog = new QProgressDialog(nullptr);
+  m_ProgressDialog->setLabelText(tr("Logging into Nexus"));
+  QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
   buttons.at(0)->setEnabled(false);
-  m_ProgressDialog.show();
+  m_ProgressDialog->show();
   QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
   m_LoginReply = post(request, postDataQuery);
@@ -269,7 +269,10 @@ void NXMAccessManager::loginTimeout()
 void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 {
   qDebug("login error");
-  m_ProgressDialog.hide();
+  if (m_ProgressDialog != nullptr) {
+    m_ProgressDialog->deleteLater();
+    m_ProgressDialog = nullptr;
+  }
   m_Username.clear();
   m_Password.clear();
   m_LoginState = LOGIN_NOT_VALID;
@@ -300,7 +303,10 @@ bool NXMAccessManager::hasLoginCookies() const
 
 void NXMAccessManager::loginFinished()
 {
-  m_ProgressDialog.hide();
+  if (m_ProgressDialog != nullptr) {
+    m_ProgressDialog->deleteLater();
+    m_ProgressDialog = nullptr;
+  }
 
   m_LoginReply->deleteLater();
   m_LoginReply = nullptr;

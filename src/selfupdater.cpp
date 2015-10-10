@@ -61,11 +61,8 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   , m_Interface(nexusInterface)
   , m_UpdateRequestID(-1)
   , m_Reply(nullptr)
-  , m_Progress(nullptr)
   , m_Attempts(3)
 {
-  m_Progress.setMaximum(100);
-
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
     throw MyException(tr("archive.dll not loaded: \"%1\"").arg(archiveLib.errorString()));
@@ -78,7 +75,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     throw MyException(InstallationManager::getErrorString(m_CurrentArchive->getLastError()));
   }
 
-  connect(&m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
+  connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
 
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
 
@@ -136,12 +133,23 @@ void SelfUpdater::startUpdate()
 
 void SelfUpdater::showProgress()
 {
-  m_Progress.setModal(true);
-  m_Progress.setParent(m_Parent, Qt::Dialog);
-  m_Progress.show();
-  m_Progress.setValue(0);
-  m_Progress.setWindowTitle(tr("Update"));
-  m_Progress.setLabelText(tr("Download in progress"));
+  if (m_Progress == nullptr) {
+    m_Progress = new QProgressDialog(m_Parent, Qt::Dialog);
+  }
+  m_Progress->setModal(true);
+  m_Progress->show();
+  m_Progress->setValue(0);
+  m_Progress->setWindowTitle(tr("Update"));
+  m_Progress->setLabelText(tr("Download in progress"));
+}
+
+void SelfUpdater::closeProgress()
+{
+  if (m_Progress != nullptr) {
+    m_Progress->hide();
+    m_Progress->deleteLater();
+    m_Progress = nullptr;
+  }
 }
 
 void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
@@ -168,7 +176,9 @@ void SelfUpdater::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
       m_Reply->abort();
     } else {
       if (bytesTotal != 0) {
-        m_Progress.setValue((bytesReceived * 100) / bytesTotal);
+        if (m_Progress != nullptr) {
+          m_Progress->setValue((bytesReceived * 100) / bytesTotal);
+        }
       }
     }
   }
@@ -196,7 +206,8 @@ void SelfUpdater::downloadFinished()
       m_Canceled = true;
     }
 
-    m_Progress.hide();
+    closeProgress();
+
     m_Reply->close();
     m_Reply->deleteLater();
     m_Reply = nullptr;
@@ -439,7 +450,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
   } else {
     qCritical("no file for update found");
     MessageDialog::showMessage(tr("no file for update found. Please update manually."), m_Parent);
-    m_Progress.hide();
+    closeProgress();
   }
 }
 
@@ -474,8 +485,7 @@ void SelfUpdater::nxmDownloadURLsAvailable(int, int, QVariant userData, QVariant
       download(dlServer["URI"].toString(), userData.toString());
     } else {
       MessageDialog::showMessage(tr("No download server available. Please try again later."), m_Parent);
-      m_Progress.hide();
+      closeProgress();
     }
   }
 }
-
