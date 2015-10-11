@@ -228,7 +228,7 @@ SET(organizer_QRCS
 
 SET(organizer_RCS
     app_icon.rc
-    #version.rc
+    version.rc
 	)
 
 
