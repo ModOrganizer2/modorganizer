@@ -37,7 +37,7 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   m_LicenseFiles[LICENSE_ZLIB] = "zlib.txt";
   m_LicenseFiles[LICENSE_APACHE2] = "apache-license-2.0.txt";
 
-  addLicense("Qt 5.4", LICENSE_LGPL3);
+  addLicense("Qt", LICENSE_LGPL3);
   addLicense("Qt Json", LICENSE_GPL3);
   addLicense("Boost Library", LICENSE_BOOST);
   addLicense("7-zip", LICENSE_LGPL3);

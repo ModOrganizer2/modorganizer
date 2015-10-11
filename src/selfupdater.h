@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class NexusInterface;
 
+
 /**
  * @brief manages updates for Mod Organizer itself
  * This class is used to update the Mod Organizer
@@ -39,7 +40,7 @@ class NexusInterface;
  * 1. call testForUpdate() to determine is available
  * 2. if the updateAvailable() signal is received, allow the user to start the update
  * 3. if the user start the update, call startUpdate()
- * 4. startUpdate() will first query a list of files, try to determine if there is an 
+ * 4. startUpdate() will first query a list of files, try to determine if there is an
  *    incremental update. If not, the user will have to confirm the download of a full download.
  *    Once the correct file is selected, it is downloaded.
  * 5. before the downloaded file is extracted, existing files that are going to be replaced are
@@ -48,7 +49,7 @@ class NexusInterface;
  * 7. finally, a restart is requested via signal.
  * 8. at restart, Mod Organizer will remove the update_backup directory since none of the files
  *    should now be open
- * 
+ *
  * @todo use NexusBridge
  **/
 class SelfUpdater : public QObject
@@ -121,6 +122,7 @@ private:
   void report7ZipError(LPCWSTR errorMessage);
   QString retrieveNews(const QString &description);
   void showProgress();
+  void closeProgress();
 
 private slots:
 
@@ -138,7 +140,7 @@ private:
   QString m_NewestVersion;
   QFile m_UpdateFile;
   QNetworkReply *m_Reply;
-  QProgressDialog m_Progress;
+  QProgressDialog *m_Progress { nullptr };
   bool m_Canceled;
   int m_Attempts;
 
