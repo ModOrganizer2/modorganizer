@@ -1,5 +1,4 @@
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
-PROJECT(organizer)
 
 CMAKE_POLICY(SET CMP0020 NEW)
 #CMAKE_POLICY(SET CMP0043 NEW)
@@ -167,7 +166,6 @@ SET(organizer_HDRS
     aboutdialog.h
     json.h
     safewritefile.h
-    pdll.h
     modflagicondelegate.h
     genericicondelegate.h
     organizerproxy.h
@@ -208,14 +206,12 @@ SET(organizer_UIS
     mainwindow.ui
     lockeddialog.ui
     installdialog.ui
-    fomodinstallerdialog.ui
     finddialog.ui
     editexecutablesdialog.ui
     downloadlistwidgetcompact.ui
     downloadlistwidget.ui
     credentialsdialog.ui
     categoriesdialog.ui
-    baincomplexinstallerdialog.ui
     activatemodsdialog.ui
     profileinputdialog.ui
     savetextasdialog.ui
@@ -232,7 +228,7 @@ SET(organizer_QRCS
 
 SET(organizer_RCS
     app_icon.rc
-    #version.rc
+    version.rc
 	)
 
 
@@ -283,8 +279,9 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
                     ${project_path}/plugin/game_features/src)
-INCLUDE_DIRECTORIES(shared)
-LINK_DIRECTORIES(${lib_path})
+INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
+LINK_DIRECTORIES(${lib_path}
+                 ${project_path}/zlib/lib)
 
 ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 
@@ -301,7 +298,7 @@ SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LTCG /INCREMENTAL:NO /LARGEADDRESSAWARE /OPT:REF /OPT:ICF")
 
 
-QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebkitWidgets)
+QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebEngineWidgets)
 
 
 ###############

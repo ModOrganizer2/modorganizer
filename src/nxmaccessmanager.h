@@ -109,7 +109,7 @@ private:
 
   QTimer m_LoginTimeout;
   QNetworkReply *m_LoginReply;
-  QProgressDialog m_ProgressDialog;
+  QProgressDialog *m_ProgressDialog { nullptr };
 
   QString m_MOVersion;
   QString m_NMMVersion;

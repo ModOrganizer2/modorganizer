@@ -206,7 +206,7 @@ private:
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
 
-  QProgressDialog m_InstallationProgress;
+  QProgressDialog *m_InstallationProgress { nullptr };
 
   std::set<QString> m_TempFilesToDelete;
 

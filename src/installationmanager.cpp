@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <installationtester.h>
 #include <gameinfo.h>
 #include <utility.h>
+#include <scopeguard.h>
 #include <QFileInfo>
 #include <QLibrary>
 #include <QInputDialog>
@@ -71,7 +72,6 @@ static T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager()
   : m_ParentWidget(nullptr)
-  , m_InstallationProgress(nullptr)
   , m_SupportedExtensions({ "zip", "rar", "7z", "fomod", "001" })
 {
   QLibrary archiveLib("dlls\\archive.dll");
@@ -85,8 +85,6 @@ InstallationManager::InstallationManager()
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
-
-  m_InstallationProgress.setWindowFlags(m_InstallationProgress.windowFlags() & (~Qt::WindowContextHelpButtonHint));
 }
 
 
@@ -97,7 +95,6 @@ InstallationManager::~InstallationManager()
 
 void InstallationManager::setParentWidget(QWidget *widget)
 {
-  m_InstallationProgress.setParent(widget, Qt::Dialog);
   for (IPluginInstaller *installer : m_Installers) {
     installer->setParentWidget(widget);
   }
@@ -167,18 +164,23 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
     return false;
   }
 
-  m_InstallationProgress.setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress.setLabelText(QString());
-  m_InstallationProgress.setValue(0);
-  m_InstallationProgress.setWindowModality(Qt::WindowModal);
-  m_InstallationProgress.show();
+  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
+  ON_BLOCK_EXIT([this] () {
+    m_InstallationProgress->hide();
+    m_InstallationProgress->deleteLater();
+    m_InstallationProgress = nullptr;
+  });
+  m_InstallationProgress->setWindowFlags(
+        m_InstallationProgress->windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+  m_InstallationProgress->setWindowTitle(tr("Extracting files"));
+  m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->show();
 
   bool res = m_ArchiveHandler->extract(QDir::tempPath(),
                                 new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
                                 nullptr,
                                 new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError));
-
-  m_InstallationProgress.hide();
 
   return res;
 }
@@ -187,7 +189,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 QString InstallationManager::extractFile(const QString &fileName)
 {
   if (unpackSingleFile(fileName)) {
-    return QDir::tempPath().append("/").append(QFileInfo(fileName).fileName());
+    return QDir::tempPath() + "/" + QFileInfo(fileName).fileName();
   } else {
     return QString();
   }
@@ -211,7 +213,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
 {
   QStringList files;
 
-  foreach (const QString &file, filesOrig) {
+  for (const QString &file : filesOrig) {
     files.append(canonicalize(file));
   }
 
@@ -250,22 +252,26 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     }
   }
 
-  m_InstallationProgress.setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress.setLabelText(QString());
-  m_InstallationProgress.setValue(0);
-  m_InstallationProgress.setWindowModality(Qt::WindowModal);
-  m_InstallationProgress.show();
+  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
+  ON_BLOCK_EXIT([this] () {
+    m_InstallationProgress->hide();
+    m_InstallationProgress->deleteLater();
+    m_InstallationProgress = nullptr;
+  });
+  m_InstallationProgress->setWindowFlags(
+        m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+  m_InstallationProgress->setWindowTitle(tr("Extracting files"));
+  m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
   if (!m_ArchiveHandler->extract(QDir::tempPath(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          nullptr,
          new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
-    m_InstallationProgress.hide();
     throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
 
-  m_InstallationProgress.hide();
   return result;
 }
 
@@ -388,17 +394,21 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
 
 void InstallationManager::updateProgress(float percentage)
 {
-  m_InstallationProgress.setValue(static_cast<int>(percentage * 100.0));
-  if (m_InstallationProgress.wasCanceled()) {
-    m_ArchiveHandler->cancel();
-    m_InstallationProgress.reset();
+  if (m_InstallationProgress != nullptr) {
+    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
+    if (m_InstallationProgress->wasCanceled()) {
+      m_ArchiveHandler->cancel();
+      m_InstallationProgress->reset();
+    }
   }
 }
 
 
 void InstallationManager::updateProgressFile(QString const &fileName)
 {
-  m_InstallationProgress.setLabelText(fileName);
+  if (m_InstallationProgress != nullptr) {
+    m_InstallationProgress->setLabelText(fileName);
+  }
 }
 
 
@@ -530,24 +540,27 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
 
   qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
 
-  m_InstallationProgress.setWindowTitle(tr("Extracting files"));
-  m_InstallationProgress.setLabelText(QString());
-  m_InstallationProgress.setValue(0);
-  m_InstallationProgress.setWindowModality(Qt::WindowModal);
-  m_InstallationProgress.show();
+  m_InstallationProgress = new QProgressDialog(m_ParentWidget);
+  ON_BLOCK_EXIT([this] () {
+    m_InstallationProgress->hide();
+    m_InstallationProgress->deleteLater();
+    m_InstallationProgress = nullptr;
+  });
+
+  m_InstallationProgress->setWindowFlags(
+        m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
+  m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->show();
   if (!m_ArchiveHandler->extract(targetDirectory,
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
          new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
          new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
-    m_InstallationProgress.hide();
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
       throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
     }
   }
-
-  m_InstallationProgress.hide();
 
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 

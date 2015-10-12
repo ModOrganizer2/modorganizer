@@ -4,3 +4,9 @@ src/moc_*.cpp
 src/ui_*.h
 src/*.qrc.depends
 src/Modorganizer.*
+CMakeLists.txt.user
+edit
+stderr.log
+stdout.log
+build
+.idea
