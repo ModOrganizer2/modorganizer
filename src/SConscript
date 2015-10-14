@@ -1,5 +1,42 @@
+import ctypes
 import os
 import subprocess
+
+def resolve_name(source):
+    # Get the actual name of the file, after reparse points and symlinks are
+    # taken into account.
+    GENERIC_READ = 0x80000000
+    FILE_SHARE_READ = 0x1
+    OPEN_EXISTING = 0x3
+    FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+    handle = ctypes.windll.kernel32.CreateFileA(source,
+                                                GENERIC_READ,
+                                                FILE_SHARE_READ,
+                                                None,
+                                                OPEN_EXISTING,
+                                                FILE_FLAG_BACKUP_SEMANTICS,
+                                                None)
+    # get the target
+    FILE_NAME_NORMALIZED = 0x0
+    FILE_NAME_OPENED = 0x8
+    buff = ctypes.create_string_buffer(1024)
+    res = ctypes.windll.kernel32.GetFinalPathNameByHandleA(handle,
+                                                           buff,
+                                                           ctypes.sizeof(buff),
+                                                           FILE_NAME_NORMALIZED)
+    target = buff.value
+    ctypes.windll.kernel32.CloseHandle(handle)
+    return target
+
+def search_up(path, target):
+    while True:
+        if os.path.exists(os.path.join(path, target)):
+            return True
+        npath = os.path.dirname(path)
+        if npath == path:
+            break
+        path = npath
+    return False
 
 Import('qt_env')
 
@@ -47,16 +84,12 @@ env.AppendUnique(LIBS = [
 other_sources = env.AddExtraMoc(env.Glob('*.h'))
 
 for file in env.Glob('*.rc'):
-    # version.rc is included in app_icon.rc. Not sure why it's a separate file.
-    if file.name == 'version.rc':
-        continue
     other_sources.append(env.RES(file))
 
 # Note the order of this is important, or you can pick up the wrong report.h...
 # Doing appendunique seems to throw the moc code into a tizzy
 env['CPPPATH'] += [
     '../archive',
-#    '../boss_modified/boss-api',
     '../plugins/gamefeatures',
     '.',            # Why is this necessary?
     '${LOOTPATH}',
@@ -86,10 +119,19 @@ cpp_files = [
 ]
 
 about_env = env.Clone()
+# This is somewhat of a hack until I can work out a way of setting up a build
+# with all the repos without using millions of junction points
 try:
-    hgid = subprocess.check_output(['hg', 'id', '-i']).rstrip()
+    target = resolve_name(Dir('.').srcnode().abspath)
+    if search_up(target, '.hg'):
+        hgid = subprocess.check_output([env['MERCURIAL'], 'id', '-i']).rstrip()
+    elif search_up(target, '.git'):
+        hgid = subprocess.check_output([env['GIT'], '-C', target, 'describe',
+                                                              '--tag']).rstrip()
+    else:
+        hgid = "Unknown"
 except:
-    hgid = 'Unknown version'
+    hgid = "Problem determining version"
 
 # FIXME: It'd be much easier to stringify this in the source code
 about_env.AppendUnique(CPPDEFINES = [ 'HGID=\\"%s\\"' % hgid ])

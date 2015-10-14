@@ -310,7 +310,9 @@ DEFINES += UNICODE _UNICODE _CRT_SECURE_NO_WARNINGS _SCL_SECURE_NO_WARNINGS NOMI
 DEFINES += BOOST_DISABLE_ASSERTS NDEBUG QT_MESSAGELOGCONTEXT
 #DEFINES += QMLJSDEBUGGER
 
-HGID = $$system(hg id -i)
+# If we are running mercurial get the build ID from that. If we aren't, at least
+# don't generate a strange message whenever you open the project
+HGID = $$system(if exist $OUT_PWD\\..\\.hg (hg id -i) else (echo 'Unknown'))
 DEFINES += HGID=\\\"$${HGID}\\\"
 
 CONFIG(debug, debug|release) {
