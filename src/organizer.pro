@@ -91,7 +91,12 @@ SOURCES += \
     organizerproxy.cpp \
     viewmarkingscrollbar.cpp \
     plugincontainer.cpp \
-    organizercore.cpp
+    organizercore.cpp \
+    modinfowithconflictinfo.cpp \
+    modinforegular.cpp \
+    modinfobackup.cpp \
+    modinfooverwrite.cpp \
+    modinfoforeign.cpp
 
 
 HEADERS  += \
@@ -167,7 +172,12 @@ HEADERS  += \
     viewmarkingscrollbar.h \
     plugincontainer.h \
     organizercore.h \
-    iuserinterface.h
+    iuserinterface.h \
+    modinfowithconflictinfo.h \
+    modinforegular.h \
+    modinfobackup.h \
+    modinfooverwrite.h \
+    modinfoforeign.h
 
 FORMS    += \
     transfersavesdialog.ui \

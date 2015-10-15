@@ -59,6 +59,8 @@ public:
 
   void setParentWidget(QWidget *widget);
 
+  void setURL(const QString &url);
+
   /**
    * @brief update the directory where mods are to be installed
    * @param modsDirectory the mod directory
@@ -168,8 +170,6 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = nullptr);
-
   bool doInstall(MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
@@ -212,6 +212,7 @@ private:
 
   std::set<QString> m_TempFilesToDelete;
 
+  QString m_URL;
 };
 
 
