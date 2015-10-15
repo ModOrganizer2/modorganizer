@@ -3120,7 +3120,9 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
         }
 
-        if (info->getURL() != "") {
+        if (info->getURL() != "" &&
+            !GameInfo::instance().isValidModURL(info->getNexusID(),
+                                                info->getURL().toStdWString())) {
           menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
         }
 
