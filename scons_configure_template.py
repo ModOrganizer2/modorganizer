@@ -31,3 +31,6 @@ ZLIBPATH = r"C:\Apps\zlib-1.2.8"
 # though you have to set it up in the configuration
 GIT = r"C:\Program Files\git\bin\git.exe"
 MERCURIAL = r"C:\Program Files\TortoiseHg\hg.exe"
+
+# Path to include-what-you-use. This is currently rather experimental
+#IWYU = r"C:\Apps\include-what-you-use\bin\include-what-you-use.exe"

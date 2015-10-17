@@ -25,7 +25,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
-#include "json.h"
 #include "messagedialog.h"
 #include "filenamestring.h"
 

@@ -25,7 +25,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
-#include "json.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>

@@ -25,8 +25,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "persistentcookiejar.h"
 
-#include "json.h"
-
 #include <utility.h>
 #include <gameinfo.h>
 #include "settings.h"
