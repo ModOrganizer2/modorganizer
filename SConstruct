@@ -37,6 +37,14 @@ def setup_config_variables():
     if 'ZLIBPATH' in os.environ:
         zlibpath = os.environ['ZLIBPATH']
 
+    git = 'git'
+    if 'GIT' in os.environ:
+        git = os.environ['GIT']
+
+    mercurial = 'hg'
+    if 'MERCURIAL' in os.environ:
+        hg = os.environ['HG']
+
     vars = Variables('scons_configure.py')
     vars.AddVariables(
         PathVariable('BOOSTPATH', 'Set to point to your boost directory',
@@ -51,11 +59,13 @@ def setup_config_variables():
         PathVariable('SEVENZIPPATH', 'Path to 7zip sources', sevenzippath,
                                                         PathVariable.PathIsDir),
         PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
-                                                        PathVariable.PathIsDir).
-        PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
                                                         PathVariable.PathIsDir),
-        PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
-                                                        PathVariable.PathIsDir)
+        PathVariable('GIT', 'Path to git executable', git,
+                                                       PathVariable.PathIsFile),
+        PathVariable('MERCURIAL', 'Path to hg executable', mercurial,
+                                                       PathVariable.PathIsFile),
+        PathVariable('IWYU', 'Path to include-what-you-use executable', None,
+                                                        PathVariable.PathIsFile)
     )
 
     return vars
@@ -350,6 +360,44 @@ if env['CONFIG'] == 'debug':
 else:
     env.AppendUnique(CPPFLAGS = [ '/O2', '/MD' ])
     env.AppendUnique(LINKFLAGS = [ '/OPT:REF', '/OPT:ICF' ])
+
+# Add in env variables for include-what-you-use
+################################################################
+# I really want to make this a post action for building a .o
+if 'IWYU' in env:
+    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to duplicate most of the usual stuff. Worse, half the
+    # flags are irrelevant immaterial and incompetent and I can't use an environment clone because it takes stuff from the
+    # wrong environment.
+
+    # There has to be a better way of doing this. 'begins with Q means system header'???
+    # Also, I can't get this to show issues in the issue window which sucks
+    env['IWYU_FLAGS'] = [
+        # This might turn down the output a bit. I hope
+        '-Xiwyu', '--transitive_includes_only',
+         '-D_MT', '-D_DLL', '-m32',
+         # This is something to do with clang, windows and boost headers
+         '-DBOOST_USE_WINDOWS_H',
+        # There's a lot of this, disabled for now
+        '-Wno-inconsistent-missing-override',
+        '--system-header-prefix=Q',
+        '--system-header-prefix=boost/',
+        # Attempt to get QT to recognise clang output. So far it has not worked well.
+        '-fdiagnostics-format=msvc',
+        '-fno-show-column',
+        # clang says it sets this to 1700 but pretty sure vc12 is 1800
+        '-fmsc-version=1800',
+    ]
+    if env['CONFIG'] == 'debug':
+        env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
+
+    env['IWYU_DEFPREFIX'] = '-D'
+    env['IWYU_DEFSUFFIX'] = ''
+    env['IWYU_INCPREFIX'] = '-I'
+    env['IWYU_INCSUFFIX'] = ''
+    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $CCPCHFLAGS $CCPDBFLAGS'
+    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
+    env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
+    env['IWYU_MAPPING_FILE'] = env.File('#/qtmappings.imp')
 
 # /OPT:REF removes unreferenced code
 # for release, use /OPT:ICF (comdat folding: coalesce identical blocks of code)
