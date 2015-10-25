@@ -143,14 +143,6 @@ env.AppendUnique(LIBS = 'zlibstatic')
 prog = env.Program('ModOrganizer',
                    cpp_files + env.Glob('*.qrc') + other_sources)
 
-###############################################################################
-# I'd like to automatically add this to every .o generation.
-if 'IWYU' in env:
-    for f in cpp_files + [ env.File('aboutdialog.cpp') ]:
-        env.AddPostAction(prog, "-$IWYU $IWYU_FLAGS -Xiwyu --mapping_file=$IWYU_MAPPING_FILE $IWYU_COMCOM " + str(f))
-    env.Depends(prog, env['IWYU_MAPPING_FILE'])
-###############################################################################
-
 env.InstallModule(prog)
 
 for subdir in ('tutorials', 'stylesheets'):

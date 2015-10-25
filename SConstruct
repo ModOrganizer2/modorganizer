@@ -245,6 +245,83 @@ def DisableQtModules(self, *modules):
     for module in modules:
         self['CPPPATH'].remove(os.path.join('$QTDIR', 'include', 'QT' + module))
 
+def setup_IWYU(env):
+    import SCons.Defaults
+    import SCons.Builder
+    original_shared = SCons.Defaults.SharedObjectEmitter
+    original_static = SCons.Defaults.StaticObjectEmitter
+
+    def DoIWYU(env, source, target):
+        for i in range(len(source)):
+            s = source[i]
+            dir, name = os.path.split(str(s)) # I'm sure theres a way of getting this from scons
+            # Don't bother looking at moc files and 7zip source
+            if not name.startswith('moc_') and \
+               not dir.startswith(env['SEVENZIPPATH']):
+                # Put the .iwyu in the same place as the .obj
+                targ = os.path.splitext(str(target[i]))[0]
+                env.IWYU(targ + '.iwyu', s)
+
+    def shared_emitter(target, source, env):
+        DoIWYU(env, source, target)
+        return original_shared(target, source, env)
+
+    def static_emitter(target, source, env):
+        DoIWYU(env, source, target)
+        return original_static(target, source, env)
+
+    SCons.Defaults.SharedObjectEmitter = shared_emitter
+    SCons.Defaults.StaticObjectEmitter = static_emitter
+
+    def emitter(target, source, env):
+        env.Depends(target, '$IWYU_MAPPING_FILE')
+        return target, source
+
+    iwyu = SCons.Builder.Builder(
+           action=[
+                '-$IWYU $IWYU_FLAGS -Xiwyu --mapping_file=$IWYU_MAPPING_FILE $IWYU_COMCOM $SOURCE',
+                Touch('$TARGET')
+            ],
+            emitter=emitter,
+            suffix='.iwyu',
+            src_suffix='.cpp')
+
+    env.Append(BUILDERS={'IWYU': iwyu})
+
+    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to duplicate most of the usual stuff. Worse, half the
+    # flags are irrelevant immaterial and incompetent and I can't use an environment clone because it takes stuff from the
+    # wrong environment.
+
+    # There has to be a better way of doing this. 'begins with Q means system header'???
+    # Also, I can't get this to show issues in the issue window which sucks
+    env['IWYU_FLAGS'] = [
+        # This might turn down the output a bit. I hope
+        '-Xiwyu', '--transitive_includes_only',
+         '-D_MT', '-D_DLL', '-m32',
+         # This is something to do with clang, windows and boost headers
+         '-DBOOST_USE_WINDOWS_H',
+        # There's a lot of this, disabled for now
+        '-Wno-inconsistent-missing-override',
+        '--system-header-prefix=Q',
+        '--system-header-prefix=boost/',
+        # Attempt to get QT to recognise clang output. So far it has not worked well.
+        '-fdiagnostics-format=msvc',
+        '-fno-show-column',
+        # clang says it sets this to 1700 but pretty sure vc12 is 1800
+        '-fmsc-version=1800',
+    ]
+    if env['CONFIG'] == 'debug':
+        env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
+
+    env['IWYU_DEFPREFIX'] = '-D'
+    env['IWYU_DEFSUFFIX'] = ''
+    env['IWYU_INCPREFIX'] = '-I'
+    env['IWYU_INCSUFFIX'] = ''
+    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $CCPDBFLAGS'
+    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
+    env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
+    env['IWYU_MAPPING_FILE'] = env.File('#/qtmappings.imp')
+
 
 # Create base environment
 vars = setup_config_variables()
@@ -361,44 +438,10 @@ else:
     env.AppendUnique(CPPFLAGS = [ '/O2', '/MD' ])
     env.AppendUnique(LINKFLAGS = [ '/OPT:REF', '/OPT:ICF' ])
 
-# Add in env variables for include-what-you-use
-################################################################
-# I really want to make this a post action for building a .o
+# Set up include what you use. Add this as an extra compile step. Note it
+# doesn't currently generate an output file (use the output instead!).
 if 'IWYU' in env:
-    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to duplicate most of the usual stuff. Worse, half the
-    # flags are irrelevant immaterial and incompetent and I can't use an environment clone because it takes stuff from the
-    # wrong environment.
-
-    # There has to be a better way of doing this. 'begins with Q means system header'???
-    # Also, I can't get this to show issues in the issue window which sucks
-    env['IWYU_FLAGS'] = [
-        # This might turn down the output a bit. I hope
-        '-Xiwyu', '--transitive_includes_only',
-         '-D_MT', '-D_DLL', '-m32',
-         # This is something to do with clang, windows and boost headers
-         '-DBOOST_USE_WINDOWS_H',
-        # There's a lot of this, disabled for now
-        '-Wno-inconsistent-missing-override',
-        '--system-header-prefix=Q',
-        '--system-header-prefix=boost/',
-        # Attempt to get QT to recognise clang output. So far it has not worked well.
-        '-fdiagnostics-format=msvc',
-        '-fno-show-column',
-        # clang says it sets this to 1700 but pretty sure vc12 is 1800
-        '-fmsc-version=1800',
-    ]
-    if env['CONFIG'] == 'debug':
-        env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
-
-    env['IWYU_DEFPREFIX'] = '-D'
-    env['IWYU_DEFSUFFIX'] = ''
-    env['IWYU_INCPREFIX'] = '-I'
-    env['IWYU_INCSUFFIX'] = ''
-    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $CCPCHFLAGS $CCPDBFLAGS'
-    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
-    env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
-    env['IWYU_MAPPING_FILE'] = env.File('#/qtmappings.imp')
-
+    setup_IWYU(env)
 # /OPT:REF removes unreferenced code
 # for release, use /OPT:ICF (comdat folding: coalesce identical blocks of code)
 

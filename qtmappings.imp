@@ -1,19 +1,23 @@
 [
 # Overrides. Some classes are defined by the spec to reside in their own headers but actually use the same
 # header as another class. It might make some sense using this for every class in QT...
+    { symbol: [ "QAbstractItemModel",                       "private", "<QAbstractItemModel>", "public" ] },
     { symbol: [ "QAbstractTableModel",                      "private", "<QAbstractTableModel>", "public" ] },
     { symbol: [ "QAtomicInt",                               "private", "<QAtomicInt>", "public"] },
+    { symbol: [ "QCloseEvent",                              "private", "<QCloseEvent>", "public" ] },
     { symbol: [ "QDate",                                    "private", "<QDate>", "public"] },
     { symbol: [ "QDragEnterEvent",                          "private", "<QDragEnterEvent>", "public" ] },
+    { symbol: [ "QDropEvent",                               "private", "<QDropEvent>", "public" ] },
     { symbol: [ "QIntValidator",                            "private", "<QIntValidator>", "public" ] },
     { symbol: [ "QKeyEvent",                                "private", "<QKeyEvent>", "public" ] },
     { symbol: [ "QListWidgetItem",                          "private", "<QListWidgetItem>", "public" ] },
     { symbol: [ "QModelIndex",                              "private", "<QModelIndex>", "public" ] },
-    { symbol: [ "QModelIndexList",                          "private", "<QModelIndex>", "public" ] },
+    { symbol: [ "QModelIndexList",                          "private", "<QModelIndexList>", "public" ] },
     { symbol: [ "QMouseEvent",                              "private", "<QMouseEvent>", "public" ] },
     { symbol: [ "@QMutableHashIterator(::.*)?",             "private", "<QMutableHashIterator>", "public" ] },
+    { symbol: [ "QPersistentModelIndex",                    "private", "<QPersistentModelIndex>", "public" ] },
+    { symbol: [ "QResizeEvent",                             "private", "<QResizeEvent>", "public" ] },
     { symbol: [ "QScopedArrayPointer",                      "private", "<QScopedArrayPointer>", "public" ] },
-    { symbol: [ "QResizeEvent",                             "private", "<QScopedArrayPointer>", "public" ] },
     { symbol: [ "QStyleOptionSlider",                       "private", "<QStyleOptionSlider>", "public" ] },
     { symbol: [ "QStyleOptionViewItem",                     "private", "<QStyleOptionViewItem>", "public" ] },
     { symbol: [ "QTableWidgetItem",                         "private", "<QTableWidgetItem>", "public" ] },
@@ -32,7 +36,6 @@
 
     { include: [ "@\"(QtConcurrent/)?qtconcurrentrun\\.h\"", "private", "<QtConcurrentRun>", "public" ] },
 
-    { include: [ "@\"(QtCore/)?qabstractitemmodel\\.h\"",   "private", "<QAbstractItemModel>", "public" ] },
     { include: [ "@\"(QtCore/)?qabstractproxymodel\\.h\"",  "private", "<QAbstractProxyModel>", "public" ] },
     { include: [ "@\"(QtCore/)?qalgorithms\\.h\"",          "private", "<QtAlgorithms>", "public" ] },
     { include: [ "@\"(QtCore/)?qbytearray\\.h\"",           "private", "<QByteArray>", "public" ] },
@@ -41,6 +44,7 @@
     { include: [ "@\"(QtCore/)?qcoreevent\\.h\"",           "private", "<QEvent>", "public" ] },
     { include: [ "@\"(QtCore/)?qdatastream\\.h\"",          "private", "<QDataStream>", "public" ] },
     { include: [ "@\"(QtCore/)?qdatetime\\.h\"",            "private", "<QDateTime>", "public" ] },
+    { include: [ "@\"(QtCore/)?qdebug\\.h\"",               "private", "<QDebug>", "public" ] },
     { include: [ "@\"(QtCore/)?qdir\\.h\"",                 "private", "<QDir>", "public" ] },
     { include: [ "@\"(QtCore/)?qdiriterator\\.h\"",         "private", "<QDirIterator>", "public" ] },
     { include: [ "@\"(QtCore/)?qfile\\.h\"",                "private", "<QFile>", "public" ] },
@@ -67,17 +71,17 @@
     { include: [ "@\"(QtCore/)?qset\\.h\"",                 "private", "<QSet>", "public" ] },
     { include: [ "@\"(QtCore/)?qsharedpointer_impl\\.h\"",  "private", "<QSharedPointer>", "public" ] },
     { include: [ "@\"(QtCore/)?qsize\\.h\"",                "private", "<QSize>", "public" ] },
+    { include: [ "@\"(QtCore/)?qstandardpaths\\.h\"",       "private", "<QStandardPaths>", "public" ] },
     { include: [ "@\"(QtCore/)?qstring\\.h\"",              "private", "<QString>", "public" ] },
     { include: [ "@\"(QtCore/)?qstringlist\\.h\"",          "private", "<QStringList>", "public" ] },
     { include: [ "@\"(QtCore/)?qurl\\.h\"",                 "private", "<QUrl>", "public" ] },
     { include: [ "@\"(QtCore/)?qvariant\\.h\"",             "private", "<QVariant>", "public" ] },
-    { include: [ "@\"(QtCore/)?qdebug\\.h\"",               "private", "<QDebug>", "public" ] },
-    { include: [ "@\"(QtCore/)?qstandardpaths\\.h\"",       "private", "<QStandardPaths>", "public" ] },
-    
+
     { include: [ "@\"(QtGui/)?qbrush\\.h\"",                "private", "<QBrush>", "public" ] },
     { include: [ "@\"(QtGui/)?qcolor\\.h\"",                "private", "<QColor>", "public" ] },
     { include: [ "@\"(QtGui/)?qcursor\\.h\"",               "private", "<QCursor>", "public" ] },
     { include: [ "@\"(QtGui/)?qfont\\.h\"",                 "private", "<QFont>", "public" ] },
+    { include: [ "@\"(QtGui/)?qfontmetrics\\.h\"",          "private", "<QFontMetrics>", "public" ] },
     { include: [ "@\"(QtGui/)?qicon\\.h\"",                 "private", "<QIcon>", "public" ] },
     { include: [ "@\"(QtGui/)?qimage\\.h\"",                "private", "<QImage>", "public" ] },
     { include: [ "@\"(QtGui/)?qkeysequence\\.h\"",          "private", "<QKeySequence>", "public" ] },
@@ -85,7 +89,6 @@
     { include: [ "@\"(QtGui/)?qpalette\\.h\"",              "private", "<QPalette>", "public" ] },
     { include: [ "@\"(QtGui/)?qpen\\.h\"",                  "private", "<QPen>", "public" ] },
     { include: [ "@\"(QtGui/)?qpixmap\\.h\"",               "private", "<QPixmap>", "public" ] },
-    { include: [ "@\"(QtGui/)?qfontmetrics\\.h\"",          "private", "<QFontMetrics>", "public" ] },
     
     { include: [ "@\"(QtNetwork/)?qhostaddress\\.h\"",      "private", "<QHostAddress>", "public" ] },
     { include: [ "@\"(QtNetwork/)?qnetworkaccessmanager\\.h\"", "private", "<QNetworkAccessManager>", "public" ] },
@@ -105,14 +108,16 @@
     { include: [ "@\"(QtWidgets/)?qstyleoption\\.h\"",      "private", "<QStyleOption>", "public" ] },
     { include: [ "@\"(QtWidgets/)?qtabbar\\.h\"",           "private", "<QTabBar>", "public" ] },
     { include: [ "@\"(QtWidgets/)?qtabwidget\\.h\"",        "private", "<QTabWidget>", "public" ] },
-    { include: [ "@\"(QtWidgets/)?qwidget\\.h\"",           "private", "<QWidget>", "public" ] },
     { include: [ "@\"(QtWidgets/)?qtextedit\\.h\"",         "private", "<QTextEdit>", "public" ] },
+    { include: [ "@\"(QtWidgets/)?qwidget\\.h\"",           "private", "<QWidget>", "public" ] },
     
     { include: [ "@\"(QtWebKit/)?qwebsettings\\.h\"",       "private", "<QWebSettings>", "public" ] },
 
     { include: [ "@\"(QtWebKitWidgets/)?qwebpage\\.h\"",    "private", "<QWebPage>", "public" ] },
 
+    # I need to find out where these are and group them as above.
     { include: [ "\"qapplication.h\"",                      "private", "<QApplication>", "public" ] },
+    { include: [ "\"qbuffer.h\"",                           "private", "<QBuffer>", "public" ] },
     { include: [ "\"qcheckbox.h\"",                         "private", "<QCheckBox>", "public" ] },
     { include: [ "\"qclipboard.h\"",                        "private", "<QClipboard>", "public" ] },
     { include: [ "\"qcombobox.h\"",                         "private", "<QComboBox>", "public" ] },
@@ -123,11 +128,13 @@
     { include: [ "\"qfiledialog.h\"",                       "private", "<QFileDialog>", "public" ] },
     { include: [ "\"qfilesystemmodel.h\"",                  "private", "<QFileSystemModel>", "public" ] },
     { include: [ "\"qfilesystemwatcher.h\"",                "private", "<QFileSystemWatcher>", "public" ] },
+    { include: [ "\"qgroupbox.h\"",                         "private", "<QGroupBox>", "public" ] },
     { include: [ "\"qheaderview.h\"",                       "private", "<QHeaderView>", "public" ] },
     { include: [ "\"qinputdialog.h\"",                      "private", "<QInputDialog>", "public" ] },
     { include: [ "\"qitemdelegate.h\"",                     "private", "<QItemDelegate>", "public" ] },
     { include: [ "\"qjsonarray.h\"",                        "private", "<QJsonArray>", "public" ] },
     { include: [ "\"qjsondocument.h\"",                     "private", "<QJsonDocument>", "public" ] },
+    { include: [ "\"qjsonobject.h\"",                       "private", "<QJsonObject>", "public" ] },
     { include: [ "\"qlabel.h\"",                            "private", "<QLabel>", "public" ] },
     { include: [ "\"qlcdnumber.h\"",                        "private", "<QLCDNumber>", "public" ] },
     { include: [ "\"qlistwidget.h\"",                       "private", "<QListWidget>", "public" ] },
@@ -144,12 +151,14 @@
     { include: [ "\"qnetworkdiskcache.h\"",                 "private", "<QNetworkDiskCache>", "public" ] },
     { include: [ "\"qnetworkinterface.h\"",                 "private", "<QNetworkInterface>", "public" ] },
     { include: [ "\"qnetworkreply.h\"",                     "private", "<QNetworkReply>", "public" ] },
+    { include: [ "\"qpixmapcache.h\"",                      "private", "<QPixmapCache>", "public" ] },
     { include: [ "\"qprocess.h\"",                          "private", "<QProcess>", "public" ] },
     { include: [ "\"qprogressbar.h\"",                      "private", "<QProgressBar>", "public" ] },
     { include: [ "\"qprogressdialog.h\"",                   "private", "<QProgressDialog>", "public" ] },
     { include: [ "\"qproxystyle.h\"",                       "private", "<QProxyStyle>", "public" ] },
     { include: [ "\"qpushbutton.h\"",                       "private", "<QPushButton>", "public" ] },
     { include: [ "\"qqueue.h\"",                            "private", "<QQueue>", "public" ] },
+    { include: [ "\"qradiobutton.h\"",                      "private", "<QRadioButton>", "public" ] },
     { include: [ "\"qscrollbar.h\"",                        "private", "<QScrollBar>", "public" ] },
     { include: [ "\"qsettings.h\"",                         "private", "<QSettings>", "public" ] },
     { include: [ "\"qsharedmemory.h\"",                     "private", "<QSharedMemory>", "public" ] },
@@ -157,18 +166,24 @@
     { include: [ "\"qsignalmapper.h\"",                     "private", "<QSignalMapper>", "public" ] },
     { include: [ "\"qsortfilterproxymodel.h\"",             "private", "<QSortFilterProxyModel>", "public" ] },
     { include: [ "\"qsplashscreen.h\"",                     "private", "<QSplashScreen>", "public" ] },
+    { include: [ "\"qsplitter.h\"",                         "private", "<QSplitter>", "public" ] },
     { include: [ "\"qsslsocket.h\"",                        "private", "<QSslSocket>", "public" ] },
     { include: [ "\"qstackedwidget.h\"",                    "private", "<QStackedWidget>", "public" ] },
+    { include: [ "\"qstatusbar.h\"",                        "private", "<QStatusBar>", "public" ] },
     { include: [ "\"qstyleditemdelegate.h\"",               "private", "<QStyledItemDelegate>", "public" ] },
     { include: [ "\"qstylefactory.h\"",                     "private", "<QStyleFactory>", "public" ] },
+    { include: [ "\"qsyntaxhighlighter.h\"",                "private", "<QSyntaxHighlighter>", "public" ] },
     { include: [ "\"qtablewidget.h\"",                      "private", "<QTableWidget>", "public" ] },
     { include: [ "\"qtemporaryfile.h\"",                    "private", "<QTemporaryFile>", "public" ] },
     { include: [ "\"qtextbrowser.h\"",                      "private", "<QTextBrowser>", "public" ] },
     { include: [ "\"qtextcodec.h\"",                        "private", "<QTextCodec>", "public" ] },
     { include: [ "\"qtextstream.h\"",                       "private", "<QTextStream>", "public" ] },
-    { include: [ "\"qtgroupingproxy.h\"",                   "private", "<QtGroupingProxy>", "public" ] },
     { include: [ "\"qthread.h\"",                           "private", "<QThread>", "public" ] },
     { include: [ "\"qtimer.h\"",                            "private", "<QTimer>", "public" ] },
+    { include: [ "\"qtoolbar.h\"",                          "private", "<QToolBar>", "public" ] },
+    { include: [ "\"qtoolbutton.h\"",                       "private", "<QToolButton>", "public" ] },
+    { include: [ "\"qtooltip.h\"",                          "private", "<QToolTip>", "public" ] },
+    { include: [ "\"qtranslator.h\"",                       "private", "<QTranslator>", "public" ] },
     { include: [ "\"qtreeview.h\"",                         "private", "<QTreeView>", "public" ] },
     { include: [ "\"qtreewidget.h\"",                       "private", "<QTreeWidget>", "public" ] },
     { include: [ "\"qurlquery.h\"",                         "private", "<QUrlQuery>", "public" ] },
@@ -178,48 +193,68 @@
     { include: [ "\"qwebhistory.h\"",                       "private", "<QWebHistory>", "public" ] },
     { include: [ "\"qwebview.h\"",                          "private", "<QWebView>", "public" ] },
     { include: [ "\"qwhatsthis.h\"",                        "private", "<QWhatsThis>", "public" ] },
+    { include: [ "\"qwidgetaction.h\"",                     "private", "<QWidgetAction>", "public" ] },
+    { include: [ "\"qimagereader.h\"",                      "private", "<QImageReader>", "public" ] },
 
-# Microsft visual C?
+    
+    # Microsft visual C?
 
+    { include: [ "<xios_base>", "private", "<ios_base>", "public" ] },
+    { include: [ "<xlocale>", "private", "<locale>", "public" ] },
     { include: [ "<xstring>", "private", "<string>", "public" ] },
     { include: [ "<xutility>", "private", "<utility>", "public" ] },
 
 # Windows
+# Looks like the doucmentation says the 1st char is u/c the rest are l/c
 # You have to be kidding me. ULONG is defined in winsmcrd.h?
     { symbol: [ "ULONG",    "private", "<windef.h>", "private" ] },
 
-# These are all in windef.h apparently. Which m/s then says 'use windows.h'
+    { include: [ "<winnls.h>", "private", "<stringapiset.h>", "private" ] }, # Stringapiset.h
+    { include: [ "<stringapiset.h>", "private", "<Windows.h>", "public" ] }, # Windows.h
+
+# These are all in windef.h apparently. Which m/s then says 'use Windows.h'
     { include: [ "<basetsd.h>", "private", "<windef.h>", "private" ] }, # or in winnt apparently
     { include: [ "<handleapi.h>", "private", "<windef.h>", "private" ] },
     { include: [ "<libloaderapi.h>", "private", "<windef.h>", "private" ] },
     { include: [ "<minwindef.h>", "private", "<windef.h>", "private" ] },
 
 # Similary, but for winbase.h
-    { include: [ "<securitybaseapi.h>", "private", "<winbase.h>", "private" ] },
-    { include: [ "<excpt.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<LMCons.h>", "private", "<winbase.h>", "private" ] },
     { include: [ "<errhandlingapi.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<excpt.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<minwinbase.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<namedpipeapi.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<securitybaseapi.h>", "private", "<winbase.h>", "private" ] },
 
-# These ones say xxxx.h (include windows.h) on the ms web site
-    { include: [ "<fileapi.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<verrsrc.h>", "private", "<windows.h>", "public" ] }, # check this
-    { include: [ "<winbase.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<windef.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<winerror.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<winnt.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<winuser.h>", "private", "<windows.h>", "public" ] },
+# These ones say xxxx.h (include Windows.h) on the ms web site
+    { include: [ "<fileapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<verrsrc.h>", "private", "<Windows.h>", "public" ] }, # VerRsrc.h
+    { include: [ "<winbase.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<windef.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winerror.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winnt.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winuser.h>", "private", "<Windows.h>", "public" ] },
 
-# These ones are in windows.h but the documentation post windows 8 says they are individual headers,
+# These ones are in Windows.h but the documentation post windows 8 says they are individual headers,
 # which looks like M/S are trying to get their act together. Maybe.
-    { include: [ "<minwinbase.h>", "private", "<windows.h>", "public" ] }, #recheck
-    { include: [ "<processenv.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<processthreadsapi.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<synchapi.h>", "private", "<windows.h>", "public" ] },
+    { include: [ "<processenv.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<processthreadsapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<synchapi.h>", "private", "<Windows.h>", "public" ] },
 
-# These ones are *not* defined to be in windows.h, but it seems to work. These should probably be cleaned up
-    { include: [ "<DbgHelp.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<ShellAPI.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<Shellapi.h>", "private", "<windows.h>", "public" ] },
-    { include: [ "<shellapi.h>", "private", "<windows.h>", "public" ] },
+# These ones are *not* defined to be in Windows.h, but it seems to work. These should probably be cleaned up
+    { include: [ "<DbgHelp.h>", "private", "<Windows.h>", "public" ] },
+    # These 3 should go to Shellapi.h
+    { include: [ "<ShellAPI.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<Shellapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<shellapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<objidl.h>", "private", "<Windows.h>", "public" ] },
+# combaseapi.h is for objbase.h but objbase.h appears to come free with Windows.h
+# Windows.h is a pile of ...
+    { include: [ "<combaseapi.>", "private", "<objbase.h>", "private" ] },
+    { include: [ "<objbase.h>", "private", "<Windows.h>", "public" ] },
+
+# Huh? This one is sane?
+    { include: [ "<shlguid.h>", "private", "<shobjidl.h>", "public" ] },
 
 # And for boost???
 # These are probably correct but might need a revisit as if you look at the boost documentation pages, it
@@ -229,7 +264,10 @@
     { include: [ "@\"boost/bind/.*\"",                      "private", "<boost/bind.hpp>", "public" ] },
     { include: [ "@\"boost/algorithm/string/.*\"",          "private", "<boost/algorithm/string.hpp>", "public" ] },
     { include: [ "@\"boost/assign/.*\"",                    "private", "<boost/assign.hpp>", "public" ] },
+    { include: [ "@\"boost/filesystem/.*\"",                "private", "<boost/filesystem.hpp>", "public" ] },
+    { include: [ "@\"boost/format/.*\"",                    "private", "<boost/format.hpp>", "public" ] },
     { include: [ "@\"boost/function/.*\"",                  "private", "<boost/function.hpp>", "public" ] },
+    { include: [ "@\"boost/python/.*\"",                    "private", "<boost/python.hpp>", "public" ] },
     { include: [ "@\"boost/signals2/.*\"",                  "private", "<boost/signals2.hpp>", "public" ] },
     { include: [ "\"boost/smart_ptr/scoped_array.hpp\"",    "private", "<boost/scoped_array.hpp>", "public" ] },
     { include: [ "\"boost/smart_ptr/shared_ptr.hpp\"",      "private", "<boost/shared_ptr.hpp>", "public" ] },
@@ -239,7 +277,17 @@
 
 ]
 
+# Warning: QtGroupingProxy is not provided by Qt
+
+#include "qdeclarativecontext.h"   // for QDeclarativeContext
+#include "qdeclarativeview.h"      // for QDeclarativeView, etc
+#include "qgraphicsitem.h"         // for QGraphicsObject
+
+#include "qpluginloader.h"
+#include "qnetworkproxy.h"
+
 # Ones I don't yet know how to deal with
+#include <wtypesbase.h>
 #include "boost/fusion/container/vector/vector10_fwd.hpp"  // for fusion
 #include "boost/iterator/iterator_facade.hpp"  // for operator!=
 #include <crtdbg.h>                                // for operator delete[], etc
@@ -248,10 +296,13 @@
 #include "QtCore/qtypeinfo.h"       // for swap
 #include "QtCore/qtypetraits.h"
 #include "QtCore/qtypetraits.h"      // for remove_reference<>::type
-#include "QtGui/qfontmetrics.h"
-#include "QtGui/qvalidator.h"              // for QIntValidator
 #include "QtGui/qwindowdefs_win.h"  // for HINSTANCE
 #include "QtWidgets/qabstractitemdelegate.h"
 #include "boost/iterator/iterator_facade.hpp"
 #include <xmemory0>                 // for _Simple_types<>::value_type
 #include <xtree>                          // for _Tree_const_iterator
+
+# typical error on stdout (?)
+#source\hookdll\dllmain.cpp(220) : warning C4244: '=' : conversion from 'int' to 'char', possible loss of data
+# error from include-what-you-use (on stderr? at least it's in red)
+#source\hookdll\dllmain.cpp(2220) :  warning: case value not in enumerated type 'FILE_INFORMATION_CLASS' (aka '_FILE_INFORMATION_CLASS') [-Wswitch]
