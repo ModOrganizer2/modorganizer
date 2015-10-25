@@ -195,7 +195,10 @@
     { include: [ "\"qwhatsthis.h\"",                        "private", "<QWhatsThis>", "public" ] },
     { include: [ "\"qwidgetaction.h\"",                     "private", "<QWidgetAction>", "public" ] },
     { include: [ "\"qimagereader.h\"",                      "private", "<QImageReader>", "public" ] },
-
+    { include: [ "\"qdeclarativecontext.h\"",               "private", "<QDeclarativeContext>", "public" ] },
+    { include: [ "\"qdeclarativeview.h\"",                  "private", "<QDeclarativeView>", "public" ] },
+# looks wrong
+#    { include: [ "\"qgraphicsitem.h\"",                     "private", "<QGraphicsObject>", "public" ] },
     
     # Microsft visual C?
 
@@ -210,7 +213,7 @@
     { symbol: [ "ULONG",    "private", "<windef.h>", "private" ] },
 
     { include: [ "<winnls.h>", "private", "<stringapiset.h>", "private" ] }, # Stringapiset.h
-    { include: [ "<stringapiset.h>", "private", "<Windows.h>", "public" ] }, # Windows.h
+    { include: [ "<stringapiset.h>", "private", "<Windows.h>", "public" ] },
 
 # These are all in windef.h apparently. Which m/s then says 'use Windows.h'
     { include: [ "<basetsd.h>", "private", "<windef.h>", "private" ] }, # or in winnt apparently
@@ -227,6 +230,7 @@
     { include: [ "<securitybaseapi.h>", "private", "<winbase.h>", "private" ] },
 
 # These ones say xxxx.h (include Windows.h) on the ms web site
+    { include: [ "<datetimeapi.h>", "private", "<Windows.h>", "public" ] },
     { include: [ "<fileapi.h>", "private", "<Windows.h>", "public" ] },
     { include: [ "<verrsrc.h>", "private", "<Windows.h>", "public" ] }, # VerRsrc.h
     { include: [ "<winbase.h>", "private", "<Windows.h>", "public" ] },
@@ -245,13 +249,25 @@
     { include: [ "<DbgHelp.h>", "private", "<Windows.h>", "public" ] },
     # These 3 should go to Shellapi.h
     { include: [ "<ShellAPI.h>", "private", "<Windows.h>", "public" ] },
-    { include: [ "<Shellapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<Shellapi.h>", "private", "<Windows.h>", "public" ] }, # official name according to website
     { include: [ "<shellapi.h>", "private", "<Windows.h>", "public" ] },
+    #
+    { include: [ "<knownfolders.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<ShlObj.h>", "private", "<Windows.h>", "public" ] },
     { include: [ "<objidl.h>", "private", "<Windows.h>", "public" ] },
-# combaseapi.h is for objbase.h but objbase.h appears to come free with Windows.h
-# Windows.h is a pile of ...
-    { include: [ "<combaseapi.>", "private", "<objbase.h>", "private" ] },
+
+# Files that are included by other files which seem to then come for free in Windows.h but
+# shouldn't. Again, should be cleaned up.
+    
+    { include: [ "<basetyps.h>", "private", "<objbase.h>", "private" ] },
+    { include: [ "<combaseapi.h>", "private", "<objbase.h>", "private" ] },
     { include: [ "<objbase.h>", "private", "<Windows.h>", "public" ] },
+
+    { include: [ "<wtypesbase.h>", "private", "<WTypes.h>", "private" ] },
+    { include: [ "<WTypes.h>", "private", "<Windows.h>", "public" ] },
+
+    { include: [ "<guiddef.h>", "private", "<Rpc.h>", "private" ] },
+    { include: [ "<Rpc.h>", "private", "<Windows.h>", "public" ] },
 
 # Huh? This one is sane?
     { include: [ "<shlguid.h>", "private", "<shobjidl.h>", "public" ] },
@@ -279,15 +295,11 @@
 
 # Warning: QtGroupingProxy is not provided by Qt
 
-#include "qdeclarativecontext.h"   // for QDeclarativeContext
-#include "qdeclarativeview.h"      // for QDeclarativeView, etc
-#include "qgraphicsitem.h"         // for QGraphicsObject
 
 #include "qpluginloader.h"
 #include "qnetworkproxy.h"
 
 # Ones I don't yet know how to deal with
-#include <wtypesbase.h>
 #include "boost/fusion/container/vector/vector10_fwd.hpp"  // for fusion
 #include "boost/iterator/iterator_facade.hpp"  // for operator!=
 #include <crtdbg.h>                                // for operator delete[], etc
