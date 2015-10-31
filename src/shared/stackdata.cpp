@@ -24,7 +24,7 @@ static void initDbgIfNecess()
       firstCall = false;
     }
     if (!::SymInitialize(process, NULL, TRUE)) {
-      printf("failed to initialize symbols: %d", ::GetLastError());
+      printf("failed to initialize symbols: %lu", ::GetLastError());
     }
     initialized.insert(::GetCurrentProcessId());
   }

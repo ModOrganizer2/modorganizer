@@ -260,7 +260,7 @@ def setup_IWYU(env):
                not dir.startswith(env['SEVENZIPPATH']):
                 # Put the .iwyu in the same place as the .obj
                 targ = os.path.splitext(str(target[i]))[0]
-                env.IWYU(targ + '.iwyu', s)
+                env.Depends(env.IWYU(targ + '.iwyu', s), target[i])
 
     def shared_emitter(target, source, env):
         DoIWYU(env, source, target)
@@ -274,12 +274,13 @@ def setup_IWYU(env):
     SCons.Defaults.StaticObjectEmitter = static_emitter
 
     def emitter(target, source, env):
-        env.Depends(target, '$IWYU_MAPPING_FILE')
+        env.Depends(target, ('$IWYU_MAPPING_FILE', '$IWYU_MASSAGE'))
         return target, source
 
+    # Note to self: command 2>&1 | other command appears to work as I would hope
     iwyu = SCons.Builder.Builder(
            action=[
-                '-$IWYU $IWYU_FLAGS -Xiwyu --mapping_file=$IWYU_MAPPING_FILE $IWYU_COMCOM $SOURCE',
+                '-$IWYU $IWYU_FLAGS -Xiwyu --mapping_file=$IWYU_MAPPING_FILE $IWYU_COMCOM $SOURCE 2>&1 | $IWYU_MASSAGE',
                 Touch('$TARGET')
             ],
             emitter=emitter,
@@ -308,8 +309,14 @@ def setup_IWYU(env):
         '-fdiagnostics-format=msvc',
         '-fno-show-column',
         # clang says it sets this to 1700 but pretty sure vc12 is 1800
-        '-fmsc-version=1800',
-    ]
+        #'-fmsc-version=1800', '-D_MSC_VER=1800',
+        '-fmsc-version=1700',
+        # clang and qt don't agree about these because clang says its gcc 4.2 and
+        # QT doesn't realise it's clang
+        '-DQ_COMPILER_INITIALIZER_LISTS',
+        '-DQ_COMPILER_DECLTYPE',
+        '-DQ_COMPILER_VARIADIC_TEMPLATES',
+]
     if env['CONFIG'] == 'debug':
         env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
 
@@ -317,10 +324,14 @@ def setup_IWYU(env):
     env['IWYU_DEFSUFFIX'] = ''
     env['IWYU_INCPREFIX'] = '-I'
     env['IWYU_INCSUFFIX'] = ''
-    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $CCPDBFLAGS'
+    env['IWYU_INCLUDEPREFIX'] = '-include' # Amazingly this works without a space
+    env['IWYU_INCLUDESUFFIX'] = ''
+    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $IWYU_PCHFILES $CCPDBFLAGS'
     env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
     env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
+    env['IWYU_PCHFILES'] = '$( ${_concat(IWYU_INCLUDEPREFIX, PCHSTOP, IWYU_INCLUDESUFFIX, __env__, target=TARGET, source=SOURCE)} $)'
     env['IWYU_MAPPING_FILE'] = env.File('#/qtmappings.imp')
+    env['IWYU_MASSAGE'] = env.File('#/massage_messages.py')
 
 
 # Create base environment
@@ -442,6 +453,7 @@ else:
 # doesn't currently generate an output file (use the output instead!).
 if 'IWYU' in env:
     setup_IWYU(env)
+
 # /OPT:REF removes unreferenced code
 # for release, use /OPT:ICF (comdat folding: coalesce identical blocks of code)
 

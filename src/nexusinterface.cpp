@@ -217,8 +217,8 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
         QString r3Highlight(fileName);
         r3Highlight.insert(result.position(3) + result.length(3), "* ").insert(result.position(3), " *");
 
-        selection.addChoice(candidate.c_str(), r3Highlight, strtol(candidate.c_str(), nullptr, 10));
-        selection.addChoice(candidate2.c_str() + offset, r2Highlight, abs(strtol(candidate2.c_str() + offset, nullptr, 10)));
+        selection.addChoice(candidate.c_str(), r3Highlight, static_cast<int>(strtol(candidate.c_str(), nullptr, 10)));
+        selection.addChoice(candidate2.c_str() + offset, r2Highlight, static_cast<int>(abs(strtol(candidate2.c_str() + offset, nullptr, 10))));
         if (selection.exec() == QDialog::Accepted) {
           modID = selection.getChoiceData().toInt();
         } else {
