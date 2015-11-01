@@ -18,8 +18,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "gameinfoimpl.h"
-#include <gameinfo.h>
+#include "gameinfo.h"
 #include <utility.h>
+
+#include <QDebug>
 #include <QDir>
 
 
@@ -51,4 +53,51 @@ QString GameInfoImpl::path() const
 QString GameInfoImpl::binaryName() const
 {
   return ToQString(GameInfo::instance().getBinaryName());
+}
+
+namespace {
+
+QString GetAppVersion(std::wstring const &app_name)
+{
+  DWORD handle;
+  DWORD info_len = ::GetFileVersionInfoSizeW(app_name.c_str(), &handle);
+  if (info_len == 0) {
+    qDebug("GetFileVersionInfoSizeW Error %d", ::GetLastError());
+    throw std::runtime_error("Failed to get version info");
+  }
+
+  std::vector<char> buff(info_len);
+  if( ! ::GetFileVersionInfoW(app_name.c_str(), handle, info_len, buff.data())) {
+    qDebug("GetFileVersionInfoW Error %d", ::GetLastError());
+    throw std::runtime_error("Failed to get version info");
+  }
+
+  VS_FIXEDFILEINFO *pFileInfo;
+  UINT buf_len;
+  if ( ! ::VerQueryValueW(buff.data(), L"\\", reinterpret_cast<LPVOID *>(&pFileInfo), &buf_len)) {
+    qDebug("VerQueryValueW Error %d", ::GetLastError());
+    throw std::runtime_error("Failed to get version info");
+  }
+  return QString("%1.%2.%3.%4").arg(HIWORD(pFileInfo->dwFileVersionMS))
+                               .arg(LOWORD(pFileInfo->dwFileVersionMS))
+                               .arg(HIWORD(pFileInfo->dwFileVersionLS))
+                               .arg(LOWORD(pFileInfo->dwFileVersionLS));
+}
+
+}
+
+QString GameInfoImpl::version() const
+{
+  std::wstring dir = GameInfo::instance().getGameDirectory();
+  std::wstring exec = GameInfo::instance().getBinaryName();
+  std::wstring target = L"\\\\?\\" + dir + L"\\" + exec;
+  return GetAppVersion(target.c_str());
+}
+
+QString GameInfoImpl::extenderVersion() const
+{
+  std::wstring dir = GameInfo::instance().getGameDirectory();
+  std::wstring exec = GameInfo::instance().getExtenderName();
+  std::wstring target = L"\\\\?\\" + dir + L"\\" + exec;
+  return GetAppVersion(target.c_str());
 }

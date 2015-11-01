@@ -33,6 +33,8 @@ public:
   virtual Type type() const;
   virtual QString path() const;
   virtual QString binaryName() const;
+  virtual QString version() const;
+  virtual QString extenderVersion() const;
 
 };
 

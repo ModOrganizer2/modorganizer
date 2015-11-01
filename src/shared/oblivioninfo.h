@@ -36,6 +36,7 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Oblivion.exe"; }
+  virtual std::wstring getExtenderName() { return L"obse_loader.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_OBLIVION; }
 

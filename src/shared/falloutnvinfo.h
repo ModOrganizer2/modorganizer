@@ -38,6 +38,7 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"FalloutNV.exe"; }
+  virtual std::wstring getExtenderName() { return L"nvse_loader.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_FALLOUTNV; }
 

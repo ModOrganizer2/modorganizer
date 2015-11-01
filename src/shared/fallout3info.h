@@ -38,6 +38,7 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Fallout3.exe"; }
+  virtual std::wstring getExtenderName() { return L"fose_loader.exe"; }
 
   virtual GameInfo::Type getType() { return TYPE_FALLOUT3; }
 

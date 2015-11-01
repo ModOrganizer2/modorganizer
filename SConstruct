@@ -51,10 +51,6 @@ def setup_config_variables():
         PathVariable('SEVENZIPPATH', 'Path to 7zip sources', sevenzippath,
                                                         PathVariable.PathIsDir),
         PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
-                                                        PathVariable.PathIsDir).
-        PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
-                                                        PathVariable.PathIsDir),
-        PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
                                                         PathVariable.PathIsDir)
     )
 
