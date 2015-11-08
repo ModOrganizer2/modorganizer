@@ -1,12 +1,33 @@
-# Attempt to massage the messages from clang so that QT recognises them
-# expected: source\bsatk\bsafile.cpp(101) : fatal error C1189: #error :  "we may have to compress/decompress!"
-# clang:    source\bsatk\bsafile.cpp(101) :  error: "we may have to compress/decompress!"
-
 import fileinput
 import re
 import subprocess
 import sys
 
+
+"""
+
+source/organizer/aboutdialog.h should add these lines:
+#include <QObject>  // for Q_OBJECT, slots
+#include <QString>  // for QString
+class QListWidgetItem;
+class QWidget;
+
+source/organizer/aboutdialog.h should remove these lines:
+- #include <QListWidgetItem>  // lines 25-25
+- #include <utility>  // lines 28-28
+- #include <vector>  // lines 27-27
+- class DownloadManager;  // lines 47-47
+
+The full include-list for source/organizer/aboutdialog.h:
+#include <QDialog>  // for QDialog
+#include <QObject>  // for Q_OBJECT, slots
+#include <QString>  // for QString
+#include <map>      // for map
+class QListWidgetItem;
+class QWidget;
+namespace Ui { class AboutDialog; }  // lines 31-31
+---
+"""
 removing = None
 
 includes = dict
@@ -14,8 +35,10 @@ includes = dict
 foundline = 0
 
 def process_next_line(line):
-    # Look for '\) : ([^:])?:'
-    # Replace with ') : \1 I0000:
+    """ Read a line of output/error from include-what-you use
+        Turn clang errors into a form QT creator recognises
+        Raise warnings for unneeded includes
+    """
     global removing
     global includes
     global foundline
@@ -41,14 +64,15 @@ def process_next_line(line):
                 else:
                     print '********* I got confused **********'
 
-    # Replace clang :line:column: type: with ms (line) : type nnnn:
-    # filename:line:column type:
-    # replace with brackets
-    line = re.sub(r':(\d+):\d+: ([^:]*):', r'(\1) : \2 I1234:', line)
+    if line.startswith('In file included from'):
+        line = re.sub(r'^(In file included from)(.*):(\d+):', r'        \2(\3) : \1 here', line)
+        # Note This doesnt appear to work if you get a string of them, not sure why.
+    elif ': note:' in line:
+        line = '        ' + re.sub(r':(\d+):\d+: note:', r'(\1) : note:', line)
+    else:
+        # Replace clang :line:column: type: with ms (line) : type nnnn:
+        line = re.sub(r':(\d+):\d+: ([^:]*):', r'(\1) : \2 I1234:', line)
 
-    if ': note I1234:' in line:
-        line = '        ' + line
-        line = line.replace(': note I1234:', '')
 
     print line
     if line.endswith(' should remove these lines:'):
@@ -57,30 +81,6 @@ def process_next_line(line):
         adding = (line.split(' '))[0]
 
 # also process the other lines
-"""
-
-source/organizer/aboutdialog.h should add these lines:
-#include <QObject>  // for Q_OBJECT, slots
-#include <QString>  // for QString
-class QListWidgetItem;
-class QWidget;
-
-source/organizer/aboutdialog.h should remove these lines:
-- #include <QListWidgetItem>  // lines 25-25
-- #include <utility>  // lines 28-28
-- #include <vector>  // lines 27-27
-- class DownloadManager;  // lines 47-47
-
-The full include-list for source/organizer/aboutdialog.h:
-#include <QDialog>  // for QDialog
-#include <QObject>  // for Q_OBJECT, slots
-#include <QString>  // for QString
-#include <map>      // for map
-class QListWidgetItem;
-class QWidget;
-namespace Ui { class AboutDialog; }  // lines 31-31
----
-"""
 
     # added lines should come after the first entry with a line number.
 

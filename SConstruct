@@ -355,9 +355,9 @@ def setup_IWYU(env):
     env['IWYU_FLAGS'] = [
         # This might turn down the output a bit. I hope
         '-Xiwyu', '--transitive_includes_only',
-         '-D_MT', '-D_DLL', '-m32',
-         # This is something to do with clang, windows and boost headers
-         '-DBOOST_USE_WINDOWS_H',
+        '-D_MT', '-D_DLL', '-m32',
+        # This is something to do with clang, windows and boost headers
+        '-DBOOST_USE_WINDOWS_H',
         # There's a lot of this, disabled for now
         '-Wno-inconsistent-missing-override',
         '--system-header-prefix=Q',
