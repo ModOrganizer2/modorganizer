@@ -274,13 +274,70 @@ def setup_IWYU(env):
     SCons.Defaults.StaticObjectEmitter = static_emitter
 
     def emitter(target, source, env):
-        env.Depends(target, ('$IWYU_MAPPING_FILE', '$IWYU_MASSAGE'))
+        env.Depends(target, env['IWYU_MAPPING_FILE'])
+        env.Depends(target, env['IWYU_MASSAGE'])
         return target, source
 
+    def _concat_list(prefixes, list, suffixes, env, f=lambda x: x, target=None, source=None):
+        """ Creates a new list from 'list' by first interpolating each element
+            in the list using the 'env' dictionary and then calling f on the
+            list, and concatenate the 'prefix' and 'suffix' LISTS onto each element of the list.
+            A trailing space on the last element of 'prefix' or leading space on the
+            first element of 'suffix' will cause them to be put into separate list
+            elements rather than being concatenated.
+        """
+
+        if not list:
+            return list
+
+        l = f(SCons.PathList.PathList(list).subst_path(env, target, source))
+        if l is not None:
+            list = l
+
+        # This bit replaces current concat_ixes
+
+        result = []
+
+        def process_stringlist(s):
+            return [ str(env.subst(p, SCons.Subst.SUBST_RAW))
+                                              for p in Flatten([s]) if p != '' ]
+
+        # ensure that prefix and suffix are strings
+        prefixes = process_stringlist(prefixes)
+        prefix = ''
+        if len(prefixes) != 0:
+            if prefixes[-1][-1] != ' ':
+                prefix = prefixes.pop()
+
+        suffixes = process_stringlist(suffixes)
+        suffix = ''
+        if len(suffixes) != 0:
+            if suffixes[-1][0] != ' ':
+                suffix = suffixes.pop(0)
+
+        for x in list:
+            if isinstance(x, SCons.Node.FS.File):
+                result.append(x)
+                continue
+            x = str(x)
+            if x:
+                result.append(prefixes)
+                if prefix:
+                    if x[:len(prefix)] != prefix:
+                        x = prefix + x
+                result.append(x)
+                if suffix:
+                    if x[-len(suffix):] != suffix:
+                        result[-1] = result[-1] + suffix
+                result.append(suffixes)
+        return result
+
+    env['_concat_list'] = _concat_list
     # Note to self: command 2>&1 | other command appears to work as I would hope
+    # except it eats errors
     iwyu = SCons.Builder.Builder(
            action=[
-                '-$IWYU $IWYU_FLAGS -Xiwyu --mapping_file=$IWYU_MAPPING_FILE $IWYU_COMCOM $SOURCE 2>&1 | $IWYU_MASSAGE',
+                '$IWYU_MASSAGE $IWYU $IWYU_FLAGS $IWYU_MAPPINGS $IWYU_COMCOM $SOURCE',
                 Touch('$TARGET')
             ],
             emitter=emitter,
@@ -305,9 +362,6 @@ def setup_IWYU(env):
         '-Wno-inconsistent-missing-override',
         '--system-header-prefix=Q',
         '--system-header-prefix=boost/',
-        # Attempt to get QT to recognise clang output. So far it has not worked well.
-        '-fdiagnostics-format=msvc',
-        '-fno-show-column',
         # clang says it sets this to 1700 but pretty sure vc12 is 1800
         #'-fmsc-version=1800', '-D_MSC_VER=1800',
         '-fmsc-version=1700',
@@ -330,9 +384,15 @@ def setup_IWYU(env):
     env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
     env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
     env['IWYU_PCHFILES'] = '$( ${_concat(IWYU_INCLUDEPREFIX, PCHSTOP, IWYU_INCLUDESUFFIX, __env__, target=TARGET, source=SOURCE)} $)'
-    env['IWYU_MAPPING_FILE'] = env.File('#/qtmappings.imp')
-    env['IWYU_MASSAGE'] = env.File('#/massage_messages.py')
-
+    env['IWYU_MAPPING_FILE'] = [
+        env.File('#/modorganizer/qt5_4.imp'),
+        env.File('#/modorganizer/win.imp'),
+        env.File('#/modorganizer/mappings.imp')
+        ]
+    env['IWYU_MAPPING_PREFIX'] = ['-Xiwyu', '--mapping_file=']
+    env['IWYU_MAPPING_SUFFIX'] = ''
+    env['IWYU_MAPPINGS'] = '$( ${_concat_list(IWYU_MAPPING_PREFIX, IWYU_MAPPING_FILE, IWYU_MAPPING_SUFFIX, __env__, f=lambda l: [ str(x) for x in l], target=TARGET, source=SOURCE)} $)'
+    env['IWYU_MASSAGE'] = env.File('#/modorganizer/massage_messages.py')
 
 # Create base environment
 vars = setup_config_variables()
