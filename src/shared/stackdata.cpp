@@ -99,7 +99,8 @@ void StackData::initTrace() {
   CONTEXT context;
   std::memset(&context, 0, sizeof(CONTEXT));
   context.ContextFlags = CONTEXT_CONTROL;
-#if BOOST_ARCH_X86_64
+  //Why only for 64 bit?
+#if BOOST_ARCH_X86_64 || defined(__clang__)
   ::RtlCaptureContext(&context);
 #else
   __asm

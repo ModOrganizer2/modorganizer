@@ -337,8 +337,7 @@ def setup_IWYU(env):
     # except it eats errors
     iwyu = SCons.Builder.Builder(
            action=[
-                '$IWYU_MASSAGE $IWYU $IWYU_FLAGS $IWYU_MAPPINGS $IWYU_COMCOM $SOURCE',
-                Touch('$TARGET')
+                '$IWYU_MASSAGE $TARGET $IWYU $IWYU_FLAGS $IWYU_MAPPINGS $IWYU_COMCOM $SOURCE'
             ],
             emitter=emitter,
             suffix='.iwyu',
@@ -346,27 +345,26 @@ def setup_IWYU(env):
 
     env.Append(BUILDERS={'IWYU': iwyu})
 
-    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to duplicate most of the usual stuff. Worse, half the
-    # flags are irrelevant immaterial and incompetent and I can't use an environment clone because it takes stuff from the
-    # wrong environment.
+    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to
+    # duplicate most of the usual stuff
 
-    # There has to be a better way of doing this. 'begins with Q means system header'???
-    # Also, I can't get this to show issues in the issue window which sucks
     env['IWYU_FLAGS'] = [
         # This might turn down the output a bit. I hope
         '-Xiwyu', '--transitive_includes_only',
+        # Seem to be needed for a windows build
         '-D_MT', '-D_DLL', '-m32',
         # This is something to do with clang, windows and boost headers
         '-DBOOST_USE_WINDOWS_H',
         # There's a lot of this, disabled for now
         '-Wno-inconsistent-missing-override',
+        # Mark boost and Qt headers as system headers to disable a lot of noise.
+        # I'm sure there has to be a better way than saying 'prefix=Q'
         '--system-header-prefix=Q',
         '--system-header-prefix=boost/',
-        # clang says it sets this to 1700 but pretty sure vc12 is 1800
-        #'-fmsc-version=1800', '-D_MSC_VER=1800',
-        '-fmsc-version=1700',
-        # clang and qt don't agree about these because clang says its gcc 4.2 and
-        # QT doesn't realise it's clang
+        # Should be able to get this info from our setup really
+        '-fmsc-version=1800', '-D_MSC_VER=1800',
+        # clang and qt don't agree about these because clang says its gcc 4.2
+        # and QT doesn't realise it's clang
         '-DQ_COMPILER_INITIALIZER_LISTS',
         '-DQ_COMPILER_DECLTYPE',
         '-DQ_COMPILER_VARIADIC_TEMPLATES',
@@ -376,22 +374,27 @@ def setup_IWYU(env):
 
     env['IWYU_DEFPREFIX'] = '-D'
     env['IWYU_DEFSUFFIX'] = ''
+    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
+
     env['IWYU_INCPREFIX'] = '-I'
     env['IWYU_INCSUFFIX'] = ''
-    env['IWYU_INCLUDEPREFIX'] = '-include' # Amazingly this works without a space
-    env['IWYU_INCLUDESUFFIX'] = ''
-    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $IWYU_PCHFILES $CCPDBFLAGS'
-    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
     env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
-    env['IWYU_PCHFILES'] = '$( ${_concat(IWYU_INCLUDEPREFIX, PCHSTOP, IWYU_INCLUDESUFFIX, __env__, target=TARGET, source=SOURCE)} $)'
+
+    env['IWYU_PCH_PREFIX'] = '-include' # Amazingly this works without a space
+    env['IWYU_PCH_SUFFIX'] = ''
+    env['IWYU_PCHFILES'] = '$( ${_concat(IWYU_PCH_PREFIX, PCHSTOP, IWYU_PCH_SUFFIX, __env__, target=TARGET, source=SOURCE)} $)'
+
+    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $IWYU_PCHFILES $CCPDBFLAGS'
+    env['IWYU_MAPPING_PREFIX'] = ['-Xiwyu', '--mapping_file=']
+    env['IWYU_MAPPING_SUFFIX'] = ''
+    env['IWYU_MAPPINGS'] = '$( ${_concat_list(IWYU_MAPPING_PREFIX, IWYU_MAPPING_FILE, IWYU_MAPPING_SUFFIX, __env__, f=lambda l: [ str(x) for x in l], target=TARGET, source=SOURCE)} $)'
+
     env['IWYU_MAPPING_FILE'] = [
         env.File('#/modorganizer/qt5_4.imp'),
         env.File('#/modorganizer/win.imp'),
         env.File('#/modorganizer/mappings.imp')
         ]
-    env['IWYU_MAPPING_PREFIX'] = ['-Xiwyu', '--mapping_file=']
-    env['IWYU_MAPPING_SUFFIX'] = ''
-    env['IWYU_MAPPINGS'] = '$( ${_concat_list(IWYU_MAPPING_PREFIX, IWYU_MAPPING_FILE, IWYU_MAPPING_SUFFIX, __env__, f=lambda l: [ str(x) for x in l], target=TARGET, source=SOURCE)} $)'
+
     env['IWYU_MASSAGE'] = env.File('#/modorganizer/massage_messages.py')
 
 # Create base environment
