@@ -9,9 +9,10 @@
     { include: [ "<sys/stat.inl>", "private", "<sys/stat.h>", "public" ] },
 
 # Windows
-# Looks like the doucmentation says the 1st char is u/c the rest are l/c
+# Looks like the documentation says the 1st char is u/c the rest are l/c
+
 # You have to be kidding me. ULONG is defined in winsmcrd.h?
-    { symbol: [ "ULONG",    "private", "<windef.h>", "private" ] },
+    { symbol: [ "ULONG", "private", "<windef.h>", "private" ] },
 
     { include: [ "<winnls.h>", "private", "<stringapiset.h>", "private" ] }, # Stringapiset.h
     { include: [ "<stringapiset.h>", "private", "<Windows.h>", "public" ] },

@@ -2464,6 +2464,7 @@
     { include: [ "@\"(QtCore/)?qnamespace\\.h\"", "private", "<Qt>", "public" ] },
     { include: [ "@\"(QtCore/)?qlogging\\.h\"", "private", "<QtDebug>", "public" ] }, #qDebug, qWarning, etc
     { include: [ "@\"(QtCore/)?qalgorithms\\.h\"", "private", "<QAlgorithms>", "public" ] }, #qSort, etc
+    { include: [ "@\"(QtWinExtras/)?qwinfunctions\\.h\"", "private", "<QtWin>", "public" ] },  // for fromHICON
 
 # These ones are just madness. For instance, why with the above do we get
 #    #include "QtCore/qcoreevent.h"      // for QEvent (ptr only), etc
@@ -2473,6 +2474,5 @@
 #include "QtCore/qtypetraits.h"  // for remove_reference<>::type
 #include "QtCore/qsharedpointer_impl.h"            // for swap
 #include "QtCore/qatomic_msvc.h"
-#include "qwinfunctions.h"  // for fromHICON
 
 ]
