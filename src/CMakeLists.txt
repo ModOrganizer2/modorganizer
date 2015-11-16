@@ -272,16 +272,20 @@ SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
-SET(lib_path "${project_path}/../install/libs")
+SET(lib_path "${project_path}/../../install/libs")
+
+
+MESSAGE(STATUS ${lib_path})
+MESSAGE(STATUS ${project_path})
 
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/plugin/game_features/src)
+                    ${project_path}/game_features/src)
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
-                 ${project_path}/zlib/lib)
+                 ${project_path}/../zlib/lib)
 
 ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
 
@@ -298,7 +302,7 @@ SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LTCG /INCREMENTAL:NO /LARGEADDRESSAWARE /OPT:REF /OPT:ICF")
 
 
-QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebEngineWidgets)
+QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebKitWidgets)
 
 
 ###############
