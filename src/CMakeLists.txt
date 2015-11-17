@@ -284,7 +284,7 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/usvfs/usvfs
+                    ${project_path}/../usvfs/usvfs
                     ${project_path}/game_features/src)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
