@@ -162,7 +162,6 @@ MainWindow::MainWindow(const QString &exeName
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
-  , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
 {
   ui->setupUi(this);
   updateWindowTitle(QString(), false);
@@ -264,8 +263,6 @@ MainWindow::MainWindow(const QString &exeName
 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(espFilterChanged(QString)));
-
-  connect(ui->bsaList, SIGNAL(itemsMoved()), this, SLOT(bsaList_itemMoved()));
 
   connect(ui->dataTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(expandDataTreeItem(QTreeWidgetItem*)));
 
@@ -1389,13 +1386,6 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
       } else if (hasAssociatedPlugin(fileInfo.fileName())) {
         newItem->setCheckState(0, Qt::Checked);
         newItem->setDisabled(true);
-      } else {
-        if (ui->manageArchivesBox->isChecked()) {
-          newItem->setCheckState(0, (index != 0xFFFF) ? Qt::Checked : Qt::Unchecked);
-        } else {
-          newItem->setCheckState(0, Qt::Unchecked);
-          newItem->setDisabled(true);
-        }
       }
 
       if (index < 0) index = 0;
@@ -1557,10 +1547,6 @@ void MainWindow::readSettings()
   if (settings.value("Settings/use_proxy", false).toBool()) {
     activateProxy(true);
   }
-
-  ui->manageArchivesBox->blockSignals(true);
-  ui->manageArchivesBox->setChecked(settings.value("manage_bsas", true).toBool());
-  ui->manageArchivesBox->blockSignals(false);
 }
 
 
@@ -1578,7 +1564,6 @@ void MainWindow::storeSettings(QSettings &settings)
   settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
 
   settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
-  settings.setValue("manage_bsas", ui->manageArchivesBox->isChecked());
 
   settings.setValue("selected_executable", ui->executablesListBox->currentIndex());
 }
@@ -1900,7 +1885,6 @@ void MainWindow::modorder_changed()
   }
   m_OrganizerCore.refreshBSAList();
   m_OrganizerCore.currentProfile()->modlistWriter().write();
-  m_ArchiveListWriter.write();
   m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
 
   { // refresh selection
@@ -2809,30 +2793,6 @@ void MainWindow::savePrimaryCategory()
   }
 }
 
-void MainWindow::saveArchiveList()
-{
-  if (m_OrganizerCore.isArchivesInit()) {
-    SafeWriteFile archiveFile(m_OrganizerCore.currentProfile()->getArchivesFileName());
-    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
-      for (int j = 0; j < tlItem->childCount(); ++j) {
-        QTreeWidgetItem *item = tlItem->child(j);
-        if (item->checkState(0) == Qt::Checked) {
-          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
-          if (ui->manageArchivesBox->isChecked()
-              || item->data(0, Qt::UserRole).toBool()) {
-            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
-          }
-        }
-      }
-    }
-    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
-    }
-  } else {
-    qWarning("archive list not initialised");
-  }
-}
 
 void MainWindow::checkModsForUpdates()
 {
@@ -4075,19 +4035,6 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
   menu.exec(ui->bsaList->mapToGlobal(pos));
 }
 
-void MainWindow::bsaList_itemMoved()
-{
-  m_ArchiveListWriter.write();
-  m_CheckBSATimer.start(500);
-}
-
-
-void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
-{
-  m_ArchiveListWriter.write();
-  m_CheckBSATimer.start(500);
-}
-
 void MainWindow::on_actionProblems_triggered()
 {
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
@@ -4667,11 +4614,6 @@ void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
 {
   QToolTip::showText(QCursor::pos(),
                      ui->managedArchiveLabel->toolTip());
-}
-
-void MainWindow::on_manageArchivesBox_toggled(bool)
-{
-  m_OrganizerCore.refreshBSAList();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

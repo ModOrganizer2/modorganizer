@@ -75,8 +75,6 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     throw MyException(InstallationManager::getErrorString(m_CurrentArchive->getLastError()));
   }
 
-  connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
-
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
 
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
@@ -135,6 +133,7 @@ void SelfUpdater::showProgress()
 {
   if (m_Progress == nullptr) {
     m_Progress = new QProgressDialog(m_Parent, Qt::Dialog);
+    connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
   }
   m_Progress->setModal(true);
   m_Progress->show();

@@ -990,6 +990,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
 
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
+    m_USVFS.updateMapping(fileMapping());
     return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
   } else {
     qDebug("start of \"%s\" canceled by plugin", qPrintable(binary.absoluteFilePath()));
@@ -1185,10 +1186,6 @@ void OrganizerCore::refreshBSAList()
       m_ActiveArchives = m_DefaultArchives;
     }
 
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
-    }
-
     m_ArchivesInit = true;
   }
 }
@@ -1247,9 +1244,7 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index, ModInfo::P
   updateModActiveState(index, true);
   // now we need to refresh the bsa list and save it so there is no confusion about what archives are avaiable and active
   refreshBSAList();
-  if (m_UserInterface != nullptr) {
-    m_UserInterface->archivesWriter().write();
-  }
+
   std::vector<QString> archives = enabledArchives();
   m_DirectoryRefresher.setMods(m_CurrentProfile->getActiveMods(),
                                std::set<QString>(archives.begin(), archives.end()));
@@ -1394,9 +1389,6 @@ void OrganizerCore::modStatusChanged(unsigned int index)
         FilesOrigin &origin = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
       }
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->archivesWriter().write();
-      }
     }
     modInfo->clearCaches();
 
@@ -1535,9 +1527,6 @@ bool OrganizerCore::saveCurrentLists()
 
   try {
     savePluginList();
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->archivesWriter().write();
-    }
   } catch (const std::exception &e) {
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }
@@ -1571,21 +1560,22 @@ void OrganizerCore::prepareStart() {
   storeSettings();
 }
 
-std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping()
+std::vector<Mapping> OrganizerCore::fileMapping()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-  return fileMapping(game->dataDirectory().absolutePath(),
-                     directoryStructure(),
-                     directoryStructure());
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
+  return fileMapping(
+      QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
+      "\\",
+      directoryStructure(), directoryStructure());
 }
 
-
-std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping(
+std::vector<Mapping> OrganizerCore::fileMapping(
     const QString &dataPath,
+    const QString &relPath,
     const DirectoryEntry *base,
     const DirectoryEntry *directoryEntry)
 {
-  std::vector<std::pair<QString, QString>> result;
+  std::vector<Mapping> result;
 
   for (FileEntry::Ptr current : directoryEntry->getFiles()) {
     bool isArchive = false;
@@ -1594,20 +1584,36 @@ std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping(
       continue;
     }
 
-    QString fileName = ToQString(current->getRelativePath());
-    QString source = ToQString(base->getOriginByID(origin).getPath()) + fileName;
-    QString target = QDir::toNativeSeparators(dataPath) + fileName;
-    result.push_back(std::make_pair(source, target));
+    QString originPath
+        = QString::fromStdWString(base->getOriginByID(origin).getPath());
+    QString fileName = QString::fromStdWString(current->getName());
+    QString source = originPath + relPath + fileName;
+    QString target = dataPath   + relPath + fileName;
+    if (source != target) {
+      result.push_back({source, target, false});
+    }
   }
 
   // recurse into subdirectories
   std::vector<DirectoryEntry*>::const_iterator current, end;
   directoryEntry->getSubDirectories(current, end);
   for (; current != end; ++current) {
-    std::vector<std::pair<QString, QString>> subRes = fileMapping(dataPath, base, *current);
+    int origin = (*current)->anyOrigin();
+    if (origin == 0) {
+      continue;
+    }
+
+    QString originPath
+        = QString::fromStdWString(base->getOriginByID(origin).getPath());
+    QString dirName = QString::fromStdWString((*current)->getName());
+    QString source = originPath + relPath + dirName;
+    QString target = dataPath   + relPath + dirName;
+
+    result.push_back({source, target, true});
+    std::vector<Mapping> subRes
+        = fileMapping(dataPath, relPath + dirName + "\\", base, *current);
     result.insert(result.end(), subRes.begin(), subRes.end());
   }
   return result;
 }
-
 

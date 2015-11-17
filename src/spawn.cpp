@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <gameinfo.h>
 #include <report.h>
 #include <inject.h>
+#include <usvfs.h>
 #include <Shellapi.h>
 #include <appconfig.h>
 #include <windows_error.h>
@@ -37,7 +38,8 @@ using namespace MOShared;
 
 static const int BUFSIZE = 4096;
 
-static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, bool suspended,
+static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
+                  bool suspended, bool hooked,
                   HANDLE stdOut, HANDLE stdErr,
                   HANDLE& processHandle, HANDLE& threadHandle)
 {
@@ -85,15 +87,28 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory, b
   }
 
   PROCESS_INFORMATION pi;
-  BOOL success = ::CreateProcess(nullptr,
-                                 commandLine,
-                                 nullptr, nullptr,       // no special process or thread attributes
-                                 inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
-                                 CREATE_BREAKAWAY_FROM_JOB | (suspended ? CREATE_SUSPENDED : 0), // create suspended so I have time to inject the DLL
-                                 nullptr,             // same environment as parent
-                                 currentDirectory, // current directory
-                                 &si, &pi          // startup and process information
-                                 );
+  BOOL success = FALSE;
+  if (hooked) {
+    success = ::CreateProcessHooked(nullptr,
+                                    commandLine,
+                                    nullptr, nullptr,       // no special process or thread attributes
+                                    inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
+                                    CREATE_BREAKAWAY_FROM_JOB,
+                                    nullptr,             // same environment as parent
+                                    currentDirectory, // current directory
+                                    &si, &pi          // startup and process information
+                                    );
+  } else {
+    success = ::CreateProcess(nullptr,
+                              commandLine,
+                              nullptr, nullptr,       // no special process or thread attributes
+                              inheritHandles,   // inherit handles if we plan to use stdout or stderr reroute
+                              CREATE_BREAKAWAY_FROM_JOB,
+                              nullptr,             // same environment as parent
+                              currentDirectory, // current directory
+                              &si, &pi          // startup and process information
+                              );
+  }
 
   ::SetEnvironmentVariable(TEXT("PATH"), oldPath.get());
 
@@ -136,8 +151,8 @@ HANDLE startBinary(const QFileInfo &binary,
   std::wstring currentDirectoryName = ToWString(QDir::toNativeSeparators(currentDirectory.absolutePath()));
 
   try {
-    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(), true,
-               stdOut, stdErr, processHandle, threadHandle)) {
+    if (!spawn(binaryName.c_str(), ToWString(arguments).c_str(), currentDirectoryName.c_str(),
+               true, hooked, stdOut, stdErr, processHandle, threadHandle)) {
       reportError(QObject::tr("failed to spawn \"%1\"").arg(binary.fileName()));
       return INVALID_HANDLE_VALUE;
     }
@@ -165,7 +180,7 @@ HANDLE startBinary(const QFileInfo &binary,
       return INVALID_HANDLE_VALUE;
     }
   }
-
+/*
   if (hooked) {
     try {
       QFileInfo dllInfo(QApplication::applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName()));
@@ -185,6 +200,7 @@ HANDLE startBinary(const QFileInfo &binary,
     reportError("ready?");
 #endif // DEBUG
   }
+  */
 
   if (::AssignProcessToJobObject(jobObject, processHandle) == 0) {
     qWarning("failed to assign to job object: %lu", ::GetLastError());
@@ -194,10 +210,6 @@ HANDLE startBinary(const QFileInfo &binary,
     ::CloseHandle(processHandle);
   }
 
-  if (::ResumeThread(threadHandle) == (DWORD)-1) {
-    reportError(QObject::tr("failed to run \"%1\"").arg(binary.fileName()));
-    return INVALID_HANDLE_VALUE;
-  }
   ::CloseHandle(threadHandle);
   return jobObject;
 }

@@ -83,6 +83,7 @@ SET(organizer_SRCS
     viewmarkingscrollbar.cpp
     plugincontainer.cpp
     organizercore.cpp
+    usvfsconnector.cpp
 
     shared/inject.cpp
     shared/windows_error.cpp
@@ -173,6 +174,7 @@ SET(organizer_HDRS
     plugincontainer.h
     organizercore.h
     iuserinterface.h
+    usvfsconnector.h
 
     shared/inject.h
     shared/windows_error.h
@@ -278,12 +280,19 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/plugin/game_features/src)
+                    ${project_path}/plugin/game_features/src
+                    ${project_path}/usvfs/usvfs)
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
                  ${project_path}/zlib/lib)
 
 ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+
+IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+  SET(usvfs_name usvfs_x64)
+ELSE()
+  SET(usvfs_name usvfs_x86)
+ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS})
 TARGET_LINK_LIBRARIES(ModOrganizer
@@ -291,6 +300,7 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk
+                      ${usvfs_name}
                       Dbghelp advapi32 Version Shlwapi)
 
 SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS /GL)

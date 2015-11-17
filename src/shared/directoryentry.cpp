@@ -704,7 +704,7 @@ FilesOrigin &DirectoryEntry::getOriginByName(const std::wstring &name) const
   return m_OriginConnection->getByName(name);
 }
 
-
+/*
 int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
 {
   const DirectoryEntry *directory = nullptr;
@@ -718,7 +718,7 @@ int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
       return -1;
     }
   }
-}
+}*/
 
 std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
 {

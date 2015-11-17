@@ -35,11 +35,7 @@ class LogBuffer : public QAbstractItemModel
 public:
 
   static void init(int messageCount, QtMsgType minMsgType, const QString &outputFileName);
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   static void log(QtMsgType type, const QMessageLogContext &context, const QString &message);
-#else
-  static void log(QtMsgType type, const char *message);
-#endif
 
   static void writeNow();
   static void cleanQuit();

@@ -14,6 +14,7 @@
 #include "modlistsortproxy.h"
 #include "pluginlistsortproxy.h"
 #include "executableslist.h"
+#include "usvfsconnector.h"
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
@@ -157,7 +158,10 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
 
-  std::vector<std::pair<QString, QString> > fileMapping();
+  /**
+   * @brief return a descriptor of the mappings real file->virtual file
+   */
+  std::vector<Mapping> fileMapping();
 
 public: // IPluginDiagnose interface
 
@@ -210,9 +214,10 @@ private:
 
   bool testForSteam();
 
-  std::vector<std::pair<QString, QString>> fileMapping(const QString &dataPath,
-                                                       const MOShared::DirectoryEntry *base,
-                                                       const MOShared::DirectoryEntry *directoryEntry);
+  std::vector<Mapping>
+  fileMapping(const QString &dataPath, const QString &relPath,
+              const MOShared::DirectoryEntry *base,
+              const MOShared::DirectoryEntry *directoryEntry);
 
 private slots:
 
@@ -270,6 +275,7 @@ private:
   bool m_ArchivesInit;
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
+  UsvfsConnector m_USVFS;
 
 };
 

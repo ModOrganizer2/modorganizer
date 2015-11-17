@@ -73,8 +73,8 @@ class MainWindow : public QMainWindow, public IUserInterface
 
   friend class OrganizerProxy;
 
-
 public:
+
   explicit MainWindow(const QString &exeName, QSettings &initSettings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
@@ -94,8 +94,6 @@ public:
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
-
-  void saveArchiveList();
 
   void registerPluginTool(MOBase::IPluginTool *tool);
   void registerModPage(MOBase::IPluginModPage *modPage);
@@ -119,9 +117,8 @@ public:
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
-  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
-
   void updateWindowTitle(const QString &accountName, bool premium);
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -134,7 +131,6 @@ public slots:
   void modPagePluginInvoke();
 
 signals:
-
 
   /**
    * @brief emitted after the information dialog has been closed
@@ -319,13 +315,9 @@ private:
 
   std::vector<QTreeWidgetItem*> m_RemoveWidget;
 
-  QByteArray m_ArchiveListHash;
-
   bool m_DidUpdateMasterList;
 
   LockedDialog *m_LockDialog { nullptr };
-
-  MOBase::DelayedFileWriter m_ArchiveListWriter;
 
   enum class ShortcutType {
     Toolbar,
@@ -503,7 +495,6 @@ private slots: // ui slots
   void on_actionEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void bsaList_itemMoved();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
@@ -522,7 +513,6 @@ private slots: // ui slots
   void on_categoriesList_itemSelectionChanged();
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
-  void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_bossButton_clicked();
 
   void on_saveButton_clicked();
@@ -533,7 +523,6 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
-  void on_manageArchivesBox_toggled(bool checked);
 };
 
 

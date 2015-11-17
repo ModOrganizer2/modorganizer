@@ -124,8 +124,6 @@ char LogBuffer::msgTypeID(QtMsgType type)
   }
 }
 
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-
 void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
   // QMutexLocker doesn't support timeout...
@@ -141,6 +139,7 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
     s_Instance->logMessage(type, message);
   }
 //  fprintf(stdout, "(%s:%u) %s\n", context.file, context.line, qPrintable(message));
+
   if (type == QtDebugMsg) {
     fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), qPrintable(message));
   } else {
@@ -153,21 +152,6 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context, const QSt
   }
   fflush(stdout);
 }
-
-#else
-
-void LogBuffer::log(QtMsgType type, const char *message)
-{
-  QMutexLocker guard(&s_Mutex);
-  if (!s_Instance.isNull()) {
-    s_Instance->logMessage(type, message);
-  }
-  fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()), msgTypeID(type), message);
-  fflush(stdout);
-}
-
-#endif
-
 
 QModelIndex LogBuffer::index(int row, int column, const QModelIndex&) const
 {
@@ -268,8 +252,6 @@ void log(const char *format, ...)
 
   va_end(argList);
 }
-
-
 
 QString LogBuffer::Message::toString() const
 {

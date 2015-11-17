@@ -207,7 +207,8 @@ public:
   DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID);
 
   DirectoryEntry(const std::wstring &name, DirectoryEntry *parent, int originID,
-                 boost::shared_ptr<FileRegister> fileRegister, boost::shared_ptr<OriginConnection> originConnection);
+                 boost::shared_ptr<FileRegister> fileRegister,
+                 boost::shared_ptr<OriginConnection> originConnection);
 
   ~DirectoryEntry();
 
@@ -232,7 +233,9 @@ public:
   FilesOrigin &getOriginByID(int ID) const;
   FilesOrigin &getOriginByName(const std::wstring &name) const;
 
-  int getOrigin(const std::wstring &path, bool &archive);
+  int anyOrigin() const;
+
+  //int getOrigin(const std::wstring &path, bool &archive);
 
   std::vector<FileEntry::Ptr> getFiles() const;
 
@@ -315,8 +318,6 @@ private:
   DirectoryEntry *getSubDirectory(const std::wstring &name, bool create, int originID = -1);
 
   DirectoryEntry *getSubDirectoryRecursive(const std::wstring &path, bool create, int originID = -1);
-
-  int anyOrigin() const;
 
   void removeDirRecursive();
 
