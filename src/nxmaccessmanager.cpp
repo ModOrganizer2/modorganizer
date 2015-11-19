@@ -58,6 +58,11 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   m_LoginTimeout.setInterval(30000);
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
+
+  if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
+    // why is this necessary all of a sudden?
+    setNetworkAccessible(QNetworkAccessManager::Accessible);
+  }
 }
 
 NXMAccessManager::~NXMAccessManager()

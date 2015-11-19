@@ -83,7 +83,7 @@ void NexusBridge::nxmFilesAvailable(int modID, QVariant userData, QVariant resul
 
     QVariantList resultList = resultData.toList();
 
-    foreach(QVariant file, resultList) {
+    for (const QVariant &file : resultList) {
       ModRepositoryFileInfo temp;
       QVariantMap fileInfo = file.toMap();
       temp.uri = fileInfo["uri"].toString();
@@ -536,8 +536,10 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
     return;
   }
 
-  qCritical("request (%s) error: %s",
-            qPrintable(reply->url().toString()), qPrintable(reply->errorString()));
+  qCritical("request (%s) error: %s (%d)",
+            qPrintable(reply->url().toString()),
+            qPrintable(reply->errorString()),
+            reply->error());
 }
 
 
