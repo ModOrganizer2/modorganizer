@@ -131,19 +131,6 @@ bool bootstrap()
   createAndMakeWritable(AppConfig::overwritePath());
   createAndMakeWritable(AppConfig::logPath());
 
-  // verify the hook-dll exists
-  QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
-
-  if (::GetModuleHandleW(ToWString(dllName).c_str()) != nullptr) {
-    throw std::runtime_error("hook.dll already loaded! You can't start Mod Organizer from within itself (not even indirectly)");
-  }
-
-  HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
-  if (dllMod == nullptr) {
-    throw windows_error("hook.dll is missing or invalid");
-  }
-  ::FreeLibrary(dllMod);
-
   return true;
 }
 
@@ -515,7 +502,6 @@ int main(int argc, char *argv[])
       }
     }
     game->setGameVariant(settings.value("game_edition").toString());
-
 
 #pragma message("edition isn't used?")
     qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));

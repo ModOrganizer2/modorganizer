@@ -132,6 +132,9 @@ void LoadMechanism::deactivateScriptExtender()
 
     QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->name() + "/plugins");
 
+#pragma "implement this for usvfs"
+
+    /*
     QString hookDLLName = ToQString(AppConfig::hookDLLName());
     if (QFile(pluginsDir.absoluteFilePath(hookDLLName)).exists()) {
       // remove dll from SE plugins directory
@@ -141,6 +144,7 @@ void LoadMechanism::deactivateScriptExtender()
     }
 
     removeHintFile(pluginsDir);
+    */
   } catch (const std::exception &e) {
     QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate script extender loading"), e.what());
   }
@@ -191,6 +195,8 @@ void LoadMechanism::activateScriptExtender()
       pluginsDir.mkpath(".");
     }
 
+#pragma message("implement this for usvfs")
+/*
     QString targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::hookDLLName()));
     QString hookDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::hookDLLName());
 
@@ -210,6 +216,7 @@ void LoadMechanism::activateScriptExtender()
       }
     }
     writeHintFile(pluginsDir);
+*/
   } catch (const std::exception &e) {
     QMessageBox::critical(nullptr, QObject::tr("Failed to set up script extender loading"), e.what());
   }

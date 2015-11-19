@@ -14,7 +14,6 @@ APPPARAM(std::wstring, iniFileName, L"ModOrganizer.ini")
 APPPARAM(std::wstring, proxyDLLTarget, L"steam_api.dll")
 APPPARAM(std::wstring, proxyDLLOrig, L"steam_api_orig.dll") // needs to be identical to the value used in proxydll-project
 APPPARAM(std::wstring, proxyDLLSource, L"proxy.dll")
-APPPARAM(std::wstring, hookDLLName, L"hook.dll") // needs to be identical to the value used in proxydll-project
 APPPARAM(const wchar_t*, localSavePlaceholder, L"__MOProfileSave__\\")
 
 APPPARAM(std::wstring, firstStepsTutorial, L"tutorial_firststeps_main.js")

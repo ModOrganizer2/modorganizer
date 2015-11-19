@@ -694,7 +694,10 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
                                             new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
-    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_CurrentArchive->getLastError());
+    qDebug("integrated archiver can't open %s: %s (%d)",
+           qPrintable(fileName),
+           qPrintable(getErrorString(m_CurrentArchive->getLastError())),
+           m_CurrentArchive->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 

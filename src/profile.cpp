@@ -585,7 +585,9 @@ bool Profile::invalidationActive(bool *supported) const
     }
     return false;
   } else {
-    *supported = false;
+    if (supported != nullptr) {
+      *supported = false;
+    }
   }
   return false;
 }
