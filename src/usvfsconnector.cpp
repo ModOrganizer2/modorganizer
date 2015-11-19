@@ -53,26 +53,23 @@ extern "C" DLLEXPORT void __cdecl InitHooks(LPVOID userData, size_t userDataSize
 LogWorker::LogWorker()
   : m_Buffer(1024, '\0')
   , m_QuitRequested(false)
-  , m_LogFile(new QTemporaryFile("usvfs-XXXXXX.log"))
+  , m_LogFile(qApp->property("dataPath").toString() + "/logs/usvfs.log")
 {
-  m_LogFile->open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s", qPrintable(m_LogFile->fileName()));
+  m_LogFile.open(QIODevice::WriteOnly);
+  qDebug("usvfs log messages are written to %s", qPrintable(m_LogFile.fileName()));
 }
 
 LogWorker::~LogWorker()
 {
-  delete m_LogFile;
 }
 
 void LogWorker::process()
 {
   while (!m_QuitRequested) {
     if (GetLogMessages(&m_Buffer[0], m_Buffer.size(), false)) {
-      m_LogFile->write(m_Buffer.c_str());
-      m_LogFile->write("\n");
-      m_LogFile->flush();
-
-      //emit outputLog(QString::fromStdString(m_Buffer));
+      m_LogFile.write(m_Buffer.c_str());
+      m_LogFile.write("\n");
+      m_LogFile.flush();
     } else {
       QThread::sleep(1);
     }
@@ -88,7 +85,7 @@ void LogWorker::exit()
 
 UsvfsConnector::UsvfsConnector()
 {
-  usvfs::Parameters params(SHMID, true, LogLevel::Debug);
+  usvfs::Parameters params(SHMID, false, LogLevel::Debug);
   InitLogging(false);
   ConnectVFS(&params);
 

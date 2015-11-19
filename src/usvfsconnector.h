@@ -61,7 +61,7 @@ private:
 
   std::string m_Buffer;
   bool m_QuitRequested;
-  QFile *m_LogFile;
+  QFile m_LogFile;
 
 };
 
