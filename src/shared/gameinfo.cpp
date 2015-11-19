@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "oblivioninfo.h"
 #include "fallout3info.h"
+#include "fallout4info.h"
 #include "falloutnvinfo.h"
 #include "skyriminfo.h"
 #include "util.h"
@@ -97,6 +98,8 @@ bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring 
     s_Instance = new FalloutNVInfo(moDirectory, moDataDirectory, searchPath);
   } else if (SkyrimInfo::identifyGame(searchPath)) {
     s_Instance = new SkyrimInfo(moDirectory, moDataDirectory, searchPath);
+  } else if (Fallout4Info::identifyGame(searchPath)) {
+    s_Instance = new Fallout4Info(moDirectory, moDataDirectory, searchPath);
   }
 
   return s_Instance != nullptr;

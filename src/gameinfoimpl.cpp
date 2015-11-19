@@ -36,6 +36,7 @@ IGameInfo::Type GameInfoImpl::type() const
   switch (GameInfo::instance().getType()) {
     case GameInfo::TYPE_OBLIVION: return IGameInfo::TYPE_OBLIVION;
     case GameInfo::TYPE_FALLOUT3: return IGameInfo::TYPE_FALLOUT3;
+    case GameInfo::TYPE_FALLOUT4: return IGameInfo::TYPE_FALLOUT4;
     case GameInfo::TYPE_FALLOUTNV: return IGameInfo::TYPE_FALLOUTNV;
     case GameInfo::TYPE_SKYRIM: return IGameInfo::TYPE_SKYRIM;
     default: throw MyException(QObject::tr("invalid game type %1").arg(GameInfo::instance().getType()));

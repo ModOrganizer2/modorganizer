@@ -92,6 +92,7 @@ SET(organizer_SRCS
     shared/gameinfo.cpp
     shared/oblivioninfo.cpp
     shared/fallout3info.cpp
+    shared/fallout4info.cpp
     shared/falloutnvinfo.cpp
     shared/util.cpp
     shared/skyriminfo.cpp
@@ -183,6 +184,7 @@ SET(organizer_HDRS
     shared/gameinfo.h
     shared/oblivioninfo.h
     shared/fallout3info.h
+    shared/fallout4info.h
     shared/falloutnvinfo.h
     shared/util.h
     shared/skyriminfo.h

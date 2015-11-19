@@ -43,6 +43,7 @@ public:
   enum Type {
     TYPE_OBLIVION,
     TYPE_FALLOUT3,
+    TYPE_FALLOUT4,
     TYPE_FALLOUTNV,
     TYPE_SKYRIM
   };
