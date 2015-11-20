@@ -69,7 +69,7 @@ public:
 
 private:
 
-  Fallout3Info(const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  Fallout3Info(const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

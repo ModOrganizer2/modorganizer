@@ -33,8 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-SkyrimInfo::SkyrimInfo(const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDataDirectory, gameDirectory)
+SkyrimInfo::SkyrimInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"skyrim");
 

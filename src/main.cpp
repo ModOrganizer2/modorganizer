@@ -446,7 +446,7 @@ int main(int argc, char *argv[])
     QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
     bool done = false;
     while (!done) {
-      if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(dataPath), ToWString(QDir::toNativeSeparators(gamePath)))) {
+      if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(QDir::toNativeSeparators(gamePath)))) {
         if (!gamePath.isEmpty()) {
           reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
                                   "the game binary and its launcher.").arg(gamePath));

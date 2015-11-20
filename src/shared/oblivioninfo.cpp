@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-OblivionInfo::OblivionInfo(const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDataDirectory, gameDirectory)
+OblivionInfo::OblivionInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"oblivion");
 }

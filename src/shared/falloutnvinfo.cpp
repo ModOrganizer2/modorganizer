@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-FalloutNVInfo::FalloutNVInfo(const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDataDirectory, gameDirectory)
+FalloutNVInfo::FalloutNVInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"falloutnv");
 }
