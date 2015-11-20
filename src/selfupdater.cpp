@@ -159,7 +159,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
   QNetworkRequest request(dlUrl);
   m_Canceled = false;
   m_Reply = accessManager->get(request);
-  m_UpdateFile.setFileName(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()).append("\\").append(fileName)));
+  m_UpdateFile.setFileName(QDir::fromNativeSeparators(qApp->property("dataPath").toString()).append("/").append(fileName));
   m_UpdateFile.open(QIODevice::WriteOnly);
   showProgress();
 
@@ -243,7 +243,7 @@ void SelfUpdater::downloadCancel()
 
 void SelfUpdater::installUpdate()
 {
-  const QString mopath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()));
+  const QString mopath = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
 
   QString backupPath = mopath + "/update_backup";
   QDir().mkdir(backupPath);
@@ -281,7 +281,7 @@ void SelfUpdater::installUpdate()
   }
 
   // now unpack the archive into the mo directory
-  if (!m_CurrentArchive->extract(GameInfo::instance().getOrganizerDirectory().c_str(),
+  if (!m_CurrentArchive->extract(QDir::toNativeSeparators(mopath).toStdWString().c_str(),
          new MethodCallback<SelfUpdater, void, float>(this, &SelfUpdater::updateProgress),
          new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::updateProgressFile),
          new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::report7ZipError))) {

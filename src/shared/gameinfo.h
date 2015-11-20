@@ -56,8 +56,7 @@ public:
 
   virtual ~GameInfo() {}
 
-  std::wstring getOrganizerDirectory() { return m_OrganizerDirectory; }
-
+  //**USED IN HOOKDLL
   virtual std::wstring getRegPath() = 0;
   virtual std::wstring getBinaryName() = 0;
 
@@ -70,6 +69,7 @@ public:
   /// exception if the mechanism can't be determined
   virtual LoadOrderMechanism getLoadOrderMechanism() const { return TYPE_FILETIME; }
 
+  //**USED IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
 
   virtual bool requiresSteam() const;
@@ -80,9 +80,11 @@ public:
   // get a set of esp/esm files that are part of known dlcs
   virtual std::vector<std::wstring> getDLCPlugins() = 0;
 
+  //**USED IN HOOKDLL
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;
 
+  //**USED IN HOOKDLL
   virtual std::wstring getReferenceDataFile() = 0;
 
   virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
@@ -90,19 +92,22 @@ public:
   virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;
 
+  //**USED IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 
 public:
 
+  //**USED IN HOOKDLL
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
   static bool init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath = L"");
 
+  //**USED IN HOOKDLL
   static GameInfo& instance();
 
 protected:
 
-  GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  GameInfo(const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   std::wstring getLocalAppFolder() const;
   const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
@@ -110,7 +115,7 @@ protected:
 
 private:
 
-  static bool identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath);
+  static bool identifyGame(const std::wstring &moDataDirectory, const std::wstring &searchPath);
   std::wstring getSpecialPath(LPCWSTR name) const;
 
   static void cleanup();
@@ -122,7 +127,6 @@ private:
   std::wstring m_MyGamesDirectory;
 
   std::wstring m_GameDirectory;
-  std::wstring m_OrganizerDirectory;
   std::wstring m_OrganizerDataDirectory;
 
 };

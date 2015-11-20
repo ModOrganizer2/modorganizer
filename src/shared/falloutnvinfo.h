@@ -102,7 +102,7 @@ public:
 
 private:
 
-  FalloutNVInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  FalloutNVInfo(const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 };

@@ -87,7 +87,7 @@ void SettingsDialog::on_categoriesBtn_clicked()
 
 void SettingsDialog::on_bsaDateBtn_clicked()
 {
-  Helper::backdateBSAs(GameInfo::instance().getOrganizerDirectory(), GameInfo::instance().getGameDirectory().append(L"\\data"));
+  Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(), GameInfo::instance().getGameDirectory().append(L"\\data"));
 }
 
 void SettingsDialog::on_browseDownloadDirBtn_clicked()

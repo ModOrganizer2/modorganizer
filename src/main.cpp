@@ -86,7 +86,8 @@ using namespace MOShared;
 
 bool createAndMakeWritable(const std::wstring &subPath)
 {
-  QString fullPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(subPath);
+  QString const dataPath = qApp->property("dataPath").toString();
+  QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
 
   if (!QDir(fullPath).exists()) {
     QDir().mkdir(fullPath);
@@ -100,7 +101,7 @@ bool createAndMakeWritable(const std::wstring &subPath)
            "will be made writable for the current user account). You will be asked to run "
            "\"helper.exe\" with administrative rights."),
            QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-      if (!Helper::init(GameInfo::instance().getOrganizerDirectory())) {
+      if (!Helper::init(dataPath.toStdWString())) {
         return false;
       }
     } else {
@@ -341,7 +342,7 @@ int main(int argc, char *argv[])
     instanceID = instanceFile.readAll().trimmed();
   }  
 
-  QString dataPath =
+  QString const dataPath =
       instanceID.isEmpty() ? application.applicationDirPath()
                            : QDir::fromNativeSeparators(
                                QStandardPaths::writableLocation(QStandardPaths::DataLocation)
@@ -373,7 +374,7 @@ int main(int argc, char *argv[])
   QSplashScreen splash(pixmap);
 
   try {
-    if (!bootstrap()) { // requires gameinfo to be initialised!
+    if (!bootstrap()) {
       return -1;
     }
 

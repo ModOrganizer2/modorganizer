@@ -1,4 +1,5 @@
 #include "organizercore.h"
+
 #include "mainwindow.h"
 #include "gameinfoimpl.h"
 #include "messagedialog.h"

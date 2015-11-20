@@ -1,7 +1,9 @@
 #include "organizerproxy.h"
+
 #include <gameinfo.h>
 #include <appconfig.h>
 
+#include <QApplication>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -40,7 +42,7 @@ QString OrganizerProxy::downloadsPath() const
 
 QString OrganizerProxy::overwritePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()))
+  return QDir::fromNativeSeparators(qApp->property("dataPath").toString())
          + "/"
          + ToQString(AppConfig::overwritePath());
 }
