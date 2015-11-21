@@ -1332,8 +1332,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
   std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
 
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
   std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
 
   QStringList plugins = m_OrganizerCore.findFiles("", [] (const QString &fileName) -> bool {

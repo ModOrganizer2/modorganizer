@@ -65,6 +65,7 @@ public:
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
   Profile(const QString &name, MOBase::IPluginGame *gamePlugin, bool useDefaultSettings);
+
   /**
    * @brief constructor
    *

@@ -1570,8 +1570,7 @@ void OrganizerCore::prepareStart() {
 
 std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
-  return fileMapping(game->dataDirectory().absolutePath(),
+  return fileMapping(managedGame()->dataDirectory().absolutePath(),
                      directoryStructure(),
                      directoryStructure());
 }

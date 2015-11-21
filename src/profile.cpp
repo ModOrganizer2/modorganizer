@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "profile.h"
+
 #include "gameinfo.h"
 #include "windows_error.h"
 #include "modinfo.h"
@@ -30,16 +31,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
+
 #include <QMessageBox>
 #include <QApplication>
 #include <QSettings>
 #include <QTemporaryFile>
+
 #include <functional>
+#include <stdexcept>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shlobj.h>
-#include <stdexcept>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -47,6 +50,7 @@ using namespace MOShared;
 
 Profile::Profile()
   : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_GamePlugin(qApp->property("managed_game").value<IPluginGame*>())
 {
 }
 
@@ -101,6 +105,7 @@ Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSe
 
 Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
   : m_Directory(directory)
+  , m_GamePlugin(gamePlugin)
   , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
   assert(gamePlugin != nullptr);
@@ -568,10 +573,8 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 
 bool Profile::invalidationActive(bool *supported) const
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
-  DataArchives *dataArchives = gamePlugin->feature<DataArchives>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
+  DataArchives *dataArchives = m_GamePlugin->feature<DataArchives>();
 
   if ((invalidation != nullptr) && (dataArchives != nullptr)) {
     if (supported != nullptr) {
@@ -593,9 +596,7 @@ bool Profile::invalidationActive(bool *supported) const
 
 void Profile::deactivateInvalidation()
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->deactivate(this);
@@ -605,9 +606,7 @@ void Profile::deactivateInvalidation()
 
 void Profile::activateInvalidation()
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->activate(this);
