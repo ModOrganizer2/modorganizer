@@ -31,7 +31,7 @@ public:
   GameInfoImpl();
 
   virtual Type type() const;
-  virtual QString path() const;
+//  virtual QString path() const;
 //  virtual QString binaryName() const;
 
 };
