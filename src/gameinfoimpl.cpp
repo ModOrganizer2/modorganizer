@@ -47,8 +47,9 @@ QString GameInfoImpl::path() const
 {
   return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
 }
-
+/*
 QString GameInfoImpl::binaryName() const
 {
-  return ToQString(GameInfo::instance().getBinaryName());
+  return ToQString(GameInfo::instance().getgetBinaryName());
 }
+*/

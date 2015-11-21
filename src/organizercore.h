@@ -132,7 +132,7 @@ public:
   QString profilePath() const;
   QString downloadsPath() const;
   MOBase::VersionInfo appVersion() const;
-  MOBase::IModInterface *getMod(const QString &name);
+  MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);

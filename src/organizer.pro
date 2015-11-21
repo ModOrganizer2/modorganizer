@@ -355,10 +355,10 @@ CONFIG(debug, debug|release) {
 }
 
 OTHER_FILES += \
-    SConscript
+    SConscript \
+    CMakeLists.txt
 
 DISTFILES += \
     tutorials/tutorial_primer_main.js \
     tutorials/Tooltip.qml \
-    tutorials/TooltipArea.qml \
-    SConscript
+    tutorials/TooltipArea.qml

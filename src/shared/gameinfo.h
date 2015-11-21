@@ -58,7 +58,6 @@ public:
 
   //**USED IN HOOKDLL
   virtual std::wstring getRegPath() = 0;
-  virtual std::wstring getBinaryName() = 0;
 
   virtual GameInfo::Type getType() = 0;
 

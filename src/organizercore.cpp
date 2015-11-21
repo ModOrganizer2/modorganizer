@@ -594,14 +594,10 @@ MOBase::VersionInfo OrganizerCore::appVersion() const
   return m_Updater.getVersion();
 }
 
-MOBase::IModInterface *OrganizerCore::getMod(const QString &name)
+MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
 {
   unsigned int index = ModInfo::getIndex(name);
-  if (index == UINT_MAX) {
-    return nullptr;
-  } else {
-    return ModInfo::getByIndex(index).data();
-  }
+  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
 }
 
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
