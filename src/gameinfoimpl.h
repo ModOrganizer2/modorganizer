@@ -30,7 +30,7 @@ class GameInfoImpl : public MOBase::IGameInfo
 public:
   GameInfoImpl();
 
-  virtual Type type() const;
+//  virtual Type type() const;
 //  virtual QString path() const;
 //  virtual QString binaryName() const;
 

@@ -1568,6 +1568,7 @@ void OrganizerCore::prepareStart() {
   storeSettings();
 }
 
+/*
 std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping()
 {
   return fileMapping(managedGame()->dataDirectory().absolutePath(),
@@ -1606,4 +1607,4 @@ std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping(
   return result;
 }
 
-
+*/

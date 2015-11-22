@@ -31,6 +31,7 @@ GameInfoImpl::GameInfoImpl()
 {
 }
 
+/*
 IGameInfo::Type GameInfoImpl::type() const
 {
   switch (GameInfo::instance().getType()) {
@@ -42,7 +43,6 @@ IGameInfo::Type GameInfoImpl::type() const
   }
 }
 
-/*
 QString GameInfoImpl::path() const
 {
   return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));

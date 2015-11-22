@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profile.h"
 
-#include "gameinfo.h"
 #include "windows_error.h"
 #include "modinfo.h"
 #include "safewritefile.h"
