@@ -70,7 +70,6 @@ SOURCES += \
     moapplication.cpp \
     profileinputdialog.cpp \
     icondelegate.cpp \
-    gameinfoimpl.cpp \
     csvbuilder.cpp \
     savetextasdialog.cpp \
     qtgroupingproxy.cpp \
@@ -145,7 +144,6 @@ HEADERS  += \
     moapplication.h \
     profileinputdialog.h \
     icondelegate.h \
-    gameinfoimpl.h \
     csvbuilder.h \
     savetextasdialog.h \
     qtgroupingproxy.h \

@@ -15,11 +15,6 @@ OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, const QString &pluginNa
 {
 }
 
-IGameInfo &OrganizerProxy::gameInfo() const
-{
-  return m_Proxied->gameInfo();
-}
-
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
 {
   return new NexusBridge(m_PluginName);

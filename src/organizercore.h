@@ -126,7 +126,6 @@ public:
   MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
 
 public:
-  MOBase::IGameInfo &gameInfo() const;
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
   QString profilePath() const;
@@ -230,8 +229,6 @@ private:
   static const unsigned int PROBLEM_TOOMANYPLUGINS = 1;
 
 private:
-
-  MOBase::IGameInfo *m_GameInfo;
 
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;

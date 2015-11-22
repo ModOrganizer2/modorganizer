@@ -52,7 +52,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
-#include "gameinfoimpl.h"
 #include "savetextasdialog.h"
 #include "problemsdialog.h"
 #include "previewdialog.h"

@@ -12,7 +12,6 @@ public:
 
   OrganizerProxy(OrganizerCore *organizer, const QString &pluginName);
 
-  virtual MOBase::IGameInfo &gameInfo() const;
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;

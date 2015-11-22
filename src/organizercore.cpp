@@ -1,7 +1,6 @@
 #include "organizercore.h"
 
 #include "mainwindow.h"
-#include "gameinfoimpl.h"
 #include "messagedialog.h"
 #include "logbuffer.h"
 #include "credentialsdialog.h"
@@ -119,8 +118,7 @@ QStringList toStringList(InputIterator current, InputIterator end)
 
 
 OrganizerCore::OrganizerCore(const QSettings &initSettings)
-  : m_GameInfo(new GameInfoImpl())
-  , m_UserInterface(nullptr)
+  : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
@@ -187,7 +185,6 @@ OrganizerCore::~OrganizerCore()
   m_ModList.setProfile(nullptr);
   NexusInterface::instance()->cleanup();
 
-  delete m_GameInfo;
   delete m_DirectoryStructure;
 }
 
@@ -554,11 +551,6 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
   connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
   refreshDirectoryStructure();
-}
-
-MOBase::IGameInfo &OrganizerCore::gameInfo() const
-{
-  return *m_GameInfo;
 }
 
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
