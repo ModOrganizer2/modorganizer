@@ -85,6 +85,7 @@ private:
 
   void readESSFile(QFile &saveFile);
   void readFOSFile(QFile &saveFile, bool newVegas);
+  void readFO4File(QFile &saveFile);
   void readSkyrimFile(QFile &saveFile);
 
   void setCreationTime(const QString &fileName);

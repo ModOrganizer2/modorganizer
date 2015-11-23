@@ -117,9 +117,6 @@ SaveGameGamebryo::~SaveGameGamebryo()
 }
 
 
-
-
-
 void SaveGameGamebryo::readSkyrimFile(QFile &saveFile)
 {
   char fileID[14];
@@ -163,6 +160,58 @@ void SaveGameGamebryo::readSkyrimFile(QFile &saveFile)
 
   FileSkip<unsigned char>(saveFile); // form version
   FileSkip<unsigned long>(saveFile); // plugin info size
+
+  unsigned char pluginCount;
+  FileRead(saveFile, pluginCount);
+
+  for (int i = 0; i < pluginCount; ++i) {
+    m_Plugins.push_back(ReadFOSString(saveFile, false));
+  }
+}
+
+void SaveGameGamebryo::readFO4File(QFile &saveFile)
+{
+  char fileID[13];
+
+  saveFile.read(fileID, 12);
+  fileID[12] = '\0';
+  if (strncmp(fileID, "FO4_SAVEGAME", 12) != 0) {
+    throw std::runtime_error(QObject::tr("wrong file format").toUtf8().constData());
+  }
+
+  FileSkip<unsigned long>(saveFile); // header size
+  FileSkip<unsigned long>(saveFile); // header version, -> 11
+  FileRead(saveFile, m_SaveNumber);
+
+  m_PCName = ReadFOSString(saveFile, false);
+
+  unsigned long temp;
+  FileRead(saveFile, temp); // player level
+  m_PCLevel = static_cast<unsigned short>(temp);
+
+  m_PCLocation = ReadFOSString(saveFile, false);
+  ReadFOSString(saveFile, false); // playtime as ascii hhh.mm.ss
+  ReadFOSString(saveFile, false); // race name (HumanRace)
+
+
+  FileSkip<unsigned short>(saveFile); // ???
+  FileSkip<float>(saveFile, 2); // ???
+  FileSkip<unsigned char>(saveFile, 8); // filetime
+
+//  FileSkip<unsigned char>(saveFile, 18); // ??? 18 bytes of data. not completely random, maybe a time stamp? maybe
+
+  unsigned long width, height;
+  FileRead(saveFile, width); // 640
+  FileRead(saveFile, height); // 384
+
+  QScopedArrayPointer<unsigned char> buffer(new unsigned char[width * height * 4]);
+  saveFile.read(reinterpret_cast<char*>(buffer.data()), width * height * 4);
+  // 640x384 is a bit large
+  m_Screenshot = QImage(buffer.data(), width, height, QImage::Format_RGBA8888).scaledToWidth(320);
+
+  FileSkip<unsigned char>(saveFile); // form version (?)
+  ReadFOSString(saveFile, false);    // game version
+  FileSkip<unsigned long>(saveFile); // plugin info size (?)
 
   unsigned char pluginCount;
   FileRead(saveFile, pluginCount);
@@ -331,6 +380,10 @@ void SaveGameGamebryo::readFile(const QString &fileName)
     case GameInfo::TYPE_SKYRIM: {
       setCreationTime(fileName);
       readSkyrimFile(saveFile);
+    } break;
+    case GameInfo::TYPE_FALLOUT4: {
+      setCreationTime(fileName);
+      readFO4File(saveFile);
     } break;
   }
 

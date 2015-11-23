@@ -77,7 +77,7 @@ void TransferSavesDialog::refreshLocalSaves()
 
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
-  foreach (const QString &filename, files) {
+  for (const QString &filename : files) {
     SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
     save->setParent(this);
     m_LocalSaves.push_back(save);
