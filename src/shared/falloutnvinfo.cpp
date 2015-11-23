@@ -63,20 +63,6 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> FalloutNVInfo::getDLCPlugins()
-{
-  return boost::assign::list_of (L"DeadMoney.esm")
-                                (L"HonestHearts.esm")
-                                (L"OldWorldBlues.esm")
-                                (L"LonesomeRoad.esm")
-                                (L"GunRunnersArsenal.esm")
-                                (L"CaravanPack.esm")
-                                (L"ClassicPack.esm")
-                                (L"MercenaryPack.esm")
-                                (L"TribalPack.esm")
-      ;
-}
-
 std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions()
 {
   return std::vector<std::wstring>();

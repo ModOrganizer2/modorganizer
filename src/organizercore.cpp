@@ -320,7 +320,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.init(m_PluginContainer->managedGame(ToQString(GameInfo::instance().getGameName())));
+  m_ExecutablesList.init(managedGame());
 
   qDebug("setting up configured executables");
 
@@ -348,7 +348,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   settings.endArray();
 
   // TODO this has nothing to do with executables list move to an appropriate function!
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *widget)
@@ -1125,7 +1125,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
   if (saveChanges) {
     m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
 
   m_CurrentProfile->refreshModStatus();
 
@@ -1367,7 +1367,7 @@ void OrganizerCore::directory_refreshed()
 void OrganizerCore::profileRefresh()
 {
   // have to refresh mods twice (again in refreshModList), otherwise the refresh isn't complete. Not sure why
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
   m_CurrentProfile->refreshModStatus();
 
   refreshModList();

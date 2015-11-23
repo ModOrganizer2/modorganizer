@@ -45,8 +45,6 @@ public:
 
   virtual LoadOrderMechanism getLoadOrderMechanism() const;
 
-  virtual std::vector<std::wstring> getDLCPlugins();
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

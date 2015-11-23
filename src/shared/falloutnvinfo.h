@@ -43,40 +43,6 @@ public:
   virtual std::wstring getGameName() const { return L"New Vegas"; }
   virtual std::wstring getGameShortName() const { return L"FalloutNV"; }
 
-//  virtual bool requiresSteam() const { return true; }
-
-/*  virtual std::wstring getInvalidationBSA()
-  {
-    return L"Fallout - Invalidation.bsa";
-  }
-
-  virtual bool isInvalidationBSA(const std::wstring &bsaName)
-  {
-    static LPCWSTR invalidation[] = { L"Fallout - AI!.bsa", L"Fallout - Invalidation.bsa", nullptr };
-
-    for (int i = 0; invalidation[i] != nullptr; ++i) {
-      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  virtual std::vector<std::wstring> getVanillaBSAs()
-  {
-    return boost::assign::list_of (L"Fallout - Textures.bsa")
-        (L"Fallout - Textures2.bsa")
-        (L"Fallout - Meshes.bsa")
-        (L"Fallout - Voices1.bsa")
-        (L"Fallout - Sound.bsa")
-        (L"Fallout - Misc.bsa");
-  }
-
-  virtual std::vector<std::wstring> getPrimaryPlugins()
-  {
-    return boost::assign::list_of(L"falloutnv.esm");
-  }*/
-  virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

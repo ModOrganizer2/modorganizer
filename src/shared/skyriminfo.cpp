@@ -91,17 +91,6 @@ GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
   }
 }
 
-std::vector<std::wstring> SkyrimInfo::getDLCPlugins()
-{
-  return boost::assign::list_of (L"Dawnguard.esm")
-                                (L"Dragonborn.esm")
-                                (L"HearthFires.esm")
-                                (L"HighResTexturePack01.esp")
-                                (L"HighResTexturePack02.esp")
-                                (L"HighResTexturePack03.esp")
-      ;
-}
-
 std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions()
 {
   return boost::assign::list_of(L"skse");

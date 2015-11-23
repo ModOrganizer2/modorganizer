@@ -23,19 +23,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include <versioninfo.h>
 #include <imodinterface.h>
+//#include <directoryentry.h>
 
-#include <QString>
-#include <QMutex>
-#include <QIcon>
-#include <QDir>
-#include <QSharedPointer>
 #include <QDateTime>
+class QDir;
+#include <QMutex>
+#include <QSharedPointer>
+#include <QString>
+#include <QStringList>
+
+#include <boost/function.hpp>
+
 #include <map>
 #include <set>
 #include <vector>
-#include <directoryentry.h>
 
-using MOBase::ModRepositoryFileInfo;
+namespace MOBase { class IPluginGame; }
+namespace MOShared { class DirectoryEntry; }
 
 /**
  * @brief Represents meta information about a single mod.
@@ -103,7 +107,7 @@ public:
   /**
    * @brief read the mod directory and Mod ModInfo objects for all subdirectories
    **/
-  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure, bool displayForeign);
+  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure, bool displayForeign, const MOBase::IPluginGame *game);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 

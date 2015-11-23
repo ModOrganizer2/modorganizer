@@ -66,29 +66,6 @@ std::wstring OblivionInfo::getRegPathStatic()
 
 
 
-
-
-
-
-
-
-
-std::vector<std::wstring> OblivionInfo::getDLCPlugins()
-{
-  return boost::assign::list_of (L"DLCShiveringIsles.esp")
-                                (L"Knights.esp")
-                                (L"DLCFrostcrag.esp")
-                                (L"DLCSpellTomes.esp")
-                                (L"DLCMehrunesRazor.esp")
-                                (L"DLCOrrery.esp")
-                                (L"DLCSpellTomes.esp")
-                                (L"DLCThievesDen.esp")
-                                (L"DLCVileLair.esp")
-                                (L"DLCHorseArmor.esp")
-      ;
-}
-
-
 std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions()
 {
   return boost::assign::list_of(L"obse");

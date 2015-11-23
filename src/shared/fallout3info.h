@@ -43,7 +43,6 @@ public:
   virtual std::wstring getGameName() const { return L"Fallout 3"; }
   virtual std::wstring getGameShortName() const { return L"Fallout3"; }
 
-  virtual std::vector<std::wstring> getDLCPlugins();
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

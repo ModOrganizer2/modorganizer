@@ -74,9 +74,6 @@ public:
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
-  // get a set of esp/esm files that are part of known dlcs
-  virtual std::vector<std::wstring> getDLCPlugins() = 0;
-
   //**USED IN HOOKDLL
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;

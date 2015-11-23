@@ -358,7 +358,7 @@ MainWindow::~MainWindow()
 void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
-        ToQString(GameInfo::instance().getGameName()),
+        m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString());
 
   if (accountName.isEmpty()) {

@@ -63,16 +63,6 @@ std::wstring Fallout3Info::getRegPathStatic()
 }
 
 
-std::vector<std::wstring> Fallout3Info::getDLCPlugins()
-{
-  return boost::assign::list_of (L"ThePitt.esm")
-                                (L"Anchorage.esm")
-                                (L"BrokenSteel.esm")
-                                (L"PointLookout.esm")
-                                (L"Zeta.esm")
-      ;
-}
-
 std::vector<std::wstring> Fallout3Info::getSavegameAttachmentExtensions()
 {
   return std::vector<std::wstring>();
