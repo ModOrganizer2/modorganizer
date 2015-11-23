@@ -950,7 +950,10 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
     ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(m_Settings.getSteamAppID()).c_str());
   }
 
-  if ((GameInfo::instance().requiresSteam())
+
+  //This could possibly be extracted somewhere else but it's probably for when
+  //we have more than one provider of game registration.
+  if (QFileInfo(managedGame()->gameDirectory().absoluteFilePath("steam_api.dll")).exists()
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
       QWidget *window = qApp->activeWindow();

@@ -71,8 +71,6 @@ public:
   //**USED IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
 
-  virtual bool requiresSteam() const;
-
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
