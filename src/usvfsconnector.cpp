@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <QTemporaryFile>
 #include <QProgressDialog>
+#include <QDateTime>
 #include <QCoreApplication>
 
 
@@ -53,10 +54,13 @@ extern "C" DLLEXPORT void __cdecl InitHooks(LPVOID userData, size_t userDataSize
 LogWorker::LogWorker()
   : m_Buffer(1024, '\0')
   , m_QuitRequested(false)
-  , m_LogFile(qApp->property("dataPath").toString() + "/logs/usvfs.log")
+  , m_LogFile(qApp->property("dataPath").toString()
+              + QString("/logs/usvfs-%1.log").arg(
+                QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s", qPrintable(m_LogFile.fileName()));
+  qDebug("usvfs log messages are written to %s",
+         qPrintable(m_LogFile.fileName()));
 }
 
 LogWorker::~LogWorker()

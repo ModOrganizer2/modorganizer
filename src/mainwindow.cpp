@@ -186,6 +186,7 @@ MainWindow::MainWindow(const QString &exeName
   m_RefreshProgress->setVisible(false);
   statusBar()->addWidget(m_RefreshProgress, 1000);
   statusBar()->clearMessage();
+  statusBar()->hide();
 
   ui->actionEndorseMO->setVisible(false);
 
@@ -232,8 +233,6 @@ MainWindow::MainWindow(const QString &exeName
     ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
   }
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
-
-  ui->bsaList->setLocalMoveOnly(true);
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
@@ -301,9 +300,6 @@ MainWindow::MainWindow(const QString &exeName
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
-
-  m_CheckBSATimer.setSingleShot(true);
-  connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -1317,157 +1313,6 @@ static QStringList toStringList(InputIterator current, InputIterator end)
   return result;
 }
 
-void MainWindow::updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives)
-{
-  m_DefaultArchives = defaultArchives;
-  ui->bsaList->clear();
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-  ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-#else
-  ui->bsaList->header()->setResizeMode(QHeaderView::ResizeToContents);
-#endif
-
-  std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
-
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
-  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
-
-  QStringList plugins = m_OrganizerCore.findFiles("", [] (const QString &fileName) -> bool {
-    return fileName.endsWith(".esp", Qt::CaseInsensitive)
-        || fileName.endsWith(".esm", Qt::CaseInsensitive);
-  });
-
-  auto hasAssociatedPlugin = [&](const QString &bsaName) -> bool {
-    for (const QString &pluginName : plugins) {
-      QFileInfo pluginInfo(pluginName);
-      if (bsaName.startsWith(QFileInfo(pluginName).baseName(), Qt::CaseInsensitive)
-          && (m_OrganizerCore.pluginList()->state(pluginInfo.fileName()) == IPluginList::STATE_ACTIVE)) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  for (FileEntry::Ptr current : files) {
-    QFileInfo fileInfo(ToQString(current->getName().c_str()));
-
-    if (fileInfo.suffix().toLower() == "bsa") {
-      int index = activeArchives.indexOf(fileInfo.fileName());
-      if (index == -1) {
-        index = 0xFFFF;
-      } else {
-        index += 2;
-      }
-
-      if ((invalidation != nullptr) && invalidation->isInvalidationBSA(fileInfo.fileName())) {
-        index = 1;
-      }
-
-      int originId = current->getOrigin();
-      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
-
-      QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList()
-                                                     << fileInfo.fileName()
-                                                     << ToQString(origin.getName()));
-      newItem->setData(0, Qt::UserRole, index);
-      newItem->setData(1, Qt::UserRole, originId);
-      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
-      newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
-      newItem->setData(0, Qt::UserRole, false);
-      if (m_OrganizerCore.settings().forceEnableCoreFiles()
-          && defaultArchives.contains(fileInfo.fileName())) {
-        newItem->setCheckState(0, Qt::Checked);
-        newItem->setDisabled(true);
-        newItem->setData(0, Qt::UserRole, true);
-      } else if (fileInfo.fileName().compare("update.bsa", Qt::CaseInsensitive) == 0) {
-        newItem->setCheckState(0, Qt::Checked);
-        newItem->setDisabled(true);
-      } else if (hasAssociatedPlugin(fileInfo.fileName())) {
-        newItem->setCheckState(0, Qt::Checked);
-        newItem->setDisabled(true);
-      }
-
-      if (index < 0) index = 0;
-
-      UINT32 sortValue = ((origin.getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
-      items.push_back(std::make_pair(sortValue, newItem));
-    }
-  }
-
-  std::sort(items.begin(), items.end(), BySortValue);
-
-  for (auto iter = items.begin(); iter != items.end(); ++iter) {
-    int originID = iter->second->data(1, Qt::UserRole).toInt();
-
-    FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-    QString modName("data");
-    unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-    if (modIndex != UINT_MAX) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      modName = modInfo->name();
-    }
-    QList<QTreeWidgetItem*> items = ui->bsaList->findItems(modName, Qt::MatchFixedString);
-    QTreeWidgetItem *subItem = nullptr;
-    if (items.length() > 0) {
-      subItem = items.at(0);
-    } else {
-      subItem = new QTreeWidgetItem(QStringList(modName));
-      subItem->setFlags(subItem->flags() & ~Qt::ItemIsDragEnabled);
-      ui->bsaList->addTopLevelItem(subItem);
-    }
-    subItem->addChild(iter->second);
-    subItem->setExpanded(true);
-  }
-
-  checkBSAList();
-}
-
-
-void MainWindow::checkBSAList()
-{
-  DataArchives *archives = m_OrganizerCore.managedGame()->feature<DataArchives>();
-
-  if (archives != nullptr) {
-    ui->bsaList->blockSignals(true);
-    ON_BLOCK_EXIT([&] () { ui->bsaList->blockSignals(false); });
-
-    QStringList defaultArchives = archives->archives(m_OrganizerCore.currentProfile());
-
-    bool warning = false;
-
-    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
-      bool modWarning = false;
-      QTreeWidgetItem *tlItem = ui->bsaList->topLevelItem(i);
-      for (int j = 0; j < tlItem->childCount(); ++j) {
-        QTreeWidgetItem *item = tlItem->child(j);
-        QString filename = item->text(0);
-        item->setIcon(0, QIcon());
-        item->setToolTip(0, QString());
-
-        if (item->checkState(0) == Qt::Unchecked) {
-          if (defaultArchives.contains(filename)) {
-            item->setIcon(0, QIcon(":/MO/gui/warning"));
-            item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
-            modWarning = true;
-          }
-        }
-      }
-      if (modWarning) {
-        ui->bsaList->expandItem(ui->bsaList->topLevelItem(i));
-        warning = true;
-      }
-    }
-
-    if (warning) {
-      ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/warning"));
-    } else {
-      ui->tabWidget->setTabIcon(1, QIcon());
-    }
-  }
-}
-
-
 void MainWindow::saveModMetas()
 {
   for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
@@ -1475,7 +1320,6 @@ void MainWindow::saveModMetas()
     modInfo->saveMeta();
   }
 }
-
 
 void MainWindow::fixCategories()
 {
@@ -1856,8 +1700,10 @@ void MainWindow::setESPListSorting(int index)
 void MainWindow::refresher_progress(int percent)
 {
   if (percent == 100) {
-//    m_RefreshProgress->setVisible(false);
+    m_RefreshProgress->setVisible(false);
+    statusBar()->hide();
   } else if (!m_RefreshProgress->isVisible()) {
+    statusBar()->show();
     m_RefreshProgress->setVisible(true);
     m_RefreshProgress->setRange(0, 100);
     m_RefreshProgress->setValue(percent);
@@ -3815,8 +3661,7 @@ void MainWindow::updateDownloadListDelegate()
 
 void MainWindow::modDetailsUpdated(bool)
 {
-  --m_ModsToUpdate;
-  if (m_ModsToUpdate == 0) {
+  if (--m_ModsToUpdate == 0) {
     statusBar()->hide();
     m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
     for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
@@ -4020,19 +3865,6 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
     }
     ++i;
   }
-}
-
-
-void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
-{
-  m_ContextItem = ui->bsaList->itemAt(pos);
-
-//  m_ContextRow = ui->bsaList->indexOfTopLevelItem(ui->bsaList->itemAt(pos));
-
-  QMenu menu;
-  menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
-
-  menu.exec(ui->bsaList->mapToGlobal(pos));
 }
 
 void MainWindow::on_actionProblems_triggered()
@@ -4608,12 +4440,6 @@ void MainWindow::on_categoriesOrBtn_toggled(bool checked)
   if (checked) {
     m_ModListSortProxy->setFilterMode(ModListSortProxy::FILTER_OR);
   }
-}
-
-void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
-{
-  QToolTip::showText(QCursor::pos(),
-                     ui->managedArchiveLabel->toolTip());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

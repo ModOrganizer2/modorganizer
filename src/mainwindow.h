@@ -88,7 +88,6 @@ public:
   virtual bool unlockClicked() override;
 
   bool addProfile();
-  void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
   void refreshSaveList();
 
@@ -439,8 +438,6 @@ private slots:
 
   void startExeAction();
 
-  void checkBSAList();
-
   void updateProblemsButton();
 
   void saveModMetas();
@@ -494,7 +491,6 @@ private slots: // ui slots
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
 
-  void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
@@ -522,7 +518,6 @@ private slots: // ui slots
   void on_actionCopy_Log_to_Clipboard_triggered();
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
-  void on_managedArchiveLabel_linkHovered(const QString &link);
 };
 
 

@@ -123,7 +123,7 @@ bool bootstrap()
 
   // cycle logfile
   removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
-                 "ModOrganizer*.log", 5, QDir::Name);
+                 "usvfs*.log", 5, QDir::Name);
 
   createAndMakeWritable(AppConfig::profilesPath());
   createAndMakeWritable(AppConfig::modsPath());

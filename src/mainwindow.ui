@@ -884,102 +884,6 @@ p, li { white-space: pre-wrap; }
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="bsaTab">
-               <attribute name="title">
-                <string>Archives</string>
-               </attribute>
-               <layout class="QVBoxLayout" name="verticalLayout_9">
-                <property name="leftMargin">
-                 <number>6</number>
-                </property>
-                <property name="topMargin">
-                 <number>6</number>
-                </property>
-                <property name="rightMargin">
-                 <number>6</number>
-                </property>
-                <property name="bottomMargin">
-                 <number>6</number>
-                </property>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
-                  <item>
-                   <widget class="QLabel" name="managedArchiveLabel">
-                    <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs are bundles of game assets (textures, scripts, ...). By default, the engine loads these bundles in a separate step from loose files. MO can manage those archives to align their load order with that of loose files:&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;managed&lt;/span&gt;, their load order is specified by the priority of the corresponding mod (left pane), the same as the loose files. You can manually enable any BSA that has no corresponding plugin active.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;not managed&lt;/span&gt; their load order is specified by the priority of the corresponding plugin (right pane, plugins tab). You can then not manually enable BSAs where the plugin isn't active.&lt;/p&gt;&lt;p&gt;In either case you can not disable archives if there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                    <property name="text">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Archive order follows Plugin order.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                    </property>
-                    <property name="wordWrap">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="MOBase::SortableTreeWidget" name="bsaList">
-                  <property name="contextMenuPolicy">
-                   <enum>Qt::CustomContextMenu</enum>
-                  </property>
-                  <property name="toolTip">
-                   <string>List of available BS Archives. Archives not checked here are not managed by MO and ignore installation order.</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
-By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
-
-BSAs checked here are loaded in such a way that your installation order is obeyed properly.</string>
-                  </property>
-                  <property name="editTriggers">
-                   <set>QAbstractItemView::NoEditTriggers</set>
-                  </property>
-                  <property name="showDropIndicator" stdset="0">
-                   <bool>true</bool>
-                  </property>
-                  <property name="dragEnabled">
-                   <bool>false</bool>
-                  </property>
-                  <property name="dragDropOverwriteMode">
-                   <bool>false</bool>
-                  </property>
-                  <property name="dragDropMode">
-                   <enum>QAbstractItemView::DragDrop</enum>
-                  </property>
-                  <property name="defaultDropAction">
-                   <enum>Qt::MoveAction</enum>
-                  </property>
-                  <property name="selectionMode">
-                   <enum>QAbstractItemView::SingleSelection</enum>
-                  </property>
-                  <property name="selectionBehavior">
-                   <enum>QAbstractItemView::SelectRows</enum>
-                  </property>
-                  <property name="indentation">
-                   <number>20</number>
-                  </property>
-                  <property name="itemsExpandable">
-                   <bool>true</bool>
-                  </property>
-                  <property name="columnCount">
-                   <number>1</number>
-                  </property>
-                  <attribute name="headerVisible">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="headerDefaultSectionSize">
-                   <number>200</number>
-                  </attribute>
-                  <column>
-                   <property name="text">
-                    <string>File</string>
-                   </property>
-                  </column>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
               <widget class="QWidget" name="dataTab">
                <attribute name="title">
                 <string>Data</string>
@@ -1476,11 +1380,6 @@ Right now this has very limited functionality</string>
    <class>ModListView</class>
    <extends>QTreeView</extends>
    <header>modlistview.h</header>
-  </customwidget>
-  <customwidget>
-   <class>MOBase::SortableTreeWidget</class>
-   <extends>QTreeWidget</extends>
-   <header>sortabletreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>
