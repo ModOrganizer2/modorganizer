@@ -1563,10 +1563,18 @@ void OrganizerCore::prepareStart() {
 std::vector<Mapping> OrganizerCore::fileMapping()
 {
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
-  return fileMapping(
+  MappingType result = fileMapping(
       QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
       "\\",
       directoryStructure(), directoryStructure());
+
+  for (MOBase::IPluginFileMapper *mapper : m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
+    MappingType pluginMap = mapper->mappings();
+    result.reserve(result.size() + pluginMap.size());
+    result.insert(result.end(), pluginMap.begin(), pluginMap.end());
+  }
+
+  return result;
 }
 
 std::vector<Mapping> OrganizerCore::fileMapping(

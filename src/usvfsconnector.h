@@ -23,19 +23,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <usvfs.h>
+#include <filemapping.h>
 #include <QString>
 #include <QThread>
 #include <QFile>
 #include <QDebug>
-
-
-struct Mapping {
-  QString source;
-  QString destination;
-  bool isDirectory;
-};
-
-typedef std::vector<Mapping> MappingType;
 
 
 class LogWorker : public QThread {
