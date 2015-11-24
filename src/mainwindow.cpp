@@ -1258,9 +1258,11 @@ QDir MainWindow::currentSavesDir() const
     savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
   } else {
     wchar_t path[MAX_PATH];
-    ::GetPrivateProfileStringW(L"General", L"SLocalSavePath", L"Saves",
-                               path, MAX_PATH,
-                               (ToWString(m_OrganizerCore.currentProfile()->absolutePath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
+    ::GetPrivateProfileStringW(
+          L"General", L"SLocalSavePath", L"Saves",
+          path, MAX_PATH,
+          ToWString(m_OrganizerCore.currentProfile()->absolutePath() + "/" +
+                      m_OrganizerCore.managedGame()->getIniFiles()[0]).c_str());
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 

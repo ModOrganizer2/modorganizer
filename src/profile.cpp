@@ -46,13 +46,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-
-Profile::Profile()
-  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
-  , m_GamePlugin(qApp->property("managed_game").value<IPluginGame*>())
-{
-}
-
 void Profile::touchFile(QString fileName)
 {
   QFile modList(m_Directory.filePath(fileName));
@@ -679,8 +672,7 @@ QString Profile::getDeleterFileName() const
 
 QString Profile::getIniFileName() const
 {
-  std::wstring primaryIniFile = *(GameInfo::instance().getIniFileNames().begin());
-  return m_Directory.absoluteFilePath(ToQString(primaryIniFile));
+  return m_Directory.absoluteFilePath(m_GamePlugin->getIniFiles()[0]);
 }
 
 QString Profile::getProfileTweaks() const

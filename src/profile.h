@@ -24,17 +24,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <iprofile.h>
 #include <delayedfilewriter.h>
+
 #include <QString>
 #include <QDir>
-#include <QMetaType>
 #include <QSettings>
+
 #include <vector>
 #include <tuple>
 
 
-namespace MOBase {
-  class IPluginGame;
-}
+namespace MOBase { class IPluginGame; }
 
 /**
  * @brief represents a profile
@@ -49,12 +48,6 @@ public:
   typedef boost::shared_ptr<Profile> Ptr;
 
 public:
-
-  /**
-   * @brief default constructor
-   * @todo This constructor initialised nothing, the resulting object is not usable
-   **/
-  Profile();
 
   /**
    * @brief constructor
@@ -319,8 +312,6 @@ private:
   MOBase::DelayedFileWriter m_ModListWriter;
 
 };
-
-Q_DECLARE_METATYPE(Profile)
 
 
 #endif // PROFILE_H
