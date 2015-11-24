@@ -128,7 +128,7 @@ void PluginList::refresh(const QString &profileName
   m_ESPsByPriority.clear();
   m_ESPs.clear();
 
-  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
+  QStringList primaryPlugins = m_GamePlugin->getPrimaryPlugins();
 
   m_CurrentProfile = profileName;
 
@@ -313,7 +313,7 @@ bool PluginList::readLoadOrder(const QString &fileName)
 
   int priority = 0;
 
-  QStringList primaryPlugins = qApp->property("managed_game").value<IPluginGame*>()->getPrimaryPlugins();
+  QStringList primaryPlugins = m_GamePlugin->getPrimaryPlugins();
   for (const QString &plugin : primaryPlugins) {
     if (availableESPs.find(plugin) != availableESPs.end()) {
       m_ESPLoadOrder[plugin] = priority++;
@@ -504,7 +504,7 @@ void PluginList::saveTo(const QString &pluginFileName
 
 bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
 {
-  if (GameInfo::instance().getLoadOrderMechanism() != GameInfo::TYPE_FILETIME) {
+  if (m_GamePlugin->getLoadOrderMechanism() != IPluginGame::LoadOrderMechanism::FileTime) {
     // nothing to do
     return true;
   }
@@ -1209,4 +1209,9 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
     m_IsMaster = false;
     m_IsDummy = false;
   }
+}
+
+void PluginList::managedGameChanged(IPluginGame *gamePlugin)
+{
+  m_GamePlugin = gamePlugin;
 }

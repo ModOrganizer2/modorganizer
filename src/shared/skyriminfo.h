@@ -42,8 +42,6 @@ public:
 
   virtual std::wstring getGameName() const { return L"Skyrim"; }
 
-  virtual LoadOrderMechanism getLoadOrderMechanism() const;
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

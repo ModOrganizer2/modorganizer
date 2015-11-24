@@ -73,24 +73,6 @@ std::wstring SkyrimInfo::getRegPathStatic()
   }
 }
 
-GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
-{
-  std::wstring fileName = getGameDirectory() + L"\\TESV.exe";
-
-  try {
-    VS_FIXEDFILEINFO versionInfo = GetFileVersion(fileName);
-    if ((versionInfo.dwFileVersionMS > 0x10004) || // version >= 1.5.x?
-        ((versionInfo.dwFileVersionMS == 0x10004) && (versionInfo.dwFileVersionLS >= 0x1A0000))) { // version >= ?.4.26
-      return TYPE_PLUGINSTXT;
-    } else {
-      return TYPE_FILETIME;
-    }
-  } catch (const std::exception &e) {
-    log("TESV.exe is invalid: %s", e.what());
-    return TYPE_FILETIME;
-  }
-}
-
 std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions()
 {
   return boost::assign::list_of(L"skse");

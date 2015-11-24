@@ -4527,12 +4527,12 @@ void MainWindow::on_bossButton_clicked()
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
-    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       qDebug("removing loadorder.txt");
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
-    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       // the load order should have been retrieved from file time, now save it to our own format
       m_OrganizerCore.savePluginList();
     }

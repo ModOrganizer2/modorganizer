@@ -160,6 +160,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
 
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame*)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter, &DelayedFileWriterBase::write);
 
@@ -920,12 +921,12 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
       refreshESPList();
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         // the load order should have been retrieved from file time, now save it to our own format
         savePluginList();
       }

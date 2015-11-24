@@ -65,10 +65,6 @@ public:
   //**Currently only used in a nasty mess at initialisation time.
   virtual std::wstring getGameName() const = 0;
 
-  /// determine the load order mechanism used by this game. this may throw an
-  /// exception if the mechanism can't be determined
-  virtual LoadOrderMechanism getLoadOrderMechanism() const { return TYPE_FILETIME; }
-
   //**USED IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
 
