@@ -287,7 +287,10 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
   int result = 0;
   std::vector<int> modIDs;
 
-  modIDs.push_back(GameInfo::instance().getNexusModID());
+  //I ought to store this, it's used elsewhere
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+
+  modIDs.push_back(game->getNexusModOrganizerID());
 
   for (const ModInfo::Ptr &mod : s_Collection) {
     if (mod->canBeUpdated()) {

@@ -50,8 +50,6 @@ public:
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
-  static int getNexusModIDStatic();
-  virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 101; }
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);

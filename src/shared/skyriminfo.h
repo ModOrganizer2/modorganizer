@@ -54,7 +54,6 @@ public:
   static std::wstring getNexusInfoUrlStatic();
   virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return getNexusModIDStatic(); }
   static int getNexusGameIDStatic() { return 110; }
   virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 

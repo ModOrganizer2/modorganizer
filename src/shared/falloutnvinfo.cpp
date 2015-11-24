@@ -94,12 +94,6 @@ std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
 }
 
 
-int FalloutNVInfo::getNexusModIDStatic()
-{
-  return 42572;
-}
-
-
 bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };

@@ -92,11 +92,6 @@ std::wstring Fallout3Info::getNexusInfoUrlStatic()
   return L"http://nmm.nexusmods.com/fallout3";
 }
 
-int Fallout3Info::getNexusModIDStatic()
-{
-  return 16348;
-}
-
 bool Fallout3Info::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };

@@ -3813,7 +3813,8 @@ void MainWindow::on_actionEndorseMO_triggered()
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(ToQString(GameInfo::instance().getNexusPage())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance()->requestToggleEndorsement(GameInfo::instance().getNexusModID(), true, this, QVariant(), QString());
+    NexusInterface::instance()->requestToggleEndorsement(
+          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -3877,7 +3878,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == GameInfo::instance().getNexusModID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->getNexusModOrganizerID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }

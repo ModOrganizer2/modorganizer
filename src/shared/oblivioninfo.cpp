@@ -97,11 +97,6 @@ std::wstring OblivionInfo::getNexusInfoUrlStatic()
 }
 
 
-int OblivionInfo::getNexusModIDStatic()
-{
-  return 38277;
-}
-
 bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };

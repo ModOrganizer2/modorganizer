@@ -80,8 +80,8 @@ public:
 
   virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
   virtual std::wstring getNexusInfoUrl() = 0;
-  virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;
+  //**Still used: SkyrimInfo::getNexusModIDStatic
 
   //**USED ONLY IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
