@@ -62,7 +62,6 @@ public:
   virtual GameInfo::Type getType() = 0;
 
   virtual std::wstring getGameName() const = 0;
-  virtual std::wstring getGameShortName() const = 0;
 
   /// determine the load order mechanism used by this game. this may throw an
   /// exception if the mechanism can't be determined

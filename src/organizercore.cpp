@@ -159,6 +159,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame*)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter, &DelayedFileWriterBase::write);
 

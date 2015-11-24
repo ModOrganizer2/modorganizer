@@ -58,10 +58,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
-#include "organizerproxy.h"
 #include "nxmaccessmanager.h"
 #include <archive.h>
-#include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <ipluginproxy.h>
@@ -70,15 +68,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <questionboxmemory.h>
 #include <taskprogressmanager.h>
 #include <util.h>
-#include <map>
-#include <ctime>
-#include <wchar.h>
-#include <utility.h>
+
 #include <QTime>
 #include <QInputDialog>
 #include <QSettings>
 #include <QWhatsThis>
-#include <sstream>
 #include <QProcess>
 #include <QMenu>
 #include <QBuffer>
@@ -126,8 +120,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
+
+#include <sstream>
 #include <regex>
 #include <functional>
+#include <map>
+#include <ctime>
+#include <wchar.h>
+#include <utility.h>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -4391,8 +4391,8 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
-               << "--game" << ToQString(GameInfo::instance().getGameShortName())
-               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()))
+               << "--game" << m_OrganizerCore.managedGame()->getNexusName()
+               << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--out" << outPath;
 
     if (m_DidUpdateMasterList) {

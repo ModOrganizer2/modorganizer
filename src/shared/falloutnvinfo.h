@@ -41,7 +41,6 @@ public:
   virtual GameInfo::Type getType() { return TYPE_FALLOUTNV; }
 
   virtual std::wstring getGameName() const { return L"New Vegas"; }
-  virtual std::wstring getGameShortName() const { return L"FalloutNV"; }
 
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 

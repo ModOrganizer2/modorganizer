@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 #include <QSettings>
 
+namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 
@@ -416,6 +417,8 @@ public slots:
 
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
+  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+
 private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
@@ -503,6 +506,7 @@ private:
 
   QRegExp m_DateExpression;
 
+  MOBase::IPluginGame *m_ManagedGame;
 };
 
 

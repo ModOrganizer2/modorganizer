@@ -41,7 +41,6 @@ public:
   virtual GameInfo::Type getType() { return TYPE_SKYRIM; }
 
   virtual std::wstring getGameName() const { return L"Skyrim"; }
-  virtual std::wstring getGameShortName() const { return L"Skyrim"; }
 
   virtual LoadOrderMechanism getLoadOrderMechanism() const;
 

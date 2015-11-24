@@ -39,7 +39,7 @@ public:
   virtual GameInfo::Type getType() { return TYPE_OBLIVION; }
 
   virtual std::wstring getGameName() const { return L"Oblivion"; }
-  virtual std::wstring getGameShortName() const { return L"Oblivion"; }
+
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)
