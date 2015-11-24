@@ -56,11 +56,13 @@ public:
 
   virtual ~GameInfo() {}
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   virtual std::wstring getRegPath() = 0;
 
+  //**Used only in savegame which needs refactoring a lot.
   virtual GameInfo::Type getType() = 0;
 
+  //**Currently only used in a nasty mess at initialisation time.
   virtual std::wstring getGameName() const = 0;
 
   /// determine the load order mechanism used by this game. this may throw an
@@ -73,11 +75,11 @@ public:
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   // file name of this games ini file(s)
   virtual std::vector<std::wstring> getIniFileNames() = 0;
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   virtual std::wstring getReferenceDataFile() = 0;
 
   virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
@@ -85,7 +87,7 @@ public:
   virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 
 public:
