@@ -3814,7 +3814,7 @@ void MainWindow::on_actionEndorseMO_triggered()
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(ToQString(GameInfo::instance().getNexusPage())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    //Why pass an empty variant of we're toggling an endorsement?
+    //Why pass an empty variant if we're toggling an endorsement?
     NexusInterface::instance()->requestToggleEndorsement(
           m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), "");
   }

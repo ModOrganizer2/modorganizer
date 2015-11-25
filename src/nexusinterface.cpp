@@ -37,7 +37,6 @@ using namespace MOShared;
 
 NexusBridge::NexusBridge(const QString &subModule)
   : m_Interface(NexusInterface::instance())
-  , m_Url() //Lazily initialised (but redundant)
   , m_SubModule(subModule)
 {
 }

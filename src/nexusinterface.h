@@ -110,7 +110,6 @@ public slots:
 private:
 
   NexusInterface *m_Interface;
-  QString m_Url;
   QString m_SubModule;
   std::set<int> m_RequestIDs;
 
