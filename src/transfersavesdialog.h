@@ -35,7 +35,7 @@ class TransferSavesDialog : public MOBase::TutorableDialog
   Q_OBJECT
   
 public:
-  explicit TransferSavesDialog(const Profile &profile, MOBase::IPluginGame *gamePlugin, QWidget *parent = 0);
+  explicit TransferSavesDialog(const Profile &profile, MOBase::IPluginGame const *gamePlugin, QWidget *parent = 0);
   ~TransferSavesDialog();
   
 private slots:
@@ -76,7 +76,7 @@ private:
 
   Profile m_Profile;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
   std::vector<SaveGame*> m_GlobalSaves;
   std::vector<SaveGame*> m_LocalSaves;

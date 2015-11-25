@@ -1134,14 +1134,15 @@ QDateTime ModInfoForeign::creationTime() const
 
 QString ModInfoForeign::absolutePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data";
+  //I ought to store this, it's used elsewhere
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  return game->dataDirectory().absolutePath();
 }
 
 std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   result.push_back(FLAG_FOREIGN);
-
   return result;
 }
 

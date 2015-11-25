@@ -65,7 +65,7 @@ public:
   //**Currently only used in a nasty mess at initialisation time.
   virtual std::wstring getGameName() const = 0;
 
-  //**USED IN HOOKDLL
+  //**USED IN HOOKDLL and in initialisation
   virtual std::wstring getGameDirectory() const;
 
   // get a list of file extensions for additional files belonging to a save game

@@ -285,14 +285,10 @@ private:
 
   int m_OldExecutableIndex;
 
-  QString m_GamePath;
-
   int m_ContextRow;
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
-
-  //int m_SelectedSaveGame;
 
   CategoryFactory &m_CategoryFactory;
 

@@ -1011,7 +1011,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable, const QStringL
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
-      binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
+      binary = QFileInfo(managedGame()->gameDirectory().absoluteFilePath(executable));
     }
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();

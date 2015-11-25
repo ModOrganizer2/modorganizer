@@ -54,7 +54,7 @@ void Profile::touchFile(QString fileName)
   }
 }
 
-Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
+Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDefaultSettings)
   : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
   , m_GamePlugin(gamePlugin)
 {
@@ -95,7 +95,7 @@ Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSe
 }
 
 
-Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
+Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   : m_Directory(directory)
   , m_GamePlugin(gamePlugin)
   , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
@@ -122,6 +122,8 @@ Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
 Profile::Profile(const Profile &reference)
   : m_Directory(reference.m_Directory)
   , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_GamePlugin(reference.m_GamePlugin)
+
 {
   refreshModStatus();
 }
@@ -483,7 +485,7 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
   m_ModListWriter.write();
 }
 
-Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin)
+Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin)
 {
   QString profileDirectory = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()) + "/" + name;
   reference.copyFilesTo(profileDirectory);

@@ -57,7 +57,7 @@ public:
    * @param name name of the new profile
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
-  Profile(const QString &name, MOBase::IPluginGame *gamePlugin, bool useDefaultSettings);
+  Profile(const QString &name, MOBase::IPluginGame const *gamePlugin, bool useDefaultSettings);
 
   /**
    * @brief constructor
@@ -67,7 +67,7 @@ public:
    * invoking this should always produce a working profile
    * @param directory directory to read the profile from
    **/
-  Profile(const QDir &directory, MOBase::IPluginGame *gamePlugin);
+  Profile(const QDir &directory, MOBase::IPluginGame const *gamePlugin);
 
   Profile(const Profile &reference);
 
@@ -82,7 +82,7 @@ public:
    * @param name of the new profile
    * @param reference profile to copy from
    **/
-  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin);
+  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin);
 
   MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
 
@@ -302,7 +302,7 @@ private:
 
   QDir m_Directory;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const * const m_GamePlugin;
 
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;

@@ -64,6 +64,7 @@ void LoadMechanism::removeHintFile(QDir &targetDirectory)
 
 bool LoadMechanism::isDirectLoadingSupported()
 {
+  //FIXME: Seriously? isn't there a 'do i need steam' thing?
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
   if (game->gameName().compare("oblivion", Qt::CaseInsensitive) == 0) {
     // oblivion can be loaded directly if it's not the steam variant

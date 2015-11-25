@@ -18,18 +18,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "settingsdialog.h"
+
 #include "ui_settingsdialog.h"
 #include "categoriesdialog.h"
 #include "helper.h"
 #include "noeditdelegate.h"
+#include "iplugingame.h"
 #include <gameinfo.h>
+#include "settings.h"
+
 #include <QDirIterator>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QShortcut>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include "settings.h"
 
 
 using namespace MOBase;
@@ -87,7 +90,11 @@ void SettingsDialog::on_categoriesBtn_clicked()
 
 void SettingsDialog::on_bsaDateBtn_clicked()
 {
-  Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(), GameInfo::instance().getGameDirectory().append(L"\\data"));
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  QDir dir = game->dataDirectory();
+
+  Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(),
+                       dir.absolutePath().toStdWString());
 }
 
 void SettingsDialog::on_browseDownloadDirBtn_clicked()

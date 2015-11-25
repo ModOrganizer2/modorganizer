@@ -32,7 +32,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame *gamePlugin, QWidget *parent)
+TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame const *gamePlugin, QWidget *parent)
   : TutorableDialog("TransferSaves", parent)
   , ui(new Ui::TransferSavesDialog)
   , m_Profile(profile)

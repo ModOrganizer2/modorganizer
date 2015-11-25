@@ -153,7 +153,6 @@ MainWindow::MainWindow(const QString &exeName
   , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
-  , m_GamePath(ToQString(GameInfo::instance().getGameDirectory()))
   , m_CategoryFactory(CategoryFactory::instance())
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
@@ -1031,9 +1030,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     if (ui->profileBox->currentIndex() == 0) {
       ui->profileBox->setCurrentIndex(previousIndex);
-      ProfilesDialog(ui->profileBox->currentText(), this).exec();
+      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
       while (!refreshProfiles()) {
-        ProfilesDialog(ui->profileBox->currentText(), this).exec();
+        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
       }
     } else {
       activateSelectedProfile();
@@ -1819,16 +1818,18 @@ void MainWindow::on_actionInstallMod_triggered()
 
 void MainWindow::on_actionAdd_Profile_triggered()
 {
-  bool repeat = true;
-  while (repeat) {
-    ProfilesDialog profilesDialog(m_GamePath, this);
+  for (;;) {
+    //Note: Calling this with an invalid profile name. Not quite sure why
+    ProfilesDialog profilesDialog(m_OrganizerCore.managedGame()->gameDirectory().absolutePath(),
+                                  m_OrganizerCore.managedGame(),
+                                  this);
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
     stopMonitorSaves();
     profilesDialog.exec();
     refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
     if (refreshProfiles() && !profilesDialog.failed()) {
-      repeat = false;
+      break;
     }
   }
 //  addProfile();
@@ -3225,9 +3226,9 @@ void MainWindow::fixMods_clicked()
 
   // search in data
   {
-    QDir dataDir(m_GamePath + "/data");
+    QDir dataDir(m_OrganizerCore.managedGame()->dataDirectory());
     QStringList esps = dataDir.entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back("<data>");
@@ -3241,7 +3242,7 @@ void MainWindow::fixMods_clicked()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
 
     QStringList esps = QDir(modInfo->absolutePath()).entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back(modInfo->name());
@@ -3253,7 +3254,7 @@ void MainWindow::fixMods_clicked()
   {
     QDir overwriteDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
     QStringList esps = overwriteDir.entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back("<overwrite>");
