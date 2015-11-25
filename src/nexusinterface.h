@@ -20,20 +20,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSINTERFACE_H
 #define NEXUSINTERFACE_H
 
-
-
 #include <utility.h>
 #include <gameinfo.h>
 #include <versioninfo.h>
 #include <imodrepositorybridge.h>
+
 #include <QNetworkReply>
 #include <QNetworkDiskCache>
 #include <QQueue>
 #include <QVariant>
 #include <QTimer>
+
 #include <list>
 #include <set>
 
+namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 class NXMAccessManager;
@@ -108,10 +109,6 @@ public slots:
 
 private:
 
-  QString url();
-
-private:
-
   NexusInterface *m_Interface;
   QString m_Url;
   QString m_SubModule;
@@ -150,26 +147,64 @@ public:
   /**
    * @brief request description for a mod
    *
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
+   * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   **/
+  int requestDescription(int modID, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestDescription(modID, receiver, userData, subModule, m_Game);
+  }
+
+  /**
+   * @brief request description for a mod
+   *
    * @param modID id of the mod caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @param game Game with which the mod is associated
    * @return int an id to identify the request
    **/
   int requestDescription(int modID, QObject *receiver, QVariant userData, const QString &subModule,
-                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()),
-                         int nexusGameId = -1);
+                         MOBase::IPluginGame const *game);
+
+  /**
+   * @brief request nexus descriptions for multiple mods at once
+   * @param modIDs a list of ids of mods the caller is interested in (assumed to be for the current game)
+   * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   */
+  int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestUpdates(modIDs, receiver, userData, subModule, m_Game);
+  }
 
   /**
    * @brief request nexus descriptions for multiple mods at once
    * @param modIDs a list of ids of mods the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @param game the game with which the mods are associated
    * @return int an id to identify the request
    */
   int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData, const QString &subModule,
-                     const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+                     MOBase::IPluginGame const *game);
+
+  /**
+   * @brief request a list of the files belonging to a mod
+   *
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
+   * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   **/
+  int requestFiles(int modID, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestFiles(modID, receiver, userData, subModule, m_Game);
+  }
+
 
   /**
    * @brief request a list of the files belonging to a mod
@@ -177,24 +212,52 @@ public:
    * @param modID id of the mod caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @param game the game with which the mods are associated
    * @return int an id to identify the request
    **/
   int requestFiles(int modID, QObject *receiver, QVariant userData, const QString &subModule,
-                   const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+                   MOBase::IPluginGame const *game);
 
   /**
    * @brief request info about a single file of a mod
    *
-   * @param modID id of the mod caller is interested in
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
    * @param fileID id of the file the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @return int an id to identify the request
+   **/
+  int requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestFileInfo(modID, fileID, receiver, userData, subModule, m_Game);
+  }
+
+  /**
+   * @brief request info about a single file of a mod
+   *
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
+   * @param fileID id of the file the caller is interested in
+   * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+   * @param userData user data to be returned with the result
+   * @param game the game with which the mods are associated
    * @return int an id to identify the request
    **/
   int requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
-                      const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+                      MOBase::IPluginGame const *game);
+
+  /**
+   * @brief request the download url of a file
+   *
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
+   * @param fileID id of the file the caller is interested in
+   * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   **/
+  int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestDownloadURL(modID, fileID, receiver, userData, subModule, m_Game);
+  }
 
   /**
    * @brief request the download url of a file
@@ -203,11 +266,23 @@ public:
    * @param fileID id of the file the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @param game the game with which the mods are associated
    * @return int an id to identify the request
    **/
-  int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
-                         const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+  int requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+
+  /**
+   * @brief toggle endorsement state of the mod
+   * @param modID id of the mod (assumed to be for the current game)
+   * @param endorse true if the mod should be endorsed, false for un-endorse
+   * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   */
+  int requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestToggleEndorsement(modID, endorse, receiver, userData, subModule, m_Game);
+  }
 
   /**
    * @brief toggle endorsement state of the mod
@@ -215,11 +290,11 @@ public:
    * @param endorse true if the mod should be endorsed, false for un-endorse
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
-   * @param url the url to request from
+   * @param game the game with which the mods are associated
    * @return int an id to identify the request
    */
   int requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData, const QString &subModule,
-                               const QString &url = MOBase::ToQString(MOShared::GameInfo::instance().getNexusInfoUrl()));
+                               MOBase::IPluginGame const *game);
 
   /**
    * @param directory the directory to store cache files
@@ -247,6 +322,11 @@ public:
    */
   static void interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query);
 
+  /**
+   * @brief get the currently managed game
+   */
+  MOBase::IPluginGame const *managedGame() const;
+
 signals:
 
   void requestNXMDownload(const QString &url);
@@ -260,6 +340,9 @@ signals:
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+
+public slots:
+  void managedGameChanged(MOBase::IPluginGame const *game);
 
 private slots:
 
@@ -295,9 +378,9 @@ private:
     int m_ID;
     int m_Endorse;
 
-    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
-    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
-    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, const QString &url, int nexusGameId);
+    NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   private:
     static QAtomicInt s_NextID;
@@ -323,6 +406,8 @@ private:
 
   MOBase::VersionInfo m_MOVersion;
   QString m_NMMVersion;
+
+  MOBase::IPluginGame const *m_Game;
 
 };
 

@@ -88,12 +88,6 @@ std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme)
 }
 
 
-std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/newvegas";
-}
-
-
 bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };

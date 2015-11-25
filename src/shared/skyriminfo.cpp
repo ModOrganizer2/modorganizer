@@ -99,17 +99,6 @@ std::wstring SkyrimInfo::getNexusPage(bool nmmScheme)
 }
 
 
-std::wstring SkyrimInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/skyrim";
-}
-
-
-int SkyrimInfo::getNexusModIDStatic()
-{
-  return 1334;
-}
-
 bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
 {
   static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };

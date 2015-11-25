@@ -1,5 +1,6 @@
 #include "organizercore.h"
 
+#include "iplugingame.h"
 #include "mainwindow.h"
 #include "messagedialog.h"
 #include "logbuffer.h"
@@ -19,11 +20,14 @@
 #include <appconfig.h>
 #include <report.h>
 #include <questionboxmemory.h>
+
 #include <QNetworkInterface>
 #include <QMessageBox>
 #include <QDialogButtonBox>
 #include <QApplication>
+
 #include <Psapi.h>
+
 #include <functional>
 
 
@@ -158,9 +162,10 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame*)));
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), NexusInterface::instance(), SLOT(managedGameChanged(MOBase::IPluginGame const *)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter, &DelayedFileWriterBase::write);
 
@@ -392,6 +397,14 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   if (!m_GameName.isEmpty()) {
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
     emit managedGameChanged(m_GamePlugin);
+  }
+  //Do this the hard way
+  for (const IPluginGame * const game : container->plugins<IPluginGame>()) {
+    QString n = game->getNexusName();
+    if (game->getNexusName() == "Skyrim") {
+      m_Updater.setNexusDownload(game);
+      break;
+    }
   }
 }
 
@@ -1308,7 +1321,12 @@ PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
   return result;
 }
 
-IPluginGame *OrganizerCore::managedGame() const
+IPluginGame const *OrganizerCore::managedGame() const
+{
+  return m_GamePlugin;
+}
+
+IPluginGame *OrganizerCore::managedGameForUpdate() const
 {
   return m_GamePlugin;
 }

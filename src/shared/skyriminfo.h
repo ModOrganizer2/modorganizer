@@ -51,9 +51,6 @@ public:
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
 
-  static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
-  static int getNexusModIDStatic();
   static int getNexusGameIDStatic() { return 110; }
   virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 

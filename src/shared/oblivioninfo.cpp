@@ -91,12 +91,6 @@ std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
 }
 
 
-std::wstring OblivionInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/oblivion";
-}
-
-
 bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };

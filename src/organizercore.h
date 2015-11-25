@@ -99,7 +99,8 @@ public:
   ModListSortProxy *createModListProxyModel();
   PluginListSortProxy *createPluginListProxyModel();
 
-  MOBase::IPluginGame *managedGame() const;
+  MOBase::IPluginGame const *managedGame() const;
+  MOBase::IPluginGame *managedGameForUpdate() const;
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
