@@ -261,7 +261,7 @@ public slots:
    * @brief The currently managed game has changed
    * @param gamePlugin
    */
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 signals:
 
@@ -347,7 +347,7 @@ private:
 
   QTemporaryFile m_TempFile;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
 };
 

@@ -45,7 +45,7 @@ public:
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
   virtual bool onModInstalled(const std::function<void (const QString&)> &func);
 
-  virtual MOBase::IPluginGame *managedGame() const;
+  virtual MOBase::IPluginGame const *managedGame() const;
 
 private:
 

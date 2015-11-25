@@ -107,7 +107,10 @@ public:
   /**
    * @brief read the mod directory and Mod ModInfo objects for all subdirectories
    **/
-  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure, bool displayForeign, const MOBase::IPluginGame *game);
+  static void updateFromDisc(const QString &modDirectory,
+                             MOShared::DirectoryEntry **directoryStructure,
+                             bool displayForeign,
+                             MOBase::IPluginGame const *game);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 

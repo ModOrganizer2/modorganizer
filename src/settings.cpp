@@ -116,7 +116,7 @@ void Settings::registerAsNXMHandler(bool force)
   }
 }
 
-void Settings::managedGameChanged(IPluginGame *gamePlugin)
+void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
 }

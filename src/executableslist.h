@@ -78,7 +78,7 @@ public:
   /**
    * @brief initialise the list with the executables preconfigured for this game
    **/
-  void init(MOBase::IPluginGame *game);
+  void init(MOBase::IPluginGame const *game);
 
   /**
    * @brief find an executable by its name

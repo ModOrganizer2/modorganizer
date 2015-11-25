@@ -203,7 +203,10 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 }
 
 
-void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **directoryStructure, bool displayForeign, MOBase::IPluginGame const *game)
+void ModInfo::updateFromDisc(const QString &modDirectory,
+                             DirectoryEntry **directoryStructure,
+                             bool displayForeign,
+                             MOBase::IPluginGame const *game)
 {
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();

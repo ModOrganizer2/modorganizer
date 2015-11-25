@@ -38,7 +38,7 @@ ExecutablesList::~ExecutablesList()
 {
 }
 
-void ExecutablesList::init(IPluginGame *game)
+void ExecutablesList::init(IPluginGame const *game)
 {
   Q_ASSERT(game != nullptr);
   m_Executables.clear();

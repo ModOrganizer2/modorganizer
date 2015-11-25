@@ -167,7 +167,7 @@ MOBase::IModList *OrganizerProxy::modList() const
   return m_Proxied->modList();
 }
 
-MOBase::IPluginGame *OrganizerProxy::managedGame() const
+MOBase::IPluginGame const *OrganizerProxy::managedGame() const
 {
   return m_Proxied->managedGame();
 }

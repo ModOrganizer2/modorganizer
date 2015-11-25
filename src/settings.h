@@ -299,7 +299,7 @@ public:
 
 public slots:
 
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private:
 
@@ -420,7 +420,7 @@ private:
 
   static Settings *s_Instance;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
   QSettings m_Settings;
 

@@ -1211,7 +1211,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   }
 }
 
-void PluginList::managedGameChanged(IPluginGame *gamePlugin)
+void PluginList::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
 }

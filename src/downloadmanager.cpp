@@ -1465,7 +1465,7 @@ void DownloadManager::directoryChanged(const QString&)
   refreshList();
 }
 
-void DownloadManager::managedGameChanged(MOBase::IPluginGame *managedGame)
+void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)
 {
   m_ManagedGame = managedGame;
 }

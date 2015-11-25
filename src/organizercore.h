@@ -193,7 +193,7 @@ signals:
    */
   void modInstalled(const QString &modName);
 
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private:
 

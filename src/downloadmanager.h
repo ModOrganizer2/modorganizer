@@ -417,7 +417,7 @@ public slots:
 
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private slots:
 
@@ -506,7 +506,7 @@ private:
 
   QRegExp m_DateExpression;
 
-  MOBase::IPluginGame *m_ManagedGame;
+  MOBase::IPluginGame const *m_ManagedGame;
 };
 
 
