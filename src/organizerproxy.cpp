@@ -1,6 +1,5 @@
 #include "organizerproxy.h"
 
-#include <gameinfo.h>
 #include <appconfig.h>
 
 #include <QApplication>

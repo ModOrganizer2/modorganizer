@@ -68,6 +68,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <questionboxmemory.h>
 #include <taskprogressmanager.h>
 #include <util.h>
+#include "gameinfo.h"
 
 #include <QTime>
 #include <QInputDialog>
@@ -113,6 +114,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCoreApplication>
 #include <QProgressDialog>
 #include <scopeguard.h>
+
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>

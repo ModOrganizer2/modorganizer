@@ -48,7 +48,6 @@ public:
   virtual std::wstring getReferenceDataFile();
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
-  virtual int getNexusGameID() { return 101; }
 
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
 

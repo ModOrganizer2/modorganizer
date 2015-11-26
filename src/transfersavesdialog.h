@@ -22,11 +22,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include "profile.h"
-#include <iplugingame.h>
 
-namespace Ui {
-class TransferSavesDialog;
-}
+namespace Ui { class TransferSavesDialog; }
+namespace MOBase { class IPluginGame; }
 
 class SaveGame;
 

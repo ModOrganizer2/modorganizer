@@ -18,12 +18,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "transfersavesdialog.h"
+
 #include "ui_transfersavesdialog.h"
+#include "iplugingame.h"
 #include "savegamegamebyro.h"
 #include "utility.h"
-#include <gameinfo.h>
+
 #include <QDir>
 #include <QMessageBox>
+
 #include <Shlwapi.h>
 #include <shlobj.h>
 

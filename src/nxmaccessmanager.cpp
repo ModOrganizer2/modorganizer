@@ -18,6 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
+
+#include "iplugingame.h"
 #include "nxmurl.h"
 #include "report.h"
 #include "utility.h"
@@ -26,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include <gameinfo.h>
 #include <json.h>
+
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>
@@ -127,9 +130,13 @@ void NXMAccessManager::startLoginCheck()
 void NXMAccessManager::retrieveCredentials()
 {
   qDebug("retrieving credentials");
-  QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage())
+
+  //This may be overkill as
+  //www.nexusmods.com/Core/Libs/Flamework/Entities/User?GetCredentials
+  //seems to work fine.
+  QNetworkRequest request(m_Game->getNexusManagementURL()
                           + QString("/Core/Libs/Flamework/Entities/User?GetCredentials&game_id=%1"
-                                    ).arg(GameInfo::instance().getNexusGameID()));
+                                    ).arg(m_Game->getNexusGameID()));
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 
@@ -339,3 +346,7 @@ void NXMAccessManager::loginChecked()
   m_LoginReply = nullptr;
 }
 
+void NXMAccessManager::managedGameChanged(MOBase::IPluginGame const *game)
+{
+  m_Game = game;
+}

@@ -162,6 +162,7 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
+  //This seems awfully imperative
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));

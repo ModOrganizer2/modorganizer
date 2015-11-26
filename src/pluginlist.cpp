@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "scopeguard.h"
 #include "modinfo.h"
 #include <utility.h>
-#include <gameinfo.h>
 #include <iplugingame.h>
 #include <espfile.h>
 #include <report.h>

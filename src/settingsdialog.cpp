@@ -24,19 +24,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "helper.h"
 #include "noeditdelegate.h"
 #include "iplugingame.h"
-#include <gameinfo.h>
 #include "settings.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QShortcut>
+
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 
 using namespace MOBase;
-using namespace MOShared;
 
 
 SettingsDialog::SettingsDialog(QWidget *parent)

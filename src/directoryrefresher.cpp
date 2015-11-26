@@ -23,7 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "report.h"
 #include "modinfo.h"
-#include <gameinfo.h>
 
 #include <QApplication>
 #include <QDir>

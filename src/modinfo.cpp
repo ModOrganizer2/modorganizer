@@ -29,7 +29,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "filenamestring.h"
 
-#include <gameinfo.h>
 #include <iplugingame.h>
 #include <versioninfo.h>
 #include <appconfig.h>

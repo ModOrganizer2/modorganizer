@@ -555,6 +555,7 @@ void NexusInterface::requestTimeout()
 void NexusInterface::managedGameChanged(IPluginGame const *game)
 {
   m_Game = game;
+  m_AccessManager->managedGameChanged(game);
 }
 
 

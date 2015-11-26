@@ -18,10 +18,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "syncoverwritedialog.h"
+
 #include "ui_syncoverwritedialog.h"
 #include <utility.h>
 #include <report.h>
-#include <gameinfo.h>
+
 #include <QDir>
 #include <QDirIterator>
 #include <QComboBox>

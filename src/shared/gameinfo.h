@@ -47,20 +47,16 @@ public:
     TYPE_SKYRIM
   };
 
-  enum LoadOrderMechanism {
-    TYPE_FILETIME,
-    TYPE_PLUGINSTXT
-  };
-
 public:
 
   virtual ~GameInfo() {}
 
-  //**USED ONLY IN HOOKDLL
-  virtual std::wstring getRegPath() = 0;
-
   //**Used only in savegame which needs refactoring a lot.
   virtual GameInfo::Type getType() = 0;
+
+  //**Used only in savegame which needs refactoring a lot.
+  // get a list of file extensions for additional files belonging to a save game
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
   //**Currently only used in a nasty mess at initialisation time.
   virtual std::wstring getGameName() const = 0;
@@ -68,8 +64,13 @@ public:
   //**USED IN HOOKDLL and in initialisation
   virtual std::wstring getGameDirectory() const;
 
-  // get a list of file extensions for additional files belonging to a save game
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
+  //**USED IN HOOKDLL and initialisation
+  // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
+  // needs to be called before the instance can be retrieved
+  static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
+
+  //**USED ONLY IN HOOKDLL
+  virtual std::wstring getRegPath() = 0;
 
   //**USED ONLY IN HOOKDLL
   // file name of this games ini file(s)
@@ -78,20 +79,12 @@ public:
   //**USED ONLY IN HOOKDLL
   virtual std::wstring getReferenceDataFile() = 0;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
-  virtual int getNexusGameID() = 0;
-
   //**USED ONLY IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 
-public:
+  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
 
-  //**USED IN HOOKDLL
-  // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
-  // needs to be called before the instance can be retrieved
-  static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
-
-  //**USED IN HOOKDLL
+  //**USED IN HOOKDLL and everywhere that uses GameInfo
   static GameInfo& instance();
 
 protected:
