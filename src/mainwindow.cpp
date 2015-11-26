@@ -4401,7 +4401,7 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
-               << "--game" << m_OrganizerCore.managedGame()->getNexusName()
+               << "--game" << m_OrganizerCore.managedGame()->getGameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--out" << outPath;
 

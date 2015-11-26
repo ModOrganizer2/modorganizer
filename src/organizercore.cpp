@@ -401,8 +401,8 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   }
   //Do this the hard way
   for (const IPluginGame * const game : container->plugins<IPluginGame>()) {
-    QString n = game->getNexusName();
-    if (game->getNexusName() == "Skyrim") {
+    QString n = game->getGameShortName();
+    if (game->getGameShortName() == "Skyrim") {
       m_Updater.setNexusDownload(game);
       break;
     }

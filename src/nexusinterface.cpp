@@ -244,12 +244,12 @@ bool NexusInterface::isURLGameRelated(const QUrl &url) const
 {
   QString const name(url.toString());
   return name.startsWith(getGameURL() + "/") ||
-         name.startsWith("http://" + m_Game->getNexusName().toLower() + ".nexusmods.com/mods/");
+         name.startsWith("http://" + m_Game->getGameShortName().toLower() + ".nexusmods.com/mods/");
 }
 
 QString NexusInterface::getGameURL() const
 {
-  return "http://www.nexusmods.com/" + m_Game->getNexusName().toLower();
+  return "http://www.nexusmods.com/" + m_Game->getGameShortName().toLower();
 }
 
 QString NexusInterface::getModURL(int modID) const
@@ -576,7 +576,7 @@ void NexusInterface::managedGameChanged(IPluginGame const *game)
 namespace {
   QString get_management_url(MOBase::IPluginGame const *game)
   {
-    return "http://nmm.nexusmods.com/" + game->getNexusName().toLower();
+    return "http://nmm.nexusmods.com/" + game->getGameShortName().toLower();
   }
 }
 
