@@ -82,8 +82,6 @@ public:
   //**USED ONLY IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
-
   //**USED IN HOOKDLL and everywhere that uses GameInfo
   static GameInfo& instance();
 

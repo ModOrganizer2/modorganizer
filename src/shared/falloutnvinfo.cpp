@@ -78,16 +78,6 @@ std::wstring FalloutNVInfo::getReferenceDataFile()
   return L"Fallout - Meshes.bsa";
 }
 
-std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme)
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/newvegas";
-  } else {
-    return L"http://www.nexusmods.com/newvegas";
-  }
-}
-
-
 bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };

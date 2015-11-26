@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
 
+#include "iplugingame.h"
 #include "report.h"
 #include "utility.h"
 #include "messagedialog.h"
@@ -36,9 +37,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QMenu>
 #include <QFileSystemModel>
-#include <Shlwapi.h>
-#include <sstream>
 #include <QInputDialog>
+
+#include <Shlwapi.h>
+
+#include <sstream>
 
 
 using namespace MOBase;
@@ -688,7 +691,9 @@ void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 
 void ModInfoDialog::linkClicked(const QUrl &url)
 {
-  if (url.toString().startsWith(ToQString(GameInfo::instance().getNexusPage(false)))) {
+  //FIXME: See elsewhere. This needs to be a property of the installed mod.
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  if (game->isRelatedURL(url)) {
     this->close();
     emit nexusLinkActivated(url.toString());
   } else {
@@ -832,7 +837,10 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
   if (modID != 0) {
-    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID);
+    //FIXME: We should remember the game for which this mod was installed in the
+    //modInfo and get the web page via that.
+    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    QString nexusLink = QString("%1/downloads/file.php?id=%2").arg(game->getNexusDisplayURL()).arg(modID);
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);

@@ -49,8 +49,6 @@ public:
 
   virtual std::wstring getReferenceDataFile();
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true);
-
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
 
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to

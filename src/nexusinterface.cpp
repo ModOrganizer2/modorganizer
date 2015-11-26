@@ -555,9 +555,14 @@ void NexusInterface::requestTimeout()
 void NexusInterface::managedGameChanged(IPluginGame const *game)
 {
   m_Game = game;
-  m_AccessManager->managedGameChanged(game);
 }
 
+namespace {
+  QString get_management_url(MOBase::IPluginGame const *game)
+  {
+    return "http://nmm.nexusmods.com/" + game->getNexusName().toLower();
+  }
+}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , NexusInterface::NXMRequestInfo::Type type
@@ -573,7 +578,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(game->getNexusManagementURL())
+  , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->getNexusGameID())
   , m_Endorse(false)
@@ -594,7 +599,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(game->getNexusManagementURL())
+  , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->getNexusGameID())
   , m_Endorse(false)
@@ -615,7 +620,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(game->getNexusManagementURL())
+  , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->getNexusGameID())
   , m_Endorse(false)

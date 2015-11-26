@@ -85,10 +85,6 @@ private slots:
   void loginError(QNetworkReply::NetworkError errorCode);
   void loginTimeout();
 
-public:
-  //This would be a slot but the NexusInterface code calls this
-  void managedGameChanged(MOBase::IPluginGame const *game);
-
 protected:
 
   virtual QNetworkReply *createRequest(
@@ -129,8 +125,6 @@ private:
     LOGIN_REFUSED,
     LOGIN_VALID
   } m_LoginState = LOGIN_NOT_CHECKED;
-
-  MOBase::IPluginGame const *m_Game;
 
 };
 

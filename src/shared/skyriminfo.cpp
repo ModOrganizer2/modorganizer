@@ -88,17 +88,6 @@ std::wstring SkyrimInfo::getReferenceDataFile()
   return L"Skyrim - Meshes.bsa";
 }
 
-
-std::wstring SkyrimInfo::getNexusPage(bool nmmScheme)
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/skyrim";
-  } else {
-    return L"http://www.nexusmods.com/skyrim";
-  }
-}
-
-
 bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
 {
   static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };

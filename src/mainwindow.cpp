@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include "spawn.h"
 #include "report.h"
 #include "modlist.h"
@@ -68,7 +69,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <questionboxmemory.h>
 #include <taskprogressmanager.h>
 #include <util.h>
-#include "gameinfo.h"
+#include <scopeguard.h>
 
 #include <QTime>
 #include <QInputDialog>
@@ -95,10 +96,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtPlugin>
 #include <QIdentityProxyModel>
 #include <QClipboard>
-#include <Psapi.h>
-#include <shlobj.h>
-#include <ShellAPI.h>
-#include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
 #include <QJsonDocument>
@@ -113,7 +110,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include <QCoreApplication>
 #include <QProgressDialog>
-#include <scopeguard.h>
 
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
@@ -122,6 +118,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
+
+#include <Psapi.h>
+#include <shlobj.h>
+#include <ShellAPI.h>
+#include <TlHelp32.h>
 
 #include <sstream>
 #include <regex>
@@ -2528,7 +2529,7 @@ void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
-    nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
+    nexusLinkActivated(QString("%1/mods/%2").arg(m_OrganizerCore.managedGame()->getNexusDisplayURL()).arg(modID));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }
@@ -3420,7 +3421,9 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  ::ShellExecuteW(nullptr, L"open", GameInfo::instance().getNexusPage(false).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open",
+                  m_OrganizerCore.managedGame()->getNexusDisplayURL().toStdWString().c_str(),
+                  nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 
@@ -3814,11 +3817,11 @@ void MainWindow::on_actionUpdate_triggered()
 void MainWindow::on_actionEndorseMO_triggered()
 {
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
-                            tr("Do you want to endorse Mod Organizer on %1 now?").arg(ToQString(GameInfo::instance().getNexusPage())),
+                            tr("Do you want to endorse Mod Organizer on %1 now?").arg(
+                              m_OrganizerCore.managedGame()->getNexusDisplayURL()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    //Why pass an empty variant if we're toggling an endorsement?
     NexusInterface::instance()->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), "");
+          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 

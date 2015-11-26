@@ -77,20 +77,6 @@ std::vector<std::wstring> OblivionInfo::getIniFileNames()
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");
 }
 
-
-
-
-
-std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/oblivion";
-  } else {
-    return L"http://www.nexusmods.com/oblivion";
-  }
-}
-
-
 bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
 {
   static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };
