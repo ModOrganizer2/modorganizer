@@ -2529,7 +2529,7 @@ void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
-    nexusLinkActivated(QString("%1/mods/%2").arg(m_OrganizerCore.managedGame()->getNexusDisplayURL()).arg(modID));
+    nexusLinkActivated(NexusInterface::instance()->getModURL(modID));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }
@@ -3422,7 +3422,7 @@ void MainWindow::on_actionSettings_triggered()
 void MainWindow::on_actionNexus_triggered()
 {
   ::ShellExecuteW(nullptr, L"open",
-                  m_OrganizerCore.managedGame()->getNexusDisplayURL().toStdWString().c_str(),
+                  NexusInterface::instance()->getGameURL().toStdWString().c_str(),
                   nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -3818,7 +3818,7 @@ void MainWindow::on_actionEndorseMO_triggered()
 {
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                              m_OrganizerCore.managedGame()->getNexusDisplayURL()),
+                                      NexusInterface::instance()->getGameURL()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance()->requestToggleEndorsement(
           m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());

@@ -325,6 +325,26 @@ public:
    */
   MOBase::IPluginGame const *managedGame() const;
 
+  /**
+   * @brief see if the passed URL is related to the current game
+   *
+   * Arguably, this should optionally take a gameplugin pointer
+   */
+  bool isURLGameRelated(QUrl const &url) const;
+
+  /**
+   * @brief Get the nexus page for the current game
+   *
+   * Arguably, this should optionally take a gameplugin pointer
+   */
+  QString getGameURL() const;
+
+  /**
+   * @brief Get the URL for the mod web page
+   * @param modID
+   */
+  QString getModURL(int modID) const;
+
 signals:
 
   void requestNXMDownload(const QString &url);

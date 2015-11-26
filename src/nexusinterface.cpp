@@ -240,6 +240,22 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
   }
 }
 
+bool NexusInterface::isURLGameRelated(const QUrl &url) const
+{
+  QString const name(url.toString());
+  return name.startsWith(getGameURL() + "/") ||
+         name.startsWith("http://" + m_Game->getNexusName().toLower() + ".nexusmods.com/mods/");
+}
+
+QString NexusInterface::getGameURL() const
+{
+  return "http://www.nexusmods.com/" + m_Game->getNexusName().toLower();
+}
+
+QString NexusInterface::getModURL(int modID) const
+{
+  return QString("%1/mods/%2").arg(getGameURL()).arg(modID);
+}
 
 int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,
                                        const QString &subModule, MOBase::IPluginGame const *game)
