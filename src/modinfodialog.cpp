@@ -28,7 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "questionboxmemory.h"
 #include "settings.h"
 #include "categories.h"
-#include <gameinfo.h>
 
 #include <QDir>
 #include <QDirIterator>
@@ -45,7 +44,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
-using namespace MOShared;
 
 
 class ModFileListWidget : public QListWidgetItem {
