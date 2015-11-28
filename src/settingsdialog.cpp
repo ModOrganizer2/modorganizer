@@ -89,7 +89,7 @@ void SettingsDialog::on_categoriesBtn_clicked()
 
 void SettingsDialog::on_bsaDateBtn_clicked()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
   QDir dir = game->dataDirectory();
 
   Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(),

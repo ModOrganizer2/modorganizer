@@ -58,13 +58,10 @@ public:
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
-  //**Currently only used in a nasty mess at initialisation time.
-  virtual std::wstring getGameName() const = 0;
-
-  //**USED IN HOOKDLL and in initialisation
+  //**USED IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
 
-  //**USED IN HOOKDLL and initialisation
+  //**USED IN HOOKDLL
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
   static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");

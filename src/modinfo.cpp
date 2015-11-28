@@ -290,7 +290,7 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
   std::vector<int> modIDs;
 
   //I ought to store this, it's used elsewhere
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
 
   modIDs.push_back(game->getNexusModOrganizerID());
 
@@ -935,7 +935,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       m_CachedContent.push_back(CONTENT_BSA);
     }
 
-    ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+    ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame const *>()->feature<ScriptExtender>();
 
     if (extender != nullptr) {
       QString sePluginPath = extender->name() + "/plugins";
@@ -1137,7 +1137,7 @@ QDateTime ModInfoForeign::creationTime() const
 QString ModInfoForeign::absolutePath() const
 {
   //I ought to store this, it's used elsewhere
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
   return game->dataDirectory().absolutePath();
 }
 

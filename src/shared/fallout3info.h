@@ -40,8 +40,6 @@ public:
 
   virtual GameInfo::Type getType() { return TYPE_FALLOUT3; }
 
-  virtual std::wstring getGameName() const { return L"Fallout 3"; }
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

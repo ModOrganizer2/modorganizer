@@ -40,8 +40,6 @@ public:
 
   virtual GameInfo::Type getType() { return TYPE_FALLOUTNV; }
 
-  virtual std::wstring getGameName() const { return L"New Vegas"; }
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

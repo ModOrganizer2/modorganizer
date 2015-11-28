@@ -40,8 +40,6 @@ public:
 
   virtual GameInfo::Type getType() { return TYPE_SKYRIM; }
 
-  virtual std::wstring getGameName() const { return L"Skyrim"; }
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

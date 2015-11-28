@@ -73,7 +73,7 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
-  void setManagedGame(const QString &gameName, const QString &gamePath);
+  void setManagedGame(const MOBase::IPluginGame *game);
 
   void updateExecutablesList(QSettings &settings);
 
@@ -100,7 +100,6 @@ public:
   PluginListSortProxy *createPluginListProxyModel();
 
   MOBase::IPluginGame const *managedGame() const;
-  MOBase::IPluginGame *managedGameForUpdate() const;
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
@@ -234,7 +233,7 @@ private:
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 
