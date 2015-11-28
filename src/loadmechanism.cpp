@@ -81,9 +81,7 @@ bool LoadMechanism::isScriptExtenderSupported()
   ScriptExtender *extender = game->feature<ScriptExtender>();
 
   // test if there even is an extender for the managed game and if so whether it's installed
-  return (extender != nullptr)
-      && (game->gameDirectory().exists(extender->name() + "_loader.exe")
-          || game->gameDirectory().exists(extender->name() + "_steam_loader.dll"));
+  return extender != nullptr && extender->isInstalled();
 }
 
 bool LoadMechanism::isProxyDLLSupported()
