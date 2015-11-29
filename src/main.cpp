@@ -26,21 +26,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <DbgHelp.h>
-#include <cstdarg>
+
 #include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <scopeguard.h>
-#include <stdexcept>
 #include "mainwindow.h"
 #include <report.h>
 #include "modlist.h"
 #include "profile.h"
 #include "gameinfo.h"
-#include "fallout3info.h"
-#include "falloutnvinfo.h"
-#include "oblivioninfo.h"
-#include "skyriminfo.h"
 #include "spawn.h"
 #include "executableslist.h"
 #include "singleinstance.h"
@@ -51,11 +46,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
-#include <iostream>
-#include <ShellAPI.h>
 #include <eh.h>
 #include <windows_error.h>
-#include <boost/scoped_array.hpp>
+
 #include <QApplication>
 #include <QPushButton>
 #include <QListWidget>
@@ -76,6 +69,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDesktopServices>
 #include <QLibraryInfo>
 #include <QSslSocket>
+
+#include <boost/scoped_array.hpp>
+
+#include <ShellAPI.h>
+
+#include <cstdarg>
+#include <iostream>
+#include <stdexcept>
 
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
@@ -565,6 +566,9 @@ int main(int argc, char *argv[])
     }
 
     organizer.setManagedGame(game);
+
+    //*sigh just for making it work
+    GameInfo::init(application.applicationDirPath().toStdWString(), game->gameDirectory().absolutePath().toStdWString());
 
     organizer.createDefaultProfile();
 

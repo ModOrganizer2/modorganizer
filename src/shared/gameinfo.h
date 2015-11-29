@@ -51,6 +51,9 @@ public:
 
   virtual ~GameInfo() {}
 
+  //**USED IN HOOKDLL and savegame code
+  static GameInfo& instance();
+
   //**Used only in savegame which needs refactoring a lot.
   virtual GameInfo::Type getType() = 0;
 
@@ -58,10 +61,10 @@ public:
   // get a list of file extensions for additional files belonging to a save game
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
 
-  //**USED IN HOOKDLL
+  //**USED ONLY IN HOOKDLL
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
   static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
@@ -78,9 +81,6 @@ public:
 
   //**USED ONLY IN HOOKDLL
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
-
-  //**USED IN HOOKDLL and everywhere that uses GameInfo
-  static GameInfo& instance();
 
 protected:
 
