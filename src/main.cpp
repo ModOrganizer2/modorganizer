@@ -334,9 +334,11 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
 MOBase::IPluginGame *selectGame(QSettings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
 {
   settings.setValue("gameName", game->gameName());
-  if (gamePath == game->gameDirectory()) {
+  //Sadly, hookdll needs gamePath in order to run. So following code block is
+  //commented out
+  /*if (gamePath == game->gameDirectory()) {
     settings.remove("gamePath");
-  } else {
+  } else*/ {
     QString gameDir = gamePath.absolutePath();
     game->setGamePath(gameDir);
     settings.setValue("gamePath", QDir::toNativeSeparators(gameDir).toUtf8().constData());
