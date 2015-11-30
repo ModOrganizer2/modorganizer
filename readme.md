@@ -20,7 +20,7 @@ Here is a complete list:
 * https://github.com/TanninOne/modorganizer-lootcli
 * https://github.com/TanninOne/modorganizer-helper
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
-* https://github.com/TanninOne/modorganizer-tool_pyniedit
+* https://github.com/TanninOne/modorganizer-tool_configurator
 * https://github.com/TanninOne/modorganizer-tool_inieditor
 * https://github.com/TanninOne/modorganizer-preview_base
 * https://github.com/TanninOne/modorganizer-diagnose_basic
