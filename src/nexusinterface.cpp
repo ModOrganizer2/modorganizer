@@ -196,12 +196,13 @@ void NexusInterface::loginCompleted()
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
-  static std::tr1::regex exp("^([a-zA-Z0-9_\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
-  static std::tr1::regex simpleexp("^([a-zA-Z0-9_]+)");
+  //Look for something along the lines of modulename-Vn-m + any old rubbish.
+  static std::regex exp("^([a-zA-Z0-9_'\"\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
+  static std::regex simpleexp("^([a-zA-Z0-9_]+)");
 
   QByteArray fileNameUTF8 = fileName.toUtf8();
-  std::tr1::cmatch result;
-  if (std::tr1::regex_search(fileNameUTF8.constData(), result, exp)) {
+  std::cmatch result;
+  if (std::regex_search(fileNameUTF8.constData(), result, exp)) {
     modName = QString::fromUtf8(result[1].str().c_str());
     modName = modName.replace('_', ' ').trimmed();
 
@@ -231,7 +232,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
       modID = strtol(candidate.c_str(), nullptr, 10);
     }
     qDebug("mod id guessed: %s -> %d", qPrintable(fileName), modID);
-  } else if (std::tr1::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
+  } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
     qDebug("simple expression matched, using name only");
     modName = QString::fromUtf8(result[1].str().c_str());
     modName = modName.replace('_', ' ').trimmed();
