@@ -70,9 +70,9 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
   CreateArchiveType CreateArchiveFunc = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
 
-  m_CurrentArchive = CreateArchiveFunc();
-  if (!m_CurrentArchive->isValid()) {
-    throw MyException(InstallationManager::getErrorString(m_CurrentArchive->getLastError()));
+  m_ArchiveHandler = CreateArchiveFunc();
+  if (!m_ArchiveHandler->isValid()) {
+    throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
 
   connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
@@ -87,7 +87,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
 SelfUpdater::~SelfUpdater()
 {
-  delete m_CurrentArchive;
+  delete m_ArchiveHandler;
 }
 
 void SelfUpdater::setUserInterface(QWidget *widget)
@@ -249,26 +249,25 @@ void SelfUpdater::installUpdate()
   QDir().mkdir(backupPath);
 
   // rename files that are currently open so we can unpack the update
-  if (!m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(m_UpdateFile.fileName())).c_str(),
-          new MethodCallback<SelfUpdater, void, LPSTR>(this, &SelfUpdater::queryPassword))) {
+  if (!m_ArchiveHandler->open(m_UpdateFile.fileName(), nullptr)) {
     throw MyException(tr("failed to open archive \"%1\": %2")
                       .arg(m_UpdateFile.fileName())
-                      .arg(InstallationManager::getErrorString(m_CurrentArchive->getLastError())));
+                      .arg(InstallationManager::getErrorString(m_ArchiveHandler->getLastError())));
   }
 
   // move all files contained in the archive out of the way,
   // otherwise we can't overwrite everything
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
   for (size_t i = 0; i < size; ++i) {
-    QString outputName = ToQString(data[i]->getFileName());
+    QString outputName = data[i]->getFileName();
     if (outputName.startsWith("ModOrganizer\\", Qt::CaseInsensitive)) {
       outputName = outputName.mid(13);
-      data[i]->addOutputFileName(ToWString(outputName).c_str());
+      data[i]->addOutputFileName(outputName);
     } else if (outputName != "ModOrganizer") {
-      data[i]->addOutputFileName(ToWString(outputName).c_str());
+      data[i]->addOutputFileName(outputName);
     }
     QFileInfo file(mopath + "/" + outputName);
     if (file.exists() && file.isFile()) {
@@ -281,14 +280,14 @@ void SelfUpdater::installUpdate()
   }
 
   // now unpack the archive into the mo directory
-  if (!m_CurrentArchive->extract(GameInfo::instance().getOrganizerDirectory().c_str(),
-         new MethodCallback<SelfUpdater, void, float>(this, &SelfUpdater::updateProgress),
-         new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::updateProgressFile),
-         new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::report7ZipError))) {
+  if (!m_ArchiveHandler->extract(QString::fromStdWString(GameInfo::instance().getOrganizerDirectory()),
+         nullptr,
+         nullptr,
+         new MethodCallback<SelfUpdater, void, QString const &>(this, &SelfUpdater::report7ZipError))) {
     throw std::runtime_error("extracting failed");
   }
 
-  m_CurrentArchive->close();
+  m_ArchiveHandler->close();
 
   m_UpdateFile.remove();
 
@@ -303,24 +302,9 @@ void SelfUpdater::installUpdate()
   emit restart();
 }
 
-void SelfUpdater::queryPassword(LPSTR)
+void SelfUpdater::report7ZipError(QString const &errorMessage)
 {
-  // nop
-}
-
-void SelfUpdater::updateProgress(float)
-{
-  // nop
-}
-
-void SelfUpdater::updateProgressFile(LPCWSTR)
-{
-  // nop
-}
-
-void SelfUpdater::report7ZipError(LPCWSTR errorMessage)
-{
-  QMessageBox::critical(m_Parent, tr("Error"), ToQString(errorMessage));
+  QMessageBox::critical(m_Parent, tr("Error"), errorMessage);
 }
 
 
