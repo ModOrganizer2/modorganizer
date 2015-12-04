@@ -100,6 +100,10 @@ void InstallationManager::setParentWidget(QWidget *widget)
   }
 }
 
+void InstallationManager::setURL(QString const &url)
+{
+  m_URL = url;
+}
 
 void InstallationManager::queryPassword(QString *password)
 {
@@ -582,6 +586,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   }
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
+  settingsFile.setValue("url", m_URL);
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway

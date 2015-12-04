@@ -86,6 +86,19 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
   }
 }
 
+bool GameInfo::isValidModURL(int modID, const std::wstring &url, const std::wstring &alt) const
+{
+  std::wostringstream os;
+  os << getNexusPage(false) << "/mods/" << modID;
+  if (url == os.str()) {
+    return true;
+  }
+  os.clear();
+  os.str(L"");
+  os << alt << "/mods/" << modID;
+  return url == os.str();
+}
+
 
 bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath)
 {

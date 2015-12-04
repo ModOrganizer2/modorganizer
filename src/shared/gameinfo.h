@@ -56,12 +56,12 @@ public:
 
   virtual ~GameInfo() {}
 
-  std::wstring getOrganizerDirectory() { return m_OrganizerDirectory; }
+  std::wstring getOrganizerDirectory() const { return m_OrganizerDirectory; }
 
-  virtual std::wstring getRegPath() = 0;
-  virtual std::wstring getBinaryName() = 0;
+  virtual std::wstring getRegPath() const = 0;
+  virtual std::wstring getBinaryName() const = 0;
 
-  virtual GameInfo::Type getType() = 0;
+  virtual GameInfo::Type getType() const = 0;
 
   virtual std::wstring getGameName() const = 0;
   virtual std::wstring getGameShortName() const = 0;
@@ -75,22 +75,24 @@ public:
   virtual bool requiresSteam() const;
 
   // get a list of file extensions for additional files belonging to a save game
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const = 0;
 
   // get a set of esp/esm files that are part of known dlcs
-  virtual std::vector<std::wstring> getDLCPlugins() = 0;
+  virtual std::vector<std::wstring> getDLCPlugins() const = 0;
 
   // file name of this games ini file(s)
-  virtual std::vector<std::wstring> getIniFileNames() = 0;
+  virtual std::vector<std::wstring> getIniFileNames() const = 0;
 
-  virtual std::wstring getReferenceDataFile() = 0;
+  virtual std::wstring getReferenceDataFile() const = 0;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
-  virtual std::wstring getNexusInfoUrl() = 0;
-  virtual int getNexusModID() = 0;
-  virtual int getNexusGameID() = 0;
+  virtual std::wstring getNexusPage(bool nmmScheme = true) const = 0;
+  virtual std::wstring getNexusInfoUrl() const = 0;
+  virtual int getNexusModID() const = 0;
+  virtual int getNexusGameID() const = 0;
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const = 0;
+
+  virtual bool isValidModURL(int modID, std::wstring const &url) const = 0;
 
 public:
 
@@ -107,6 +109,8 @@ protected:
   std::wstring getLocalAppFolder() const;
   const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
   void identifyMyGamesDirectory(const std::wstring &file);
+
+  bool isValidModURL(int modID, const std::wstring &url, const std::wstring &alt) const;
 
 private:
 
