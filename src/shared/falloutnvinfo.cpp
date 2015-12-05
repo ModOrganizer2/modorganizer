@@ -63,7 +63,7 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> FalloutNVInfo::getDLCPlugins()
+std::vector<std::wstring> FalloutNVInfo::getDLCPlugins() const
 {
   return boost::assign::list_of (L"DeadMoney.esm")
                                 (L"HonestHearts.esm")
@@ -77,22 +77,22 @@ std::vector<std::wstring> FalloutNVInfo::getDLCPlugins()
       ;
 }
 
-std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions()
+std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions() const
 {
   return std::vector<std::wstring>();
 }
 
-std::vector<std::wstring> FalloutNVInfo::getIniFileNames()
+std::vector<std::wstring> FalloutNVInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
 }
 
-std::wstring FalloutNVInfo::getReferenceDataFile()
+std::wstring FalloutNVInfo::getReferenceDataFile() const
 {
   return L"Fallout - Meshes.bsa";
 }
 
-std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme)
+std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme) const
 {
   if (nmmScheme) {
     return L"http://nmm.nexusmods.com/newvegas";
@@ -114,7 +114,7 @@ int FalloutNVInfo::getNexusModIDStatic()
 }
 
 
-bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
+bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*) const
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
 
@@ -124,6 +124,11 @@ bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
     }
   }
   return false;
+}
+
+bool FalloutNVInfo::isValidModURL(int modID, std::wstring const &url) const
+{
+  return GameInfo::isValidModURL(modID, url, L"http://newvegas.nexusmods.com");
 }
 
 } // namespace MOShared

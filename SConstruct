@@ -368,7 +368,7 @@ def setup_IWYU(env):
         '-DQ_COMPILER_INITIALIZER_LISTS',
         '-DQ_COMPILER_DECLTYPE',
         '-DQ_COMPILER_VARIADIC_TEMPLATES',
-]
+    ]
     if env['CONFIG'] == 'debug':
         env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
 

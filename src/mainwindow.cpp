@@ -2525,9 +2525,19 @@ void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
-    nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
+    linkClicked(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+  }
+}
+
+void MainWindow::visitWebPage_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  if (info->getURL() != "") {
+    linkClicked(info->getURL());
+  } else {
+    MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
   }
 }
 
@@ -3106,7 +3116,16 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
-        menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        if (info->getNexusID() > 0)  {
+          menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        }
+
+        if (info->getURL() != "" &&
+            !GameInfo::instance().isValidModURL(info->getNexusID(),
+                                                info->getURL().toStdWString())) {
+          menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
         menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
       }
 

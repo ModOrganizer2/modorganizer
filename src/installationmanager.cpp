@@ -81,16 +81,16 @@ InstallationManager::InstallationManager()
 
   CreateArchiveType CreateArchiveFunc = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
 
-  m_CurrentArchive = CreateArchiveFunc();
-  if (!m_CurrentArchive->isValid()) {
-    throw MyException(getErrorString(m_CurrentArchive->getLastError()));
+  m_ArchiveHandler = CreateArchiveFunc();
+  if (!m_ArchiveHandler->isValid()) {
+    throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
 }
 
 
 InstallationManager::~InstallationManager()
 {
-  delete m_CurrentArchive;
+  delete m_ArchiveHandler;
 }
 
 void InstallationManager::setParentWidget(QWidget *widget)
@@ -100,35 +100,37 @@ void InstallationManager::setParentWidget(QWidget *widget)
   }
 }
 
-
-void InstallationManager::queryPassword(LPSTR password)
+void InstallationManager::setURL(QString const &url)
 {
-  QString result = QInputDialog::getText(nullptr, tr("Password required"), tr("Password"), QLineEdit::Password);
-  strncpy(password, result.toLocal8Bit().constData(), MAX_PASSWORD_LENGTH);
+  m_URL = url;
+}
+
+void InstallationManager::queryPassword(QString *password)
+{
+  *password = QInputDialog::getText(nullptr, tr("Password required"), tr("Password"), QLineEdit::Password);
 }
 
 
-void InstallationManager::mapToArchive(const DirectoryTree::Node *node, std::wstring path, FileData * const *data)
+void InstallationManager::mapToArchive(const DirectoryTree::Node *node, QString path, FileData * const *data)
 {
   if (path.length() > 0) {
     // when using a long windows path (starting with \\?\) we apparently can have redundant
     // . components in the path. This wasn't a problem with "regular" path names.
-    if (path == L".") {
+    if (path == ".") {
       path.clear();
     } else {
-      path.append(L"\\");
+      path.append("\\");
     }
   }
 
   for (DirectoryTree::const_leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
-    std::wstring temp = path + iter->getName().toStdWString();
-    data[iter->getIndex()]->addOutputFileName(temp.c_str());
+    data[iter->getIndex()]->addOutputFileName(path + iter->getName().toQString());
   }
 
   for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    std::wstring temp = path + (*iter)->getData().name.toStdWString();
+    QString temp = path + (*iter)->getData().name.toQString();
     if ((*iter)->getData().index != -1) {
-      data[(*iter)->getData().index]->addOutputFileName(temp.c_str());
+      data[(*iter)->getData().index]->addOutputFileName(temp);
     }
     mapToArchive(*iter, temp, data);
   }
@@ -139,11 +141,9 @@ void InstallationManager::mapToArchive(const DirectoryTree::Node *baseNode)
 {
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
-  std::wstring currentPath;
-
-  mapToArchive(baseNode, currentPath, data);
+  mapToArchive(baseNode, "", data);
 }
 
 
@@ -151,15 +151,15 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 {
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
   QString baseName = QFileInfo(fileName).fileName();
 
   bool available = false;
   for (size_t i = 0; i < size; ++i) {
-    if (_wcsicmp(data[i]->getFileName(), ToWString(fileName).c_str()) == 0) {
+    if (data[i]->getFileName().compare(fileName, Qt::CaseInsensitive) == 0) {
       available = true;
-      data[i]->addOutputFileName(ToWString(baseName).c_str());
+      data[i]->addOutputFileName(baseName);
       m_TempFilesToDelete.insert(baseName);
     }
   }
@@ -181,10 +181,10 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->show();
 
-  bool res = m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
+  bool res = m_ArchiveHandler->extract(QDir::tempPath(),
                                 new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-                                new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
-                                new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError));
+                                nullptr,
+                                new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError));
 
   return res;
 }
@@ -225,25 +225,30 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
 
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
   for (size_t i = 0; i < size; ++i) {
-    if (files.contains(ToQString(data[i]->getFileName()), Qt::CaseInsensitive)) {
-      const wchar_t *targetFile = data[i]->getFileName();
+    //FIXME Use qstring all the way through
+    if (files.contains(data[i]->getFileName(), Qt::CaseInsensitive)) {
+      std::wstring temp = data[i]->getFileName().toStdWString();
+      wchar_t const * const origFile = temp.c_str();
+      const wchar_t *targetFile = origFile;
+      //Note: I don't think 'flatten' is ever set to true. so this code
+      //might never be executed
       if (flatten) {
-        targetFile = wcsrchr(data[i]->getFileName(), '\\');
+        targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '\\');
         if (targetFile == nullptr) {
-          targetFile = wcsrchr(data[i]->getFileName(), '/');
+          targetFile = wcsrchr(origFile/*data[i]->getFileName()*/, '/');
         }
         if (targetFile == nullptr) {
-          qCritical("failed to find backslash in %ls", data[i]->getFileName());
+          qCritical() << "Failed to find backslash in " << data[i]->getFileName();
           continue;
         } else {
           // skip the slash
           ++targetFile;
         }
       }
-      data[i]->addOutputFileName(targetFile);
+      data[i]->addOutputFileName(ToQString(targetFile));
 
       result.append(QDir::tempPath().append("/").append(ToQString(targetFile)));
 
@@ -264,11 +269,11 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
-  if (!m_CurrentArchive->extract(ToWString(QDir::toNativeSeparators(QDir::tempPath())).c_str(),
+  if (!m_ArchiveHandler->extract(QDir::tempPath(),
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::dummyProgressFile),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
-    throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
+         nullptr,
+         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+    throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
 
   return result;
@@ -292,7 +297,7 @@ DirectoryTree *InstallationManager::createFilesTree()
 {
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
   QScopedPointer<DirectoryTree> result(new DirectoryTree);
 
@@ -302,7 +307,7 @@ DirectoryTree *InstallationManager::createFilesTree()
     // grouping the filenames first, but so far there doesn't seem to be an actual performance problem
     DirectoryTree::Node *currentNode = result.data();
 
-    QString fileName = ToQString(data[i]->getFileName());
+    QString fileName = data[i]->getFileName();
     QStringList components = fileName.split("\\");
 
     // iterate over all path-components of this filename (including the filename itself)
@@ -396,25 +401,25 @@ void InstallationManager::updateProgress(float percentage)
   if (m_InstallationProgress != nullptr) {
     m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
     if (m_InstallationProgress->wasCanceled()) {
-      m_CurrentArchive->cancel();
+      m_ArchiveHandler->cancel();
       m_InstallationProgress->reset();
     }
   }
 }
 
 
-void InstallationManager::updateProgressFile(LPCWSTR fileName)
+void InstallationManager::updateProgressFile(QString const &fileName)
 {
   if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setLabelText(QString::fromWCharArray(fileName));
+    m_InstallationProgress->setLabelText(fileName);
   }
 }
 
 
-void InstallationManager::report7ZipError(LPCWSTR errorMessage)
+void InstallationManager::report7ZipError(QString const &errorMessage)
 {
-  reportError(QString::fromWCharArray(errorMessage));
-  m_CurrentArchive->cancel();
+  reportError(errorMessage);
+  m_ArchiveHandler->cancel();
 }
 
 
@@ -550,14 +555,14 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->show();
-  if (!m_CurrentArchive->extract(ToWString("\\\\?\\" + targetDirectoryNative).c_str(),
+  if (!m_ArchiveHandler->extract(targetDirectory,
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::updateProgressFile),
-         new MethodCallback<InstallationManager, void, LPCWSTR>(this, &InstallationManager::report7ZipError))) {
-    if (m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
+         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+    if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
-      throw MyException(QString("extracting failed (%1)").arg(m_CurrentArchive->getLastError()));
+      throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
     }
   }
 
@@ -581,6 +586,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   }
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
+  settingsFile.setValue("url", m_URL);
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
@@ -596,13 +602,13 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
 
 bool InstallationManager::wasCancelled()
 {
-  return m_CurrentArchive->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+  return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
 }
 
 
 void InstallationManager::postInstallCleanup()
 {
-  m_CurrentArchive->close();
+  m_ArchiveHandler->close();
 
   // directories we may want to remove. sorted from longest to shortest to ensure we remove subdirectories first.
   auto longestFirst = [](const QString &LHS, const QString &RHS) -> bool {
@@ -688,13 +694,13 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive
   //to deal with.
-  m_CurrentArchive->close();
+  m_ArchiveHandler->close();
 
   // open the archive and construct the directory tree the installers work on
-  bool archiveOpen = m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(fileName)).c_str(),
-                                            new MethodCallback<InstallationManager, void, LPSTR>(this, &InstallationManager::queryPassword));
+  bool archiveOpen = m_ArchiveHandler->open(fileName,
+                                            new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
-    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_CurrentArchive->getLastError());
+    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
