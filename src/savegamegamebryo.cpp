@@ -31,7 +31,7 @@ using namespace MOBase;
 
 
 SaveGameGamebryo::SaveGameGamebryo(QObject *parent, const QString &fileName, IPluginGame const *game)
-  : SaveGame(parent, fileName)
+  : SaveGame(parent, fileName, game)
   , m_Plugins()
 {
   SaveGameInfo const *info = game->feature<SaveGameInfo>();

@@ -63,11 +63,6 @@ std::wstring Fallout3Info::getRegPathStatic()
 }
 
 
-std::vector<std::wstring> Fallout3Info::getSavegameAttachmentExtensions() const
-{
-  return std::vector<std::wstring>();
-}
-
 std::vector<std::wstring> Fallout3Info::getIniFileNames() const
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");

@@ -42,20 +42,16 @@ public:
 
   virtual ~GameInfo() {}
 
-  //**USED IN HOOKDLL and savegame code
-  static GameInfo& instance();
-
-  //**Used only in savegame which needs refactoring a lot.
-  // get a list of file extensions for additional files belonging to a save game
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const = 0;
-
-  //**USED ONLY IN HOOKDLL
-  virtual std::wstring getGameDirectory() const;
-
-  //**USED ONLY IN HOOKDLL
+  //**USED IN HOOKDLL and at startup to set up for hookdll to work
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
   static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
+
+  //**USED ONLY IN HOOKDLL
+  static GameInfo& instance();
+
+  //**USED ONLY IN HOOKDLL
+  virtual std::wstring getGameDirectory() const;
 
   //**USED ONLY IN HOOKDLL
   virtual std::wstring getRegPath() const = 0;
@@ -74,11 +70,7 @@ protected:
 
   GameInfo(const std::wstring &gameDirectory);
 
-  std::wstring getLocalAppFolder() const;
-  const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
   void identifyMyGamesDirectory(const std::wstring &file);
-
-  bool isValidModURL(int modID, const std::wstring &url, const std::wstring &alt) const;
 
 private:
 

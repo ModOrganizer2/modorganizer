@@ -36,8 +36,6 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() const { return getRegPathStatic(); }
 
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
-
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames() const;
 

@@ -835,15 +835,29 @@ SaveGameGamebryo *MainWindow::getSaveGame(const QString &name__)
   IPluginGame const *game = m_OrganizerCore.managedGame();
   QString name(name__);
 
+  static int count = 0;
   //fudge with me
-//  game = m_PluginContainer.managedGame("Fallout 3");
-//  name = "C:\\Users\\Dad\\Downloads\\Games\\Both good and evil saves -10416\\Save 106 - New Start Good, Vault 101 Entrance, 00.33.34.fos";
+  switch (count)
+  {
+    case 0:
+      game = m_PluginContainer.managedGame("Fallout 3");
+      name = "C:\\Users\\Dad\\Downloads\\Games\\Both good and evil saves -10416\\Save 106 - New Start Good, Vault 101 Entrance, 00.33.34.fos";
+      break;
 
-//    game = m_PluginContainer.managedGame("New Vegas");
-//    name = "C:\\Users\\Dad\\Downloads\\Games\\Crossroads - Clean Save-44883-1-0\\Crossroads.fos";
+    case 1:
+      game = m_PluginContainer.managedGame("New Vegas");
+      name = "C:\\Users\\Dad\\Downloads\\Games\\Crossroads - Clean Save-44883-1-0\\Crossroads.fos";
+      break;
 
-//    game = m_PluginContainer.managedGame("Oblivion");
-//    name = "C:\\Users\\Dad\\Saved Games\\Oblivion\\Saves\\Save 1537 - Hilary - Xirethard, Level 45, Playing Time 458.48.17.ess";
+    case 2:
+      game = m_PluginContainer.managedGame("Oblivion");
+      name = "C:\\Users\\Dad\\Saved Games\\Oblivion\\Saves\\Save 1537 - Hilary - Xirethard, Level 45, Playing Time 458.48.17.ess";
+      break;
+
+    case 3:
+      count = -1;
+  }
+  ++count;
 
   return new SaveGameGamebryo(this, name, game);
 }
@@ -3210,7 +3224,7 @@ void MainWindow::deleteSavegame_clicked()
 
   foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
-    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
+    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString(), m_OrganizerCore.managedGame());
 
     if (count < 10) {
       savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";

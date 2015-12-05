@@ -73,11 +73,6 @@ std::wstring SkyrimInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions() const
-{
-  return boost::assign::list_of(L"skse");
-}
-
 std::vector<std::wstring> SkyrimInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");

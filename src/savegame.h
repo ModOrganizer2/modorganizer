@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+namespace MOBase { class IPluginGame; }
 
 /**
  * @brief represents a single save game
@@ -42,22 +43,13 @@ Q_OBJECT
 public:
 
   /**
-   * @brief construct an empty object
-   **/
-  SaveGame(QObject *parent = 0);
-
-  /**
    * @brief construct a save game and immediately read out information from the file
    *
    * @param filename absolute path of the save game file
    **/
-  SaveGame(QObject *parent, const QString &filename);
+  SaveGame(QObject *parent, const QString &filename, MOBase::IPluginGame const *game);
 
-  SaveGame(const SaveGame& reference);
-
-  SaveGame& operator=(const SaveGame &reference);
-
-  ~SaveGame();
+  virtual ~SaveGame();
 
   /**
    * @brief read out information from a savegame
@@ -111,10 +103,6 @@ public:
    **/
   const QImage &screenshot() const { return m_Screenshot; }
 
-private:
-
-  void setCreationTime(const QString &fileName);
-
 protected:
 
   QString m_FileName;
@@ -125,6 +113,8 @@ protected:
   SYSTEMTIME m_CreationTime;
   QImage m_Screenshot;
 
+private:
+  MOBase::IPluginGame const * const m_Game;
 };
 
 

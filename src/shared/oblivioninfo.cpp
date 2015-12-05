@@ -63,15 +63,6 @@ std::wstring OblivionInfo::getRegPathStatic()
   }
 }
 
-
-
-
-std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions() const
-{
-  return boost::assign::list_of(L"obse");
-}
-
-
 std::vector<std::wstring> OblivionInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");

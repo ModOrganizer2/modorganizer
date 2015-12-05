@@ -1,7 +1,9 @@
 #include "modinfoforeign.h"
 
-#include "gameinfo.h"
+#include "iplugingame.h"
 #include "utility.h"
+
+#include <QApplication>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -18,7 +20,9 @@ QDateTime ModInfoForeign::creationTime() const
 
 QString ModInfoForeign::absolutePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data";
+  //I ought to store this, it's used elsewhere
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  return game->dataDirectory().absolutePath();
 }
 
 std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const

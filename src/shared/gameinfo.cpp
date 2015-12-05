@@ -134,19 +134,6 @@ std::wstring GameInfo::getGameDirectory() const
   return m_GameDirectory;
 }
 
-std::wstring GameInfo::getLocalAppFolder() const
-{
-  wchar_t localAppFolder[MAX_PATH];
-  memset(localAppFolder, '\0', MAX_PATH * sizeof(wchar_t));
-
-  if (::SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
-    return localAppFolder;
-  } else {
-    // fallback: try the registry
-    return getSpecialPath(L"Local AppData");
-  }
-}
-
 std::wstring GameInfo::getSpecialPath(LPCWSTR name) const
 {
   HKEY key;
