@@ -38,7 +38,7 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() const { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() const { return L"TESV.exe"; }
-  virtual std::wstring getExtenderName() { return L"skse_loader.exe"; }
+  virtual std::wstring getExtenderName() const { return L"skse_loader.exe"; }
 
   virtual GameInfo::Type getType() const { return TYPE_SKYRIM; }
 
