@@ -1,8 +1,6 @@
-Import('qt_env')
+Import('env')
 
-env = qt_env.Clone()
-
-env.EnableQtModules('Core', 'Gui')
+env = env.Clone()
 
 env.AppendUnique(CPPDEFINES = [
     'UNICODE',
@@ -21,5 +19,5 @@ env.AppendUnique(CPPPATH = [
 # Not sure if renaming this helps much as it's static
 env.StaticLibrary('mo_shared', env.Glob('*.cpp'))
 
-res = env['QT_USED_MODULES']
-Return('res')
+#res = env['QT_USED_MODULES']
+#Return('res')

@@ -345,6 +345,14 @@ public:
    */
   QString getModURL(int modID) const;
 
+  /**
+   * @brief Checks if the specified URL might correspond to a nexus mod
+   * @param modID
+   * @param url
+   * @return
+   */
+  bool isModURL(int modID, QString const &url) const;
+
 signals:
 
   void requestNXMDownload(const QString &url);
@@ -412,6 +420,7 @@ private:
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
   bool requiresLogin(const NXMRequestInfo &info);
+  QString getOldModsURL() const;
 
 private:
 

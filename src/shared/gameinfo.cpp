@@ -86,7 +86,6 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
   }
 }
 
-
 bool GameInfo::identifyGame(const std::wstring &searchPath)
 {
   if (OblivionInfo::identifyGame(searchPath)) {

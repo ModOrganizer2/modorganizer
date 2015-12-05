@@ -47,7 +47,7 @@ public:
 
   //**Used only in savegame which needs refactoring a lot.
   // get a list of file extensions for additional files belonging to a save game
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const = 0;
 
   //**USED ONLY IN HOOKDLL
   virtual std::wstring getGameDirectory() const;
@@ -58,17 +58,17 @@ public:
   static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
 
   //**USED ONLY IN HOOKDLL
-  virtual std::wstring getRegPath() = 0;
+  virtual std::wstring getRegPath() const = 0;
 
   //**USED ONLY IN HOOKDLL
   // file name of this games ini file(s)
-  virtual std::vector<std::wstring> getIniFileNames() = 0;
+  virtual std::vector<std::wstring> getIniFileNames() const = 0;
 
   //**USED ONLY IN HOOKDLL
-  virtual std::wstring getReferenceDataFile() = 0;
+  virtual std::wstring getReferenceDataFile() const = 0;
 
   //**USED ONLY IN HOOKDLL
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const = 0;
 
 protected:
 
@@ -77,6 +77,8 @@ protected:
   std::wstring getLocalAppFolder() const;
   const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
   void identifyMyGamesDirectory(const std::wstring &file);
+
+  bool isValidModURL(int modID, const std::wstring &url, const std::wstring &alt) const;
 
 private:
 

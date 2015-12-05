@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef FALLOUT3INFO_H
 #define FALLOUT3INFO_H
 
-
 #include "gameinfo.h"
 
 namespace MOShared {
@@ -36,22 +35,18 @@ public:
   virtual ~Fallout3Info() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
 
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
-  virtual std::wstring getReferenceDataFile();
+  virtual std::wstring getReferenceDataFile() const;
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const;
 
-  // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
-  // the game directory
-  //virtual std::vector<ExecutableInfo> getExecutables();
-
-  virtual std::wstring archiveListKey() { return L"SArchiveList"; }
+  virtual std::wstring archiveListKey() const { return L"SArchiveList"; }
 
 private:
 

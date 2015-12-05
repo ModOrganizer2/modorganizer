@@ -63,22 +63,22 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions()
+std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions() const
 {
   return std::vector<std::wstring>();
 }
 
-std::vector<std::wstring> FalloutNVInfo::getIniFileNames()
+std::vector<std::wstring> FalloutNVInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
 }
 
-std::wstring FalloutNVInfo::getReferenceDataFile()
+std::wstring FalloutNVInfo::getReferenceDataFile() const
 {
   return L"Fallout - Meshes.bsa";
 }
 
-bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
+bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*) const
 {
   static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
 

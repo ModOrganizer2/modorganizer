@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_modinfodialog.h"
 
 #include "iplugingame.h"
+#include "nexusinterface.h"
 #include "report.h"
 #include "utility.h"
 #include "messagedialog.h"

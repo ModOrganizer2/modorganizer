@@ -192,12 +192,13 @@ void NexusInterface::loginCompleted()
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
-  static std::tr1::regex exp("^([a-zA-Z0-9_\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
-  static std::tr1::regex simpleexp("^([a-zA-Z0-9_]+)");
+  //Look for something along the lines of modulename-Vn-m + any old rubbish.
+  static std::regex exp("^([a-zA-Z0-9_'\"\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
+  static std::regex simpleexp("^([a-zA-Z0-9_]+)");
 
   QByteArray fileNameUTF8 = fileName.toUtf8();
-  std::tr1::cmatch result;
-  if (std::tr1::regex_search(fileNameUTF8.constData(), result, exp)) {
+  std::cmatch result;
+  if (std::regex_search(fileNameUTF8.constData(), result, exp)) {
     modName = QString::fromUtf8(result[1].str().c_str());
     modName = modName.replace('_', ' ').trimmed();
 
@@ -227,7 +228,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
       modID = strtol(candidate.c_str(), nullptr, 10);
     }
     qDebug("mod id guessed: %s -> %d", qPrintable(fileName), modID);
-  } else if (std::tr1::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
+  } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
     qDebug("simple expression matched, using name only");
     modName = QString::fromUtf8(result[1].str().c_str());
     modName = modName.replace('_', ' ').trimmed();
@@ -244,7 +245,7 @@ bool NexusInterface::isURLGameRelated(const QUrl &url) const
 {
   QString const name(url.toString());
   return name.startsWith(getGameURL() + "/") ||
-         name.startsWith("http://" + m_Game->getGameShortName().toLower() + ".nexusmods.com/mods/");
+         name.startsWith(getOldModsURL() + "/");
 }
 
 QString NexusInterface::getGameURL() const
@@ -252,9 +253,25 @@ QString NexusInterface::getGameURL() const
   return "http://www.nexusmods.com/" + m_Game->getGameShortName().toLower();
 }
 
+QString NexusInterface::getOldModsURL() const
+{
+  return "http://" + m_Game->getGameShortName().toLower() + ".nexusmods.com/mods";
+}
+
+
 QString NexusInterface::getModURL(int modID) const
 {
   return QString("%1/mods/%2").arg(getGameURL()).arg(modID);
+}
+
+bool NexusInterface::isModURL(int modID, QString const &url) const
+{
+  if (url == getModURL(modID)) {
+    return true;
+  }
+  //Try the alternate (old style) mod name
+  QString alt = QString("%1/%2").arg(getOldModsURL()).arg(modID);
+  return alt == url;
 }
 
 int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,

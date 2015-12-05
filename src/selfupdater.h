@@ -67,7 +67,7 @@ public:
    * @param parent parent widget
    * @todo passing the nexus interface is unneccessary
    **/
-  SelfUpdater(NexusInterface *nexusInterface);
+  explicit SelfUpdater(NexusInterface *nexusInterface);
 
   virtual ~SelfUpdater();
 
@@ -120,10 +120,7 @@ private:
 
   void download(const QString &downloadLink, const QString &fileName);
   void installUpdate();
-  void queryPassword(LPSTR password);
-  void updateProgress(float percentage);
-  void updateProgressFile(LPCWSTR fileName);
-  void report7ZipError(LPCWSTR errorMessage);
+  void report7ZipError(const QString &errorMessage);
   QString retrieveNews(const QString &description);
   void showProgress();
   void closeProgress();
@@ -148,7 +145,7 @@ private:
   bool m_Canceled;
   int m_Attempts;
 
-  Archive *m_CurrentArchive;
+  Archive *m_ArchiveHandler;
 
   MOBase::IPluginGame const *m_NexusDownload;
 };

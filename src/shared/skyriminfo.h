@@ -36,16 +36,16 @@ public:
   virtual ~SkyrimInfo() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
 
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
-  virtual std::wstring getReferenceDataFile();
+  virtual std::wstring getReferenceDataFile() const;
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const;
 
 private:
 

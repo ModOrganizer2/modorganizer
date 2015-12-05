@@ -66,18 +66,18 @@ std::wstring OblivionInfo::getRegPathStatic()
 
 
 
-std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions()
+std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions() const
 {
   return boost::assign::list_of(L"obse");
 }
 
 
-std::vector<std::wstring> OblivionInfo::getIniFileNames()
+std::vector<std::wstring> OblivionInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");
 }
 
-bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
+bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*) const
 {
   static LPCWSTR profileFiles[] = { L"oblivion.ini", L"oblivionprefs.ini", L"plugins.txt", nullptr };
 
@@ -89,7 +89,7 @@ bool OblivionInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
   return false;
 }
 
-std::wstring OblivionInfo::getReferenceDataFile()
+std::wstring OblivionInfo::getReferenceDataFile() const
 {
   return L"Oblivion - Meshes.bsa";
 }

@@ -2552,6 +2552,16 @@ void MainWindow::visitOnNexus_clicked()
   }
 }
 
+void MainWindow::visitWebPage_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  if (info->getURL() != "") {
+    linkClicked(info->getURL());
+  } else {
+    MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+  }
+}
+
 void MainWindow::openExplorer_clicked()
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
@@ -3122,12 +3132,22 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             } break;
           }
         }
+
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
           menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
-        menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        if (info->getNexusID() > 0)  {
+          menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        }
+
+        //If a URL is specified which is not the game's URL, pop up 'visit web page'
+        if (info->getURL() != "" &&
+            !NexusInterface::instance()->isModURL(info->getNexusID(), info->getURL())) {
+          menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
         menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
       }
 

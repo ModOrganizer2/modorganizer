@@ -73,22 +73,22 @@ std::wstring SkyrimInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions()
+std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions() const
 {
   return boost::assign::list_of(L"skse");
 }
 
-std::vector<std::wstring> SkyrimInfo::getIniFileNames()
+std::vector<std::wstring> SkyrimInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");
 }
 
-std::wstring SkyrimInfo::getReferenceDataFile()
+std::wstring SkyrimInfo::getReferenceDataFile() const
 {
   return L"Skyrim - Meshes.bsa";
 }
 
-bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
+bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const
 {
   static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };
 
@@ -105,6 +105,5 @@ bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPa
 
   return false;
 }
-
 
 } // namespace MOShared

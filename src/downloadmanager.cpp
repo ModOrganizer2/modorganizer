@@ -39,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QTextDocument>
 
 #include <boost/bind.hpp>
 #include <regex>
@@ -912,10 +913,10 @@ QString DownloadManager::getDownloadFileName(const QString &baseName) const
 QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 {
   if (reply->hasRawHeader("Content-Disposition")) {
-    std::tr1::regex exp("filename=\"(.*)\"");
+    std::regex exp("filename=\"(.*)\"");
 
-    std::tr1::cmatch result;
-    if (std::tr1::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
+    std::cmatch result;
+    if (std::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
       return QString::fromUtf8(result.str(1).c_str());
     }
   }
@@ -1131,6 +1132,12 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
+      //Nexus has HTMLd these so unhtml them if necessary
+      QTextDocument doc;
+      doc.setHtml(info->m_FileInfo->modName);
+      info->m_FileInfo->modName = doc.toPlainText();
+      doc.setHtml(info->m_FileInfo->name);
+      info->m_FileInfo->name = doc.toPlainText();
       info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
