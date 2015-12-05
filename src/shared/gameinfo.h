@@ -40,22 +40,10 @@ class GameInfo
 
 public:
 
-  enum Type {
-    TYPE_OBLIVION,
-    TYPE_FALLOUT3,
-    TYPE_FALLOUTNV,
-    TYPE_SKYRIM
-  };
-
-public:
-
   virtual ~GameInfo() {}
 
   //**USED IN HOOKDLL and savegame code
   static GameInfo& instance();
-
-  //**Used only in savegame which needs refactoring a lot.
-  virtual GameInfo::Type getType() = 0;
 
   //**Used only in savegame which needs refactoring a lot.
   // get a list of file extensions for additional files belonging to a save game

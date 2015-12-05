@@ -38,8 +38,6 @@ public:
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() { return getRegPathStatic(); }
 
-  virtual GameInfo::Type getType() { return TYPE_FALLOUT3; }
-
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)

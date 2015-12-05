@@ -232,6 +232,10 @@ INCLUDEPATH += "E:/Visual Leak Detector/include"
 LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
 
+#########################FUDGE###############################
+INCLUDEPATH += ../plugins/gameGamebro
+#############################################################
+
 # custom leak detection
 #LIBS += -lDbgHelp
 

@@ -59,6 +59,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
+//?
+//#include "isavegame.h"
+//#include "savegameinfo.h"
+//?
 #include "nxmaccessmanager.h"
 #include <archive.h>
 #include <appconfig.h>
@@ -826,9 +830,22 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
 }
 
 
-SaveGameGamebryo *MainWindow::getSaveGame(const QString &name)
+SaveGameGamebryo *MainWindow::getSaveGame(const QString &name__)
 {
-  return new SaveGameGamebryo(this, name);
+  IPluginGame const *game = m_OrganizerCore.managedGame();
+  QString name(name__);
+
+  //fudge with me
+//  game = m_PluginContainer.managedGame("Fallout 3");
+//  name = "C:\\Users\\Dad\\Downloads\\Games\\Both good and evil saves -10416\\Save 106 - New Start Good, Vault 101 Entrance, 00.33.34.fos";
+
+//    game = m_PluginContainer.managedGame("New Vegas");
+//    name = "C:\\Users\\Dad\\Downloads\\Games\\Crossroads - Clean Save-44883-1-0\\Crossroads.fos";
+
+//    game = m_PluginContainer.managedGame("Oblivion");
+//    name = "C:\\Users\\Dad\\Saved Games\\Oblivion\\Saves\\Save 1537 - Hilary - Xirethard, Level 45, Playing Time 458.48.17.ess";
+
+  return new SaveGameGamebryo(this, name, game);
 }
 
 

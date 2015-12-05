@@ -63,7 +63,7 @@ void TransferSavesDialog::refreshGlobalSaves()
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
   for (const QString &filename : files) {
-    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
+    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename), m_GamePlugin);
     save->setParent(this);
     m_GlobalSaves.push_back(save);
   }
@@ -81,7 +81,7 @@ void TransferSavesDialog::refreshLocalSaves()
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
   foreach (const QString &filename, files) {
-    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
+    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename), m_GamePlugin);
     save->setParent(this);
     m_LocalSaves.push_back(save);
   }

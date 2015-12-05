@@ -96,6 +96,12 @@ env['CPPPATH'] += [
     '${BOOSTPATH}',
 ]
 
+#########################FUDGE###############################
+env['CPPPATH'] += [
+    '../plugins/gameGamebryo',
+    ]
+#############################################################
+
 env.AppendUnique(CPPDEFINES = [
     '_UNICODE',
     '_CRT_SECURE_NO_WARNINGS',
