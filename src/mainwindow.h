@@ -361,6 +361,7 @@ private slots:
   void unendorse_clicked();
   void ignoreMissingData_clicked();
   void visitOnNexus_clicked();
+  void visitWebPage_clicked();
   void openExplorer_clicked();
   void information_clicked();
   // savegame context menu

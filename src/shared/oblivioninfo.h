@@ -34,70 +34,35 @@ public:
   virtual ~OblivionInfo() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
-  virtual std::wstring getBinaryName() { return L"Oblivion.exe"; }
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
+  virtual std::wstring getBinaryName() const { return L"Oblivion.exe"; }
   virtual std::wstring getExtenderName() { return L"obse_loader.exe"; }
 
-  virtual GameInfo::Type getType() { return TYPE_OBLIVION; }
+  virtual GameInfo::Type getType() const { return TYPE_OBLIVION; }
 
   virtual std::wstring getGameName() const { return L"Oblivion"; }
   virtual std::wstring getGameShortName() const { return L"Oblivion"; }
-/*
-  virtual std::wstring getInvalidationBSA()
-  {
-    return L"Oblivion - Invalidation.bsa";
-  }
 
-  virtual bool isInvalidationBSA(const std::wstring &bsaName)
-  {
-    static LPCWSTR invalidation[] = { L"Oblivion - Invalidation.bsa", L"ArchiveInvalidationInvalidated!.bsa",
-                                      L"BSARedirection.bsa", nullptr };
-
-    for (int i = 0; invalidation[i] != nullptr; ++i) {
-      if (wcscmp(bsaName.c_str(), invalidation[i]) == 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  virtual std::vector<std::wstring> getVanillaBSAs()
-  {
-    return boost::assign::list_of(L"Oblivion - Meshes.bsa")
-        (L"Oblivion - Textures - Compressed.bsa")
-        (L"Oblivion - Sounds.bsa")
-        (L"Oblivion - Voices1.bsa")
-        (L"Oblivion - Voices2.bsa")
-        (L"Oblivion - Misc.bsa");
-  }
-
-  virtual std::vector<std::wstring> getPrimaryPlugins()
-  {
-    return boost::assign::list_of(L"oblivion.esm");
-  }*/
-
-  virtual std::vector<std::wstring> getDLCPlugins();
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
+  virtual std::vector<std::wstring> getDLCPlugins() const;
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
-  virtual std::wstring getReferenceDataFile();
+  virtual std::wstring getReferenceDataFile() const;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true);
+  virtual std::wstring getNexusPage(bool nmmScheme = true) const;
   static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
+  virtual std::wstring getNexusInfoUrl() const { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return getNexusModIDStatic(); }
-  virtual int getNexusGameID() { return 101; }
+  virtual int getNexusModID() const { return getNexusModIDStatic(); }
+  virtual int getNexusGameID() const { return 101; }
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const;
 
-  // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
-  // the game directory
-  //virtual std::vector<ExecutableInfo> getExecutables();
+  virtual std::wstring archiveListKey() const { return L"SArchiveList"; }
 
-  virtual std::wstring archiveListKey() { return L"SArchiveList"; }
+  virtual bool isValidModURL(int modID, std::wstring const &url) const;
 
 private:
 

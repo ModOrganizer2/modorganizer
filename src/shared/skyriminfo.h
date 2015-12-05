@@ -36,36 +36,38 @@ public:
   virtual ~SkyrimInfo() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
-  virtual std::wstring getBinaryName() { return L"TESV.exe"; }
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
+  virtual std::wstring getBinaryName() const { return L"TESV.exe"; }
   virtual std::wstring getExtenderName() { return L"skse_loader.exe"; }
 
-  virtual GameInfo::Type getType() { return TYPE_SKYRIM; }
+  virtual GameInfo::Type getType() const { return TYPE_SKYRIM; }
 
   virtual std::wstring getGameName() const { return L"Skyrim"; }
   virtual std::wstring getGameShortName() const { return L"Skyrim"; }
 
   virtual LoadOrderMechanism getLoadOrderMechanism() const;
 
-  virtual std::vector<std::wstring> getDLCPlugins();
+  virtual std::vector<std::wstring> getDLCPlugins() const;
 
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
+  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
-  virtual std::wstring getReferenceDataFile();
+  virtual std::wstring getReferenceDataFile() const;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true);
+  virtual std::wstring getNexusPage(bool nmmScheme = true) const;
 
   static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
+  virtual std::wstring getNexusInfoUrl() const { return getNexusInfoUrlStatic(); }
   static int getNexusModIDStatic();
-  virtual int getNexusModID() { return getNexusModIDStatic(); }
+  virtual int getNexusModID() const { return getNexusModIDStatic(); }
   static int getNexusGameIDStatic() { return 110; }
-  virtual int getNexusGameID() { return getNexusGameIDStatic(); }
+  virtual int getNexusGameID() const { return getNexusGameIDStatic(); }
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
+  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const;
+
+  virtual bool isValidModURL(int modID, std::wstring const &url) const;
 
 private:
 
