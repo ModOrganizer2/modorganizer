@@ -37,38 +37,19 @@ public:
 
   static std::wstring getRegPathStatic();
   virtual std::wstring getRegPath() const { return getRegPathStatic(); }
-  virtual std::wstring getBinaryName() const { return L"FalloutNV.exe"; }
-  virtual std::wstring getExtenderName() const { return L"nvse_loader.exe"; }
-
-  virtual GameInfo::Type getType() const { return TYPE_FALLOUTNV; }
-
-  virtual std::wstring getGameName() const { return L"New Vegas"; }
-  virtual std::wstring getGameShortName() const { return L"FalloutNV"; }
-
-  virtual std::vector<std::wstring> getDLCPlugins() const;
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() const;
 
   // file name of this games ini (no path)
   virtual std::vector<std::wstring> getIniFileNames() const;
 
   virtual std::wstring getReferenceDataFile() const;
 
-  virtual std::wstring getNexusPage(bool nmmScheme = true) const;
-  static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() const { return getNexusInfoUrlStatic(); }
-  static int getNexusModIDStatic();
-  virtual int getNexusModID() const { return getNexusModIDStatic(); }
-  virtual int getNexusGameID() const { return 130; }
-
   virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) const;
 
   virtual std::wstring archiveListKey() const { return L"SArchiveList"; }
 
-  virtual bool isValidModURL(int modID, const std::wstring &url) const;
-
 private:
 
-  FalloutNVInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  FalloutNVInfo(const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 };

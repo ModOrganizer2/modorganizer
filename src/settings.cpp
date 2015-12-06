@@ -22,26 +22,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialog.h"
 #include "utility.h"
 #include "helper.h"
-#include "json.h"
 #include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <iplugingame.h>
 
 #include <QCheckBox>
-#include <QLineEdit>
-#include <QDirIterator>
-#include <QRegExp>
 #include <QCoreApplication>
-#include <QMessageBox>
 #include <QDesktopServices>
+#include <QDirIterator>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QRegExp>
 
 #include <memory>
 
-
 using namespace MOBase;
-using namespace MOShared;
-
 
 template <typename T>
 class QListWidgetItemEx : public QListWidgetItem {
@@ -112,7 +108,7 @@ void Settings::registerAsNXMHandler(bool force)
   std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
   std::wstring mode = force ? L"forcereg" : L"reg";
-  std::wstring parameters = mode + L" " + GameInfo::instance().getGameShortName() + L" \"" + executable + L"\"";
+  std::wstring parameters = mode + L" " + m_GamePlugin->getGameShortName().toStdWString() + L" \"" + executable + L"\"";
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
   if ((int)res <= 32) {
     QMessageBox::critical(nullptr, tr("Failed"),
@@ -120,7 +116,7 @@ void Settings::registerAsNXMHandler(bool force)
   }
 }
 
-void Settings::managedGameChanged(IPluginGame *gamePlugin)
+void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
 }

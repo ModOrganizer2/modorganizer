@@ -20,13 +20,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef EXECUTABLESLIST_H
 #define EXECUTABLESLIST_H
 
+#include "executableinfo.h"
 
 #include <vector>
+
 #include <QFileInfo>
 #include <QMetaType>
-#include <gameinfo.h>
-#include <iplugingame.h>
 
+namespace MOBase { class IPluginGame; }
 
 /*!
  * @brief Information about an executable
@@ -78,7 +79,7 @@ public:
   /**
    * @brief initialise the list with the executables preconfigured for this game
    **/
-  void init(MOBase::IPluginGame *game);
+  void init(MOBase::IPluginGame const *game);
 
   /**
    * @brief find an executable by its name

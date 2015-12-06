@@ -26,21 +26,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <DbgHelp.h>
-#include <cstdarg>
+
 #include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <scopeguard.h>
-#include <stdexcept>
 #include "mainwindow.h"
 #include <report.h>
 #include "modlist.h"
 #include "profile.h"
 #include "gameinfo.h"
-#include "fallout3info.h"
-#include "falloutnvinfo.h"
-#include "oblivioninfo.h"
-#include "skyriminfo.h"
 #include "spawn.h"
 #include "executableslist.h"
 #include "singleinstance.h"
@@ -51,11 +46,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
-#include <iostream>
-#include <ShellAPI.h>
 #include <eh.h>
 #include <windows_error.h>
-#include <boost/scoped_array.hpp>
+
 #include <QApplication>
 #include <QPushButton>
 #include <QListWidget>
@@ -77,6 +70,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLibraryInfo>
 #include <QSslSocket>
 
+#include <boost/scoped_array.hpp>
+
+#include <ShellAPI.h>
+
+#include <cstdarg>
+#include <iostream>
+#include <stdexcept>
+
 
 #pragma comment(linker, "/manifestDependency:\"name='dlls' processorArchitecture='x86' version='1.0.0.0' type='win32' \"")
 
@@ -86,7 +87,8 @@ using namespace MOShared;
 
 bool createAndMakeWritable(const std::wstring &subPath)
 {
-  QString fullPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(subPath);
+  QString const dataPath = qApp->property("dataPath").toString();
+  QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
 
   if (!QDir(fullPath).exists()) {
     QDir().mkdir(fullPath);
@@ -100,7 +102,7 @@ bool createAndMakeWritable(const std::wstring &subPath)
            "will be made writable for the current user account). You will be asked to run "
            "\"helper.exe\" with administrative rights."),
            QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-      if (!Helper::init(GameInfo::instance().getOrganizerDirectory())) {
+      if (!Helper::init(dataPath.toStdWString())) {
         return false;
       }
     } else {
@@ -329,6 +331,124 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
   return selectedProfileName;
 }
 
+MOBase::IPluginGame *selectGame(QSettings &settings, QDir const &gamePath, MOBase::IPluginGame *game)
+{
+  settings.setValue("gameName", game->gameName());
+  //Sadly, hookdll needs gamePath in order to run. So following code block is
+  //commented out
+  /*if (gamePath == game->gameDirectory()) {
+    settings.remove("gamePath");
+  } else*/ {
+    QString gameDir = gamePath.absolutePath();
+    game->setGamePath(gameDir);
+    settings.setValue("gamePath", QDir::toNativeSeparators(gameDir).toUtf8().constData());
+  }
+  return game; //Woot
+}
+
+
+MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &settings, PluginContainer const &plugins)
+{
+  //Determine what game we are running where. Be very paranoid in case the
+  //user has done something odd.
+  //If the game name has been set up, use that.
+  QString gameName = settings.value("gameName", "").toString();
+  if (!gameName.isEmpty()) {
+    MOBase::IPluginGame *game = plugins.managedGame(gameName);
+    if (game == nullptr) {
+      reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(gameName));
+      return nullptr;
+    }
+    QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
+    if (gamePath == "") {
+      gamePath = game->gameDirectory().absolutePath();
+    }
+    QDir gameDir(gamePath);
+    if (game->looksValid(gameDir)) {
+      return selectGame(settings, gameDir, game);
+    }
+  }
+
+  //gameName wasn't set, or otherwise can't be found. Try looking through all
+  //the plugins using the gamePath
+  QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
+  if (!gamePath.isEmpty()) {
+    QDir gameDir(gamePath);
+    //Look to see if one of the installed games binary file exists in the current
+    //game directory.
+    for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+      if (game->looksValid(gameDir)) {
+        return selectGame(settings, gameDir, game);
+      }
+    }
+  }
+
+  //OK, we are in a new setup or existing info is useless.
+  //See if MO has been installed inside a game directory
+  for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+    if (game->isInstalled() && moPath.startsWith(game->gameDirectory().absolutePath())) {
+      //Found it.
+      return selectGame(settings, game->gameDirectory(), game);
+    }
+  }
+
+  //Try walking up the directory tree to see if MO has been installed inside a game
+  {
+    QDir gameDir(moPath);
+    do {
+      //Look to see if one of the installed games binary file exists in the current
+      //directory.
+      for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+        if (game->looksValid(gameDir)) {
+          return selectGame(settings, gameDir, game);
+        }
+      }
+      //OK, chop off the last directory and try again
+    } while (gameDir.cdUp());
+  }
+
+  //Then try a selection dialogue.
+  if (!gamePath.isEmpty() || !gameName.isEmpty()) {
+    reportError(QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".").
+                                                   arg(gameName).arg(gamePath));
+  }
+
+  SelectionDialog selection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+
+  for (IPluginGame *game : plugins.plugins<IPluginGame>()) {
+    if (game->isInstalled()) {
+      QString path = game->gameDirectory().absolutePath();
+      selection.addChoice(game->gameIcon(), game->gameName(), path, QVariant::fromValue(game));
+    }
+  }
+
+  selection.addChoice(QString("Browse..."), QString(), QVariant::fromValue(static_cast<IPluginGame *>(nullptr)));
+
+  while (selection.exec() != QDialog::Rejected) {
+    IPluginGame * game = selection.getChoiceData().value<IPluginGame *>();
+    if (game != nullptr) {
+      return selectGame(settings, game->gameDirectory(), game);
+    }
+
+    gamePath = QFileDialog::getExistingDirectory(
+          nullptr, QObject::tr("Please select the game to manage"), QString(),
+          QFileDialog::ShowDirsOnly);
+
+    if (!gamePath.isEmpty()) {
+      QDir gameDir(gamePath);
+      for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+        if (game->looksValid(gameDir)) {
+          return selectGame(settings, gameDir, game);
+        }
+      }
+      reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
+                              "the game binary and its launcher.").arg(gamePath));
+    }
+  }
+
+  return nullptr;
+}
+
 int main(int argc, char *argv[])
 {
   MOApplication application(argc, argv);
@@ -341,7 +461,7 @@ int main(int argc, char *argv[])
     instanceID = instanceFile.readAll().trimmed();
   }  
 
-  QString dataPath =
+  QString const dataPath =
       instanceID.isEmpty() ? application.applicationDirPath()
                            : QDir::fromNativeSeparators(
                                QStandardPaths::writableLocation(QStandardPaths::DataLocation)
@@ -373,7 +493,7 @@ int main(int argc, char *argv[])
   QSplashScreen splash(pixmap);
 
   try {
-    if (!bootstrap()) { // requires gameinfo to be initialised!
+    if (!bootstrap()) {
       return -1;
     }
 
@@ -442,63 +562,19 @@ int main(int argc, char *argv[])
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();
 
-    QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
-    bool done = false;
-    while (!done) {
-      if (!GameInfo::init(ToWString(application.applicationDirPath()), ToWString(dataPath), ToWString(QDir::toNativeSeparators(gamePath)))) {
-        if (!gamePath.isEmpty()) {
-          reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
-                                  "the game binary and its launcher.").arg(gamePath));
-        }
-        SelectionDialog selection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
-
-        for (const IPluginGame * const game : pluginContainer.plugins<IPluginGame>()) {
-          if (game->isInstalled()) {
-            QString path = game->gameDirectory().absolutePath();
-            selection.addChoice(game->gameIcon(), game->gameName(), path, path);
-          }
-        }
-
-        selection.addChoice(QString("Browse..."), QString(), QString());
-
-        if (selection.exec() == QDialog::Rejected) {
-          gamePath = "";
-          done = true;
-        } else {
-          gamePath = QDir::cleanPath(selection.getChoiceData().toString());
-          if (gamePath.isEmpty()) {
-            gamePath = QFileDialog::getExistingDirectory(
-                  nullptr, QObject::tr("Please select the game to manage"), QString(),
-                  QFileDialog::ShowDirsOnly);
-            qDebug() << "manually selected path " << gamePath;
-          }
-        }
-      } else {
-        done = true;
-        gamePath = ToQString(GameInfo::instance().getGameDirectory());
-      }
-    }
-
-    if (gamePath.isEmpty()) {
-      // game not found and user canceled
-      return -1;
-    } else if (gamePath.length() != 0) {
-      // user selected a folder and game was initialised with it
-      qDebug("game path: %s", qPrintable(gamePath));
-      settings.setValue("gamePath", gamePath.toUtf8().constData());
-    }
-
-    organizer.setManagedGame(ToQString(GameInfo::instance().getGameName()), gamePath);
-
-    organizer.createDefaultProfile();
-
-    if (pluginContainer.managedGame(ToQString(GameInfo::instance().getGameName())) == nullptr) {
-      reportError(QObject::tr("Plugin to handle %1 not installed").arg(ToQString(GameInfo::instance().getGameName())));
+    MOBase::IPluginGame *game = determineCurrentGame(application.applicationDirPath(), settings, pluginContainer);
+    if (game == nullptr) {
       return 1;
     }
 
-    IPluginGame *game = organizer.managedGame();
+    organizer.setManagedGame(game);
 
+    //*sigh just for making it work
+    GameInfo::init(application.applicationDirPath().toStdWString(), game->gameDirectory().absolutePath().toStdWString());
+
+    organizer.createDefaultProfile();
+
+    //See the pragma - we apparently don't use this so not sure why we check it
     if (!settings.contains("game_edition")) {
       QStringList editions = game->gameVariants();
       if (editions.size() > 1) {
@@ -518,7 +594,7 @@ int main(int argc, char *argv[])
 
 
 #pragma message("edition isn't used?")
-    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(gamePath)));
+    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(game->gameDirectory().absolutePath())));
 
     organizer.updateExecutablesList(settings);
 

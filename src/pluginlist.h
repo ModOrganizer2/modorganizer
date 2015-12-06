@@ -22,16 +22,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <directoryentry.h>
 #include <ipluginlist.h>
+namespace MOBase { class IPluginGame; }
+
 #include <QString>
 #include <QListWidget>
 #include <QTimer>
 #include <QTemporaryFile>
+
 #pragma warning(push)
 #pragma warning(disable: 4100)
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #endif
+
 #include <vector>
 #include <map>
 
@@ -253,6 +257,12 @@ public slots:
    **/
   void disableAll();
 
+  /**
+   * @brief The currently managed game has changed
+   * @param gamePlugin
+   */
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
+
 signals:
 
  /**
@@ -336,6 +346,8 @@ private:
   SignalPluginStateChanged m_PluginStateChanged;
 
   QTemporaryFile m_TempFile;
+
+  MOBase::IPluginGame const *m_GamePlugin;
 
 };
 

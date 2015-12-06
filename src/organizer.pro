@@ -70,7 +70,6 @@ SOURCES += \
     moapplication.cpp \
     profileinputdialog.cpp \
     icondelegate.cpp \
-    gameinfoimpl.cpp \
     csvbuilder.cpp \
     savetextasdialog.cpp \
     qtgroupingproxy.cpp \
@@ -150,7 +149,6 @@ HEADERS  += \
     moapplication.h \
     profileinputdialog.h \
     icondelegate.h \
-    gameinfoimpl.h \
     csvbuilder.h \
     savetextasdialog.h \
     qtgroupingproxy.h \
@@ -243,6 +241,10 @@ OTHER_FILES += \
 INCLUDEPATH += "E:/Visual Leak Detector/include"
 LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
+
+#########################FUDGE###############################
+INCLUDEPATH += ../plugins/gameGamebryo
+#############################################################
 
 # custom leak detection
 #LIBS += -lDbgHelp
@@ -365,10 +367,10 @@ CONFIG(debug, debug|release) {
 }
 
 OTHER_FILES += \
-    SConscript
+    SConscript \
+    CMakeLists.txt
 
 DISTFILES += \
     tutorials/tutorial_primer_main.js \
     tutorials/Tooltip.qml \
-    tutorials/TooltipArea.qml \
-    SConscript
+    tutorials/TooltipArea.qml

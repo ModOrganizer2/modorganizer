@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QProgressDialog>
 
+namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 
@@ -82,6 +83,9 @@ public:
    * @return current version of Mod Organizer
    **/
   MOBase::VersionInfo getVersion() const { return m_MOVersion; }
+
+  /** Set the game check for updates */
+  void setNexusDownload(MOBase::IPluginGame const *game);
 
 public slots:
 
@@ -143,6 +147,7 @@ private:
 
   Archive *m_ArchiveHandler;
 
+  MOBase::IPluginGame const *m_NexusDownload;
 };
 
 

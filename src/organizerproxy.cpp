@@ -1,7 +1,8 @@
 #include "organizerproxy.h"
-#include <gameinfo.h>
+
 #include <appconfig.h>
 
+#include <QApplication>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -11,11 +12,6 @@ OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, const QString &pluginNa
   : m_Proxied(organizer)
   , m_PluginName(pluginName)
 {
-}
-
-IGameInfo &OrganizerProxy::gameInfo() const
-{
-  return m_Proxied->gameInfo();
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
@@ -40,7 +36,7 @@ QString OrganizerProxy::downloadsPath() const
 
 QString OrganizerProxy::overwritePath() const
 {
-  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()))
+  return QDir::fromNativeSeparators(qApp->property("dataPath").toString())
          + "/"
          + ToQString(AppConfig::overwritePath());
 }
@@ -50,7 +46,7 @@ VersionInfo OrganizerProxy::appVersion() const
   return m_Proxied->appVersion();
 }
 
-IModInterface *OrganizerProxy::getMod(const QString &name)
+IModInterface *OrganizerProxy::getMod(const QString &name) const
 {
   return m_Proxied->getMod(name);
 }
@@ -155,17 +151,22 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
   return m_Proxied->findFileInfos(path, filter);
 }
 
-MOBase::IDownloadManager *OrganizerProxy::downloadManager()
+MOBase::IDownloadManager *OrganizerProxy::downloadManager() const
 {
   return m_Proxied->downloadManager();
 }
 
-MOBase::IPluginList *OrganizerProxy::pluginList()
+MOBase::IPluginList *OrganizerProxy::pluginList() const
 {
   return m_Proxied->pluginList();
 }
 
-MOBase::IModList *OrganizerProxy::modList()
+MOBase::IModList *OrganizerProxy::modList() const
 {
   return m_Proxied->modList();
+}
+
+MOBase::IPluginGame const *OrganizerProxy::managedGame() const
+{
+  return m_Proxied->managedGame();
 }

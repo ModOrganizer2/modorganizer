@@ -18,6 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "installationmanager.h"
+
 #include "utility.h"
 #include "report.h"
 #include "categories.h"
@@ -32,9 +33,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <scopeguard.h>
 #include <installationtester.h>
-#include <gameinfo.h>
 #include <utility.h>
 #include <scopeguard.h>
+
 #include <QFileInfo>
 #include <QLibrary>
 #include <QInputDialog>
@@ -42,11 +43,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 #include <QMessageBox>
 #include <QSettings>
-#include <Shellapi.h>
 #include <QPushButton>
 #include <QApplication>
 #include <QDateTime>
 #include <QDirIterator>
+
+#include <Shellapi.h>
+
 #include <boost/assign.hpp>
 #include <boost/scoped_ptr.hpp>
 

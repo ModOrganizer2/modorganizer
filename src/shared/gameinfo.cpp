@@ -40,8 +40,8 @@ namespace MOShared {
 GameInfo* GameInfo::s_Instance = nullptr;
 
 
-GameInfo::GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : m_GameDirectory(gameDirectory), m_OrganizerDirectory(moDirectory), m_OrganizerDataDirectory(moDataDirectory)
+GameInfo::GameInfo(const std::wstring &gameDirectory)
+  : m_GameDirectory(gameDirectory)
 {
   atexit(&cleanup);
 }
@@ -86,50 +86,36 @@ void GameInfo::identifyMyGamesDirectory(const std::wstring &file)
   }
 }
 
-bool GameInfo::isValidModURL(int modID, const std::wstring &url, const std::wstring &alt) const
-{
-  std::wostringstream os;
-  os << getNexusPage(false) << "/mods/" << modID;
-  if (url == os.str()) {
-    return true;
-  }
-  os.clear();
-  os.str(L"");
-  os << alt << "/mods/" << modID;
-  return url == os.str();
-}
-
-
-bool GameInfo::identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath)
+bool GameInfo::identifyGame(const std::wstring &searchPath)
 {
   if (OblivionInfo::identifyGame(searchPath)) {
-    s_Instance = new OblivionInfo(moDirectory, moDataDirectory, searchPath);
+    s_Instance = new OblivionInfo(searchPath);
   } else if (Fallout3Info::identifyGame(searchPath)) {
-    s_Instance = new Fallout3Info(moDirectory, moDataDirectory, searchPath);
+    s_Instance = new Fallout3Info(searchPath);
   } else if (FalloutNVInfo::identifyGame(searchPath)) {
-    s_Instance = new FalloutNVInfo(moDirectory, moDataDirectory, searchPath);
+    s_Instance = new FalloutNVInfo(searchPath);
   } else if (SkyrimInfo::identifyGame(searchPath)) {
-    s_Instance = new SkyrimInfo(moDirectory, moDataDirectory, searchPath);
+    s_Instance = new SkyrimInfo(searchPath);
   }
 
   return s_Instance != nullptr;
 }
 
 
-bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath)
+bool GameInfo::init(const std::wstring &moDirectory, const std::wstring &gamePath)
 {
   if (s_Instance == nullptr) {
     if (gamePath.length() == 0) {
       // search upward in the directory until a recognized game-binary is found
       std::wstring searchPath(moDirectory);
-      while (!identifyGame(moDirectory, moDataDirectory, searchPath)) {
+      while (!identifyGame(searchPath)) {
         size_t lastSep = searchPath.find_last_of(L"/\\");
         if (lastSep == std::string::npos) {
           return false;
         }
         searchPath.erase(lastSep);
       }
-    } else if (!identifyGame(moDirectory, moDataDirectory, gamePath)) {
+    } else if (!identifyGame(gamePath)) {
       return false;
     }
   }
@@ -146,24 +132,6 @@ GameInfo &GameInfo::instance()
 std::wstring GameInfo::getGameDirectory() const
 {
   return m_GameDirectory;
-}
-
-bool GameInfo::requiresSteam() const
-{
-  return FileExists(getGameDirectory() + L"\\steam_api.dll");
-}
-
-std::wstring GameInfo::getLocalAppFolder() const
-{
-  wchar_t localAppFolder[MAX_PATH];
-  memset(localAppFolder, '\0', MAX_PATH * sizeof(wchar_t));
-
-  if (::SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppFolder) == S_OK) {
-    return localAppFolder;
-  } else {
-    // fallback: try the registry
-    return getSpecialPath(L"Local AppData");
-  }
 }
 
 std::wstring GameInfo::getSpecialPath(LPCWSTR name) const

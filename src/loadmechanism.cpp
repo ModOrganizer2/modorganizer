@@ -56,7 +56,7 @@ void LoadMechanism::writeHintFile(const QDir &targetDirectory)
 }
 
 
-void LoadMechanism::removeHintFile(QDir &targetDirectory)
+void LoadMechanism::removeHintFile(QDir targetDirectory)
 {
   targetDirectory.remove("mo_path.txt");
 }
@@ -64,7 +64,8 @@ void LoadMechanism::removeHintFile(QDir &targetDirectory)
 
 bool LoadMechanism::isDirectLoadingSupported()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  //FIXME: Seriously? isn't there a 'do i need steam' thing?
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
   if (game->gameName().compare("oblivion", Qt::CaseInsensitive) == 0) {
     // oblivion can be loaded directly if it's not the steam variant
     return !game->gameDirectory().exists("steam_api.dll");
@@ -76,13 +77,11 @@ bool LoadMechanism::isDirectLoadingSupported()
 
 bool LoadMechanism::isScriptExtenderSupported()
 {
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
   ScriptExtender *extender = game->feature<ScriptExtender>();
 
   // test if there even is an extender for the managed game and if so whether it's installed
-  return (extender != nullptr)
-      && (game->gameDirectory().exists(extender->name() + "_loader.exe")
-          || game->gameDirectory().exists(extender->name() + "_steam_loader.dll"));
+  return extender != nullptr && extender->isInstalled();
 }
 
 bool LoadMechanism::isProxyDLLSupported()
@@ -92,7 +91,7 @@ bool LoadMechanism::isProxyDLLSupported()
   // plus: the proxy dll hasn't been working for at least the whole 1.12.x versions of MO and
   // noone reported it so why maintain an unused feature?
   return false;
-/*  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+/*  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
   return game->gameDirectory().exists(QString::fromStdWString(AppConfig::proxyDLLTarget()));*/
 }
 
@@ -124,7 +123,7 @@ bool LoadMechanism::hashIdentical(const QString &fileNameLHS, const QString &fil
 void LoadMechanism::deactivateScriptExtender()
 {
   try {
-    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
     ScriptExtender *extender = game->feature<ScriptExtender>();
     if (extender == nullptr) {
       throw MyException(QObject::tr("game doesn't support a script extender"));
@@ -150,7 +149,7 @@ void LoadMechanism::deactivateScriptExtender()
 void LoadMechanism::deactivateProxyDLL()
 {
   try {
-    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
 
     QString targetPath = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLTarget()));
 
@@ -179,7 +178,7 @@ void LoadMechanism::deactivateProxyDLL()
 void LoadMechanism::activateScriptExtender()
 {
   try {
-    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
     ScriptExtender *extender = game->feature<ScriptExtender>();
     if (extender == nullptr) {
       throw MyException(QObject::tr("game doesn't support a script extender"));
@@ -219,7 +218,7 @@ void LoadMechanism::activateScriptExtender()
 void LoadMechanism::activateProxyDLL()
 {
   try {
-    IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+    IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
 
     QString targetPath = game->gameDirectory().absoluteFilePath(QString::fromStdWString(AppConfig::proxyDLLTarget()));
 

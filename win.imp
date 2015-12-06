@@ -1,0 +1,83 @@
+[
+    # Microsft visual C?
+
+    { include: [ "<xiosbase>", "private", "<ios_base>", "public" ] },
+    { include: [ "<xlocale>", "private", "<locale>", "public" ] },
+    { include: [ "<xstring>", "private", "<string>", "public" ] },
+    { include: [ "<xutility>", "private", "<utility>", "public" ] },
+
+    { include: [ "<sys/stat.inl>", "private", "<sys/stat.h>", "public" ] },
+
+# Windows
+# Looks like the documentation says the 1st char is u/c the rest are l/c
+
+# You have to be kidding me. ULONG is defined in winsmcrd.h?
+    { symbol: [ "ULONG", "private", "<windef.h>", "private" ] },
+
+    { include: [ "<winnls.h>", "private", "<stringapiset.h>", "private" ] }, # Stringapiset.h
+    { include: [ "<stringapiset.h>", "private", "<Windows.h>", "public" ] },
+
+# These are all in windef.h apparently. Which m/s then says 'use Windows.h'
+    { include: [ "<basetsd.h>", "private", "<windef.h>", "private" ] }, # or in winnt apparently
+    { include: [ "<handleapi.h>", "private", "<windef.h>", "private" ] },
+    { include: [ "<libloaderapi.h>", "private", "<windef.h>", "private" ] },
+    { include: [ "<minwindef.h>", "private", "<windef.h>", "private" ] },
+
+# Similary, but for winbase.h
+    { include: [ "<LMCons.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<errhandlingapi.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<excpt.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<minwinbase.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<namedpipeapi.h>", "private", "<winbase.h>", "private" ] },
+    { include: [ "<securitybaseapi.h>", "private", "<winbase.h>", "private" ] },
+
+# These ones say xxxx.h (include Windows.h) on the ms web site
+    { include: [ "<datetimeapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<fileapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<verrsrc.h>", "private", "<Windows.h>", "public" ] }, # VerRsrc.h
+    { include: [ "<winbase.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<windef.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winerror.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winnt.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<winuser.h>", "private", "<Windows.h>", "public" ] },
+
+# These ones are in Windows.h but the documentation post windows 8 says they are individual headers,
+# which looks like M/S are trying to get their act together. Maybe.
+    { include: [ "<processenv.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<processthreadsapi.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<synchapi.h>", "private", "<Windows.h>", "public" ] },
+
+# These ones are *not* defined to be in Windows.h, but it seems to work. These should probably be cleaned up
+    { include: [ "<DbgHelp.h>", "private", "<Windows.h>", "public" ] },
+    # These 3 should go to Shellapi.h
+    { include: [ "<ShellAPI.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<Shellapi.h>", "private", "<Windows.h>", "public" ] }, # official name according to website
+    { include: [ "<shellapi.h>", "private", "<Windows.h>", "public" ] },
+    #
+    { include: [ "<knownfolders.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<ShlObj.h>", "private", "<Windows.h>", "public" ] },
+    { include: [ "<objidl.h>", "private", "<Windows.h>", "public" ] },
+
+# Files that are included by other files which seem to then come for free in Windows.h but
+# shouldn't. Again, should be cleaned up.
+    
+    { include: [ "<basetyps.h>", "private", "<objbase.h>", "private" ] },
+    { include: [ "<combaseapi.h>", "private", "<objbase.h>", "private" ] },
+    { include: [ "<objbase.h>", "private", "<Windows.h>", "public" ] },
+
+    { include: [ "<wtypesbase.h>", "private", "<WTypes.h>", "private" ] },
+    { include: [ "<WTypes.h>", "private", "<Windows.h>", "public" ] },
+
+    { include: [ "<guiddef.h>", "private", "<Rpc.h>", "private" ] },
+    { include: [ "<Rpc.h>", "private", "<Windows.h>", "public" ] },
+
+# Huh? This one is sane?
+    { include: [ "<shlguid.h>", "private", "<shobjidl.h>", "public" ] },
+
+
+]
+
+#include <crtdbg.h>                                // for operator delete[], etc
+
+#include <xmemory0>                 // for _Simple_types<>::value_type
+#include <xtree>                          // for _Tree_const_iterator

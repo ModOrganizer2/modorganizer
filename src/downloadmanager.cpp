@@ -18,18 +18,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "downloadmanager.h"
+
 #include "nxmurl.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
-#include <gameinfo.h>
+#include "iplugingame.h"
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
-#include "json.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>
 #include <report.h>
+
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>
@@ -38,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QTextDocument>
+
 #include <boost/bind.hpp>
 #include <regex>
 
@@ -448,7 +450,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 {
   NXMUrl nxmInfo(url);
 
-  QString managedGame = ToQString(MOShared::GameInfo::instance().getGameShortName());
+  QString managedGame = m_ManagedGame->getGameShortName();
   qDebug("add nxm download: %s", qPrintable(url));
   if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(managedGame), qPrintable(nxmInfo.game()));
@@ -1242,13 +1244,14 @@ int DownloadManager::startDownloadURLs(const QStringList &urls)
   return m_ActiveDownloads.size() - 1;
 }
 
+/* This doesn't appear to be used by anything
 int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 {
   int newID = m_ActiveDownloads.size();
   addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(ToQString(MOShared::GameInfo::instance().getGameName())).arg(modID).arg(fileID));
   return newID;
 }
-
+*/
 QString DownloadManager::downloadPath(int id)
 {
   return getFilePath(id);
@@ -1468,3 +1471,7 @@ void DownloadManager::directoryChanged(const QString&)
   refreshList();
 }
 
+void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)
+{
+  m_ManagedGame = managedGame;
+}

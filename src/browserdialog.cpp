@@ -18,18 +18,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "browserdialog.h"
+
 #include "ui_browserdialog.h"
 #include "browserview.h"
-
 #include "messagedialog.h"
 #include "report.h"
 #include "persistentcookiejar.h"
 
-#include "json.h"
-
 #include <utility.h>
-#include <gameinfo.h>
 #include "settings.h"
+
 #include <QNetworkCookieJar>
 #include <QNetworkCookie>
 #include <QMenu>

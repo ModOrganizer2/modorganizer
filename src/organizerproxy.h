@@ -12,14 +12,13 @@ public:
 
   OrganizerProxy(OrganizerCore *organizer, const QString &pluginName);
 
-  virtual MOBase::IGameInfo &gameInfo() const;
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
   virtual QString profilePath() const;
   virtual QString downloadsPath() const;
   virtual QString overwritePath() const;
   virtual MOBase::VersionInfo appVersion() const;
-  virtual MOBase::IModInterface *getMod(const QString &name);
+  virtual MOBase::IModInterface *getMod(const QString &name) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
@@ -35,9 +34,9 @@ public:
   virtual QStringList getFileOrigins(const QString &fileName) const;
   virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
 
-  virtual MOBase::IDownloadManager *downloadManager();
-  virtual MOBase::IPluginList *pluginList();
-  virtual MOBase::IModList *modList();
+  virtual MOBase::IDownloadManager *downloadManager() const;
+  virtual MOBase::IPluginList *pluginList() const;
+  virtual MOBase::IModList *modList() const;
   virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
   virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
   virtual void refreshModList(bool saveChanges);
@@ -46,6 +45,7 @@ public:
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
   virtual bool onModInstalled(const std::function<void (const QString&)> &func);
 
+  virtual MOBase::IPluginGame const *managedGame() const;
 
 private:
 

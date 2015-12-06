@@ -91,7 +91,7 @@ private:
   void writeHintFile(const QDir &targetDirectory);
 
   // remove the hint file if it exists. does nothing if the file doesn't exist
-  void removeHintFile(QDir &targetDirectory);
+  void removeHintFile(QDir targetDirectory);
 
   // compare the two files by md5-hash, returns true if they are identical
   bool hashIdentical(const QString &fileNameLHS, const QString &fileNameRHS);

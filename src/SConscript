@@ -67,7 +67,6 @@ env.Uic(env.Glob('*.ui'))
 
 env.RequireLibraries('uibase', 'shared', 'bsatk', 'esptk')
 
-
 env.AppendUnique(LIBS = [
     'shell32',
     'user32',
@@ -96,6 +95,12 @@ env['CPPPATH'] += [
     '${BOOSTPATH}',
 ]
 
+#########################FUDGE###############################
+env['CPPPATH'] += [
+    '../plugins/gameGamebryo',
+    ]
+#############################################################
+
 env.AppendUnique(CPPDEFINES = [
     '_UNICODE',
     '_CRT_SECURE_NO_WARNINGS',
@@ -118,8 +123,9 @@ env.AppendUnique(LINKFLAGS = [
 
 #  modeltest is optional and it doesn't compile anyway...
 cpp_files = [
-    x for x in Glob('*.cpp')
-        if x.name != 'modeltest.cpp' and x.name != 'aboutdialog.cpp'
+    x for x in env.Glob('*.cpp', source = True)
+        if x.name != 'modeltest.cpp' and x.name != 'aboutdialog.cpp' and \
+           not x.name.startswith('moc_') # I think this is a strange bug
 ]
 
 about_env = env.Clone()
