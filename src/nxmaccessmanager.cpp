@@ -26,8 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "selfupdater.h"
 #include "persistentcookiejar.h"
 #include "settings.h"
-#include <json.h>
-
+#include <gameinfo.h>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>

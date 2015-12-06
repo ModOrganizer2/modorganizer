@@ -28,7 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "categories.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
-#include "json.h"
 #include "filenamestring.h"
 #include "versioninfo.h"
 

@@ -35,7 +35,7 @@ public:
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const;
   virtual QString absolutePath() const;
-  virtual MOBase::VersionInfo getNewestVersion() const { return ""; }
+  virtual MOBase::VersionInfo getNewestVersion() const { return QString(); }
   virtual QString getInstallationFile() const { return ""; }
   virtual int getNexusID() const { return -1; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
