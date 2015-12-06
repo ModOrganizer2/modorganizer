@@ -24,17 +24,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <iprofile.h>
 #include <delayedfilewriter.h>
+
 #include <QString>
 #include <QDir>
-#include <QMetaType>
 #include <QSettings>
+
 #include <vector>
 #include <tuple>
 
 
-namespace MOBase {
-  class IPluginGame;
-}
+namespace MOBase { class IPluginGame; }
 
 /**
  * @brief represents a profile
@@ -51,12 +50,6 @@ public:
 public:
 
   /**
-   * @brief default constructor
-   * @todo This constructor initialised nothing, the resulting object is not usable
-   **/
-  Profile();
-
-  /**
    * @brief constructor
    *
    * This constructor is used to create a new profile so it is to be assumed a profile
@@ -64,7 +57,8 @@ public:
    * @param name name of the new profile
    * @param filter save game filter. Defaults to &lt;no filter&gt;.
    **/
-  Profile(const QString &name, MOBase::IPluginGame *gamePlugin, bool useDefaultSettings);
+  Profile(const QString &name, MOBase::IPluginGame const *gamePlugin, bool useDefaultSettings);
+
   /**
    * @brief constructor
    *
@@ -73,7 +67,7 @@ public:
    * invoking this should always produce a working profile
    * @param directory directory to read the profile from
    **/
-  Profile(const QDir &directory, MOBase::IPluginGame *gamePlugin);
+  Profile(const QDir &directory, MOBase::IPluginGame const *gamePlugin);
 
   Profile(const Profile &reference);
 
@@ -88,7 +82,7 @@ public:
    * @param name of the new profile
    * @param reference profile to copy from
    **/
-  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin);
+  static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin);
 
   MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
 
@@ -308,7 +302,7 @@ private:
 
   QDir m_Directory;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const * const m_GamePlugin;
 
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
@@ -318,8 +312,6 @@ private:
   MOBase::DelayedFileWriter m_ModListWriter;
 
 };
-
-Q_DECLARE_METATYPE(Profile)
 
 
 #endif // PROFILE_H

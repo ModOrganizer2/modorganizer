@@ -42,10 +42,11 @@ using namespace MOShared;
 Q_DECLARE_METATYPE(Profile::Ptr)
 
 
-ProfilesDialog::ProfilesDialog(const QString &profileName, QWidget *parent)
+ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent)
   : TutorableDialog("Profiles", parent)
   , ui(new Ui::ProfilesDialog)
   , m_FailState(false)
+  , m_Game(game)
 {
   ui->setupUi(this);
 
@@ -65,7 +66,6 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, QWidget *parent)
 
   QCheckBox *invalidationBox = findChild<QCheckBox*>("invalidationBox");
 
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
   BSAInvalidation *invalidation = game->feature<BSAInvalidation>();
 
   if (invalidation == nullptr) {
@@ -104,7 +104,7 @@ QListWidgetItem *ProfilesDialog::addItem(const QString &name)
   QDir profileDir(name);
   QListWidgetItem *newItem = new QListWidgetItem(profileDir.dirName(), m_ProfilesList);
   try {
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir, qApp->property("managed_game").value<IPluginGame*>()))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(profileDir, m_Game))));
     m_FailState = false;
   } catch (const std::exception& e) {
     reportError(tr("failed to create profile: %1").arg(e.what()));
@@ -117,7 +117,7 @@ void ProfilesDialog::createProfile(const QString &name, bool useDefaultSettings)
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, qApp->property("managed_game").value<IPluginGame*>(), useDefaultSettings))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(new Profile(name, m_Game, useDefaultSettings))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -131,7 +131,7 @@ void ProfilesDialog::createProfile(const QString &name, const Profile &reference
   try {
     QListWidget *profilesList = findChild<QListWidget*>("profilesList");
     QListWidgetItem *newItem = new QListWidgetItem(name, profilesList);
-    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, qApp->property("managed_game").value<IPluginGame*>()))));
+    newItem->setData(Qt::UserRole, QVariant::fromValue(Profile::Ptr(Profile::createPtrFrom(name, reference, m_Game))));
     profilesList->addItem(newItem);
     m_FailState = false;
   } catch (const std::exception&) {
@@ -324,6 +324,6 @@ void ProfilesDialog::on_localSavesBox_stateChanged(int state)
 void ProfilesDialog::on_transferButton_clicked()
 {
   const Profile::Ptr currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
-  TransferSavesDialog transferDialog(*currentProfile, qApp->property("managed_game").value<IPluginGame*>(), this);
+  TransferSavesDialog transferDialog(*currentProfile, m_Game, this);
   transferDialog.exec();
 }

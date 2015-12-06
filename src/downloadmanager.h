@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemWatcher>
 #include <QSettings>
 
+namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 
@@ -328,7 +329,9 @@ public:
 
 
   virtual int startDownloadURLs(const QStringList &urls);
+  /* This doesn't appear to be used anywhere
   virtual int startDownloadNexusFile(int modID, int fileID);
+  */
   virtual QString downloadPath(int id);
 
   /**
@@ -413,6 +416,8 @@ public slots:
   void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
   void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private slots:
 
@@ -501,6 +506,7 @@ private:
 
   QRegExp m_DateExpression;
 
+  MOBase::IPluginGame const *m_ManagedGame;
 };
 
 

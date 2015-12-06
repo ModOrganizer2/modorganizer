@@ -18,7 +18,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "profile.h"
-#include "gameinfo.h"
+
 #include "windows_error.h"
 #include "modinfo.h"
 #include "safewritefile.h"
@@ -30,25 +30,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
+
 #include <QMessageBox>
 #include <QApplication>
 #include <QSettings>
 #include <QTemporaryFile>
+
 #include <functional>
+#include <stdexcept>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <shlobj.h>
-#include <stdexcept>
 
 using namespace MOBase;
 using namespace MOShared;
-
-
-Profile::Profile()
-  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
-{
-}
 
 void Profile::touchFile(QString fileName)
 {
@@ -58,7 +54,7 @@ void Profile::touchFile(QString fileName)
   }
 }
 
-Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSettings)
+Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDefaultSettings)
   : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
   , m_GamePlugin(gamePlugin)
 {
@@ -99,8 +95,9 @@ Profile::Profile(const QString &name, IPluginGame *gamePlugin, bool useDefaultSe
 }
 
 
-Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
+Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   : m_Directory(directory)
+  , m_GamePlugin(gamePlugin)
   , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
 {
   assert(gamePlugin != nullptr);
@@ -125,6 +122,8 @@ Profile::Profile(const QDir &directory, IPluginGame *gamePlugin)
 Profile::Profile(const Profile &reference)
   : m_Directory(reference.m_Directory)
   , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_GamePlugin(reference.m_GamePlugin)
+
 {
   refreshModStatus();
 }
@@ -486,7 +485,7 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
   m_ModListWriter.write();
 }
 
-Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame *gamePlugin)
+Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin)
 {
   QString profileDirectory = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()) + "/" + name;
   reference.copyFilesTo(profileDirectory);
@@ -568,10 +567,8 @@ void Profile::mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const
 
 bool Profile::invalidationActive(bool *supported) const
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
-  DataArchives *dataArchives = gamePlugin->feature<DataArchives>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
+  DataArchives *dataArchives = m_GamePlugin->feature<DataArchives>();
 
   if ((invalidation != nullptr) && (dataArchives != nullptr)) {
     if (supported != nullptr) {
@@ -593,9 +590,7 @@ bool Profile::invalidationActive(bool *supported) const
 
 void Profile::deactivateInvalidation()
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->deactivate(this);
@@ -605,9 +600,7 @@ void Profile::deactivateInvalidation()
 
 void Profile::activateInvalidation()
 {
-  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
-
-  BSAInvalidation *invalidation = gamePlugin->feature<BSAInvalidation>();
+  BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
 
   if (invalidation != nullptr) {
     invalidation->activate(this);
@@ -681,8 +674,7 @@ QString Profile::getDeleterFileName() const
 
 QString Profile::getIniFileName() const
 {
-  std::wstring primaryIniFile = *(GameInfo::instance().getIniFileNames().begin());
-  return m_Directory.absoluteFilePath(ToQString(primaryIniFile));
+  return m_Directory.absoluteFilePath(m_GamePlugin->getIniFiles()[0]);
 }
 
 QString Profile::getProfileTweaks() const

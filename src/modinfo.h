@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "imodinterface.h"
 #include "versioninfo.h"
+//#include <directoryentry.h>
 
 class QDateTime;
 class QDir;
@@ -36,6 +37,7 @@ class QDir;
 #include <set>
 #include <vector>
 
+namespace MOBase { class IPluginGame; }
 namespace MOShared { class DirectoryEntry; }
 
 /**
@@ -104,7 +106,10 @@ public:
   /**
    * @brief read the mod directory and Mod ModInfo objects for all subdirectories
    **/
-  static void updateFromDisc(const QString &modDirectory, MOShared::DirectoryEntry **directoryStructure, bool displayForeign);
+  static void updateFromDisc(const QString &modDirectory,
+                             MOShared::DirectoryEntry **directoryStructure,
+                             bool displayForeign,
+                             MOBase::IPluginGame const *game);
 
   static void clear() { s_Collection.clear(); s_ModsByName.clear(); s_ModsByModID.clear(); }
 

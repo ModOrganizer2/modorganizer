@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-FalloutNVInfo::FalloutNVInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
+FalloutNVInfo::FalloutNVInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"falloutnv");
 }
@@ -63,25 +63,6 @@ std::wstring FalloutNVInfo::getRegPathStatic()
   }
 }
 
-std::vector<std::wstring> FalloutNVInfo::getDLCPlugins() const
-{
-  return boost::assign::list_of (L"DeadMoney.esm")
-                                (L"HonestHearts.esm")
-                                (L"OldWorldBlues.esm")
-                                (L"LonesomeRoad.esm")
-                                (L"GunRunnersArsenal.esm")
-                                (L"CaravanPack.esm")
-                                (L"ClassicPack.esm")
-                                (L"MercenaryPack.esm")
-                                (L"TribalPack.esm")
-      ;
-}
-
-std::vector<std::wstring> FalloutNVInfo::getSavegameAttachmentExtensions() const
-{
-  return std::vector<std::wstring>();
-}
-
 std::vector<std::wstring> FalloutNVInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"fallout.ini")(L"falloutprefs.ini");
@@ -91,28 +72,6 @@ std::wstring FalloutNVInfo::getReferenceDataFile() const
 {
   return L"Fallout - Meshes.bsa";
 }
-
-std::wstring FalloutNVInfo::getNexusPage(bool nmmScheme) const
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/newvegas";
-  } else {
-    return L"http://www.nexusmods.com/newvegas";
-  }
-}
-
-
-std::wstring FalloutNVInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/newvegas";
-}
-
-
-int FalloutNVInfo::getNexusModIDStatic()
-{
-  return 42572;
-}
-
 
 bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*) const
 {
@@ -124,11 +83,6 @@ bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*) co
     }
   }
   return false;
-}
-
-bool FalloutNVInfo::isValidModURL(int modID, std::wstring const &url) const
-{
-  return GameInfo::isValidModURL(modID, url, L"http://newvegas.nexusmods.com");
 }
 
 } // namespace MOShared

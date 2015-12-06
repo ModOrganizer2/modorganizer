@@ -18,12 +18,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "transfersavesdialog.h"
+
 #include "ui_transfersavesdialog.h"
+#include "iplugingame.h"
 #include "savegamegamebyro.h"
 #include "utility.h"
-#include <gameinfo.h>
+
 #include <QDir>
 #include <QMessageBox>
+
 #include <Shlwapi.h>
 #include <shlobj.h>
 
@@ -32,7 +35,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame *gamePlugin, QWidget *parent)
+TransferSavesDialog::TransferSavesDialog(const Profile &profile, IPluginGame const *gamePlugin, QWidget *parent)
   : TutorableDialog("TransferSaves", parent)
   , ui(new Ui::TransferSavesDialog)
   , m_Profile(profile)
@@ -60,7 +63,7 @@ void TransferSavesDialog::refreshGlobalSaves()
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
   for (const QString &filename : files) {
-    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
+    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename), m_GamePlugin);
     save->setParent(this);
     m_GlobalSaves.push_back(save);
   }
@@ -78,7 +81,7 @@ void TransferSavesDialog::refreshLocalSaves()
   QStringList files = savesDir.entryList(QDir::Files, QDir::Time);
 
   foreach (const QString &filename, files) {
-    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename));
+    SaveGameGamebryo *save = new SaveGameGamebryo(this, savesDir.absoluteFilePath(filename), m_GamePlugin);
     save->setParent(this);
     m_LocalSaves.push_back(save);
   }

@@ -66,7 +66,6 @@ SET(organizer_SRCS
     moapplication.cpp
     profileinputdialog.cpp
     icondelegate.cpp
-    gameinfoimpl.cpp
     csvbuilder.cpp
     savetextasdialog.cpp
     qtgroupingproxy.cpp
@@ -160,7 +159,6 @@ SET(organizer_HDRS
     moapplication.h
     profileinputdialog.h
     icondelegate.h
-    gameinfoimpl.h
     csvbuilder.h
     savetextasdialog.h
     qtgroupingproxy.h

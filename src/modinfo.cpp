@@ -32,6 +32,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "filenamestring.h"
 #include "versioninfo.h"
 
+#include <iplugingame.h>
+#include <versioninfo.h>
+#include <appconfig.h>
+#include <scriptextender.h>
+
 #include <QApplication>
 #include <QDirIterator>
 #include <QMutexLocker>
@@ -197,7 +202,10 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 }
 
 
-void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **directoryStructure, bool displayForeign)
+void ModInfo::updateFromDisc(const QString &modDirectory,
+                             DirectoryEntry **directoryStructure,
+                             bool displayForeign,
+                             MOBase::IPluginGame const *game)
 {
   QMutexLocker lock(&s_Mutex);
   s_Collection.clear();
@@ -213,19 +221,25 @@ void ModInfo::updateFromDisc(const QString &modDirectory, DirectoryEntry **direc
   }
 
   { // list plugins in the data directory and make a foreign-managed mod out of each
-    std::vector<std::wstring> dlcPlugins = GameInfo::instance().getDLCPlugins();
-    QDir dataDir(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/data");
-    foreach (const QFileInfo &file, dataDir.entryInfoList(QStringList() << "*.esp" << "*.esm")) {
-      if ((file.baseName() != "Update") // hide update
-          && (file.baseName() != ToQString(GameInfo::instance().getGameName())) // hide the game esp
+    QStringList dlcPlugins = game->getDLCPlugins();
+    QStringList mainPlugins = game->getPrimaryPlugins();
+    QDir dataDir(game->dataDirectory());
+    for (const QString &file : dataDir.entryList({ "*.esp", "*.esm" })) {
+      if (std::find_if(mainPlugins.begin(), mainPlugins.end(),
+                       [&file](QString const &p) {
+                          return p.compare(file, Qt::CaseInsensitive) == 0; }) == mainPlugins.end()
           && (displayForeign // show non-dlc bundles only if the user wants them
-              || std::find(dlcPlugins.begin(), dlcPlugins.end(), ToWString(file.fileName())) != dlcPlugins.end())) {
+              || std::find_if(dlcPlugins.begin(), dlcPlugins.end(),
+                              [&file](QString const &p) {
+                                  return p.compare(file, Qt::CaseInsensitive) == 0; }) != dlcPlugins.end())) {
+
+        QFileInfo f(file); //Just so I can get a basename...
         QStringList archives;
-        foreach (const QString archiveName, dataDir.entryList(QStringList() << file.baseName() + "*.bsa")) {
+        for (const QString &archiveName : dataDir.entryList({ f.baseName() + "*.bsa" })) {
           archives.append(dataDir.absoluteFilePath(archiveName));
         }
 
-        createFromPlugin(file.fileName(), archives, directoryStructure);
+        createFromPlugin(file, archives, directoryStructure);
       }
     }
   }
@@ -275,7 +289,10 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
   int result = 0;
   std::vector<int> modIDs;
 
-  modIDs.push_back(GameInfo::instance().getNexusModID());
+  //I ought to store this, it's used elsewhere
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+
+  modIDs.push_back(game->getNexusModOrganizerID());
 
   for (const ModInfo::Ptr &mod : s_Collection) {
     if (mod->canBeUpdated()) {

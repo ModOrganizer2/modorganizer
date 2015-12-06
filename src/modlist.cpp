@@ -24,15 +24,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
-#include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <report.h>
+
 #include <QFileInfo>
 #include <QDir>
 #include <QDirIterator>
 #include <QMimeData>
-#include <stdexcept>
 #include <QStandardItemModel>
 #include <QMessageBox>
 #include <QStringList>
@@ -44,7 +43,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractItemView>
 #include <QSortFilterProxyModel>
 #include <QApplication>
+
 #include <sstream>
+#include <stdexcept>
 #include <algorithm>
 
 

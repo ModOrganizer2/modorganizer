@@ -18,16 +18,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "executableslist.h"
-#include <gameinfo.h>
+
+#include "iplugingame.h"
+#include "utility.h"
+
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
-#include "utility.h"
+
 #include <algorithm>
 
 
 using namespace MOBase;
-using namespace MOShared;
 
 
 ExecutablesList::ExecutablesList()
@@ -38,7 +40,7 @@ ExecutablesList::~ExecutablesList()
 {
 }
 
-void ExecutablesList::init(IPluginGame *game)
+void ExecutablesList::init(IPluginGame const *game)
 {
   Q_ASSERT(game != nullptr);
   m_Executables.clear();

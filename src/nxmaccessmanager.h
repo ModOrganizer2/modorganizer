@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 #include <set>
 
+namespace MOBase { class IPluginGame; }
 
 /**
  * @brief access manager extended to handle nxm links
@@ -83,8 +84,6 @@ private slots:
   void loginFinished();
   void loginError(QNetworkReply::NetworkError errorCode);
   void loginTimeout();
-
-public slots:
 
 protected:
 

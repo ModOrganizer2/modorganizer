@@ -18,9 +18,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "categories.h"
+
 #include <utility.h>
 #include <report.h>
-#include <gameinfo.h>
+
 #include <QObject>
 #include <QFile>
 #include <QDir>
@@ -29,7 +30,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
-using namespace MOShared;
 
 
 CategoryFactory* CategoryFactory::s_Instance = nullptr;

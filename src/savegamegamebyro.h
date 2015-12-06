@@ -20,17 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SAVEGAMEGAMEBRYO_H
 #define SAVEGAMEGAMEBRYO_H
 
-
 #include "savegame.h"
 
-#include <QString>
-#include <QObject>
 #include <QMetaType>
-#include <QFile>
+#include <QObject>
+#include <QString>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
+namespace MOBase { class IPluginGame; class ISaveGame; }
 
 /**
  * @brief represents a single save game
@@ -42,30 +38,20 @@ Q_OBJECT
 public:
 
   /**
-   * @brief construct an empty object
-   **/
-  SaveGameGamebryo(QObject *parent = 0);
-
-  /**
    * @brief construct a save game and immediately read out information from the file
    *
    * @param filename absolute path of the save game file
    **/
-  SaveGameGamebryo(QObject *parent, const QString &filename);
+  SaveGameGamebryo(QObject *parent, const QString &filename, MOBase::IPluginGame const *game);
 
+  /*
 
   SaveGameGamebryo(const SaveGameGamebryo &reference);
 
   SaveGameGamebryo &operator=(const SaveGameGamebryo &reference);
 
   ~SaveGameGamebryo();
-
-  /**
-   * @brief read out information from a savegame
-   *
-   * @param fileName absolute path of the save game file
-   **/
-  virtual void readFile(const QString &fileName);
+  */
 
   /**
    * @return number of plugins that were enabled when the save game was created
@@ -80,22 +66,12 @@ public:
    **/
   const QString &plugin(int index) const { return m_Plugins.at(index); }
 
-
 private:
 
-  void readESSFile(QFile &saveFile);
-  void readFOSFile(QFile &saveFile, bool newVegas);
-  void readSkyrimFile(QFile &saveFile);
-
-  void setCreationTime(const QString &fileName);
-
-private:
-
-  std::vector<QString> m_Plugins;
+  QStringList m_Plugins;
+  //Note: This isn't owned by us so safe to copy
+  MOBase::ISaveGame const *m_Save;
 
 };
-
-Q_DECLARE_METATYPE(SaveGameGamebryo)
-Q_DECLARE_METATYPE(SaveGameGamebryo*)
 
 #endif // SAVEGAMEGAMEBRYO_H
