@@ -243,7 +243,7 @@ LIBS += -L"E:/Visual Leak Detector/lib/Win32"
 #DEFINES += LEAK_CHECK_WITH_VLD
 
 #########################FUDGE###############################
-INCLUDEPATH += ../plugins/gameGamebro
+INCLUDEPATH += ../plugins/gameGamebryo
 #############################################################
 
 # custom leak detection
