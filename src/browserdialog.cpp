@@ -24,7 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "report.h"
 #include "persistentcookiejar.h"
-#include "json.h"
+
 #include <utility.h>
 #include "settings.h"
 

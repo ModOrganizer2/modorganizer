@@ -37,6 +37,14 @@ def setup_config_variables():
     if 'ZLIBPATH' in os.environ:
         zlibpath = os.environ['ZLIBPATH']
 
+    git = 'git'
+    if 'GIT' in os.environ:
+        git = os.environ['GIT']
+
+    mercurial = 'hg'
+    if 'MERCURIAL' in os.environ:
+        hg = os.environ['HG']
+
     vars = Variables('scons_configure.py')
     vars.AddVariables(
         PathVariable('BOOSTPATH', 'Set to point to your boost directory',
@@ -51,7 +59,13 @@ def setup_config_variables():
         PathVariable('SEVENZIPPATH', 'Path to 7zip sources', sevenzippath,
                                                         PathVariable.PathIsDir),
         PathVariable('ZLIBPATH', 'Path to zlib install', zlibpath,
-                                                        PathVariable.PathIsDir)
+                                                        PathVariable.PathIsDir),
+        PathVariable('GIT', 'Path to git executable', git,
+                                                       PathVariable.PathIsFile),
+        PathVariable('MERCURIAL', 'Path to hg executable', mercurial,
+                                                       PathVariable.PathIsFile),
+        PathVariable('IWYU', 'Path to include-what-you-use executable', None,
+                                                        PathVariable.PathIsFile)
     )
 
     return vars
@@ -231,6 +245,157 @@ def DisableQtModules(self, *modules):
     for module in modules:
         self['CPPPATH'].remove(os.path.join('$QTDIR', 'include', 'QT' + module))
 
+def setup_IWYU(env):
+    import SCons.Defaults
+    import SCons.Builder
+    original_shared = SCons.Defaults.SharedObjectEmitter
+    original_static = SCons.Defaults.StaticObjectEmitter
+
+    def DoIWYU(env, source, target):
+        for i in range(len(source)):
+            s = source[i]
+            dir, name = os.path.split(str(s)) # I'm sure theres a way of getting this from scons
+            # Don't bother looking at moc files and 7zip source
+            if not name.startswith('moc_') and \
+               not dir.startswith(env['SEVENZIPPATH']):
+                # Put the .iwyu in the same place as the .obj
+                targ = os.path.splitext(str(target[i]))[0]
+                env.Depends(env.IWYU(targ + '.iwyu', s), target[i])
+
+    def shared_emitter(target, source, env):
+        DoIWYU(env, source, target)
+        return original_shared(target, source, env)
+
+    def static_emitter(target, source, env):
+        DoIWYU(env, source, target)
+        return original_static(target, source, env)
+
+    SCons.Defaults.SharedObjectEmitter = shared_emitter
+    SCons.Defaults.StaticObjectEmitter = static_emitter
+
+    def emitter(target, source, env):
+        env.Depends(target, env['IWYU_MAPPING_FILE'])
+        env.Depends(target, env['IWYU_MASSAGE'])
+        return target, source
+
+    def _concat_list(prefixes, list, suffixes, env, f=lambda x: x, target=None, source=None):
+        """ Creates a new list from 'list' by first interpolating each element
+            in the list using the 'env' dictionary and then calling f on the
+            list, and concatenate the 'prefix' and 'suffix' LISTS onto each element of the list.
+            A trailing space on the last element of 'prefix' or leading space on the
+            first element of 'suffix' will cause them to be put into separate list
+            elements rather than being concatenated.
+        """
+
+        if not list:
+            return list
+
+        l = f(SCons.PathList.PathList(list).subst_path(env, target, source))
+        if l is not None:
+            list = l
+
+        # This bit replaces current concat_ixes
+
+        result = []
+
+        def process_stringlist(s):
+            return [ str(env.subst(p, SCons.Subst.SUBST_RAW))
+                                              for p in Flatten([s]) if p != '' ]
+
+        # ensure that prefix and suffix are strings
+        prefixes = process_stringlist(prefixes)
+        prefix = ''
+        if len(prefixes) != 0:
+            if prefixes[-1][-1] != ' ':
+                prefix = prefixes.pop()
+
+        suffixes = process_stringlist(suffixes)
+        suffix = ''
+        if len(suffixes) != 0:
+            if suffixes[-1][0] != ' ':
+                suffix = suffixes.pop(0)
+
+        for x in list:
+            if isinstance(x, SCons.Node.FS.File):
+                result.append(x)
+                continue
+            x = str(x)
+            if x:
+                result.append(prefixes)
+                if prefix:
+                    if x[:len(prefix)] != prefix:
+                        x = prefix + x
+                result.append(x)
+                if suffix:
+                    if x[-len(suffix):] != suffix:
+                        result[-1] = result[-1] + suffix
+                result.append(suffixes)
+        return result
+
+    env['_concat_list'] = _concat_list
+    # Note to self: command 2>&1 | other command appears to work as I would hope
+    # except it eats errors
+    iwyu = SCons.Builder.Builder(
+           action=[
+                '$IWYU_MASSAGE $TARGET $IWYU $IWYU_FLAGS $IWYU_MAPPINGS $IWYU_COMCOM $SOURCE'
+            ],
+            emitter=emitter,
+            suffix='.iwyu',
+            src_suffix='.cpp')
+
+    env.Append(BUILDERS={'IWYU': iwyu})
+
+    # Sigh - IWYU is a right bum as it doesn't recognise /I so I have to
+    # duplicate most of the usual stuff
+
+    env['IWYU_FLAGS'] = [
+        # This might turn down the output a bit. I hope
+        '-Xiwyu', '--transitive_includes_only',
+        # Seem to be needed for a windows build
+        '-D_MT', '-D_DLL', '-m32',
+        # This is something to do with clang, windows and boost headers
+        '-DBOOST_USE_WINDOWS_H',
+        # There's a lot of this, disabled for now
+        '-Wno-inconsistent-missing-override',
+        # Mark boost and Qt headers as system headers to disable a lot of noise.
+        # I'm sure there has to be a better way than saying 'prefix=Q'
+        '--system-header-prefix=Q',
+        '--system-header-prefix=boost/',
+        # Should be able to get this info from our setup really
+        '-fmsc-version=1800', '-D_MSC_VER=1800',
+        # clang and qt don't agree about these because clang says its gcc 4.2
+        # and QT doesn't realise it's clang
+        '-DQ_COMPILER_INITIALIZER_LISTS',
+        '-DQ_COMPILER_DECLTYPE',
+        '-DQ_COMPILER_VARIADIC_TEMPLATES',
+    ]
+    if env['CONFIG'] == 'debug':
+        env['IWYU_FLAGS'] += [ '-D_DEBUG' ]
+
+    env['IWYU_DEFPREFIX'] = '-D'
+    env['IWYU_DEFSUFFIX'] = ''
+    env['IWYU_CPPDEFFLAGS'] = '${_defines(IWYU_DEFPREFIX, CPPDEFINES, IWYU_DEFSUFFIX, __env__)}'
+
+    env['IWYU_INCPREFIX'] = '-I'
+    env['IWYU_INCSUFFIX'] = ''
+    env['IWYU_CPPINCFLAGS'] = '$( ${_concat(IWYU_INCPREFIX, CPPPATH, IWYU_INCSUFFIX, __env__, RDirs, TARGET, SOURCE)} $)'
+
+    env['IWYU_PCH_PREFIX'] = '-include' # Amazingly this works without a space
+    env['IWYU_PCH_SUFFIX'] = ''
+    env['IWYU_PCHFILES'] = '$( ${_concat(IWYU_PCH_PREFIX, PCHSTOP, IWYU_PCH_SUFFIX, __env__, target=TARGET, source=SOURCE)} $)'
+
+    env['IWYU_COMCOM'] = '$IWYU_CPPDEFFLAGS $IWYU_CPPINCFLAGS $IWYU_PCHFILES $CCPDBFLAGS'
+    env['IWYU_MAPPING_PREFIX'] = ['-Xiwyu', '--mapping_file=']
+    env['IWYU_MAPPING_SUFFIX'] = ''
+    env['IWYU_MAPPINGS'] = '$( ${_concat_list(IWYU_MAPPING_PREFIX, IWYU_MAPPING_FILE, IWYU_MAPPING_SUFFIX, __env__, f=lambda l: [ str(x) for x in l], target=TARGET, source=SOURCE)} $)'
+
+    env['IWYU_MAPPING_FILE'] = [
+        env.File('#/modorganizer/qt5_4.imp'),
+        env.File('#/modorganizer/win.imp'),
+        env.File('#/modorganizer/mappings.imp')
+        ]
+
+    env['IWYU_MASSAGE'] = env.File('#/modorganizer/massage_messages.py')
 
 # Create base environment
 vars = setup_config_variables()
@@ -346,6 +511,11 @@ if env['CONFIG'] == 'debug':
 else:
     env.AppendUnique(CPPFLAGS = [ '/O2', '/MD' ])
     env.AppendUnique(LINKFLAGS = [ '/OPT:REF', '/OPT:ICF' ])
+
+# Set up include what you use. Add this as an extra compile step. Note it
+# doesn't currently generate an output file (use the output instead!).
+if 'IWYU' in env:
+    setup_IWYU(env)
 
 # /OPT:REF removes unreferenced code
 # for release, use /OPT:ICF (comdat folding: coalesce identical blocks of code)

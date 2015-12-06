@@ -56,7 +56,7 @@ void LoadMechanism::writeHintFile(const QDir &targetDirectory)
 }
 
 
-void LoadMechanism::removeHintFile(QDir &targetDirectory)
+void LoadMechanism::removeHintFile(QDir targetDirectory)
 {
   targetDirectory.remove("mo_path.txt");
 }

@@ -21,9 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define NEXUSVIEW_H
 
 
+class QEvent;
+class QUrl;
+class QWidget;
 #include <QWebView>
 #include <QWebPage>
-#include <QTabWidget>
 
 /**
  * @brief web view used to display a nexus page
