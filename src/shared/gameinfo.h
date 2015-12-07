@@ -91,8 +91,6 @@ public:
   virtual int getNexusModID() = 0;
   virtual int getNexusGameID() = 0;
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath) = 0;
-
 public:
 
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This

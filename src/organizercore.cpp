@@ -13,6 +13,7 @@
 #include "nxmaccessmanager.h"
 #include <ipluginmodpage.h>
 #include <dataarchives.h>
+#include <localsavegames.h>
 #include <directoryentry.h>
 #include <scopeguard.h>
 #include <utility.h>
@@ -279,7 +280,9 @@ bool OrganizerCore::testForSteam()
   bool success = false;
   while (!success) {
     processIDs.reset(new DWORD[currentSize]);
-    if (!::EnumProcesses(processIDs.get(), currentSize * sizeof(DWORD), &bytesReturned)) {
+    if (!::EnumProcesses(processIDs.get(),
+                         static_cast<DWORD>(currentSize) * sizeof(DWORD),
+                         &bytesReturned)) {
       qWarning("failed to determine if steam is running");
       return true;
     }
@@ -530,6 +533,11 @@ void OrganizerCore::createDefaultProfile()
   if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
     Profile newProf("Default", managedGame(), false);
   }
+}
+
+void OrganizerCore::prepareVFS()
+{
+  m_USVFS.updateMapping(fileMapping());
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -991,7 +999,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     m_USVFS.updateMapping(fileMapping());
-    return startBinary(binary, arguments, profileName, m_Settings.logLevel(), currentDirectory, true);
+    return startBinary(binary, arguments, currentDirectory, true);
   } else {
     qDebug("start of \"%s\" canceled by plugin", qPrintable(binary.absoluteFilePath()));
     return INVALID_HANDLE_VALUE;
@@ -1562,16 +1570,35 @@ void OrganizerCore::prepareStart() {
 
 std::vector<Mapping> OrganizerCore::fileMapping()
 {
+  // need to wait until directory structure
+  while (m_DirectoryUpdate) {
+    ::Sleep(100);
+    QCoreApplication::processEvents();
+  }
+
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
   MappingType result = fileMapping(
       QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
       "\\",
       directoryStructure(), directoryStructure());
 
+  if (m_CurrentProfile->localSavesEnabled()) {
+    LocalSavegames *localSaves = game->feature<LocalSavegames>();
+
+    if (localSaves != nullptr) {
+      MappingType saveMap = localSaves->mappings(currentProfile()->absolutePath() + "/saves");
+      result.reserve(result.size() + saveMap.size());
+      result.insert(result.end(), saveMap.begin(), saveMap.end());
+    }
+  }
+
   for (MOBase::IPluginFileMapper *mapper : m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {
-    MappingType pluginMap = mapper->mappings();
-    result.reserve(result.size() + pluginMap.size());
-    result.insert(result.end(), pluginMap.begin(), pluginMap.end());
+    IPlugin *plugin = dynamic_cast<IPlugin*>(mapper);
+    if (plugin->isActive()) {
+      MappingType pluginMap = mapper->mappings();
+      result.reserve(result.size() + pluginMap.size());
+      result.insert(result.end(), pluginMap.begin(), pluginMap.end());
+    }
   }
 
   return result;
@@ -1607,9 +1634,10 @@ std::vector<Mapping> OrganizerCore::fileMapping(
   directoryEntry->getSubDirectories(current, end);
   for (; current != end; ++current) {
     int origin = (*current)->anyOrigin();
+    /*
     if (origin == 0) {
       continue;
-    }
+    }*/
 
     QString originPath
         = QString::fromStdWString(base->getOriginByID(origin).getPath());

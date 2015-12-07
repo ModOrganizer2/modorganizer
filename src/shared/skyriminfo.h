@@ -64,8 +64,6 @@ public:
   static int getNexusGameIDStatic() { return 110; }
   virtual int getNexusGameID() { return getNexusGameIDStatic(); }
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
-
 private:
 
   SkyrimInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);

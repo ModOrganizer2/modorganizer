@@ -113,17 +113,4 @@ int FalloutNVInfo::getNexusModIDStatic()
   return 42572;
 }
 
-
-bool FalloutNVInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t*)
-{
-  static LPCWSTR profileFiles[] = { L"fallout.ini", L"falloutprefs.ini", L"plugins.txt", nullptr };
-
-  for (int i = 0; profileFiles[i] != nullptr; ++i) {
-    if (_wcsicmp(fileName, profileFiles[i]) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
 } // namespace MOShared

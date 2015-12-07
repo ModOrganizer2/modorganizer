@@ -355,9 +355,7 @@ void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
         ToQString(GameInfo::instance().getGameName()),
         m_OrganizerCore.getVersion().displayString());
 
-  if (accountName.isEmpty()) {
-    title.append(" (not logged in)");
-  } else {
+  if (!accountName.isEmpty()) {
     title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
   }
 
@@ -582,7 +580,7 @@ bool MainWindow::errorReported(QString &logFile)
 
 int MainWindow::checkForProblems()
 {
-  int numProblems = 0;
+  size_t numProblems = 0;
   for (IPluginDiagnose *diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
     numProblems += diagnose->activeProblems().size();
   }
@@ -4184,10 +4182,9 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
+    m_OrganizerCore.prepareVFS();
     HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
-                              m_OrganizerCore.currentProfile()->name(),
-                              m_OrganizerCore.settings().logLevel(),
                               qApp->applicationDirPath() + "/loot",
                               true,
                               stdOutWrite);

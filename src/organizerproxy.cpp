@@ -155,6 +155,11 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerProxy::findFileInfos(const QString 
   return m_Proxied->findFileInfos(path, filter);
 }
 
+MOBase::IProfile *OrganizerProxy::profile()
+{
+  return m_Proxied->currentProfile();
+}
+
 MOBase::IDownloadManager *OrganizerProxy::downloadManager()
 {
   return m_Proxied->downloadManager();

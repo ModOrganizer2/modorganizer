@@ -34,6 +34,7 @@ public:
   virtual QStringList findFiles(const QString &path, const std::function<bool(const QString &)> &filter) const;
   virtual QStringList getFileOrigins(const QString &fileName) const;
   virtual QList<FileInfo> findFileInfos(const QString &path, const std::function<bool(const FileInfo&)> &filter) const;
+  virtual MOBase::IProfile *profile();
 
   virtual MOBase::IDownloadManager *downloadManager();
   virtual MOBase::IPluginList *pluginList();
@@ -46,7 +47,6 @@ public:
   virtual bool onFinishedRun(const std::function<void (const QString&, unsigned int)> &func);
   virtual bool onModInstalled(const std::function<void (const QString&)> &func);
 
-
 private:
 
   OrganizerCore *m_Proxied;
@@ -54,6 +54,5 @@ private:
   const QString &m_PluginName;
 
 };
-
 
 #endif // ORGANIZERPROXY_H

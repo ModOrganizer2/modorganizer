@@ -92,8 +92,6 @@ public:
   virtual int getNexusModID() { return getNexusModIDStatic(); }
   virtual int getNexusGameID() { return 130; }
 
-  virtual bool rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath);
-
   // get a list of executables (game binary and known-to-work 3rd party tools). All of these are relative to
   // the game directory
   //virtual std::vector<ExecutableInfo> getExecutables();

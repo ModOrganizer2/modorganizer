@@ -317,9 +317,11 @@ int CategoryFactory::getCategoryIndex(int ID) const
 
 int CategoryFactory::getCategoryID(const QString &name) const
 {
-  auto iter = std::find_if(m_Categories.begin(), m_Categories.end(), [name] (const Category &cat) -> bool {
+  auto iter = std::find_if(m_Categories.begin(), m_Categories.end(),
+                           [name] (const Category &cat) -> bool {
     return cat.m_Name == name;
   });
+
   if (iter != m_Categories.end()) {
     return iter->m_ID;
   } else {

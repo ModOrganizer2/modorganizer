@@ -139,23 +139,5 @@ int SkyrimInfo::getNexusModIDStatic()
   return 1334;
 }
 
-bool SkyrimInfo::rerouteToProfile(const wchar_t *fileName, const wchar_t *fullPath)
-{
-  static LPCWSTR profileFiles[] = { L"skyrim.ini", L"skyrimprefs.ini", L"loadorder.txt", nullptr };
-
-  for (int i = 0; profileFiles[i] != nullptr; ++i) {
-    if (_wcsicmp(fileName, profileFiles[i]) == 0) {
-      return true;
-    }
-  }
-
-  if ((_wcsicmp(fileName, L"plugins.txt") == 0) &&
-      (m_AppData.empty() || (StrStrIW(fullPath, m_AppData.c_str()) != nullptr))) {
-    return true;
-  }
-
-  return false;
-}
-
 
 } // namespace MOShared

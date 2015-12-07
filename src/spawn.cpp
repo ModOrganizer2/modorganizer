@@ -126,8 +126,6 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
 
 HANDLE startBinary(const QFileInfo &binary,
                    const QString &arguments,
-                   const QString& profileName,
-                   int logLevel,
                    const QDir &currentDirectory,
                    bool hooked,
                    HANDLE stdOut,

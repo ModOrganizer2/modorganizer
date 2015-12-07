@@ -70,7 +70,7 @@ public:
   /**
    * @return number of plugins that were enabled when the save game was created
    **/
-  int numPlugins() const { return m_Plugins.size(); }
+  size_t numPlugins() const { return m_Plugins.size(); }
 
   /**
    * retrieve the name of one of the plugins that were enabled when the save game

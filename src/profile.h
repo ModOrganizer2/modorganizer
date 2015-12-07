@@ -210,7 +210,7 @@ public:
    * 
    * @return number of mods for which the profile has status information
    **/
-  unsigned int numMods() const { return m_ModStatus.size(); }
+  size_t numMods() const { return m_ModStatus.size(); }
 
   /**
    * @return the number of mods that can be enabled and where the priority can be modified

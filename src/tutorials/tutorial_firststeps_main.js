@@ -145,42 +145,6 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("Another special type of files are BSAs. These are bundles of game resources. "
-                             + "Please open the \"Archives\"-tab.")
-        if (tutorialControl.waitForTabOpen("tabWidget", 1)) {
-            highlightItem("tabWidget", true)
-        } else {
-            waitForClick()
-        }
-    },
-
-    function() {
-        tutorial.text = qsTr("These archives can be a real headache because the way bsas interact "
-                           + "with non-bundled resources is complicated. The game can even crash if required "
-                           + "archives are not loaded or ordered incorrectly.")
-        waitForClick()
-    },
-
-    function() {
-        tutorial.text = qsTr("MO applies some \"magic\" to make all BSAs that are checked in this list load in "
-                           + "the correct order interleaved with the non-bundled resources.")
-        waitForClick()
-    },
-
-    function() {
-        tutorial.text = qsTr("You can disable this magic to make MO behave more like other tools. In this case "
-                           + "their load order follows that of the corresponding plugin (.esp).")
-        highlightItem("managedArchiveLabel", false)
-        waitForClick()
-    },
-
-    function() {
-        tutorial.text = qsTr("Many BSAs will appear grayed out and enabled. These mods are loaded by the game engine "
-                           + "automatically so they can't be disabled here.")
-        waitForClick()
-    },
-
-    function() {
         tutorial.text = qsTr("Now you know how to download, install and enable mods.\n"
                            + "It's important you always start the game from inside MO, otherwise "
                            + "the mods you installed here won't work.")

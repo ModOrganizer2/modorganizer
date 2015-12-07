@@ -140,7 +140,8 @@ std::wstring GameInfo::getGameDirectory() const
 
 bool GameInfo::requiresSteam() const
 {
-  return FileExists(getGameDirectory() + L"\\steam_api.dll");
+  return FileExists(getGameDirectory() + L"\\steam_api.dll")
+      || FileExists(getGameDirectory() + L"\\steam_api64.dll");
 }
 
 std::wstring GameInfo::getLocalAppFolder() const

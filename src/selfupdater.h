@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QProgressDialog>
 
+#include <windows.h>
+
 
 class NexusInterface;
 

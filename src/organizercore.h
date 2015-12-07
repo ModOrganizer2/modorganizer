@@ -126,6 +126,8 @@ public:
 
   MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
 
+  void prepareVFS();
+
 public:
   MOBase::IGameInfo &gameInfo() const;
   MOBase::IModRepositoryBridge *createNexusBridge() const;

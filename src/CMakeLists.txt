@@ -279,9 +279,6 @@ SET(project_path "${default_project_path}" CACHE PATH "path to the other mo proj
 SET(lib_path "${project_path}/../../install/libs")
 
 
-MESSAGE(STATUS ${lib_path})
-MESSAGE(STATUS ${project_path})
-
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src

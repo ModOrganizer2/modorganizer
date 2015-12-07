@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "usvfsconnector.h"
+#include "settings.h"
 #include <memory>
 #include <QTemporaryFile>
 #include <QProgressDialog>
@@ -84,12 +85,21 @@ void LogWorker::process()
 void LogWorker::exit()
 {
   m_QuitRequested = true;
+}
 
+LogLevel logLevel(int level)
+{
+  switch (level) {
+    case LogLevel::Info:    return LogLevel::Info;
+    case LogLevel::Warning: return LogLevel::Warning;
+    case LogLevel::Error:   return LogLevel::Error;
+    default:                return LogLevel::Debug;
+  }
 }
 
 UsvfsConnector::UsvfsConnector()
 {
-  usvfs::Parameters params(SHMID, false, LogLevel::Debug);
+  usvfs::Parameters params(SHMID, false, logLevel(Settings::instance().logLevel()));
   InitLogging(false);
   ConnectVFS(&params);
 
