@@ -74,7 +74,7 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
-  void setManagedGame(const QString &gameName, const QString &gamePath);
+  void setManagedGame(const MOBase::IPluginGame *game);
 
   void updateExecutablesList(QSettings &settings);
 
@@ -100,7 +100,7 @@ public:
   ModListSortProxy *createModListProxyModel();
   PluginListSortProxy *createPluginListProxyModel();
 
-  MOBase::IPluginGame *managedGame() const;
+  MOBase::IPluginGame const *managedGame() const;
 
   bool isArchivesInit() const { return m_ArchivesInit; }
 
@@ -129,13 +129,12 @@ public:
   void prepareVFS();
 
 public:
-  MOBase::IGameInfo &gameInfo() const;
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
   QString profilePath() const;
   QString downloadsPath() const;
   MOBase::VersionInfo appVersion() const;
-  MOBase::IModInterface *getMod(const QString &name);
+  MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);
@@ -200,7 +199,7 @@ signals:
    */
   void modInstalled(const QString &modName);
 
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private:
 
@@ -236,12 +235,10 @@ private:
 
 private:
 
-  MOBase::IGameInfo *m_GameInfo;
-
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 

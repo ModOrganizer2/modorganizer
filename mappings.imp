@@ -1,0 +1,30 @@
+[
+
+# for boost???
+# These are probably correct but might need a revisit as if you look at the boost documentation pages, it
+# can give you huge lists of alternate includes...
+    { symbol: [ "BOOST_FOREACH",                            "private", "<boost/foreach.hpp>", "public" ] },
+
+    { include: [ "@\"boost/bind/.*\"",                      "private", "<boost/bind.hpp>", "public" ] },
+    { include: [ "@\"boost/algorithm/string/.*\"",          "private", "<boost/algorithm/string.hpp>", "public" ] },
+    { include: [ "@\"boost/assign/.*\"",                    "private", "<boost/assign.hpp>", "public" ] },
+    { include: [ "@\"boost/filesystem/.*\"",                "private", "<boost/filesystem.hpp>", "public" ] },
+    { include: [ "@\"boost/format/.*\"",                    "private", "<boost/format.hpp>", "public" ] },
+    { include: [ "@\"boost/function/.*\"",                  "private", "<boost/function.hpp>", "public" ] },
+    { include: [ "@\"boost/local/.*\"",                     "private", "<boost/locale.hpp>", "public" ] },
+    { include: [ "@\"boost/python/.*\"",                    "private", "<boost/python.hpp>", "public" ] },
+    { include: [ "@\"boost/signals2/.*\"",                  "private", "<boost/signals2.hpp>", "public" ] },
+    { include: [ "\"boost/smart_ptr/scoped_array.hpp\"",    "private", "<boost/scoped_array.hpp>", "public" ] },
+    { include: [ "\"boost/smart_ptr/shared_ptr.hpp\"",      "private", "<boost/shared_ptr.hpp>", "public" ] },
+    # this appears to be excessive
+    #{ include: [ "@\"boost/thread/.*\"",                    "private", "<boost/thread.hpp>", "public" ] },
+
+# And this is specific to us
+    { include: [ "\"appconfig.inc\"", "private", "\"appconfig.h\"", "public" ] },
+
+]
+
+# Ones I don't yet know how to deal with
+#include "boost/fusion/container/vector/vector10_fwd.hpp"  // for fusion
+#include "boost/iterator/iterator_facade.hpp"  // for operator!=
+#include "boost/iterator/iterator_facade.hpp"

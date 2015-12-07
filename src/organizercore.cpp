@@ -1,6 +1,7 @@
 #include "organizercore.h"
+
+#include "iplugingame.h"
 #include "mainwindow.h"
-#include "gameinfoimpl.h"
 #include "messagedialog.h"
 #include "logbuffer.h"
 #include "credentialsdialog.h"
@@ -20,11 +21,14 @@
 #include <appconfig.h>
 #include <report.h>
 #include <questionboxmemory.h>
+
 #include <QNetworkInterface>
 #include <QMessageBox>
 #include <QDialogButtonBox>
 #include <QApplication>
+
 #include <Psapi.h>
+
 #include <functional>
 
 
@@ -119,8 +123,7 @@ QStringList toStringList(InputIterator current, InputIterator end)
 
 
 OrganizerCore::OrganizerCore(const QSettings &initSettings)
-  : m_GameInfo(new GameInfoImpl())
-  , m_UserInterface(nullptr)
+  : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
   , m_GameName()
   , m_CurrentProfile(nullptr)
@@ -160,7 +163,11 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame*)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame*)));
+  //This seems awfully imperative
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_Settings, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_DownloadManager, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
+  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)), NexusInterface::instance(), SLOT(managedGameChanged(MOBase::IPluginGame const *)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter, &DelayedFileWriterBase::write);
 
@@ -187,7 +194,6 @@ OrganizerCore::~OrganizerCore()
   m_ModList.setProfile(nullptr);
   NexusInterface::instance()->cleanup();
 
-  delete m_GameInfo;
   delete m_DirectoryStructure;
 }
 
@@ -325,7 +331,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.init(m_PluginContainer->managedGame(ToQString(GameInfo::instance().getGameName())));
+  m_ExecutablesList.init(managedGame());
 
   qDebug("setting up configured executables");
 
@@ -353,7 +359,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   settings.endArray();
 
   // TODO this has nothing to do with executables list move to an appropriate function!
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface *userInterface, QWidget *widget)
@@ -396,6 +402,14 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
+  //Do this the hard way
+  for (const IPluginGame * const game : container->plugins<IPluginGame>()) {
+    QString n = game->getGameShortName();
+    if (game->getGameShortName() == "Skyrim") {
+      m_Updater.setNexusDownload(game);
+      break;
+    }
+  }
 }
 
 void OrganizerCore::disconnectPlugins()
@@ -411,15 +425,12 @@ void OrganizerCore::disconnectPlugins()
   m_PluginContainer = nullptr;
 }
 
-void OrganizerCore::setManagedGame(const QString &gameName, const QString &gamePath)
+void OrganizerCore::setManagedGame(MOBase::IPluginGame const *game)
 {
-  m_GameName = gameName;
-  if (m_PluginContainer != nullptr) {
-    m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
-    m_GamePlugin->setGamePath(gamePath);
-    qApp->setProperty("managed_game", QVariant::fromValue(m_GamePlugin));
-    emit managedGameChanged(m_GamePlugin);
-  }
+  m_GameName = game->gameName();
+  m_GamePlugin = game;
+  qApp->setProperty("managed_game", QVariant::fromValue(m_GamePlugin));
+  emit managedGameChanged(m_GamePlugin);
 }
 
 Settings &OrganizerCore::settings()
@@ -563,11 +574,6 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
   refreshDirectoryStructure();
 }
 
-MOBase::IGameInfo &OrganizerCore::gameInfo() const
-{
-  return *m_GameInfo;
-}
-
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
 {
   return new NexusBridge();
@@ -601,14 +607,10 @@ MOBase::VersionInfo OrganizerCore::appVersion() const
   return m_Updater.getVersion();
 }
 
-MOBase::IModInterface *OrganizerCore::getMod(const QString &name)
+MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
 {
   unsigned int index = ModInfo::getIndex(name);
-  if (index == UINT_MAX) {
-    return nullptr;
-  } else {
-    return ModInfo::getByIndex(index).data();
-  }
+  return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
 }
 
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
@@ -938,12 +940,12 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
       refreshESPList();
-      if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         // the load order should have been retrieved from file time, now save it to our own format
         savePluginList();
       }
@@ -969,7 +971,11 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
     ::SetEnvironmentVariableW(L"SteamAPPId", ToWString(m_Settings.getSteamAppID()).c_str());
   }
 
-  if ((GameInfo::instance().requiresSteam())
+
+  //This could possibly be extracted somewhere else but it's probably for when
+  //we have more than one provider of game registration.
+  if ((QFileInfo(managedGame()->gameDirectory().absoluteFilePath("steam_api.dll")).exists()
+       || QFileInfo(managedGame()->gameDirectory().absoluteFilePath("steam_api64.dll")).exists())
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
       QWidget *window = qApp->activeWindow();
@@ -1026,7 +1032,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable, const QStringL
     binary = QFileInfo(executable);
     if (binary.isRelative()) {
       // relative path, should be relative to game directory
-      binary = QFileInfo(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory())) + "/" + executable);
+      binary = QFileInfo(managedGame()->gameDirectory().absoluteFilePath(executable));
     }
     if (cwd.length() == 0) {
       currentDirectory = binary.absolutePath();
@@ -1142,7 +1148,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
   if (saveChanges) {
     m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
 
   m_CurrentProfile->refreshModStatus();
 
@@ -1317,7 +1323,7 @@ PluginListSortProxy *OrganizerCore::createPluginListProxyModel()
   return result;
 }
 
-IPluginGame *OrganizerCore::managedGame() const
+IPluginGame const *OrganizerCore::managedGame() const
 {
   return m_GamePlugin;
 }
@@ -1378,7 +1384,7 @@ void OrganizerCore::directory_refreshed()
 void OrganizerCore::profileRefresh()
 {
   // have to refresh mods twice (again in refreshModList), otherwise the refresh isn't complete. Not sure why
-  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign());
+  ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure, m_Settings.displayForeign(), managedGame());
   m_CurrentProfile->refreshModStatus();
 
   refreshModList();

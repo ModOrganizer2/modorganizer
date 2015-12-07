@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
 #include "spawn.h"
 #include "report.h"
 #include "modlist.h"
@@ -52,17 +53,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
-#include "gameinfoimpl.h"
 #include "savetextasdialog.h"
 #include "problemsdialog.h"
 #include "previewdialog.h"
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
-#include "organizerproxy.h"
+//?
+//#include "isavegame.h"
+//#include "savegameinfo.h"
+//?
 #include "nxmaccessmanager.h"
 #include <archive.h>
-#include <gameinfo.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <ipluginproxy.h>
@@ -71,15 +73,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <questionboxmemory.h>
 #include <taskprogressmanager.h>
 #include <util.h>
-#include <map>
-#include <ctime>
-#include <wchar.h>
-#include <utility.h>
+#include <scopeguard.h>
+
 #include <QTime>
 #include <QInputDialog>
 #include <QSettings>
 #include <QWhatsThis>
-#include <sstream>
 #include <QProcess>
 #include <QMenu>
 #include <QBuffer>
@@ -101,10 +100,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtPlugin>
 #include <QIdentityProxyModel>
 #include <QClipboard>
-#include <Psapi.h>
-#include <shlobj.h>
-#include <ShellAPI.h>
-#include <TlHelp32.h>
 #include <QNetworkInterface>
 #include <QNetworkProxy>
 #include <QJsonDocument>
@@ -119,7 +114,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 #include <QCoreApplication>
 #include <QProgressDialog>
-#include <scopeguard.h>
+
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
@@ -127,8 +122,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
+
+#include <Psapi.h>
+#include <shlobj.h>
+#include <ShellAPI.h>
+#include <TlHelp32.h>
+
+#include <sstream>
 #include <regex>
 #include <functional>
+#include <map>
+#include <ctime>
+#include <wchar.h>
+#include <utility.h>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -154,7 +160,6 @@ MainWindow::MainWindow(const QString &exeName
   , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
   , m_OldExecutableIndex(-1)
-  , m_GamePath(ToQString(GameInfo::instance().getGameDirectory()))
   , m_CategoryFactory(CategoryFactory::instance())
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
@@ -352,7 +357,7 @@ MainWindow::~MainWindow()
 void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
-        ToQString(GameInfo::instance().getGameName()),
+        m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString());
 
   if (!accountName.isEmpty()) {
@@ -818,7 +823,8 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
 
 SaveGameGamebryo *MainWindow::getSaveGame(const QString &name)
 {
-  return new SaveGameGamebryo(this, name);
+  IPluginGame const *game = m_OrganizerCore.managedGame();
+  return new SaveGameGamebryo(this, name, game);
 }
 
 
@@ -1023,9 +1029,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
     if (ui->profileBox->currentIndex() == 0) {
       ui->profileBox->setCurrentIndex(previousIndex);
-      ProfilesDialog(ui->profileBox->currentText(), this).exec();
+      ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
       while (!refreshProfiles()) {
-        ProfilesDialog(ui->profileBox->currentText(), this).exec();
+        ProfilesDialog(ui->profileBox->currentText(), m_OrganizerCore.managedGame(), this).exec();
       }
     } else {
       activateSelectedProfile();
@@ -1250,9 +1256,11 @@ QDir MainWindow::currentSavesDir() const
     savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
   } else {
     wchar_t path[MAX_PATH];
-    ::GetPrivateProfileStringW(L"General", L"SLocalSavePath", L"Saves",
-                               path, MAX_PATH,
-                               (ToWString(m_OrganizerCore.currentProfile()->absolutePath()) + L"\\" + GameInfo::instance().getIniFileNames().at(0)).c_str());
+    ::GetPrivateProfileStringW(
+          L"General", L"SLocalSavePath", L"Saves",
+          path, MAX_PATH,
+          ToWString(m_OrganizerCore.currentProfile()->absolutePath() + "/" +
+                      m_OrganizerCore.managedGame()->getIniFiles()[0]).c_str());
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
@@ -1646,16 +1654,18 @@ void MainWindow::on_actionInstallMod_triggered()
 
 void MainWindow::on_actionAdd_Profile_triggered()
 {
-  bool repeat = true;
-  while (repeat) {
-    ProfilesDialog profilesDialog(m_GamePath, this);
+  for (;;) {
+    //Note: Calling this with an invalid profile name. Not quite sure why
+    ProfilesDialog profilesDialog(m_OrganizerCore.managedGame()->gameDirectory().absolutePath(),
+                                  m_OrganizerCore.managedGame(),
+                                  this);
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
     stopMonitorSaves();
     profilesDialog.exec();
     refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
     if (refreshProfiles() && !profilesDialog.failed()) {
-      repeat = false;
+      break;
     }
   }
 //  addProfile();
@@ -2353,9 +2363,19 @@ void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   if (modID > 0)  {
-    nexusLinkActivated(QString("%1/mods/%2").arg(ToQString(GameInfo::instance().getNexusPage(false))).arg(modID));
+    nexusLinkActivated(NexusInterface::instance()->getModURL(modID));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+  }
+}
+
+void MainWindow::visitWebPage_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  if (info->getURL() != "") {
+    linkClicked(info->getURL());
+  } else {
+    MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
   }
 }
 
@@ -2905,12 +2925,22 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             } break;
           }
         }
+
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
           menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
-        menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        if (info->getNexusID() > 0)  {
+          menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+        }
+
+        //If a URL is specified which is not the game's URL, pop up 'visit web page'
+        if (info->getURL() != "" &&
+            !NexusInterface::instance()->isModURL(info->getNexusID(), info->getURL())) {
+          menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+        }
+
         menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
       }
 
@@ -2973,7 +3003,7 @@ void MainWindow::deleteSavegame_clicked()
 
   foreach (const QModelIndex &idx, selectedIndexes) {
     QString name = idx.data().toString();
-    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString());
+    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString(), m_OrganizerCore.managedGame());
 
     if (count < 10) {
       savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
@@ -3029,9 +3059,9 @@ void MainWindow::fixMods_clicked()
 
   // search in data
   {
-    QDir dataDir(m_GamePath + "/data");
+    QDir dataDir(m_OrganizerCore.managedGame()->dataDirectory());
     QStringList esps = dataDir.entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back("<data>");
@@ -3045,7 +3075,7 @@ void MainWindow::fixMods_clicked()
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
 
     QStringList esps = QDir(modInfo->absolutePath()).entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back(modInfo->name());
@@ -3057,7 +3087,7 @@ void MainWindow::fixMods_clicked()
   {
     QDir overwriteDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
     QStringList esps = overwriteDir.entryList(espFilter);
-    foreach (const QString &esp, esps) {
+    for (const QString &esp : esps) {
       std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
       if (iter != missingPlugins.end()) {
         iter->second.push_back("<overwrite>");
@@ -3221,7 +3251,9 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  ::ShellExecuteW(nullptr, L"open", GameInfo::instance().getNexusPage(false).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open",
+                  NexusInterface::instance()->getGameURL().toStdWString().c_str(),
+                  nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 
@@ -3615,9 +3647,11 @@ void MainWindow::on_actionUpdate_triggered()
 void MainWindow::on_actionEndorseMO_triggered()
 {
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
-                            tr("Do you want to endorse Mod Organizer on %1 now?").arg(ToQString(GameInfo::instance().getNexusPage())),
+                            tr("Do you want to endorse Mod Organizer on %1 now?").arg(
+                                      NexusInterface::instance()->getGameURL()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance()->requestToggleEndorsement(GameInfo::instance().getNexusModID(), true, this, QVariant(), QString());
+    NexusInterface::instance()->requestToggleEndorsement(
+          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -3680,7 +3714,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == GameInfo::instance().getNexusModID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->getNexusModOrganizerID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
@@ -4170,8 +4204,8 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
-               << "--game" << ToQString(GameInfo::instance().getGameShortName())
-               << "--gamePath" << QString("\"%1\"").arg(ToQString(GameInfo::instance().getGameDirectory()))
+               << "--game" << m_OrganizerCore.managedGame()->getGameShortName()
+               << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--out" << outPath;
 
     if (m_DidUpdateMasterList) {
@@ -4303,12 +4337,12 @@ void MainWindow::on_bossButton_clicked()
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
-    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       qDebug("removing loadorder.txt");
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
-    if (GameInfo::instance().getLoadOrderMechanism() == GameInfo::TYPE_FILETIME) {
+    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       // the load order should have been retrieved from file time, now save it to our own format
       m_OrganizerCore.savePluginList();
     }

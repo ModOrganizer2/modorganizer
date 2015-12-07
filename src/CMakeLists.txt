@@ -35,6 +35,11 @@ SET(organizer_SRCS
     modlist.cpp
     modinfodialog.cpp
     modinfo.cpp
+	modinfobackup.cpp
+	modinfoforeign.cpp
+	modinfooverwrite.cpp
+	modinforegular.cpp
+	modinfowithconflictinfo.cpp
     messagedialog.cpp
     mainwindow.cpp
     main.cpp
@@ -61,7 +66,6 @@ SET(organizer_SRCS
     moapplication.cpp
     profileinputdialog.cpp
     icondelegate.cpp
-    gameinfoimpl.cpp
     csvbuilder.cpp
     savetextasdialog.cpp
     qtgroupingproxy.cpp
@@ -127,6 +131,11 @@ SET(organizer_HDRS
     modlist.h
     modinfodialog.h
     modinfo.h
+	modinfobackup.h
+	modinfoforeign.h
+	modinfooverwrite.h
+	modinforegular.h
+	modinfowithconflictinfo.h
     messagedialog.h
     mainwindow.h
     loghighlighter.h
@@ -152,7 +161,6 @@ SET(organizer_HDRS
     moapplication.h
     profileinputdialog.h
     icondelegate.h
-    gameinfoimpl.h
     csvbuilder.h
     savetextasdialog.h
     qtgroupingproxy.h
@@ -284,7 +292,11 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
                     ${project_path}/../usvfs/usvfs
+                    ${project_path}/game_gamebryo/src
                     ${project_path}/game_features/src)
+
+MESSAGE(STATUS ${project_path}/gameGamebryo/src)
+
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}

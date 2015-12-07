@@ -299,7 +299,7 @@ public:
 
 public slots:
 
-  void managedGameChanged(MOBase::IPluginGame *gamePlugin);
+  void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
 private:
 
@@ -328,7 +328,7 @@ private:
   };
 
   /** Display/store the configuration in the 'general' tab of the settings dialogue */
-  class GeneralTab : SettingsTab
+  class GeneralTab : public SettingsTab
   {
   public:
     GeneralTab(Settings *m_parent, SettingsDialog &m_dialog);
@@ -347,7 +347,7 @@ private:
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */
-  class NexusTab : SettingsTab
+  class NexusTab : public SettingsTab
   {
   public:
     NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
@@ -365,7 +365,7 @@ private:
   };
 
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */
-  class SteamTab : SettingsTab
+  class SteamTab : public SettingsTab
   {
   public:
     SteamTab(Settings *m_parent, SettingsDialog &m_dialog);
@@ -378,7 +378,7 @@ private:
   };
 
   /** Display/store the configuration in the 'plugins' tab of the settings dialogue */
-  class PluginsTab : SettingsTab
+  class PluginsTab : public SettingsTab
   {
   public:
     PluginsTab(Settings *m_parent, SettingsDialog &m_dialog);
@@ -391,7 +391,7 @@ private:
   };
 
   /** Display/store the configuration in the 'workarounds' tab of the settings dialogue */
-  class WorkaroundsTab : SettingsTab
+  class WorkaroundsTab : public SettingsTab
   {
   public:
     WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
@@ -420,7 +420,7 @@ private:
 
   static Settings *s_Instance;
 
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin;
 
   QSettings m_Settings;
 

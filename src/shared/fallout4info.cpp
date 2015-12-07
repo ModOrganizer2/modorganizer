@@ -30,8 +30,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-Fallout4Info::Fallout4Info(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
+Fallout4Info::Fallout4Info(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"fallout4");
 }
@@ -73,14 +73,9 @@ std::vector<std::wstring> Fallout4Info::getSavegameAttachmentExtensions()
   return std::vector<std::wstring>();
 }
 
-std::vector<std::wstring> Fallout4Info::getIniFileNames()
+std::vector<std::wstring> Fallout4Info::getIniFileNames() const
 {
   return boost::assign::list_of(L"fallout4.ini")(L"fallout4prefs.ini");
-}
-
-std::wstring Fallout4Info::getReferenceDataFile()
-{
-  return L"Fallout - Meshes.bsa";
 }
 
 std::wstring Fallout4Info::getNexusPage(bool nmmScheme)

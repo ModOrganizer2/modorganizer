@@ -33,8 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-SkyrimInfo::SkyrimInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
+SkyrimInfo::SkyrimInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"skyrim");
 
@@ -73,71 +73,9 @@ std::wstring SkyrimInfo::getRegPathStatic()
   }
 }
 
-GameInfo::LoadOrderMechanism SkyrimInfo::getLoadOrderMechanism() const
-{
-  std::wstring fileName = getGameDirectory() + L"\\TESV.exe";
-
-  try {
-    VS_FIXEDFILEINFO versionInfo = GetFileVersion(fileName);
-    if ((versionInfo.dwFileVersionMS > 0x10004) || // version >= 1.5.x?
-        ((versionInfo.dwFileVersionMS == 0x10004) && (versionInfo.dwFileVersionLS >= 0x1A0000))) { // version >= ?.4.26
-      return TYPE_PLUGINSTXT;
-    } else {
-      return TYPE_FILETIME;
-    }
-  } catch (const std::exception &e) {
-    log("TESV.exe is invalid: %s", e.what());
-    return TYPE_FILETIME;
-  }
-}
-
-std::vector<std::wstring> SkyrimInfo::getDLCPlugins()
-{
-  return boost::assign::list_of (L"Dawnguard.esm")
-                                (L"Dragonborn.esm")
-                                (L"HearthFires.esm")
-                                (L"HighResTexturePack01.esp")
-                                (L"HighResTexturePack02.esp")
-                                (L"HighResTexturePack03.esp")
-      ;
-}
-
-std::vector<std::wstring> SkyrimInfo::getSavegameAttachmentExtensions()
-{
-  return boost::assign::list_of(L"skse");
-}
-
-std::vector<std::wstring> SkyrimInfo::getIniFileNames()
+std::vector<std::wstring> SkyrimInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"skyrim.ini")(L"skyrimprefs.ini");
 }
-
-std::wstring SkyrimInfo::getReferenceDataFile()
-{
-  return L"Skyrim - Meshes.bsa";
-}
-
-
-std::wstring SkyrimInfo::getNexusPage(bool nmmScheme)
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/skyrim";
-  } else {
-    return L"http://www.nexusmods.com/skyrim";
-  }
-}
-
-
-std::wstring SkyrimInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/skyrim";
-}
-
-
-int SkyrimInfo::getNexusModIDStatic()
-{
-  return 1334;
-}
-
 
 } // namespace MOShared

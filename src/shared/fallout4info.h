@@ -36,10 +36,8 @@ public:
   virtual ~Fallout4Info() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
   virtual std::wstring getBinaryName() { return L"Fallout4.exe"; }
-
-  virtual GameInfo::Type getType() { return TYPE_FALLOUT4; }
 
   virtual std::wstring getGameName() const { return L"Fallout 4"; }
   virtual std::wstring getGameShortName() const { return L"Fallout4"; }
@@ -48,9 +46,7 @@ public:
   virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
-
-  virtual std::wstring getReferenceDataFile();
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
   virtual std::wstring getNexusPage(bool nmmScheme = true);
   static std::wstring getNexusInfoUrlStatic();
@@ -67,9 +63,10 @@ public:
 
 private:
 
-  Fallout4Info(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  Fallout4Info(const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
+
 
 };
 

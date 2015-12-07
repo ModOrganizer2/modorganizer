@@ -59,6 +59,8 @@ public:
 
   void setParentWidget(QWidget *widget);
 
+  void setURL(const QString &url);
+
   /**
    * @brief update the directory where mods are to be installed
    * @param modsDirectory the mod directory
@@ -147,12 +149,10 @@ public:
 
 private:
 
-  void queryPassword(LPSTR password);
+  void queryPassword(QString *password);
   void updateProgress(float percentage);
-  void updateProgressFile(LPCWSTR fileName);
-  void report7ZipError(LPCWSTR errorMessage);
-
-  void dummyProgressFile(LPCWSTR) {}
+  void updateProgressFile(const QString &fileName);
+  void report7ZipError(const QString &errorMessage);
 
   MOBase::DirectoryTree *createFilesTree();
 
@@ -161,14 +161,12 @@ private:
   void mapToArchive(const MOBase::DirectoryTree::Node *baseNode);
 
   // recursive worker function for mapToArchive
-  void mapToArchive(const MOBase::DirectoryTree::Node *node, std::wstring path, FileData * const *data);
+  void mapToArchive(const MOBase::DirectoryTree::Node *node, QString path, FileData * const *data);
   bool unpackSingleFile(const QString &fileName);
 
 
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
-
-  //bool testOverwrite(const QString &modsDirectory, MOBase::GuessedValue<QString> &modName, bool *merge = nullptr);
 
   bool doInstall(MOBase::GuessedValue<QString> &modName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
@@ -205,13 +203,14 @@ private:
   std::vector<MOBase::IPluginInstaller*> m_Installers;
   std::set<QString, CaseInsensitive> m_SupportedExtensions;
 
-  Archive *m_CurrentArchive;
+  Archive *m_ArchiveHandler;
   QString m_CurrentFile;
 
   QProgressDialog *m_InstallationProgress { nullptr };
 
   std::set<QString> m_TempFilesToDelete;
 
+  QString m_URL;
 };
 
 

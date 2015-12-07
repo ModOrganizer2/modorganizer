@@ -18,16 +18,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "selfupdater.h"
+
 #include "utility.h"
 #include "installationmanager.h"
+#include "iplugingame.h"
 #include "messagedialog.h"
 #include "downloadmanager.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include <versioninfo.h>
-#include <gameinfo.h>
-#include <skyriminfo.h>
 #include <report.h>
+#include <util.h>
+
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -35,7 +37,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLibrary>
 #include <QProcess>
 #include <QApplication>
-#include <util.h>
 #include <boost/bind.hpp>
 
 
@@ -62,6 +63,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   , m_UpdateRequestID(-1)
   , m_Reply(nullptr)
   , m_Attempts(3)
+  , m_NexusDownload(nullptr)
 {
   QLibrary archiveLib("dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -70,9 +72,9 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
   CreateArchiveType CreateArchiveFunc = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
 
-  m_CurrentArchive = CreateArchiveFunc();
-  if (!m_CurrentArchive->isValid()) {
-    throw MyException(InstallationManager::getErrorString(m_CurrentArchive->getLastError()));
+  m_ArchiveHandler = CreateArchiveFunc();
+  if (!m_ArchiveHandler->isValid()) {
+    throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
 
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
@@ -85,7 +87,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
 SelfUpdater::~SelfUpdater()
 {
-  delete m_CurrentArchive;
+  delete m_ArchiveHandler;
 }
 
 void SelfUpdater::setUserInterface(QWidget *widget)
@@ -99,12 +101,10 @@ void SelfUpdater::testForUpdate()
     emit updateAvailable();
     return;
   }
-
-  if (m_UpdateRequestID == -1) {
+  if (m_UpdateRequestID == -1 && m_NexusDownload != nullptr) {
     m_UpdateRequestID = m_Interface->requestDescription(
-              SkyrimInfo::getNexusModIDStatic(), this, QVariant(),
-              QString(), ToQString(SkyrimInfo::getNexusInfoUrlStatic()),
-              SkyrimInfo::getNexusGameIDStatic());
+              m_NexusDownload->getNexusModOrganizerID(), this, QVariant(),
+              QString(), m_NexusDownload);
   }
 }
 
@@ -121,9 +121,9 @@ void SelfUpdater::startUpdate()
     if (QMessageBox::question(m_Parent, tr("Update"),
           tr("An update is available (newest version: %1), do you want to install it?").arg(m_NewestVersion),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_UpdateRequestID = m_Interface->requestFiles(SkyrimInfo::getNexusModIDStatic(),
-                                                    this, m_NewestVersion,
-                                                    ToQString(SkyrimInfo::getNexusInfoUrlStatic()));
+      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->getNexusModOrganizerID(),
+                                                    this, m_NewestVersion, "",
+                                                    m_NexusDownload);
     }
   }
 }
@@ -158,7 +158,7 @@ void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
   QNetworkRequest request(dlUrl);
   m_Canceled = false;
   m_Reply = accessManager->get(request);
-  m_UpdateFile.setFileName(QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()).append("\\").append(fileName)));
+  m_UpdateFile.setFileName(QDir::fromNativeSeparators(qApp->property("dataPath").toString()).append("/").append(fileName));
   m_UpdateFile.open(QIODevice::WriteOnly);
   showProgress();
 
@@ -242,32 +242,31 @@ void SelfUpdater::downloadCancel()
 
 void SelfUpdater::installUpdate()
 {
-  const QString mopath = QDir::fromNativeSeparators(ToQString(GameInfo::instance().getOrganizerDirectory()));
+  const QString mopath = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
 
   QString backupPath = mopath + "/update_backup";
   QDir().mkdir(backupPath);
 
   // rename files that are currently open so we can unpack the update
-  if (!m_CurrentArchive->open(ToWString(QDir::toNativeSeparators(m_UpdateFile.fileName())).c_str(),
-          new MethodCallback<SelfUpdater, void, LPSTR>(this, &SelfUpdater::queryPassword))) {
+  if (!m_ArchiveHandler->open(m_UpdateFile.fileName(), nullptr)) {
     throw MyException(tr("failed to open archive \"%1\": %2")
                       .arg(m_UpdateFile.fileName())
-                      .arg(InstallationManager::getErrorString(m_CurrentArchive->getLastError())));
+                      .arg(InstallationManager::getErrorString(m_ArchiveHandler->getLastError())));
   }
 
   // move all files contained in the archive out of the way,
   // otherwise we can't overwrite everything
   FileData* const *data;
   size_t size;
-  m_CurrentArchive->getFileList(data, size);
+  m_ArchiveHandler->getFileList(data, size);
 
   for (size_t i = 0; i < size; ++i) {
-    QString outputName = ToQString(data[i]->getFileName());
+    QString outputName = data[i]->getFileName();
     if (outputName.startsWith("ModOrganizer\\", Qt::CaseInsensitive)) {
       outputName = outputName.mid(13);
-      data[i]->addOutputFileName(ToWString(outputName).c_str());
+      data[i]->addOutputFileName(outputName);
     } else if (outputName != "ModOrganizer") {
-      data[i]->addOutputFileName(ToWString(outputName).c_str());
+      data[i]->addOutputFileName(outputName);
     }
     QFileInfo file(mopath + "/" + outputName);
     if (file.exists() && file.isFile()) {
@@ -280,14 +279,12 @@ void SelfUpdater::installUpdate()
   }
 
   // now unpack the archive into the mo directory
-  if (!m_CurrentArchive->extract(GameInfo::instance().getOrganizerDirectory().c_str(),
-         new MethodCallback<SelfUpdater, void, float>(this, &SelfUpdater::updateProgress),
-         new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::updateProgressFile),
-         new MethodCallback<SelfUpdater, void, LPCWSTR>(this, &SelfUpdater::report7ZipError))) {
+  if (!m_ArchiveHandler->extract(mopath, nullptr, nullptr,
+         new MethodCallback<SelfUpdater, void, QString const &>(this, &SelfUpdater::report7ZipError))) {
     throw std::runtime_error("extracting failed");
   }
 
-  m_CurrentArchive->close();
+  m_ArchiveHandler->close();
 
   m_UpdateFile.remove();
 
@@ -302,24 +299,9 @@ void SelfUpdater::installUpdate()
   emit restart();
 }
 
-void SelfUpdater::queryPassword(LPSTR)
+void SelfUpdater::report7ZipError(QString const &errorMessage)
 {
-  // nop
-}
-
-void SelfUpdater::updateProgress(float)
-{
-  // nop
-}
-
-void SelfUpdater::updateProgressFile(LPCWSTR)
-{
-  // nop
-}
-
-void SelfUpdater::report7ZipError(LPCWSTR errorMessage)
-{
-  QMessageBox::critical(m_Parent, tr("Error"), ToQString(errorMessage));
+  QMessageBox::critical(m_Parent, tr("Error"), errorMessage);
 }
 
 
@@ -433,18 +415,18 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
 
   if (updateFileID != -1) {
     qDebug("update available: %d", updateFileID);
-    m_UpdateRequestID = m_Interface->requestDownloadURL(SkyrimInfo::getNexusModIDStatic(),
-                                    updateFileID, this, updateFileName,
-                                    ToQString(SkyrimInfo::getNexusInfoUrlStatic()));
+    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+                                    updateFileID, this, updateFileName, "",
+                                    m_NexusDownload);
   } else if (mainFileID != -1) {
     qDebug("full download required: %d", mainFileID);
     if (QMessageBox::question(m_Parent, tr("Update"),
             tr("No incremental update available for this version, "
                "the complete package needs to be downloaded (%1 kB)").arg(mainFileSize),
             QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-      m_UpdateRequestID = m_Interface->requestDownloadURL(SkyrimInfo::getNexusModIDStatic(),
-                                    mainFileID, this, mainFileName,
-                                    ToQString(SkyrimInfo::getNexusInfoUrlStatic()));
+      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+                                    mainFileID, this, mainFileName, "",
+                                    m_NexusDownload);
     }
   } else {
     qCritical("no file for update found");
@@ -487,4 +469,10 @@ void SelfUpdater::nxmDownloadURLsAvailable(int, int, QVariant userData, QVariant
       closeProgress();
     }
   }
+}
+
+/** Set the game check for updates */
+void SelfUpdater::setNexusDownload(MOBase::IPluginGame const *game)
+{
+  m_NexusDownload = game;
 }

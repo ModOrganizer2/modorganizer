@@ -36,37 +36,14 @@ public:
   virtual ~SkyrimInfo() {}
 
   static std::wstring getRegPathStatic();
-  virtual std::wstring getRegPath() { return getRegPathStatic(); }
-  virtual std::wstring getBinaryName() { return L"TESV.exe"; }
-
-  virtual GameInfo::Type getType() { return TYPE_SKYRIM; }
-
-  virtual std::wstring getGameName() const { return L"Skyrim"; }
-  virtual std::wstring getGameShortName() const { return L"Skyrim"; }
-
-  virtual LoadOrderMechanism getLoadOrderMechanism() const;
-
-  virtual std::vector<std::wstring> getDLCPlugins();
-
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions();
+  virtual std::wstring getRegPath() const { return getRegPathStatic(); }
 
   // file name of this games ini (no path)
-  virtual std::vector<std::wstring> getIniFileNames();
-
-  virtual std::wstring getReferenceDataFile();
-
-  virtual std::wstring getNexusPage(bool nmmScheme = true);
-
-  static std::wstring getNexusInfoUrlStatic();
-  virtual std::wstring getNexusInfoUrl() { return getNexusInfoUrlStatic(); }
-  static int getNexusModIDStatic();
-  virtual int getNexusModID() { return getNexusModIDStatic(); }
-  static int getNexusGameIDStatic() { return 110; }
-  virtual int getNexusGameID() { return getNexusGameIDStatic(); }
+  virtual std::vector<std::wstring> getIniFileNames() const;
 
 private:
 
-  SkyrimInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  SkyrimInfo(const std::wstring &gameDirectory);
 
   static bool identifyGame(const std::wstring &searchPath);
 

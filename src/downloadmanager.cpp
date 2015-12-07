@@ -18,18 +18,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "downloadmanager.h"
+
 #include "nxmurl.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
-#include <gameinfo.h>
+#include "iplugingame.h"
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
-#include "json.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>
 #include <report.h>
+
 #include <QTimer>
 #include <QFileInfo>
 #include <QRegExp>
@@ -37,6 +38,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QTextDocument>
+
 #include <boost/bind.hpp>
 #include <regex>
 
@@ -447,7 +450,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 {
   NXMUrl nxmInfo(url);
 
-  QString managedGame = ToQString(MOShared::GameInfo::instance().getGameShortName());
+  QString managedGame = m_ManagedGame->getGameShortName();
   qDebug("add nxm download: %s", qPrintable(url));
   if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(managedGame), qPrintable(nxmInfo.game()));
@@ -909,10 +912,10 @@ QString DownloadManager::getDownloadFileName(const QString &baseName) const
 QString DownloadManager::getFileNameFromNetworkReply(QNetworkReply *reply)
 {
   if (reply->hasRawHeader("Content-Disposition")) {
-    std::tr1::regex exp("filename=\"(.*)\"");
+    std::regex exp("filename=\"(.*)\"");
 
-    std::tr1::cmatch result;
-    if (std::tr1::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
+    std::cmatch result;
+    if (std::regex_search(reply->rawHeader("Content-Disposition").constData(), result, exp)) {
       return QString::fromUtf8(result.str(1).c_str());
     }
   }
@@ -1128,6 +1131,12 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
+      //Nexus has HTMLd these so unhtml them if necessary
+      QTextDocument doc;
+      doc.setHtml(info->m_FileInfo->modName);
+      info->m_FileInfo->modName = doc.toPlainText();
+      doc.setHtml(info->m_FileInfo->name);
+      info->m_FileInfo->name = doc.toPlainText();
       info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
@@ -1235,13 +1244,14 @@ int DownloadManager::startDownloadURLs(const QStringList &urls)
   return m_ActiveDownloads.size() - 1;
 }
 
+/* This doesn't appear to be used by anything
 int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 {
   int newID = m_ActiveDownloads.size();
   addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(ToQString(MOShared::GameInfo::instance().getGameName())).arg(modID).arg(fileID));
   return newID;
 }
-
+*/
 QString DownloadManager::downloadPath(int id)
 {
   return getFilePath(id);
@@ -1461,3 +1471,7 @@ void DownloadManager::directoryChanged(const QString&)
   refreshList();
 }
 
+void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)
+{
+  m_ManagedGame = managedGame;
+}

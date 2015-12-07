@@ -31,8 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 
-OblivionInfo::OblivionInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory)
-  : GameInfo(moDirectory, moDataDirectory, gameDirectory)
+OblivionInfo::OblivionInfo(const std::wstring &gameDirectory)
+  : GameInfo(gameDirectory)
 {
   identifyMyGamesDirectory(L"oblivion");
 }
@@ -63,71 +63,9 @@ std::wstring OblivionInfo::getRegPathStatic()
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-std::vector<std::wstring> OblivionInfo::getDLCPlugins()
-{
-  return boost::assign::list_of (L"DLCShiveringIsles.esp")
-                                (L"Knights.esp")
-                                (L"DLCFrostcrag.esp")
-                                (L"DLCSpellTomes.esp")
-                                (L"DLCMehrunesRazor.esp")
-                                (L"DLCOrrery.esp")
-                                (L"DLCSpellTomes.esp")
-                                (L"DLCThievesDen.esp")
-                                (L"DLCVileLair.esp")
-                                (L"DLCHorseArmor.esp")
-      ;
-}
-
-
-std::vector<std::wstring> OblivionInfo::getSavegameAttachmentExtensions()
-{
-  return boost::assign::list_of(L"obse");
-}
-
-
-std::vector<std::wstring> OblivionInfo::getIniFileNames()
+std::vector<std::wstring> OblivionInfo::getIniFileNames() const
 {
   return boost::assign::list_of(L"oblivion.ini")(L"oblivionprefs.ini");
-}
-
-
-
-
-
-std::wstring OblivionInfo::getNexusPage(bool nmmScheme)
-{
-  if (nmmScheme) {
-    return L"http://nmm.nexusmods.com/oblivion";
-  } else {
-    return L"http://www.nexusmods.com/oblivion";
-  }
-}
-
-
-std::wstring OblivionInfo::getNexusInfoUrlStatic()
-{
-  return L"http://nmm.nexusmods.com/oblivion";
-}
-
-
-int OblivionInfo::getNexusModIDStatic()
-{
-  return 38277;
-}
-
-std::wstring OblivionInfo::getReferenceDataFile()
-{
-  return L"Oblivion - Meshes.bsa";
 }
 
 } // namespace MOShared

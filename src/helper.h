@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define HELPER_H
 
 
-#include <QString>
+#include <string>
 
 
 /**

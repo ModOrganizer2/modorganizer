@@ -18,6 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
+
+#include "iplugingame.h"
 #include "nxmurl.h"
 #include "report.h"
 #include "utility.h"
@@ -25,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "persistentcookiejar.h"
 #include "settings.h"
 #include <gameinfo.h>
-#include <json.h>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QNetworkProxy>
@@ -39,10 +40,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QJsonDocument>
 #include <QJsonArray>
 
-
 using namespace MOBase;
-using namespace MOShared;
 
+namespace {
+  QString const Nexus_Management_URL("http://nmm.nexusmods.com");
+}
 
 // unfortunately Nexus doesn't seem to document these states, all I know is all these listed
 // are considered premium (27 should be lifetime premium)
@@ -101,8 +103,7 @@ QNetworkReply *NXMAccessManager::createRequest(
 
 void NXMAccessManager::showCookies() const
 {
-  QUrl url(ToQString(GameInfo::instance().getNexusPage()) + "/");
-
+  QUrl url(Nexus_Management_URL + "/");
   for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
     qDebug("%s - %s (expires: %s)",
            cookie.name().constData(), cookie.value().constData(),
@@ -115,7 +116,7 @@ void NXMAccessManager::startLoginCheck()
 {
   if (hasLoginCookies()) {
     qDebug("validating login cookies");
-    QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Validate");
+    QNetworkRequest request(Nexus_Management_URL + "/Sessions/?Validate");
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
     request.setRawHeader("User-Agent", userAgent().toUtf8());
 
@@ -132,9 +133,8 @@ void NXMAccessManager::startLoginCheck()
 void NXMAccessManager::retrieveCredentials()
 {
   qDebug("retrieving credentials");
-  QNetworkRequest request(ToQString(GameInfo::instance().getNexusPage())
-                          + QString("/Core/Libs/Flamework/Entities/User?GetCredentials&game_id=%1"
-                                    ).arg(GameInfo::instance().getNexusGameID()));
+
+  QNetworkRequest request(Nexus_Management_URL + "/Core/Libs/Flamework/Entities/User?GetCredentials");
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 
@@ -229,8 +229,9 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 void NXMAccessManager::pageLogin()
 {
   qDebug("logging %s in on Nexus", qPrintable(m_Username));
-  QString requestString = (ToQString(GameInfo::instance().getNexusPage()) + "/Sessions/?Login&uri=%1")
-                             .arg(QString(QUrl::toPercentEncoding(ToQString(GameInfo::instance().getNexusPage()))));
+
+  QString requestString = (Nexus_Management_URL + "/Sessions/?Login&uri=%1")
+                            .arg(QString(QUrl::toPercentEncoding(Nexus_Management_URL)));
 
   QNetworkRequest request(requestString);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
@@ -294,15 +295,14 @@ void NXMAccessManager::loginError(QNetworkReply::NetworkError)
 
 bool NXMAccessManager::hasLoginCookies() const
 {
-  bool sidCookie = false;
-  QUrl url(ToQString(GameInfo::instance().getNexusPage()) + "/");
+  QUrl url(Nexus_Management_URL + "/");
   QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(url);
   for (const QNetworkCookie &cookie : cookies) {
     if (cookie.name() == "sid") {
-      sidCookie = true;
+      return true;
     }
   }
-  return sidCookie;
+  return false;
 }
 
 
@@ -343,4 +343,3 @@ void NXMAccessManager::loginChecked()
   m_LoginReply->deleteLater();
   m_LoginReply = nullptr;
 }
-

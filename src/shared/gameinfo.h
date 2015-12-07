@@ -40,76 +40,35 @@ class GameInfo
 
 public:
 
-  enum Type {
-    TYPE_OBLIVION,
-    TYPE_FALLOUT3,
-    TYPE_FALLOUT4,
-    TYPE_FALLOUTNV,
-    TYPE_SKYRIM
-  };
-
-  enum LoadOrderMechanism {
-    TYPE_FILETIME,
-    TYPE_PLUGINSTXT
-  };
-
-public:
-
   virtual ~GameInfo() {}
 
-  std::wstring getOrganizerDirectory() { return m_OrganizerDirectory; }
-
-  virtual std::wstring getRegPath() = 0;
-  virtual std::wstring getBinaryName() = 0;
-
-  virtual GameInfo::Type getType() = 0;
-
-  virtual std::wstring getGameName() const = 0;
-  virtual std::wstring getGameShortName() const = 0;
-
-  /// determine the load order mechanism used by this game. this may throw an
-  /// exception if the mechanism can't be determined
-  virtual LoadOrderMechanism getLoadOrderMechanism() const { return TYPE_FILETIME; }
-
-  virtual std::wstring getGameDirectory() const;
-
-  virtual bool requiresSteam() const;
-
-  // get a list of file extensions for additional files belonging to a save game
-  virtual std::vector<std::wstring> getSavegameAttachmentExtensions() = 0;
-
-  // get a set of esp/esm files that are part of known dlcs
-  virtual std::vector<std::wstring> getDLCPlugins() = 0;
-
-  // file name of this games ini file(s)
-  virtual std::vector<std::wstring> getIniFileNames() = 0;
-
-  virtual std::wstring getReferenceDataFile() = 0;
-
-  virtual std::wstring getNexusPage(bool nmmScheme = true) = 0;
-  virtual std::wstring getNexusInfoUrl() = 0;
-  virtual int getNexusModID() = 0;
-  virtual int getNexusGameID() = 0;
-
-public:
-
+  //**USED IN HOOKDLL and at startup to set up for hookdll to work
   // initialise with the path to the mo directory (needs to be where hook.dll is stored). This
   // needs to be called before the instance can be retrieved
-  static bool init(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gamePath = L"");
+  static bool init(const std::wstring &moDirectory, const std::wstring &gamePath = L"");
 
+  //**USED ONLY IN HOOKDLL
   static GameInfo& instance();
+
+  //**USED ONLY IN HOOKDLL
+  virtual std::wstring getGameDirectory() const;
+
+  //**USED ONLY IN HOOKDLL
+  virtual std::wstring getRegPath() const = 0;
+
+  //**USED ONLY IN HOOKDLL
+  // file name of this games ini file(s)
+  virtual std::vector<std::wstring> getIniFileNames() const = 0;
 
 protected:
 
-  GameInfo(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &gameDirectory);
+  GameInfo(const std::wstring &gameDirectory);
 
-  std::wstring getLocalAppFolder() const;
-  const std::wstring &getMyGamesDirectory() const { return m_MyGamesDirectory; }
   void identifyMyGamesDirectory(const std::wstring &file);
 
 private:
 
-  static bool identifyGame(const std::wstring &moDirectory, const std::wstring &moDataDirectory, const std::wstring &searchPath);
+  static bool identifyGame(const std::wstring &searchPath);
   std::wstring getSpecialPath(LPCWSTR name) const;
 
   static void cleanup();
@@ -121,8 +80,6 @@ private:
   std::wstring m_MyGamesDirectory;
 
   std::wstring m_GameDirectory;
-  std::wstring m_OrganizerDirectory;
-  std::wstring m_OrganizerDataDirectory;
 
 };
 

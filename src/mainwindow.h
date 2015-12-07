@@ -280,14 +280,10 @@ private:
 
   int m_OldExecutableIndex;
 
-  QString m_GamePath;
-
   int m_ContextRow;
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
-
-  //int m_SelectedSaveGame;
 
   CategoryFactory &m_CategoryFactory;
 
@@ -352,6 +348,7 @@ private slots:
   void unendorse_clicked();
   void ignoreMissingData_clicked();
   void visitOnNexus_clicked();
+  void visitWebPage_clicked();
   void openExplorer_clicked();
   void information_clicked();
   // savegame context menu
