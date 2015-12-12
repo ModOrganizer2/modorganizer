@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import fileinput
 import re
 import subprocess
@@ -39,6 +41,8 @@ foundline = None
 
 errors = False
 
+messages = defaultdict(list)
+
 def process_next_line(line, outfile):
     """ Read a line of output/error from include-what-you use
         Turn clang errors into a form QT creator recognises
@@ -75,19 +79,23 @@ def process_next_line(line, outfile):
         m = re.match(r'- #include [<"](.*)[">] +// lines (.*)-', line)
         if m:
             foundline = m.group(2)
-            print '%s(%s) : warning I0001: Unnecessary include of %s' %\
-                                          (removing, m.group(2), m.group(1))
             if m.group(1) in added:
-                print '        %s(%s) : note: Use forward reference %s' % (
-                                 removing, m.group(2), added[m.group(1)][1])
+                messages[removing].append(
+                    '%s(%s) : warning I0004: Replace include of %s with '
+                        'forward reference %s' % (
+                        removing, m.group(2), m.group(1), added[m.group(1)][1]))
                 del added[m.group(1)]
+            else:
+                messages[removing].append(
+                    '%s(%s) : warning I0001: Unnecessary include of %s' % (
+                                              removing, m.group(2), m.group(1)))
+
         else:
             m = re.match(r'- (.*) +// lines (.*)-', line)
             if m:
-                foundline = m.group(2)
-                print '%s(%s) : warning I0002: '\
-                                          'Unnecessary forward ref of %s' %\
-                                          (removing, m.group(2), m.group(1))
+                messages[removing].append(
+                    '%s(%s) : warning I0002: Unnecessary forward ref of %s' % (
+                                              removing, m.group(2), m.group(1)))
             else:
                 print '********* I got confused **********'
     elif line.startswith('In file included from'):
@@ -122,9 +130,15 @@ while True:
 
 if foundline is None:
     foundline = '1'
+
 for add in added:
-    print '%s(%s) : warning I0003: Need to include %s' % (
-                                        added[add][0], foundline, added[add][1])
+    messages[added[add][0]].append(
+        '%s(%s) : warning I0003: Need to include %s' % (
+                                       added[add][0], foundline, added[add][1]))
+
+for file in sorted(messages.keys(), reverse = True):
+    for line in messages[file]:
+        print line
 
 rc = process.poll()
 # The return code you get appears to be more to do with the amount of output
