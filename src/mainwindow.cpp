@@ -1262,7 +1262,7 @@ QDir MainWindow::currentSavesDir() const
 {
   QDir savesDir;
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
-    savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
+    savesDir.setPath(m_OrganizerCore.currentProfile()->savePath());
   } else {
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(

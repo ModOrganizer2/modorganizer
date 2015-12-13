@@ -19,22 +19,28 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profilesdialog.h"
 #include "ui_profilesdialog.h"
-#include "report.h"
-#include "utility.h"
-#include "transfersavesdialog.h"
+
+#include "appconfig.h"
+#include "bsainvalidation.h"
+#include "iplugingame.h"
+#include "profile.h"
 #include "profileinputdialog.h"
-#include "mainwindow.h"
-#include "aboutdialog.h"
-#include <iplugingame.h>
-#include <bsainvalidation.h>
-#include <appconfig.h>
-#include <QListWidgetItem>
+#include "report.h"
+#include "transfersavesdialog.h"
+#include "utility.h"
+
+#include <Qt>
+#include <QDir>
+#include <QDirIterator>
 #include <QInputDialog>
 #include <QLineEdit>
-#include <QDirIterator>
+#include <QListWidgetItem>
 #include <QMessageBox>
 #include <QWhatsThis>
 
+#include <Windows.h>
+
+#include <exception>
 
 using namespace MOBase;
 using namespace MOShared;

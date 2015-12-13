@@ -21,17 +21,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define PROFILESDIALOG_H
 
 #include "tutorabledialog.h"
-#include <QListWidgetItem>
-#include "profile.h"
+class Profile;
 
+class QListWidget;
+class QListWidgetItem;
+#include <QObject>
+class QString;
 
-namespace Ui {
-    class ProfilesDialog;
-}
+namespace Ui { class ProfilesDialog; }
 
-namespace MOBase {
-  class IPluginGame;
-}
+namespace MOBase { class IPluginGame; }
 
 
 /**

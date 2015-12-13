@@ -19,29 +19,39 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "profile.h"
 
-#include "windows_error.h"
 #include "modinfo.h"
 #include "safewritefile.h"
 #include <utility.h>
-#include <util.h>
 #include <error_report.h>
-#include <appconfig.h>
+#include "appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
 
-#include <QMessageBox>
 #include <QApplication>
-#include <QSettings>
-#include <QTemporaryFile>
+#include <QFile>                                   // for QFile
+#include <QFlags>                                  // for operator|, QFlags
+#include <QIODevice>                               // for QIODevice, etc
+#include <QMessageBox>
+#include <QScopedArrayPointer>
+#include <QStringList>                             // for QStringList
+#include <QtDebug>                                 // for qDebug, qWarning, etc
+#include <QtGlobal>                                // for qPrintable
 
+#include <Windows.h>
+
+#include <assert.h>                                // for assert
+#include <limits.h>                                // for UINT_MAX, INT_MAX, etc
+#include <stddef.h>                                // for size_t
+#include <string.h>                                // for wcslen
+
+#include <algorithm>                               // for max, min
+#include <exception>                               // for exception
 #include <functional>
+#include <set>                                     // for set
+#include <utility>                                 // for find
 #include <stdexcept>
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <shlobj.h>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -685,6 +695,12 @@ QString Profile::getProfileTweaks() const
 QString Profile::absolutePath() const
 {
   return QDir::cleanPath(m_Directory.absolutePath());
+}
+
+QString Profile::savePath() const
+{
+  return QDir::cleanPath(m_Directory.absoluteFilePath("saves"));
+
 }
 
 void Profile::rename(const QString &newName)

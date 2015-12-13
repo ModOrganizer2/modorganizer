@@ -25,12 +25,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iprofile.h>
 #include <delayedfilewriter.h>
 
-#include <QString>
+#include <QByteArray>
 #include <QDir>
-#include <QSettings>
+#include <QObject>
+#include <QString>
 
-#include <vector>
+#include <boost/shared_ptr.hpp>
+
+#include <string>
 #include <tuple>
+#include <vector>
 
 
 namespace MOBase { class IPluginGame; }
@@ -172,6 +176,15 @@ public:
    **/
   QString absolutePath() const;
 
+  /**
+   * @return path to this profile's save games
+   **/
+  QString savePath() const;
+
+  /**
+   * @brief rename profile
+   * @param newName new name of profile
+   */
   void rename(const QString &newName);
 
   /**
