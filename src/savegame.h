@@ -24,10 +24,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QString>
 #include <QObject>
 #include <QImage>
-#include <QMetaType>
-#include <QFile>
-#include <QStringList>
 
+//Sigh - for SYSTEMTIME
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
@@ -62,16 +60,6 @@ public:
    * @return filename of this savegame
    */
   const QString &fileName() const { return m_FileName; }
-
-  /**
-   * @return a list of additional files that belong to this savegame
-   */
-  virtual QStringList attachedFiles() const;
-
-  /**
-   * @return a list of all files that belong to this savegame
-   */
-  virtual QStringList saveFiles() const;
 
   /**
    * @return name of the player character

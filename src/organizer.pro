@@ -109,7 +109,6 @@ HEADERS  += \
     selectiondialog.h \
     savegameinfowidgetgamebryo.h \
     savegameinfowidget.h \
-    savegamegamebyro.h \
     savegame.h \
     queryoverwritedialog.h \
     profilesdialog.h \
@@ -175,7 +174,8 @@ HEADERS  += \
     modinforegular.h \
     modinfobackup.h \
     modinfooverwrite.h \
-    modinfoforeign.h
+    modinfoforeign.h \
+    savegamegamebryo.h
 
 FORMS    += \
     transfersavesdialog.ui \

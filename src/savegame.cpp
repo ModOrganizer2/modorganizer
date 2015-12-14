@@ -19,20 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "savegame.h"
 
-#include "iplugingame.h"
-#include "scriptextender.h"
-#include "utility.h"
-
-#include <QApplication>
-#include <QDateTime>
-#include <QFile>
-#include <QFileInfo>
-
-#include <limits>
-#include <set>
-
-using namespace MOBase;
-
 SaveGame::SaveGame(QObject *parent, const QString &filename, const MOBase::IPluginGame *game)
   : QObject(parent)
   , m_FileName(filename)
@@ -42,28 +28,4 @@ SaveGame::SaveGame(QObject *parent, const QString &filename, const MOBase::IPlug
 
 SaveGame::~SaveGame()
 {
-}
-
-QStringList SaveGame::attachedFiles() const
-{
-  QStringList result;
-  ScriptExtender const *extender = m_Game->feature<ScriptExtender>();
-  if (extender != nullptr) {
-    for (QString const &ext : extender->saveGameAttachmentExtensions()) {
-      QFileInfo fi(fileName());
-      fi.setFile(fi.canonicalPath() + "/" + fi.completeBaseName() + "." + ext);
-      if (fi.exists()) {
-        result.append(fi.filePath());
-      }
-    }
-  }
-
-  return result;
-}
-
-QStringList SaveGame::saveFiles() const
-{
-  QStringList result = attachedFiles();
-  result.append(fileName());
-  return result;
 }

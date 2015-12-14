@@ -20,7 +20,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "directoryentry.h"
+#include "directoryrefresher.h"
+#include "executableinfo.h"
+#include "executableslist.h"
+#include "guessedvalue.h"
+#include "imodinterface.h"
+#include "iplugingame.h"
+#include "iplugindiagnose.h"
+#include "nexusinterface.h"
+#include "organizercore.h"
+#include "previewgenerator.h"
 #include "spawn.h"
+#include "versioninfo.h"
+
 #include "report.h"
 #include "modlist.h"
 #include "modlistsortproxy.h"
@@ -31,7 +44,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "editexecutablesdialog.h"
 #include "categories.h"
 #include "categoriesdialog.h"
-#include "utility.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
 #include "activatemodsdialog.h"
@@ -41,16 +53,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "lockeddialog.h"
-#include "syncoverwritedialog.h"
 #include "logbuffer.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
-#include "questionboxmemory.h"
 #include "tutorialmanager.h"
 #include "modflagicondelegate.h"
 #include "genericicondelegate.h"
-#include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
 #include "savetextasdialog.h"
@@ -59,59 +68,84 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
-//?
-//#include "isavegame.h"
-//#include "savegameinfo.h"
-//?
+#include "savegameinfowidget.h"
+#include "savegameinfowidgetgamebryo.h"
+#include "scriptextender.h"
 #include "nxmaccessmanager.h"
-#include <archive.h>
-#include <appconfig.h>
+#include "appconfig.h"
 #include <utility.h>
-#include <ipluginproxy.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
-#include <questionboxmemory.h>
 #include <taskprogressmanager.h>
-#include <util.h>
 #include <scopeguard.h>
 
+#include <QAbstractItemDelegate>
+#include <QAbstractProxyModel>
+#include <QAction>
+#include <QApplication>
+#include <QCheckBox>
+#include <QCloseEvent>
+#include <QCursor>
+#include <QDialog>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QEvent>
+#include <QFont>
+#include <QFuture>
+#include <QHash>
+#include <QIODevice>
+#include <QIcon>
+#include <QItemSelectionModel>
+#include <QLineEdit>
+#include <QListWidgetItem>
+#include <QModelIndex>
+#include <QNetworkProxyFactory>
+#include <QPainter>
+#include <QPixmap>
+#include <QPoint>
+#include <QPushButton>
+#include <QRect>
+#include <QResizeEvent>
+#include <QScopedPointer>
+#include <QSizePolicy>
+#include <QSize>
 #include <QTime>
+#include <QUrl>
+#include <QVariantList>
+#include <QtDebug>
+#include <QtGlobal>
+
 #include <QInputDialog>
 #include <QSettings>
 #include <QWhatsThis>
 #include <QProcess>
 #include <QMenu>
 #include <QBuffer>
-#include <QInputDialog>
 #include <QDirIterator>
-#include <QHelpEvent>
 #include <QToolTip>
 #include <QFileDialog>
 #include <QTimer>
+#include <QTranslator>
 #include <QMessageBox>
 #include <QDebug>
-#include <QBuffer>
 #include <QWidgetAction>
 #include <QToolButton>
-#include <QGraphicsObject>
-#include <QPluginLoader>
 #include <QRadioButton>
 #include <QDesktopWidget>
-#include <QtPlugin>
-#include <QIdentityProxyModel>
 #include <QClipboard>
-#include <QNetworkInterface>
-#include <QNetworkProxy>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include <QJsonValue>
+#include <QJsonValueRef>
 #include <QMimeData>
+
+
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
 #include <QtConcurrentRun>
 #endif
+
 #include <QCoreApplication>
 #include <QProgressDialog>
 
@@ -119,22 +153,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
 
-#include <Psapi.h>
 #include <shlobj.h>
-#include <ShellAPI.h>
-#include <TlHelp32.h>
 
-#include <sstream>
-#include <regex>
+#include <limits.h>
+#include <exception>
 #include <functional>
 #include <map>
-#include <ctime>
-#include <wchar.h>
-#include <utility.h>
+#include <regex>
+#include <stdexcept>
+#include <sstream>
+#include <utility>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -3191,29 +3222,42 @@ void MainWindow::deleteSavegame_clicked()
 {
   QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
 
+  //This feels wrong and should be part of savegame interface
+  QStringList extensions;
+  {
+    ScriptExtender *extender = m_OrganizerCore.managedGame()->feature<ScriptExtender>();
+    if (extender != nullptr) {
+      extensions += extender->saveGameAttachmentExtensions();
+    }
+  }
+
   QString savesMsgLabel;
   QStringList deleteFiles;
 
   int count = 0;
 
-  foreach (const QModelIndex &idx, selectedIndexes) {
-    QString name = idx.data().toString();
-    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString(), m_OrganizerCore.managedGame());
+  for (const QModelIndex &idx : selectedIndexes) {
+    //QString name = idx.data().toString();
+    QFileInfo fileName(idx.data(Qt::UserRole).toString());
 
     if (count < 10) {
-      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
+      savesMsgLabel += "<li>" + fileName.completeBaseName() + "</li>";
     }
     ++count;
 
-    deleteFiles << save->saveFiles();
+    deleteFiles << fileName.absoluteFilePath();
+    for (QString const &ext : extensions) {
+      deleteFiles << fileName.absoluteDir().absoluteFilePath(fileName.completeBaseName() + "." + ext);
+    }
   }
 
   if (count > 10) {
     savesMsgLabel += "<li><i>... " + tr("%1 more").arg(count - 10) + "</i></li>";
   }
 
-  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
-                            .arg(savesMsgLabel),
+  if (QMessageBox::question(this, tr("Confirm"),
+                            tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
+                              .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
   }
