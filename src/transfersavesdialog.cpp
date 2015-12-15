@@ -23,7 +23,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include "isavegame.h"
 #include "savegameinfo.h"
-#include "scriptextender.h"
 
 #include <QtDebug>
 #include <QDateTime>
@@ -37,8 +36,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QPushButton>
 #include <QStringList>
-
-class QWidget; //Do we /really/ need this?
 
 using namespace MOBase;
 using namespace MOShared;
