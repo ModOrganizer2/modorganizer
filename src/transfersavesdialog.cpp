@@ -71,6 +71,11 @@ public:
     return m_File;
   }
 
+  virtual QStringList allFiles() const override
+  {
+    return { m_File };
+  }
+
 private:
   QString m_File;
 };
@@ -298,19 +303,11 @@ bool TransferSavesDialog::transferCharacters(QString const &character,
 
   OverwriteMode overwriteMode = OVERWRITE_ASK;
 
-  QStringList extensions = { m_GamePlugin->savegameExtension() };
-  {
-    ScriptExtender *ext = m_GamePlugin->feature<ScriptExtender>();
-    if (ext != nullptr) {
-      extensions += ext->saveGameAttachmentExtensions();
-    }
-  }
   QDir destination(dest);
   for (SaveListItem const &save : saves) {
-    QFileInfo const saveFile = save->getFilename();
-    for (QString const &ext : extensions) {
-      QFileInfo sourceFile(saveFile.absoluteDir().absoluteFilePath(saveFile.completeBaseName() + "." + ext));
-      QString destinationFile = destination.absoluteFilePath(sourceFile.fileName());
+    for (QString source : save->allFiles()) {
+      QFileInfo sourceFile(source);
+      QString destinationFile(destination.absoluteFilePath(sourceFile.fileName()));
 
       //If the file is already there, let them skip (or not).
       if (QFile::exists(destinationFile)) {

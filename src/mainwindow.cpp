@@ -28,9 +28,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imodinterface.h"
 #include "iplugingame.h"
 #include "iplugindiagnose.h"
+#include "isavegame.h"
 #include "nexusinterface.h"
 #include "organizercore.h"
 #include "previewgenerator.h"
+#include "savegameinfo.h"
 #include "spawn.h"
 #include "versioninfo.h"
 
@@ -70,7 +72,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "safewritefile.h"
 #include "savegameinfowidget.h"
 #include "savegameinfowidgetgamebryo.h"
-#include "scriptextender.h"
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include <utility.h>
@@ -83,61 +84,63 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractProxyModel>
 #include <QAction>
 #include <QApplication>
+#include <QBuffer>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QCloseEvent>
+#include <QCoreApplication>
 #include <QCursor>
+#include <QDebug>
+#include <QDesktopWidget>
 #include <QDialog>
+#include <QDirIterator>
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QEvent>
+#include <QFileDialog>
 #include <QFont>
 #include <QFuture>
 #include <QHash>
 #include <QIODevice>
 #include <QIcon>
+#include <QInputDialog>
 #include <QItemSelectionModel>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValueRef>
 #include <QLineEdit>
 #include <QListWidgetItem>
+#include <QMenu>
+#include <QMessageBox>
+#include <QMimeData>
 #include <QModelIndex>
 #include <QNetworkProxyFactory>
 #include <QPainter>
 #include <QPixmap>
 #include <QPoint>
+#include <QProcess>
+#include <QProgressDialog>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QRect>
 #include <QResizeEvent>
+#include <QSettings>
 #include <QScopedPointer>
 #include <QSizePolicy>
 #include <QSize>
 #include <QTime>
+#include <QTimer>
+#include <QToolButton>
+#include <QToolTip>
+#include <QTranslator>
 #include <QUrl>
 #include <QVariantList>
+#include <QWhatsThis>
+#include <QWidgetAction>
+
 #include <QtDebug>
 #include <QtGlobal>
-
-#include <QInputDialog>
-#include <QSettings>
-#include <QWhatsThis>
-#include <QProcess>
-#include <QMenu>
-#include <QBuffer>
-#include <QDirIterator>
-#include <QToolTip>
-#include <QFileDialog>
-#include <QTimer>
-#include <QTranslator>
-#include <QMessageBox>
-#include <QDebug>
-#include <QWidgetAction>
-#include <QToolButton>
-#include <QRadioButton>
-#include <QDesktopWidget>
-#include <QClipboard>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QJsonValueRef>
-#include <QMimeData>
 
 
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
@@ -145,9 +148,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #else
 #include <QtConcurrentRun>
 #endif
-
-#include <QCoreApplication>
-#include <QProgressDialog>
 
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
@@ -3220,34 +3220,26 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
 void MainWindow::deleteSavegame_clicked()
 {
-  QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
-
-  //This feels wrong and should be part of savegame interface
-  QStringList extensions;
-  {
-    ScriptExtender *extender = m_OrganizerCore.managedGame()->feature<ScriptExtender>();
-    if (extender != nullptr) {
-      extensions += extender->saveGameAttachmentExtensions();
-    }
-  }
+  SaveGameInfo const *info = m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
 
   QString savesMsgLabel;
   QStringList deleteFiles;
 
   int count = 0;
 
-  for (const QModelIndex &idx : selectedIndexes) {
-    //QString name = idx.data().toString();
-    QFileInfo fileName(idx.data(Qt::UserRole).toString());
+  for (const QModelIndex &idx : ui->savegameList->selectionModel()->selectedIndexes()) {
+    QString name = idx.data(Qt::UserRole).toString();
 
     if (count < 10) {
-      savesMsgLabel += "<li>" + fileName.completeBaseName() + "</li>";
+      savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
     }
     ++count;
 
-    deleteFiles << fileName.absoluteFilePath();
-    for (QString const &ext : extensions) {
-      deleteFiles << fileName.absoluteDir().absoluteFilePath(fileName.completeBaseName() + "." + ext);
+    if (info == nullptr) {
+      deleteFiles.push_back(name);
+    } else {
+      ISaveGame const *save = info->getSaveGameInfo(name);
+      deleteFiles += save->allFiles();
     }
   }
 
@@ -3256,7 +3248,9 @@ void MainWindow::deleteSavegame_clicked()
   }
 
   if (QMessageBox::question(this, tr("Confirm"),
-                            tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
+                            tr("Are you sure you want to remove the following %n save(s)?<br>"
+                               "<ul>%1</ul><br>"
+                               "Removed saves will be sent to the Recycle Bin.", "", count)
                               .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
