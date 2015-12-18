@@ -70,7 +70,7 @@ private:
 
   QStringList m_Plugins;
   //Note: This isn't owned by us so safe to copy
-  MOBase::ISaveGame const *m_Save;
+  const MOBase::ISaveGame *m_Save;
 
 };
 

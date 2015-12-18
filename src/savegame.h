@@ -106,10 +106,10 @@ public:
 protected:
 
   QString m_FileName;
-  QString m_PCName;
-  unsigned short m_PCLevel;
-  QString m_PCLocation;
-  unsigned long m_SaveNumber;
+  QString m_PCName { "N/A" };
+  unsigned short m_PCLevel { 0 };
+  QString m_PCLocation { "N/A" };
+  unsigned long m_SaveNumber { 0 };
   SYSTEMTIME m_CreationTime;
   QImage m_Screenshot;
 

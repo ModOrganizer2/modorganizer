@@ -32,13 +32,29 @@ SaveGameGamebryo::SaveGameGamebryo(QObject *parent, const QString &fileName, IPl
   : SaveGame(parent, fileName, game)
   , m_Plugins()
 {
-  SaveGameInfo const *info = game->feature<SaveGameInfo>();
+  // ensure creation time is set to a valid, preferrably even a reasonable value
+  memset(&m_CreationTime, 0, sizeof(SYSTEMTIME));
+  HANDLE fileHandle = CreateFileW(fileName.toStdWString().c_str(),
+                                  GENERIC_READ,
+                                  FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                  nullptr,
+                                  OPEN_EXISTING,
+                                  FILE_ATTRIBUTE_NORMAL,
+                                  nullptr);
+  if (fileHandle != INVALID_HANDLE_VALUE) {
+    FILETIME creationTime;
+    if (GetFileTime(fileHandle, &creationTime, nullptr, nullptr)) {
+      FileTimeToSystemTime(&creationTime, &m_CreationTime);
+    }
+  }
+
+  const SaveGameInfo *info = game->feature<SaveGameInfo>();
   if (info != nullptr) {
-    ISaveGame const *save = info->getSaveGameInfo(fileName);
+    const ISaveGame *save = info->getSaveGameInfo(fileName);
     m_Save = save;
 
     //Kludgery
-    GamebryoSaveGame const *s = dynamic_cast<GamebryoSaveGame const *>(save);
+    const GamebryoSaveGame *s = dynamic_cast<const GamebryoSaveGame *>(save);
     m_PCName = s->getPCName();
     m_PCLevel = s->getPCLevel();
     m_PCLocation = s->getPCLocation();
