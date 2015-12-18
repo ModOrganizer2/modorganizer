@@ -166,7 +166,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
          iter != m_GlobalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
         QStringList files = (*iter)->saveFiles();
-        foreach (const QString &file, files) {
+        for (const QString &file : files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination + "/" + fileInfo.fileName();
           if (QFile::exists(destinationFile)) {
@@ -203,22 +203,12 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
          iter != m_GlobalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
         QStringList files = (*iter)->saveFiles();
-        foreach (const QString &file, files) {
+        QStringList destinations;
+        for (const QString &file : files) {
           QFileInfo fileInfo(file);
-          QString destinationFile = destination + "/" + fileInfo.fileName();
-          if (QFile::exists(destinationFile)) {
-            if (testOverwrite(overwriteMode, destinationFile)) {
-              QFile::remove(destinationFile);
-            } else {
-              continue;
-            }
-          }
-          if (!QFile::copy(fileInfo.absoluteFilePath(), destinationFile)) {
-            qCritical("failed to copy %s to %s",
-                      fileInfo.absoluteFilePath().toUtf8().constData(),
-                      destinationFile.toUtf8().constData());
-          }
+          destinations.append(destination + "/" + fileInfo.fileName());
         }
+        shellCopy(files, destinations, this);
       }
     }
   }
@@ -240,7 +230,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
          iter != m_LocalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
         QStringList files = (*iter)->saveFiles();
-        foreach (const QString &file, files) {
+        for (const QString &file : files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.filePath(fileInfo.fileName());
           if (QFile::exists(destinationFile)) {
@@ -279,7 +269,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
          iter != m_LocalSaves.end(); ++iter) {
       if ((*iter)->pcName() == selectedCharacter) {
         QStringList files = (*iter)->saveFiles();
-        foreach (const QString &file, files) {
+        for (const QString &file : files) {
           QFileInfo fileInfo(file);
           QString destinationFile = destination.filePath(fileInfo.fileName());
           if (QFile::exists(destinationFile)) {
