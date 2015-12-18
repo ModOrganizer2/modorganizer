@@ -236,7 +236,6 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
       settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
       settings.setValue("arguments", item.m_Arguments);
       settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("closeOnStart", item.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
       settings.setValue("steamAppID", item.m_SteamAppID);
     }
   }
@@ -338,9 +337,6 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   int numCustomExecutables = settings.beginReadArray("customExecutables");
   for (int i = 0; i < numCustomExecutables; ++i) {
     settings.setArrayIndex(i);
-    ExecutableInfo::CloseMOStyle closeMO =
-        settings.value("closeOnStart").toBool() ? ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
-                                                : ExecutableInfo::CloseMOStyle::DEFAULT_STAY;
 
     Executable::Flags flags;
     if (settings.value("custom", true).toBool())   flags |= Executable::CustomExecutable;
@@ -351,7 +347,6 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
                                     settings.value("binary").toString(),
                                     settings.value("arguments").toString(),
                                     settings.value("workingDirectory", "").toString(),
-                                    closeMO,
                                     settings.value("steamAppID", "").toString(),
                                     flags);
   }
@@ -875,7 +870,7 @@ ModList *OrganizerCore::modList()
   return &m_ModList;
 }
 
-void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
+void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID)
 {
   LockedDialog *dialog = new LockedDialog(qApp->activeWindow());
   dialog->show();
@@ -883,55 +878,52 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
 
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID);
   if (processHandle != INVALID_HANDLE_VALUE) {
-    if (closeAfterStart && (m_UserInterface != nullptr)) {
-      m_UserInterface->closeWindow();
-    } else {
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->setWindowEnabled(false);
-      }
-      // re-enable the locked dialog because what'd be the point otherwise?
-      dialog->setEnabled(true);
+    if (m_UserInterface != nullptr) {
+      m_UserInterface->setWindowEnabled(false);
+    }
+    // re-enable the locked dialog because what'd be the point otherwise?
+    dialog->setEnabled(true);
 
-      QCoreApplication::processEvents();
+    QCoreApplication::processEvents();
 
-      DWORD processExitCode;
-      DWORD retLen;
-      JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+    DWORD processExitCode;
+    DWORD retLen;
+    JOBOBJECT_BASIC_PROCESS_ID_LIST info;
 
-      {
-        DWORD currentProcess = 0UL;
-        bool isJobHandle = true;
+    {
+      DWORD currentProcess = 0UL;
+      bool isJobHandle = true;
 
-        DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
-        while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
-          if (isJobHandle) {
-            if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-              if (info.NumberOfProcessIdsInList == 0) {
-                break;
-              } else {
-                if (info.ProcessIdList[0] != currentProcess) {
-                  currentProcess = info.ProcessIdList[0];
-                  dialog->setProcessName(ToQString(getProcessName(currentProcess)));
-                }
-              }
+      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
+        if (isJobHandle) {
+          if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
+            if (info.NumberOfProcessIdsInList == 0) {
+              break;
             } else {
-              // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-              // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-              // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-              // the right to break out.
-              if (::GetLastError() != ERROR_MORE_DATA) {
-                isJobHandle = false;
+              if (info.ProcessIdList[0] != currentProcess) {
+                currentProcess = info.ProcessIdList[0];
+                dialog->setProcessName(ToQString(getProcessName(currentProcess)));
               }
             }
+          } else {
+            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
+            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
+            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
+            // the right to break out.
+            if (::GetLastError() != ERROR_MORE_DATA) {
+              isJobHandle = false;
+            }
           }
-
-          // keep processing events so the app doesn't appear dead
-          QCoreApplication::processEvents();
-
-          res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
         }
-        ::GetExitCodeProcess(processHandle, &processExitCode);
+
+        // keep processing events so the app doesn't appear dead
+        QCoreApplication::processEvents();
+
+        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
       }
+      ::GetExitCodeProcess(processHandle, &processExitCode);
+
       ::CloseHandle(processHandle);
 
       if (m_UserInterface != nullptr) {
@@ -1640,10 +1632,6 @@ std::vector<Mapping> OrganizerCore::fileMapping(
   directoryEntry->getSubDirectories(current, end);
   for (; current != end; ++current) {
     int origin = (*current)->anyOrigin();
-    /*
-    if (origin == 0) {
-      continue;
-    }*/
 
     QString originPath
         = QString::fromStdWString(base->getOriginByID(origin).getPath());

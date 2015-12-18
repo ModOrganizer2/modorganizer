@@ -60,8 +60,7 @@ LogWorker::LogWorker()
                 QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s",
-         qPrintable(m_LogFile.fileName()));
+  qDebug("usvfs log messages are written to %s", qPrintable(m_LogFile.fileName()));
 }
 
 LogWorker::~LogWorker()

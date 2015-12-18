@@ -36,7 +36,6 @@ struct Executable {
   QString m_Title;
   QFileInfo m_BinaryInfo;
   QString m_Arguments;
-  MOBase::ExecutableInfo::CloseMOStyle m_CloseMO;
   QString m_SteamAppID;
   QString m_WorkingDirectory;
 
@@ -126,17 +125,15 @@ public:
    * @param title name displayed in the UI
    * @param executableName the actual filename to execute
    * @param arguments arguments to pass to the executable
-   * @param closeMO if true, MO will be closed when the binary is started
    **/
   void addExecutable(const QString &title,
                      const QString &executableName,
                      const QString &arguments,
                      const QString &workingDirectory,
-                     MOBase::ExecutableInfo::CloseMOStyle closeMO,
                      const QString &steamAppID,
                      Executable::Flags flags)
   {
-    updateExecutable(title, executableName, arguments, workingDirectory, closeMO, steamAppID, Executable::AllFlags, flags);
+    updateExecutable(title, executableName, arguments, workingDirectory, steamAppID, Executable::AllFlags, flags);
   }
 
   /**
@@ -151,7 +148,6 @@ public:
                         const QString &executableName,
                         const QString &arguments,
                         const QString &workingDirectory,
-                        MOBase::ExecutableInfo::CloseMOStyle closeMO,
                         const QString &steamAppID,
                         Executable::Flags mask,
                         Executable::Flags flags);
@@ -192,7 +188,7 @@ private:
   std::vector<Executable>::iterator findExe(const QString &title);
 
   void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
-                             const QString &workingDirectory, MOBase::ExecutableInfo::CloseMOStyle closeMO,
+                             const QString &workingDirectory,
                              const QString &steamAppID);
 
 private:
