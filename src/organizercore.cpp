@@ -1574,11 +1574,14 @@ std::vector<Mapping> OrganizerCore::fileMapping()
     QCoreApplication::processEvents();
   }
 
+  int overwriteId = m_DirectoryStructure->getOriginByName(L"Overwrite").getID();
+
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
   MappingType result = fileMapping(
       QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
       "\\",
-      directoryStructure(), directoryStructure());
+      directoryStructure(), directoryStructure(),
+      overwriteId);
 
   if (m_CurrentProfile->localSavesEnabled()) {
     LocalSavegames *localSaves = game->feature<LocalSavegames>();
@@ -1606,7 +1609,8 @@ std::vector<Mapping> OrganizerCore::fileMapping(
     const QString &dataPath,
     const QString &relPath,
     const DirectoryEntry *base,
-    const DirectoryEntry *directoryEntry)
+    const DirectoryEntry *directoryEntry,
+    int createDestination)
 {
   std::vector<Mapping> result;
 
@@ -1623,7 +1627,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(
     QString source = originPath + relPath + fileName;
     QString target = dataPath   + relPath + fileName;
     if (source != target) {
-      result.push_back({source, target, false});
+      result.push_back({source, target, false, false});
     }
   }
 
@@ -1639,9 +1643,13 @@ std::vector<Mapping> OrganizerCore::fileMapping(
     QString source = originPath + relPath + dirName;
     QString target = dataPath   + relPath + dirName;
 
-    result.push_back({source, target, true});
+    bool writeDestination = (base == directoryEntry)
+        && (origin == createDestination);
+
+    result.push_back({source, target, true, writeDestination});
     std::vector<Mapping> subRes
-        = fileMapping(dataPath, relPath + dirName + "\\", base, *current);
+        = fileMapping(dataPath, relPath + dirName + "\\", base, *current,
+                      createDestination);
     result.insert(result.end(), subRes.begin(), subRes.end());
   }
   return result;

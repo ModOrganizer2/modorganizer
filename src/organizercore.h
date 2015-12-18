@@ -116,7 +116,7 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
+  void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), const QString &steamAppID = "");
   HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
 
   void loginSuccessfulUpdate(bool necessary);
@@ -218,7 +218,8 @@ private:
   std::vector<Mapping>
   fileMapping(const QString &dataPath, const QString &relPath,
               const MOShared::DirectoryEntry *base,
-              const MOShared::DirectoryEntry *directoryEntry);
+              const MOShared::DirectoryEntry *directoryEntry,
+              int createDestination);
 
 private slots:
 

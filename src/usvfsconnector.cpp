@@ -133,7 +133,7 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     if (map.isDirectory) {
       VirtualLinkDirectoryStatic(map.source.toStdWString().c_str()
                                  , map.destination.toStdWString().c_str()
-                                 , 0);
+                                 , (map.createTarget ? LINKFLAG_CREATETARGET : 0) | LINKFLAG_RECURSIVE);
     } else {
       VirtualLinkFile(map.source.toStdWString().c_str()
                       , map.destination.toStdWString().c_str()
