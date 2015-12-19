@@ -32,6 +32,7 @@ Here is a complete list:
 * https://github.com/TanninOne/modorganizer-game_skyrim
 * https://github.com/TanninOne/modorganizer-game_oblivion
 * https://github.com/TanninOne/modorganizer-game_fallout3
+* https://github.com/TanninOne/modorganizer-game_fallout4
 * https://github.com/TanninOne/modorganizer-game_falloutnv
 * https://github.com/TanninOne/modorganizer-game_gamebryo
 * https://github.com/TanninOne/modorganizer-game_features
