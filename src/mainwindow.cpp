@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "isavegame.h"
 #include "nexusinterface.h"
 #include "organizercore.h"
+#include "pluginlistsortproxy.h"
 #include "previewgenerator.h"
 #include "savegameinfo.h"
 #include "spawn.h"
@@ -104,6 +105,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QIODevice>
 #include <QIcon>
 #include <QInputDialog>
+#include <QItemSelection>
 #include <QItemSelectionModel>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -124,6 +126,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRect>
+#include <QRegExp>
 #include <QResizeEvent>
 #include <QSettings>
 #include <QScopedPointer>
@@ -134,6 +137,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QToolButton>
 #include <QToolTip>
 #include <QTranslator>
+#include <QTreeWidget>
 #include <QUrl>
 #include <QVariantList>
 #include <QWhatsThis>
@@ -3258,78 +3262,9 @@ void MainWindow::deleteSavegame_clicked()
 }
 
 
-void MainWindow::fixMods_clicked()
+void MainWindow::fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets)
 {
-  QListWidgetItem *selectedItem = ui->savegameList->currentItem();
-
-  if (selectedItem == nullptr)
-    return;
-
-  // if required, parse the save game
-  if (selectedItem->data(Qt::UserRole).isNull()) {
-    QVariant temp;
-    SaveGameGamebryo *save = getSaveGame(selectedItem->data(Qt::UserRole).toString());
-    save->setParent(selectedItem->listWidget());
-    temp.setValue(save);
-    selectedItem->setData(Qt::UserRole, temp);
-  }
-
-  const SaveGameGamebryo *save = getSaveGame(selectedItem);
-
-  // collect the list of missing plugins
-  std::map<QString, std::vector<QString> > missingPlugins;
-
-  for (int i = 0; i < save->numPlugins(); ++i) {
-    const QString &pluginName = save->plugin(i);
-    if (!m_OrganizerCore.pluginList()->isEnabled(pluginName)) {
-      missingPlugins[pluginName] = std::vector<QString>();
-    }
-  }
-
-  // figure out, for each esp/esm, which mod, if any, contains it
-  QStringList espFilter("*.esp");
-  espFilter.append("*.esm");
-
-  // search in data
-  {
-    QDir dataDir(m_OrganizerCore.managedGame()->dataDirectory());
-    QStringList esps = dataDir.entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back("<data>");
-      }
-    }
-  }
-
-  // search in mods
-  for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numRegularMods(); ++i) {
-    int modIndex = m_OrganizerCore.currentProfile()->modIndexByPriority(i);
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-    QStringList esps = QDir(modInfo->absolutePath()).entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back(modInfo->name());
-      }
-    }
-  }
-
-  // search in overwrite
-  {
-    QDir overwriteDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
-    QStringList esps = overwriteDir.entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back("<overwrite>");
-      }
-    }
-  }
-
-
-  ActivateModsDialog dialog(missingPlugins, this);
+  ActivateModsDialog dialog(missingAssets, this);
   if (dialog.exec() == QDialog::Accepted) {
     // activate the required mods, then enable all esps
     std::set<QString> modsToActivate = dialog.getModsToActivate();
@@ -3356,13 +3291,25 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
   QItemSelectionModel *selection = ui->savegameList->selectionModel();
 
-  if (!selection->hasSelection())
+  if (!selection->hasSelection()) {
     return;
+  }
 
   QMenu menu;
+  QAction *action = menu.addAction(tr("Enable Mods..."));
+  action->setEnabled(false);
 
-  if (!(selection->selectedIndexes().count() > 1))
-    menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
+  if (selection->selectedIndexes().count() == 1) {
+    SaveGameInfo const *info = this->m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
+    if (info != nullptr) {
+      QString save = ui->savegameList->currentItem()->data(Qt::UserRole).toString();
+      SaveGameInfo::MissingAssets missing = info->getMissingAssets(save);
+      if (missing.size() != 0) {
+        connect(action, &QAction::triggered, this, [this, missing]{ fixMods_clicked(missing); });
+        action->setEnabled(true);
+      }
+    }
+  }
 
   QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
 

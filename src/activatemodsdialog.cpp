@@ -21,9 +21,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_activatemodsdialog.h"
 
 #include <QComboBox>
+#include <QHeaderView>
 #include <QLabel>
+#include <QString>
+#include <QTableWidget>
 
-ActivateModsDialog::ActivateModsDialog(const std::map<QString, std::vector<QString> > &missingPlugins, QWidget *parent)
+#include <QtGlobal>
+
+ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missingAssets, QWidget *parent)
   : TutorableDialog("ActivateMods", parent), ui(new Ui::ActivateModsDialog)
 {
   ui->setupUi(this);
@@ -40,18 +45,17 @@ ActivateModsDialog::ActivateModsDialog(const std::map<QString, std::vector<QStri
 
   int row = 0;
 
-  modsTable->setRowCount(missingPlugins.size());
+  modsTable->setRowCount(missingAssets.size());
 
-  for (std::map<QString, std::vector<QString> >::const_iterator espIter = missingPlugins.begin();
-       espIter != missingPlugins.end(); ++espIter, ++row) {
-    modsTable->setCellWidget(row, 0, new QLabel(espIter->first));
-    if (espIter->second.size() == 0) {
+  for (SaveGameInfo::MissingAssets::const_iterator espIter = missingAssets.begin();
+       espIter != missingAssets.end(); ++espIter, ++row) {
+    modsTable->setCellWidget(row, 0, new QLabel(espIter.key()));
+    if (espIter->size() == 0) {
       modsTable->setCellWidget(row, 1, new QLabel(tr("not found")));
     } else {
       QComboBox* combo = new QComboBox();
-      for (std::vector<QString>::const_iterator modIter = espIter->second.begin();
-           modIter != espIter->second.end(); ++modIter) {
-        combo->addItem(*modIter);
+      for (QString const &mod : espIter.value()) {
+        combo->addItem(mod);
       }
       modsTable->setCellWidget(row, 1, combo);
     }

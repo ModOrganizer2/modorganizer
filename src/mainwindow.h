@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iuserinterface.h"
 #include "modinfo.h"
 #include "modlistsortproxy.h"
+#include "savegameinfo.h"
 #include "tutorialcontrol.h"
 
 //Note the commented headers here can be replaced with forward references,
@@ -393,7 +394,7 @@ private slots:
   void information_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
-  void fixMods_clicked();
+  void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
   // data-tree context menu
   void writeDataToFile();
   void openDataFile();

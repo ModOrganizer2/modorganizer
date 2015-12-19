@@ -3,7 +3,8 @@
 
 
 #include <imoinfo.h>
-#include "mainwindow.h"
+
+class OrganizerCore;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
@@ -46,6 +47,8 @@ public:
   virtual bool onModInstalled(const std::function<void (const QString&)> &func);
 
   virtual MOBase::IPluginGame const *managedGame() const;
+
+  virtual QStringList modsSortedByProfilePriority() const;
 
 private:
 

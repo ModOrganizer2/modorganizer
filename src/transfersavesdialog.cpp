@@ -84,6 +84,12 @@ public:
   {
     return new DummySave(file);
   }
+
+  virtual MissingAssets getMissingAssets(QString const &) const override
+  {
+    return {};
+  }
+
 };
 
 } //end anonymous namespace
