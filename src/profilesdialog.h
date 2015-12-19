@@ -48,7 +48,6 @@ public:
   *
   * @param profileName currently enabled profile
   * @param parent parent widget
-  * @todo the game path could be retrieved from GameInfo just as easily
   **/
  explicit ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent = 0);
   ~ProfilesDialog();

@@ -102,10 +102,6 @@ public:
 
   /**
    * @brief activate archive invalidation
-   *
-   * @param dataDirectory data directory of the game
-   * @todo passing the data directory as a parameter is useless, the function should
-   *       be able to query it from GameInfo
    **/
   void activateInvalidation();
 
