@@ -63,7 +63,7 @@ public:
     return QFileInfo(m_File).created();
   }
 
-  virtual QString getIdentifier() const override
+  virtual QString getSaveGroupIdentifier() const override
   {
     return m_File;
   }
@@ -269,7 +269,7 @@ void TransferSavesDialog::refreshSaves(SaveCollection &saveCollection, QString c
   for (const QString &filename : files) {
     QString file = savesDir.absoluteFilePath(filename);
     MOBase::ISaveGame const *save = info->getSaveGameInfo(file);
-    saveCollection[save->getIdentifier()].push_back(
+    saveCollection[save->getSaveGroupIdentifier()].push_back(
                                 std::unique_ptr<MOBase::ISaveGame const>(save));
   }
 }
