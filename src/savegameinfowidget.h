@@ -20,14 +20,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SAVEGAMEINFOWIDGET_H
 #define SAVEGAMEINFOWIDGET_H
 
+#include <QObject>
 #include <QWidget>
-#include <QFrame>
+
+class QFrame;
 
 namespace Ui {
 class SaveGameInfoWidget;
 }
 
-class SaveGame;
+namespace MOBase { class ISaveGame; }
 
 class SaveGameInfoWidget : public QWidget
 {
@@ -38,7 +40,7 @@ public:
   explicit SaveGameInfoWidget(QWidget *parent = 0);
   ~SaveGameInfoWidget();
 
-  virtual void setSave(const SaveGame *saveGame);
+  virtual void setSave(MOBase::ISaveGame const *saveGame);
 
 signals:
 

@@ -39,12 +39,13 @@ class LockedDialog;
 class OrganizerCore;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
-#include "savegamegamebryo.h" //class SaveGameGamebryo;
 class SaveGameInfoWidget;
 namespace BSA { class Archive; }
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
 namespace MOBase { class IPluginModPage; }
 namespace MOBase { class IPluginTool; }
+namespace MOBase { class ISaveGame; }
+
 namespace MOShared { class DirectoryEntry; }
 
 #include <QByteArray>
@@ -255,10 +256,9 @@ private:
 
   void setCategoryListVisible(bool visible);
 
-  SaveGameGamebryo *getSaveGame(const QString &name);
-  SaveGameGamebryo *getSaveGame(QListWidgetItem *item);
+  MOBase::ISaveGame const *getSaveGame(QListWidgetItem *item);
 
-  void displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos);
+  void displaySaveGameInfo(MOBase::ISaveGame const *save, QPoint pos);
 
   HANDLE nextChildProcess();
 

@@ -22,18 +22,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include "savegameinfowidget.h"
-#include "pluginlist.h"
 
-
-class SaveGame;
+class PluginList;
 
 class SaveGameInfoWidgetGamebryo : public SaveGameInfoWidget
 {
 public:
 
-  explicit SaveGameInfoWidgetGamebryo(const SaveGame *saveGame, PluginList *pluginList, QWidget *parent = 0);
+  explicit SaveGameInfoWidgetGamebryo(MOBase::ISaveGame const *saveGame, PluginList *pluginList, QWidget *parent = 0);
 
-  virtual void setSave(const SaveGame *saveGame);
+  virtual void setSave(MOBase::ISaveGame const *saveGame);
 
 private:
 

@@ -20,8 +20,6 @@ SET(organizer_SRCS
     selectiondialog.cpp
     savegameinfowidgetgamebryo.cpp
     savegameinfowidget.cpp
-    savegamegamebryo.cpp
-    savegame.cpp
     queryoverwritedialog.cpp
     profilesdialog.cpp
     profile.cpp
@@ -114,8 +112,6 @@ SET(organizer_HDRS
     selectiondialog.h
     savegameinfowidgetgamebryo.h
     savegameinfowidget.h
-    savegamegamebyro.h
-    savegame.h
     queryoverwritedialog.h
     profilesdialog.h
     profile.h

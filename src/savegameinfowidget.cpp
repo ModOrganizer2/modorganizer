@@ -19,9 +19,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "savegameinfowidget.h"
 #include "ui_savegameinfowidget.h"
-#include "utility.h"
-#include "savegame.h"
-#include <QGraphicsDropShadowEffect>
+
+#include "isavegame.h"
+#include "gamebryosavegame.h"
+
+#include <QDate>
+#include <QDateTime>
+#include <QFrame>
+#include <QLabel>
+#include <QLayout>
+#include <QLayoutItem>
+#include <QPixmap>
+#include <QString>
+#include <QStyle>
+#include <QTime>
+
+#include <Qt>
 
 
 SaveGameInfoWidget::SaveGameInfoWidget(QWidget *parent)
@@ -41,14 +54,19 @@ SaveGameInfoWidget::~SaveGameInfoWidget()
 }
 
 
-void SaveGameInfoWidget::setSave(const SaveGame *saveGame)
+void SaveGameInfoWidget::setSave(MOBase::ISaveGame const *saveGame)
 {
-  ui->saveNumLabel->setText(QString("%1").arg(saveGame->saveNumber()));
-  ui->characterLabel->setText(saveGame->pcName());
-  ui->locationLabel->setText(saveGame->pcLocation());
-  ui->levelLabel->setText(QString("%1").arg(saveGame->pcLevel()));
-  ui->dateLabel->setText(MOBase::ToString(saveGame->creationTime()));
-  ui->screenshotLabel->setPixmap(QPixmap::fromImage(saveGame->screenshot()));
+  GamebryoSaveGame const *game = dynamic_cast<GamebryoSaveGame const *>(saveGame);
+  ui->saveNumLabel->setText(QString("%1").arg(game->getSaveNumber()));
+  ui->characterLabel->setText(game->getPCName());
+  ui->locationLabel->setText(game->getPCLocation());
+  ui->levelLabel->setText(QString("%1").arg(game->getPCLevel()));
+  //This somewhat contorted code is because on my system at least, the
+  //old way of doing this appears to give short date and long time.
+  QDateTime t = saveGame->getCreationTime();
+  ui->dateLabel->setText(t.date().toString(Qt::DefaultLocaleShortDate) + " " +
+                         t.time().toString(Qt::DefaultLocaleLongDate));
+  ui->screenshotLabel->setPixmap(QPixmap::fromImage(game->getScreenshot()));
   if (ui->gameFrame->layout() != nullptr) {
     QLayoutItem *item = nullptr;
     while ((item = ui->gameFrame->layout()->takeAt(0)) != nullptr) {

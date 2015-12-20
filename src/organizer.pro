@@ -29,8 +29,6 @@ SOURCES += \
     selectiondialog.cpp \
     savegameinfowidgetgamebryo.cpp \
     savegameinfowidget.cpp \
-    savegamegamebryo.cpp \
-    savegame.cpp \
     queryoverwritedialog.cpp \
     profilesdialog.cpp \
     profile.cpp \
@@ -109,7 +107,6 @@ HEADERS  += \
     selectiondialog.h \
     savegameinfowidgetgamebryo.h \
     savegameinfowidget.h \
-    savegame.h \
     queryoverwritedialog.h \
     profilesdialog.h \
     profile.h \
@@ -174,8 +171,7 @@ HEADERS  += \
     modinforegular.h \
     modinfobackup.h \
     modinfooverwrite.h \
-    modinfoforeign.h \
-    savegamegamebryo.h
+    modinfoforeign.h
 
 FORMS    += \
     transfersavesdialog.ui \

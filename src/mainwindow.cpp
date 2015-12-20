@@ -864,28 +864,24 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
   m_IntegratedBrowser.restoreGeometry(geometry);
 }
 
-
-SaveGameGamebryo *MainWindow::getSaveGame(const QString &name)
-{
-  IPluginGame const *game = m_OrganizerCore.managedGame();
-  return new SaveGameGamebryo(this, name, game);
-}
-
-
-SaveGameGamebryo *MainWindow::getSaveGame(QListWidgetItem *item)
+ISaveGame const *MainWindow::getSaveGame(QListWidgetItem *item)
 {
   try {
-    SaveGameGamebryo *saveGame = getSaveGame(item->data(Qt::UserRole).toString());
-    saveGame->setParent(item->listWidget());
-    return saveGame;
+    IPluginGame const *game = m_OrganizerCore.managedGame();
+    SaveGameInfo const *info = game->feature<SaveGameInfo>();
+    if (info != nullptr) {
+      return info->getSaveGameInfo(item->data(Qt::UserRole).toString());
+    }
+    //SaveGameGamebryo *saveGame = new SaveGameGamebryo(/*this,*/ item->data(Qt::UserRole).toString(), game);
+    //saveGame->setParent(item->listWidget());
+    //return saveGame;
   } catch (const std::exception &e) {
     reportError(tr("failed to read savegame: %1").arg(e.what()));
-    return nullptr;
   }
+  return nullptr;
 }
 
-
-void MainWindow::displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos)
+void MainWindow::displaySaveGameInfo(MOBase::ISaveGame const *save, QPoint pos)
 {
   if (m_CurrentSaveView == nullptr) {
     m_CurrentSaveView = new SaveGameInfoWidgetGamebryo(save, m_OrganizerCore.pluginList(), this);
@@ -918,11 +914,11 @@ void MainWindow::saveSelectionChanged(QListWidgetItem *newItem)
 {
   if (newItem == nullptr) {
     hideSaveGameInfo();
-  } else if ((m_CurrentSaveView == nullptr) || (newItem != m_CurrentSaveView->property("displayItem").value<void*>())) {
-    const SaveGameGamebryo *save = getSaveGame(newItem);
+  } else if (m_CurrentSaveView == nullptr || newItem != m_CurrentSaveView->property("displayItem").value<void*>()) {
+    MOBase::ISaveGame const *save = getSaveGame(newItem);
     if (save != nullptr) {
       displaySaveGameInfo(save, QCursor::pos());
-      m_CurrentSaveView->setProperty("displayItem", qVariantFromValue((void*)newItem));
+      m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
     }
   }
 }

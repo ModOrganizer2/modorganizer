@@ -17,13 +17,18 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "savegamegamebryo.h"
 #include "savegameinfowidgetgamebryo.h"
+
+#include "pluginlist.h"
+#include "gamebryosavegame.h"
+
+#include <QFont>
 #include <QLabel>
+#include <QLayout>
 #include <QVBoxLayout>
 
 
-SaveGameInfoWidgetGamebryo::SaveGameInfoWidgetGamebryo(const SaveGame *saveGame, PluginList *pluginList, QWidget *parent)
+SaveGameInfoWidgetGamebryo::SaveGameInfoWidgetGamebryo(MOBase::ISaveGame const *saveGame, PluginList *pluginList, QWidget *parent)
   : SaveGameInfoWidget(parent), m_PluginList(pluginList)
 {
   QVBoxLayout *gameLayout = new QVBoxLayout();
@@ -34,10 +39,10 @@ SaveGameInfoWidgetGamebryo::SaveGameInfoWidgetGamebryo(const SaveGame *saveGame,
 }
 
 
-void SaveGameInfoWidgetGamebryo::setSave(const SaveGame *saveGame)
+void SaveGameInfoWidgetGamebryo::setSave(MOBase::ISaveGame const *saveGame)
 {
   SaveGameInfoWidget::setSave(saveGame);
-  const SaveGameGamebryo *gamebryoSave = qobject_cast<const SaveGameGamebryo*>(saveGame);
+  GamebryoSaveGame const *gamebryoSave = dynamic_cast<GamebryoSaveGame const *>(saveGame);
   QLayout *layout = getGameFrame()->layout();
   QLabel *header = new QLabel(tr("Missing ESPs"));
   QFont headerFont = header->font();
@@ -48,19 +53,18 @@ void SaveGameInfoWidgetGamebryo::setSave(const SaveGame *saveGame)
   header->setFont(headerFont);
   layout->addWidget(header);
   int count = 0;
-  for (int i = 0; i < gamebryoSave->numPlugins(); ++i) {
-    const QString &pluginName = gamebryoSave->plugin(i);
+  for (QString const &pluginName : gamebryoSave->getPlugins()) {
     if (m_PluginList->isEnabled(pluginName)) {
       continue;
-    } else {
-      ++count;
     }
+
+    ++count;
 
     if (count > 10) {
       break;
     }
 
-    QLabel *pluginLabel = new QLabel(gamebryoSave->plugin(i));
+    QLabel *pluginLabel = new QLabel(pluginName);
     pluginLabel->setIndent(10);
     pluginLabel->setFont(contentFont);
     layout->addWidget(pluginLabel);
