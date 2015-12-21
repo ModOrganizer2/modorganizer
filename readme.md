@@ -39,3 +39,4 @@ Here is a complete list:
 * https://github.com/TanninOne/modorganizer-check_fnis
 * https://github.com/TanninOne/modorganizer-plugin_python
 * https://github.com/TanninOne/modorganizer-bsa_extractor
+* https://github.com/TanninOne/usvfs
