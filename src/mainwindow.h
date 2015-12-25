@@ -256,9 +256,7 @@ private:
 
   void setCategoryListVisible(bool visible);
 
-  MOBase::ISaveGame const *getSaveGame(QListWidgetItem *item);
-
-  void displaySaveGameInfo(MOBase::ISaveGame const *save, QPoint pos);
+  void displaySaveGameInfo(QListWidgetItem *newItem);
 
   HANDLE nextChildProcess();
 
@@ -333,7 +331,8 @@ private:
   QTimer m_UpdateProblemsTimer;
 
   QTime m_StartTime;
-  SaveGameInfoWidget *m_CurrentSaveView;
+  //SaveGameInfoWidget *m_CurrentSaveView;
+  MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
 
   OrganizerCore &m_OrganizerCore;
   PluginContainer &m_PluginContainer;

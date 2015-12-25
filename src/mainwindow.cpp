@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include "iplugindiagnose.h"
 #include "isavegame.h"
+#include "isavegameinfowidget.h"
 #include "nexusinterface.h"
 #include "organizercore.h"
 #include "pluginlistsortproxy.h"
@@ -864,33 +865,25 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
   m_IntegratedBrowser.restoreGeometry(geometry);
 }
 
-ISaveGame const *MainWindow::getSaveGame(QListWidgetItem *item)
+void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
-  try {
+  QString const &save = newItem->data(Qt::UserRole).toString();
+  if (m_CurrentSaveView == nullptr) {
+    //FIXME Is this the right place?
     IPluginGame const *game = m_OrganizerCore.managedGame();
     SaveGameInfo const *info = game->feature<SaveGameInfo>();
     if (info != nullptr) {
-      return info->getSaveGameInfo(item->data(Qt::UserRole).toString());
+      m_CurrentSaveView = info->getSaveGameWidget(this);
     }
-    //SaveGameGamebryo *saveGame = new SaveGameGamebryo(/*this,*/ item->data(Qt::UserRole).toString(), game);
-    //saveGame->setParent(item->listWidget());
-    //return saveGame;
-  } catch (const std::exception &e) {
-    reportError(tr("failed to read savegame: %1").arg(e.what()));
+    if (m_CurrentSaveView == nullptr) {
+      return;
+    }
   }
-  return nullptr;
-}
-
-void MainWindow::displaySaveGameInfo(MOBase::ISaveGame const *save, QPoint pos)
-{
-  if (m_CurrentSaveView == nullptr) {
-    m_CurrentSaveView = new SaveGameInfoWidgetGamebryo(save, m_OrganizerCore.pluginList(), this);
-  } else {
-    m_CurrentSaveView->setSave(save);
-  }
+  m_CurrentSaveView->setSave(save);
 
   QRect screenRect = QApplication::desktop()->availableGeometry(m_CurrentSaveView);
 
+  QPoint pos = QCursor::pos();
   if (pos.x() + m_CurrentSaveView->width() > screenRect.right()) {
     pos.rx() -= (m_CurrentSaveView->width() + 2);
   } else {
@@ -905,8 +898,9 @@ void MainWindow::displaySaveGameInfo(MOBase::ISaveGame const *save, QPoint pos)
   m_CurrentSaveView->move(pos);
 
   m_CurrentSaveView->show();
+  m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
+
   ui->savegameList->activateWindow();
-  connect(m_CurrentSaveView, SIGNAL(closeSaveInfo()), this, SLOT(hideSaveGameInfo()));
 }
 
 
@@ -915,20 +909,14 @@ void MainWindow::saveSelectionChanged(QListWidgetItem *newItem)
   if (newItem == nullptr) {
     hideSaveGameInfo();
   } else if (m_CurrentSaveView == nullptr || newItem != m_CurrentSaveView->property("displayItem").value<void*>()) {
-    MOBase::ISaveGame const *save = getSaveGame(newItem);
-    if (save != nullptr) {
-      displaySaveGameInfo(save, QCursor::pos());
-      m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
-    }
+    displaySaveGameInfo(newItem);
   }
 }
-
 
 
 void MainWindow::hideSaveGameInfo()
 {
   if (m_CurrentSaveView != nullptr) {
-    disconnect(m_CurrentSaveView, SIGNAL(closeSaveInfo()), this, SLOT(hideSaveGameInfo()));
     m_CurrentSaveView->deleteLater();
     m_CurrentSaveView = nullptr;
   }

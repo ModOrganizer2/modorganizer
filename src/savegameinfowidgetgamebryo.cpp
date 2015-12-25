@@ -54,7 +54,9 @@ void SaveGameInfoWidgetGamebryo::setSave(MOBase::ISaveGame const *saveGame)
   layout->addWidget(header);
   int count = 0;
   for (QString const &pluginName : gamebryoSave->getPlugins()) {
-    if (m_PluginList->isEnabled(pluginName)) {
+    //if (m_PluginList->isEnabled(pluginName)) {
+    //should use IPluginList * in interface
+    if (m_PluginList->state(pluginName) == MOBase::IPluginList::STATE_ACTIVE) {
       continue;
     }
 

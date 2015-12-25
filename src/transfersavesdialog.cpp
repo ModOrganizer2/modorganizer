@@ -90,6 +90,10 @@ public:
     return {};
   }
 
+  MOBase::ISaveGameInfoWidget *getSaveGameWidget(QWidget *) const override
+  {
+    return nullptr;
+  }
 };
 
 } //end anonymous namespace
