@@ -39,7 +39,6 @@ class LockedDialog;
 class OrganizerCore;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
-class SaveGameInfoWidget;
 namespace BSA { class Archive; }
 #include "iplugingame.h" //namespace MOBase { class IPluginGame; }
 namespace MOBase { class IPluginModPage; }

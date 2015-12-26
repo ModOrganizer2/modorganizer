@@ -72,8 +72,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
-#include "savegameinfowidget.h"
-#include "savegameinfowidgetgamebryo.h"
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include <utility.h>
@@ -869,7 +867,6 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
   QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
-    //FIXME Is this the right place?
     IPluginGame const *game = m_OrganizerCore.managedGame();
     SaveGameInfo const *info = game->feature<SaveGameInfo>();
     if (info != nullptr) {

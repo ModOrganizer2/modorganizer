@@ -18,8 +18,6 @@ SET(organizer_SRCS
     settings.cpp
     selfupdater.cpp
     selectiondialog.cpp
-    savegameinfowidgetgamebryo.cpp
-    savegameinfowidget.cpp
     queryoverwritedialog.cpp
     profilesdialog.cpp
     profile.cpp
@@ -110,8 +108,6 @@ SET(organizer_HDRS
     settings.h
     selfupdater.h
     selectiondialog.h
-    savegameinfowidgetgamebryo.h
-    savegameinfowidget.h
     queryoverwritedialog.h
     profilesdialog.h
     profile.h
@@ -200,7 +196,6 @@ SET(organizer_UIS
     simpleinstalldialog.ui
     settingsdialog.ui
     selectiondialog.ui
-    savegameinfowidget.ui
     queryoverwritedialog.ui
     profilesdialog.ui
     overwriteinfodialog.ui
