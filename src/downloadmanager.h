@@ -329,9 +329,9 @@ public:
 
 
   virtual int startDownloadURLs(const QStringList &urls);
-  /* This doesn't appear to be used anywhere
+
   virtual int startDownloadNexusFile(int modID, int fileID);
-  */
+
   virtual QString downloadPath(int id);
 
   /**
