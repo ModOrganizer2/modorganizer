@@ -88,12 +88,7 @@ SET(organizer_SRCS
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
-    shared/gameinfo.cpp
-    shared/oblivioninfo.cpp
-    shared/fallout3info.cpp
-    shared/falloutnvinfo.cpp
     shared/util.cpp
-    shared/skyriminfo.cpp
     shared/appconfig.cpp
     shared/leaktrace.cpp
     shared/stackdata.cpp
@@ -178,12 +173,7 @@ SET(organizer_HDRS
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
-    shared/gameinfo.h
-    shared/oblivioninfo.h
-    shared/fallout3info.h
-    shared/falloutnvinfo.h
     shared/util.h
-    shared/skyriminfo.h
     shared/appconfig.h
     shared/appconfig.inc
     shared/leaktrace.h
