@@ -997,7 +997,31 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
   // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     m_USVFS.updateMapping(fileMapping());
-    return startBinary(binary, arguments, currentDirectory, true);
+    QString modsPath(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::modsPath()));
+
+    QString binPath = binary.absoluteFilePath();
+
+    if (binPath.startsWith(modsPath, Qt::CaseInsensitive)) {
+      // binary was installed as a MO mod. Need to start it through a (hooked)
+      // proxy to ensure pathes are correct
+
+      QString cwdPath = currentDirectory.absolutePath();
+
+      int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+      int cwdOffset = cwdPath.indexOf('/', cwdPath.length() + 1);
+      QString binPath = m_GamePlugin->dataDirectory().absolutePath() + "/" + binPath.mid(binOffset);
+      QString cwd = m_GamePlugin->dataDirectory().absolutePath() + "/" + cwdPath.mid(cwdOffset);
+      QString cmdline = QString("launch \"%1\" \"%2\" %3")
+                        .arg(QDir::toNativeSeparators(cwd),
+                             QDir::toNativeSeparators(binPath),
+                             arguments);
+
+      return startBinary(QFileInfo(QCoreApplication::applicationDirPath() + "/helper.exe"),
+                         cmdline,
+                         QCoreApplication::applicationDirPath(), true);
+    } else {
+      return startBinary(binary, arguments, currentDirectory, true);
+    }
   } else {
     qDebug("start of \"%s\" canceled by plugin", qPrintable(binary.absoluteFilePath()));
     return INVALID_HANDLE_VALUE;
@@ -1576,7 +1600,7 @@ std::vector<Mapping> OrganizerCore::fileMapping()
 
   int overwriteId = m_DirectoryStructure->getOriginByName(L"Overwrite").getID();
 
-  IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
+  const IPluginGame *game = qApp->property("managed_game").value<const IPluginGame *>();
   MappingType result = fileMapping(
       QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
       "\\",
@@ -1585,11 +1609,12 @@ std::vector<Mapping> OrganizerCore::fileMapping()
 
   if (m_CurrentProfile->localSavesEnabled()) {
     LocalSavegames *localSaves = game->feature<LocalSavegames>();
-
     if (localSaves != nullptr) {
       MappingType saveMap = localSaves->mappings(currentProfile()->absolutePath() + "/saves");
       result.reserve(result.size() + saveMap.size());
       result.insert(result.end(), saveMap.begin(), saveMap.end());
+    } else {
+      qWarning("local save games not supported by this game plugin");
     }
   }
 
