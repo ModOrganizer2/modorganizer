@@ -157,7 +157,7 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
 {
   QString selectedCharacter = ui->globalCharacterList->currentItem()->text();
   if (QMessageBox::question(this, tr("Confirm"),
-      tr("Copy all save games of character \"%1\" to the profile?").arg(selectedCharacter),
+      tr("Move all save games of character \"%1\" to the profile?").arg(selectedCharacter),
       QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     QString destination = m_Profile.absolutePath() + "/saves";
     OverwriteMode overwriteMode = OVERWRITE_ASK;
@@ -176,10 +176,11 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
               continue;
             }
           }
-          if (!QFile::rename(fileInfo.absoluteFilePath(), destinationFile)) {
-            qCritical("failed to move %s to %s",
+          if (!shellMove(fileInfo.absoluteFilePath(), destinationFile)) {
+            qCritical("failed to move %s to %s: %lu",
                       fileInfo.absoluteFilePath().toUtf8().constData(),
-                      destinationFile.toUtf8().constData());
+                      destinationFile.toUtf8().constData(),
+                      ::GetLastError());
           }
         }
       }
@@ -240,7 +241,7 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
               continue;
             }
           }
-          if (!QFile::rename(fileInfo.absoluteFilePath(), destinationFile)) {
+          if (!shellMove(fileInfo.absoluteFilePath(), destinationFile)) {
             qCritical("failed to move %s to %s",
                       fileInfo.absoluteFilePath().toUtf8().constData(),
                       destinationFile.toUtf8().constData());
@@ -279,7 +280,7 @@ void TransferSavesDialog::on_copyToGlobalBtn_clicked()
               continue;
             }
           }
-          if (!QFile::copy(fileInfo.absoluteFilePath(), destinationFile)) {
+          if (!shellCopy(fileInfo.absoluteFilePath(), destinationFile)) {
             qCritical("failed to copy %s to %s",
                       fileInfo.absoluteFilePath().toUtf8().constData(),
                       destinationFile.toUtf8().constData());
