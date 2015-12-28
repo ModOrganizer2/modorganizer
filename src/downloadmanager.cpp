@@ -450,7 +450,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 {
   NXMUrl nxmInfo(url);
 
-  QString managedGame = m_ManagedGame->getGameShortName();
+  QString managedGame = m_ManagedGame->gameShortName();
   qDebug("add nxm download: %s", qPrintable(url));
   if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(managedGame), qPrintable(nxmInfo.game()));

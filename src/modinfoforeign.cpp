@@ -21,7 +21,7 @@ QDateTime ModInfoForeign::creationTime() const
 QString ModInfoForeign::absolutePath() const
 {
   //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
   return game->dataDirectory().absolutePath();
 }
 

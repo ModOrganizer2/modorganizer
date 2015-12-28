@@ -220,8 +220,8 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   }
 
   { // list plugins in the data directory and make a foreign-managed mod out of each
-    QStringList dlcPlugins = game->getDLCPlugins();
-    QStringList mainPlugins = game->getPrimaryPlugins();
+    QStringList dlcPlugins = game->DLCPlugins();
+    QStringList mainPlugins = game->primaryPlugins();
     QDir dataDir(game->dataDirectory());
     for (const QString &file : dataDir.entryList({ "*.esp", "*.esm" })) {
       if (std::find_if(mainPlugins.begin(), mainPlugins.end(),
@@ -289,9 +289,9 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
   std::vector<int> modIDs;
 
   //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
 
-  modIDs.push_back(game->getNexusModOrganizerID());
+  modIDs.push_back(game->nexusModOrganizerID());
 
   for (const ModInfo::Ptr &mod : s_Collection) {
     if (mod->canBeUpdated()) {

@@ -74,7 +74,7 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
-  void setManagedGame(const MOBase::IPluginGame *game);
+  void setManagedGame(MOBase::IPluginGame *game);
 
   void updateExecutablesList(QSettings &settings);
 
@@ -239,7 +239,7 @@ private:
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame const *m_GamePlugin;
+  MOBase::IPluginGame *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 

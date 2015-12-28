@@ -144,7 +144,7 @@ void DirectoryRefresher::refresh()
 
   m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
 
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
   std::wstring dataDirectory = QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);

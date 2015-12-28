@@ -127,7 +127,7 @@ void PluginList::refresh(const QString &profileName
   m_ESPsByPriority.clear();
   m_ESPs.clear();
 
-  QStringList primaryPlugins = m_GamePlugin->getPrimaryPlugins();
+  QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
 
   m_CurrentProfile = profileName;
 
@@ -312,7 +312,7 @@ bool PluginList::readLoadOrder(const QString &fileName)
 
   int priority = 0;
 
-  QStringList primaryPlugins = m_GamePlugin->getPrimaryPlugins();
+  QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
   for (const QString &plugin : primaryPlugins) {
     if (availableESPs.find(plugin) != availableESPs.end()) {
       m_ESPLoadOrder[plugin] = priority++;
@@ -503,7 +503,7 @@ void PluginList::saveTo(const QString &pluginFileName
 
 bool PluginList::saveLoadOrder(DirectoryEntry &directoryStructure)
 {
-  if (m_GamePlugin->getLoadOrderMechanism() != IPluginGame::LoadOrderMechanism::FileTime) {
+  if (m_GamePlugin->loadOrderMechanism() != IPluginGame::LoadOrderMechanism::FileTime) {
     // nothing to do
     return true;
   }

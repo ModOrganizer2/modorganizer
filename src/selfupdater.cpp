@@ -103,7 +103,7 @@ void SelfUpdater::testForUpdate()
   }
   if (m_UpdateRequestID == -1 && m_NexusDownload != nullptr) {
     m_UpdateRequestID = m_Interface->requestDescription(
-              m_NexusDownload->getNexusModOrganizerID(), this, QVariant(),
+              m_NexusDownload->nexusModOrganizerID(), this, QVariant(),
               QString(), m_NexusDownload);
   }
 }
@@ -121,7 +121,7 @@ void SelfUpdater::startUpdate()
     if (QMessageBox::question(m_Parent, tr("Update"),
           tr("An update is available (newest version: %1), do you want to install it?").arg(m_NewestVersion),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->getNexusModOrganizerID(),
+      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->nexusModOrganizerID(),
                                                     this, m_NewestVersion, "",
                                                     m_NexusDownload);
     }
@@ -415,7 +415,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
 
   if (updateFileID != -1) {
     qDebug("update available: %d", updateFileID);
-    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
                                     updateFileID, this, updateFileName, "",
                                     m_NexusDownload);
   } else if (mainFileID != -1) {
@@ -424,7 +424,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
             tr("No incremental update available for this version, "
                "the complete package needs to be downloaded (%1 kB)").arg(mainFileSize),
             QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
                                     mainFileID, this, mainFileName, "",
                                     m_NexusDownload);
     }
