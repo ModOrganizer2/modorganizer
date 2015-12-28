@@ -35,7 +35,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include "modlist.h"
 #include "profile.h"
-#include "gameinfo.h"
 #include "spawn.h"
 #include "executableslist.h"
 #include "singleinstance.h"
@@ -555,9 +554,6 @@ int main(int argc, char *argv[])
     }
 
     organizer.setManagedGame(game);
-
-    //*sigh just for making it work
-    GameInfo::init(application.applicationDirPath().toStdWString(), game->gameDirectory().absolutePath().toStdWString());
 
     organizer.createDefaultProfile();
 

@@ -1244,14 +1244,13 @@ int DownloadManager::startDownloadURLs(const QStringList &urls)
   return m_ActiveDownloads.size() - 1;
 }
 
-/* This doesn't appear to be used by anything
 int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 {
   int newID = m_ActiveDownloads.size();
-  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(ToQString(MOShared::GameInfo::instance().getGameName())).arg(modID).arg(fileID));
+  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(m_ManagedGame->getGameShortName()).arg(modID).arg(fileID));
   return newID;
 }
-*/
+
 QString DownloadManager::downloadPath(int id)
 {
   return getFilePath(id);
