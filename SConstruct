@@ -532,7 +532,8 @@ if qt_env['CONFIG'] != 'debug':
     qt_env.AppendUnique(CPPDEFINES = [ 'QT_NO_DEBUG' ])
 
 # Better way of working this out
-qt_env['QT_MAJOR_VERSION'] = 5 #int(os.path.basename(env['QTDIR']).split('.')[0])
+qt_env['QT_MAJOR_VERSION'] = int(os.path.basename(os.path.dirname(env['QTDIR'])).split('.')[0])
+qt_env['QT_MINOR_VERSION'] = int(os.path.basename(os.path.dirname(env['QTDIR'])).split('.')[1])
 
 qt_env.Tool('qt%d' % qt_env['QT_MAJOR_VERSION'])
 
@@ -648,8 +649,10 @@ if 'WebKit' in libs_to_install and qt_env['QT_MAJOR_VERSION'] == 4:
 if qt_env['QT_MAJOR_VERSION'] > 4:
     # Guesswork a bit.
     dlls_to_install += [
-        os.path.join(env['QTDIR'], 'bin', 'icu%s53.dll' % lib)
-                                                    for lib in ('dt','in', 'uc')
+        os.path.join(env['QTDIR'],
+                     'bin',
+                     'icu%s%d%d.dll' % (lib, qt_env['QT_MAJOR_VERSION'], qt_env['QT_MINOR_VERSION'] - 1))
+            for lib in ('dt','in', 'uc')
     ]
 
     platform_dlls = []
