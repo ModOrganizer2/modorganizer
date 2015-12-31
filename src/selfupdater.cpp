@@ -19,6 +19,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selfupdater.h"
 
+#include "archive.h"
+#include "callback.h"
 #include "utility.h"
 #include "installationmanager.h"
 #include "iplugingame.h"
@@ -30,15 +32,36 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <util.h>
 
+#include <QApplication>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QLibrary>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
-#include <QDir>
-#include <QLibrary>
+#include <QNetworkReply>
 #include <QProcess>
-#include <QApplication>
+#include <QProgressDialog>
+#include <QRegExp>
+#include <QStringList>
+#include <QTimer>
+#include <QUrl>
+#include <QVariantList>
+#include <QVariantMap>
+
+#include <Qt>
+#include <QtDebug>
+#include <QtAlgorithms>
+
 #include <boost/bind.hpp>
 
+#include <Windows.h> //for VS_FIXEDFILEINFO, GetLastError
+
+#include <exception>
+#include <map>
+#include <stddef.h> //for size_t
+#include <stdexcept>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -76,8 +99,6 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
-
-  connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
 
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
 
@@ -135,6 +156,7 @@ void SelfUpdater::showProgress()
 {
   if (m_Progress == nullptr) {
     m_Progress = new QProgressDialog(m_Parent, Qt::Dialog);
+    connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
   }
   m_Progress->setModal(true);
   m_Progress->show();
