@@ -36,6 +36,7 @@ includes = dict()
 
 adding = None
 added = dict()
+lcadded = dict()
 
 foundline = None
 
@@ -70,6 +71,7 @@ def process_next_line(line, outfile):
         m = re.match(r'.*class (.*);', line)
         if m:
             added[m.group(1)] = (adding, line)
+            lcadded[m.group(1).lower() + '.h'] = m.group(1)
         else:
             added[line] = (adding, line)
     elif removing:
@@ -79,12 +81,18 @@ def process_next_line(line, outfile):
         m = re.match(r'- #include [<"](.*)[">] +// lines (.*)-', line)
         if m:
             foundline = m.group(2)
-            if m.group(1) in added:
+            # Note: In this project at least we have a naming convention of
+            # lower case filename and upper case classname.
+            clname = m.group(1)
+            if clname not in added:
+                if clname in lcadded:
+                    clname = lcadded[clname]
+            if clname in added:
                 messages[removing].append(
                     '%s(%s) : warning I0004: Replace include of %s with '
                         'forward reference %s' % (
-                        removing, m.group(2), m.group(1), added[m.group(1)][1]))
-                del added[m.group(1)]
+                        removing, m.group(2), m.group(1), added[clname][1]))
+                del added[clname]
             else:
                 messages[removing].append(
                     '%s(%s) : warning I0001: Unnecessary include of %s' % (
