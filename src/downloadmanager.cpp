@@ -693,19 +693,14 @@ void DownloadManager::queryInfo(int index)
     QString ignore;
     NexusInterface::interpretNexusFileName(fileName, ignore, info->m_FileInfo->modID, true);
     if (info->m_FileInfo->modID < 0) {
-      QString modIDString;
-      while (modIDString.isEmpty()) {
-        modIDString = QInputDialog::getText(nullptr, tr("Please enter the nexus mod id"), tr("Mod ID:"), QLineEdit::Normal,
-                                            QString(), nullptr, 0, Qt::ImhFormattedNumbersOnly);
-        if (modIDString.isNull()) {
-          // canceled
-          return;
-        } else if (modIDString.contains(QRegExp("[^0-9]"))) {
-          qDebug("illegal character in mod-id");
-          modIDString.clear();
-        }
-      }
-      info->m_FileInfo->modID = modIDString.toInt(nullptr, 10);
+      bool ok = false;
+      int modId = QInputDialog::getInt(
+          nullptr, tr("Please enter the nexus mod id"), tr("Mod ID:"), 1, 1,
+          std::numeric_limits<int>::max(), 1, &ok);
+      // careful now: while the dialog was displayed, events were processed.
+      // the download list might have changed and our info-ptr invalidated.
+      m_ActiveDownloads[index]->m_FileInfo->modID = modId;
+      return;
     }
   }
   info->m_ReQueried = true;
@@ -1247,7 +1242,7 @@ int DownloadManager::startDownloadURLs(const QStringList &urls)
 int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 {
   int newID = m_ActiveDownloads.size();
-  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(m_ManagedGame->getGameShortName()).arg(modID).arg(fileID));
+  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(m_ManagedGame->gameShortName()).arg(modID).arg(fileID));
   return newID;
 }
 

@@ -193,7 +193,7 @@ void NexusInterface::loginCompleted()
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
   //Look for something along the lines of modulename-Vn-m + any old rubbish.
-  static std::regex exp("^([a-zA-Z0-9_'\"\\- ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*");
+  static std::regex exp("^([a-zA-Z0-9_'\"\\-.() ]*?)([-_ ][VvRr]?[0-9_]+)?-([1-9][0-9]+).*\.(zip|rar|7z)");
   static std::regex simpleexp("^([a-zA-Z0-9_]+)");
 
   QByteArray fileNameUTF8 = fileName.toUtf8();
