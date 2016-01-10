@@ -26,7 +26,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTreeWidget>
 #include <QListWidgetItem>
 #include <QProcess>
-#include <QThread>
 #include <QProgressBar>
 #include <QTranslator>
 #include <QPluginLoader>
@@ -75,7 +74,7 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
 
-  explicit MainWindow(const QString &exeName, QSettings &initSettings,
+  explicit MainWindow(QSettings &initSettings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
   ~MainWindow();
@@ -154,6 +153,8 @@ protected:
   virtual void dropEvent(QDropEvent *event);
 
 private:
+
+  void cleanup();
 
   void actionToToolButton(QAction *&sourceAction);
 
@@ -262,8 +263,6 @@ private:
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
-
-  QString m_ExeName;
 
   int m_OldProfileIndex;
 

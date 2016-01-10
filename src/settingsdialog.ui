@@ -108,92 +108,6 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>Advanced</string>
-         </property>
-         <property name="checkable">
-          <bool>true</bool>
-         </property>
-         <property name="checked">
-          <bool>false</bool>
-         </property>
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="downloadDirEdit">
-            <property name="toolTip">
-             <string>Directory where downloads are stored.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Directory where downloads are stored.</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="browseDownloadDirBtn">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string notr="true">...</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Mod Directory</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QLineEdit" name="modDirEdit">
-            <property name="toolTip">
-             <string>Directory where mods are stored.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Directory where mods are stored. Please note that changing this will break all associations of profiles with mods that don't exist in the new location (with the same name).</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QPushButton" name="browseModDirBtn">
-            <property name="text">
-             <string notr="true">...</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Download Directory</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Cache Directory</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="cacheDirEdit"/>
-          </item>
-          <item row="3" column="2">
-           <widget class="QPushButton" name="browseCacheDirBtn">
-            <property name="text">
-             <string notr="true">...</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>User interface</string>
@@ -219,26 +133,39 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="resetDialogsButton">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>Reset stored information from dialogs.</string>
+            </property>
+            <property name="whatsThis">
+             <string>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</string>
+            </property>
+            <property name="text">
+             <string>Reset Dialogs</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="categoriesBtn">
+            <property name="toolTip">
+             <string>Modify the categories available to arrange your mods.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Modify the categories available to arrange your mods.</string>
+            </property>
+            <property name="text">
+             <string>Configure Mod Categories</string>
+            </property>
+           </widget>
+          </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="resetDialogsButton">
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Reset stored information from dialogs.</string>
-         </property>
-         <property name="whatsThis">
-          <string>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</string>
-         </property>
-         <property name="text">
-          <string>Reset Dialogs</string>
-         </property>
         </widget>
        </item>
        <item>
@@ -255,15 +182,134 @@ p, li { white-space: pre-wrap; }
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="categoriesBtn">
+        <widget class="QPushButton" name="changeInstanceButton">
          <property name="toolTip">
-          <string>Modify the categories available to arrange your mods.</string>
+          <string>Restart MO and choose a different set of data paths.</string>
          </property>
          <property name="whatsThis">
-          <string>Modify the categories available to arrange your mods.</string>
+          <string>This will restart MO and give you opportunity to switch to a different set of data paths.</string>
          </property>
          <property name="text">
-          <string>Configure Mod Categories</string>
+          <string>Change Instance</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="pathsTab">
+      <attribute name="title">
+       <string>Paths</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Downloads</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Caches</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="browseModDirBtn">
+           <property name="text">
+            <string notr="true">...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="cacheDirEdit"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="downloadDirEdit">
+           <property name="toolTip">
+            <string>Directory where downloads are stored.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Directory where downloads are stored.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Mods</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QPushButton" name="browseCacheDirBtn">
+           <property name="text">
+            <string notr="true">...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="modDirEdit">
+           <property name="toolTip">
+            <string>Directory where mods are stored.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Directory where mods are stored. Please note that changing this will break all associations of profiles with mods that don't exist in the new location (with the same name).</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="browseDownloadDirBtn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string notr="true">...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_22">
+           <property name="text">
+            <string>Profiles</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="profilesDirEdit"/>
+         </item>
+         <item row="3" column="2">
+          <widget class="QPushButton" name="browseProfilesDirBtn">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_6">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_23">
+         <property name="text">
+          <string>Important: All directories have to be writeable!</string>
          </property>
         </widget>
        </item>

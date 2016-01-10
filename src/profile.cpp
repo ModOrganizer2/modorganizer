@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "windows_error.h"
 #include "modinfo.h"
 #include "safewritefile.h"
+#include "settings.h"
 #include <utility.h>
 #include <util.h>
 #include <error_report.h>
@@ -58,7 +59,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
   , m_GamePlugin(gamePlugin)
 {
-  QString profilesDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath());
+  QString profilesDir = Settings::instance().getProfileDirectory();
   QDir profileBase(profilesDir);
 
   QString fixedName = name;
@@ -487,7 +488,7 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
 
 Profile *Profile::createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin)
 {
-  QString profileDirectory = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()) + "/" + name;
+  QString profileDirectory = Settings::instance().getProfileDirectory() + "/" + name;
   reference.copyFilesTo(profileDirectory);
   return new Profile(QDir(profileDirectory), gamePlugin);
 }
@@ -691,7 +692,7 @@ QString Profile::absolutePath() const
 
 void Profile::rename(const QString &newName)
 {
-  QDir profileDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
+  QDir profileDir(Settings::instance().getProfileDirectory());
   profileDir.rename(name(), newName);
   m_Directory = profileDir.absoluteFilePath(newName);
 }

@@ -52,6 +52,9 @@ signals:
 
   void resetDialogs();
 
+private slots:
+  void on_changeInstanceButton_clicked();
+
 private:
 
   void storeSettings(QListWidgetItem *pluginItem);

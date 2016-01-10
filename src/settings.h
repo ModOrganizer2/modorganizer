@@ -131,6 +131,11 @@ public:
   QString getCacheDirectory() const;
 
   /**
+   * retrieve the directory where profiles stored (with native separators)
+   **/
+  QString getProfileDirectory() const;
+
+  /**
    * @return true if the user has set up automatic login to nexus
    **/
   bool automaticLoginEnabled() const;
@@ -339,11 +344,22 @@ private:
     QComboBox *m_languageBox;
     QComboBox *m_styleBox;
     QComboBox *m_logLevelBox;
+    QCheckBox *m_compactBox;
+    QCheckBox *m_showMetaBox;
+  };
+
+  class PathsTab : public SettingsTab
+  {
+  public:
+    PathsTab(Settings *parent, SettingsDialog &dialog);
+
+    void update();
+
+  private:
     QLineEdit *m_downloadDirEdit;
     QLineEdit *m_modDirEdit;
     QLineEdit *m_cacheDirEdit;
-    QCheckBox *m_compactBox;
-    QCheckBox *m_showMetaBox;
+    QLineEdit *m_profilesDirEdit;
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */

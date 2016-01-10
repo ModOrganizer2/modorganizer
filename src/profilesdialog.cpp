@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profileinputdialog.h"
 #include "mainwindow.h"
 #include "aboutdialog.h"
+#include "settings.h"
 #include <iplugingame.h>
 #include <bsainvalidation.h>
 #include <appconfig.h>
@@ -50,7 +51,7 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
 {
   ui->setupUi(this);
 
-  QDir profilesDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
+  QDir profilesDir(Settings::instance().getProfileDirectory());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
   m_ProfilesList = findChild<QListWidget*>("profilesList");
 
@@ -187,8 +188,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     Profile::Ptr currentProfile = profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
     QString profilePath;
     if (currentProfile.get() == nullptr) {
-      profilePath = qApp->property("dataPath").toString()
-                  + "/" + QString::fromStdWString(AppConfig::profilesPath())
+      profilePath = Settings::instance().getProfileDirectory()
                   + "/" + profilesList->currentItem()->text();
       if (QMessageBox::question(this, tr("Profile broken"),
             tr("This profile you're about to delete seems to be broken or the path is invalid. "

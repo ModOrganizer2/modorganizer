@@ -535,7 +535,7 @@ InstallationManager *OrganizerCore::installationManager()
 
 void OrganizerCore::createDefaultProfile()
 {
-  QString profilesPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath());
+  QString profilesPath = settings().getProfileDirectory();
   if (QDir(profilesPath).entryList(QDir::AllDirs | QDir::NoDotAndDotDot).size() == 0) {
     Profile newProf("Default", managedGame(), false);
   }
@@ -552,7 +552,7 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
       (profileName == m_CurrentProfile->name())) {
     return;
   }
-  QString profileDir = qApp->property("dataPath").toString() + "/" + ToQString(AppConfig::profilesPath()) + "/" + profileName;
+  QString profileDir = settings().getProfileDirectory() + "/" + profileName;
   Profile *newProfile = new Profile(QDir(profileDir), managedGame());
 
   delete m_CurrentProfile;
@@ -994,10 +994,9 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
     m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
 
-  // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     m_USVFS.updateMapping(fileMapping());
-    QString modsPath(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::modsPath()));
+    QString modsPath = settings().getModDirectory();
 
     QString binPath = binary.absoluteFilePath();
 
@@ -1008,15 +1007,14 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
       QString cwdPath = currentDirectory.absolutePath();
 
       int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-      int cwdOffset = cwdPath.indexOf('/', cwdPath.length() + 1);
-      QString binPath = m_GamePlugin->dataDirectory().absolutePath() + "/" + binPath.mid(binOffset);
-      QString cwd = m_GamePlugin->dataDirectory().absolutePath() + "/" + cwdPath.mid(cwdOffset);
+      int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
+      QString dataBinPath = m_GamePlugin->dataDirectory().absolutePath() + binPath.mid(binOffset, -1);
+      QString dataCwd = m_GamePlugin->dataDirectory().absolutePath() + cwdPath.mid(cwdOffset, -1);
       QString cmdline = QString("launch \"%1\" \"%2\" %3")
-                        .arg(QDir::toNativeSeparators(cwd),
-                             QDir::toNativeSeparators(binPath),
+                        .arg(QDir::toNativeSeparators(dataCwd),
+                             QDir::toNativeSeparators(dataBinPath),
                              arguments);
-
-      return startBinary(QFileInfo(QCoreApplication::applicationDirPath() + "/helper.exe"),
+      return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline,
                          QCoreApplication::applicationDirPath(), true);
     } else {
@@ -1600,7 +1598,7 @@ std::vector<Mapping> OrganizerCore::fileMapping()
 
   int overwriteId = m_DirectoryStructure->getOriginByName(L"Overwrite").getID();
 
-  const IPluginGame *game = qApp->property("managed_game").value<const IPluginGame *>();
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
   MappingType result = fileMapping(
       QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
       "\\",

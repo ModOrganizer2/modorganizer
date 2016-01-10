@@ -65,7 +65,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   , m_Attempts(3)
   , m_NexusDownload(nullptr)
 {
-  QLibrary archiveLib("dlls\\archive.dll");
+  QLibrary archiveLib(QCoreApplication::applicationDirPath() + "\\dlls\\archive.dll");
   if (!archiveLib.load()) {
     throw MyException(tr("archive.dll not loaded: \"%1\"").arg(archiveLib.errorString()));
   }

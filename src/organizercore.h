@@ -201,6 +201,8 @@ signals:
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
+  void close();
+
 private:
 
   void storeSettings();

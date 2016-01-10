@@ -79,6 +79,11 @@ QString SelectionDialog::getChoiceString()
   }
 }
 
+void SelectionDialog::disableCancel()
+{
+  ui->cancelButton->setEnabled(false);
+  ui->cancelButton->setHidden(true);
+}
 
 void SelectionDialog::on_buttonBox_clicked(QAbstractButton *button)
 {

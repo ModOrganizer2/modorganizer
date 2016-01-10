@@ -74,6 +74,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <taskprogressmanager.h>
 #include <util.h>
 #include <scopeguard.h>
+#include <usvfs.h>
 
 #include <QTime>
 #include <QInputDialog>
@@ -146,8 +147,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-MainWindow::MainWindow(const QString &exeName
-                       , QSettings &initSettings
+MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
                        , PluginContainer &pluginContainer
                        , QWidget *parent)
@@ -155,7 +155,6 @@ MainWindow::MainWindow(const QString &exeName
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
   , m_Tutorial(this, "MainWindow")
-  , m_ExeName(exeName)
   , m_OldProfileIndex(-1)
   , m_ModListGroupingProxy(nullptr)
   , m_ModListSortProxy(nullptr)
@@ -301,6 +300,7 @@ MainWindow::MainWindow(const QString &exeName
   connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
+  connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
 
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
@@ -347,6 +347,8 @@ MainWindow::MainWindow(const QString &exeName
 
 MainWindow::~MainWindow()
 {
+  cleanup();
+
   m_PluginContainer.setUserInterface(nullptr, nullptr);
   m_OrganizerCore.setUserInterface(nullptr, nullptr);
   m_IntegratedBrowser.close();
@@ -810,6 +812,14 @@ void MainWindow::closeEvent(QCloseEvent* event)
   }
 
   setCursor(Qt::WaitCursor);
+}
+
+void MainWindow::cleanup()
+{
+  if (ui->logList->model() != nullptr) {
+    disconnect(ui->logList->model(), nullptr, nullptr, nullptr);
+    ui->logList->setModel(nullptr);
+  }
 
   m_IntegratedBrowser.close();
 }
@@ -1175,7 +1185,7 @@ bool MainWindow::refreshProfiles(bool selectProfile)
   profileBox->clear();
   profileBox->addItem(QObject::tr("<Manage...>"));
 
-  QDir profilesDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()));
+  QDir profilesDir(Settings::instance().getProfileDirectory());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
 
   QDirIterator profileIter(profilesDir);
@@ -3166,7 +3176,7 @@ QString getStartMenuLinkfile(const Executable &exec)
 
 void MainWindow::addWindowsLink(const ShortcutType mapping)
 {
-  Executable const &selectedExecutable(getSelectedExecutable());
+  const Executable &selectedExecutable(getSelectedExecutable());
   QString const linkName = getLinkfile(mapping == ShortcutType::Desktop ? getDesktopDirectory() : getStartMenuDirectory(),
                                        selectedExecutable);
 
@@ -4217,6 +4227,7 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
     m_OrganizerCore.prepareVFS();
+
     HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),
                               qApp->applicationDirPath() + "/loot",
@@ -4313,6 +4324,7 @@ void MainWindow::on_bossButton_clicked()
   } catch (const std::exception &e) {
     reportError(tr("failed to run loot: %1").arg(e.what()));
   }
+
   if (errorMessages.length() > 0) {
     QMessageBox *warn = new QMessageBox(QMessageBox::Warning, tr("Errors occured"), errorMessages.c_str(), QMessageBox::Ok, this);
     warn->setModal(false);
@@ -4326,11 +4338,7 @@ void MainWindow::on_bossButton_clicked()
       QStringList temp = report.split("?");
       QUrl url = QUrl::fromLocalFile(temp.at(0));
       if (temp.size() > 1) {
-#if QT_VERSION >= 0x050000
         url.setQuery(temp.at(1).toUtf8());
-#else
-        url.setEncodedQuery(temp.at(1).toUtf8());
-#endif
       }
       m_IntegratedBrowser.openUrl(url);
     }

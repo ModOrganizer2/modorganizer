@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "noeditdelegate.h"
 #include "iplugingame.h"
 #include "settings.h"
+#include "instancemanager.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
@@ -39,11 +40,13 @@ using namespace MOBase;
 
 
 SettingsDialog::SettingsDialog(QWidget *parent)
-  : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog)
+  : TutorableDialog("SettingsDialog", parent)
+  , ui(new Ui::SettingsDialog)
 {
   ui->setupUi(this);
 
-  QShortcut *delShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QShortcut *delShortcut
+      = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
 }
 
@@ -54,7 +57,7 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::addPlugins(const std::vector<IPlugin*> &plugins)
 {
-  foreach (IPlugin *plugin, plugins) {
+  for (IPlugin *plugin : plugins) {
     ui->pluginsList->addItem(plugin->name());
   }
 }
@@ -89,7 +92,8 @@ void SettingsDialog::on_categoriesBtn_clicked()
 
 void SettingsDialog::on_bsaDateBtn_clicked()
 {
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
+  IPluginGame const *game
+      = qApp->property("managed_game").value<IPluginGame *>();
   QDir dir = game->dataDirectory();
 
   Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(),
@@ -185,4 +189,16 @@ void SettingsDialog::deleteBlacklistItem()
 void SettingsDialog::on_associateButton_clicked()
 {
   Settings::instance().registerAsNXMHandler(true);
+}
+
+void SettingsDialog::on_changeInstanceButton_clicked()
+{
+  if (QMessageBox::question(this, tr("Are you sure?"),
+                            tr("This will restart MO, continue?"),
+                            QMessageBox::Yes | QMessageBox::Cancel)
+      == QMessageBox::Yes) {
+    InstanceManager().clearCurrentInstance();
+    this->reject();
+    qApp->exit(INT_MAX);
+  }
 }

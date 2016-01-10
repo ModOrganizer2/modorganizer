@@ -35,11 +35,11 @@ SET(organizer_SRCS
     modlist.cpp
     modinfodialog.cpp
     modinfo.cpp
-	modinfobackup.cpp
-	modinfoforeign.cpp
-	modinfooverwrite.cpp
-	modinforegular.cpp
-	modinfowithconflictinfo.cpp
+    modinfobackup.cpp
+    modinfoforeign.cpp
+    modinfooverwrite.cpp
+    modinforegular.cpp
+    modinfowithconflictinfo.cpp
     messagedialog.cpp
     mainwindow.cpp
     main.cpp
@@ -87,6 +87,7 @@ SET(organizer_SRCS
     viewmarkingscrollbar.cpp
     plugincontainer.cpp
     organizercore.cpp
+    instancemanager.cpp
     usvfsconnector.cpp
 
     shared/inject.cpp
@@ -131,11 +132,11 @@ SET(organizer_HDRS
     modlist.h
     modinfodialog.h
     modinfo.h
-	modinfobackup.h
-	modinfoforeign.h
-	modinfooverwrite.h
-	modinforegular.h
-	modinfowithconflictinfo.h
+    modinfobackup.h
+    modinfoforeign.h
+    modinfooverwrite.h
+    modinforegular.h
+    modinfowithconflictinfo.h
     messagedialog.h
     mainwindow.h
     loghighlighter.h
@@ -183,6 +184,7 @@ SET(organizer_HDRS
     plugincontainer.h
     organizercore.h
     iuserinterface.h
+    instancemanager.h
     usvfsconnector.h
 
     shared/inject.h
