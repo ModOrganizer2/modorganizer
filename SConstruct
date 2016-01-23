@@ -623,6 +623,20 @@ if qt_env['QT_MAJOR_VERSION'] > 4:
     ]
 
 # Finally, set up rules to install the DLLs.
+# use windeployqt.exe to install all required libraries
+#SET(windeploy_parameters --no-translations --no-plugins --libdir dlls --release-with-debug-info --no-compiler-runtime)
+#INSTALL(
+#    CODE
+#    "EXECUTE_PROCESS(
+#        COMMAND
+#        ${qt5bin}/windeployqt.exe ModOrganizer.exe ${windeploy_parameters}
+#        COMMAND
+#        ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
+#        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+#    )"
+#)
+# this should probably be a rule though it seems to produce an awful lot of
+# Stuff(TM). or a postaction
 
 dll_path = os.path.join('$INSTALL_PATH', 'DLLs')
 

@@ -89,7 +89,7 @@ public:
     m_ExecutablesList = executablesList;
   }
 
-  Profile *currentProfile() { return m_CurrentProfile; }
+  Profile *currentProfile() const { return m_CurrentProfile; }
   void setCurrentProfile(const QString &profileName);
 
   std::vector<QString> enabledArchives();
