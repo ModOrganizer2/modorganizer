@@ -401,8 +401,8 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   }
   //Do this the hard way
   for (const IPluginGame * const game : container->plugins<IPluginGame>()) {
-    QString n = game->getGameShortName();
-    if (game->getGameShortName() == "Skyrim") {
+    QString n = game->gameShortName();
+    if (game->gameShortName() == "Skyrim") {
       m_Updater.setNexusDownload(game);
       break;
     }
@@ -932,12 +932,12 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
-      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+      if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
       refreshESPList();
-      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+      if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         // the load order should have been retrieved from file time, now save it to our own format
         savePluginList();
       }
