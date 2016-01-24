@@ -167,7 +167,7 @@ MOBase::IModList *OrganizerProxy::modList() const
   return m_Proxied->modList();
 }
 
-IProfile *OrganizerProxy::profile() const
+MOBase::IProfile *OrganizerProxy::profile() const
 {
   return m_Proxied->currentProfile();
 }

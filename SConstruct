@@ -431,16 +431,24 @@ msvs_version = int(env['MSVS_VERSION'].split('.')[0]) + 2000
 if msvs_version > 2010:
     msvs_version += 1
 
-# Need more work on the qt version stuff
-#build-ModOrganizer-Desktop_Qt_5_4_1_MSVC2013_OpenGL_32bit-Debug
-build_dir = 'scons-ModOrganizer-QT_%s_for_MSVS%d_32bit-%s' % (
-    #os.path.basename(env['QTDIR']).replace('.', '_'),
-    '5_4_1_OpenGL',
+# Read the QT version info
+with open(os.path.join(env['QTDIR'], 'mkspecs', 'qconfig.pri')) as qtinfo:
+    for line in qtinfo:
+        info = re.split(r'\s*=\s*', line.rstrip())
+        if info[0] == 'QT_VERSION':
+            env[info[0]] = info[1]
+        elif '_VERSION' in info[0]:
+            env[info[0]] = int(info[1])
+
+build_dir = 'scons-ModOrganizer-QT_%s_%sfor_MSVS%d_32bit-%s' % (
+    env['QT_VERSION'].replace('.', '_'),
+    'OpenGL_' if 'opengl' in env['QTDIR'] else '',
     msvs_version,
     config.title())
 
 # Put the sconsign file somewhere sane
 env.SConsignFile(os.path.join(build_dir, '.sconsign.dblite'))
+env.CacheDir(os.path.join(build_dir, '.cache'))
 
 #this doesn't seem to work
 #env.VariantDir('build/$CONFIG', 'source')
@@ -531,10 +539,6 @@ qt_env = env.Clone()
 if qt_env['CONFIG'] != 'debug':
     qt_env.AppendUnique(CPPDEFINES = [ 'QT_NO_DEBUG' ])
 
-# Better way of working this out
-qt_env['QT_MAJOR_VERSION'] = int(os.path.basename(os.path.dirname(env['QTDIR'])).split('.')[0])
-qt_env['QT_MINOR_VERSION'] = int(os.path.basename(os.path.dirname(env['QTDIR'])).split('.')[1])
-
 qt_env.Tool('qt%d' % qt_env['QT_MAJOR_VERSION'])
 
 # FIXME See if I can work out how to get official scons qt to work. Appears
@@ -619,6 +623,20 @@ if qt_env['QT_MAJOR_VERSION'] > 4:
     ]
 
 # Finally, set up rules to install the DLLs.
+# use windeployqt.exe to install all required libraries
+#SET(windeploy_parameters --no-translations --no-plugins --libdir dlls --release-with-debug-info --no-compiler-runtime)
+#INSTALL(
+#    CODE
+#    "EXECUTE_PROCESS(
+#        COMMAND
+#        ${qt5bin}/windeployqt.exe ModOrganizer.exe ${windeploy_parameters}
+#        COMMAND
+#        ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
+#        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+#    )"
+#)
+# this should probably be a rule though it seems to produce an awful lot of
+# Stuff(TM). or a postaction
 
 dll_path = os.path.join('$INSTALL_PATH', 'DLLs')
 

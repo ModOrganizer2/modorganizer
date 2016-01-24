@@ -1285,7 +1285,7 @@ QDir MainWindow::currentSavesDir() const
           L"General", L"SLocalSavePath", L"Saves",
           path, MAX_PATH,
           ToWString(m_OrganizerCore.currentProfile()->absolutePath() + "/" +
-                      m_OrganizerCore.managedGame()->getIniFiles()[0]).c_str());
+                      m_OrganizerCore.managedGame()->iniFiles()[0]).c_str());
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
@@ -3812,7 +3812,7 @@ void MainWindow::on_actionEndorseMO_triggered()
                                       NexusInterface::instance()->getGameURL()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance()->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());
+          m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -3876,7 +3876,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->getNexusModOrganizerID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
@@ -4392,7 +4392,7 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
-               << "--game" << m_OrganizerCore.managedGame()->getGameShortName()
+               << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--out" << outPath;
 
@@ -4526,12 +4526,12 @@ void MainWindow::on_bossButton_clicked()
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
-    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       qDebug("removing loadorder.txt");
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
-    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       // the load order should have been retrieved from file time, now save it to our own format
       m_OrganizerCore.savePluginList();
     }
