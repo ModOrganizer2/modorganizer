@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfo.h"
 #include "iplugingame.h"
 #include <gamebryosavegame.h>
+#include <scopeguard.h>
 #include <limits>
 #include <set>
 
@@ -41,6 +42,9 @@ SaveGameGamebryo::SaveGameGamebryo(QObject *parent, const QString &fileName, IPl
                                   OPEN_EXISTING,
                                   FILE_ATTRIBUTE_NORMAL,
                                   nullptr);
+  ON_BLOCK_EXIT([fileHandle] () {
+    CloseHandle(fileHandle);
+  });
   if (fileHandle != INVALID_HANDLE_VALUE) {
     FILETIME creationTime;
     if (GetFileTime(fileHandle, &creationTime, nullptr, nullptr)) {
