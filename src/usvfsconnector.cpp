@@ -96,18 +96,26 @@ void LogWorker::exit()
 LogLevel logLevel(int level)
 {
   switch (level) {
-    case LogLevel::Info:    return LogLevel::Info;
-    case LogLevel::Warning: return LogLevel::Warning;
-    case LogLevel::Error:   return LogLevel::Error;
-    default:                return LogLevel::Debug;
+    case LogLevel::Info:
+      return LogLevel::Info;
+    case LogLevel::Warning:
+      return LogLevel::Warning;
+    case LogLevel::Error:
+      return LogLevel::Error;
+    default:
+      return LogLevel::Debug;
   }
 }
 
 UsvfsConnector::UsvfsConnector()
 {
-  usvfs::Parameters params(SHMID, false, logLevel(Settings::instance().logLevel()));
+  USVFSParameters params;
+  USVFSInitParameters(&params, SHMID, false,
+                      logLevel(Settings::instance().logLevel()));
   InitLogging(false);
   ConnectVFS(&params);
+
+  BlacklistExecutable(L"TSVNCache.exe");
 
   m_LogWorker.moveToThread(&m_WorkerThread);
 
@@ -122,37 +130,39 @@ UsvfsConnector::~UsvfsConnector()
   DisconnectVFS();
   m_LogWorker.exit();
   m_WorkerThread.quit();
-  //m_WorkerThread.wait();
+  m_WorkerThread.wait();
 }
 
 void UsvfsConnector::updateMapping(const MappingType &mapping)
 {
   QProgressDialog progress;
   progress.setLabelText(tr("Preparing vfs"));
-  progress.setMaximum(mapping.size());
+  progress.setMaximum(static_cast<int>(mapping.size()));
   progress.show();
   int value = 0;
+
+  ClearVirtualMappings();
+
   for (auto map : mapping) {
     progress.setValue(value++);
     if (value % 10 == 0) {
       QCoreApplication::processEvents();
     }
     if (map.isDirectory) {
-      VirtualLinkDirectoryStatic(map.source.toStdWString().c_str()
-                                 , map.destination.toStdWString().c_str()
-                                 , (map.createTarget ? LINKFLAG_CREATETARGET : 0) | LINKFLAG_RECURSIVE);
+      VirtualLinkDirectoryStatic(map.source.toStdWString().c_str(),
+                                 map.destination.toStdWString().c_str(),
+                                 (map.createTarget ? LINKFLAG_CREATETARGET : 0)
+                                     | LINKFLAG_RECURSIVE);
     } else {
-      VirtualLinkFile(map.source.toStdWString().c_str()
-                      , map.destination.toStdWString().c_str()
-                      , 0);
+      VirtualLinkFile(map.source.toStdWString().c_str(),
+                      map.destination.toStdWString().c_str(), 0);
     }
   }
-/*
-  size_t dumpSize = 0;
-  CreateVFSDump(nullptr, &dumpSize);
-  std::unique_ptr<char[]> buffer(new char[dumpSize]);
-  CreateVFSDump(buffer.get(), &dumpSize);
-  qDebug(buffer.get());
-*/
+  /*
+    size_t dumpSize = 0;
+    CreateVFSDump(nullptr, &dumpSize);
+    std::unique_ptr<char[]> buffer(new char[dumpSize]);
+    CreateVFSDump(buffer.get(), &dumpSize);
+    qDebug(buffer.get());
+  */
 }
-
