@@ -475,6 +475,9 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QComboBox" name="groupCombo">
+                <property name="focusPolicy">
+                 <enum>Qt::ClickFocus</enum>
+                </property>
                 <item>
                  <property name="text">
                   <string>No groups</string>
