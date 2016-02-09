@@ -2,6 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 PROJECT(organizer)
 
+
 SET(DEPENDENCIES_DIR CACHE PATH "")
 # hint to find qt in dependencies path
 LIST(APPEND CMAKE_PREFIX_PATH ${DEPENDENCIES_DIR}/qt5/lib/cmake)

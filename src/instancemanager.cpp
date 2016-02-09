@@ -172,18 +172,21 @@ QString InstanceManager::determineDataPath()
 
     QStringList instanceList = instances();
 
-    qDebug("%d - %s", instanceList.size(), qPrintable(instanceList.join(";")));
-
     if (instanceList.size() == 0) {
-      switch (queryInstallMode()) {
-        case InstallationMode::PORTABLE: {
-          instanceId = QString();
-        } break;
-        case InstallationMode::REGULAR: {
-          instanceId = queryInstanceName();
-        } break;
+      if (QFileInfo(qApp->applicationDirPath()).isWritable()) {
+        switch (queryInstallMode()) {
+          case InstallationMode::PORTABLE: {
+            instanceId = QString();
+          } break;
+          case InstallationMode::REGULAR: {
+            instanceId = queryInstanceName();
+          } break;
+        }
+      } else {
+        instanceId = queryInstanceName();
       }
     } else {
+      // don't offer portable instance if we can't set one up.
       instanceId = chooseInstance(instanceList);
     }
   }

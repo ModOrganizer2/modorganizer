@@ -297,8 +297,6 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_gamebryo/src
                     ${project_path}/game_features/src)
 
-MESSAGE(STATUS ${project_path}/gameGamebryo/src)
-
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
