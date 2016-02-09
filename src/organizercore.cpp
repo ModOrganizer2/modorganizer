@@ -978,40 +978,59 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
     QCoreApplication::processEvents();
 
     DWORD processExitCode;
-    DWORD retLen;
-    JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+
+    dialog->setProcessName(
+        QString::fromStdWString(getProcessName(::GetProcessId(processHandle))));
 
     {
       DWORD currentProcess = 0UL;
-      bool isJobHandle = true;
 
-      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
-      while ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0) && !dialog->unlockClicked()) {
-        if (isJobHandle) {
-          if (::QueryInformationJobObject(processHandle, JobObjectBasicProcessIdList, &info, sizeof(info), &retLen) > 0) {
-            if (info.NumberOfProcessIdsInList == 0) {
-              break;
-            } else {
-              if (info.ProcessIdList[0] != currentProcess) {
-                currentProcess = info.ProcessIdList[0];
-                dialog->setProcessName(ToQString(getProcessName(currentProcess)));
+      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000,
+                                              QS_KEY | QS_MOUSE);
+      bool tryAgain = true;
+      while ((res != WAIT_FAILED) && !dialog->unlockClicked()) {
+        if (res == WAIT_OBJECT_0) {
+          // process ended, is there another one in the group?
+          static const DWORD maxCount = 5;
+          size_t numProcesses         = maxCount;
+          LPDWORD processes = new DWORD[maxCount];
+          if (::GetVFSProcessList(&numProcesses, processes)) {
+            bool found = false;
+            for (size_t i = 0; i < std::min<DWORD>(maxCount, numProcesses);
+                 ++i) {
+              std::wstring processName = getProcessName(processes[i]);
+              if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
+                currentProcess = processes[i];
+                dialog->setProcessName(QString::fromStdWString(processName));
+                processHandle
+                    = ::OpenProcess(SYNCHRONIZE, FALSE, currentProcess);
+                found = true;
               }
             }
-          } else {
-            // the info-object I passed only provides space for 1 process id. but since this code only cares about whether there
-            // is more than one that's good enough. ERROR_MORE_DATA simply signals there are at least two processes running.
-            // any other error probably means the handle is a regular process handle, probably caused by running MO in a job without
-            // the right to break out.
-            if (::GetLastError() != ERROR_MORE_DATA) {
-              isJobHandle = false;
+            if (!found) {
+              // it's possible the previous process has deregistered before
+              // the new one has registered, so we should try one more time
+              // with a little delay
+              if (tryAgain) {
+                tryAgain = false;
+                QThread::msleep(500);
+                continue;
+              } else {
+                break;
+              }
+            } else {
+              tryAgain = true;
             }
+          } else {
+            break;
           }
         }
 
         // keep processing events so the app doesn't appear dead
         QCoreApplication::processEvents();
 
-        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000, QS_KEY | QS_MOUSE);
+        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000,
+                                          QS_KEY | QS_MOUSE);
       }
       ::GetExitCodeProcess(processHandle, &processExitCode);
 

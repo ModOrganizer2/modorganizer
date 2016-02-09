@@ -134,19 +134,6 @@ HANDLE startBinary(const QFileInfo &binary,
                    HANDLE stdOut,
                    HANDLE stdErr)
 {
-  JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo;
-
-  ::QueryInformationJobObject(nullptr, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), nullptr);
-  jobInfo.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_BREAKAWAY_OK;
-
-  HANDLE jobObject = ::CreateJobObject(nullptr, nullptr);
-
-  if (jobObject == nullptr) {
-    qWarning("failed to create job object: %lu", ::GetLastError());
-  } else {
-    ::SetInformationJobObject(jobObject, JobObjectExtendedLimitInformation, &jobInfo, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION));
-  }
-
   HANDLE processHandle, threadHandle;
   std::wstring binaryName = ToWString(QDir::toNativeSeparators(binary.absoluteFilePath()));
   std::wstring currentDirectoryName = ToWString(QDir::toNativeSeparators(currentDirectory.absolutePath()));
@@ -181,36 +168,7 @@ HANDLE startBinary(const QFileInfo &binary,
       return INVALID_HANDLE_VALUE;
     }
   }
-/*
-  if (hooked) {
-    try {
-      QFileInfo dllInfo(QApplication::applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName()));
-      if (!dllInfo.exists()) {
-        reportError(QObject::tr("\"%1\" doesn't exist").arg(dllInfo.fileName()));
-        return INVALID_HANDLE_VALUE;
-      }
-      injectDLL(processHandle, threadHandle,
-                QDir::toNativeSeparators(dllInfo.canonicalFilePath()).toLocal8Bit().constData(),
-                ToWString(profileName).c_str(), logLevel);
-    } catch (const windows_error& e) {
-      reportError(QObject::tr("failed to inject dll into \"%1\": %2").arg(binary.fileName()).arg(e.what()));
-      ::TerminateProcess(processHandle, 1);
-      return INVALID_HANDLE_VALUE;
-    }
-#ifdef _DEBUG
-    reportError("ready?");
-#endif // DEBUG
-  }
-  */
-
-  if (::AssignProcessToJobObject(jobObject, processHandle) == 0) {
-    qWarning("failed to assign to job object: %lu", ::GetLastError());
-    ::CloseHandle(jobObject);
-    jobObject = processHandle;
-  } else {
-    ::CloseHandle(processHandle);
-  }
 
   ::CloseHandle(threadHandle);
-  return jobObject;
+  return processHandle;
 }
