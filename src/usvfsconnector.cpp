@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "usvfsconnector.h"
 #include "settings.h"
 #include <memory>
@@ -26,41 +25,49 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QCoreApplication>
 
-
 static const char SHMID[] = "mod_organizer_instance";
 
-
 /*
-extern "C" DLLEXPORT BOOL WINAPI VirtualLinkFile(LPCWSTR source, LPCWSTR destination, BOOL failIfExists);
-extern "C" DLLEXPORT BOOL WINAPI VirtualLinkDirectoryStatic(LPCWSTR source, LPCWSTR destination, unsigned int flags);
-extern "C" DLLEXPORT BOOL WINAPI ConnectVFS(const usvfs::Parameters *parameters);
+extern "C" DLLEXPORT BOOL WINAPI VirtualLinkFile(LPCWSTR source, LPCWSTR
+destination, BOOL failIfExists);
+extern "C" DLLEXPORT BOOL WINAPI VirtualLinkDirectoryStatic(LPCWSTR source,
+LPCWSTR destination, unsigned int flags);
+extern "C" DLLEXPORT BOOL WINAPI ConnectVFS(const usvfs::Parameters
+*parameters);
 extern "C" DLLEXPORT void WINAPI DisconnectVFS();
 extern "C" DLLEXPORT void WINAPI GetCurrentVFSName(char *buffer, size_t size);
 extern "C" DLLEXPORT BOOL WINAPI CreateProcessHooked(LPCWSTR lpApplicationName
                                                      , LPWSTR lpCommandLine
-                                                     , LPSECURITY_ATTRIBUTES lpProcessAttributes
-                                                     , LPSECURITY_ATTRIBUTES lpThreadAttributes
+                                                     , LPSECURITY_ATTRIBUTES
+lpProcessAttributes
+                                                     , LPSECURITY_ATTRIBUTES
+lpThreadAttributes
                                                      , BOOL bInheritHandles
                                                      , DWORD dwCreationFlags
                                                      , LPVOID lpEnvironment
-                                                     , LPCWSTR lpCurrentDirectory
-                                                     , LPSTARTUPINFOW lpStartupInfo
-                                                     , LPPROCESS_INFORMATION lpProcessInformation
+                                                     , LPCWSTR
+lpCurrentDirectory
+                                                     , LPSTARTUPINFOW
+lpStartupInfo
+                                                     , LPPROCESS_INFORMATION
+lpProcessInformation
                                                      );
 extern "C" DLLEXPORT void __cdecl InitLogging(bool toLocal = false);
-extern "C" DLLEXPORT void __cdecl InitHooks(LPVOID userData, size_t userDataSize);
+extern "C" DLLEXPORT void __cdecl InitHooks(LPVOID userData, size_t
+userDataSize);
 */
-
 
 LogWorker::LogWorker()
   : m_Buffer(1024, '\0')
   , m_QuitRequested(false)
   , m_LogFile(qApp->property("dataPath").toString()
-              + QString("/logs/usvfs-%1.log").arg(
-                QDateTime::currentDateTimeUtc().toString("yyyy-MM-dd_hh-mm-ss")))
+              + QString("/logs/usvfs-%1.log")
+                    .arg(QDateTime::currentDateTimeUtc().toString(
+                        "yyyy-MM-dd_hh-mm-ss")))
 {
   m_LogFile.open(QIODevice::WriteOnly);
-  qDebug("usvfs log messages are written to %s", qPrintable(m_LogFile.fileName()));
+  qDebug("usvfs log messages are written to %s",
+         qPrintable(m_LogFile.fileName()));
 }
 
 LogWorker::~LogWorker()

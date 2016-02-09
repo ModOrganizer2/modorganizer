@@ -44,7 +44,6 @@ LogBuffer::LogBuffer(int messageCount, QtMsgType minMsgType,
 
 LogBuffer::~LogBuffer()
 {
-  qDebug("closing log buffer");
   qInstallMessageHandler(0);
   write();
 }
