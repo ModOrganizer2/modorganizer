@@ -660,7 +660,7 @@ p, li { white-space: pre-wrap; }
               <bool>false</bool>
              </attribute>
              <attribute name="headerDefaultSectionSize">
-              <number>100</number>
+              <number>170</number>
              </attribute>
              <column>
               <property name="text">

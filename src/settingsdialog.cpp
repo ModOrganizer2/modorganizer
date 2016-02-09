@@ -110,7 +110,7 @@ void SettingsDialog::on_browseDownloadDirBtn_clicked()
 
 void SettingsDialog::on_browseModDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), ui->downloadDirEdit->text());
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), ui->modDirEdit->text());
   if (!temp.isEmpty()) {
     ui->modDirEdit->setText(temp);
   }
@@ -121,6 +121,14 @@ void SettingsDialog::on_browseCacheDirBtn_clicked()
   QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), ui->cacheDirEdit->text());
   if (!temp.isEmpty()) {
     ui->cacheDirEdit->setText(temp);
+  }
+}
+
+void SettingsDialog::on_browseProfilesDirBtn_clicked()
+{
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), ui->profilesDirEdit->text());
+  if (!temp.isEmpty()) {
+    ui->profilesDirEdit->setText(temp);
   }
 }
 

@@ -60,7 +60,7 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
     si.dwFlags |= STARTF_USESTDHANDLES;
   }
   si.cb = sizeof(si);
-  int length = wcslen(binary) + wcslen(arguments) + 4;
+  size_t length = wcslen(binary) + wcslen(arguments) + 4;
   wchar_t *commandLine = nullptr;
   if (arguments[0] != L'\0') {
     commandLine = new wchar_t[length];

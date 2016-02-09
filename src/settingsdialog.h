@@ -53,6 +53,9 @@ signals:
   void resetDialogs();
 
 private slots:
+  void on_browseProfilesDirBtn_clicked();
+
+private slots:
   void on_changeInstanceButton_clicked();
 
 private:
