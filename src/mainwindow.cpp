@@ -287,11 +287,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
   connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
-  connect(NexusInterface::instance()->getAccessManager(), &NXMAccessManager::credentialsReceived,
-          [this] (const QString &accountName, bool premium) {
-    qDebug("user %s premium", premium ? "is" : "is not");
-    updateWindowTitle(accountName, premium);
-  });
+  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
+          this, SLOT(updateWindowTitle(const QString&, bool)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -532,7 +529,7 @@ void MainWindow::scheduleUpdateButton()
 
 void MainWindow::updateProblemsButton()
 {
-  int numProblems = checkForProblems();
+  size_t numProblems = checkForProblems();
   if (numProblems > 0) {
     ui->actionProblems->setEnabled(true);
     ui->actionProblems->setIconText(tr("Problems"));
@@ -2485,7 +2482,7 @@ bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 
   bool childEnabled = false;
 
-  for (size_t i = 1; i < m_CategoryFactory.numCategories(); ++i) {
+  for (unsigned int i = 1; i < m_CategoryFactory.numCategories(); ++i) {
     if (m_CategoryFactory.getParentID(i) == targetID) {
       QMenu *targetMenu = menu;
       if (m_CategoryFactory.hasChildren(i)) {

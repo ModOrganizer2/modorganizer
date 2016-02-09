@@ -115,8 +115,6 @@ public:
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
-  void updateWindowTitle(const QString &accountName, bool premium);
-
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -325,6 +323,8 @@ private:
   Executable &getSelectedExecutable();
 
 private slots:
+
+  void updateWindowTitle(const QString &accountName, bool premium);
 
   void showMessage(const QString &message);
   void showError(const QString &message);
