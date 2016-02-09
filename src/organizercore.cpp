@@ -206,7 +206,7 @@ OrganizerCore::~OrganizerCore()
   ModInfo::clear();
   LogBuffer::cleanQuit();
   m_ModList.setProfile(nullptr);
-  NexusInterface::instance()->cleanup();
+  //  NexusInterface::instance()->cleanup();
 
   delete m_DirectoryStructure;
 }
