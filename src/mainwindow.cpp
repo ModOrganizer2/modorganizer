@@ -120,7 +120,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
 
@@ -1148,7 +1147,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
 
 void MainWindow::delayedRemove()
 {
-  foreach (QTreeWidgetItem *item, m_RemoveWidget) {
+  for (QTreeWidgetItem *item : m_RemoveWidget) {
     item->removeChild(item->child(0));
   }
   m_RemoveWidget.clear();
@@ -1303,9 +1302,10 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
+  qDebug("reading save games from %s", qPrintable(savesDir.absolutePath()));
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
-  foreach (const QFileInfo &file, files) {
+  for (const QFileInfo &file : files) {
     QListWidgetItem *item = new QListWidgetItem(file.fileName());
     item->setData(Qt::UserRole, file.absoluteFilePath());
     ui->savegameList->addItem(item);
@@ -2080,7 +2080,7 @@ void MainWindow::removeMod_clicked()
     if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       QString mods;
       QStringList modNames;
-      foreach (QModelIndex idx, selection->selectedRows()) {
+      for (QModelIndex idx : selection->selectedRows()) {
         QString name = idx.data().toString();
         if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
           continue;
@@ -2092,7 +2092,7 @@ void MainWindow::removeMod_clicked()
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
-        foreach (QString name, modNames) {
+        for (QString name : modNames) {
           m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
         }
       }
@@ -2519,7 +2519,7 @@ bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 void MainWindow::replaceCategoriesFromMenu(QMenu *menu, int modRow)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(modRow);
-  foreach (QAction* action, menu->actions()) {
+  for (QAction* action : menu->actions()) {
     if (action->menu() != nullptr) {
       replaceCategoriesFromMenu(action->menu(), modRow);
     } else {
@@ -2652,7 +2652,7 @@ void MainWindow::savePrimaryCategory()
     return;
   }
 
-  foreach (QAction* action, menu->actions()) {
+  for (QAction* action : menu->actions()) {
     QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
     if (widgetAction != nullptr) {
       QRadioButton *btn = qobject_cast<QRadioButton*>(widgetAction->defaultWidget());
@@ -2731,7 +2731,7 @@ void MainWindow::unignoreUpdate()
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info)
 {
   const std::set<int> &categories = info->getCategories();
-  foreach (int categoryID, categories) {
+  for (int categoryID : categories) {
     int catIdx = m_CategoryFactory.getCategoryIndex(categoryID);
     QWidgetAction *action = new QWidgetAction(primaryCategoryMenu);
     try {
@@ -2975,7 +2975,7 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
   QModelIndexList indices = ui->categoriesList->selectionModel()->selectedRows();
   std::vector<int> categories;
   std::vector<int> content;
-  foreach (const QModelIndex &index, indices) {
+  for (const QModelIndex &index : indices) {
     int filterType = index.data(Qt::UserRole + 1).toInt();
     if ((filterType == ModListSortProxy::TYPE_CATEGORY)
         || (filterType == ModListSortProxy::TYPE_SPECIAL)) {
@@ -3012,7 +3012,7 @@ void MainWindow::deleteSavegame_clicked()
 
   int count = 0;
 
-  foreach (const QModelIndex &idx, selectedIndexes) {
+  for (const QModelIndex &idx : selectedIndexes) {
     QString name = idx.data().toString();
     SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString(), m_OrganizerCore.managedGame());
 
@@ -3300,7 +3300,7 @@ void MainWindow::installTranslator(const QString &name)
 
 void MainWindow::languageChange(const QString &newLanguage)
 {
-  foreach (QTranslator *trans, m_Translators) {
+  for (QTranslator *trans : m_Translators) {
     qApp->removeTranslator(trans);
   }
   m_Translators.clear();
@@ -3544,7 +3544,7 @@ void MainWindow::previewDataFile()
     };
 
   addFunc(file->getOrigin());
-  foreach (int i, file->getAlternatives()) {
+  for (int i : file->getAlternatives()) {
     addFunc(i);
   }
   if (preview.numVariants() > 0) {
@@ -3774,7 +3774,7 @@ void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
   QVariantList serverList = resultData.toList();
 
   QList<ServerInfo> servers;
-  foreach (const QVariant &server, serverList) {
+  for (const QVariant &server : serverList) {
     QVariantMap serverInfo = server.toMap();
     ServerInfo info;
     info.name = serverInfo["Name"].toString();
@@ -3897,7 +3897,7 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
 
   // view/hide columns depending on check-state
   int i = 1;
-  foreach (const QAction *action, menu.actions()) {
+  for (const QAction *action : menu.actions()) {
     const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
     if (widgetAction != nullptr) {
       const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
@@ -4395,7 +4395,7 @@ QString MainWindow::queryRestore(const QString &filePath)
   SelectionDialog dialog(tr("Choose backup to restore"), this);
   QRegExp exp(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX);
   QRegExp exp2(pluginFileInfo.fileName() + "\\.(.*)");
-  foreach(const QFileInfo &info, files) {
+  for(const QFileInfo &info : files) {
     if (exp.exactMatch(info.fileName())) {
       QDateTime time = QDateTime::fromString(exp.cap(1), PATTERN_BACKUP_DATE);
       dialog.addChoice(time.toString(), "", exp.cap(1));

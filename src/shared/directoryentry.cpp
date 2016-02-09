@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <bsatk.h>
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
-#include <boost/foreach.hpp>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <sstream>
@@ -950,12 +949,12 @@ void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int ori
   // the latter should be faster when there are many files in few directories. since this is called
   // only when disabling an origin that is probably frequently the case
   std::set<DirectoryEntry*> parents;
-  BOOST_FOREACH (const FileEntry::Ptr &file, removedFiles) {
+  for (const FileEntry::Ptr &file : removedFiles) {
     if (file->getParent() != nullptr) {
       parents.insert(file->getParent());
     }
   }
-  BOOST_FOREACH (DirectoryEntry *parent, parents) {
+  for (DirectoryEntry *parent : parents) {
     parent->removeFiles(indices);
   }
 }
