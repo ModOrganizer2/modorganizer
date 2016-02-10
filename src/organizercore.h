@@ -2,30 +2,42 @@
 #define ORGANIZERCORE_H
 
 
-#include "profile.h"
 #include "selfupdater.h"
-#include "iuserinterface.h"
+#include "iuserinterface.h" //should be class IUserInterface;
 #include "settings.h"
 #include "modlist.h"
+#include "modinfo.h"
 #include "pluginlist.h"
 #include "directoryrefresher.h"
 #include "installationmanager.h"
 #include "downloadmanager.h"
-#include "modlistsortproxy.h"
-#include "pluginlistsortproxy.h"
 #include "executableslist.h"
-#include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
-#include <iplugingame.h>
 #include <versioninfo.h>
-#include <guessedvalue.h>
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
+
+class ModListSortProxy;
+class PluginListSortProxy;
+class Profile;
+namespace MOBase { template <typename T> class GuessedValue; }
+namespace MOShared { class DirectoryEntry; }
+
+#include <QDir>
+#include <QList>
+#include <QObject>
 #include <QSettings>
 #include <QString>
+#include <QStringList>
 #include <QThread>
 
+class QNetworkReply;
+class QUrl;
+class QWidget;
+
+#include <functional>
+#include <vector>
 
 class PluginContainer;
 
@@ -89,7 +101,7 @@ public:
     m_ExecutablesList = executablesList;
   }
 
-  Profile *currentProfile() { return m_CurrentProfile; }
+  Profile *currentProfile() const { return m_CurrentProfile; }
   void setCurrentProfile(const QString &profileName);
 
   std::vector<QString> enabledArchives();
@@ -155,6 +167,7 @@ public:
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
+  QStringList modsSortedByProfilePriority() const;
 
   //std::vector<std::pair<QString, QString> > fileMapping();
 

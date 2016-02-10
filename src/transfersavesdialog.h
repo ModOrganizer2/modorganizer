@@ -23,10 +23,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorabledialog.h"
 #include "profile.h"
 
+class QListWidget;
+#include <QObject>
+class QPushButton;
+#include <QString>
+class QWidget;
+
+#include <memory>
+#include <map>
+#include <vector>
+
 namespace Ui { class TransferSavesDialog; }
 namespace MOBase { class IPluginGame; }
-
-class SaveGame;
+namespace MOBase { class ISaveGame; }
 
 class TransferSavesDialog : public MOBase::TutorableDialog
 {
@@ -76,8 +85,25 @@ private:
 
   MOBase::IPluginGame const *m_GamePlugin;
 
-  std::vector<SaveGame*> m_GlobalSaves;
-  std::vector<SaveGame*> m_LocalSaves;
+  typedef std::unique_ptr<MOBase::ISaveGame const> SaveListItem;
+  typedef std::vector<SaveListItem> SaveList;
+  typedef std::map<QString, SaveList> SaveCollection;
+  SaveCollection m_GlobalSaves;
+  SaveCollection m_LocalSaves;
+
+  void refreshSaves(SaveCollection &saveCollection, const QString &savedir);
+  void refreshCharacters(SaveCollection const &saveCollection,
+                         QListWidget *charList,
+                         QPushButton *copy,
+                         QPushButton *move);
+
+  bool transferCharacters(QString const &character,
+                          char const *message,
+                          SaveList &saves,
+                          QString const &dest,
+                          bool (method)(QString const &, QString const &),
+                          char const *errmsg
+                          );
 
 };
 

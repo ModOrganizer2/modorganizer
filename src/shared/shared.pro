@@ -21,12 +21,7 @@ SOURCES += \
     windows_error.cpp \
     error_report.cpp \
     directoryentry.cpp \
-    gameinfo.cpp \
-    oblivioninfo.cpp \
-    fallout3info.cpp \
-    falloutnvinfo.cpp \
     util.cpp \
-    skyriminfo.cpp \
     appconfig.cpp \
     leaktrace.cpp \
     stackdata.cpp
@@ -36,12 +31,7 @@ HEADERS += \
     windows_error.h \
     error_report.h \
     directoryentry.h \
-    gameinfo.h \
-    oblivioninfo.h \
-    fallout3info.h \
-    falloutnvinfo.h \
     util.h \
-    skyriminfo.h \
     appconfig.h \
     appconfig.inc \
     leaktrace.h \

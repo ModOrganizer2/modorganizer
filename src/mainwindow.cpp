@@ -20,7 +20,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "directoryentry.h"
+#include "directoryrefresher.h"
+#include "executableinfo.h"
+#include "executableslist.h"
+#include "guessedvalue.h"
+#include "imodinterface.h"
+#include "iplugingame.h"
+#include "iplugindiagnose.h"
+#include "isavegame.h"
+#include "isavegameinfowidget.h"
+#include "nexusinterface.h"
+#include "organizercore.h"
+#include "pluginlistsortproxy.h"
+#include "previewgenerator.h"
+#include "savegameinfo.h"
 #include "spawn.h"
+#include "versioninfo.h"
+
 #include "report.h"
 #include "modlist.h"
 #include "modlistsortproxy.h"
@@ -31,7 +48,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "editexecutablesdialog.h"
 #include "categories.h"
 #include "categoriesdialog.h"
-#include "utility.h"
 #include "modinfodialog.h"
 #include "overwriteinfodialog.h"
 #include "activatemodsdialog.h"
@@ -41,16 +57,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "lockeddialog.h"
-#include "syncoverwritedialog.h"
 #include "logbuffer.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
 #include "filedialogmemory.h"
-#include "questionboxmemory.h"
 #include "tutorialmanager.h"
 #include "modflagicondelegate.h"
 #include "genericicondelegate.h"
-#include "credentialsdialog.h"
 #include "selectiondialog.h"
 #include "csvbuilder.h"
 #include "savetextasdialog.h"
@@ -59,82 +72,103 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "browserdialog.h"
 #include "aboutdialog.h"
 #include "safewritefile.h"
-//?
-//#include "isavegame.h"
-//#include "savegameinfo.h"
-//?
 #include "nxmaccessmanager.h"
-#include <archive.h>
-#include <appconfig.h>
+#include "appconfig.h"
 #include <utility.h>
-#include <ipluginproxy.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
-#include <questionboxmemory.h>
 #include <taskprogressmanager.h>
-#include <util.h>
 #include <scopeguard.h>
 
-#include <QTime>
-#include <QInputDialog>
-#include <QSettings>
-#include <QWhatsThis>
-#include <QProcess>
-#include <QMenu>
+#include <QAbstractItemDelegate>
+#include <QAbstractProxyModel>
+#include <QAction>
+#include <QApplication>
 #include <QBuffer>
-#include <QInputDialog>
-#include <QDirIterator>
-#include <QHelpEvent>
-#include <QToolTip>
-#include <QFileDialog>
-#include <QTimer>
-#include <QMessageBox>
-#include <QDebug>
-#include <QBuffer>
-#include <QWidgetAction>
-#include <QToolButton>
-#include <QGraphicsObject>
-#include <QPluginLoader>
-#include <QRadioButton>
-#include <QDesktopWidget>
-#include <QtPlugin>
-#include <QIdentityProxyModel>
+#include <QCheckBox>
 #include <QClipboard>
-#include <QNetworkInterface>
-#include <QNetworkProxy>
-#include <QJsonDocument>
+#include <QCloseEvent>
+#include <QCoreApplication>
+#include <QCursor>
+#include <QDebug>
+#include <QDesktopWidget>
+#include <QDialog>
+#include <QDirIterator>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QEvent>
+#include <QFileDialog>
+#include <QFont>
+#include <QFuture>
+#include <QHash>
+#include <QIODevice>
+#include <QIcon>
+#include <QInputDialog>
+#include <QItemSelection>
+#include <QItemSelectionModel>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonValue>
+#include <QJsonValueRef>
+#include <QLineEdit>
+#include <QListWidgetItem>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
+#include <QModelIndex>
+#include <QNetworkProxyFactory>
+#include <QPainter>
+#include <QPixmap>
+#include <QPoint>
+#include <QProcess>
+#include <QProgressDialog>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QRect>
+#include <QRegExp>
+#include <QResizeEvent>
+#include <QSettings>
+#include <QScopedPointer>
+#include <QSizePolicy>
+#include <QSize>
+#include <QTime>
+#include <QTimer>
+#include <QToolButton>
+#include <QToolTip>
+#include <QTranslator>
+#include <QTreeWidget>
+#include <QUrl>
+#include <QVariantList>
+#include <QWhatsThis>
+#include <QWidgetAction>
+
+#include <QtDebug>
+#include <QtGlobal>
+
+
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
 #else
 #include <QtConcurrentRun>
 #endif
-#include <QCoreApplication>
-#include <QProgressDialog>
 
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/assign.hpp>
 #endif
 
-#include <Psapi.h>
 #include <shlobj.h>
-#include <ShellAPI.h>
-#include <TlHelp32.h>
 
-#include <sstream>
-#include <regex>
+#include <limits.h>
+#include <exception>
 #include <functional>
 #include <map>
-#include <ctime>
-#include <wchar.h>
-#include <utility.h>
+#include <regex>
+#include <stdexcept>
+#include <sstream>
+#include <utility>
 
 #ifdef TEST_MODELS
 #include "modeltest.h"
@@ -829,37 +863,24 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
   m_IntegratedBrowser.restoreGeometry(geometry);
 }
 
-
-SaveGameGamebryo *MainWindow::getSaveGame(const QString &name)
+void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
-  IPluginGame const *game = m_OrganizerCore.managedGame();
-  return new SaveGameGamebryo(this, name, game);
-}
-
-
-SaveGameGamebryo *MainWindow::getSaveGame(QListWidgetItem *item)
-{
-  try {
-    SaveGameGamebryo *saveGame = getSaveGame(item->data(Qt::UserRole).toString());
-    saveGame->setParent(item->listWidget());
-    return saveGame;
-  } catch (const std::exception &e) {
-    reportError(tr("failed to read savegame: %1").arg(e.what()));
-    return nullptr;
-  }
-}
-
-
-void MainWindow::displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos)
-{
+  QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
-    m_CurrentSaveView = new SaveGameInfoWidgetGamebryo(save, m_OrganizerCore.pluginList(), this);
-  } else {
-    m_CurrentSaveView->setSave(save);
+    IPluginGame const *game = m_OrganizerCore.managedGame();
+    SaveGameInfo const *info = game->feature<SaveGameInfo>();
+    if (info != nullptr) {
+      m_CurrentSaveView = info->getSaveGameWidget(this);
+    }
+    if (m_CurrentSaveView == nullptr) {
+      return;
+    }
   }
+  m_CurrentSaveView->setSave(save);
 
   QRect screenRect = QApplication::desktop()->availableGeometry(m_CurrentSaveView);
 
+  QPoint pos = QCursor::pos();
   if (pos.x() + m_CurrentSaveView->width() > screenRect.right()) {
     pos.rx() -= (m_CurrentSaveView->width() + 2);
   } else {
@@ -874,8 +895,9 @@ void MainWindow::displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos)
   m_CurrentSaveView->move(pos);
 
   m_CurrentSaveView->show();
+  m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
+
   ui->savegameList->activateWindow();
-  connect(m_CurrentSaveView, SIGNAL(closeSaveInfo()), this, SLOT(hideSaveGameInfo()));
 }
 
 
@@ -883,21 +905,15 @@ void MainWindow::saveSelectionChanged(QListWidgetItem *newItem)
 {
   if (newItem == nullptr) {
     hideSaveGameInfo();
-  } else if ((m_CurrentSaveView == nullptr) || (newItem != m_CurrentSaveView->property("displayItem").value<void*>())) {
-    const SaveGameGamebryo *save = getSaveGame(newItem);
-    if (save != nullptr) {
-      displaySaveGameInfo(save, QCursor::pos());
-      m_CurrentSaveView->setProperty("displayItem", qVariantFromValue((void*)newItem));
-    }
+  } else if (m_CurrentSaveView == nullptr || newItem != m_CurrentSaveView->property("displayItem").value<void*>()) {
+    displaySaveGameInfo(newItem);
   }
 }
-
 
 
 void MainWindow::hideSaveGameInfo()
 {
   if (m_CurrentSaveView != nullptr) {
-    disconnect(m_CurrentSaveView, SIGNAL(closeSaveInfo()), this, SLOT(hideSaveGameInfo()));
     m_CurrentSaveView->deleteLater();
     m_CurrentSaveView = nullptr;
   }
@@ -1262,14 +1278,14 @@ QDir MainWindow::currentSavesDir() const
 {
   QDir savesDir;
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
-    savesDir.setPath(m_OrganizerCore.currentProfile()->absolutePath() + "/saves");
+    savesDir.setPath(m_OrganizerCore.currentProfile()->savePath());
   } else {
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(
           L"General", L"SLocalSavePath", L"Saves",
           path, MAX_PATH,
           ToWString(m_OrganizerCore.currentProfile()->absolutePath() + "/" +
-                      m_OrganizerCore.managedGame()->getIniFiles()[0]).c_str());
+                      m_OrganizerCore.managedGame()->iniFiles()[0]).c_str());
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
@@ -3189,109 +3205,47 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
 void MainWindow::deleteSavegame_clicked()
 {
-  QModelIndexList selectedIndexes = ui->savegameList->selectionModel()->selectedIndexes();
+  SaveGameInfo const *info = m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
 
   QString savesMsgLabel;
   QStringList deleteFiles;
 
   int count = 0;
 
-  foreach (const QModelIndex &idx, selectedIndexes) {
-    QString name = idx.data().toString();
-    SaveGame *save = new SaveGame(this,  idx.data(Qt::UserRole).toString(), m_OrganizerCore.managedGame());
+  for (const QModelIndex &idx : ui->savegameList->selectionModel()->selectedIndexes()) {
+    QString name = idx.data(Qt::UserRole).toString();
 
     if (count < 10) {
       savesMsgLabel += "<li>" + QFileInfo(name).completeBaseName() + "</li>";
     }
     ++count;
 
-    deleteFiles << save->saveFiles();
+    if (info == nullptr) {
+      deleteFiles.push_back(name);
+    } else {
+      ISaveGame const *save = info->getSaveGameInfo(name);
+      deleteFiles += save->allFiles();
+    }
   }
 
   if (count > 10) {
     savesMsgLabel += "<li><i>... " + tr("%1 more").arg(count - 10) + "</i></li>";
   }
 
-  if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to remove the following %n save(s)?<br><ul>%1</ul><br>Removed saves will be sent to the Recycle Bin.", "", selectedIndexes.count())
-                            .arg(savesMsgLabel),
+  if (QMessageBox::question(this, tr("Confirm"),
+                            tr("Are you sure you want to remove the following %n save(s)?<br>"
+                               "<ul>%1</ul><br>"
+                               "Removed saves will be sent to the Recycle Bin.", "", count)
+                              .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
   }
 }
 
 
-void MainWindow::fixMods_clicked()
+void MainWindow::fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets)
 {
-  QListWidgetItem *selectedItem = ui->savegameList->currentItem();
-
-  if (selectedItem == nullptr)
-    return;
-
-  // if required, parse the save game
-  if (selectedItem->data(Qt::UserRole).isNull()) {
-    QVariant temp;
-    SaveGameGamebryo *save = getSaveGame(selectedItem->data(Qt::UserRole).toString());
-    save->setParent(selectedItem->listWidget());
-    temp.setValue(save);
-    selectedItem->setData(Qt::UserRole, temp);
-  }
-
-  const SaveGameGamebryo *save = getSaveGame(selectedItem);
-
-  // collect the list of missing plugins
-  std::map<QString, std::vector<QString> > missingPlugins;
-
-  for (int i = 0; i < save->numPlugins(); ++i) {
-    const QString &pluginName = save->plugin(i);
-    if (!m_OrganizerCore.pluginList()->isEnabled(pluginName)) {
-      missingPlugins[pluginName] = std::vector<QString>();
-    }
-  }
-
-  // figure out, for each esp/esm, which mod, if any, contains it
-  QStringList espFilter("*.esp");
-  espFilter.append("*.esm");
-
-  // search in data
-  {
-    QDir dataDir(m_OrganizerCore.managedGame()->dataDirectory());
-    QStringList esps = dataDir.entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back("<data>");
-      }
-    }
-  }
-
-  // search in mods
-  for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numRegularMods(); ++i) {
-    int modIndex = m_OrganizerCore.currentProfile()->modIndexByPriority(i);
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-
-    QStringList esps = QDir(modInfo->absolutePath()).entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back(modInfo->name());
-      }
-    }
-  }
-
-  // search in overwrite
-  {
-    QDir overwriteDir(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
-    QStringList esps = overwriteDir.entryList(espFilter);
-    for (const QString &esp : esps) {
-      std::map<QString, std::vector<QString> >::iterator iter = missingPlugins.find(esp);
-      if (iter != missingPlugins.end()) {
-        iter->second.push_back("<overwrite>");
-      }
-    }
-  }
-
-
-  ActivateModsDialog dialog(missingPlugins, this);
+  ActivateModsDialog dialog(missingAssets, this);
   if (dialog.exec() == QDialog::Accepted) {
     // activate the required mods, then enable all esps
     std::set<QString> modsToActivate = dialog.getModsToActivate();
@@ -3318,13 +3272,25 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 {
   QItemSelectionModel *selection = ui->savegameList->selectionModel();
 
-  if (!selection->hasSelection())
+  if (!selection->hasSelection()) {
     return;
+  }
 
   QMenu menu;
+  QAction *action = menu.addAction(tr("Enable Mods..."));
+  action->setEnabled(false);
 
-  if (!(selection->selectedIndexes().count() > 1))
-    menu.addAction(tr("Fix Mods..."), this, SLOT(fixMods_clicked()));
+  if (selection->selectedIndexes().count() == 1) {
+    SaveGameInfo const *info = this->m_OrganizerCore.managedGame()->feature<SaveGameInfo>();
+    if (info != nullptr) {
+      QString save = ui->savegameList->currentItem()->data(Qt::UserRole).toString();
+      SaveGameInfo::MissingAssets missing = info->getMissingAssets(save);
+      if (missing.size() != 0) {
+        connect(action, &QAction::triggered, this, [this, missing]{ fixMods_clicked(missing); });
+        action->setEnabled(true);
+      }
+    }
+  }
 
   QString deleteMenuLabel = tr("Delete %n save(s)", "", selection->selectedIndexes().count());
 
@@ -3846,7 +3812,7 @@ void MainWindow::on_actionEndorseMO_triggered()
                                       NexusInterface::instance()->getGameURL()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance()->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->getNexusModOrganizerID(), true, this, QVariant(), QString());
+          m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -3910,7 +3876,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->getNexusModOrganizerID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
@@ -4426,7 +4392,7 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--unattended"
                << "--stdout"
                << "--noreport"
-               << "--game" << m_OrganizerCore.managedGame()->getGameShortName()
+               << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--out" << outPath;
 
@@ -4560,12 +4526,12 @@ void MainWindow::on_bossButton_clicked()
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
-    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       qDebug("removing loadorder.txt");
       QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
-    if (m_OrganizerCore.managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
       // the load order should have been retrieved from file time, now save it to our own format
       m_OrganizerCore.savePluginList();
     }

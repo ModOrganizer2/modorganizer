@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "imodinterface.h"
 #include "versioninfo.h"
-//#include <directoryentry.h>
 
 class QDateTime;
 class QDir;

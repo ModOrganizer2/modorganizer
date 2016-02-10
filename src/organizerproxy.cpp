@@ -1,6 +1,7 @@
 #include "organizerproxy.h"
 
-#include <appconfig.h>
+#include "appconfig.h"
+#include "organizercore.h"
 
 #include <QApplication>
 
@@ -166,7 +167,17 @@ MOBase::IModList *OrganizerProxy::modList() const
   return m_Proxied->modList();
 }
 
+MOBase::IProfile *OrganizerProxy::profile() const
+{
+  return m_Proxied->currentProfile();
+}
+
 MOBase::IPluginGame const *OrganizerProxy::managedGame() const
 {
   return m_Proxied->managedGame();
+}
+
+QStringList OrganizerProxy::modsSortedByProfilePriority() const
+{
+  return m_Proxied->modsSortedByProfilePriority();
 }

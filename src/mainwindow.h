@@ -20,51 +20,83 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QFileInfo>
-#include <QDir>
-#include <QTreeWidget>
-#include <QListWidgetItem>
-#include <QProcess>
-#include <QThread>
-#include <QProgressBar>
-#include <QTranslator>
-#include <QPluginLoader>
-#include "modlist.h"
-#include "pluginlist.h"
-#include "plugincontainer.h"
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <archive.h>
-#include "directoryrefresher.h"
-#include <imoinfo.h>
-#include "settings.h"
-#include "downloadmanager.h"
-#include "installationmanager.h"
-#include "selfupdater.h"
-#include "savegamegamebyro.h"
-#include "modlistsortproxy.h"
-#include "pluginlistsortproxy.h"
-#include "tutorialcontrol.h"
-#include "savegameinfowidgetgamebryo.h"
-#include "previewgenerator.h"
+#include "bsafolder.h"
 #include "browserdialog.h"
+#include "delayedfilewriter.h"
+#include "errorcodes.h"
+#include "imoinfo.h"
 #include "iuserinterface.h"
-#include <guessedvalue.h>
-#include <directoryentry.h>
-#include <delayedfilewriter.h>
+#include "modinfo.h"
+#include "modlistsortproxy.h"
+#include "savegameinfo.h"
+#include "tutorialcontrol.h"
+
+//Note the commented headers here can be replaced with forward references,
+//when I get round to cleaning up main.cpp
+struct Executable;
+class CategoryFactory;
+class LockedDialog;
+class OrganizerCore;
+#include "plugincontainer.h" //class PluginContainer;
+class PluginListSortProxy;
+namespace BSA { class Archive; }
+#include "iplugingame.h" //namespace MOBase { class IPluginGame; }
+namespace MOBase { class IPluginModPage; }
+namespace MOBase { class IPluginTool; }
+namespace MOBase { class ISaveGame; }
+
+namespace MOShared { class DirectoryEntry; }
+
+#include <QByteArray>
+#include <QDir>
+#include <QFileInfo>
+#include <QFileSystemWatcher>
+#include <QList>
+#include <QMainWindow>
+#include <QObject>
+#include <QPersistentModelIndex>
+#include <QProcess>
+#include <QString>
+#include <QStringList>
+#include <QTime>
+#include <QTimer>
+#include <QVariant>
+#include <Qt>
+
+class QAction;
+class QAbstractItemModel;
+class QDateTime;
+class QEvent;
+class QFile;
+class QListWidgetItem;
+class QMenu;
+class QModelIndex;
+class QPoint;
+class QProgressBar;
+class QProgressDialog;
+class QTranslator;
+class QTreeWidgetItem;
+class QUrl;
+class QSettings;
+class QWidget;
+
 #ifndef Q_MOC_RUN
 #include <boost/signals2.hpp>
 #endif
+
+//Sigh - just for HANDLE
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
+#include <functional>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace Ui {
     class MainWindow;
 }
 
-class LockedDialog;
-class QToolButton;
-class ModListSortProxy;
-class ModListGroupCategoriesProxy;
 
 
 class MainWindow : public QMainWindow, public IUserInterface
@@ -223,10 +255,7 @@ private:
 
   void setCategoryListVisible(bool visible);
 
-  SaveGameGamebryo *getSaveGame(const QString &name);
-  SaveGameGamebryo *getSaveGame(QListWidgetItem *item);
-
-  void displaySaveGameInfo(const SaveGameGamebryo *save, QPoint pos);
+  void displaySaveGameInfo(QListWidgetItem *newItem);
 
   HANDLE nextChildProcess();
 
@@ -301,7 +330,8 @@ private:
   QTimer m_UpdateProblemsTimer;
 
   QTime m_StartTime;
-  SaveGameInfoWidget *m_CurrentSaveView;
+  //SaveGameInfoWidget *m_CurrentSaveView;
+  MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
 
   OrganizerCore &m_OrganizerCore;
   PluginContainer &m_PluginContainer;
@@ -362,7 +392,7 @@ private slots:
   void information_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
-  void fixMods_clicked();
+  void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
   // data-tree context menu
   void writeDataToFile();
   void openDataFile();

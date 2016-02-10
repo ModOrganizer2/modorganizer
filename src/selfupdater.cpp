@@ -19,6 +19,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "selfupdater.h"
 
+#include "archive.h"
+#include "callback.h"
 #include "utility.h"
 #include "installationmanager.h"
 #include "iplugingame.h"
@@ -30,15 +32,36 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <report.h>
 #include <util.h>
 
+#include <QApplication>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QLibrary>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
-#include <QDir>
-#include <QLibrary>
+#include <QNetworkReply>
 #include <QProcess>
-#include <QApplication>
+#include <QProgressDialog>
+#include <QRegExp>
+#include <QStringList>
+#include <QTimer>
+#include <QUrl>
+#include <QVariantList>
+#include <QVariantMap>
+
+#include <Qt>
+#include <QtDebug>
+#include <QtAlgorithms>
+
 #include <boost/bind.hpp>
 
+#include <Windows.h> //for VS_FIXEDFILEINFO, GetLastError
+
+#include <exception>
+#include <map>
+#include <stddef.h> //for size_t
+#include <stdexcept>
 
 using namespace MOBase;
 using namespace MOShared;
@@ -77,8 +100,6 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
 
-  connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
-
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
 
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
@@ -105,7 +126,7 @@ void SelfUpdater::testForUpdate()
   }
   if (m_UpdateRequestID == -1 && m_NexusDownload != nullptr) {
     m_UpdateRequestID = m_Interface->requestDescription(
-              m_NexusDownload->getNexusModOrganizerID(), this, QVariant(),
+              m_NexusDownload->nexusModOrganizerID(), this, QVariant(),
               QString(), m_NexusDownload);
   }
 }
@@ -123,7 +144,7 @@ void SelfUpdater::startUpdate()
     if (QMessageBox::question(m_Parent, tr("Update"),
           tr("An update is available (newest version: %1), do you want to install it?").arg(m_NewestVersion),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->getNexusModOrganizerID(),
+      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->nexusModOrganizerID(),
                                                     this, m_NewestVersion, "",
                                                     m_NexusDownload);
     }
@@ -135,6 +156,7 @@ void SelfUpdater::showProgress()
 {
   if (m_Progress == nullptr) {
     m_Progress = new QProgressDialog(m_Parent, Qt::Dialog);
+    connect(m_Progress, SIGNAL(canceled()), this, SLOT(downloadCancel()));
   }
   m_Progress->setModal(true);
   m_Progress->show();
@@ -416,7 +438,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
 
   if (updateFileID != -1) {
     qDebug("update available: %d", updateFileID);
-    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
                                     updateFileID, this, updateFileName, "",
                                     m_NexusDownload);
   } else if (mainFileID != -1) {
@@ -425,7 +447,7 @@ void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData,
             tr("No incremental update available for this version, "
                "the complete package needs to be downloaded (%1 kB)").arg(mainFileSize),
             QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->getNexusModOrganizerID(),
+      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
                                     mainFileID, this, mainFileName, "",
                                     m_NexusDownload);
     }

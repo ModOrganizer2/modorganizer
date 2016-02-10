@@ -107,7 +107,7 @@ void Settings::registerAsNXMHandler(bool force)
   std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
   std::wstring mode = force ? L"forcereg" : L"reg";
-  std::wstring parameters = mode + L" " + m_GamePlugin->getGameShortName().toStdWString() + L" \"" + executable + L"\"";
+  std::wstring parameters = mode + L" " + m_GamePlugin->gameShortName().toStdWString() + L" \"" + executable + L"\"";
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
   if ((int)res <= 32) {
     QMessageBox::critical(nullptr, tr("Failed"),

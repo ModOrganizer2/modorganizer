@@ -54,9 +54,17 @@
     { include: [ "<Shellapi.h>", "private", "<Windows.h>", "public" ] }, # official name according to website
     { include: [ "<shellapi.h>", "private", "<Windows.h>", "public" ] },
     #
-    { include: [ "<knownfolders.h>", "private", "<Windows.h>", "public" ] },
     { include: [ "<ShlObj.h>", "private", "<Windows.h>", "public" ] },
     { include: [ "<objidl.h>", "private", "<Windows.h>", "public" ] },
+
+# These ones are in shtypes.h but the only documentation I can find says
+# to include Knownfolders.h for these
+    { symbol: [ "REFKNOWNFOLDERID", "private", "<Knownfolders.h>", "public" ] },
+    { symbol: [ "KNOWNFOLDERID", "private", "<Knownfolders.h>", "public" ] },
+
+# IWYU doesn't understand upper/lower case which is *really* annoying on
+# windows, though to be fair I'm not sure M/S understand it either.
+    { include: [ "<knownfolders.h>", "private", "<Knownfolders.h>", "public" ] },
 
 # Files that are included by other files which seem to then come for free in Windows.h but
 # shouldn't. Again, should be cleaned up.

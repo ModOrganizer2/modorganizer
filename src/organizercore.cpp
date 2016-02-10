@@ -1,15 +1,19 @@
 #include "organizercore.h"
 
+#include "imodinterface.h"
 #include "iplugingame.h"
-#include "mainwindow.h"
+#include "iuserinterface.h"
+#include "loadmechanism.h"
 #include "messagedialog.h"
+#include "modlistsortproxy.h"
+#include "plugincontainer.h"
+#include "pluginlistsortproxy.h"
 #include "logbuffer.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
 #include "lockeddialog.h"
 #include "modinfodialog.h"
 #include "spawn.h"
-#include "safewritefile.h"
 #include "syncoverwritedialog.h"
 #include "nxmaccessmanager.h"
 #include <ipluginmodpage.h>
@@ -17,18 +21,27 @@
 #include <directoryentry.h>
 #include <scopeguard.h>
 #include <utility.h>
-#include <appconfig.h>
+#include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
 
-#include <QNetworkInterface>
-#include <QMessageBox>
-#include <QDialogButtonBox>
 #include <QApplication>
+#include <QDialogButtonBox>
+#include <QMessageBox>
+#include <QNetworkInterface>
+#include <QProcess>
+#include <QTimer>
+#include <QWidget>
+
+#include <QtDebug>
 
 #include <Psapi.h>
 
+#include <exception>
 #include <functional>
+#include <memory>
+#include <set>
+#include <utility>
 
 
 using namespace MOShared;
@@ -401,8 +414,8 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   }
   //Do this the hard way
   for (const IPluginGame * const game : container->plugins<IPluginGame>()) {
-    QString n = game->getGameShortName();
-    if (game->getGameShortName() == "Skyrim") {
+    QString n = game->gameShortName();
+    if (game->gameShortName() == "Skyrim") {
       m_Updater.setNexusDownload(game);
       break;
     }
@@ -867,6 +880,16 @@ ModList *OrganizerCore::modList()
   return &m_ModList;
 }
 
+QStringList OrganizerCore::modsSortedByProfilePriority() const
+{
+  QStringList res;
+  for (unsigned int i = 0; i < currentProfile()->numRegularMods(); ++i) {
+    int modIndex = currentProfile()->modIndexByPriority(i);
+    res.push_back(ModInfo::getByIndex(modIndex)->name());
+  }
+  return res;
+}
+
 void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, bool closeAfterStart, const QString &steamAppID)
 {
   LockedDialog *dialog = new LockedDialog(qApp->activeWindow());
@@ -932,12 +955,12 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
       refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file time as the order
-      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+      if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
       refreshESPList();
-      if (managedGame()->getLoadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+      if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
         // the load order should have been retrieved from file time, now save it to our own format
         savePluginList();
       }
