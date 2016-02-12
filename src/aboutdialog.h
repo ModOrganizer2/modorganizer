@@ -22,10 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define ABOUTDIALOG_H
 
 #include <QDialog>
-#include <QListWidgetItem>
+class QListWidgetItem;
+#include <QObject>
+#include <QString>
+
 #include <map>
-#include <vector>
-#include <utility>
 
 namespace Ui {
   class AboutDialog;

@@ -21,19 +21,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SELFUPDATER_H
 
 
-#include <archive.h>
 #include <versioninfo.h>
 
-#include <QObject>
-#include <QNetworkReply>
-#include <QFile>
-#include <QProgressDialog>
-
-#include <windows.h>
-
+class Archive;
+class NexusInterface;
 namespace MOBase { class IPluginGame; }
 
-class NexusInterface;
+#include <QFile>
+#include <QObject>
+#include <QString>
+#include <QVariant>
+#include <QtGlobal> //for qint64
+
+class QNetworkReply;
+class QProgressDialog;
 
 
 /**

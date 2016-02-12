@@ -18,10 +18,6 @@ SET(organizer_SRCS
     settings.cpp
     selfupdater.cpp
     selectiondialog.cpp
-    savegameinfowidgetgamebryo.cpp
-    savegameinfowidget.cpp
-    savegamegamebryo.cpp
-    savegame.cpp
     queryoverwritedialog.cpp
     profilesdialog.cpp
     profile.cpp
@@ -94,13 +90,7 @@ SET(organizer_SRCS
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
-    shared/gameinfo.cpp
-    shared/oblivioninfo.cpp
-    shared/fallout3info.cpp
-    shared/fallout4info.cpp
-    shared/falloutnvinfo.cpp
     shared/util.cpp
-    shared/skyriminfo.cpp
     shared/appconfig.cpp
     shared/leaktrace.cpp
     shared/stackdata.cpp
@@ -115,10 +105,6 @@ SET(organizer_HDRS
     settings.h
     selfupdater.h
     selectiondialog.h
-    savegameinfowidgetgamebryo.h
-    savegameinfowidget.h
-    savegamegamebyro.h
-    savegame.h
     queryoverwritedialog.h
     profilesdialog.h
     profile.h
@@ -191,13 +177,7 @@ SET(organizer_HDRS
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
-    shared/gameinfo.h
-    shared/oblivioninfo.h
-    shared/fallout3info.h
-    shared/fallout4info.h
-    shared/falloutnvinfo.h
     shared/util.h
-    shared/skyriminfo.h
     shared/appconfig.h
     shared/appconfig.inc
     shared/leaktrace.h
@@ -210,7 +190,6 @@ SET(organizer_UIS
     simpleinstalldialog.ui
     settingsdialog.ui
     selectiondialog.ui
-    savegameinfowidget.ui
     queryoverwritedialog.ui
     profilesdialog.ui
     overwriteinfodialog.ui

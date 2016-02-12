@@ -27,10 +27,6 @@ SOURCES += \
     settings.cpp \
     selfupdater.cpp \
     selectiondialog.cpp \
-    savegameinfowidgetgamebryo.cpp \
-    savegameinfowidget.cpp \
-    savegamegamebryo.cpp \
-    savegame.cpp \
     queryoverwritedialog.cpp \
     profilesdialog.cpp \
     profile.cpp \
@@ -107,10 +103,6 @@ HEADERS  += \
     settings.h \
     selfupdater.h \
     selectiondialog.h \
-    savegameinfowidgetgamebryo.h \
-    savegameinfowidget.h \
-    savegamegamebyro.h \
-    savegame.h \
     queryoverwritedialog.h \
     profilesdialog.h \
     profile.h \
@@ -183,7 +175,6 @@ FORMS    += \
     simpleinstalldialog.ui \
     settingsdialog.ui \
     selectiondialog.ui \
-    savegameinfowidget.ui \
     queryoverwritedialog.ui \
     profilesdialog.ui \
     overwriteinfodialog.ui \

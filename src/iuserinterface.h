@@ -7,6 +7,7 @@
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
 
+class QSettings;
 
 class IUserInterface
 {
