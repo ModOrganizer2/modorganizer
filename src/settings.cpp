@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QRegExp>
+#include <QDir>
 
 #include <memory>
 
@@ -179,6 +180,11 @@ QString Settings::getSteamAppID() const
   return m_Settings.value("Settings/app_id", m_GamePlugin->steamAPPId()).toString();
 }
 
+bool Settings::usePrereleases() const
+{
+  return m_Settings.value("Settings/use_prereleases", false).toBool();
+}
+
 void Settings::setDownloadSpeed(const QString &serverName, int bytesPerSecond)
 {
   m_Settings.beginGroup("Servers");
@@ -213,34 +219,55 @@ std::map<QString, int> Settings::getPreferredServers()
   return result;
 }
 
-QString Settings::getConfigurablePath(const QString &key, const QString &def) const
+QString Settings::getConfigurablePath(const QString &key,
+                                      const QString &def,
+                                      bool resolve) const
 {
-  return QDir::fromNativeSeparators(m_Settings.value(QString("settings/") + key, qApp->property("dataPath").toString() + "/" + def).toString());
+  QString result = QDir::fromNativeSeparators(
+      m_Settings.value(QString("settings/") + key,
+                       qApp->property("dataPath").toString() + "/" + def)
+          .toString());
+  if (resolve) {
+    result.replace("%BASE_DIR%", getBaseDirectory());
+  }
+  return result;
 }
 
-QString Settings::getDownloadDirectory() const
+QString Settings::getBaseDirectory() const
 {
-  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()));
+  return QDir::fromNativeSeparators(m_Settings.value(
+      "settings/base_directory", qApp->property("dataPath").toString()).toString());
 }
 
-QString Settings::getCacheDirectory() const
+QString Settings::getDownloadDirectory(bool resolve) const
 {
-  return getConfigurablePath("cache_directory", ToQString(AppConfig::cachePath()));
+  return getConfigurablePath("download_directory", ToQString(AppConfig::downloadPath()), resolve);
 }
 
-QString Settings::getModDirectory() const
+QString Settings::getCacheDirectory(bool resolve) const
 {
-  return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()));
+  return getConfigurablePath("cache_directory", ToQString(AppConfig::cachePath()), resolve);
 }
 
-QString Settings::getProfileDirectory() const
+QString Settings::getModDirectory(bool resolve) const
 {
-  return getConfigurablePath("profiles_directory", ToQString(AppConfig::profilesPath()));
+  return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()), resolve);
+}
+
+QString Settings::getProfileDirectory(bool resolve) const
+{
+  return getConfigurablePath("profiles_directory", ToQString(AppConfig::profilesPath()), resolve);
+}
+
+QString Settings::getOverwriteDirectory(bool resolve) const
+{
+  return getConfigurablePath("overwrite_directory",
+                             ToQString(AppConfig::overwritePath()), resolve);
 }
 
 QString Settings::getNMMVersion() const
 {
-  static const QString MIN_NMM_VERSION = "0.52.3";
+  static const QString MIN_NMM_VERSION = "0.61.13";
   QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
   if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
     result = MIN_NMM_VERSION;
@@ -508,12 +535,7 @@ void Settings::addLanguages(QComboBox *languageBox)
 void Settings::addStyles(QComboBox *styleBox)
 {
   styleBox->addItem("None", "");
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   styleBox->addItem("Fusion", "Fusion");
-#else
-  styleBox->addItem("Plastique", "Plastique");
-  styleBox->addItem("Cleanlooks", "Cleanlooks");
-#endif
 
   QDirIterator langIter(QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::stylesheetsPath()), QStringList("*.qss"), QDir::Files);
   while (langIter.hasNext()) {
@@ -575,6 +597,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_logLevelBox(m_dialog.findChild<QComboBox *>("logLevelBox"))
   , m_compactBox(m_dialog.findChild<QCheckBox *>("compactBox"))
   , m_showMetaBox(m_dialog.findChild<QCheckBox *>("showMetaBox"))
+  , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
 {
   // FIXME I think 'addLanguages' lives in here not in parent
   m_parent->addLanguages(m_languageBox);
@@ -606,6 +629,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   m_logLevelBox->setCurrentIndex(m_parent->logLevel());
   m_compactBox->setChecked(m_parent->compactDownloads());
   m_showMetaBox->setChecked(m_parent->metaDownloads());
+  m_usePrereleaseBox->setChecked(m_parent->usePrereleases());
 }
 
 void Settings::GeneralTab::update()
@@ -629,23 +653,53 @@ void Settings::GeneralTab::update()
 
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
   m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
+  m_Settings.setValue("Settings/use_prereleases", m_usePrereleaseBox->isChecked());
 }
 
 Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
   : SettingsTab(parent, dialog)
+  , m_baseDirEdit(m_dialog.findChild<QLineEdit *>("baseDirEdit"))
   , m_downloadDirEdit(m_dialog.findChild<QLineEdit *>("downloadDirEdit"))
   , m_modDirEdit(m_dialog.findChild<QLineEdit *>("modDirEdit"))
   , m_cacheDirEdit(m_dialog.findChild<QLineEdit *>("cacheDirEdit"))
   , m_profilesDirEdit(m_dialog.findChild<QLineEdit *>("profilesDirEdit"))
+  , m_overwriteDirEdit(m_dialog.findChild<QLineEdit *>("overwriteDirEdit"))
 {
-    m_downloadDirEdit->setText(m_parent->getDownloadDirectory());
-    m_modDirEdit->setText(m_parent->getModDirectory());
-    m_cacheDirEdit->setText(m_parent->getCacheDirectory());
-    m_profilesDirEdit->setText(m_parent->getProfileDirectory());
+  m_baseDirEdit->setText(m_parent->getBaseDirectory());
+  /*
+  m_downloadDirEdit->setText(m_parent->getDownloadDirectory(false));
+  m_modDirEdit->setText(m_parent->getModDirectory(false));
+  m_cacheDirEdit->setText(m_parent->getCacheDirectory(false));
+  m_profilesDirEdit->setText(m_parent->getProfileDirectory(false));
+  m_overwriteDirEdit->setText(m_parent->getOverwriteDirectory(false));
+  */
+
+  QString basePath = parent->getBaseDirectory();
+  QDir baseDir(basePath);
+  for (const auto &dir : {
+       std::make_pair(m_downloadDirEdit, m_parent->getDownloadDirectory(false)),
+       std::make_pair(m_modDirEdit, m_parent->getModDirectory(false)),
+       std::make_pair(m_cacheDirEdit, m_parent->getCacheDirectory(false)),
+       std::make_pair(m_profilesDirEdit, m_parent->getProfileDirectory(false)),
+       std::make_pair(m_overwriteDirEdit, m_parent->getOverwriteDirectory(false))
+      }) {
+    QString storePath = baseDir.relativeFilePath(dir.second);
+    qDebug("%s -> %s", qPrintable(dir.second), qPrintable(storePath));
+    if (storePath.startsWith("..") || QDir::isAbsolutePath(storePath)) {
+      storePath = dir.second;
+    } else {
+      storePath = QString("%BASE_DIR%/") + storePath;
+    }
+    dir.first->setText(storePath);
+  }
 }
 
 void Settings::PathsTab::update()
 {
+  typedef std::tuple<QString, QString, std::wstring> Directory;
+
+  QString basePath = m_parent->getBaseDirectory();
+
   if ((QDir::fromNativeSeparators(m_modDirEdit->text())
        != QDir::fromNativeSeparators(m_parent->getModDirectory()))
       && (QMessageBox::question(
@@ -660,6 +714,38 @@ void Settings::PathsTab::update()
     m_modDirEdit->setText(m_parent->getModDirectory());
   }
 
+  for (const Directory &dir :{
+       Directory{m_downloadDirEdit->text(), "download_directory", AppConfig::downloadPath()},
+       Directory{m_cacheDirEdit->text(), "cache_directory", AppConfig::cachePath()},
+       Directory{m_modDirEdit->text(), "mod_directory", AppConfig::modsPath()},
+       Directory{m_overwriteDirEdit->text(), "overwrite_directory", AppConfig::overwritePath()},
+       Directory{m_profilesDirEdit->text(), "profiles_directory", AppConfig::profilesPath()}
+      }) {
+    QString path, settingsKey;
+    std::wstring defaultName;
+    std::tie(path, settingsKey, defaultName) = dir;
+
+    settingsKey = QString("Settings/%1").arg(settingsKey);
+
+    QString realPath = path;
+    realPath.replace("%BASE_DIR%", m_parent->getBaseDirectory());
+
+    if (!QDir(realPath).exists()) {
+      QDir().mkpath(realPath);
+    }
+
+    qDebug("%s -> %s", qPrintable(path), qPrintable(realPath));
+
+    if (QFileInfo(realPath)
+        != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
+      m_Settings.setValue(settingsKey, path);
+    } else {
+      m_Settings.remove(settingsKey);
+    }
+  }
+
+
+/*
   if (!QDir(m_downloadDirEdit->text()).exists()) {
     QDir().mkpath(m_downloadDirEdit->text());
   }
@@ -707,6 +793,7 @@ void Settings::PathsTab::update()
   } else {
     m_Settings.remove("Settings/profiles_directory");
   }
+  */
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)

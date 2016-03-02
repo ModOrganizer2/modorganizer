@@ -53,6 +53,12 @@ signals:
   void resetDialogs();
 
 private slots:
+  void on_browseBaseDirBtn_clicked();
+
+private slots:
+  void on_browseOverwriteDirBtn_clicked();
+
+private slots:
   void on_browseProfilesDirBtn_clicked();
 
 private slots:

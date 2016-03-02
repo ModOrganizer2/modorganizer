@@ -100,6 +100,15 @@ void SettingsDialog::on_bsaDateBtn_clicked()
                        dir.absolutePath().toStdWString());
 }
 
+void SettingsDialog::on_browseBaseDirBtn_clicked()
+{
+  QString temp = QFileDialog::getExistingDirectory(
+      this, tr("Select base directory"), ui->baseDirEdit->text());
+  if (!temp.isEmpty()) {
+    ui->baseDirEdit->setText(temp);
+  }
+}
+
 void SettingsDialog::on_browseDownloadDirBtn_clicked()
 {
   QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), ui->downloadDirEdit->text());
@@ -129,6 +138,14 @@ void SettingsDialog::on_browseProfilesDirBtn_clicked()
   QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), ui->profilesDirEdit->text());
   if (!temp.isEmpty()) {
     ui->profilesDirEdit->setText(temp);
+  }
+}
+
+void SettingsDialog::on_browseOverwriteDirBtn_clicked()
+{
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select overwrite directory"), ui->overwriteDirEdit->text());
+  if (!temp.isEmpty()) {
+    ui->overwriteDirEdit->setText(temp);
   }
 }
 

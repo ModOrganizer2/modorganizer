@@ -108,6 +108,36 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
+        <widget class="QCheckBox" name="usePrereleaseBox">
+         <property name="toolTip">
+          <string>Update to non-stable releases.</string>
+         </property>
+         <property name="whatsThis">
+          <string>If this is enabled, the integrated update mechanism will notify of all releases, including pre-releases (alphas, betas).
+
+Please use this only if you're sufficiently tech-savvy to investigate issues, look for known problems in the issue tracker and create meaningful reports.
+
+If you use pre-releases, never contact me directly by e-mail or via private messages!</string>
+         </property>
+         <property name="text">
+          <string>Install Pre-releases (Betas)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>User interface</string>
@@ -204,54 +234,71 @@ p, li { white-space: pre-wrap; }
        <item>
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_7">
+          <widget class="QLabel" name="label_25">
            <property name="text">
-            <string>Downloads</string>
+            <string>Base Directory</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="6" column="2">
+          <widget class="QPushButton" name="browseOverwriteDirBtn">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLineEdit" name="overwriteDirEdit"/>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="baseDirEdit"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="browseBaseDirBtn">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_24">
+           <property name="text">
+            <string>Overwrite</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
           <widget class="QLabel" name="label_9">
            <property name="text">
             <string>Caches</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
+         <item row="3" column="2">
           <widget class="QPushButton" name="browseModDirBtn">
            <property name="text">
             <string notr="true">...</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="4" column="1">
           <widget class="QLineEdit" name="cacheDirEdit"/>
          </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="downloadDirEdit">
-           <property name="toolTip">
-            <string>Directory where downloads are stored.</string>
-           </property>
-           <property name="whatsThis">
-            <string>Directory where downloads are stored.</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_8">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_7">
            <property name="text">
-            <string>Mods</string>
+            <string>Downloads</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="2">
+         <item row="4" column="2">
           <widget class="QPushButton" name="browseCacheDirBtn">
            <property name="text">
             <string notr="true">...</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="3" column="1">
           <widget class="QLineEdit" name="modDirEdit">
            <property name="toolTip">
             <string>Directory where mods are stored.</string>
@@ -261,7 +308,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
+         <item row="2" column="2">
           <widget class="QPushButton" name="browseDownloadDirBtn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -274,22 +321,52 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="downloadDirEdit">
+           <property name="toolTip">
+            <string>Directory where downloads are stored.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Directory where downloads are stored.</string>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="0">
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Mods</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QPushButton" name="browseProfilesDirBtn">
+           <property name="text">
+            <string>...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="profilesDirEdit"/>
+         </item>
+         <item row="5" column="0">
           <widget class="QLabel" name="label_22">
            <property name="text">
             <string>Profiles</string>
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="profilesDirEdit"/>
-         </item>
-         <item row="3" column="2">
-          <widget class="QPushButton" name="browseProfilesDirBtn">
-           <property name="text">
-            <string>...</string>
+         <item row="1" column="1">
+          <spacer name="verticalSpacer_8">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
-          </widget>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
