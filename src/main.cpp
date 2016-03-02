@@ -434,11 +434,11 @@ void setupPath()
   ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
 }
 
-
-int runApplication(MOApplication &application, SingleInstance &instance)
+int runApplication(MOApplication &application, SingleInstance &instance,
+                   const QString &splashPath)
 {
   qDebug("start main application");
-  QPixmap pixmap(":/MO/gui/splash");
+  QPixmap pixmap(splashPath);
   QSplashScreen splash(pixmap);
 
   QString dataPath = application.property("dataPath").toString();
@@ -473,6 +473,17 @@ int runApplication(MOApplication &application, SingleInstance &instance)
         application.applicationDirPath(), settings, pluginContainer);
     if (game == nullptr) {
       return 1;
+    }
+    if (splashPath.startsWith(':')) {
+      // currently using MO splash, see if the plugin contains one
+      QString pluginSplash
+          = QString(":/%1/splash").arg(game->gameShortName());
+      QImage image(pluginSplash);
+      if (!image.isNull()) {
+        image.save(dataPath + "/splash.png");
+      } else {
+        qDebug("no plugin splash");
+      }
     }
 
     organizer.setManagedGame(game);
@@ -630,7 +641,12 @@ int main(int argc, char *argv[])
 
     LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
-    int result = runApplication(application, instance);
+    QString splash = dataPath + "/splash.png";
+    if (!QFile::exists(dataPath + "/splash.png")) {
+      splash = ":/MO/gui/splash";
+    }
+
+    int result = runApplication(application, instance, splash);
 
     if (result != INT_MAX) {
       return result;
