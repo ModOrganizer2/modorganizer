@@ -74,6 +74,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "safewritefile.h"
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
+#include "eventfilter.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -289,6 +290,17 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
+
+  // don't allow mouse wheel to switch grouping, too many people accidentally
+  // turn on grouping and then don't understand what happened
+
+  EventFilter *noWheel
+      = new EventFilter(this, [](QObject *, QEvent *event) -> bool {
+          return event->type() == QEvent::Wheel;
+        });
+
+  ui->groupCombo->installEventFilter(noWheel);
+  ui->profileBox->installEventFilter(noWheel);
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -1064,9 +1076,7 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
   {
-    std::vector<FileEntry::Ptr> files = directoryEntry.getFiles();
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      FileEntry::Ptr current = *iter;
+    for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
       }
@@ -1476,12 +1486,10 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   if (index == 0) {
     m_OrganizerCore.refreshESPList();
   } else if (index == 1) {
-    m_OrganizerCore.refreshBSAList();
-  } else if (index == 2) {
     refreshDataTree();
-  } else if (index == 3) {
+  } else if (index == 2) {
     refreshSaveList();
-  } else if (index == 4) {
+  } else if (index == 3) {
     ui->downloadView->scrollToBottom();
   }
 }
