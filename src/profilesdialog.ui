@@ -46,6 +46,16 @@ p, li { white-space: pre-wrap; }
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="localIniFilesBox">
+       <property name="text">
+        <string>Local Game Settings</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="invalidationBox">
        <property name="toolTip">
         <string>This ensures data files from mods are actually used. You want to enable this unless you use a different tool for Archive Invalidation.</string>

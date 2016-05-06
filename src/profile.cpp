@@ -72,6 +72,8 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   QString profilesDir = Settings::instance().getProfileDirectory();
   QDir profileBase(profilesDir);
 
+  m_Settings = new QSettings(profileBase.absoluteFilePath("settings.ini"));
+
   QString fixedName = name;
   if (!fixDirectoryName(fixedName)) {
     throw MyException(tr("invalid profile name %1").arg(name));
@@ -113,19 +115,18 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
 {
   assert(gamePlugin != nullptr);
 
+  m_Settings = new QSettings(directory.absoluteFilePath("settings.ini"),
+                             QSettings::IniFormat);
+
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
     touchFile(m_Directory.filePath("modlist.txt"));
   }
 
-  IPluginGame::ProfileSettings settings = IPluginGame::CONFIGURATION
-                                        | IPluginGame::MODS
+  IPluginGame::ProfileSettings settings = IPluginGame::MODS
                                         | IPluginGame::SAVEGAMES;
   gamePlugin->initializeProfile(directory, settings);
 
-  if (!QFile::exists(getIniFileName())) {
-    reportError(QObject::tr("\"%1\" is missing or inaccessible").arg(getIniFileName()));
-  }
   refreshModStatus();
 }
 
@@ -136,12 +137,15 @@ Profile::Profile(const Profile &reference)
   , m_GamePlugin(reference.m_GamePlugin)
 
 {
+  m_Settings = new QSettings(m_Directory.absoluteFilePath("settings.ini"),
+                             QSettings::IniFormat);
   refreshModStatus();
 }
 
 
 Profile::~Profile()
 {
+  delete m_Settings;
   m_ModListWriter.writeImmediately(true);
 }
 
@@ -655,6 +659,30 @@ bool Profile::enableLocalSaves(bool enable)
   return true;
 }
 
+bool Profile::localSettingsEnabled() const
+{
+  return m_Directory.exists(getIniFileName());
+}
+
+bool Profile::enableLocalSettings(bool enable)
+{
+  // TODO: this currently assumes game settings are stored in an ini file.
+  // This shall become very interesting when a game stores its settings in the
+  // registry
+  QString backupFile = getIniFileName() + "_";
+  if (enable) {
+    if (m_Directory.exists(backupFile)) {
+      shellRename(backupFile, getIniFileName());
+    } else {
+      IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
+      game->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
+    }
+  } else {
+    shellRename(getIniFileName(), backupFile);
+  }
+
+  return true;
+}
 
 QString Profile::getModlistFileName() const
 {
@@ -714,3 +742,14 @@ void Profile::rename(const QString &newName)
   m_Directory = profileDir.absoluteFilePath(newName);
 }
 
+QVariant Profile::setting(const QString &section, const QString &name,
+                          const QVariant &fallback)
+{
+  return m_Settings->value(section + "/" + name, fallback);
+}
+
+void Profile::storeSetting(const QString &section, const QString &name,
+                           const QVariant &value)
+{
+  m_Settings->setValue(section + "/" + name, value);
+}

@@ -58,7 +58,6 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
 
   QDir profilesDir(Settings::instance().getProfileDirectory());
   profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
-  m_ProfilesList = findChild<QListWidget*>("profilesList");
 
   QDirIterator profileIter(profilesDir);
 
@@ -322,7 +321,17 @@ void ProfilesDialog::on_localSavesBox_stateChanged(int state)
 
 void ProfilesDialog::on_transferButton_clicked()
 {
-  const Profile::Ptr currentProfile = m_ProfilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
+  const Profile::Ptr currentProfile = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
   TransferSavesDialog transferDialog(*currentProfile, m_Game, this);
   transferDialog.exec();
+}
+
+void ProfilesDialog::on_localIniFilesBox_stateChanged(int state)
+{
+  Profile::Ptr currentProfile = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
+
+  if (!currentProfile->enableLocalSettings(state == Qt::Checked)) {
+    // revert checkbox-state
+    ui->localIniFilesBox->setChecked(state != Qt::Checked);
+  }
 }

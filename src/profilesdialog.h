@@ -61,6 +61,9 @@ protected:
 
   virtual void showEvent(QShowEvent *event);
 
+private slots:
+  void on_localIniFilesBox_stateChanged(int state);
+
 private:
 
   QListWidgetItem *addItem(const QString &name);

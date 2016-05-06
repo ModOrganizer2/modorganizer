@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDir>
 #include <QObject>
 #include <QString>
+#include <QSettings>
 
 #include <boost/shared_ptr.hpp>
 
@@ -112,20 +113,32 @@ public:
   /**
    * @return true if this profile uses local save games
    */
-  bool localSavesEnabled() const;
+  virtual bool localSavesEnabled() const override;
 
   /**
    * @brief enables or disables the use of local save games for this profile
-   * disabling this does not delete exising local saves but they will not be visible
-   * in the game
+   * when disabling the user will be asked if he wants to remove the save games
+   * in the profile
    * @param enable if true, local saves are enabled, otherewise they are disabled
    */
   bool enableLocalSaves(bool enable);
 
   /**
+   * @return true if this profile uses local ini files
+   */
+  virtual bool localSettingsEnabled() const override;
+
+  /**
+   * @brief enables or disables the use of local ini files for this profile
+   * disabling this does not delete existing ini files but the global ones will be used
+   * @param enable
+   */
+  bool enableLocalSettings(bool enable);
+
+  /**
    * @return name of the profile (this is identical to its directory name)
    **/
-  QString name() const { return m_Directory.dirName(); }
+  virtual QString name() const override { return m_Directory.dirName(); }
 
   /**
    * @return the path of the plugins file in this profile
@@ -267,6 +280,12 @@ public:
 
   void dumpModStatus() const;
 
+  QVariant setting(const QString &section, const QString &name,
+                   const QVariant &fallback = QVariant());
+
+  void storeSetting(const QString &section, const QString &name,
+                    const QVariant &value);
+
 signals:
 
   /**
@@ -311,7 +330,9 @@ private:
 
   QDir m_Directory;
 
-  MOBase::IPluginGame const * const m_GamePlugin;
+  QSettings *m_Settings;
+
+  const MOBase::IPluginGame *m_GamePlugin;
 
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
