@@ -20,13 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "profile.h"
 
 #include "modinfo.h"
-#include "safewritefile.h"
 #include "settings.h"
 #include <utility.h>
 #include <error_report.h>
 #include "appconfig.h"
 #include <iplugingame.h>
 #include <report.h>
+#include <safewritefile.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
 

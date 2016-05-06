@@ -71,7 +71,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "previewdialog.h"
 #include "browserdialog.h"
 #include "aboutdialog.h"
-#include "safewritefile.h"
+#include <safewritefile.h>
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include "eventfilter.h"
