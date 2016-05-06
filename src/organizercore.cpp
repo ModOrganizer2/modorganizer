@@ -596,7 +596,7 @@ void OrganizerCore::createDefaultProfile()
 
 void OrganizerCore::prepareVFS()
 {
-  m_USVFS.updateMapping(fileMapping());
+  m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -969,10 +969,21 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
+void OrganizerCore::spawnBinary(const Executable &exe)
+{
+  spawnBinary(
+      exe.m_BinaryInfo, exe.m_Arguments,
+      exe.m_WorkingDirectory.length() != 0 ? exe.m_WorkingDirectory
+                                           : exe.m_BinaryInfo.absolutePath(),
+      exe.m_SteamAppID,
+      m_CurrentProfile->setting("custom_overwrites", exe.m_Title).toString());
+}
+
 void OrganizerCore::spawnBinary(const QFileInfo &binary,
                                 const QString &arguments,
                                 const QDir &currentDirectory,
-                                const QString &steamAppID)
+                                const QString &steamAppID,
+                                const QString &customOverwrite)
 {
   LockedDialog *dialog = new LockedDialog(qApp->activeWindow());
   dialog->show();
@@ -983,7 +994,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
 
   HANDLE processHandle
       = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(),
-                          currentDirectory, steamAppID);
+                          currentDirectory, steamAppID, customOverwrite);
   if (processHandle != INVALID_HANDLE_VALUE) {
     if (m_UserInterface != nullptr) {
       m_UserInterface->setWindowEnabled(false);
@@ -1082,7 +1093,8 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
                                         const QString &arguments,
                                         const QString &profileName,
                                         const QDir &currentDirectory,
-                                        const QString &steamAppID)
+                                        const QString &steamAppID,
+                                        const QString &customOverwrite)
 {
   prepareStart();
 
@@ -1135,11 +1147,16 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
   }
 
   if (m_AboutToRun(binary.absoluteFilePath())) {
-    m_USVFS.updateMapping(fileMapping());
+    try {
+      m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
+    } catch (const std::exception &e) {
+      QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
+      return INVALID_HANDLE_VALUE;
+    }
+
     QString modsPath = settings().getModDirectory();
 
     QString binPath = binary.absoluteFilePath();
-
     if (binPath.startsWith(modsPath, Qt::CaseInsensitive)) {
       // binary was installed as a MO mod. Need to start it through a (hooked)
       // proxy to ensure pathes are correct
@@ -1185,6 +1202,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
   QString steamAppID;
+  QString customOverwrite;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
 
@@ -1200,6 +1218,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     try {
       const Executable &exe = m_ExecutablesList.findByBinary(binary);
       steamAppID = exe.m_SteamAppID;
+      customOverwrite
+          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+                .toString();
     } catch (const std::runtime_error &) {
       // nop
     }
@@ -1208,6 +1229,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     try {
       const Executable &exe = m_ExecutablesList.find(executable);
       steamAppID = exe.m_SteamAppID;
+      customOverwrite
+          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+                .toString();
       if (arguments == "") {
         arguments = exe.m_Arguments;
       }
@@ -1223,7 +1247,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   }
 
   return spawnBinaryDirect(binary, arguments, profileName, currentDirectory,
-                           steamAppID);
+                           steamAppID, customOverwrite);
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
@@ -1781,7 +1805,8 @@ void OrganizerCore::prepareStart()
   storeSettings();
 }
 
-std::vector<Mapping> OrganizerCore::fileMapping()
+std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
+                                                const QString &customOverwrite)
 {
   // need to wait until directory structure
   while (m_DirectoryUpdate) {
@@ -1789,12 +1814,39 @@ std::vector<Mapping> OrganizerCore::fileMapping()
     QCoreApplication::processEvents();
   }
 
-  int overwriteId = m_DirectoryStructure->getOriginByName(L"Overwrite").getID();
-
   IPluginGame *game  = qApp->property("managed_game").value<IPluginGame *>();
-  MappingType result = fileMapping(
-      QDir::toNativeSeparators(game->dataDirectory().absolutePath()), "\\",
-      directoryStructure(), directoryStructure(), overwriteId);
+  Profile profile(QDir(m_Settings.getProfileDirectory() + "/" + profileName),
+                  game);
+
+  MappingType result;
+
+  QString dataPath
+      = QDir::toNativeSeparators(game->dataDirectory().absolutePath());
+
+  bool overwriteActive = false;
+
+  for (auto mod : profile.getActiveMods()) {
+    if (std::get<0>(mod).compare("overwrite", Qt::CaseInsensitive) == 0) {
+      continue;
+    }
+
+    unsigned int modIndex = ModInfo::getIndex(std::get<0>(mod));
+    ModInfo::Ptr modPtr   = ModInfo::getByIndex(modIndex);
+
+    bool createTarget = customOverwrite == std::get<0>(mod);
+
+    overwriteActive |= createTarget;
+
+    if (modPtr->isRegular()) {
+      result.insert(result.end(), {QDir::toNativeSeparators(std::get<1>(mod)),
+                                   dataPath, true, createTarget});
+    }
+  }
+
+  if (!overwriteActive && !customOverwrite.isEmpty()) {
+    throw MyException(tr("The designated write target \"%1\" is not enabled.")
+                          .arg(customOverwrite));
+  }
 
   if (m_CurrentProfile->localSavesEnabled()) {
     LocalSavegames *localSaves = game->feature<LocalSavegames>();
@@ -1807,6 +1859,13 @@ std::vector<Mapping> OrganizerCore::fileMapping()
       qWarning("local save games not supported by this game plugin");
     }
   }
+
+  result.insert(result.end(), {
+                  QDir::toNativeSeparators(m_Settings.getOverwriteDirectory()),
+                  QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
+                  true,
+                  customOverwrite.isEmpty()
+                });
 
   for (MOBase::IPluginFileMapper *mapper :
        m_PluginContainer->plugins<MOBase::IPluginFileMapper>()) {

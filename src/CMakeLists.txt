@@ -84,6 +84,7 @@ SET(organizer_SRCS
     organizercore.cpp
     instancemanager.cpp
     usvfsconnector.cpp
+    eventfilter.cpp
 
     shared/inject.cpp
     shared/windows_error.cpp
@@ -170,6 +171,7 @@ SET(organizer_HDRS
     iuserinterface.h
     instancemanager.h
     usvfsconnector.h
+    eventfilter.h
 
     shared/inject.h
     shared/windows_error.h

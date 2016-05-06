@@ -129,8 +129,8 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), const QString &steamAppID = "");
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
+  void spawnBinary(const Executable &exe);
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite);
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -172,11 +172,6 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
-
-  /**
-   * @brief return a descriptor of the mappings real file->virtual file
-   */
-  std::vector<Mapping> fileMapping();
 
 public: // IPluginDiagnose interface
 
@@ -231,11 +226,22 @@ private:
 
   bool testForSteam();
 
+  /**
+   * @brief return a descriptor of the mappings real file->virtual file
+   */
+  std::vector<Mapping> fileMapping(const QString &profile,
+                                   const QString &customOverwrite);
+
   std::vector<Mapping>
   fileMapping(const QString &dataPath, const QString &relPath,
               const MOShared::DirectoryEntry *base,
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
+
+  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
+                   const QDir &currentDirectory = QDir(),
+                   const QString &steamAppID = "",
+                   const QString &customOverwrite = "");
 
 private slots:
 

@@ -29,15 +29,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
+EditExecutablesDialog::EditExecutablesDialog(
+    const ExecutablesList &executablesList, const ModList &modList,
+    Profile *profile, QWidget *parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
   , m_CurrentItem(nullptr)
   , m_ExecutablesList(executablesList)
+  , m_Profile(profile)
 {
   ui->setupUi(this);
 
   refreshExecutablesWidget();
+
+  ui->newFilesModBox->addItems(modList.allMods());
 }
 
 EditExecutablesDialog::~EditExecutablesDialog()
@@ -86,23 +91,30 @@ void EditExecutablesDialog::resetInput()
   ui->appIDOverwriteEdit->clear();
   ui->overwriteAppIDBox->setChecked(false);
   ui->useAppIconCheckBox->setChecked(false);
+  ui->newFilesModCheckBox->setChecked(false);
   m_CurrentItem = nullptr;
 }
 
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.updateExecutable(ui->titleEdit->text(),
-                                     QDir::fromNativeSeparators(ui->binaryEdit->text()),
-                                     ui->argumentsEdit->text(),
-                                     QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-                                     ui->overwriteAppIDBox->isChecked() ?
-                                       ui->appIDOverwriteEdit->text() : "",
-                                     Executable::UseApplicationIcon | Executable::CustomExecutable,
-                                     (ui->useAppIconCheckBox->isChecked() ?
-                                       Executable::UseApplicationIcon : Executable::Flags())
-                                     | Executable::CustomExecutable);
+  m_ExecutablesList.updateExecutable(
+        ui->titleEdit->text(),
+        QDir::fromNativeSeparators(ui->binaryEdit->text()),
+        ui->argumentsEdit->text(),
+        QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+        ui->overwriteAppIDBox->isChecked() ?
+          ui->appIDOverwriteEdit->text() : "",
+        Executable::UseApplicationIcon | Executable::CustomExecutable,
+        (ui->useAppIconCheckBox->isChecked() ?
+           Executable::UseApplicationIcon : Executable::Flags())
+        | Executable::CustomExecutable);
+
+  if (ui->newFilesModCheckBox->isChecked()) {
+    m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
+                            ui->newFilesModBox->currentText());
   }
+}
 
 
 void EditExecutablesDialog::delayedRefresh()
@@ -212,8 +224,13 @@ bool EditExecutablesDialog::executableChanged()
 {
   if (m_CurrentItem != nullptr) {
     Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
+
+    QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+
     return selectedExecutable.m_Arguments != ui->argumentsEdit->text()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
+        || !storedCustomOverwrite.isEmpty() != ui->newFilesModCheckBox->isChecked()
+        || !storedCustomOverwrite.isEmpty() && (storedCustomOverwrite != ui->newFilesModBox->currentText())
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
         || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
@@ -296,5 +313,23 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
       ui->appIDOverwriteEdit->clear();
     }
     ui->useAppIconCheckBox->setChecked(selectedExecutable.usesOwnIcon());
+
+    int index = -1;
+
+    QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    if (!customOverwrite.isEmpty()) {
+      index = ui->newFilesModBox->findText(customOverwrite);
+      qDebug("find %s -> %d", qPrintable(customOverwrite), index);
+    }
+
+    ui->newFilesModCheckBox->setChecked(index != -1);
+    if (index != -1) {
+      ui->newFilesModBox->setCurrentIndex(index);
+    }
   }
+}
+
+void EditExecutablesDialog::on_newFilesModCheckBox_toggled(bool checked)
+{
+  ui->newFilesModBox->setEnabled(checked);
 }

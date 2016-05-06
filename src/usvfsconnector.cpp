@@ -136,6 +136,7 @@ UsvfsConnector::~UsvfsConnector()
   m_WorkerThread.wait();
 }
 
+
 void UsvfsConnector::updateMapping(const MappingType &mapping)
 {
   QProgressDialog progress;

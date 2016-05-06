@@ -24,10 +24,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QListWidgetItem>
 #include <QTimer>
 #include "executableslist.h"
+#include "profile.h"
 
 namespace Ui {
     class EditExecutablesDialog;
 }
+
+
+class ModList;
+
 
 /**
  * @brief Dialog to manage the list of executables
@@ -44,7 +49,10 @@ public:
    * @param executablesList current list of executables
    * @param parent parent widget
    **/
-  explicit EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent = 0);
+  explicit EditExecutablesDialog(const ExecutablesList &executablesList,
+                                 const ModList &modList,
+                                 Profile *profile,
+                                 QWidget *parent = 0);
 
   ~EditExecutablesDialog();
 
@@ -56,6 +64,10 @@ public:
   ExecutablesList getExecutablesList() const;
 
   void saveExecutable();
+
+private slots:
+  void on_newFilesModCheckBox_toggled(bool checked);
+
 private slots:
 
   void on_binaryEdit_textChanged(const QString &arg1);
@@ -89,12 +101,13 @@ private:
   bool executableChanged();
 
 private:
-    Ui::EditExecutablesDialog *ui;
+  Ui::EditExecutablesDialog *ui;
 
-    QListWidgetItem *m_CurrentItem;
+  QListWidgetItem *m_CurrentItem;
 
-    ExecutablesList m_ExecutablesList;
+  ExecutablesList m_ExecutablesList;
 
+  Profile *m_Profile;
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

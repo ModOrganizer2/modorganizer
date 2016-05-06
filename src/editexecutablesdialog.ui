@@ -165,9 +165,37 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0,1">
+     <item>
+      <widget class="QCheckBox" name="newFilesModCheckBox">
+       <property name="toolTip">
+        <string>If this is enabled, new files are created in the specified mod instead of the &quot;Overwrite&quot; mod.</string>
+       </property>
+       <property name="text">
+        <string>Create Files in Mod instead of Overwrite (*)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="newFilesModBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QCheckBox" name="useAppIconCheckBox">
      <property name="text">
       <string>Use Application's Icon for shortcuts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>(*) This setting is profile-specific</string>
      </property>
     </widget>
    </item>
@@ -235,6 +263,23 @@ Right now the only case I know of where this needs to be overwritten is for the 
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>executablesListBox</tabstop>
+  <tabstop>titleEdit</tabstop>
+  <tabstop>binaryEdit</tabstop>
+  <tabstop>browseButton</tabstop>
+  <tabstop>workingDirEdit</tabstop>
+  <tabstop>browseDirButton</tabstop>
+  <tabstop>argumentsEdit</tabstop>
+  <tabstop>overwriteAppIDBox</tabstop>
+  <tabstop>appIDOverwriteEdit</tabstop>
+  <tabstop>newFilesModCheckBox</tabstop>
+  <tabstop>newFilesModBox</tabstop>
+  <tabstop>useAppIconCheckBox</tabstop>
+  <tabstop>addButton</tabstop>
+  <tabstop>removeButton</tabstop>
+  <tabstop>closeButton</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

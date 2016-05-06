@@ -1004,13 +1004,8 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
     m_OrganizerCore.spawnBinary(
-          selectedExecutable.m_BinaryInfo,
-          selectedExecutable.m_Arguments,
-          selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
-                                                              : selectedExecutable.m_BinaryInfo.absolutePath(),
-          selectedExecutable.m_SteamAppID);
+        m_OrganizerCore.executablesList()->find(action->text()));
   } else {
     qCritical("not an action?");
   }
@@ -1516,14 +1511,7 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked()
 {
-  const Executable &selectedExecutable(getSelectedExecutable());
-
-  m_OrganizerCore.spawnBinary(
-        selectedExecutable.m_BinaryInfo,
-        selectedExecutable.m_Arguments,
-        selectedExecutable.m_WorkingDirectory.length() != 0 ? selectedExecutable.m_WorkingDirectory
-                                                            : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID);
+  m_OrganizerCore.spawnBinary(getSelectedExecutable());
 }
 
 
@@ -1613,7 +1601,9 @@ bool MainWindow::modifyExecutablesDialog()
 {
   bool result = false;
   try {
-    EditExecutablesDialog dialog(*m_OrganizerCore.executablesList());
+    EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
+                                 *m_OrganizerCore.modList(),
+                                 m_OrganizerCore.currentProfile());
     if (dialog.exec() == QDialog::Accepted) {
       m_OrganizerCore.setExecutablesList(dialog.getExecutablesList());
       result = true;
@@ -2423,7 +2413,32 @@ void MainWindow::information_clicked()
   }
 }
 
+void MainWindow::createEmptyMod_clicked()
+{
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
 
+  while (name->isEmpty()) {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Create Mod..."),
+                                      tr("This will create an empty mod.\n"
+                                         "Please enter a name:"), QLineEdit::Normal, "", &ok),
+                GUESS_USER);
+    if (!ok) {
+      return;
+    }
+  }
+
+  if (m_OrganizerCore.getMod(name) != nullptr) {
+    reportError(tr("A mod with this name already exists"));
+    return;
+  }
+
+  IModInterface *newMod = m_OrganizerCore.createMod(name);
+  if (newMod == nullptr) {
+    return;
+  }
+}
 
 void MainWindow::createModFromOverwrite()
 {
@@ -2861,6 +2876,8 @@ QMenu *MainWindow::modListContextMenu()
 {
   QMenu *menu = new QMenu(this);
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
+
+  menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
   menu->addAction(tr("Disable all visible"), this, SLOT(disableVisibleMods()));
@@ -3529,10 +3546,14 @@ void MainWindow::openDataFile()
     QString arguments;
     switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
       case 1: {
-        m_OrganizerCore.spawnBinaryDirect(binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(), targetInfo.absolutePath(), "");
+        m_OrganizerCore.spawnBinaryDirect(
+            binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(),
+            targetInfo.absolutePath(), "", "");
       } break;
       case 2: {
-        ::ShellExecuteW(nullptr, L"open", ToWString(targetInfo.absoluteFilePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        ::ShellExecuteW(nullptr, L"open",
+                        ToWString(targetInfo.absoluteFilePath()).c_str(),
+                        nullptr, nullptr, SW_SHOWNORMAL);
       } break;
       default: {
         // nop

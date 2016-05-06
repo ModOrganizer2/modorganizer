@@ -369,6 +369,7 @@ private slots:
 
   // modlist context menu
   void installMod_clicked();
+  void createEmptyMod_clicked();
   void restoreBackup_clicked();
   void renameMod_clicked();
   void removeMod_clicked();
