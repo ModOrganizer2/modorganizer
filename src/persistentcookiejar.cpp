@@ -26,7 +26,7 @@ void PersistentCookieJar::save() {
   QList<QNetworkCookie> cookies = allCookies();
   data << static_cast<quint32>(cookies.size());
 
-  foreach (const QNetworkCookie &cookie, allCookies()) {
+  for (const QNetworkCookie &cookie : allCookies()) {
     data << cookie.toRawForm();
   }
 

@@ -1345,8 +1345,6 @@ void OrganizerCore::refreshESPList()
   // clear list
   try {
     m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
-                         m_CurrentProfile->getPluginsFileName(),
-                         m_CurrentProfile->getLoadOrderFileName(),
                          m_CurrentProfile->getLockedOrderFileName());
   } catch (const std::exception &e) {
     reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
@@ -1621,7 +1619,7 @@ void OrganizerCore::loginSuccessful(bool necessary)
   if (necessary) {
     MessageDialog::showMessage(tr("login successful"), qApp->activeWindow());
   }
-  foreach (QString url, m_PendingDownloads) {
+  for (QString url : m_PendingDownloads) {
     downloadRequestedNXM(url);
   }
   m_PendingDownloads.clear();
@@ -1765,9 +1763,7 @@ void OrganizerCore::savePluginList()
     m_PostRefreshTasks.append([&]() { this->savePluginList(); });
     return;
   }
-  m_PluginList.saveTo(m_CurrentProfile->getPluginsFileName(),
-                      m_CurrentProfile->getLoadOrderFileName(),
-                      m_CurrentProfile->getLockedOrderFileName(),
+  m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName(),
                       m_CurrentProfile->getDeleterFileName(),
                       m_Settings.hideUncheckedPlugins());
   m_PluginList.saveLoadOrder(*m_DirectoryStructure);
@@ -1825,6 +1821,7 @@ std::vector<Mapping> OrganizerCore::fileMapping()
   return result;
 }
 
+
 std::vector<Mapping> OrganizerCore::fileMapping(
     const QString &dataPath, const QString &relPath, const DirectoryEntry *base,
     const DirectoryEntry *directoryEntry, int createDestination)
@@ -1841,8 +1838,9 @@ std::vector<Mapping> OrganizerCore::fileMapping(
     QString originPath
         = QString::fromStdWString(base->getOriginByID(origin).getPath());
     QString fileName = QString::fromStdWString(current->getName());
+//    QString fileName = ToQString(current->getName());
     QString source   = originPath + relPath + fileName;
-    QString target = dataPath + relPath + fileName;
+    QString target   = dataPath + relPath + fileName;
     if (source != target) {
       result.push_back({source, target, false, false});
     }

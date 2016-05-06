@@ -346,7 +346,8 @@ DirectoryTree *InstallationManager::createFilesTree()
             // to uncheck all files in a directory while keeping the dir checked. Those directories are
             // currently not installed.
             DirectoryTree::Node *newNode = new DirectoryTree::Node;
-            newNode->setData(DirectoryTreeInformation(*componentIter, i));
+            newNode->setData(
+                DirectoryTreeInformation(*componentIter, static_cast<int>(i)));
             currentNode->addNode(newNode, false);
             currentNode = newNode;
           } else {

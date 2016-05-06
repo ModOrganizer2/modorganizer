@@ -351,14 +351,18 @@ void ModInfoDialog::refreshLists()
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
 {
-  for (size_t i = 0; i < factory.numCategories(); ++i) {
+  for (int i = 0; i < static_cast<int>(factory.numCategories()); ++i) {
     if (factory.getParentID(i) != rootLevel) {
       continue;
     }
     int categoryID = factory.getCategoryID(i);
-    QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
+    QTreeWidgetItem *newItem
+        = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
     newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
-    newItem->setCheckState(0, enabledCategories.find(categoryID) != enabledCategories.end() ? Qt::Checked : Qt::Unchecked);
+    newItem->setCheckState(0, enabledCategories.find(categoryID)
+                                      != enabledCategories.end()
+                                  ? Qt::Checked
+                                  : Qt::Unchecked);
     newItem->setData(0, Qt::UserRole, categoryID);
     if (factory.hasChildren(i)) {
       addCategories(factory, enabledCategories, newItem, categoryID);

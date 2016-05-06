@@ -144,15 +144,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 #include <QWidgetAction>
 
-#include <QtDebug>
+#include <QDebug>
 #include <QtGlobal>
 
-
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 #include <QtConcurrent/QtConcurrentRun>
-#else
-#include <QtConcurrentRun>
-#endif
 
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
@@ -4198,7 +4193,12 @@ void MainWindow::on_bossButton_clicked()
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
-    m_OrganizerCore.prepareVFS();
+    try {
+      m_OrganizerCore.prepareVFS();
+    } catch (const std::exception &e) {
+      QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
+      return;
+    }
 
     HANDLE loot = startBinary(QFileInfo(qApp->applicationDirPath() + "/loot/lootcli.exe"),
                               parameters.join(" "),

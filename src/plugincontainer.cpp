@@ -200,7 +200,7 @@ void PluginContainer::unloadPlugins()
 
   bf::for_each(m_Plugins, clearPlugins());
 
-  foreach (const boost::signals2::connection &connection, m_DiagnosisConnections) {
+  for (const boost::signals2::connection &connection : m_DiagnosisConnections) {
     connection.disconnect();
   }
   m_DiagnosisConnections.clear();
@@ -283,7 +283,7 @@ void PluginContainer::loadPlugins()
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
+          qWarning("plugin \"%s\" failed to load (may be outdated)", qPrintable(pluginName));
         }
       }
     }

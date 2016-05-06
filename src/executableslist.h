@@ -133,7 +133,8 @@ public:
                      const QString &steamAppID,
                      Executable::Flags flags)
   {
-    updateExecutable(title, executableName, arguments, workingDirectory, steamAppID, Executable::AllFlags, flags);
+    updateExecutable(title, executableName, arguments, workingDirectory,
+                     steamAppID, Executable::AllFlags, flags);
   }
 
   /**

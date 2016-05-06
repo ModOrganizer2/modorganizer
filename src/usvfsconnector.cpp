@@ -76,13 +76,16 @@ LogWorker::~LogWorker()
 
 void LogWorker::process()
 {
+  int noLogCycles = 0;
   while (!m_QuitRequested) {
     if (GetLogMessages(&m_Buffer[0], m_Buffer.size(), false)) {
       m_LogFile.write(m_Buffer.c_str());
       m_LogFile.write("\n");
       m_LogFile.flush();
+      noLogCycles = 0;
     } else {
-      QThread::sleep(1);
+      QThread::msleep(std::min(40, noLogCycles) * 5);
+      ++noLogCycles;
     }
   }
   emit finished();
@@ -148,11 +151,13 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     if (value % 10 == 0) {
       QCoreApplication::processEvents();
     }
+
     if (map.isDirectory) {
       VirtualLinkDirectoryStatic(map.source.toStdWString().c_str(),
                                  map.destination.toStdWString().c_str(),
                                  (map.createTarget ? LINKFLAG_CREATETARGET : 0)
-                                     | LINKFLAG_RECURSIVE);
+                                     | LINKFLAG_RECURSIVE
+                                 );
     } else {
       VirtualLinkFile(map.source.toStdWString().c_str(),
                       map.destination.toStdWString().c_str(), 0);

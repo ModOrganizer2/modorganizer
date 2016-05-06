@@ -159,7 +159,7 @@ void DirectoryRefresher::refresh()
     } catch (const std::exception &e) {
       emit error(tr("failed to read mod (%1): %2").arg(iter->modName, e.what()));
     }
-    emit progress((i * 100) / m_Mods.size() + 1);
+    emit progress((i * 100) / static_cast<int>(m_Mods.size()) + 1);
   }
 
   emit progress(100);

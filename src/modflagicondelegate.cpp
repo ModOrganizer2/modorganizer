@@ -58,7 +58,7 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
   if (modIdx < ModInfo::getNumMods()) {
     ModInfo::Ptr info = ModInfo::getByIndex(modIdx);
     std::vector<ModInfo::EFlag> flags = info->getFlags();
-    int count = flags.size();
+    size_t count = flags.size();
     if (std::find_first_of(flags.begin(), flags.end(), m_ConflictFlags, m_ConflictFlags + 4) == flags.end()) {
       ++count;
     }
@@ -71,11 +71,11 @@ size_t ModFlagIconDelegate::getNumIcons(const QModelIndex &index) const
 
 QSize ModFlagIconDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &modelIndex) const
 {
-  int count = getNumIcons(modelIndex);
+  size_t count = getNumIcons(modelIndex);
   unsigned int index = modelIndex.data(Qt::UserRole + 1).toInt();
   QSize result;
   if (index < ModInfo::getNumMods()) {
-    result = QSize(count * 40, 20);
+    result = QSize(static_cast<int>(count) * 40, 20);
   } else {
     result = QSize(1, 20);
   }

@@ -206,11 +206,12 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
     std::string candidate2 = result[2].str();
     if (candidate2.length() != 0 && (candidate2.find_last_of("VvRr") == std::string::npos)) {
       // well, that second match might be an id too...
-      unsigned offset = strspn(candidate2.c_str(), "-_ ");
+      size_t offset = strspn(candidate2.c_str(), "-_ ");
       if (offset < candidate2.length() && query) {
         SelectionDialog selection(tr("Failed to guess mod id for \"%1\", please pick the correct one").arg(fileName));
         QString r2Highlight(fileName);
-        r2Highlight.insert(result.position(2) + result.length(2), "* ").insert(result.position(2) + offset, " *");
+        r2Highlight.insert(result.position(2) + result.length(2), "* ")
+            .insert(result.position(2) + static_cast<int>(offset), " *");
         QString r3Highlight(fileName);
         r3Highlight.insert(result.position(3) + result.length(3), "* ").insert(result.position(3), " *");
 
@@ -264,14 +265,14 @@ QString NexusInterface::getModURL(int modID) const
   return QString("%1/mods/%2").arg(getGameURL()).arg(modID);
 }
 
-bool NexusInterface::isModURL(int modID, QString const &url) const
+bool NexusInterface::isModURL(int modID, const QString &url) const
 {
-  if (url == getModURL(modID)) {
+  if (QUrl(url) == QUrl(getModURL(modID))) {
     return true;
   }
   //Try the alternate (old style) mod name
   QString alt = QString("%1/%2").arg(getOldModsURL()).arg(modID);
-  return alt == url;
+  return QUrl(alt) == QUrl(url);
 }
 
 int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,

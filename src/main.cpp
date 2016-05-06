@@ -161,9 +161,9 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
   if (dbgDLL) {
     FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
     if (funcDump) {
-      wchar_t exeNameBuffer[MAX_PATH];
-      ::GetModuleFileNameW(nullptr, exeNameBuffer, MAX_PATH);
-      QString dumpName = QString::fromWCharArray(exeNameBuffer) + ".dmp";
+      QString dataPath = qApp->property("dataPath").toString();
+      QString exeName = QFileInfo(qApp->applicationFilePath()).fileName();
+      QString dumpName = dataPath + "/" + exeName + ".dmp";
 
       if (QMessageBox::question(nullptr, QObject::tr("Woops"),
                                 QObject::tr("ModOrganizer has crashed! "

@@ -126,15 +126,17 @@ void EditExecutablesDialog::on_addButton_clicked()
 
 void EditExecutablesDialog::on_browseButton_clicked()
 {
-  QString binaryName = FileDialogMemory::getOpenFileName("editExecutableBinary", this,
-            tr("Select a binary"), QString(), tr("Executable (%1)").arg("*.exe *.bat *.jar"));
+  QString binaryName = FileDialogMemory::getOpenFileName(
+      "editExecutableBinary", this, tr("Select a binary"), QString(),
+      tr("Executable (%1)").arg("*.exe *.bat *.jar"));
 
   if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
     QString binaryPath;
     { // try to find java automatically
       std::wstring binaryNameW = ToWString(binaryName);
       WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer)
+          > reinterpret_cast<HINSTANCE>(32)) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
           qDebug("failed to determine binary type of \"%ls\": %lu", binaryNameW.c_str(), ::GetLastError());

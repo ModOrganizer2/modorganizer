@@ -112,7 +112,7 @@ void ModInfo::createFromOverwrite()
 unsigned int ModInfo::getNumMods()
 {
   QMutexLocker locker(&s_Mutex);
-  return s_Collection.size();
+  return static_cast<unsigned int>(s_Collection.size());
 }
 
 
@@ -121,7 +121,7 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
   QMutexLocker locker(&s_Mutex);
 
   if (index >= s_Collection.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("invalid mod index %1").arg(index));
   }
   return s_Collection[index];
 }
@@ -150,7 +150,7 @@ bool ModInfo::removeMod(unsigned int index)
   QMutexLocker locker(&s_Mutex);
 
   if (index >= s_Collection.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("remove: invalid mod index %1").arg(index));
   }
   // update the indices first
   ModInfo::Ptr modInfo = s_Collection[index];

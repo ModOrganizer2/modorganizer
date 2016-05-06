@@ -163,7 +163,7 @@ void Profile::writeModlistNow()
       return;
     }
 
-    for (int i = m_ModStatus.size() - 1; i >= 0; --i) {
+    for (int i = static_cast<int>(m_ModStatus.size()) - 1; i >= 0; --i) {
       // the priority order was inverted on load so it has to be inverted again
       unsigned int index = m_ModIndexByPriority[i];
       if (index != UINT_MAX) {
@@ -311,7 +311,7 @@ void Profile::refreshModStatus()
   // invert priority order to match that of the pluginlist. Also
   // give priorities to mods not referenced in the profile
   for (size_t i = 0; i < m_ModStatus.size(); ++i) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<int>(i));
     if (modInfo->alwaysEnabled()) {
       m_ModStatus[i].m_Enabled = true;
     }
@@ -340,7 +340,7 @@ void Profile::refreshModStatus()
   if (topInsert < 0) {
     int offset = topInsert * -1;
     for (size_t i = 0; i < m_ModStatus.size(); ++i) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(static_cast<unsigned int>(i));
       if (modInfo->getFixedPriority() == INT_MAX) {
         continue;
       }
@@ -636,11 +636,12 @@ bool Profile::enableLocalSaves(bool enable)
       m_Directory.mkdir("saves");
     }
   } else {
-    QMessageBox::StandardButton res = QMessageBox::question(QApplication::activeModalWidget(), tr("Delete savegames?"),
-                                                            tr("Do you want to delete local savegames? (If you select \"No\", the save games "
-                                                               "will show up again if you re-enable local savegames)"),
-                                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-                                                            QMessageBox::Cancel);
+    QMessageBox::StandardButton res = QMessageBox::question(
+        QApplication::activeModalWidget(), tr("Delete savegames?"),
+        tr("Do you want to delete local savegames? (If you select \"No\", the "
+           "save games will show up again if you re-enable local savegames)"),
+        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+        QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
       shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
     } else if (res == QMessageBox::No) {

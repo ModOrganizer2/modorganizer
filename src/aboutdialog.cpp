@@ -54,10 +54,13 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   addLicense("RRZE Icon Set", LICENSE_CCBY3);
   addLicense("Icons by Lorc, Delapouite and sbed available on http://game-icons.net", LICENSE_CCBY3);
   addLicense("Castle Core", LICENSE_APACHE2);
+  addLicense("LOOT", LICENSE_GPL3);
 
   ui->nameLabel->setText(QString("<span style=\"font-size:12pt; font-weight:600;\">%1 %2</span>").arg(ui->nameLabel->text()).arg(version));
-#ifdef HGID
+#if defined(HGID)
   ui->revisionLabel->setText(ui->revisionLabel->text() + " " + HGID);
+#elif defined(GITID)
+  ui->revisionLabel->setText(ui->revisionLabel->text() + " " + GITID);
 #else
   ui->revisionLabel->setText(ui->revisionLabel->text() + " unknown");
 #endif

@@ -174,7 +174,7 @@ public:
   /**
    * @return path to this profile
    **/
-  QString absolutePath() const;
+  virtual QString absolutePath() const override;
 
   /**
    * @return path to this profile's save games

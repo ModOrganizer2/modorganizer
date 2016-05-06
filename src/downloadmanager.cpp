@@ -88,7 +88,8 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   QString fileName = QFileInfo(filePath).fileName();
 
   if (fileName.endsWith(UNFINISHED)) {
-    info->m_FileName = fileName.mid(0, fileName.length() - strlen(UNFINISHED));
+    info->m_FileName = fileName.mid(
+        0, fileName.length() - static_cast<int>(strlen(UNFINISHED)));
     info->m_State = STATE_PAUSED;
   } else {
     info->m_FileName = fileName;
@@ -471,7 +472,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 void DownloadManager::removeFile(int index, bool deleteFile)
 {
   if (index >= m_ActiveDownloads.size()) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("remove: invalid download index %1").arg(index));
   }
 
   DownloadInfo *download = m_ActiveDownloads.at(index);
@@ -538,7 +539,7 @@ void DownloadManager::refreshAlphabeticalTranslation()
 void DownloadManager::restoreDownload(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("restore: invalid download index: %1").arg(index));
   }
 
   DownloadInfo *download = m_ActiveDownloads.at(index);
@@ -571,7 +572,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       }
     } else {
       if (index >= m_ActiveDownloads.size()) {
-        reportError(tr("invalid index %1").arg(index));
+        reportError(tr("remove: invalid download index %1").arg(index));
         return;
       }
 
@@ -589,7 +590,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
 void DownloadManager::cancelDownload(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("invalid index %1").arg(index));
+    reportError(tr("cancel: invalid download index %1").arg(index));
     return;
   }
 
@@ -602,7 +603,7 @@ void DownloadManager::cancelDownload(int index)
 void DownloadManager::pauseDownload(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("invalid index %1").arg(index));
+    reportError(tr("pause: invalid download index %1").arg(index));
     return;
   }
 
@@ -622,7 +623,7 @@ void DownloadManager::pauseDownload(int index)
 void DownloadManager::resumeDownload(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("invalid index %1").arg(index));
+    reportError(tr("resume: invalid download index %1").arg(index));
     return;
   }
   DownloadInfo *info = m_ActiveDownloads[index];
@@ -633,7 +634,7 @@ void DownloadManager::resumeDownload(int index)
 void DownloadManager::resumeDownloadInt(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("invalid index %1").arg(index));
+    reportError(tr("resume (int): invalid download index %1").arg(index));
     return;
   }
   DownloadInfo *info = m_ActiveDownloads[index];
@@ -673,7 +674,7 @@ DownloadManager::DownloadInfo *DownloadManager::downloadInfoByID(unsigned int id
 void DownloadManager::queryInfo(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("invalid index %1").arg(index));
+    reportError(tr("query: invalid download index %1").arg(index));
     return;
   }
   DownloadInfo *info = m_ActiveDownloads[index];
@@ -721,7 +722,7 @@ int DownloadManager::numPendingDownloads() const
 std::pair<int, int> DownloadManager::getPendingDownload(int index)
 {
   if ((index < 0) || (index >= m_PendingDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("get pending: invalid download index %1").arg(index));
   }
 
   return m_PendingDownloads.at(index);
@@ -730,7 +731,7 @@ std::pair<int, int> DownloadManager::getPendingDownload(int index)
 QString DownloadManager::getFilePath(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("get path: invalid download index %1").arg(index));
   }
 
   return m_OutputDirectory + "/" + m_ActiveDownloads.at(index)->m_FileName;
@@ -751,7 +752,7 @@ QString DownloadManager::getFileTypeString(int fileType)
 QString DownloadManager::getDisplayName(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("display name: invalid download index %1").arg(index));
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
@@ -768,7 +769,7 @@ QString DownloadManager::getDisplayName(int index) const
 QString DownloadManager::getFileName(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("file name: invalid download index %1").arg(index));
   }
 
   return m_ActiveDownloads.at(index)->m_FileName;
@@ -777,7 +778,7 @@ QString DownloadManager::getFileName(int index) const
 QDateTime DownloadManager::getFileTime(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("file time: invalid download index %1").arg(index));
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
@@ -791,7 +792,7 @@ QDateTime DownloadManager::getFileTime(int index) const
 qint64 DownloadManager::getFileSize(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("file size: invalid download index %1").arg(index));
   }
 
   return m_ActiveDownloads.at(index)->m_TotalSize;
@@ -801,7 +802,7 @@ qint64 DownloadManager::getFileSize(int index) const
 int DownloadManager::getProgress(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("progress: invalid download index %1").arg(index));
   }
 
   return m_ActiveDownloads.at(index)->m_Progress;
@@ -811,7 +812,7 @@ int DownloadManager::getProgress(int index) const
 DownloadManager::DownloadState DownloadManager::getState(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("state: invalid download index %1").arg(index));
   }
 
   return m_ActiveDownloads.at(index)->m_State;
@@ -821,7 +822,7 @@ DownloadManager::DownloadState DownloadManager::getState(int index) const
 bool DownloadManager::isInfoIncomplete(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("infocomplete: invalid download index %1").arg(index));
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
@@ -836,7 +837,7 @@ bool DownloadManager::isInfoIncomplete(int index) const
 int DownloadManager::getModID(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("mod id: invalid download index %1").arg(index));
   }
   return m_ActiveDownloads.at(index)->m_FileInfo->modID;
 }
@@ -844,7 +845,7 @@ int DownloadManager::getModID(int index) const
 bool DownloadManager::isHidden(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("ishidden: invalid download index %1").arg(index));
   }
   return m_ActiveDownloads.at(index)->m_Hidden;
 }
@@ -853,7 +854,7 @@ bool DownloadManager::isHidden(int index) const
 const ModRepositoryFileInfo *DownloadManager::getFileInfo(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("file info: invalid download index %1").arg(index));
   }
 
   return m_ActiveDownloads.at(index)->m_FileInfo;
@@ -863,7 +864,7 @@ const ModRepositoryFileInfo *DownloadManager::getFileInfo(int index) const
 void DownloadManager::markInstalled(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("mark installed: invalid download index %1").arg(index));
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
@@ -878,7 +879,7 @@ void DownloadManager::markInstalled(int index)
 void DownloadManager::markUninstalled(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("invalid index"));
+    throw MyException(tr("mark uninstalled: invalid download index %1").arg(index));
   }
 
   DownloadInfo *info = m_ActiveDownloads.at(index);

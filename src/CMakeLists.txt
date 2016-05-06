@@ -272,14 +272,22 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/archive/src
                     ${project_path}/../usvfs/usvfs
                     ${project_path}/game_gamebryo/src
-                    ${project_path}/game_features/src)
+                    ${project_path}/game_features/src
+                    ${project_path}/githubpp/src)
 
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
                  ${project_path}/../zlib/lib)
 
-ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+EXECUTE_PROCESS(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -DGITID="${GIT_COMMIT_HASH}")
 
 IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
   SET(usvfs_name usvfs_x64)
