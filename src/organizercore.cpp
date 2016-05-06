@@ -455,14 +455,6 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
     emit managedGameChanged(m_GamePlugin);
   }
-  // Do this the hard way
-  for (const IPluginGame *const game : container->plugins<IPluginGame>()) {
-    QString n = game->gameShortName();
-    if (game->gameShortName() == "Skyrim") {
-      m_Updater.setNexusDownload(game);
-      break;
-    }
-  }
 }
 
 void OrganizerCore::disconnectPlugins()

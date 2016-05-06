@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <versioninfo.h>
+#include <github.h>
 
 class Archive;
 class NexusInterface;
@@ -87,20 +88,12 @@ public:
    **/
   MOBase::VersionInfo getVersion() const { return m_MOVersion; }
 
-  /** Set the game check for updates */
-  void setNexusDownload(MOBase::IPluginGame const *game);
-
 public slots:
 
   /**
    * @brief request information about the current version
    **/
   void testForUpdate();
-
-  void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmFilesAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage);
-  void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
 signals:
 
@@ -121,10 +114,10 @@ signals:
 
 private:
 
-  void download(const QString &downloadLink, const QString &fileName);
+  void openOutputFile(const QString &fileName);
+  void download(const QString &downloadLink);
   void installUpdate();
   void report7ZipError(const QString &errorMessage);
-  QString retrieveNews(const QString &description);
   void showProgress();
   void closeProgress();
 
@@ -140,8 +133,6 @@ private:
   QWidget *m_Parent;
   MOBase::VersionInfo m_MOVersion;
   NexusInterface *m_Interface;
-  int m_UpdateRequestID;
-  QString m_NewestVersion;
   QFile m_UpdateFile;
   QNetworkReply *m_Reply;
   QProgressDialog *m_Progress { nullptr };
@@ -150,7 +141,9 @@ private:
 
   Archive *m_ArchiveHandler;
 
-  MOBase::IPluginGame const *m_NexusDownload;
+  GitHub m_GitHub;
+  QJsonObject m_UpdateCandidate;
+
 };
 
 

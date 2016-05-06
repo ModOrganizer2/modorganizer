@@ -292,11 +292,13 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebKitWidgets
                       ${Boost_LIBRARIES}
                       zlibstatic
-                      uibase esptk bsatk
+                      uibase esptk bsatk githubpp
                       ${usvfs_name}
                       Dbghelp advapi32 Version Shlwapi)
-
-SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS /GL)
+IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO
+                        ${OPTIMIZE_COMPILE_FLAGS})
+ENDIF()
 SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
 
