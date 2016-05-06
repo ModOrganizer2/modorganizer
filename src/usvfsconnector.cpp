@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "usvfsconnector.h"
 #include "settings.h"
 #include <memory>
+#include <sstream>
+#include <iomanip>
 #include <QTemporaryFile>
 #include <QProgressDialog>
 #include <QDateTime>
@@ -27,35 +29,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 static const char SHMID[] = "mod_organizer_instance";
 
-/*
-extern "C" DLLEXPORT BOOL WINAPI VirtualLinkFile(LPCWSTR source, LPCWSTR
-destination, BOOL failIfExists);
-extern "C" DLLEXPORT BOOL WINAPI VirtualLinkDirectoryStatic(LPCWSTR source,
-LPCWSTR destination, unsigned int flags);
-extern "C" DLLEXPORT BOOL WINAPI ConnectVFS(const usvfs::Parameters
-*parameters);
-extern "C" DLLEXPORT void WINAPI DisconnectVFS();
-extern "C" DLLEXPORT void WINAPI GetCurrentVFSName(char *buffer, size_t size);
-extern "C" DLLEXPORT BOOL WINAPI CreateProcessHooked(LPCWSTR lpApplicationName
-                                                     , LPWSTR lpCommandLine
-                                                     , LPSECURITY_ATTRIBUTES
-lpProcessAttributes
-                                                     , LPSECURITY_ATTRIBUTES
-lpThreadAttributes
-                                                     , BOOL bInheritHandles
-                                                     , DWORD dwCreationFlags
-                                                     , LPVOID lpEnvironment
-                                                     , LPCWSTR
-lpCurrentDirectory
-                                                     , LPSTARTUPINFOW
-lpStartupInfo
-                                                     , LPPROCESS_INFORMATION
-lpProcessInformation
-                                                     );
-extern "C" DLLEXPORT void __cdecl InitLogging(bool toLocal = false);
-extern "C" DLLEXPORT void __cdecl InitHooks(LPVOID userData, size_t
-userDataSize);
-*/
+
+std::string to_hex(void *bufferIn, size_t bufferSize)
+{
+  unsigned char *buffer = static_cast<unsigned char *>(bufferIn);
+  std::ostringstream temp;
+  temp << std::hex;
+  for (size_t i = 0; i < bufferSize; ++i) {
+    temp << std::setfill('0') << std::setw(2) << (unsigned int)buffer[i];
+    if ((i % 16) == 15) {
+      temp << "\n";
+    } else {
+      temp << " ";
+    }
+  }
+  return temp.str();
+}
+
 
 LogWorker::LogWorker()
   : m_Buffer(1024, '\0')

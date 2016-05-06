@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_editexecutablesdialog.h"
 #include "filedialogmemory.h"
 #include "stackdata.h"
+#include "modlist.h"
 #include <QMessageBox>
 #include <Shellapi.h>
 #include <utility.h>

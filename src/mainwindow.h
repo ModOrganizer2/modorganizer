@@ -183,6 +183,9 @@ protected:
   virtual void dragEnterEvent(QDragEnterEvent *event);
   virtual void dropEvent(QDropEvent *event);
 
+private slots:
+  void on_clickBlankButton_clicked();
+
 private:
 
   void cleanup();

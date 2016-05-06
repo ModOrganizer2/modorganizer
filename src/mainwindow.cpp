@@ -2978,11 +2978,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         if (info->getNexusID() > 0)  {
           menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
-        }
-
-        //If a URL is specified which is not the game's URL, pop up 'visit web page'
-        if (info->getURL() != "" &&
-            !NexusInterface::instance()->isModURL(info->getNexusID(), info->getURL())) {
+        } else if ((info->getURL() != "")) {
           menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
         }
 
@@ -3025,7 +3021,7 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
   m_ModListSortProxy->setCategoryFilter(categories);
   m_ModListSortProxy->setContentFilter(content);
-  ui->clickBlankLabel->setEnabled(categories.size() > 0);
+  ui->clickBlankButton->setEnabled(categories.size() > 0);
   if (indices.count() == 0) {
     ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<All>")));
   } else if (indices.count() > 1) {
@@ -4579,3 +4575,8 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
+
+void MainWindow::on_clickBlankButton_clicked()
+{
+  deselectFilters();
+}
