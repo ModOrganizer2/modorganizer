@@ -304,6 +304,8 @@ private:
 
   void testMasters();
 
+  void fixPriorities();
+
 private:
 
   std::vector<ESPInfo> m_ESPs;

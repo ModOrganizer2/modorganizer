@@ -118,12 +118,16 @@ void PluginList::refresh(const QString &profileName
 
   m_CurrentProfile = profileName;
 
+  QStringList availablePlugins;
+
   std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (FileEntry::Ptr current : files) {
     if (current.get() == nullptr) {
       continue;
     }
     QString filename = ToQString(current->getName());
+
+    availablePlugins.append(filename.toLower());
 
     if (m_ESPsByName.find(filename.toLower()) != m_ESPsByName.end()) {
       continue;
@@ -150,11 +154,20 @@ void PluginList::refresh(const QString &profileName
         }
 
         m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni));
+        m_ESPs.rbegin()->m_Priority = -1;
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
       }
     }
   }
+
+  for (const auto &espName : m_ESPsByName) {
+    if (!availablePlugins.contains(espName.first)) {
+      m_ESPs.erase(m_ESPs.begin() + espName.second);
+    }
+  }
+
+  fixPriorities();
 
   // functions in GamePlugins will use the IPluginList interface of this, so
   // indices need to work. priority will be off however
@@ -178,6 +191,27 @@ void PluginList::refresh(const QString &profileName
   m_Refreshed();
 }
 
+void PluginList::fixPriorities()
+{
+  std::vector<std::pair<int, int>> espPrios;
+
+  for (int i = 0; i < m_ESPs.size(); ++i) {
+    int prio = m_ESPs[i].m_Priority;
+    if (prio == -1) {
+      prio = INT_MAX;
+    }
+    espPrios.push_back(std::make_pair(prio, i));
+  }
+
+  std::sort(espPrios.begin(), espPrios.end(),
+            [](const std::pair<int, int> &lhs, const std::pair<int, int> &rhs) {
+              return lhs.first < rhs.first;
+            });
+
+  for (int i = 0; i < espPrios.size(); ++i) {
+    m_ESPs[espPrios[i].second].m_Priority = i;
+  }
+}
 
 void PluginList::enableESP(const QString &name, bool enable)
 {
@@ -964,7 +998,7 @@ bool PluginList::dropMimeData(const QMimeData *mimeData, Qt::DropAction action, 
     row = parent.row();
   }
 
-  int newPriority = 0;
+  int newPriority;
 
   if ((row < 0) ||
       (row >= static_cast<int>(m_ESPs.size()))) {
