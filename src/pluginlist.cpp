@@ -163,9 +163,15 @@ void PluginList::refresh(const QString &profileName
 
   for (const auto &espName : m_ESPsByName) {
     if (!availablePlugins.contains(espName.first)) {
-      m_ESPs.erase(m_ESPs.begin() + espName.second);
+      m_ESPs[espName.second].m_Name = "";
     }
   }
+
+  m_ESPs.erase(std::remove_if(m_ESPs.begin(), m_ESPs.end(),
+                              [](const ESPInfo &info) -> bool {
+                                return info.m_Name.isEmpty();
+                              }),
+               m_ESPs.end());
 
   fixPriorities();
 
