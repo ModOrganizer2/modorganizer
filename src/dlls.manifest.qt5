@@ -4,6 +4,8 @@
     <file name="icuin53.dll"/>
     <file name="icuuc53.dll"/>
     <file name="icudt53.dll"/>
+    <file name="libeay32.dll"/>
+    <file name="ssleay32.dll"/>
     <file name="Qt5Core.dll"/>
     <file name="Qt5Declarative.dll"/>
     <file name="Qt5Gui.dll"/>
