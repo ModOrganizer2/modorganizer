@@ -1066,7 +1066,6 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
       if (m_UserInterface != nullptr) {
         m_UserInterface->setWindowEnabled(true);
       }
-      refreshDirectoryStructure();
       // need to remove our stored load order because it may be outdated if a
       // foreign tool changed the
       // file time. After removing that file, refreshESPList will use the file
@@ -1076,13 +1075,10 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
         qDebug("removing loadorder.txt");
         QFile::remove(m_CurrentProfile->getLoadOrderFileName());
       }
+      refreshDirectoryStructure();
+
       refreshESPList();
-      if (managedGame()->loadOrderMechanism()
-          == IPluginGame::LoadOrderMechanism::FileTime) {
-        // the load order should have been retrieved from file time, now save it
-        // to our own format
-        savePluginList();
-      }
+      savePluginList();
 
       m_FinishedRun(binary.absoluteFilePath(), processExitCode);
     }
@@ -1361,7 +1357,9 @@ void OrganizerCore::refreshESPList()
   if (m_DirectoryUpdate) {
     // don't mess up the esp list if we're currently updating the directory
     // structure
-    m_PostRefreshTasks.append([this]() { this->refreshESPList(); });
+    m_PostRefreshTasks.append([this]() {
+      this->refreshESPList();
+    });
     return;
   }
   m_CurrentProfile->modlistWriter().write();
@@ -1579,9 +1577,6 @@ void OrganizerCore::directory_refreshed()
     return;
   }
   m_DirectoryUpdate = false;
-  if (m_CurrentProfile != nullptr) {
-    refreshLists();
-  }
 
   for (int i = 0; i < m_ModList.rowCount(); ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
@@ -1589,6 +1584,10 @@ void OrganizerCore::directory_refreshed()
   }
   for (auto task : m_PostRefreshTasks) {
     task();
+  }
+
+  if (m_CurrentProfile != nullptr) {
+    refreshLists();
   }
 }
 
@@ -1784,7 +1783,9 @@ void OrganizerCore::savePluginList()
 {
   if (m_DirectoryUpdate) {
     // delay save till after directory update
-    m_PostRefreshTasks.append([&]() { this->savePluginList(); });
+    m_PostRefreshTasks.append([this]() {
+      this->savePluginList();
+    });
     return;
   }
   m_PluginList.saveTo(m_CurrentProfile->getLockedOrderFileName(),

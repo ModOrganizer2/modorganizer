@@ -535,6 +535,8 @@ void PluginList::setState(const QString &name, PluginStates state)
   auto iter = m_ESPsByName.find(name.toLower());
   if (iter != m_ESPsByName.end()) {
     m_ESPs[iter->second].m_Enabled = state == IPluginList::STATE_ACTIVE;
+  } else {
+    qWarning("plugin %s not found", qPrintable(name));
   }
 }
 
