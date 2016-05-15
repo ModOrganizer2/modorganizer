@@ -430,7 +430,6 @@ private slots:
   void addRemoveCategories_MenuHandler();
   void replaceCategories_MenuHandler();
 
-  void savePrimaryCategory();
   void addPrimaryCategoryCandidates();
 
   void modDetailsUpdated(bool success);

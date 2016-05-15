@@ -2676,31 +2676,6 @@ void MainWindow::replaceCategories_MenuHandler() {
   refreshFilters();
 }
 
-void MainWindow::savePrimaryCategory()
-{
-  QMenu *menu = qobject_cast<QMenu*>(sender());
-  if (menu == nullptr) {
-    qCritical("not a menu?");
-    return;
-  }
-
-  for (QAction* action : menu->actions()) {
-    QWidgetAction *widgetAction = qobject_cast<QWidgetAction*>(action);
-    if (widgetAction != nullptr) {
-      QRadioButton *btn = qobject_cast<QRadioButton*>(widgetAction->defaultWidget());
-      if (btn->isChecked()) {
-        QModelIndexList selected = ui->modList->selectionModel()->selectedRows();
-        for (int i = 0; i < selected.size(); ++i) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ModListSortProxy->mapToSource(selected.at(i)).row());
-          modInfo->setPrimaryCategory(widgetAction->data().toInt());
-        }
-        break;
-      }
-    }
-  }
-}
-
-
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
@@ -2760,15 +2735,21 @@ void MainWindow::unignoreUpdate()
   info->ignoreUpdate(false);
 }
 
-void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info)
-{
+void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
+                                              ModInfo::Ptr info) {
   const std::set<int> &categories = info->getCategories();
   for (int categoryID : categories) {
     int catIdx = m_CategoryFactory.getCategoryIndex(categoryID);
     QWidgetAction *action = new QWidgetAction(primaryCategoryMenu);
     try {
-      QRadioButton *categoryBox = new QRadioButton(m_CategoryFactory.getCategoryName(catIdx).replace('&', "&&"),
-                                             primaryCategoryMenu);
+      QRadioButton *categoryBox = new QRadioButton(
+          m_CategoryFactory.getCategoryName(catIdx).replace('&', "&&"),
+          primaryCategoryMenu);
+      connect(categoryBox, &QRadioButton::toggled, [info, categoryID](bool enable) {
+        if (enable) {
+          info->setPrimaryCategory(categoryID);
+        }
+      });
       categoryBox->setChecked(categoryID == info->getPrimaryCategory());
       action->setDefaultWidget(categoryBox);
     } catch (const std::exception &e) {
@@ -2932,7 +2913,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
-        connect(primaryCategoryMenu, SIGNAL(aboutToHide()), this, SLOT(savePrimaryCategory()));
         addMenuAsPushButton(menu, primaryCategoryMenu);
 
         menu->addSeparator();
