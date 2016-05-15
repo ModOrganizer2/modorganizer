@@ -3069,6 +3069,7 @@ void MainWindow::deleteSavegame_clicked()
                               .arg(savesMsgLabel),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     shellDelete(deleteFiles, true); // recycle bin delete.
+    refreshSaveList();
   }
 }
 
