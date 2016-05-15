@@ -275,7 +275,6 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
-    bool m_IsDummy;
     QString m_Author;
     QString m_Description;
     bool m_HasIni;
