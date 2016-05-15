@@ -104,7 +104,8 @@ bool createAndMakeWritable(const std::wstring &subPath)
            "will be made writable for the current user account). You will be asked to run "
            "\"helper.exe\" with administrative rights."),
            QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-      if (!Helper::init(dataPath.toStdWString())) {
+      if (!Helper::init(qApp->applicationDirPath().toStdWString(),
+                        dataPath.toStdWString())) {
         return false;
       }
     } else {
