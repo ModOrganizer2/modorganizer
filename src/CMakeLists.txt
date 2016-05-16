@@ -86,7 +86,6 @@ SET(organizer_SRCS
     usvfsconnector.cpp
     eventfilter.cpp
 
-    shared/inject.cpp
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
@@ -173,7 +172,6 @@ SET(organizer_HDRS
     usvfsconnector.h
     eventfilter.h
 
-    shared/inject.h
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
