@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "pluginlist.h"
-#include "inject.h"
 #include "settings.h"
 #include "scopeguard.h"
 #include "modinfo.h"

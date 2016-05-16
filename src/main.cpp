@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #include <DbgHelp.h>
 
-#include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <scopeguard.h>

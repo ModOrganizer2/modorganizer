@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "report.h"
 #include "utility.h"
 #include <report.h>
-#include <inject.h>
 #include <usvfs.h>
 #include <Shellapi.h>
 #include <appconfig.h>
