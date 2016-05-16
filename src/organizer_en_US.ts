@@ -801,7 +801,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="23"/>
-        <source>This is a list of your configured executables. Executables in grey are automatically recognised and can not be modified.</source>
+        <source>This is a list of your configured executables. Executables in grey are automatically recognised. Existing entries can be modified and new ones added.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
