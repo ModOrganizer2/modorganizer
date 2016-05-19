@@ -666,13 +666,6 @@ Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
   , m_overwriteDirEdit(m_dialog.findChild<QLineEdit *>("overwriteDirEdit"))
 {
   m_baseDirEdit->setText(m_parent->getBaseDirectory());
-  /*
-  m_downloadDirEdit->setText(m_parent->getDownloadDirectory(false));
-  m_modDirEdit->setText(m_parent->getModDirectory(false));
-  m_cacheDirEdit->setText(m_parent->getCacheDirectory(false));
-  m_profilesDirEdit->setText(m_parent->getProfileDirectory(false));
-  m_overwriteDirEdit->setText(m_parent->getOverwriteDirectory(false));
-  */
 
   QString basePath = parent->getBaseDirectory();
   QDir baseDir(basePath);
@@ -743,57 +736,6 @@ void Settings::PathsTab::update()
       m_Settings.remove(settingsKey);
     }
   }
-
-
-/*
-  if (!QDir(m_downloadDirEdit->text()).exists()) {
-    QDir().mkpath(m_downloadDirEdit->text());
-  }
-  if (QFileInfo(m_downloadDirEdit->text())
-      != QFileInfo(qApp->property("dataPath").toString() + "/"
-                   + QString::fromStdWString(AppConfig::downloadPath()))) {
-    m_Settings.setValue("Settings/download_directory",
-                        QDir::toNativeSeparators(m_downloadDirEdit->text()));
-  } else {
-    m_Settings.remove("Settings/download_directory");
-  }
-
-  if (!QDir(m_modDirEdit->text()).exists()) {
-    QDir().mkpath(m_modDirEdit->text());
-  }
-  if (QFileInfo(m_modDirEdit->text())
-      != QFileInfo(qApp->property("dataPath").toString() + "/"
-                   + QString::fromStdWString(AppConfig::modsPath()))) {
-    m_Settings.setValue("Settings/mod_directory",
-                        QDir::toNativeSeparators(m_modDirEdit->text()));
-  } else {
-    m_Settings.remove("Settings/mod_directory");
-  }
-
-  if (!QDir(m_cacheDirEdit->text()).exists()) {
-    QDir().mkpath(m_cacheDirEdit->text());
-  }
-  if (QFileInfo(m_cacheDirEdit->text())
-      != QFileInfo(qApp->property("dataPath").toString() + "/"
-                   + QString::fromStdWString(AppConfig::cachePath()))) {
-    m_Settings.setValue("Settings/cache_directory",
-                        QDir::toNativeSeparators(m_cacheDirEdit->text()));
-  } else {
-    m_Settings.remove("Settings/cache_directory");
-  }
-
-  if (!QDir(m_profilesDirEdit->text()).exists()) {
-    QDir().mkpath(m_profilesDirEdit->text());
-  }
-  if (QFileInfo(m_profilesDirEdit->text())
-      != QFileInfo(qApp->property("dataPath").toString() + "/"
-                   + QString::fromStdWString(AppConfig::profilesPath()))) {
-    m_Settings.setValue("Settings/profiles_directory",
-                        QDir::toNativeSeparators(m_profilesDirEdit->text()));
-  } else {
-    m_Settings.remove("Settings/profiles_directory");
-  }
-  */
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)

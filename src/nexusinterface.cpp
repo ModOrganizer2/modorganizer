@@ -339,10 +339,6 @@ int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData
   connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
           receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
-//  QTimer::singleShot(1000, this, SLOT(fakeFiles()));
-//  static int fID = 42;
-//  return fID++;
-
   nextRequest();
   return requestInfo.m_ID;
 }
