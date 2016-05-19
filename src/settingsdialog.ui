@@ -1052,7 +1052,9 @@ For the other games this is not a sufficient replacement for AI!</string>
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

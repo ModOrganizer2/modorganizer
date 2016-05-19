@@ -247,8 +247,8 @@ void NXMAccessManager::pageLogin()
   QByteArray postDataQuery;
   QUrlQuery postData;
   postData.addQueryItem("username", m_Username);
-  postData.addQueryItem("password", m_Password);
-  postDataQuery = postData.query(QUrl::FullyEncoded).toUtf8();
+  postData.addQueryItem("password", QUrl::toPercentEncoding(m_Password));
+  postDataQuery = postData.query(QUrl::EncodeReserved).toUtf8();
 
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 
