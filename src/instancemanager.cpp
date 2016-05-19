@@ -166,8 +166,11 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
+  QString dataPath = QDir::fromNativeSeparators(
+        QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+        + "/" + instanceId);
 
-  if (instanceId.isEmpty() && !portableInstall()) {
+  if ((instanceId.isEmpty() || !QFileInfo::exists(dataPath)) && !portableInstall()) {
     // no portable install and no selected instance
 
     QStringList instanceList = instances();
@@ -191,15 +194,10 @@ QString InstanceManager::determineDataPath()
     }
   }
 
-  if (instanceId.isEmpty()) {
-    qDebug("portable mode");
+  if (instanceId.isEmpty() || !QFileInfo::exists(dataPath)) {
     return qApp->applicationDirPath();
   } else {
     setCurrentInstance(instanceId);
-
-    QString dataPath = QDir::fromNativeSeparators(
-          QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-          + "/" + instanceId);
 
     createDataPath(dataPath);
 
