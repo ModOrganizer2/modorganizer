@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <util.h>
 
 #include <QApplication>
+#include <QNetworkCookieJar>
 
 #include <regex>
 
@@ -407,6 +408,12 @@ void NexusInterface::cleanup()
 //  delete m_DiskCache;
   m_AccessManager = nullptr;
   m_DiskCache = nullptr;
+}
+
+void NexusInterface::clearCache()
+{
+  m_DiskCache->clear();
+  m_AccessManager->clearCookies();
 }
 
 void NexusInterface::nextRequest()

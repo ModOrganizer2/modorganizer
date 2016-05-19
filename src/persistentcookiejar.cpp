@@ -15,6 +15,12 @@ PersistentCookieJar::~PersistentCookieJar() {
   save();
 }
 
+void PersistentCookieJar::clear() {
+  for (const QNetworkCookie &cookie : allCookies()) {
+    deleteCookie(cookie);
+  }
+}
+
 void PersistentCookieJar::save() {
   QTemporaryFile file;
   if (!file.open()) {

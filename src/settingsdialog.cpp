@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include "settings.h"
 #include "instancemanager.h"
+#include "nexusinterface.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
@@ -226,4 +227,10 @@ void SettingsDialog::on_changeInstanceButton_clicked()
     this->reject();
     qApp->exit(INT_MAX);
   }
+}
+
+void SettingsDialog::on_clearCacheButton_clicked()
+{
+  QDir(Settings::instance().getCacheDirectory()).removeRecursively();
+  NexusInterface::instance()->clearCache();
 }

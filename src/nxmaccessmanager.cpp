@@ -110,6 +110,15 @@ void NXMAccessManager::showCookies() const
   }
 }
 
+void NXMAccessManager::clearCookies()
+{
+  PersistentCookieJar *jar = qobject_cast<PersistentCookieJar*>(cookieJar());
+  if (jar != nullptr) {
+    jar->clear();
+  } else {
+    qWarning("failed to clear cookies, invalid cookie jar");
+  }
+}
 
 void NXMAccessManager::startLoginCheck()
 {

@@ -53,6 +53,9 @@ signals:
   void resetDialogs();
 
 private slots:
+  void on_clearCacheButton_clicked();
+
+private slots:
   void on_browseBaseDirBtn_clicked();
 
 private slots:
