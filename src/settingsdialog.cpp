@@ -65,6 +65,23 @@ void SettingsDialog::addPlugins(const std::vector<IPlugin*> &plugins)
 
 void SettingsDialog::accept()
 {
+  QString newModPath = ui->modDirEdit->text();
+  newModPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  if ((QDir::fromNativeSeparators(newModPath) !=
+       QDir::fromNativeSeparators(
+           Settings::instance().getModDirectory(true))) &&
+      (QMessageBox::question(
+           nullptr, tr("Confirm"),
+           tr("Changing the mod directory affects all your profiles! "
+              "Mods not present (or named differently) in the new location "
+              "will be disabled in all profiles. "
+              "There is no way to undo this unless you backed up your "
+              "profiles manually. Proceed?"),
+           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
+    return;
+  }
+
   storeSettings(ui->pluginsList->currentItem());
   TutorableDialog::accept();
 }
@@ -112,7 +129,10 @@ void SettingsDialog::on_browseBaseDirBtn_clicked()
 
 void SettingsDialog::on_browseDownloadDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), ui->downloadDirEdit->text());
+  QString searchPath = ui->downloadDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->downloadDirEdit->setText(temp);
   }
@@ -120,7 +140,10 @@ void SettingsDialog::on_browseDownloadDirBtn_clicked()
 
 void SettingsDialog::on_browseModDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), ui->modDirEdit->text());
+  QString searchPath = ui->modDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->modDirEdit->setText(temp);
   }
@@ -128,7 +151,10 @@ void SettingsDialog::on_browseModDirBtn_clicked()
 
 void SettingsDialog::on_browseCacheDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), ui->cacheDirEdit->text());
+  QString searchPath = ui->cacheDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->cacheDirEdit->setText(temp);
   }
@@ -136,7 +162,10 @@ void SettingsDialog::on_browseCacheDirBtn_clicked()
 
 void SettingsDialog::on_browseProfilesDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), ui->profilesDirEdit->text());
+  QString searchPath = ui->profilesDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->profilesDirEdit->setText(temp);
   }
@@ -144,7 +173,10 @@ void SettingsDialog::on_browseProfilesDirBtn_clicked()
 
 void SettingsDialog::on_browseOverwriteDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select overwrite directory"), ui->overwriteDirEdit->text());
+  QString searchPath = ui->overwriteDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select overwrite directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->overwriteDirEdit->setText(temp);
   }
@@ -222,3 +254,4 @@ void SettingsDialog::on_clearCacheButton_clicked()
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();
   NexusInterface::instance()->clearCache();
 }
+

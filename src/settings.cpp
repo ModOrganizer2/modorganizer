@@ -224,8 +224,7 @@ QString Settings::getConfigurablePath(const QString &key,
                                       bool resolve) const
 {
   QString result = QDir::fromNativeSeparators(
-      m_Settings.value(QString("settings/") + key,
-                       qApp->property("dataPath").toString() + "/" + def)
+      m_Settings.value(QString("settings/") + key, QString("%BASE_DIR%/") + def)
           .toString());
   if (resolve) {
     result.replace("%BASE_DIR%", getBaseDirectory());
@@ -677,12 +676,7 @@ Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
        std::make_pair(m_overwriteDirEdit, m_parent->getOverwriteDirectory(false))
       }) {
     QString storePath = baseDir.relativeFilePath(dir.second);
-    qDebug("%s -> %s", qPrintable(dir.second), qPrintable(storePath));
-    if (storePath.startsWith("..") || QDir::isAbsolutePath(storePath)) {
-      storePath = dir.second;
-    } else {
-      storePath = QString("%BASE_DIR%/") + storePath;
-    }
+    storePath = dir.second;
     dir.first->setText(storePath);
   }
 }
@@ -692,20 +686,6 @@ void Settings::PathsTab::update()
   typedef std::tuple<QString, QString, std::wstring> Directory;
 
   QString basePath = m_parent->getBaseDirectory();
-
-  if ((QDir::fromNativeSeparators(m_modDirEdit->text())
-       != QDir::fromNativeSeparators(m_parent->getModDirectory()))
-      && (QMessageBox::question(
-              nullptr, tr("Confirm"),
-              tr("Changing the mod directory affects all your profiles! "
-                 "Mods not present (or named differently) in the new location "
-                 "will be disabled in all profiles. "
-                 "There is no way to undo this unless you backed up your "
-                 "profiles manually. Proceed?"),
-              QMessageBox::Yes | QMessageBox::No)
-          == QMessageBox::No)) {
-    m_modDirEdit->setText(m_parent->getModDirectory());
-  }
 
   for (const Directory &dir :{
        Directory{m_downloadDirEdit->text(), "download_directory", AppConfig::downloadPath()},
@@ -727,14 +707,19 @@ void Settings::PathsTab::update()
       QDir().mkpath(realPath);
     }
 
-    qDebug("%s -> %s", qPrintable(path), qPrintable(realPath));
-
     if (QFileInfo(realPath)
         != QFileInfo(basePath + "/" + QString::fromStdWString(defaultName))) {
       m_Settings.setValue(settingsKey, path);
     } else {
       m_Settings.remove(settingsKey);
     }
+  }
+
+  if (QFileInfo(m_baseDirEdit->text()) !=
+      QFileInfo(qApp->property("dataPath").toString())) {
+    m_Settings.setValue("Settings/base_directory", m_baseDirEdit->text());
+  } else {
+    m_Settings.remove("Settings/base_directory");
   }
 }
 

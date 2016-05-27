@@ -87,6 +87,9 @@ private slots:
 
 private:
     Ui::SettingsDialog *ui;
+
 };
+
+
 
 #endif // WORKAROUNDDIALOG_H

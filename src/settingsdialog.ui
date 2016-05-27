@@ -1026,6 +1026,50 @@ For the other games this is not a sufficient replacement for AI!</string>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>languageBox</tabstop>
+  <tabstop>styleBox</tabstop>
+  <tabstop>logLevelBox</tabstop>
+  <tabstop>usePrereleaseBox</tabstop>
+  <tabstop>compactBox</tabstop>
+  <tabstop>showMetaBox</tabstop>
+  <tabstop>resetDialogsButton</tabstop>
+  <tabstop>categoriesBtn</tabstop>
+  <tabstop>baseDirEdit</tabstop>
+  <tabstop>browseBaseDirBtn</tabstop>
+  <tabstop>downloadDirEdit</tabstop>
+  <tabstop>browseDownloadDirBtn</tabstop>
+  <tabstop>modDirEdit</tabstop>
+  <tabstop>browseModDirBtn</tabstop>
+  <tabstop>cacheDirEdit</tabstop>
+  <tabstop>browseCacheDirBtn</tabstop>
+  <tabstop>profilesDirEdit</tabstop>
+  <tabstop>browseProfilesDirBtn</tabstop>
+  <tabstop>overwriteDirEdit</tabstop>
+  <tabstop>browseOverwriteDirBtn</tabstop>
+  <tabstop>loginCheckBox</tabstop>
+  <tabstop>usernameEdit</tabstop>
+  <tabstop>passwordEdit</tabstop>
+  <tabstop>clearCacheButton</tabstop>
+  <tabstop>offlineBox</tabstop>
+  <tabstop>proxyBox</tabstop>
+  <tabstop>associateButton</tabstop>
+  <tabstop>knownServersList</tabstop>
+  <tabstop>preferredServersList</tabstop>
+  <tabstop>steamUserEdit</tabstop>
+  <tabstop>steamPassEdit</tabstop>
+  <tabstop>pluginsList</tabstop>
+  <tabstop>pluginSettingsList</tabstop>
+  <tabstop>pluginBlacklist</tabstop>
+  <tabstop>appIDEdit</tabstop>
+  <tabstop>mechanismBox</tabstop>
+  <tabstop>nmmVersionEdit</tabstop>
+  <tabstop>hideUncheckedBox</tabstop>
+  <tabstop>forceEnableBox</tabstop>
+  <tabstop>displayForeignBox</tabstop>
+  <tabstop>bsaDateBtn</tabstop>
+  <tabstop>tabWidget</tabstop>
+ </tabstops>
  <resources>
   <include location="resources.qrc"/>
  </resources>
