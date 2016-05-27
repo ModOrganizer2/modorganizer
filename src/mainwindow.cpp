@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "savegameinfo.h"
 #include "spawn.h"
 #include "versioninfo.h"
+#include "instancemanager.h"
 
 #include "report.h"
 #include "modlist.h"
@@ -3880,6 +3881,17 @@ void MainWindow::on_actionProblems_triggered()
   if (problems.hasProblems()) {
     problems.exec();
     updateProblemsButton();
+  }
+}
+
+void MainWindow::on_actionChange_Game_triggered()
+{
+  if (QMessageBox::question(this, tr("Are you sure?"),
+                            tr("This will restart MO, continue?"),
+                            QMessageBox::Yes | QMessageBox::Cancel)
+      == QMessageBox::Yes) {
+    InstanceManager::instance().clearCurrentInstance();
+    qApp->exit(INT_MAX);
   }
 }
 

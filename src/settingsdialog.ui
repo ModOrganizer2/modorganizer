@@ -125,19 +125,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
         </widget>
        </item>
        <item>
-        <spacer name="verticalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>User interface</string>
@@ -183,6 +170,19 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
            </widget>
           </item>
           <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
            <widget class="QPushButton" name="categoriesBtn">
             <property name="toolTip">
              <string>Modify the categories available to arrange your mods.</string>
@@ -196,32 +196,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
            </widget>
           </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="changeInstanceButton">
-         <property name="toolTip">
-          <string>Restart MO and choose a different set of data paths.</string>
-         </property>
-         <property name="whatsThis">
-          <string>This will restart MO and give you opportunity to switch to a different set of data paths.</string>
-         </property>
-         <property name="text">
-          <string>Change Instance</string>
-         </property>
         </widget>
        </item>
       </layout>

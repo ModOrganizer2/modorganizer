@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStandardPaths>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <cstdint>
 
 
 static const char COMPANY_NAME[]     = "Tannin";
@@ -40,6 +41,11 @@ InstanceManager::InstanceManager()
 {
 }
 
+InstanceManager &InstanceManager::instance()
+{
+  static InstanceManager s_Instance;
+  return s_Instance;
+}
 
 QString InstanceManager::currentInstance() const
 {
@@ -49,6 +55,7 @@ QString InstanceManager::currentInstance() const
 void InstanceManager::clearCurrentInstance()
 {
   setCurrentInstance("");
+  m_Reset = true;
 }
 
 void InstanceManager::setCurrentInstance(const QString &name)
@@ -81,26 +88,51 @@ QString InstanceManager::queryInstanceName() const
 
 QString InstanceManager::chooseInstance(const QStringList &instanceList) const
 {
-  SelectionDialog selection(QObject::tr("Choose Instance"), nullptr);
+  enum class Special : uint8_t {
+    NewInstance,
+    Portable
+  };
+
+  SelectionDialog selection(
+      QString("<h3>%1</h3><br>%2")
+          .arg(QObject::tr("Choose Instance"))
+          .arg(QObject::tr(
+              "Each Instance is a full set of MO data files (mods, "
+              "downloads, profiles, configuration, ...). Use multiple "
+              "instances for different games. If your MO folder is "
+              "writable, you can also store a single instance locally (called "
+              "a portable install).")),
+      nullptr);
   selection.disableCancel();
   for (const QString &instance : instanceList) {
     selection.addChoice(instance, "", instance);
   }
 
-  selection.addChoice(QObject::tr("New"),
+  selection.addChoice(QIcon(":/MO/gui/add"), QObject::tr("New"),
                       QObject::tr("Create a new instance."),
-                      "");
+                      static_cast<uint8_t>(Special::NewInstance));
+
+  if (QFileInfo(qApp->applicationDirPath()).isWritable()) {
+    selection.addChoice(QIcon(":/MO/gui/package"), QObject::tr("Portable"),
+                        QObject::tr("Use MO folder for data."),
+                        static_cast<uint8_t>(Special::Portable));
+  }
+
   if (selection.exec() == QDialog::Rejected) {
     qDebug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
   }
 
-  QString choice = selection.getChoiceData().toString();
+  QVariant choice = selection.getChoiceData();
 
-  if (choice.isEmpty()) {
-    return queryInstanceName();
+  if (choice.type() == QVariant::String) {
+    return choice.toString();
   } else {
-    return choice;
+    switch (choice.value<uint8_t>()) {
+      case Special::NewInstance: return queryInstanceName();
+      case Special::Portable: return QString();
+      default: throw std::runtime_error("invalid selection");
+    }
   }
 }
 
@@ -125,27 +157,6 @@ bool InstanceManager::portableInstall() const
 }
 
 
-InstanceManager::InstallationMode InstanceManager::queryInstallMode() const
-{
-  SelectionDialog selection(QObject::tr("Installation Mode"), nullptr);
-  selection.disableCancel();
-  selection.addChoice(QObject::tr("Portable"),
-                      QObject::tr("Everything in one directory, only one game per installation."),
-                      0);
-  selection.addChoice(QObject::tr("Regular"),
-                      QObject::tr("Data in separate directory, multiple games supported."),
-                      1);
-  if (selection.exec() == QDialog::Rejected) {
-    throw MOBase::MyException(QObject::tr("Canceled"));
-  }
-
-  switch (selection.getChoiceData().toInt()) {
-    case 0:  return InstallationMode::PORTABLE;
-    default: return InstallationMode::REGULAR;
-  }
-}
-
-
 void InstanceManager::createDataPath(const QString &dataPath) const
 {
   if (!QDir(dataPath).exists()) {
@@ -166,31 +177,22 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
+  if (instanceId.isEmpty() && portableInstall() && !m_Reset) {
+    // startup, apparently using portable mode before
+    return qApp->applicationDirPath();
+  }
+
   QString dataPath = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DataLocation)
         + "/" + instanceId);
 
-  if ((instanceId.isEmpty() || !QFileInfo::exists(dataPath)) && !portableInstall()) {
-    // no portable install and no selected instance
 
-    QStringList instanceList = instances();
-
-    if (instanceList.size() == 0) {
-      if (QFileInfo(qApp->applicationDirPath()).isWritable()) {
-        switch (queryInstallMode()) {
-          case InstallationMode::PORTABLE: {
-            instanceId = QString();
-          } break;
-          case InstallationMode::REGULAR: {
-            instanceId = queryInstanceName();
-          } break;
-        }
-      } else {
-        instanceId = queryInstanceName();
-      }
-    } else {
-      // don't offer portable instance if we can't set one up.
-      instanceId = chooseInstance(instanceList);
+  if (instanceId.isEmpty() || !QFileInfo::exists(dataPath)) {
+    instanceId = chooseInstance(instances());
+    if (!instanceId.isEmpty()) {
+      dataPath = QDir::fromNativeSeparators(
+        QStandardPaths::writableLocation(QStandardPaths::DataLocation)
+        + "/" + instanceId);
     }
   }
 

@@ -630,13 +630,12 @@ int main(int argc, char *argv[])
     QString dataPath;
 
     try {
-      dataPath = InstanceManager().determineDataPath();
+      dataPath = InstanceManager::instance().determineDataPath();
     } catch (const std::exception &e) {
       QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"),
                             e.what());
       return 1;
     }
-
     application.setProperty("dataPath", dataPath);
 
     LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
@@ -647,7 +646,6 @@ int main(int argc, char *argv[])
     }
 
     int result = runApplication(application, instance, splash);
-
     if (result != INT_MAX) {
       return result;
     }

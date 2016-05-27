@@ -1197,6 +1197,7 @@ p, li { white-space: pre-wrap; }
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionChange_Game"/>
    <addaction name="actionInstallMod"/>
    <addaction name="actionNexus"/>
    <addaction name="actionAdd_Profile"/>
@@ -1381,6 +1382,18 @@ Right now this has very limited functionality</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionChange_Game">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/app_icon</normaloff>:/MO/gui/app_icon</iconset>
+   </property>
+   <property name="text">
+    <string>Change Game</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the game selection dialog</string>
    </property>
   </action>
  </widget>

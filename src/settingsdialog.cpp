@@ -217,18 +217,6 @@ void SettingsDialog::on_associateButton_clicked()
   Settings::instance().registerAsNXMHandler(true);
 }
 
-void SettingsDialog::on_changeInstanceButton_clicked()
-{
-  if (QMessageBox::question(this, tr("Are you sure?"),
-                            tr("This will restart MO, continue?"),
-                            QMessageBox::Yes | QMessageBox::Cancel)
-      == QMessageBox::Yes) {
-    InstanceManager().clearCurrentInstance();
-    this->reject();
-    qApp->exit(INT_MAX);
-  }
-}
-
 void SettingsDialog::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();

@@ -27,25 +27,21 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class InstanceManager {
 
-  enum class InstallationMode {
-    PORTABLE,
-    REGULAR
-  };
-
 public:
 
-  InstanceManager();
+  static InstanceManager &instance();
 
   QString determineDataPath();
-  QStringList instances() const;
   void clearCurrentInstance();
 
 private:
 
+  InstanceManager();
+
   QString currentInstance() const;
   QString instancePath() const;
 
-  bool portableInstall() const;
+  QStringList instances() const;
 
   void setCurrentInstance(const QString &name);
 
@@ -53,10 +49,11 @@ private:
   QString chooseInstance(const QStringList &instanceList) const;
 
   void createDataPath(const QString &dataPath) const;
-  InstallationMode queryInstallMode() const;
+  bool portableInstall() const;
 
 private:
 
   QSettings m_AppSettings;
+  bool m_Reset {false};
 
 };

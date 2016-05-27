@@ -52,21 +52,6 @@ signals:
 
   void resetDialogs();
 
-private slots:
-  void on_clearCacheButton_clicked();
-
-private slots:
-  void on_browseBaseDirBtn_clicked();
-
-private slots:
-  void on_browseOverwriteDirBtn_clicked();
-
-private slots:
-  void on_browseProfilesDirBtn_clicked();
-
-private slots:
-  void on_changeInstanceButton_clicked();
-
 private:
 
   void storeSettings(QListWidgetItem *pluginItem);
@@ -91,6 +76,14 @@ private slots:
   void deleteBlacklistItem();
 
   void on_associateButton_clicked();
+
+  void on_clearCacheButton_clicked();
+
+  void on_browseBaseDirBtn_clicked();
+
+  void on_browseOverwriteDirBtn_clicked();
+
+  void on_browseProfilesDirBtn_clicked();
 
 private:
     Ui::SettingsDialog *ui;

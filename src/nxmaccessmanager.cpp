@@ -215,7 +215,6 @@ void NXMAccessManager::login(const QString &username, const QString &password)
     emit loginSuccessful(false);
     return;
   }
-
   m_Username = username;
   m_Password = password;
   pageLogin();
@@ -237,7 +236,6 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 void NXMAccessManager::pageLogin()
 {
   qDebug("logging %s in on Nexus", qPrintable(m_Username));
-
   QString requestString = (Nexus_Management_URL + "/Sessions/?Login&uri=%1")
                             .arg(QString(QUrl::toPercentEncoding(Nexus_Management_URL)));
 
