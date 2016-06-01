@@ -223,7 +223,8 @@ void PluginList::enableESP(const QString &name, bool enable)
   std::map<QString, int>::iterator iter = m_ESPsByName.find(name.toLower());
 
   if (iter != m_ESPsByName.end()) {
-    m_ESPs[iter->second].m_Enabled = enable;
+    m_ESPs[iter->second].m_Enabled =
+        enable | m_ESPs[iter->second].m_ForceEnabled;
 
     emit writePluginsList();
   } else {
@@ -529,11 +530,11 @@ IPluginList::PluginStates PluginList::state(const QString &name) const
   }
 }
 
-void PluginList::setState(const QString &name, PluginStates state)
-{
+void PluginList::setState(const QString &name, PluginStates state) {
   auto iter = m_ESPsByName.find(name.toLower());
   if (iter != m_ESPsByName.end()) {
-    m_ESPs[iter->second].m_Enabled = state == IPluginList::STATE_ACTIVE;
+    m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
+                                     m_ESPs[iter->second].m_ForceEnabled;
   } else {
     qWarning("plugin %s not found", qPrintable(name));
   }
@@ -810,7 +811,8 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   bool result = false;
 
   if (role == Qt::CheckStateRole) {
-    m_ESPs[modIndex.row()].m_Enabled = value.toInt() == Qt::Checked;
+    m_ESPs[modIndex.row()].m_Enabled =
+        value.toInt() == Qt::Checked || m_ESPs[modIndex.row()].m_ForceEnabled;
     emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
