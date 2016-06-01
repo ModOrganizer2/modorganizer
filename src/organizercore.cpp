@@ -1023,8 +1023,9 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary,
           LPDWORD processes = new DWORD[maxCount];
           if (::GetVFSProcessList(&numProcesses, processes)) {
             bool found = false;
-            for (size_t i = 0; i < std::min<DWORD>(maxCount, numProcesses);
-                 ++i) {
+            size_t count =
+                std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
+            for (size_t i = 0; i < count; ++i) {
               std::wstring processName = getProcessName(processes[i]);
               if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
                 currentProcess = processes[i];

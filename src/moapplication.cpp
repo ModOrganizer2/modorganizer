@@ -129,18 +129,9 @@ bool MOApplication::notify(QObject *receiver, QEvent *event)
 
 void MOApplication::updateStyle(const QString &fileName)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   if (fileName == "Fusion") {
     setStyle(QStyleFactory::create("fusion"));
     setStyleSheet("");
-#else
-  if (fileName == "Plastique") {
-    setStyle(new ProxyStyle(new QPlastiqueStyle));
-    setStyleSheet("");
-  } else if (fileName == "Cleanlooks") {
-    setStyle(new ProxyStyle(new QCleanlooksStyle));
-    setStyleSheet("");
-#endif
   } else {
     setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
     if (QFile::exists(fileName)) {

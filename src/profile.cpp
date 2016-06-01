@@ -473,7 +473,9 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
     return;
   }
 
-  int newPriorityTemp = (std::max)(0, (std::min<int>)(m_ModStatus.size() - 1, newPriority));
+  int newPriorityTemp =
+      (std::max)(0, (std::min<int>)(static_cast<int>(m_ModStatus.size()) - 1,
+                                    newPriority));
 
   // don't try to place below overwrite
   while ((m_ModIndexByPriority.at(newPriorityTemp) >= m_ModStatus.size()) ||
