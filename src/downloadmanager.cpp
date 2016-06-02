@@ -757,12 +757,15 @@ QString DownloadManager::getDisplayName(int index) const
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
 
+  QTextDocument doc;
   if (!info->m_FileInfo->name.isEmpty()) {
-    return QString("%1 (%2, v%3)").arg(info->m_FileInfo->name)
+    doc.setHtml(info->m_FileInfo->name);
+    return QString("%1 (%2, v%3)").arg(doc.toPlainText())
                                   .arg(getFileTypeString(info->m_FileInfo->fileCategory))
                                   .arg(info->m_FileInfo->version.displayString());
   } else {
-    return info->m_FileName;
+    doc.setHtml(info->m_FileName);
+    return doc.toPlainText();
   }
 }
 
@@ -1058,7 +1061,9 @@ void DownloadManager::nxmDescriptionAvailable(int, QVariant userData, QVariant r
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == nullptr) return;
   info->m_FileInfo->categoryID = result["category_id"].toInt();
-  info->m_FileInfo->modName = result["name"].toString().trimmed();
+  QTextDocument doc;
+  doc.setHtml(result["name"].toString().trimmed());
+  info->m_FileInfo->modName = doc.toPlainText();
   info->m_FileInfo->newestVersion.parse(result["version"].toString());
   if (info->m_FileInfo->fileID != 0) {
     setState(info, STATE_READY);
@@ -1116,7 +1121,7 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
 
   bool found = false;
 
-  foreach(QVariant file, result) {
+  for (QVariant file : result) {
     QVariantMap fileInfo = file.toMap();
     QString fileName = fileInfo["uri"].toString();
     QString fileNameVariant = fileName.mid(0).replace(' ', '_');
@@ -1127,12 +1132,10 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
-      //Nexus has HTMLd these so unhtml them if necessary
+      // we receive some names html-encoded. This is used to decode it
       QTextDocument doc;
-      doc.setHtml(info->m_FileInfo->modName);
+      doc.setHtml(fileInfo["modName"].toString());
       info->m_FileInfo->modName = doc.toPlainText();
-      doc.setHtml(info->m_FileInfo->name);
-      info->m_FileInfo->name = doc.toPlainText();
       info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
@@ -1148,7 +1151,7 @@ void DownloadManager::nxmFilesAvailable(int, QVariant userData, QVariant resultD
       emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
     } else {
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
-      foreach(QVariant file, result) {
+      for (QVariant file : result) {
         QVariantMap fileInfo = file.toMap();
         selection.addChoice(fileInfo["uri"].toString(), "", file);
       }

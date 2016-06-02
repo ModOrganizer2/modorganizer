@@ -48,6 +48,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDateTime>
 #include <QDirIterator>
 #include <QDebug>
+#include <QTextDocument>
 
 #include <Shellapi.h>
 
@@ -669,7 +670,9 @@ bool InstallationManager::install(const QString &fileName,
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
     modID = metaFile.value("modID", 0).toInt();
-    modName.update(metaFile.value("name", "").toString(), GUESS_FALLBACK);
+    QTextDocument doc;
+    doc.setHtml(metaFile.value("name", "").toString());
+    modName.update(doc.toPlainText(), GUESS_FALLBACK);
     modName.update(metaFile.value("modName", "").toString(), GUESS_META);
 
     version = metaFile.value("version", "").toString();
@@ -688,12 +691,13 @@ bool InstallationManager::install(const QString &fileName,
   { // guess the mod name and mod if from the file name if there was no meta information
     QString guessedModName;
     int guessedModID = modID;
-    NexusInterface::interpretNexusFileName(QFileInfo(fileName).baseName(), guessedModName, guessedModID, false);
+    NexusInterface::interpretNexusFileName(QFileInfo(fileName).fileName(), guessedModName, guessedModID, false);
     if ((modID == 0) && (guessedModID != -1)) {
       modID = guessedModID;
     } else if (modID != guessedModID) {
       qDebug("passed mod id: %d, guessed id: %d", modID, guessedModID);
     }
+
     modName.update(guessedModName, GUESS_GOOD);
   }
 
