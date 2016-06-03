@@ -633,7 +633,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
 
 void Settings::GeneralTab::update()
 {
-  QString oldLanguage = m_Settings.value("Settings/language", "en_US").toString();
+  QString oldLanguage = m_parent->language();
   QString newLanguage = m_languageBox->itemData(m_languageBox->currentIndex()).toString();
   if (newLanguage != oldLanguage) {
     m_Settings.setValue("Settings/language", newLanguage);
