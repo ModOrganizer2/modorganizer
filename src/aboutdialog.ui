@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>746</width>
+    <width>604</width>
     <height>369</height>
    </rect>
   </property>
@@ -151,7 +151,7 @@
        </widget>
        <widget class="QWidget" name="credits">
         <attribute name="title">
-         <string>Credits</string>
+         <string>Thanks</string>
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
@@ -239,7 +239,7 @@
          <item>
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Others</string>
+            <string>Other Supporter</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7">
             <item>
