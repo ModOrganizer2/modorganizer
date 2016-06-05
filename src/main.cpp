@@ -533,13 +533,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
         // pass the remaining parameters to the binary
         try {
           organizer.startApplication(exeName, arguments, QString(), QString());
+          return 0;
         } catch (const std::exception &e) {
           reportError(
               QObject::tr("failed to start application: %1").arg(e.what()));
           return 1;
         }
       }
-      return 0;
     }
 
     NexusInterface::instance()->getAccessManager()->startLoginCheck();

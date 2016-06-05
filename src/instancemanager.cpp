@@ -196,7 +196,7 @@ QString InstanceManager::determineDataPath()
     }
   }
 
-  if (instanceId.isEmpty() || !QFileInfo::exists(dataPath)) {
+  if (instanceId.isEmpty()) {
     return qApp->applicationDirPath();
   } else {
     setCurrentInstance(instanceId);
