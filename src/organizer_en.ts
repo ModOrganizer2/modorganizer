@@ -211,17 +211,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="credentialsdialog.ui" line="46"/>
+        <location filename="credentialsdialog.ui" line="42"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="credentialsdialog.ui" line="64"/>
+        <location filename="credentialsdialog.ui" line="60"/>
         <source>Remember</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="credentialsdialog.ui" line="75"/>
+        <location filename="credentialsdialog.ui" line="71"/>
         <source>Never ask again</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3684,12 +3684,12 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1507"/>
+        <location filename="organizercore.cpp" line="1506"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1508"/>
+        <location filename="organizercore.cpp" line="1507"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
@@ -4557,7 +4557,7 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="main.cpp" line="538"/>
+        <location filename="main.cpp" line="539"/>
         <source>failed to start application: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5573,7 +5573,7 @@ On Windows XP:
 <context>
     <name>UsvfsConnector</name>
     <message>
-        <location filename="usvfsconnector.cpp" line="133"/>
+        <location filename="usvfsconnector.cpp" line="135"/>
         <source>Preparing vfs</source>
         <translation type="unfinished"></translation>
     </message>
