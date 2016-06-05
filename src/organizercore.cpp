@@ -1586,6 +1586,7 @@ void OrganizerCore::directory_refreshed()
   for (auto task : m_PostRefreshTasks) {
     task();
   }
+  m_PostRefreshTasks.clear();
 
   if (m_CurrentProfile != nullptr) {
     refreshLists();
