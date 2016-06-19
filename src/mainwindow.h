@@ -60,6 +60,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QStringList>
 #include <QTime>
 #include <QTimer>
+#include <QHeaderView>
 #include <QVariant>
 #include <Qt>
 
@@ -284,6 +285,8 @@ private:
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
+  bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
+
 private:
 
   static const char *PATTERN_BACKUP_GLOB;
@@ -347,6 +350,8 @@ private:
   bool m_DidUpdateMasterList;
 
   LockedDialog *m_LockDialog { nullptr };
+
+  std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   enum class ShortcutType {
     Toolbar,

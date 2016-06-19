@@ -242,12 +242,14 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
-  if (initSettings.contains("mod_list_state")) {
-    ui->modList->header()->restoreState(initSettings.value("mod_list_state").toByteArray());
 
+  bool modListAdjusted = registerWidgetState(ui->modList->objectName(), ui->modList->header(), "mod_list_state");
+
+  if (modListAdjusted) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) + 1);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, ui->modList->header()->sectionSize(ModList::COL_CONTENT) - 1);
+    int sectionSize = ui->modList->header()->sectionSize(ModList::COL_CONTENT);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize + 1);
+    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize);
   } else {
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
@@ -264,15 +266,17 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->espList->setModel(m_PluginListSortProxy);
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
-  if (initSettings.contains("plugin_list_state")) {
-    ui->espList->header()->restoreState(initSettings.value("plugin_list_state").toByteArray());
-  }
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
+
+  bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
+  registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
+  registerWidgetState(ui->downloadView->objectName(),
+                      ui->downloadView->header());
 
   ui->splitter->setStretchFactor(0, 3);
   ui->splitter->setStretchFactor(1, 2);
 
-  resizeLists(initSettings.contains("mod_list_state"), initSettings.contains("plugin_list_state"));
+  resizeLists(modListAdjusted, pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
@@ -289,7 +293,6 @@ MainWindow::MainWindow(QSettings &initSettings
 
   // don't allow mouse wheel to switch grouping, too many people accidentally
   // turn on grouping and then don't understand what happened
-
   EventFilter *noWheel
       = new EventFilter(this, [](QObject *, QEvent *event) -> bool {
           return event->type() == QEvent::Wheel;
@@ -1261,7 +1264,6 @@ void MainWindow::refreshDataTree()
   updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
   tree->insertTopLevelItem(0, subTree);
   subTree->setExpanded(true);
-  tree->header()->resizeSection(0, 200);
 }
 
 
@@ -1423,12 +1425,7 @@ void MainWindow::readSettings()
   }
 }
 
-
-void MainWindow::storeSettings(QSettings &settings)
-{
-  settings.setValue("mod_list_state", ui->modList->header()->saveState());
-  settings.setValue("plugin_list_state", ui->espList->header()->saveState());
-
+void MainWindow::storeSettings(QSettings &settings) {
   settings.setValue("group_state", ui->groupCombo->currentIndex());
 
   settings.setValue("window_geometry", saveGeometry());
@@ -1439,7 +1436,13 @@ void MainWindow::storeSettings(QSettings &settings)
 
   settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
 
-  settings.setValue("selected_executable", ui->executablesListBox->currentIndex());
+  settings.setValue("selected_executable",
+                    ui->executablesListBox->currentIndex());
+
+  for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
+    QString key = QString("geometry/") + kv.first;
+    settings.setValue(key, kv.second->saveState());
+  }
 }
 
 void MainWindow::lock()
@@ -4544,6 +4547,31 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
   }
   if (!success) {
     qCritical("file operation failed: %s", qPrintable(windowsErrorString(::GetLastError())));
+  }
+}
+
+bool MainWindow::registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName) {
+  // register the view so it's geometry gets saved at exit
+  m_PersistedGeometry.push_back(std::make_pair(name, view));
+
+  // also, restore the geometry if it was saved before
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+
+  QString key = QString("geometry/%1").arg(name);
+  QByteArray data;
+
+  if ((oldSettingName != nullptr) && settings.contains(oldSettingName)) {
+    data = settings.value(oldSettingName).toByteArray();
+    settings.remove(oldSettingName);
+  } else if (settings.contains(key)) {
+    data = settings.value(key).toByteArray();
+  }
+
+  if (!data.isEmpty()) {
+    view->restoreState(data);
+    return true;
+  } else {
+    return false;
   }
 }
 
