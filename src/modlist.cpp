@@ -64,12 +64,10 @@ ModList::ModList(QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
   m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
   m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
-  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(":/MO/gui/content/music", tr("Music"));
   m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
   m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
   m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound"));
-  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(":/MO/gui/content/string", tr("Strings"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
 
   m_LastCheck.start();

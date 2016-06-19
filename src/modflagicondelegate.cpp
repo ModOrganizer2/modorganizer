@@ -12,8 +12,7 @@ ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent)
 {
 }
 
-QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
-{
+QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
   QList<QString> result;
   QVariant modid = index.data(Qt::UserRole + 1);
   if (modid.isValid()) {
@@ -21,7 +20,8 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const
     std::vector<ModInfo::EFlag> flags = info->getFlags();
 
     { // insert conflict icon first to provide nicer alignment
-      auto iter = std::find_first_of(flags.begin(), flags.end(), m_ConflictFlags, m_ConflictFlags + 4);
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+                                     m_ConflictFlags, m_ConflictFlags + 4);
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);

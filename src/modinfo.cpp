@@ -92,12 +92,10 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_MESH:      return tr("Meshes");
     case CONTENT_BSA:       return tr("BSA");
     case CONTENT_INTERFACE: return tr("UI Changes");
-    case CONTENT_MUSIC:     return tr("Music");
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");
     case CONTENT_SKSE:      return tr("SKSE Plugins");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
-    case CONTENT_STRING:    return tr("Strings");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
   }
 }
