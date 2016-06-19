@@ -141,6 +141,8 @@ public:
 
   void prepareVFS();
 
+  void setLogLevel(int logLevel);
+
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;

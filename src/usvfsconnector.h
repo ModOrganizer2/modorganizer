@@ -22,7 +22,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define USVFSCONNECTOR_H
 
 
-#include <usvfs.h>
 #include <filemapping.h>
 #include <QString>
 #include <QThread>
@@ -68,6 +67,7 @@ public:
   ~UsvfsConnector();
 
   void updateMapping(const MappingType &mapping);
+  void setLogLevel(int logLevel);
 
 private:
 

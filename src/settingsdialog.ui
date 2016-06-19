@@ -100,6 +100,11 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
+             <string>Warning</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>Error</string>
             </property>
            </item>

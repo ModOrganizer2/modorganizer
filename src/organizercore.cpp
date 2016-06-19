@@ -22,6 +22,7 @@
 #include <directoryentry.h>
 #include <scopeguard.h>
 #include <utility.h>
+#include <usvfs.h>
 #include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
@@ -597,6 +598,10 @@ void OrganizerCore::createDefaultProfile()
 void OrganizerCore::prepareVFS()
 {
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
+}
+
+void OrganizerCore::setLogLevel(int logLevel) {
+  m_USVFS.setLogLevel(logLevel);
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)

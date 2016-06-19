@@ -3222,6 +3222,8 @@ void MainWindow::on_actionSettings_triggered()
   NexusInterface::instance()->setNMMVersion(m_OrganizerCore.settings().getNMMVersion());
 
   updateDownloadListDelegate();
+
+  m_OrganizerCore.setLogLevel(m_OrganizerCore.settings().logLevel());
 }
 
 

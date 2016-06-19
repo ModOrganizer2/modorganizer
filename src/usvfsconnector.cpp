@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <memory>
 #include <sstream>
 #include <iomanip>
+#include <usvfs.h>
 #include <QTemporaryFile>
 #include <QProgressDialog>
 #include <QDateTime>
@@ -103,10 +104,11 @@ LogLevel logLevel(int level)
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
-  USVFSInitParameters(&params, SHMID, false,
-                      logLevel(Settings::instance().logLevel()));
+  LogLevel level = logLevel(Settings::instance().logLevel());
+  USVFSInitParameters(&params, SHMID, false, level);
   InitLogging(false);
   ConnectVFS(&params);
+  SetLogLevel(level);
 
   BlacklistExecutable(L"TSVNCache.exe");
 
@@ -161,4 +163,14 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
     CreateVFSDump(buffer.get(), &dumpSize);
     qDebug(buffer.get());
   */
+}
+
+void UsvfsConnector::setLogLevel(int logLevel) {
+  switch (logLevel) {
+    case LogLevel::Debug:   SetLogLevel(LogLevel::Debug); break;
+    case LogLevel::Info:    SetLogLevel(LogLevel::Info); break;
+    case LogLevel::Warning: SetLogLevel(LogLevel::Warning); break;
+    case LogLevel::Error:   SetLogLevel(LogLevel::Error); break;
+    default: SetLogLevel(LogLevel::Debug); break;
+  }
 }
