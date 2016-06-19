@@ -51,9 +51,9 @@ public:
   virtual void addInstalledFile(int, int) {}
 
 protected:
-
-  ModInfoForeign(const QString &referenceFile, const QStringList &archives, MOShared::DirectoryEntry **directoryStructure);
-
+  ModInfoForeign(const QString &modName, const QString &referenceFile,
+                 const QStringList &archives,
+                 MOShared::DirectoryEntry **directoryStructure);
 private:
 
   QString m_Name;

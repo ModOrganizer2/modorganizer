@@ -186,7 +186,7 @@ public:
    * @param bsaNames names of archives
    * @return a new mod
    */
-  static ModInfo::Ptr createFromPlugin(const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
 
   /**
    * @brief retieve a name for one of the CONTENT_ enums

@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <versioninfo.h>
 #include <appconfig.h>
 #include <scriptextender.h>
+#include <unmanagedmods.h>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -75,11 +76,13 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
   return result;
 }
 
-ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList &bsaNames
-                                       , DirectoryEntry ** directoryStructure)
-{
+ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
+                                       const QString &espName,
+                                       const QStringList &bsaNames,
+                                       DirectoryEntry **directoryStructure) {
   QMutexLocker locker(&s_Mutex);
-  ModInfo::Ptr result = ModInfo::Ptr(new ModInfoForeign(espName, bsaNames, directoryStructure));
+  ModInfo::Ptr result = ModInfo::Ptr(
+      new ModInfoForeign(modName, espName, bsaNames, directoryStructure));
   s_Collection.push_back(result);
   return result;
 }
@@ -217,27 +220,13 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     }
   }
 
-  { // list plugins in the data directory and make a foreign-managed mod out of each
-    QStringList dlcPlugins = game->DLCPlugins();
-    QStringList mainPlugins = game->primaryPlugins();
-    QDir dataDir(game->dataDirectory());
-    for (const QString &file : dataDir.entryList({ "*.esp", "*.esm" })) {
-      if (std::find_if(mainPlugins.begin(), mainPlugins.end(),
-                       [&file](QString const &p) {
-                          return p.compare(file, Qt::CaseInsensitive) == 0; }) == mainPlugins.end()
-          && (displayForeign // show non-dlc bundles only if the user wants them
-              || std::find_if(dlcPlugins.begin(), dlcPlugins.end(),
-                              [&file](QString const &p) {
-                                  return p.compare(file, Qt::CaseInsensitive) == 0; }) != dlcPlugins.end())) {
-
-        QFileInfo f(file); //Just so I can get a basename...
-        QStringList archives;
-        for (const QString &archiveName : dataDir.entryList({ f.baseName() + "*.bsa" })) {
-          archives.append(dataDir.absoluteFilePath(archiveName));
-        }
-
-        createFromPlugin(file, archives, directoryStructure);
-      }
+  UnmanagedMods *unmanaged = game->feature<UnmanagedMods>();
+  if (unmanaged != nullptr) {
+    for (const QString &modName : unmanaged->mods(!displayForeign)) {
+      createFromPlugin(unmanaged->displayName(modName),
+                       unmanaged->referenceFile(modName).absoluteFilePath(),
+                       unmanaged->secondaryFiles(modName),
+                       directoryStructure);
     }
   }
 
