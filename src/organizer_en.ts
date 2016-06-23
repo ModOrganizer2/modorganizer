@@ -2629,62 +2629,62 @@ This function will guess the versioning scheme under the assumption that the ins
 <context>
     <name>ModInfo</name>
     <message>
-        <location filename="modinfo.cpp" line="90"/>
+        <location filename="modinfo.cpp" line="93"/>
         <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="91"/>
+        <location filename="modinfo.cpp" line="94"/>
         <source>Textures</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="92"/>
+        <location filename="modinfo.cpp" line="95"/>
         <source>Meshes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="93"/>
+        <location filename="modinfo.cpp" line="96"/>
         <source>BSA</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="94"/>
+        <location filename="modinfo.cpp" line="97"/>
         <source>UI Changes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="95"/>
+        <location filename="modinfo.cpp" line="98"/>
         <source>Sound Effects</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="96"/>
+        <location filename="modinfo.cpp" line="99"/>
         <source>Scripts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="97"/>
+        <location filename="modinfo.cpp" line="100"/>
         <source>SKSE Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="98"/>
+        <location filename="modinfo.cpp" line="101"/>
         <source>SkyProc Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="99"/>
+        <location filename="modinfo.cpp" line="102"/>
         <source>invalid content type %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="122"/>
+        <location filename="modinfo.cpp" line="125"/>
         <source>invalid mod index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfo.cpp" line="151"/>
+        <location filename="modinfo.cpp" line="154"/>
         <source>remove: invalid mod index %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3225,7 +3225,7 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>ModInfoOverwrite</name>
     <message>
-        <location filename="modinfooverwrite.cpp" line="41"/>
+        <location filename="modinfooverwrite.cpp" line="42"/>
         <source>This pseudo mod contains files from the virtual data tree that got modified (i.e. by the construction kit)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4630,17 +4630,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="144"/>
+        <location filename="spawn.cpp" line="143"/>
         <source>failed to spawn &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="151"/>
+        <location filename="spawn.cpp" line="150"/>
         <source>Elevation required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="152"/>
+        <location filename="spawn.cpp" line="151"/>
         <source>This process requires elevation to run.
 This is a potential security risk so I highly advice you to investigate if
 &quot;%1&quot;
@@ -4650,7 +4650,7 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="spawn.cpp" line="167"/>
+        <location filename="spawn.cpp" line="166"/>
         <source>failed to spawn &quot;%1&quot;: %2</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5037,23 +5037,28 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="368"/>
+        <location filename="settingsdialog.ui" line="355"/>
+        <source>Use %BASE_DIR% to refer to the Base Directory.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="375"/>
         <source>Important: All directories have to be writeable!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="376"/>
-        <location filename="settingsdialog.ui" line="392"/>
+        <location filename="settingsdialog.ui" line="383"/>
+        <location filename="settingsdialog.ui" line="399"/>
         <source>Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="382"/>
+        <location filename="settingsdialog.ui" line="389"/>
         <source>Allows automatic log-in when the Nexus-Page for the game is clicked.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="385"/>
+        <location filename="settingsdialog.ui" line="392"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5062,144 +5067,144 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="401"/>
+        <location filename="settingsdialog.ui" line="408"/>
         <source>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="404"/>
+        <location filename="settingsdialog.ui" line="411"/>
         <source>Automatically Log-In to Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="413"/>
-        <location filename="settingsdialog.ui" line="599"/>
+        <location filename="settingsdialog.ui" line="420"/>
+        <location filename="settingsdialog.ui" line="606"/>
         <source>Username</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="427"/>
-        <location filename="settingsdialog.ui" line="609"/>
+        <location filename="settingsdialog.ui" line="434"/>
+        <location filename="settingsdialog.ui" line="616"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="448"/>
+        <location filename="settingsdialog.ui" line="455"/>
         <source>Remove cache and cookies. Forces a new login.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="451"/>
+        <location filename="settingsdialog.ui" line="458"/>
         <source>Clear Cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="480"/>
+        <location filename="settingsdialog.ui" line="487"/>
         <source>Disable automatic internet features</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="483"/>
+        <location filename="settingsdialog.ui" line="490"/>
         <source>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="486"/>
+        <location filename="settingsdialog.ui" line="493"/>
         <source>Offline Mode</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="493"/>
+        <location filename="settingsdialog.ui" line="500"/>
         <source>Use a proxy for network connections.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="496"/>
+        <location filename="settingsdialog.ui" line="503"/>
         <source>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="499"/>
+        <location filename="settingsdialog.ui" line="506"/>
         <source>Use HTTP Proxy (Uses System Settings)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="508"/>
+        <location filename="settingsdialog.ui" line="515"/>
         <source>Associate with &quot;Download with manager&quot; links</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="537"/>
+        <location filename="settingsdialog.ui" line="544"/>
         <source>Known Servers (updated on download)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="558"/>
+        <location filename="settingsdialog.ui" line="565"/>
         <source>Preferred Servers (Drag &amp; Drop)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="593"/>
+        <location filename="settingsdialog.ui" line="600"/>
         <source>Steam</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="639"/>
+        <location filename="settingsdialog.ui" line="646"/>
         <source>If you save your steam user ID and password here, they will be used when logging into steam. Note, however, your password will be stored unencrypted, so make sure your computer is secure.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="666"/>
+        <location filename="settingsdialog.ui" line="673"/>
         <source>Plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="688"/>
+        <location filename="settingsdialog.ui" line="695"/>
         <source>Author:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="702"/>
+        <location filename="settingsdialog.ui" line="709"/>
         <source>Version:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="716"/>
+        <location filename="settingsdialog.ui" line="723"/>
         <source>Description:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="754"/>
+        <location filename="settingsdialog.ui" line="761"/>
         <source>Key</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="759"/>
+        <location filename="settingsdialog.ui" line="766"/>
         <source>Value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="771"/>
+        <location filename="settingsdialog.ui" line="778"/>
         <source>Blacklisted Plugins (use &lt;del&gt; to remove):</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="782"/>
+        <location filename="settingsdialog.ui" line="789"/>
         <source>Workarounds</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="790"/>
+        <location filename="settingsdialog.ui" line="797"/>
         <source>Steam App ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="810"/>
+        <location filename="settingsdialog.ui" line="817"/>
         <source>The Steam AppID for your game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="813"/>
+        <location filename="settingsdialog.ui" line="820"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5215,17 +5220,17 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="844"/>
+        <location filename="settingsdialog.ui" line="851"/>
         <source>Load Mechanism</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="864"/>
+        <location filename="settingsdialog.ui" line="871"/>
         <source>Select loading mechanism. See help for details.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="867"/>
+        <location filename="settingsdialog.ui" line="874"/>
         <source>Mod Organizer needs a dll to be injected into the game so all mods are visible to it.
 There are several means to do this:
 *Mod Organizer* (default) In this mode the Mod Organizer itself injects the dll. The disadvantage is that you always have to start the game through MO or a link created by it.
@@ -5236,17 +5241,17 @@ If you use the Steam version of Oblivion the default will NOT work. In this case
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="884"/>
+        <location filename="settingsdialog.ui" line="891"/>
         <source>NMM Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="904"/>
+        <location filename="settingsdialog.ui" line="911"/>
         <source>The Version of Nexus Mod Manager to impersonate.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="907"/>
+        <location filename="settingsdialog.ui" line="914"/>
         <source>Mod Organizer uses an API provided by the Nexus to provide features like checking for updates and downloading files. Unfortunately this API has not been made available officially to third party tools like MO so we have to impersonate the Nexus Mod Manager to be allowed in.
 On top of this Nexus has used the client identification to lock out outdated versions of NMM to force users to update. This means that MO also needs to impersonate the new version of NMM even if MO doesn&apos;t need an update. Therefore you can configure the version to identify as here.
 Please note that MO does identify itself as MO to the webserver, it&apos;s not lying about what it is. It is merely adding a &quot;compatible&quot; NMM version to the user agent.
@@ -5255,44 +5260,44 @@ tl;dr-version: If Nexus-features don&apos;t work, insert the current version num
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="929"/>
+        <location filename="settingsdialog.ui" line="936"/>
         <source>Enforces that inactive ESPs and ESMs are never loaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="932"/>
+        <location filename="settingsdialog.ui" line="939"/>
         <source>It seems that the Games occasionally load ESP or ESM files even if they haven&apos;t been activated as plugins.
 I don&apos;t yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="936"/>
+        <location filename="settingsdialog.ui" line="943"/>
         <source>Hide inactive ESPs/ESMs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="943"/>
+        <location filename="settingsdialog.ui" line="950"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="946"/>
+        <location filename="settingsdialog.ui" line="953"/>
         <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
 Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="950"/>
+        <location filename="settingsdialog.ui" line="957"/>
         <source>Force-enable game files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="960"/>
+        <location filename="settingsdialog.ui" line="967"/>
         <source>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="963"/>
+        <location filename="settingsdialog.ui" line="970"/>
         <source>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
 However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can&apos;t be resolved correctly.
 
@@ -5300,24 +5305,24 @@ If you disable this feature, MO will only display official DLCs this way. Please
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="969"/>
+        <location filename="settingsdialog.ui" line="976"/>
         <source>Display mods installed outside MO</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="979"/>
-        <location filename="settingsdialog.ui" line="983"/>
+        <location filename="settingsdialog.ui" line="986"/>
+        <location filename="settingsdialog.ui" line="990"/>
         <source>For Skyrim, this can be used instead of Archive Invalidation. It should make AI redundant for all Profiles.
 For the other games this is not a sufficient replacement for AI!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="987"/>
+        <location filename="settingsdialog.ui" line="994"/>
         <source>Back-date BSAs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1011"/>
+        <location filename="settingsdialog.ui" line="1018"/>
         <source>These are workarounds for problems with Mod Organizer. Please make sure you read the help text before changing anything here.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5558,7 +5563,7 @@ On Windows XP:
 <context>
     <name>UsvfsConnector</name>
     <message>
-        <location filename="usvfsconnector.cpp" line="136"/>
+        <location filename="usvfsconnector.cpp" line="135"/>
         <source>Preparing vfs</source>
         <translation type="unfinished"></translation>
     </message>

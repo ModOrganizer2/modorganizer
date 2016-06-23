@@ -32,6 +32,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QApplication>
 #include <QRegExp>
 #include <QDir>
 
@@ -701,10 +702,15 @@ void Settings::PathsTab::update()
     settingsKey = QString("Settings/%1").arg(settingsKey);
 
     QString realPath = path;
-    realPath.replace("%BASE_DIR%", m_parent->getBaseDirectory());
+    realPath.replace("%BASE_DIR%", m_baseDirEdit->text());
 
     if (!QDir(realPath).exists()) {
-      QDir().mkpath(realPath);
+      if (!QDir().mkpath(realPath)) {
+        QMessageBox::warning(qApp->activeWindow(), tr("Error"),
+                             tr("Failed to create \"%1\", you may not have the "
+                                "necessary permission. path remains unchanged.")
+                                 .arg(realPath));
+      }
     }
 
     if (QFileInfo(realPath)

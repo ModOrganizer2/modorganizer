@@ -135,6 +135,8 @@ public:
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
 
+  static bool createAndMakeWritable(const QString &path);
+  bool bootstrap();
   void createDefaultProfile();
 
   MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
@@ -227,6 +229,8 @@ private:
   void updateModActiveState(int index, bool active);
 
   bool testForSteam();
+
+  bool createDirectory(const QString &path);
 
   /**
    * @brief return a descriptor of the mappings real file->virtual file

@@ -237,8 +237,8 @@ void PluginList::enableAll()
 {
   if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really enable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-      iter->m_Enabled = true;
+    for (ESPInfo &info : m_ESPs) {
+      info.m_Enabled = true;
     }
     emit writePluginsList();
   }
@@ -249,9 +249,9 @@ void PluginList::disableAll()
 {
   if (QMessageBox::question(nullptr, tr("Confirm"), tr("Really disable all plugins?"),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    for (std::vector<ESPInfo>::iterator iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-      if (!iter->m_ForceEnabled) {
-        iter->m_Enabled = false;
+    for (ESPInfo &info : m_ESPs) {
+      if (!info.m_ForceEnabled) {
+        info.m_Enabled = false;
       }
     }
     emit writePluginsList();

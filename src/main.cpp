@@ -85,37 +85,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-
-bool createAndMakeWritable(const std::wstring &subPath)
-{
+bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
   QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
 
-  if (!QDir(fullPath).exists()) {
-    QDir().mkdir(fullPath);
+  if (!QDir(fullPath).exists() && !QDir().mkdir(fullPath)) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+                          QObject::tr("Failed to create \"%1\". Your user "
+                                      "account probably lacks permission.")
+                              .arg(fullPath));
+    return false;
+  } else {
+    return true;
   }
-
-  QFileInfo fileInfo(fullPath);
-  if (!fileInfo.exists() || !fileInfo.isWritable()) {
-    if (QMessageBox::question(nullptr, QObject::tr("Permissions required"),
-        QObject::tr("The current user account doesn't have the required access rights to run "
-           "Mod Organizer. The neccessary changes can be made automatically (the MO directory "
-           "will be made writable for the current user account). You will be asked to run "
-           "\"helper.exe\" with administrative rights."),
-           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-      if (!Helper::init(qApp->applicationDirPath().toStdWString(),
-                        dataPath.toStdWString())) {
-        return false;
-      }
-    } else {
-      return false;
-    }
-    // no matter which directory didn't exist/wasn't writable, the helper
-    // should have created them all so we don't have to worry this message box would appear repeatedly
-  }
-  return true;
 }
-
 
 bool bootstrap()
 {
@@ -129,11 +112,9 @@ bool bootstrap()
   removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
                  "usvfs*.log", 5, QDir::Name);
 
-  createAndMakeWritable(AppConfig::profilesPath());
-  createAndMakeWritable(AppConfig::modsPath());
-  createAndMakeWritable(AppConfig::downloadPath());
-  createAndMakeWritable(AppConfig::overwritePath());
-  createAndMakeWritable(AppConfig::logPath());
+  if (!createAndMakeWritable(AppConfig::logPath())) {
+    return false;
+  }
 
   return true;
 }
@@ -445,7 +426,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   qDebug("data path: %s", qPrintable(dataPath));
 
   if (!bootstrap()) {
-    reportError("failed to set up data path");
+    reportError("failed to set up data paths");
     return 1;
   }
 
@@ -465,6 +446,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                        QSettings::IniFormat);
     qDebug("initializing core");
     OrganizerCore organizer(settings);
+    if (!organizer.bootstrap()) {
+      reportError("failed to set up data paths");
+      return 1;
+    }
     qDebug("initialize plugins");
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();

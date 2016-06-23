@@ -586,6 +586,25 @@ InstallationManager *OrganizerCore::installationManager()
   return &m_InstallationManager;
 }
 
+bool OrganizerCore::createDirectory(const QString &path) {
+  if (!QDir(path).exists() && !QDir().mkpath(path)) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+                          QObject::tr("Failed to create \"%1\". Your user "
+                                      "account probably lacks permission.")
+                              .arg(QDir::toNativeSeparators(path)));
+    return false;
+  } else {
+    return true;
+  }
+}
+
+bool OrganizerCore::bootstrap() {
+  return createDirectory(m_Settings.getProfileDirectory()) &&
+         createDirectory(m_Settings.getModDirectory()) &&
+         createDirectory(m_Settings.getDownloadDirectory()) &&
+         createDirectory(m_Settings.getOverwriteDirectory());
+}
+
 void OrganizerCore::createDefaultProfile()
 {
   QString profilesPath = settings().getProfileDirectory();
@@ -610,7 +629,19 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
       && (profileName == m_CurrentProfile->name())) {
     return;
   }
-  QString profileDir  = settings().getProfileDirectory() + "/" + profileName;
+
+  QDir profileBaseDir(settings().getProfileDirectory());
+  QString profileDir = profileBaseDir.absoluteFilePath(profileName);
+
+  if (!QDir(profileDir).exists()) {
+    // selected profile doesn't exist. Ensure there is at least one profile,
+    // then pick any one
+    createDefaultProfile();
+
+    profileDir = profileBaseDir.absoluteFilePath(
+        profileBaseDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot).at(0));
+  }
+
   Profile *newProfile = new Profile(QDir(profileDir), managedGame());
 
   delete m_CurrentProfile;
@@ -1870,7 +1901,7 @@ std::vector<Mapping> OrganizerCore::fileMapping(const QString &profileName,
 
   result.insert(result.end(), {
                   QDir::toNativeSeparators(m_Settings.getOverwriteDirectory()),
-                  QDir::toNativeSeparators(game->dataDirectory().absolutePath()),
+                  dataPath,
                   true,
                   customOverwrite.isEmpty()
                 });

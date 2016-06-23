@@ -3197,6 +3197,7 @@ void MainWindow::on_actionSettings_triggered()
   m_OrganizerCore.installationManager()->setDownloadDirectory(m_OrganizerCore.settings().getDownloadDirectory());
   fixCategories();
   refreshFilters();
+  refreshProfiles();
   if (QDir::fromNativeSeparators(m_OrganizerCore.downloadManager()->getOutputDirectory()) != QDir::fromNativeSeparators(m_OrganizerCore.settings().getDownloadDirectory())) {
     if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
       MessageDialog::showMessage(tr("Can't change download directory while downloads are in progress!"), this);

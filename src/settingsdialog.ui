@@ -350,6 +350,13 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
         </layout>
        </item>
        <item>
+        <widget class="QLabel" name="label_26">
+         <property name="text">
+          <string>Use %BASE_DIR% to refer to the Base Directory.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer_6">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
