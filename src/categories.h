@@ -76,6 +76,11 @@ public:
   void reset();
 
   /**
+   * @brief read categories from file
+   */
+  void loadCategories();
+
+  /**
    * @brief save the categories to the categories.dat file
    **/
   void saveCategories();

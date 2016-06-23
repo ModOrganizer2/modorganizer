@@ -44,6 +44,10 @@ QString CategoryFactory::categoriesFilePath()
 CategoryFactory::CategoryFactory()
 {
   atexit(&cleanup);
+}
+
+void CategoryFactory::loadCategories()
+{
   reset();
 
   QFile categoryFile(categoriesFilePath());

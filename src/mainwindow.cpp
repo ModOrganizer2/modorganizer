@@ -200,7 +200,10 @@ MainWindow::MainWindow(QSettings &initSettings
 {
   ui->setupUi(this);
   updateWindowTitle(QString(), false);
+
   languageChange(m_OrganizerCore.settings().language());
+
+  m_CategoryFactory.loadCategories();
 
   ui->logList->setModel(LogBuffer::instance());
   ui->logList->setColumnWidth(0, 100);
@@ -3188,43 +3191,58 @@ void MainWindow::linkMenu()
 
 void MainWindow::on_actionSettings_triggered()
 {
-  QString oldModDirectory(m_OrganizerCore.settings().getModDirectory());
-  QString oldCacheDirectory(m_OrganizerCore.settings().getCacheDirectory());
-  bool oldDisplayForeign(m_OrganizerCore.settings().displayForeign());
-  bool proxy = m_OrganizerCore.settings().useProxy();
-  m_OrganizerCore.settings().query(this);
-  m_OrganizerCore.installationManager()->setModsDirectory(m_OrganizerCore.settings().getModDirectory());
-  m_OrganizerCore.installationManager()->setDownloadDirectory(m_OrganizerCore.settings().getDownloadDirectory());
+  Settings &settings = m_OrganizerCore.settings();
+
+  QString oldModDirectory(settings.getModDirectory());
+  QString oldCacheDirectory(settings.getCacheDirectory());
+  QString oldProfilesDirectory(settings.getProfileDirectory());
+  bool oldDisplayForeign(settings.displayForeign());
+  bool proxy = settings.useProxy();
+
+  settings.query(this);
+
+  InstallationManager *instManager = m_OrganizerCore.installationManager();
+  instManager->setModsDirectory(settings.getModDirectory());
+  instManager->setDownloadDirectory(settings.getDownloadDirectory());
+
   fixCategories();
   refreshFilters();
-  refreshProfiles();
-  if (QDir::fromNativeSeparators(m_OrganizerCore.downloadManager()->getOutputDirectory()) != QDir::fromNativeSeparators(m_OrganizerCore.settings().getDownloadDirectory())) {
-    if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
-      MessageDialog::showMessage(tr("Can't change download directory while downloads are in progress!"), this);
+
+  if (settings.getProfileDirectory() != oldProfilesDirectory) {
+    refreshProfiles();
+  }
+
+  DownloadManager *dlManager = m_OrganizerCore.downloadManager();
+
+  if (dlManager->getOutputDirectory() != settings.getDownloadDirectory()) {
+    if (dlManager->downloadsInProgress()) {
+      MessageDialog::showMessage(tr("Can't change download directory while "
+                                    "downloads are in progress!"),
+                                 this);
     } else {
-      m_OrganizerCore.downloadManager()->setOutputDirectory(m_OrganizerCore.settings().getDownloadDirectory());
+      dlManager->setOutputDirectory(settings.getDownloadDirectory());
     }
   }
-  m_OrganizerCore.downloadManager()->setPreferredServers(m_OrganizerCore.settings().getPreferredServers());
+  dlManager->setPreferredServers(settings.getPreferredServers());
 
-  if ((m_OrganizerCore.settings().getModDirectory() != oldModDirectory)
-      || (m_OrganizerCore.settings().displayForeign() != oldDisplayForeign)) {
+  if ((settings.getModDirectory() != oldModDirectory)
+      || (settings.displayForeign() != oldDisplayForeign)) {
     m_OrganizerCore.profileRefresh();
   }
 
-  if (m_OrganizerCore.settings().getCacheDirectory() != oldCacheDirectory) {
-    NexusInterface::instance()->setCacheDirectory(m_OrganizerCore.settings().getCacheDirectory());
+  if (settings.getCacheDirectory() != oldCacheDirectory) {
+    NexusInterface::instance()->setCacheDirectory(settings.getCacheDirectory());
   }
 
-  if (proxy != m_OrganizerCore.settings().useProxy()) {
-    activateProxy(m_OrganizerCore.settings().useProxy());
+  if (proxy != settings.useProxy()) {
+    activateProxy(settings.useProxy());
   }
 
-  NexusInterface::instance()->setNMMVersion(m_OrganizerCore.settings().getNMMVersion());
+  NexusInterface::instance()->setNMMVersion(settings.getNMMVersion());
 
   updateDownloadListDelegate();
 
-  m_OrganizerCore.setLogLevel(m_OrganizerCore.settings().logLevel());
+  m_OrganizerCore.setLogLevel(settings.logLevel());
 }
 
 
