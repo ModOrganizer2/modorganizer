@@ -970,7 +970,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary, const QString &
       if ((window != nullptr) && (!window->isVisible())) {
         window = nullptr;
       }
-      if (QuestionBoxMemory::query(window, "steamQuery",
+      if (QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
             tr("Start Steam?"),
             tr("Steam is required to be running already to correctly start the game. "
                "Should MO try to start steam now?"),
