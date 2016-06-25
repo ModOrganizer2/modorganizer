@@ -19,8 +19,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "lockeddialog.h"
 #include "ui_lockeddialog.h"
-#include <QResizeEvent>
 
+#include <QPoint>
+#include <QResizeEvent>
+#include <QWidget>
+#include <Qt>                 // for Qt::FramelessWindowHint, etc
 
 LockedDialog::LockedDialog(QWidget *parent, const QString &text, bool unlockButton)
   : QDialog(parent)
