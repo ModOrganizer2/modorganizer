@@ -35,7 +35,7 @@ removing = None
 includes = dict()
 
 adding = None
-added = dict()
+added = defaultdict(list)
 lcadded = dict()
 
 foundline = None
@@ -70,10 +70,10 @@ def process_next_line(line, outfile):
     elif adding:
         m = re.match(r'.*class (.*);', line)
         if m:
-            added[m.group(1)] = (adding, line)
+            added[m.group(1)].append((adding, line))
             lcadded[m.group(1).lower() + '.h'] = m.group(1)
         else:
-            added[line] = (adding, line)
+            added[line].append((adding, line))
     elif removing:
         # Really we should stash these so that if we get a 'class xxx' in
         # the add lines we can print it here. also we could do the case
@@ -88,10 +88,12 @@ def process_next_line(line, outfile):
                 if clname in lcadded:
                     clname = lcadded[clname]
             if clname in added:
-                messages[removing].append(
-                    '%s(%s) : warning I0004: Replace include of %s with '
-                        'forward reference %s' % (
-                        removing, m.group(2), m.group(1), added[clname][1]))
+                for item in added[clname]:
+                    if removing == item[0]:
+                        messages[removing].append(
+                            '%s(%s) : warning I0004: Replace include of %s'
+                            ' with forward reference %s' % (
+                                     removing, m.group(2), m.group(1), item[1]))
                 del added[clname]
             else:
                 messages[removing].append(
@@ -140,9 +142,10 @@ if foundline is None:
     foundline = '1'
 
 for add in added:
-    messages[added[add][0]].append(
-        '%s(%s) : warning I0003: Need to include %s' % (
-                                       added[add][0], foundline, added[add][1]))
+    for item in added[add]:
+        messages[item[0]].append(
+            '%s(%s) : warning I0003: Need to include %s' % (
+                                                   item[0], foundline, item[1]))
 
 for file in sorted(messages.keys(), reverse = True):
     for line in messages[file]:
