@@ -229,6 +229,12 @@ private:
 
   bool testForSteam();
 
+  /*
+   * std::vector<std::pair<QString, QString>> fileMapping(const QString &dataPath,
+                                                       const MOShared::DirectoryEntry *base,
+                                                       const MOShared::DirectoryEntry *directoryEntry);
+*/
+
   bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
 
 private slots:

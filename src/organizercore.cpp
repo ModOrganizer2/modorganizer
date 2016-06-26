@@ -918,7 +918,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
 
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID);
   if (processHandle != INVALID_HANDLE_VALUE) {
-    if (closeAfterStart && m_UserInterface != nullptr) {
+    if (closeAfterStart && (m_UserInterface != nullptr)) {
       m_UserInterface->closeWindow();
     } else {
 
@@ -1592,3 +1592,43 @@ void OrganizerCore::prepareStart() {
   storeSettings();
 }
 
+/*
+std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping()
+{
+  return fileMapping(managedGame()->dataDirectory().absolutePath(),
+                     directoryStructure(),
+                     directoryStructure());
+}
+
+
+std::vector<std::pair<QString, QString>> OrganizerCore::fileMapping(
+    const QString &dataPath,
+    const DirectoryEntry *base,
+    const DirectoryEntry *directoryEntry)
+{
+  std::vector<std::pair<QString, QString>> result;
+
+  for (FileEntry::Ptr current : directoryEntry->getFiles()) {
+    bool isArchive = false;
+    int origin = current->getOrigin(isArchive);
+    if (isArchive || (origin == 0)) {
+      continue;
+    }
+
+    QString fileName = ToQString(current->getRelativePath());
+    QString source = ToQString(base->getOriginByID(origin).getPath()) + fileName;
+    QString target = QDir::toNativeSeparators(dataPath) + fileName;
+    result.push_back(std::make_pair(source, target));
+  }
+
+  // recurse into subdirectories
+  std::vector<DirectoryEntry*>::const_iterator current, end;
+  directoryEntry->getSubDirectories(current, end);
+  for (; current != end; ++current) {
+    std::vector<std::pair<QString, QString>> subRes = fileMapping(dataPath, base, *current);
+    result.insert(result.end(), subRes.begin(), subRes.end());
+  }
+  return result;
+}
+
+*/
