@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <appconfig.h>
 #include <utility.h>
 #include <iplugingame.h>
+#include <questionboxmemory.h>
 
 #include <QCheckBox>
 #include <QCoreApplication>
@@ -520,13 +521,7 @@ void Settings::addStyles(QComboBox *styleBox)
 
 void Settings::resetDialogs()
 {
-  m_Settings.beginGroup("DialogChoices");
-  QStringList keys = m_Settings.childKeys();
-  foreach (QString key, keys) {
-    m_Settings.remove(key);
-  }
-
-  m_Settings.endGroup();
+  QuestionBoxMemory::resetDialogs();
 }
 
 
