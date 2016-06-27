@@ -19,23 +19,42 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "settings.h"
 
+#include "pluginsetting.h"
+#include "serverinfo.h"
 #include "settingsdialog.h"
-#include "utility.h"
-#include "helper.h"
-#include <appconfig.h>
+#include "versioninfo.h"
+#include "appconfig.h"
 #include <utility.h>
+#include <iplugin.h>
 #include <iplugingame.h>
 #include <questionboxmemory.h>
 
 #include <QCheckBox>
 #include <QCoreApplication>
-#include <QDesktopServices>
+#include <QComboBox>
+#include <QDate>
+#include <QDialog>
+#include <QDir>
 #include <QDirIterator>
+#include <QFileInfo>
 #include <QLineEdit>
+#include <QListWidgetItem>
+#include <QLocale>
 #include <QMessageBox>
 #include <QRegExp>
+#include <QStringList>
+#include <QVariantMap>
 
+#include <Qt> // for Qt::UserRole, etc
+#include <QtDebug> // for qDebug, qWarning
+
+#include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
+
+#include <algorithm> // for sort
 #include <memory>
+#include <stdexcept> // for runtime_error
+#include <string>
+#include <utility> // for pair, make_pair
 
 using namespace MOBase;
 

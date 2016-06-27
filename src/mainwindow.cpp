@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "pluginlistsortproxy.h"
 #include "previewgenerator.h"
+#include "serverinfo.h"
 #include "savegameinfo.h"
 #include "spawn.h"
 #include "versioninfo.h"

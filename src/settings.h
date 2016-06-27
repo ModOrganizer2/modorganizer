@@ -21,20 +21,34 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WORKAROUNDS_H
 
 #include "loadmechanism.h"
-#include "serverinfo.h"
-#include <iplugin.h>
 
+#include <QList>
+#include <QMap>
+#include <QObject>
+#include <QSet>
 #include <QSettings>
-#include <QListWidget>
-#include <QComboBox>
+#include <QString>
+#include <QVariant>
 
+#include <QtGlobal> //for uint
+
+#include <map>
+#include <vector>
+
+class QCheckBox;
+class QComboBox;
+class QLineEdit;
+class QListWidget;
+class QWidget;
+
+struct ServerInfo;
 
 namespace MOBase {
+  class IPlugin;
   class IPluginGame;
 }
 
 class SettingsDialog;
-class QCheckBox;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
