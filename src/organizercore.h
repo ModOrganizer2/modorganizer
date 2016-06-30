@@ -23,20 +23,27 @@
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
-namespace MOBase { template <typename T> class GuessedValue; }
+namespace MOBase {
+  template <typename T> class GuessedValue;
+  class IModInterface;
+}
 namespace MOShared { class DirectoryEntry; }
 
 #include <QDir>
+#include <QFileInfo>
 #include <QList>
 #include <QObject>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QThread>
+#include <QVariant>
 
 class QNetworkReply;
 class QUrl;
 class QWidget;
+
+#include <Windows.h> //for HANDLE, LPDWORD
 
 #include <functional>
 #include <vector>
@@ -129,8 +136,16 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
-  void spawnBinary(const Executable &exe);
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite);
+  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
+                   const QDir &currentDirectory = QDir(),
+                   const QString &steamAppID = "",
+                   const QString &customOverwrite = "");
+
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
+                           const QString &profileName,
+                           const QDir &currentDirectory,
+                           const QString &steamAppID,
+                           const QString &customOverwrite);
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -244,10 +259,7 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
-                   const QDir &currentDirectory = QDir(),
-                   const QString &steamAppID = "",
-                   const QString &customOverwrite = "");
+  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
 
 private slots:
 

@@ -1,17 +1,22 @@
 #include "organizercore.h"
 
+#include "delayedfilewriter.h"
+#include "guessedvalue.h"
 #include "imodinterface.h"
+#include "imoinfo.h"
 #include "iplugingame.h"
 #include "iuserinterface.h"
 #include "loadmechanism.h"
 #include "messagedialog.h"
 #include "modlistsortproxy.h"
+#include "modrepositoryfileinfo.h"
+#include "nexusinterface.h"
 #include "plugincontainer.h"
 #include "pluginlistsortproxy.h"
+#include "profile.h"
 #include "logbuffer.h"
 #include "credentialsdialog.h"
 #include "filedialogmemory.h"
-#include "lockeddialog.h"
 #include "modinfodialog.h"
 #include "spawn.h"
 #include "syncoverwritedialog.h"
@@ -28,22 +33,33 @@
 #include <questionboxmemory.h>
 
 #include <QApplication>
+#include <QCoreApplication>
+#include <QDialog>
 #include <QDialogButtonBox>
 #include <QMessageBox>
 #include <QNetworkInterface>
 #include <QProcess>
 #include <QTimer>
+#include <QUrl>
 #include <QWidget>
 
 #include <QtDebug>
+#include <QtGlobal> // for qPrintable, etc
 
 #include <Psapi.h>
+#include <tchar.h> // for _tcsicmp
+
+#include <limits.h>
+#include <stddef.h>
+#include <string.h> // for memset, wcsrchr
 
 #include <exception>
 #include <functional>
 #include <boost/algorithm/string/predicate.hpp>
 #include <memory>
 #include <set>
+#include <string> //for wstring
+#include <tuple>
 #include <utility>
 
 
@@ -1005,120 +1021,34 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
-void OrganizerCore::spawnBinary(const Executable &exe)
+void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite)
 {
-  spawnBinary(
-      exe.m_BinaryInfo, exe.m_Arguments,
-      exe.m_WorkingDirectory.length() != 0 ? exe.m_WorkingDirectory
-                                           : exe.m_BinaryInfo.absolutePath(),
-      exe.m_SteamAppID,
-      m_CurrentProfile->setting("custom_overwrites", exe.m_Title).toString());
-}
-
-void OrganizerCore::spawnBinary(const QFileInfo &binary,
-                                const QString &arguments,
-                                const QDir &currentDirectory,
-                                const QString &steamAppID,
-                                const QString &customOverwrite)
-{
-  LockedDialog *dialog = new LockedDialog(qApp->activeWindow());
-  dialog->show();
-  ON_BLOCK_EXIT([&]() {
-    dialog->hide();
-    dialog->deleteLater();
+  if (m_UserInterface != nullptr) {
+    m_UserInterface->lock();
+  }
+  ON_BLOCK_EXIT([&] () {
+    if (m_UserInterface != nullptr) { m_UserInterface->unlock(); }
   });
 
-  HANDLE processHandle
-      = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(),
-                          currentDirectory, steamAppID, customOverwrite);
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite);
   if (processHandle != INVALID_HANDLE_VALUE) {
-    if (m_UserInterface != nullptr) {
-      m_UserInterface->setWindowEnabled(false);
-    }
-    // re-enable the locked dialog because what'd be the point otherwise?
-    dialog->setEnabled(true);
-
-    QCoreApplication::processEvents();
-
     DWORD processExitCode;
+    (void)waitForProcessCompletion(processHandle, &processExitCode);
 
-    dialog->setProcessName(
-        QString::fromStdWString(getProcessName(::GetProcessId(processHandle))));
-
-    {
-      DWORD currentProcess = 0UL;
-
-      DWORD res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000,
-                                              QS_KEY | QS_MOUSE);
-      bool tryAgain = true;
-      while ((res != WAIT_FAILED) && !dialog->unlockClicked()) {
-        if (res == WAIT_OBJECT_0) {
-          // process ended, is there another one in the group?
-          static const DWORD maxCount = 5;
-          size_t numProcesses         = maxCount;
-          LPDWORD processes = new DWORD[maxCount];
-          if (::GetVFSProcessList(&numProcesses, processes)) {
-            bool found = false;
-            size_t count =
-                std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
-            for (size_t i = 0; i < count; ++i) {
-              std::wstring processName = getProcessName(processes[i]);
-              if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-                currentProcess = processes[i];
-                dialog->setProcessName(QString::fromStdWString(processName));
-                processHandle
-                    = ::OpenProcess(SYNCHRONIZE, FALSE, currentProcess);
-                found = true;
-              }
-            }
-            if (!found) {
-              // it's possible the previous process has deregistered before
-              // the new one has registered, so we should try one more time
-              // with a little delay
-              if (tryAgain) {
-                tryAgain = false;
-                QThread::msleep(500);
-                continue;
-              } else {
-                break;
-              }
-            } else {
-              tryAgain = true;
-            }
-          } else {
-            break;
-          }
-        }
-
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
-
-        res = ::MsgWaitForMultipleObjects(1, &processHandle, false, 1000,
-                                          QS_KEY | QS_MOUSE);
-      }
-      ::GetExitCodeProcess(processHandle, &processExitCode);
-
-      ::CloseHandle(processHandle);
-
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->setWindowEnabled(true);
-      }
-      // need to remove our stored load order because it may be outdated if a
-      // foreign tool changed the
-      // file time. After removing that file, refreshESPList will use the file
-      // time as the order
-      if (managedGame()->loadOrderMechanism()
-          == IPluginGame::LoadOrderMechanism::FileTime) {
-        qDebug("removing loadorder.txt");
-        QFile::remove(m_CurrentProfile->getLoadOrderFileName());
-      }
-      refreshDirectoryStructure();
-
-      refreshESPList();
-      savePluginList();
-
-      m_FinishedRun(binary.absoluteFilePath(), processExitCode);
+    refreshDirectoryStructure();
+    // need to remove our stored load order because it may be outdated if a foreign tool changed the
+    // file time. After removing that file, refreshESPList will use the file time as the order
+    if (managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
+      qDebug("removing loadorder.txt");
+      QFile::remove(m_CurrentProfile->getLoadOrderFileName());
     }
+    refreshDirectoryStructure();
+
+    refreshESPList();
+    savePluginList();
+
+    //These callbacks should not fiddle with directoy structure and ESPs.
+    m_FinishedRun(binary.absoluteFilePath(), processExitCode);
   }
 }
 
@@ -1158,12 +1088,11 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
       if ((window != nullptr) && (!window->isVisible())) {
         window = nullptr;
       }
-      if (QuestionBoxMemory::query(window, "steamQuery", tr("Start Steam?"),
-                                   tr("Steam is required to be running already "
-                                      "to correctly start the game. "
-                                      "Should MO try to start steam now?"),
-                                   QDialogButtonBox::Yes | QDialogButtonBox::No)
-          == QDialogButtonBox::Yes) {
+      if (QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
+            tr("Start Steam?"),
+            tr("Steam is required to be running already to correctly start the game. "
+               "Should MO try to start steam now?"),
+            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
         startSteam(qApp->activeWindow());
       }
     }
@@ -1179,6 +1108,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
     m_CurrentProfile->modlistWriter().writeImmediately(true);
   }
 
+  // TODO: should also pass arguments
   if (m_AboutToRun(binary.absoluteFilePath())) {
     try {
       m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
@@ -1287,67 +1217,83 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
   if (m_UserInterface != nullptr) {
     m_UserInterface->lock();
-    ON_BLOCK_EXIT([&]() { m_UserInterface->unlock(); });
   }
 
-  DWORD retLen;
-  JOBOBJECT_BASIC_PROCESS_ID_LIST info;
+  ON_BLOCK_EXIT([&] () {
+    if (m_UserInterface != nullptr) {
+      m_UserInterface->unlock();
+    } });
+  return waitForProcessCompletion(handle, exitCode);
+}
 
-  bool isJobHandle = true;
-
-  ULONG lastProcessID  = ULONG_MAX;
+bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
+{
   HANDLE processHandle = handle;
 
-  DWORD res
-      = ::MsgWaitForMultipleObjects(1, &handle, false, 500, QS_KEY | QS_MOUSE);
+  static const DWORD maxCount = 5;
+  size_t numProcesses         = maxCount;
+  LPDWORD processes = new DWORD[maxCount];
+
+  DWORD currentProcess = 0UL;
+  bool tryAgain = true;
+
+  DWORD res;
+  // Wait for a an event on the handle, a key press, mouse click or timeout
   while (
-      (res != WAIT_FAILED) && (res != WAIT_OBJECT_0)
-      && ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
-    if (isJobHandle) {
-      if (::QueryInformationJobObject(handle, JobObjectBasicProcessIdList,
-                                      &info, sizeof(info), &retLen)
-          > 0) {
-        if (info.NumberOfProcessIdsInList == 0) {
-          // fake signaled state
-          res = WAIT_OBJECT_0;
-          break;
-        } else {
-          // this is indeed a job handle. Figure out one of the process handles
-          // as well.
-          if (lastProcessID != info.ProcessIdList[0]) {
-            lastProcessID = info.ProcessIdList[0];
-            if (processHandle != handle) {
-              ::CloseHandle(processHandle);
-            }
-            processHandle = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE,
-                                          lastProcessID);
-          }
-        }
-      } else {
-        // the info-object I passed only provides space for 1 process id. but
-        // since this code only cares about whether there
-        // is more than one that's good enough. ERROR_MORE_DATA simply signals
-        // there are at least two processes running.
-        // any other error probably means the handle is a regular process
-        // handle, probably caused by running MO in a job without
-        // the right to break out.
-        if (::GetLastError() != ERROR_MORE_DATA) {
-          isJobHandle = false;
-        }
+      res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
+                                        QS_KEY | QS_MOUSE),
+      (MOBase::isOneOf(res, {WAIT_FAILED, WAIT_OBJECT_0}) &&
+       ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked()))) {
+
+    if (!::GetVFSProcessList(&numProcesses, processes)) {
+      break;
+    }
+
+    bool found = false;
+    size_t count =
+        std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
+    for (size_t i = 0; i < count; ++i) {
+      std::wstring processName = getProcessName(processes[i]);
+      if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
+        currentProcess = processes[i];
+        m_UserInterface->setProcessName(QString::fromStdWString(processName));
+        processHandle = ::OpenProcess(SYNCHRONIZE, FALSE, currentProcess);
+        found = true;
       }
+    }
+    if (!found) {
+      // it's possible the previous process has deregistered before
+      // the new one has registered, so we should try one more time
+      // with a little delay
+      if (tryAgain) {
+        tryAgain = false;
+        QThread::msleep(500);
+        continue;
+      } else {
+        break;
+      }
+    } else {
+      tryAgain = true;
     }
 
     // keep processing events so the app doesn't appear dead
     QCoreApplication::processEvents();
-
-    res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
-                                      QS_KEY | QS_MOUSE);
   }
 
   if (exitCode != nullptr) {
-    ::GetExitCodeProcess(processHandle, exitCode);
+    //This is actually wrong if the process we started finished before we
+    //got the event and so we end up with a job handle.
+    if (! ::GetExitCodeProcess(processHandle, exitCode))
+    {
+      DWORD error = ::GetLastError();
+      qDebug() << "Failed to get process exit code: Error " << error;
+    }
   }
+
   ::CloseHandle(processHandle);
+  if (handle != processHandle) {
+    ::CloseHandle(handle);
+  }
 
   return res == WAIT_OBJECT_0;
 }

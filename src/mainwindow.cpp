@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "organizercore.h"
 #include "pluginlistsortproxy.h"
 #include "previewgenerator.h"
+#include "serverinfo.h"
 #include "savegameinfo.h"
 #include "spawn.h"
 #include "versioninfo.h"
@@ -1011,8 +1012,14 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    m_OrganizerCore.spawnBinary(
+    const Executable &selectedExecutable(
         m_OrganizerCore.executablesList()->find(action->text()));
+    m_OrganizerCore.spawnBinary(
+        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
+        selectedExecutable.m_WorkingDirectory.length() != 0
+            ? selectedExecutable.m_WorkingDirectory
+            : selectedExecutable.m_BinaryInfo.absolutePath(),
+        selectedExecutable.m_SteamAppID);
   } else {
     qCritical("not an action?");
   }
@@ -1450,18 +1457,31 @@ void MainWindow::storeSettings(QSettings &settings) {
 
 void MainWindow::lock()
 {
+  if (m_LockDialog != nullptr) {
+    ++m_LockCount;
+    return;
+  }
   m_LockDialog = new LockedDialog(qApp->activeWindow());
   m_LockDialog->show();
   setEnabled(false);
+  m_LockDialog->setEnabled(true); //What's the point otherwise?
+  ++m_LockCount;
 }
 
 void MainWindow::unlock()
 {
-  if (m_LockDialog != nullptr) {
+  //If you come through here with a null lock pointer, it's a bug!
+  if (m_LockDialog == nullptr) {
+    qDebug("Unlocking main window when already unlocked");
+    return;
+  }
+  --m_LockCount;
+  if (m_LockCount == 0) {
     m_LockDialog->hide();
     m_LockDialog->deleteLater();
+    m_LockDialog = nullptr;
+    setEnabled(true);
   }
-  setEnabled(true);
 }
 
 bool MainWindow::unlockClicked()
@@ -1470,6 +1490,13 @@ bool MainWindow::unlockClicked()
     return m_LockDialog->unlockClicked();
   } else {
     return false;
+  }
+}
+
+void MainWindow::setProcessName(QString const &name)
+{
+  if (m_LockDialog != nullptr) {
+    m_LockDialog->setProcessName(name);
   }
 }
 
@@ -1515,12 +1542,16 @@ void MainWindow::installMod(QString fileName)
   }
 }
 
+void MainWindow::on_startButton_clicked() {
+  const Executable &selectedExecutable(getSelectedExecutable());
 
-void MainWindow::on_startButton_clicked()
-{
-  m_OrganizerCore.spawnBinary(getSelectedExecutable());
+  m_OrganizerCore.spawnBinary(
+      selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
+      selectedExecutable.m_WorkingDirectory.length() != 0
+          ? selectedExecutable.m_WorkingDirectory
+          : selectedExecutable.m_BinaryInfo.absolutePath(),
+      selectedExecutable.m_SteamAppID);
 }
-
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
                               LPCSTR linkFileName, LPCWSTR description,

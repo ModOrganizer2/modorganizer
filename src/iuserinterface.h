@@ -30,6 +30,7 @@ public:
   virtual void lock() = 0;
   virtual void unlock() = 0;
   virtual bool unlockClicked() = 0;
+  virtual void setProcessName(QString const &) = 0;
 
 
 };

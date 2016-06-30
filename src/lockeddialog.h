@@ -20,7 +20,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOCKEDDIALOG_H
 #define LOCKEDDIALOG_H
 
-#include <QDialog>
+#include <QDialog>  // for QDialog
+#include <QObject>  // for Q_OBJECT, slots
+#include <QString>  // for QString
+
+class QResizeEvent;
+class QWidget;
 
 namespace Ui {
     class LockedDialog;
@@ -49,6 +54,10 @@ public:
    **/
   bool unlockClicked() const { return m_UnlockClicked; }
 
+  /**
+   * @brief set the name of the process being run
+   * @param name of process
+   */
   void setProcessName(const QString &name);
 
 protected:

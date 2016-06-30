@@ -119,6 +119,7 @@ public:
   virtual void lock() override;
   virtual void unlock() override;
   virtual bool unlockClicked() override;
+  virtual void setProcessName(QString const &name) override;
 
   bool addProfile();
   void refreshDataTree();
@@ -350,6 +351,7 @@ private:
   bool m_DidUpdateMasterList;
 
   LockedDialog *m_LockDialog { nullptr };
+  uint64_t m_LockCount { 0 };
 
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
