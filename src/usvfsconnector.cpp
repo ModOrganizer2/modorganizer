@@ -107,7 +107,7 @@ UsvfsConnector::UsvfsConnector()
   LogLevel level = logLevel(Settings::instance().logLevel());
   USVFSInitParameters(&params, SHMID, false, level);
   InitLogging(false);
-  ConnectVFS(&params);
+  CreateVFS(&params);
   SetLogLevel(level);
 
   BlacklistExecutable(L"TSVNCache.exe");
