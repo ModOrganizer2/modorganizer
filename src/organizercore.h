@@ -21,20 +21,27 @@
 class ModListSortProxy;
 class PluginListSortProxy;
 class Profile;
-namespace MOBase { template <typename T> class GuessedValue; }
+namespace MOBase {
+  template <typename T> class GuessedValue;
+  class IModInterface;
+}
 namespace MOShared { class DirectoryEntry; }
 
 #include <QDir>
+#include <QFileInfo>
 #include <QList>
 #include <QObject>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QThread>
+#include <QVariant>
 
 class QNetworkReply;
 class QUrl;
 class QWidget;
+
+#include <Windows.h> //for HANDLE, LPDWORD
 
 #include <functional>
 #include <vector>
@@ -227,6 +234,8 @@ private:
                                                        const MOShared::DirectoryEntry *base,
                                                        const MOShared::DirectoryEntry *directoryEntry);
 */
+
+  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
 
 private slots:
 

@@ -669,7 +669,9 @@ if qt_env['QT_MAJOR_VERSION'] > 4:
     dlls_to_install += [
         os.path.join(env['QTDIR'],
                      'bin',
-                     'icu%s%d%d.dll' % (lib, qt_env['QT_MAJOR_VERSION'], qt_env['QT_MINOR_VERSION'] - 1))
+                     'icu%s%d%d.dll' % (lib,
+                                        qt_env['QT_MAJOR_VERSION'],
+                                        qt_env['QT_MINOR_VERSION'] - 1))
             for lib in ('dt','in', 'uc')
     ]
 

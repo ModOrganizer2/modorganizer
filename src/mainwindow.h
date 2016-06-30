@@ -118,6 +118,7 @@ public:
   virtual void lock() override;
   virtual void unlock() override;
   virtual bool unlockClicked() override;
+  virtual void setProcessName(QString const &name) override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
@@ -350,6 +351,7 @@ private:
   bool m_DidUpdateMasterList;
 
   LockedDialog *m_LockDialog { nullptr };
+  uint64_t m_LockCount { 0 };
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
