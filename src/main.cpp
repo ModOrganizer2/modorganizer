@@ -149,7 +149,7 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
       if (QMessageBox::question(nullptr, QObject::tr("Woops"),
                                 QObject::tr("ModOrganizer has crashed! "
                                             "Should a diagnostic file be created? "
-                                            "If you send me this file (%1) to sherb@gmx.net, "
+                                            "If you send me this file (%1) to modorganizer@gmail.com, "
                                             "the bug is a lot more likely to be fixed. "
                                             "Please include a short description of what you were "
                                             "doing when the crash happened"
