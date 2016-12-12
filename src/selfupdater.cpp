@@ -123,7 +123,7 @@ void SelfUpdater::testForUpdate()
 {
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
-  m_GitHub.releases(GitHub::Repository("TanninOne", "modorganizer"),
+  m_GitHub.releases(GitHub::Repository("LePresidente", "modorganizer"),
                     [this](const QJsonArray &releases) {
     QJsonObject newest;
     for (const QJsonValue &releaseVal : releases) {

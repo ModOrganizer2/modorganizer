@@ -39,6 +39,7 @@ IGameInfo::Type GameInfoImpl::type() const
     case GameInfo::TYPE_FALLOUT4: return IGameInfo::TYPE_FALLOUT4;
     case GameInfo::TYPE_FALLOUTNV: return IGameInfo::TYPE_FALLOUTNV;
     case GameInfo::TYPE_SKYRIM: return IGameInfo::TYPE_SKYRIM;
+	case GameInfo::TYPE_SKYRIMSE: return IGameInfo::TYPE_SKYRIMSE;
     default: throw MyException(QObject::tr("invalid game type %1").arg(GameInfo::instance().getType()));
   }
 }
