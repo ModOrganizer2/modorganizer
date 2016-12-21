@@ -1243,7 +1243,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
   while (
       res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
                                         QS_KEY | QS_MOUSE),
-      ((res != WAIT_FAILED) || (res != WAIT_OBJECT_0)) &&
+      ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) &&
        ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
 
     if (!::GetVFSProcessList(&numProcesses, processes)) {
