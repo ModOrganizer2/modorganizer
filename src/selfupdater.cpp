@@ -105,7 +105,8 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
                             version.dwFileVersionMS & 0xFFFF,
-                            version.dwFileVersionLS >> 16);
+                            version.dwFileVersionLS >> 16,
+							version.dwFileVersionLS & 0xFFFF);
 }
 
 
