@@ -4229,6 +4229,9 @@ void MainWindow::on_bossButton_clicked()
   std::string errorMessages;
 
   m_OrganizerCore.currentProfile()->writeModlistNow();
+  //Create a backup of the load orders w/ LOOT in name
+  //to make sure that any sorting is easily undo-able.
+  //Need to figure out how I want to do that.
 
   bool success = false;
 
@@ -4241,6 +4244,8 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
+    //Trying to make it display the report.
+    reportURL=outPath.toStdString();
 
     QStringList parameters;
     parameters << "--unattended"
@@ -4248,13 +4253,14 @@ void MainWindow::on_bossButton_clicked()
                << "--noreport"
                << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
+			   << "--pluginListPath" << QString("%1/loadorder.txt").arg(m_OrganizerCore.profilePath())
                << "--out" << outPath;
 
-    if (m_DidUpdateMasterList) {
+    /*if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
     } else {
       m_DidUpdateMasterList = true;
-    }
+    }*/
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
