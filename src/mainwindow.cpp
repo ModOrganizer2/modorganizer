@@ -4244,13 +4244,11 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
-    //Trying to make it display the report.
-    reportURL=outPath.toStdString();
-
+   
     QStringList parameters;
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
-               << "--pluginListPath" << QString("%1/loadorder.txt").arg(m_OrganizerCore.profilePath())
+               << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath())
                << "--out" << outPath;
 
     if (m_DidUpdateMasterList) {
