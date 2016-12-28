@@ -4248,19 +4248,14 @@ void MainWindow::on_bossButton_clicked()
     reportURL=outPath.toStdString();
 
     QStringList parameters;
-    parameters << "--unattended"
-               << "--stdout"
-               << "--noreport"
-               << "--game" << m_OrganizerCore.managedGame()->gameShortName()
+    parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
-			   << "--pluginListPath" << QString("%1/loadorder.txt").arg(m_OrganizerCore.profilePath())
+               << "--pluginListPath" << QString("%1/loadorder.txt").arg(m_OrganizerCore.profilePath())
                << "--out" << outPath;
 
-    /*if (m_DidUpdateMasterList) {
+    if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
-    } else {
-      m_DidUpdateMasterList = true;
-    }*/
+    }
     HANDLE stdOutWrite = INVALID_HANDLE_VALUE;
     HANDLE stdOutRead = INVALID_HANDLE_VALUE;
     createStdoutPipe(&stdOutRead, &stdOutWrite);
@@ -4375,7 +4370,8 @@ void MainWindow::on_bossButton_clicked()
   }
 
   if (success) {
-    if (reportURL.length() > 0) {
+    m_DidUpdateMasterList = true;
+    /*if (reportURL.length() > 0) {
       m_IntegratedBrowser.setWindowTitle("LOOT Report");
       QString report(reportURL.c_str());
       QStringList temp = report.split("?");
@@ -4384,7 +4380,7 @@ void MainWindow::on_bossButton_clicked()
         url.setQuery(temp.at(1).toUtf8());
       }
       m_IntegratedBrowser.openUrl(url);
-    }
+    }*/
 
     // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
     // refreshESPList will then use the file time as the load order.
