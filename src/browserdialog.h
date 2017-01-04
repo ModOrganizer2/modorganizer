@@ -24,7 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QTimer>
-#include <QWebView>
+#include <QWebEngineView>
 #include <QQueue>
 #include <QTabWidget>
 #include <QAtomicInt>

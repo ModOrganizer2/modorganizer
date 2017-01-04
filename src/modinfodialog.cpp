@@ -89,7 +89,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
   connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
   connect(ui->descriptionView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
-  ui->descriptionView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+  //TODO: No easy way to delegate links
+  //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
 
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));

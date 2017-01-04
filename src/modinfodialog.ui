@@ -678,7 +678,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QWebView" name="descriptionView">
+        <widget class="QWebEngineView" name="descriptionView">
          <property name="url">
           <url>
            <string>about:blank</string>
@@ -807,9 +807,9 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QWebView</class>
+   <class>QQuickWidget</class>
    <extends>QWidget</extends>
-   <header>QtWebKitWidgets/QWebView</header>
+   <header>QtQuickWidgets/QQuickWidget</header>
   </customwidget>
  </customwidgets>
  <resources>
