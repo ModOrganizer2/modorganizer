@@ -1243,7 +1243,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
   while (
       res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
                                         QS_KEY | QS_MOUSE),
-      ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) &&
+      ((res != WAIT_FAILED) || (res != WAIT_OBJECT_0)) &&
        ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
 
     if (!::GetVFSProcessList(&numProcesses, processes)) {
@@ -1256,9 +1256,9 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
     for (size_t i = 0; i < count; ++i) {
       std::wstring processName = getProcessName(processes[i]);
       if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-        currentProcess = processes[i];
+		currentProcess = processes[i];
         m_UserInterface->setProcessName(QString::fromStdWString(processName));
-        processHandle = ::OpenProcess(SYNCHRONIZE, FALSE, currentProcess);
+		processHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
         found = true;
       }
     }
