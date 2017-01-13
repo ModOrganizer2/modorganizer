@@ -4,6 +4,7 @@ src/moc_*.cpp
 src/ui_*.h
 src/*.qrc.depends
 src/Modorganizer.*
+src/*.bak
 CMakeLists.txt.user
 edit
 stderr.log
