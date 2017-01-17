@@ -18,6 +18,7 @@ public:
   virtual QString profilePath() const;
   virtual QString downloadsPath() const;
   virtual QString overwritePath() const;
+  virtual QString basePath() const;
   virtual MOBase::VersionInfo appVersion() const;
   virtual MOBase::IModInterface *getMod(const QString &name) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
