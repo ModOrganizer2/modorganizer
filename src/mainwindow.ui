@@ -732,6 +732,9 @@ p, li { white-space: pre-wrap; }
                     <property name="text">
                      <string>Sort</string>
                     </property>
+                    <property name="visible">
+                      <bool>false</bool>
+                    </property>
                     <property name="icon">
                      <iconset resource="resources.qrc">
                       <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
