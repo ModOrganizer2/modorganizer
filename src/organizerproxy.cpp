@@ -37,9 +37,15 @@ QString OrganizerProxy::downloadsPath() const
 
 QString OrganizerProxy::overwritePath() const
 {
-  return QDir::fromNativeSeparators(qApp->property("dataPath").toString())
+  /*return QDir::fromNativeSeparators(qApp->property("dataPath").toString())
          + "/"
-         + ToQString(AppConfig::overwritePath());
+	 + ToQString(AppConfig::overwritePath());*/
+  return m_Proxied->overwritePath();
+}
+
+QString OrganizerProxy::basePath() const
+{
+  return m_Proxied->basePath();
 }
 
 VersionInfo OrganizerProxy::appVersion() const

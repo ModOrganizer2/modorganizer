@@ -703,6 +703,16 @@ QString OrganizerCore::downloadsPath() const
   return QDir::fromNativeSeparators(m_Settings.getDownloadDirectory());
 }
 
+QString OrganizerCore::overwritePath() const
+{
+  return QDir::fromNativeSeparators(m_Settings.getOverwriteDirectory());
+}
+
+QString OrganizerCore::basePath() const
+{
+  return QDir::fromNativeSeparators(m_Settings.getBaseDirectory());
+}
+
 MOBase::VersionInfo OrganizerCore::appVersion() const
 {
   return m_Updater.getVersion();
