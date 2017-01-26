@@ -4228,7 +4228,8 @@ void MainWindow::on_bossButton_clicked()
   std::string reportURL;
   std::string errorMessages;
 
-  m_OrganizerCore.currentProfile()->writeModlistNow();
+  //m_OrganizerCore.currentProfile()->writeModlistNow();
+  m_OrganizerCore.savePluginList();
   //Create a backup of the load orders w/ LOOT in name
   //to make sure that any sorting is easily undo-able.
   //Need to figure out how I want to do that.
