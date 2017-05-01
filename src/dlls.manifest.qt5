@@ -1,31 +1,25 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
     <assemblyIdentity type="win32" name="dlls" version="1.0.0.0" processorArchitecture="x86"/>
-    <file name="icuin54.dll"/>
-    <file name="icuuc54.dll"/>
-    <file name="icudt54.dll"/>
+	<file name="7z.dll"/>
+	<file name="archive.dll"/>
+    <file name="icuin58.dll"/>
+    <file name="icuuc58.dll"/>
+    <file name="icudt58.dll"/>
     <file name="libeay32.dll"/>
-    <file name="ssleay32.dll"/>
+	<file name="liblz4.dll"/>
     <file name="Qt5Core.dll"/>
-    <file name="Qt5Declarative.dll"/>
     <file name="Qt5Gui.dll"/>
-    <file name="Qt5Multimedia.dll"/>
-    <file name="Qt5MultimediaWidgets.dll"/>
     <file name="Qt5Network.dll"/>
-    <file name="Qt5OpenGL.dll"/>
     <file name="Qt5Positioning.dll"/>
     <file name="Qt5PrintSupport.dll"/>
     <file name="Qt5Qml.dll"/>
     <file name="Qt5Quick.dll"/>
-    <file name="Qt5Sensors.dll"/>
-    <file name="Qt5Script.dll"/>
-    <file name="Qt5Sql.dll"/>
-    <file name="Qt5Svg.dll"/>
+	<file name="Qt5QuickWidgets.dll"/>
     <file name="Qt5WebChannel.dll"/>
-    <file name="Qt5WebKit.dll"/>
-    <file name="Qt5WebKitWidgets.dll"/>
+	<file name="Qt5WebEngineCore.dll"/>
+    <file name="Qt5WebEngineWidgets.dll"/>
     <file name="Qt5Widgets.dll"/>
     <file name="Qt5WinExtras.dll"/>
-    <file name="Qt5Xml.dll"/>
-    <file name="Qt5XmlPatterns.dll"/>
+	<file name="ssleay32.dll"/>
 </assembly>
