@@ -337,7 +337,7 @@ INSTALL(
     CODE
     "EXECUTE_PROCESS(
         COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
         COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
