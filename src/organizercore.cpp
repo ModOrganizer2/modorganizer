@@ -1432,6 +1432,20 @@ void OrganizerCore::updateModActiveState(int index, bool active)
         tr("Multiple esps activated, please check that they don't conflict."),
         qApp->activeWindow());
   }
+  QStringList esls = dir.entryList(QStringList() << "*.esl", QDir::Files);
+  for (const QString &esl : esls) {
+    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
+    if (file.get() == nullptr) {
+      qWarning("failed to activate %s", qPrintable(esl));
+      continue;
+    }
+
+    if (active != m_PluginList.isEnabled(esl)
+        && file->getAlternatives().empty()) {
+      m_PluginList.enableESP(esl, active);
+      ++enabled;
+    }
+  }
   m_PluginList.refreshLoadOrder();
   // immediately save affected lists
   m_PluginListsWriter.writeImmediately(false);
