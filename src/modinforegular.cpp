@@ -430,7 +430,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
     m_CachedContent.clear();
     QDir dir(absolutePath());
-    if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+    if (dir.entryList(QStringList() << "*.esp" << "*.esl" << "*.esm").size() > 0) {
       m_CachedContent.push_back(CONTENT_PLUGIN);
     }
     if (dir.entryList(QStringList() << "*.bsa" << "*.ba2").size() > 0) {
