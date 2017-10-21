@@ -135,7 +135,7 @@ void PluginList::refresh(const QString &profileName
 
     QString extension = filename.right(3).toLower();
 
-    if ((extension == "esp") || (extension == "esm")) {
+    if ((extension == "esp") || (extension == "esm") || (extension == "esl")) {
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
                             std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
 

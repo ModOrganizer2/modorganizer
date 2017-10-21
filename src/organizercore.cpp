@@ -1413,6 +1413,20 @@ void OrganizerCore::updateModActiveState(int index, bool active)
     m_PluginList.enableESP(esm, active);
   }
   int enabled      = 0;
+  for (const QString &esl :
+       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
+    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
+    if (file.get() == nullptr) {
+      qWarning("failed to activate %s", qPrintable(esl));
+      continue;
+    }
+
+    if (active != m_PluginList.isEnabled(esl)
+        && file->getAlternatives().empty()) {
+      m_PluginList.enableESP(esl, active);
+      ++enabled;
+    }
+  }
   QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
   for (const QString &esp : esps) {
     const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
@@ -1429,7 +1443,7 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   }
   if (active && (enabled > 1)) {
     MessageDialog::showMessage(
-        tr("Multiple esps activated, please check that they don't conflict."),
+        tr("Multiple esps/esls activated, please check that they don't conflict."),
         qApp->activeWindow());
   }
   m_PluginList.refreshLoadOrder();
@@ -1723,7 +1737,7 @@ QString OrganizerCore::shortDescription(unsigned int key) const
 {
   switch (key) {
     case PROBLEM_TOOMANYPLUGINS: {
-      return tr("Too many esps and esms enabled");
+      return tr("Too many esps, esms, and esls enabled");
     } break;
     default: {
       return tr("Description missing");

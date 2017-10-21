@@ -93,7 +93,7 @@ function getTutorialSteps() {
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("I told you in the \"First Steps\" tutorial how the esp/esm plugins contain changes to the game world "
+            tutorial.text = qsTr("I told you in the \"First Steps\" tutorial how the esp/esm/esl plugins contain changes to the game world "
                                  +"like modifications to the terrain or existing NPCs. Each change like this is stored in a record, hence the "
                                  +"name \"record conflict\". For example when two mods try to change the same location, only one change can become active.")
             waitForClick()

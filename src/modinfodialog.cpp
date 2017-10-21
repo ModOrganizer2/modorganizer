@@ -314,7 +314,8 @@ void ModInfoDialog::refreshLists()
           ui->iniFileList->addItem(namePart);
         }
       } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esm", Qt::CaseInsensitive)) {
+                 fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+                 fileName.endsWith(".esl", Qt::CaseInsensitive)) {
         QString relativePath = fileName.mid(m_RootPath.length() + 1);
         if (relativePath.contains('/')) {
           QFileInfo fileInfo(fileName);
