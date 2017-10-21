@@ -213,6 +213,7 @@ public:
   virtual int loadOrder(const QString &name) const;
   virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool isMaster(const QString &name) const;
+  virtual bool isLight(const QString &name) const;
   virtual QStringList masters(const QString &name) const;
   virtual QString origin(const QString &name) const;
   virtual void setLoadOrder(const QStringList &pluginList) override;
@@ -275,6 +276,7 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
+    bool m_IsLight;
     QString m_Author;
     QString m_Description;
     bool m_HasIni;

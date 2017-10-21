@@ -593,6 +593,16 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+bool PluginList::isLight(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].m_IsLight;
+  }
+}
+
 QStringList PluginList::masters(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
@@ -736,6 +746,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_IsMaster) {
       result.setItalic(true);
       result.setWeight(QFont::Bold);
+    } else if (m_ESPs[index].m_IsLight) {
+      result.setItalic(true);
     }
     return result;
   } else if (role == Qt::TextAlignmentRole) {
@@ -895,16 +907,18 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 {
   int newPriorityTemp = newPriority;
 
-  if (!m_ESPs[row].m_IsMaster) {
+  if (!m_ESPs[row].m_IsMaster && !m_ESPs[row].m_IsLight) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
+            (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster ||
+             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsLight)) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
-           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster &&
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsLight) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
@@ -1110,7 +1124,8 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
 {
   try {
     ESP::File file(ToWString(fullPath));
-    m_IsMaster = file.isMaster();
+    m_IsMaster = file.isMaster() && !file.isLight();
+    m_IsLight = file.isMaster() && file.isLight();
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());
     std::set<std::string> masters = file.masters();
@@ -1120,6 +1135,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   } catch (const std::exception &e) {
     qCritical("failed to parse esp file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
+    m_IsLight = false;
   }
 }
 
