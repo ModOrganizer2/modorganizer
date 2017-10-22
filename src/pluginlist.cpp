@@ -102,7 +102,7 @@ QString PluginList::getColumnToolTip(int column)
     case COL_NAME:     return tr("Name of your mods");
     case COL_PRIORITY: return tr("Load priority of your mod. The higher, the more \"important\" it is and thus "
                                  "overwrites data from plugins with lower priority.");
-    case COL_MODINDEX: return tr("The modindex determins the formids of objects originating from this mods.");
+    case COL_MODINDEX: return tr("The modindex determines the formids of objects originating from this mods.");
     default: return tr("unknown");
   }
 }
@@ -135,7 +135,7 @@ void PluginList::refresh(const QString &profileName
 
     QString extension = filename.right(3).toLower();
 
-    if ((extension == "esp") || (extension == "esm")) {
+    if ((extension == "esp") || (extension == "esm") || (extension == "esl")) {
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
                             std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
 
@@ -593,6 +593,16 @@ bool PluginList::isMaster(const QString &name) const
   }
 }
 
+bool PluginList::isLight(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].m_IsLight;
+  }
+}
+
 QStringList PluginList::masters(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
@@ -703,7 +713,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   if ((role == Qt::DisplayRole)
       || (role == Qt::EditRole)) {
     switch (modelIndex.column()) {
-    case COL_NAME: {
+      case COL_NAME: {
         return m_ESPs[index].m_Name;
       } break;
       case COL_PRIORITY: {
@@ -713,7 +723,21 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         if (m_ESPs[index].m_LoadOrder == -1) {
           return QString();
         } else {
-          return QString("%1").arg(m_ESPs[index].m_LoadOrder, 2, 16, QChar('0')).toUpper();
+          int numESLs = 0;
+          std::vector<ESPInfo> sortESPs(m_ESPs);
+          std::sort(sortESPs.begin(), sortESPs.end());
+          for (auto sortedESP: sortESPs) {
+            if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
+              break;
+            if (sortedESP.m_IsLight && sortedESP.m_LoadOrder != -1)
+              ++numESLs;
+          }
+          if (m_ESPs[index].m_IsLight) {
+            int ESLpos = 254 + (numESLs+1 / 4096);
+            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs+1)%4096).toUpper();
+          } else {
+            return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
+          }
         }
       } break;
       default: {
@@ -736,6 +760,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_IsMaster) {
       result.setItalic(true);
       result.setWeight(QFont::Bold);
+    } else if (m_ESPs[index].m_IsLight) {
+      result.setItalic(true);
     }
     return result;
   } else if (role == Qt::TextAlignmentRole) {
@@ -895,16 +921,18 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 {
   int newPriorityTemp = newPriority;
 
-  if (!m_ESPs[row].m_IsMaster) {
+  if (!m_ESPs[row].m_IsMaster && !m_ESPs[row].m_IsLight) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
-           m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
+            (m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster ||
+             m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsLight)) {
       ++newPriorityTemp;
     }
   } else {
     // don't allow esms to be moved below esps
     while ((newPriorityTemp > 0) &&
-           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster) {
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsMaster &&
+           !m_ESPs.at(m_ESPsByPriority.at(newPriorityTemp)).m_IsLight) {
       --newPriorityTemp;
     }
     // also don't allow "regular" esms to be moved above primary plugins
@@ -1110,7 +1138,8 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
 {
   try {
     ESP::File file(ToWString(fullPath));
-    m_IsMaster = file.isMaster();
+    m_IsMaster = file.isMaster() && !file.isLight();
+    m_IsLight = file.isMaster() && file.isLight();
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());
     std::set<std::string> masters = file.masters();
@@ -1120,6 +1149,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   } catch (const std::exception &e) {
     qCritical("failed to parse esp file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
+    m_IsLight = false;
   }
 }
 

@@ -75,7 +75,7 @@ function setupTooptips() {
 
   switch (manager.findControl("tabWidget").currentIndex) {
     case 0:
-      tooltipWidget("espList", qsTr("Plugins (esp/esm files) of the mods in the current profile. They need to be checked to be loaded."))
+      tooltipWidget("espList", qsTr("Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded."))
       tooltipWidget("bossButton", qsTr("Automatically sort plugins using the bundled LOOT application."))
       tooltipWidget("espFilterEdit", qsTr("Quickly filter plugin list as you type."))
       break

@@ -430,7 +430,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
     m_CachedContent.clear();
     QDir dir(absolutePath());
-    if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+    if (dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl").size() > 0) {
       m_CachedContent.push_back(CONTENT_PLUGIN);
     }
     if (dir.entryList(QStringList() << "*.bsa" << "*.ba2").size() > 0) {
@@ -476,7 +476,7 @@ int ModInfoRegular::getHighlight() const
 QString ModInfoRegular::getDescription() const
 {
   if (!isValid()) {
-    return tr("%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory").arg(name());
+    return tr("%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory").arg(name());
   } else {
     const std::set<int> &categories = getCategories();
     std::wostringstream categoryString;
