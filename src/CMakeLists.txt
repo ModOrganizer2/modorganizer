@@ -234,6 +234,7 @@ SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
+FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
@@ -299,7 +300,7 @@ ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
-                      Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets
+                      Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
@@ -313,7 +314,7 @@ SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
 
 
-QT5_USE_MODULES(ModOrganizer Widgets Script Qml QuickWidgets Network WebEngineWidgets)
+QT5_USE_MODULES(ModOrganizer Widgets Script Qml QuickWidgets Quick Network WebEngineWidgets)
 
 
 ###############
