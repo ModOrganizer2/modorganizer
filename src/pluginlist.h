@@ -282,6 +282,10 @@ private:
     bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
+    bool operator < (const ESPInfo& str) const
+    {
+      return (m_LoadOrder < str.m_LoadOrder);
+    }
   };
 
   struct AdditionalInfo {

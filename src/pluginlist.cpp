@@ -102,7 +102,7 @@ QString PluginList::getColumnToolTip(int column)
     case COL_NAME:     return tr("Name of your mods");
     case COL_PRIORITY: return tr("Load priority of your mod. The higher, the more \"important\" it is and thus "
                                  "overwrites data from plugins with lower priority.");
-    case COL_MODINDEX: return tr("The modindex determins the formids of objects originating from this mods.");
+    case COL_MODINDEX: return tr("The modindex determines the formids of objects originating from this mods.");
     default: return tr("unknown");
   }
 }
@@ -713,7 +713,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   if ((role == Qt::DisplayRole)
       || (role == Qt::EditRole)) {
     switch (modelIndex.column()) {
-    case COL_NAME: {
+      case COL_NAME: {
         return m_ESPs[index].m_Name;
       } break;
       case COL_PRIORITY: {
@@ -723,7 +723,21 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         if (m_ESPs[index].m_LoadOrder == -1) {
           return QString();
         } else {
-          return QString("%1").arg(m_ESPs[index].m_LoadOrder, 2, 16, QChar('0')).toUpper();
+          int numESLs = 0;
+          std::vector<ESPInfo> sortESPs(m_ESPs);
+          std::sort(sortESPs.begin(), sortESPs.end());
+          for (auto sortedESP: sortESPs) {
+            if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
+              break;
+            if (sortedESP.m_IsLight && sortedESP.m_LoadOrder != -1)
+              ++numESLs;
+          }
+          if (m_ESPs[index].m_IsLight) {
+            int ESLpos = 254 + (numESLs+1 / 4096);
+            return QString("%1").arg(ESLpos, 2, 16, QChar('0')).toUpper();
+          } else {
+            return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
+          }
         }
       } break;
       default: {
