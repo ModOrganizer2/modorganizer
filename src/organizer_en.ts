@@ -3019,197 +3019,197 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="430"/>
-        <location filename="modinfodialog.cpp" line="445"/>
+        <location filename="modinfodialog.cpp" line="431"/>
+        <location filename="modinfodialog.cpp" line="446"/>
         <source>Save changes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="430"/>
-        <location filename="modinfodialog.cpp" line="445"/>
+        <location filename="modinfodialog.cpp" line="431"/>
+        <location filename="modinfodialog.cpp" line="446"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="635"/>
+        <location filename="modinfodialog.cpp" line="636"/>
         <source>File Exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="635"/>
+        <location filename="modinfodialog.cpp" line="636"/>
         <source>A file with that name exists, please enter a new one</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="652"/>
+        <location filename="modinfodialog.cpp" line="653"/>
         <source>failed to move file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="677"/>
+        <location filename="modinfodialog.cpp" line="678"/>
         <source>failed to create directory &quot;optional&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="717"/>
-        <location filename="modinfodialog.cpp" line="1221"/>
+        <location filename="modinfodialog.cpp" line="718"/>
+        <location filename="modinfodialog.cpp" line="1222"/>
         <source>Info requested, please wait</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="771"/>
+        <location filename="modinfodialog.cpp" line="772"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="772"/>
+        <location filename="modinfodialog.cpp" line="773"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="773"/>
+        <location filename="modinfodialog.cpp" line="774"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="774"/>
+        <location filename="modinfodialog.cpp" line="775"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="775"/>
+        <location filename="modinfodialog.cpp" line="776"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="776"/>
+        <location filename="modinfodialog.cpp" line="777"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="787"/>
+        <location filename="modinfodialog.cpp" line="788"/>
         <source>Current Version: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="791"/>
+        <location filename="modinfodialog.cpp" line="792"/>
         <source>No update available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="832"/>
+        <location filename="modinfodialog.cpp" line="833"/>
         <source>(description incomplete, please visit nexus)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="847"/>
+        <location filename="modinfodialog.cpp" line="848"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="925"/>
+        <location filename="modinfodialog.cpp" line="926"/>
         <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="936"/>
-        <location filename="modinfodialog.cpp" line="941"/>
+        <location filename="modinfodialog.cpp" line="937"/>
+        <location filename="modinfodialog.cpp" line="942"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="936"/>
+        <location filename="modinfodialog.cpp" line="937"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="941"/>
+        <location filename="modinfodialog.cpp" line="942"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1015"/>
-        <location filename="modinfodialog.cpp" line="1021"/>
+        <location filename="modinfodialog.cpp" line="1016"/>
+        <location filename="modinfodialog.cpp" line="1022"/>
         <source>New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1027"/>
+        <location filename="modinfodialog.cpp" line="1028"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1131"/>
-        <location filename="modinfodialog.cpp" line="1155"/>
+        <location filename="modinfodialog.cpp" line="1132"/>
+        <location filename="modinfodialog.cpp" line="1156"/>
         <source>Replace file?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1131"/>
+        <location filename="modinfodialog.cpp" line="1132"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1134"/>
-        <location filename="modinfodialog.cpp" line="1158"/>
+        <location filename="modinfodialog.cpp" line="1135"/>
+        <location filename="modinfodialog.cpp" line="1159"/>
         <source>File operation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1134"/>
-        <location filename="modinfodialog.cpp" line="1158"/>
+        <location filename="modinfodialog.cpp" line="1135"/>
+        <location filename="modinfodialog.cpp" line="1159"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1145"/>
-        <location filename="modinfodialog.cpp" line="1168"/>
+        <location filename="modinfodialog.cpp" line="1146"/>
+        <location filename="modinfodialog.cpp" line="1169"/>
         <source>failed to rename %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1155"/>
+        <location filename="modinfodialog.cpp" line="1156"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1201"/>
+        <location filename="modinfodialog.cpp" line="1202"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1203"/>
+        <location filename="modinfodialog.cpp" line="1204"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1244"/>
+        <location filename="modinfodialog.cpp" line="1245"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1244"/>
+        <location filename="modinfodialog.cpp" line="1245"/>
         <source>Please enter a name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1248"/>
-        <location filename="modinfodialog.cpp" line="1251"/>
+        <location filename="modinfodialog.cpp" line="1249"/>
+        <location filename="modinfodialog.cpp" line="1252"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1248"/>
+        <location filename="modinfodialog.cpp" line="1249"/>
         <source>Invalid name. Must be a valid file name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1251"/>
+        <location filename="modinfodialog.cpp" line="1252"/>
         <source>A tweak by that name exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1265"/>
+        <location filename="modinfodialog.cpp" line="1266"/>
         <source>Create Tweak</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3240,7 +3240,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="modinforegular.cpp" line="479"/>
-        <source>%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory</source>
+        <source>%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory</source>
+        <oldsource>%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3253,7 +3254,8 @@ p, li { white-space: pre-wrap; }
     <name>ModList</name>
     <message>
         <location filename="modlist.cpp" line="63"/>
-        <source>Game plugins (esp/esm)</source>
+        <source>Game plugins (esp/esm/esl)</source>
+        <oldsource>Game plugins (esp/esm)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3459,7 +3461,8 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="modlist.cpp" line="1027"/>
-        <source>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/tr&gt;&lt;/table&gt;</source>
+        <source>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm/esl)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/tr&gt;&lt;/table&gt;</source>
+        <oldsource>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/tr&gt;&lt;/table&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3659,81 +3662,81 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1432"/>
-        <source>Multiple esps activated, please check that they don&apos;t conflict.</source>
+        <location filename="organizercore.cpp" line="1446"/>
+        <source>Multiple esps/esls activated, please check that they don&apos;t conflict.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1499"/>
+        <location filename="organizercore.cpp" line="1513"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1500"/>
+        <location filename="organizercore.cpp" line="1514"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1631"/>
+        <location filename="organizercore.cpp" line="1645"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1638"/>
-        <location filename="organizercore.cpp" line="1655"/>
+        <location filename="organizercore.cpp" line="1652"/>
+        <location filename="organizercore.cpp" line="1669"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1662"/>
+        <location filename="organizercore.cpp" line="1676"/>
         <source>Login failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1663"/>
+        <location filename="organizercore.cpp" line="1677"/>
         <source>Login failed, try again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1672"/>
+        <location filename="organizercore.cpp" line="1686"/>
         <source>login failed: %1. Download will not be associated with an account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1680"/>
+        <location filename="organizercore.cpp" line="1694"/>
         <source>login failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1690"/>
+        <location filename="organizercore.cpp" line="1704"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1726"/>
+        <location filename="organizercore.cpp" line="1740"/>
         <source>Too many esps, esms, and esls enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1729"/>
-        <location filename="organizercore.cpp" line="1747"/>
+        <location filename="organizercore.cpp" line="1743"/>
+        <location filename="organizercore.cpp" line="1761"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1738"/>
+        <location filename="organizercore.cpp" line="1752"/>
         <source>The game doesn&apos;t allow more than 255 active plugins (including the official ones) to be loaded. You have to disable some unused plugins or merge some plugins into one. You can find a guide here: &lt;a href=&quot;http://wiki.step-project.com/Guide:Merging_Plugins&quot;&gt;http://wiki.step-project.com/Guide:Merging_Plugins&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1771"/>
+        <location filename="organizercore.cpp" line="1785"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1843"/>
+        <location filename="organizercore.cpp" line="1857"/>
         <source>The designated write target &quot;%1&quot; is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3902,37 +3905,37 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="757"/>
+        <location filename="pluginlist.cpp" line="769"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="759"/>
+        <location filename="pluginlist.cpp" line="771"/>
         <source>&lt;b&gt;Origin&lt;/b&gt;: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="761"/>
+        <location filename="pluginlist.cpp" line="773"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="764"/>
+        <location filename="pluginlist.cpp" line="776"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="767"/>
+        <location filename="pluginlist.cpp" line="779"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="774"/>
+        <location filename="pluginlist.cpp" line="786"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="943"/>
+        <location filename="pluginlist.cpp" line="957"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5670,7 +5673,8 @@ On Windows XP:
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="96"/>
-        <source>I told you in the &quot;First Steps&quot; tutorial how the esp/esm plugins contain changes to the game world like modifications to the terrain or existing NPCs. Each change like this is stored in a record, hence the name &quot;record conflict&quot;. For example when two mods try to change the same location, only one change can become active.</source>
+        <source>I told you in the &quot;First Steps&quot; tutorial how the esp/esm/esl plugins contain changes to the game world like modifications to the terrain or existing NPCs. Each change like this is stored in a record, hence the name &quot;record conflict&quot;. For example when two mods try to change the same location, only one change can become active.</source>
+        <oldsource>I told you in the &quot;First Steps&quot; tutorial how the esp/esm plugins contain changes to the game world like modifications to the terrain or existing NPCs. Each change like this is stored in a record, hence the name &quot;record conflict&quot;. For example when two mods try to change the same location, only one change can become active.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5977,7 +5981,8 @@ Please open the &quot;Nexus&quot;-tab</source>
     </message>
     <message>
         <location filename="tutorials/tutorial_primer_main.js" line="78"/>
-        <source>Plugins (esp/esm files) of the mods in the current profile. They need to be checked to be loaded.</source>
+        <source>Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded.</source>
+        <oldsource>Plugins (esp/esm files) of the mods in the current profile. They need to be checked to be loaded.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

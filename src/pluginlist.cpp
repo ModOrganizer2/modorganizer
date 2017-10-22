@@ -734,7 +734,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
           }
           if (m_ESPs[index].m_IsLight) {
             int ESLpos = 254 + (numESLs+1 / 4096);
-            return QString("%1").arg(ESLpos, 2, 16, QChar('0')).toUpper();
+            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs+1)%4096).toUpper();
           } else {
             return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
           }
