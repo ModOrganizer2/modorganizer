@@ -17,7 +17,7 @@ Rectangle {
     anchors.fill: parent
     hoverEnabled: true
 
-    onMousePositionChanged: {
+    onPositionChanged: {
       if (parent.parent.width - (parent.x + mouseX) < tooltip.width + 50) {
         tooltip.x = parent.x +  mouseX - 15 - tooltip.width
       } else {

@@ -4,29 +4,40 @@
 var tooltips = []
 
 function tooltipWidget(widgetName, explanation, maxheight, clickable) {
-  var rect = tutorialControl.getRect(widgetName)
-  var component = Qt.createComponent("TooltipArea.qml")
-  if (component.status === Component.Error) {
-    console.log("b" + component.errorString())
-  }
-  if (typeof clickable === 'undefined') {
-    clickable = false
-  }
-  if ((typeof maxheight === 'undefined') || maxheight === 0) {
-    maxheight = rect.height
-  }
+    var component = Qt.createComponent("TooltipArea.qml")
+    if (component.status === Component.Ready)
+        finishCreation(component, widgetName, explanation, maxheight, clickable);
+    else
+        component.statusChanged.connect(function() {
+            finishCreation(component, widgetName, explanation, maxheight, clickable);
+        });
+}
 
-  var obj = component.createObject(tutToplevel,
-                                   { "x" : rect.x,
-                                     "y" : rect.y,
-                                     "width" : rect.width,
-                                     "height" : maxheight
-                                   })
-  obj.tooltipText = explanation
-  obj.clickable = clickable
-  obj.visible = true
+function finishCreation(component, widgetName, explanation, maxheight, clickable) {
+  if (component.status === Component.Ready) {
+    var rect = tutorialControl.getRect(widgetName)
+    if (typeof clickable === 'undefined') {
+        clickable = false
+    }
+    if ((typeof maxheight === 'undefined') || maxheight === 0) {
+        maxheight = rect.height
+    }
 
-  tooltips.push(obj)
+    var obj = component.createObject(tutToplevel,
+        {
+            "x": rect.x,
+            "y": rect.y,
+            "width": rect.width,
+            "height": maxheight
+        })
+    obj.tooltipText = explanation
+    obj.clickable = clickable
+    obj.visible = true
+
+    tooltips.push(obj)
+  } else if (component.status === Component.Error) {
+      console.log("Error loading component: " + component.errorString())
+  }
 }
 
 function tooltipAction(actionName, explanation, maxheight, clickable) {
@@ -79,16 +90,16 @@ function setupTooptips() {
       tooltipWidget("bossButton", qsTr("Automatically sort plugins using the bundled LOOT application."))
       tooltipWidget("espFilterEdit", qsTr("Quickly filter plugin list as you type."))
       break
+    // case 1:
+    //   tooltipWidget("bsaList", qsTr("All the asset archives (.bsa files) for all active mods."))
+    //   break
     case 1:
-      tooltipWidget("bsaList", qsTr("All the asset archives (.bsa files) for all active mods."))
-      break
-    case 2:
       tooltipWidget("dataTree", qsTr("The directory tree and all files that the program will see."))
       break
-    case 3:
+    case 2:
       tooltipWidget("savegameList", qsTr("Save game browser. Shows all the saves for the current profile and whether or not the current mod-load status is correct."))
       break
-    case 4:
+    case 3:
       tooltipWidget("downloadView", qsTr("Shows the mods that have been downloaded and if they’ve been installed."))
       break
   }
