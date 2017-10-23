@@ -171,6 +171,7 @@ SET(organizer_HDRS
     instancemanager.h
     usvfsconnector.h
     eventfilter.h
+    descriptionpage.h
 
     shared/windows_error.h
     shared/error_report.h

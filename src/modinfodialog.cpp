@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
+#include "descriptionpage.h"
 
 #include "iplugingame.h"
 #include "nexusinterface.h"
@@ -38,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMenu>
 #include <QFileSystemModel>
 #include <QInputDialog>
+#include <QPointer>
 
 #include <Shlwapi.h>
 
@@ -85,10 +87,12 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->notesEdit->setText(modInfo->notes());
 
+  ui->descriptionView->setPage(new DescriptionPage);
+
   connect(&m_ThumbnailMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(thumbnailClickedSignal(const QString&)));
   connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
   connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
-  connect(ui->descriptionView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
+  connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   //TODO: No easy way to delegate links
   //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
 
@@ -826,11 +830,13 @@ void ModInfoDialog::modDetailsUpdated(bool success)
                     "<body>%1</body>"
                   "</html>").arg(BBCode::convertToHTML(nexusDescription));
 
+      ui->descriptionView->page()->setHtml(descriptionAsHTML);
+
   //    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-      ui->descriptionView->setHtml(descriptionAsHTML);
+  //    ui->descriptionView->setHtml(descriptionAsHTML);
     } else {
   //    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-      ui->descriptionView->setHtml(tr("(description incomplete, please visit nexus)"));
+      ui->descriptionView->page()->setHtml(tr("(description incomplete, please visit nexus)"));
     }
 
     updateVersionColor();
@@ -876,7 +882,7 @@ void ModInfoDialog::on_modIDEdit_editingFinished()
   if (oldID != modID){
     m_ModInfo->setNexusID(modID);
 
-    ui->descriptionView->setHtml("");
+    ui->descriptionView->page()->setHtml("");
     if (modID != 0) {
       m_RequestStarted = false;
       refreshNexusData(modID);

@@ -2989,227 +2989,227 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="176"/>
+        <location filename="modinfodialog.cpp" line="178"/>
         <source>&amp;Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="177"/>
+        <location filename="modinfodialog.cpp" line="179"/>
         <source>&amp;Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="178"/>
+        <location filename="modinfodialog.cpp" line="180"/>
         <source>&amp;Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="179"/>
+        <location filename="modinfodialog.cpp" line="181"/>
         <source>&amp;Unhide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="180"/>
+        <location filename="modinfodialog.cpp" line="182"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="181"/>
+        <location filename="modinfodialog.cpp" line="183"/>
         <source>&amp;New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="431"/>
-        <location filename="modinfodialog.cpp" line="446"/>
+        <location filename="modinfodialog.cpp" line="433"/>
+        <location filename="modinfodialog.cpp" line="448"/>
         <source>Save changes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="431"/>
-        <location filename="modinfodialog.cpp" line="446"/>
+        <location filename="modinfodialog.cpp" line="433"/>
+        <location filename="modinfodialog.cpp" line="448"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="636"/>
+        <location filename="modinfodialog.cpp" line="638"/>
         <source>File Exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="636"/>
+        <location filename="modinfodialog.cpp" line="638"/>
         <source>A file with that name exists, please enter a new one</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="653"/>
+        <location filename="modinfodialog.cpp" line="655"/>
         <source>failed to move file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="678"/>
+        <location filename="modinfodialog.cpp" line="680"/>
         <source>failed to create directory &quot;optional&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="718"/>
-        <location filename="modinfodialog.cpp" line="1222"/>
+        <location filename="modinfodialog.cpp" line="720"/>
+        <location filename="modinfodialog.cpp" line="1230"/>
         <source>Info requested, please wait</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="772"/>
+        <location filename="modinfodialog.cpp" line="774"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="773"/>
+        <location filename="modinfodialog.cpp" line="775"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="774"/>
+        <location filename="modinfodialog.cpp" line="776"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="775"/>
+        <location filename="modinfodialog.cpp" line="777"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="776"/>
+        <location filename="modinfodialog.cpp" line="778"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="777"/>
+        <location filename="modinfodialog.cpp" line="779"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="788"/>
+        <location filename="modinfodialog.cpp" line="790"/>
         <source>Current Version: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="792"/>
+        <location filename="modinfodialog.cpp" line="794"/>
         <source>No update available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="833"/>
+        <location filename="modinfodialog.cpp" line="841"/>
         <source>(description incomplete, please visit nexus)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="848"/>
+        <location filename="modinfodialog.cpp" line="856"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="926"/>
+        <location filename="modinfodialog.cpp" line="934"/>
         <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="937"/>
-        <location filename="modinfodialog.cpp" line="942"/>
+        <location filename="modinfodialog.cpp" line="945"/>
+        <location filename="modinfodialog.cpp" line="950"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="937"/>
+        <location filename="modinfodialog.cpp" line="945"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="942"/>
+        <location filename="modinfodialog.cpp" line="950"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1016"/>
-        <location filename="modinfodialog.cpp" line="1022"/>
+        <location filename="modinfodialog.cpp" line="1024"/>
+        <location filename="modinfodialog.cpp" line="1030"/>
         <source>New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1028"/>
+        <location filename="modinfodialog.cpp" line="1036"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1132"/>
-        <location filename="modinfodialog.cpp" line="1156"/>
+        <location filename="modinfodialog.cpp" line="1140"/>
+        <location filename="modinfodialog.cpp" line="1164"/>
         <source>Replace file?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1132"/>
+        <location filename="modinfodialog.cpp" line="1140"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1135"/>
-        <location filename="modinfodialog.cpp" line="1159"/>
+        <location filename="modinfodialog.cpp" line="1143"/>
+        <location filename="modinfodialog.cpp" line="1167"/>
         <source>File operation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1135"/>
-        <location filename="modinfodialog.cpp" line="1159"/>
+        <location filename="modinfodialog.cpp" line="1143"/>
+        <location filename="modinfodialog.cpp" line="1167"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1146"/>
-        <location filename="modinfodialog.cpp" line="1169"/>
+        <location filename="modinfodialog.cpp" line="1154"/>
+        <location filename="modinfodialog.cpp" line="1177"/>
         <source>failed to rename %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1156"/>
+        <location filename="modinfodialog.cpp" line="1164"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1202"/>
+        <location filename="modinfodialog.cpp" line="1210"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1204"/>
+        <location filename="modinfodialog.cpp" line="1212"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1245"/>
+        <location filename="modinfodialog.cpp" line="1253"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1245"/>
+        <location filename="modinfodialog.cpp" line="1253"/>
         <source>Please enter a name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1249"/>
-        <location filename="modinfodialog.cpp" line="1252"/>
+        <location filename="modinfodialog.cpp" line="1257"/>
+        <location filename="modinfodialog.cpp" line="1260"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1249"/>
+        <location filename="modinfodialog.cpp" line="1257"/>
         <source>Invalid name. Must be a valid file name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1252"/>
+        <location filename="modinfodialog.cpp" line="1260"/>
         <source>A tweak by that name exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1266"/>
+        <location filename="modinfodialog.cpp" line="1274"/>
         <source>Create Tweak</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3870,7 +3870,8 @@ Continue?</source>
     </message>
     <message>
         <location filename="pluginlist.cpp" line="105"/>
-        <source>The modindex determins the formids of objects originating from this mods.</source>
+        <source>The modindex determines the formids of objects originating from this mods.</source>
+        <oldsource>The modindex determins the formids of objects originating from this mods.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3905,37 +3906,37 @@ Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="769"/>
+        <location filename="pluginlist.cpp" line="783"/>
         <source>This plugin can&apos;t be disabled (enforced by the game)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="771"/>
+        <location filename="pluginlist.cpp" line="785"/>
         <source>&lt;b&gt;Origin&lt;/b&gt;: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="773"/>
+        <location filename="pluginlist.cpp" line="787"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="776"/>
+        <location filename="pluginlist.cpp" line="790"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="779"/>
+        <location filename="pluginlist.cpp" line="793"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="786"/>
+        <location filename="pluginlist.cpp" line="800"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="957"/>
+        <location filename="pluginlist.cpp" line="971"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5628,22 +5629,26 @@ On Windows XP:
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="47"/>
-        <source>&lt;img src=&quot;:/MO/gui/emblem_conflict_overwrite&quot; /&gt; indicates that the mod overwrites files that are also available in another mod.</source>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwrite&quot; /&gt; indicates that the mod overwrites files that are also available in another mod.</source>
+        <oldsource>&lt;img src=&quot;:/MO/gui/emblem_conflict_overwrite&quot; /&gt; indicates that the mod overwrites files that are also available in another mod.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="51"/>
-        <source>&lt;img src=&quot;:/MO/gui/emblem_conflict_overwritten&quot; /&gt; indicates that the mod is &lt;b&gt;partially&lt;/b&gt; overwritten by another.</source>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_overwritten&quot; /&gt; indicates that the mod is &lt;b&gt;partially&lt;/b&gt; overwritten by another.</source>
+        <oldsource>&lt;img src=&quot;:/MO/gui/emblem_conflict_overwritten&quot; /&gt; indicates that the mod is &lt;b&gt;partially&lt;/b&gt; overwritten by another.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="55"/>
-        <source>&lt;img src=&quot;:/MO/gui/emblem_conflict_mixed&quot; /&gt; indicates that both of the above is true.</source>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_mixed&quot; /&gt; indicates that both of the above is true.</source>
+        <oldsource>&lt;img src=&quot;:/MO/gui/emblem_conflict_mixed&quot; /&gt; indicates that both of the above is true.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="59"/>
-        <source>&lt;img src=&quot;:/MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwrtten by another. You could as well disable it.</source>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwrtten by another. You could as well disable it.</source>
+        <oldsource>&lt;img src=&quot;:/MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwrtten by another. You could as well disable it.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5684,7 +5689,8 @@ On Windows XP:
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="108"/>
-        <source>Please open the &quot;ESPs&quot;-tab...</source>
+        <source>Please open the &quot;Plugins&quot;-tab...</source>
+        <oldsource>Please open the &quot;ESPs&quot;-tab...</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5694,17 +5700,20 @@ On Windows XP:
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="122"/>
-        <source>Unlike with file conflicts, MO does not provide help on finding conflicts. The good news is, there already is a perfect tool for that called BOSS. BOSS is available on the Nexus and integrates neatly with MO. Basically, if you don&apos;t have BOSS yet, install it once this tutorial is over.</source>
+        <source>Unlike with file conflicts, MO does not provide help on finding conflicts. The good news is, there already is a perfect tool for that called LOOT. LOOT is available on the Nexus and integrates neatly with MO. Basically, if you don&apos;t have LOOT yet, install it once this tutorial is over.</source>
+        <oldsource>Unlike with file conflicts, MO does not provide help on finding conflicts. The good news is, there already is a perfect tool for that called BOSS. BOSS is available on the Nexus and integrates neatly with MO. Basically, if you don&apos;t have BOSS yet, install it once this tutorial is over.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="128"/>
-        <source>After you installed BOSS in the default location (follow its instructions), start MO again and BOSS should automatically appear as an Executable...</source>
+        <source>After you installed LOOT in the default location (follow its instructions), start MO again and LOOT should automatically appear as an Executable...</source>
+        <oldsource>After you installed BOSS in the default location (follow its instructions), start MO again and BOSS should automatically appear as an Executable...</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="133"/>
-        <source>When you run BOSS, it will automatically re-organize plugins for best compatibility (overwriting your manual changes). It will also open a report in your browser that warns about incompatibilities. You should read the report, at least for new mods.</source>
+        <source>When you run LOOT, it will automatically re-organize plugins for best compatibility (overwriting your manual changes). It will also open a report in your browser that warns about incompatibilities. You should read the report, at least for new mods.</source>
+        <oldsource>When you run BOSS, it will automatically re-organize plugins for best compatibility (overwriting your manual changes). It will also open a report in your browser that warns about incompatibilities. You should read the report, at least for new mods.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
