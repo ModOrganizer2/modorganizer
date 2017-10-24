@@ -4,7 +4,7 @@ function getTutorialSteps()
         function() {
             highlightItem("tabWidget", true)
             tutorial.text = qsTr("You can use your regular browser to download from Nexus.\nPlease open the \"Nexus\"-tab")
-            tutorialControl.waitForTabOpen("tabWidget", 1)
+            tutorialControl.waitForTabOpen("tabWidget", 2)
         },
 
         function() {
