@@ -733,8 +733,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
               ++numESLs;
           }
           if (m_ESPs[index].m_IsLight) {
-            int ESLpos = 254 + (numESLs+1 / 4096);
-            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs+1)%4096).toUpper();
+            int ESLpos = 254 + ((numESLs+1) / 4096);
+            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs)%4096).toUpper();
           } else {
             return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
           }
@@ -1139,7 +1139,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   try {
     ESP::File file(ToWString(fullPath));
     m_IsMaster = file.isMaster() && !file.isLight();
-    m_IsLight = file.isMaster() && file.isLight();
+    m_IsLight = file.isLight();
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());
     std::set<std::string> masters = file.masters();
