@@ -1684,7 +1684,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://issue.tannin.eu/tbg", nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", L"http://github.com/LePresidente/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::tutorialTriggered()
