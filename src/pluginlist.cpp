@@ -686,18 +686,18 @@ void PluginList::testMasters()
 //  emit layoutAboutToBeChanged();
 
   std::set<QString> enabledMasters;
-  for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-    if (iter->m_Enabled) {
-      enabledMasters.insert(iter->m_Name.toLower());
+  for (const auto& iter: m_ESPs) {
+    if (iter.m_Enabled) {
+      enabledMasters.insert(iter.m_Name.toLower());
     }
   }
 
-  for (auto iter = m_ESPs.begin(); iter != m_ESPs.end(); ++iter) {
-    iter->m_MasterUnset.clear();
-    if (iter->m_Enabled) {
-      for (auto master = iter->m_Masters.begin(); master != iter->m_Masters.end(); ++master) {
-        if (enabledMasters.find(master->toLower()) == enabledMasters.end()) {
-          iter->m_MasterUnset.insert(*master);
+  for (auto& iter: m_ESPs) {
+    iter.m_MasterUnset.clear();
+    if (iter.m_Enabled) {
+      for (const auto& master: iter.m_Masters) {
+        if (enabledMasters.find(master.toLower()) == enabledMasters.end()) {
+          iter.m_MasterUnset.insert(master);
         }
       }
     }
@@ -1138,8 +1138,10 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
 {
   try {
     ESP::File file(ToWString(fullPath));
-    m_IsMaster = file.isMaster() && !file.isLight();
-    m_IsLight = file.isLight();
+    m_IsMaster = file.isMaster();
+	auto extension = name.right(3).toLower();
+	m_IsLight = (extension == "esl"); // The .isLight() header is apparently meaningless.
+
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());
     std::set<std::string> masters = file.masters();
@@ -1147,7 +1149,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    qCritical("failed to parse esp file %s: %s", qPrintable(fullPath), e.what());
+    qCritical("failed to parse plugin file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
     m_IsLight = false;
   }
