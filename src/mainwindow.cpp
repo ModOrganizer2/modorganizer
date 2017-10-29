@@ -840,6 +840,7 @@ void MainWindow::showEvent(QShowEvent *event)
 
     m_OrganizerCore.settings().registerAsNXMHandler(false);
     m_WasVisible = true;
+	updateProblemsButton();
   }
 }
 
