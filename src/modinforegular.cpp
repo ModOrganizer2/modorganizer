@@ -442,7 +442,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
                                    ->feature<ScriptExtender>();
 
     if (extender != nullptr) {
-      QString sePluginPath = extender->name() + "/plugins";
+      QString sePluginPath = extender->PluginPath();
       if (dir.exists(sePluginPath))
         m_CachedContent.push_back(CONTENT_SKSE);
     }
