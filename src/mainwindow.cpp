@@ -1944,9 +1944,10 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 
         QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
         WIN32_FIND_DATAW findData;
-        ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
-
+		HANDLE hFind;
+		hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
         filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
+		FindClose(hFind);
       }
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldOriginName))) {
         FilesOrigin &oldOrigin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(oldOriginName));

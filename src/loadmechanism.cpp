@@ -129,7 +129,7 @@ void LoadMechanism::deactivateScriptExtender()
       throw MyException(QObject::tr("game doesn't support a script extender"));
     }
 
-    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->name() + "/plugins");
+    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->PluginPath());
 
 #pragma message("implement this for usvfs")
 
@@ -194,7 +194,7 @@ void LoadMechanism::activateScriptExtender()
       throw MyException(QObject::tr("game doesn't support a script extender"));
     }
 
-    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->name() + "/plugins");
+    QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->PluginPath());
 
     if (!pluginsDir.exists()) {
       pluginsDir.mkpath(".");
