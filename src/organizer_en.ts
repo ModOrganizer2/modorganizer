@@ -2989,227 +2989,227 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="178"/>
+        <location filename="modinfodialog.cpp" line="180"/>
         <source>&amp;Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="179"/>
+        <location filename="modinfodialog.cpp" line="181"/>
         <source>&amp;Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="180"/>
+        <location filename="modinfodialog.cpp" line="182"/>
         <source>&amp;Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="181"/>
+        <location filename="modinfodialog.cpp" line="183"/>
         <source>&amp;Unhide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="182"/>
+        <location filename="modinfodialog.cpp" line="184"/>
         <source>&amp;Open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="183"/>
+        <location filename="modinfodialog.cpp" line="185"/>
         <source>&amp;New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="433"/>
-        <location filename="modinfodialog.cpp" line="448"/>
+        <location filename="modinfodialog.cpp" line="435"/>
+        <location filename="modinfodialog.cpp" line="450"/>
         <source>Save changes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="433"/>
-        <location filename="modinfodialog.cpp" line="448"/>
+        <location filename="modinfodialog.cpp" line="435"/>
+        <location filename="modinfodialog.cpp" line="450"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="638"/>
+        <location filename="modinfodialog.cpp" line="640"/>
         <source>File Exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="638"/>
+        <location filename="modinfodialog.cpp" line="640"/>
         <source>A file with that name exists, please enter a new one</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="655"/>
+        <location filename="modinfodialog.cpp" line="657"/>
         <source>failed to move file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="680"/>
+        <location filename="modinfodialog.cpp" line="682"/>
         <source>failed to create directory &quot;optional&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="720"/>
-        <location filename="modinfodialog.cpp" line="1230"/>
+        <location filename="modinfodialog.cpp" line="722"/>
+        <location filename="modinfodialog.cpp" line="1228"/>
         <source>Info requested, please wait</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="774"/>
+        <location filename="modinfodialog.cpp" line="776"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="775"/>
+        <location filename="modinfodialog.cpp" line="777"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="776"/>
+        <location filename="modinfodialog.cpp" line="778"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="777"/>
+        <location filename="modinfodialog.cpp" line="779"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="778"/>
+        <location filename="modinfodialog.cpp" line="780"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="779"/>
+        <location filename="modinfodialog.cpp" line="781"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="790"/>
+        <location filename="modinfodialog.cpp" line="792"/>
         <source>Current Version: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="794"/>
+        <location filename="modinfodialog.cpp" line="796"/>
         <source>No update available</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="841"/>
+        <location filename="modinfodialog.cpp" line="839"/>
         <source>(description incomplete, please visit nexus)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="856"/>
+        <location filename="modinfodialog.cpp" line="854"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Visit on Nexus&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="934"/>
+        <location filename="modinfodialog.cpp" line="932"/>
         <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="945"/>
-        <location filename="modinfodialog.cpp" line="950"/>
+        <location filename="modinfodialog.cpp" line="943"/>
+        <location filename="modinfodialog.cpp" line="948"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="945"/>
+        <location filename="modinfodialog.cpp" line="943"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="950"/>
+        <location filename="modinfodialog.cpp" line="948"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1024"/>
-        <location filename="modinfodialog.cpp" line="1030"/>
+        <location filename="modinfodialog.cpp" line="1022"/>
+        <location filename="modinfodialog.cpp" line="1028"/>
         <source>New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1036"/>
+        <location filename="modinfodialog.cpp" line="1034"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1140"/>
-        <location filename="modinfodialog.cpp" line="1164"/>
+        <location filename="modinfodialog.cpp" line="1138"/>
+        <location filename="modinfodialog.cpp" line="1162"/>
         <source>Replace file?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1140"/>
+        <location filename="modinfodialog.cpp" line="1138"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1143"/>
-        <location filename="modinfodialog.cpp" line="1167"/>
+        <location filename="modinfodialog.cpp" line="1141"/>
+        <location filename="modinfodialog.cpp" line="1165"/>
         <source>File operation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1143"/>
-        <location filename="modinfodialog.cpp" line="1167"/>
+        <location filename="modinfodialog.cpp" line="1141"/>
+        <location filename="modinfodialog.cpp" line="1165"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1154"/>
-        <location filename="modinfodialog.cpp" line="1177"/>
+        <location filename="modinfodialog.cpp" line="1152"/>
+        <location filename="modinfodialog.cpp" line="1175"/>
         <source>failed to rename %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1164"/>
+        <location filename="modinfodialog.cpp" line="1162"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1210"/>
+        <location filename="modinfodialog.cpp" line="1208"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1212"/>
+        <location filename="modinfodialog.cpp" line="1210"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1253"/>
+        <location filename="modinfodialog.cpp" line="1251"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1253"/>
+        <location filename="modinfodialog.cpp" line="1251"/>
         <source>Please enter a name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1257"/>
-        <location filename="modinfodialog.cpp" line="1260"/>
+        <location filename="modinfodialog.cpp" line="1255"/>
+        <location filename="modinfodialog.cpp" line="1258"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1257"/>
+        <location filename="modinfodialog.cpp" line="1255"/>
         <source>Invalid name. Must be a valid file name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1260"/>
+        <location filename="modinfodialog.cpp" line="1258"/>
         <source>A tweak by that name exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1274"/>
+        <location filename="modinfodialog.cpp" line="1272"/>
         <source>Create Tweak</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4769,52 +4769,52 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="166"/>
+        <location filename="selfupdater.cpp" line="172"/>
         <source>New update available (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="171"/>
+        <location filename="selfupdater.cpp" line="177"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="188"/>
+        <location filename="selfupdater.cpp" line="194"/>
         <source>Download failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="189"/>
+        <location filename="selfupdater.cpp" line="195"/>
         <source>Failed to find correct download, please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="204"/>
+        <location filename="selfupdater.cpp" line="210"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="205"/>
+        <location filename="selfupdater.cpp" line="211"/>
         <source>Download in progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="296"/>
+        <location filename="selfupdater.cpp" line="302"/>
         <source>Download failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="307"/>
+        <location filename="selfupdater.cpp" line="313"/>
         <source>Failed to install update: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="330"/>
+        <location filename="selfupdater.cpp" line="336"/>
         <source>Failed to start %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="selfupdater.cpp" line="340"/>
+        <location filename="selfupdater.cpp" line="346"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5919,113 +5919,108 @@ Please open the &quot;Nexus&quot;-tab</source>
 <context>
     <name>tutorial_primer_main</name>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="60"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="71"/>
         <source>This window shows all the mods that are installed. The column headers can be used for sorting. Only checked mods are active in the current profile.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="61"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="72"/>
         <source>Each profile is a separate set of enabled mods and ini settings.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="62"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="73"/>
         <source>The dropdown allows various ways of grouping the mods shown in the mod list.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="63"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="74"/>
         <source>Show/hide the category pane.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="64"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="75"/>
         <source>Quickly filter the mod list as you type.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="65"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="76"/>
         <source>Switch between information views.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="66"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="77"/>
         <source>This shows mod categories and some meta categories (in angle-brackets). Select some to filter the mod list. For example select &quot;&lt;Checked&gt;&quot; to show only active mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="67"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="78"/>
         <source>Customizable list for choosing the program to run.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="68"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="79"/>
         <source>When this button is clicked, Mod Organizer creates a virtual directory structure then runs the program selected to the left.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="69"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="80"/>
         <source>Will create a shortcut for quick access. The shortcut can be placed in the toolbar at the top, in the Start Menu or on the Windows Desktop.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="70"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="81"/>
         <source>Log messages produced by MO. Please note that messages with a light bulb usually don&apos;t require your attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="72"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="83"/>
         <source>Configure Mod Organizer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="73"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="84"/>
         <source>Reports potential Problems about the current setup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="74"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="85"/>
         <source>Activates if there is an update for MO. Please note that if, for any reason, MO can&apos;t communicate with NMM, this will not work either.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="78"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="89"/>
         <source>Plugins (esp/esm/esl files) of the mods in the current profile. They need to be checked to be loaded.</source>
         <oldsource>Plugins (esp/esm files) of the mods in the current profile. They need to be checked to be loaded.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="79"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="90"/>
         <source>Automatically sort plugins using the bundled LOOT application.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="80"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="91"/>
         <source>Quickly filter plugin list as you type.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="83"/>
-        <source>All the asset archives (.bsa files) for all active mods.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="86"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="97"/>
         <source>The directory tree and all files that the program will see.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="89"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="100"/>
         <source>Save game browser. Shows all the saves for the current profile and whether or not the current mod-load status is correct.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="92"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="103"/>
         <source>Shows the mods that have been downloaded and if theyâ€™ve been installed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="tutorials/tutorial_primer_main.js" line="100"/>
+        <location filename="tutorials/tutorial_primer_main.js" line="111"/>
         <source>Click to quit</source>
         <translation type="unfinished"></translation>
     </message>

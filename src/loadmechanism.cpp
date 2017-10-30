@@ -133,17 +133,23 @@ void LoadMechanism::deactivateScriptExtender()
 
 #pragma message("implement this for usvfs")
 
-    /*
-    QString hookDLLName = ToQString(AppConfig::hookDLLName());
-    if (QFile(pluginsDir.absoluteFilePath(hookDLLName)).exists()) {
+	QString vfsDLLName = "";
+	if (extender->getArch() == IMAGE_FILE_MACHINE_I386) {
+		vfsDLLName = ToQString(AppConfig::vfs32DLLName());
+	}
+	else if (extender->getArch() == IMAGE_FILE_MACHINE_AMD64)
+	{
+		vfsDLLName = ToQString(AppConfig::vfs64DLLName());
+	}
+	qDebug("USVFS DLL Name: " + vfsDLLName.toLatin1());
+    if (QFile(pluginsDir.absoluteFilePath(vfsDLLName)).exists()) {
       // remove dll from SE plugins directory
-      if (!pluginsDir.remove(hookDLLName)) {
-        throw MyException(QObject::tr("Failed to delete %1").arg(pluginsDir.absoluteFilePath(hookDLLName)));
+      if (!pluginsDir.remove(vfsDLLName)) {
+        throw MyException(QObject::tr("Failed to delete %1").arg(pluginsDir.absoluteFilePath(vfsDLLName)));
       }
     }
 
     removeHintFile(pluginsDir);
-    */
   } catch (const std::exception &e) {
     QMessageBox::critical(nullptr, QObject::tr("Failed to deactivate script extender loading"), e.what());
   }
@@ -195,27 +201,37 @@ void LoadMechanism::activateScriptExtender()
     }
 
 #pragma message("implement this for usvfs")
-/*
-    QString targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::hookDLLName()));
-    QString hookDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::hookDLLName());
+	QString targetPath;
+	QString vfsDLLPath;
+	if (extender->getArch() == IMAGE_FILE_MACHINE_I386) {
+		targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::vfs32DLLName()));
+		vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::vfs32DLLName());
+	}
+	else if (extender->getArch() == IMAGE_FILE_MACHINE_AMD64)
+	{
+		targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::vfs64DLLName()));
+		vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::vfs64DLLName());
+	}
+
+	qDebug("DLL USVFS Target Path: " + targetPath.toLatin1());
+	qDebug("DLL USVFS VFS DLL Path: " + vfsDLLPath.toLatin1());
 
     QFile dllFile(targetPath);
 
     if (dllFile.exists()) {
       // may be outdated
-      if (!hashIdentical(targetPath, hookDLLPath)) {
+      if (!hashIdentical(targetPath, vfsDLLPath)) {
         dllFile.remove();
       }
     }
 
     if (!dllFile.exists()) {
       // install dll to SE plugins
-      if (!QFile::copy(hookDLLPath, targetPath)) {
-        throw MyException(QObject::tr("Failed to copy %1 to %2").arg(hookDLLPath, targetPath));
+      if (!QFile::copy(vfsDLLPath, targetPath)) {
+        throw MyException(QObject::tr("Failed to copy %1 to %2").arg(vfsDLLPath, targetPath));
       }
     }
     writeHintFile(pluginsDir);
-*/
   } catch (const std::exception &e) {
     QMessageBox::critical(nullptr, QObject::tr("Failed to set up script extender loading"), e.what());
   }
@@ -278,14 +294,17 @@ void LoadMechanism::activate(EMechanism mechanism)
 {
   switch (mechanism) {
     case LOAD_MODORGANIZER: {
+		qDebug("Load Mechanism: Mod Organizer");
       deactivateProxyDLL();
       deactivateScriptExtender();
     } break;
     case LOAD_SCRIPTEXTENDER: {
+		qDebug("Load Mechanism: ScriptExtender");
       deactivateProxyDLL();
       activateScriptExtender();
     } break;
     case LOAD_PROXYDLL: {
+		qDebug("Load Mechanism: Proxy DLL");
       deactivateScriptExtender();
       activateProxyDLL();
     } break;
