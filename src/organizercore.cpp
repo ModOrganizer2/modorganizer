@@ -1264,7 +1264,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 	  size_t count =
 		  std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
 	  if (count > 0) {
-		  for (size_t i = 0; i < count; ++i) {
+		  for (size_t i = 0; i < count && !found; ++i) {
 			  std::wstring processName = getProcessName(processes[i]);
 			  if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
 				  if (!boost::starts_with(processName, L"unknown")) {
