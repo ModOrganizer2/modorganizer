@@ -1254,7 +1254,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
   while (
 	  res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
 		  QS_KEY | QS_MOUSE),
-		  ((res != WAIT_FAILED) || (res != WAIT_OBJECT_0)) &&
+		  ((res != WAIT_FAILED) && (res != WAIT_OBJECT_0)) &&
 	  ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
 
 	  if (!::GetVFSProcessList(&numProcesses, processes)) {
@@ -1263,47 +1263,50 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 	  bool found = false;
 	  size_t count =
 		  std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
-	  for (size_t i = 0; i < count; ++i) {
-		  std::wstring processName = getProcessName(processes[i]);
-		  if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-			  currentProcess = processes[i];
-			  m_UserInterface->setProcessName(QString::fromStdWString(processName));
-			  processHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
-			  found = true;
-		  }
-	  }
-	  if (!found) {
-		  // it's possible the previous process has deregistered before
-		  // the new one has registered, so we should try one more time
-		  // with a little delay
-		  if (tryAgain) {
-			  tryAgain = false;
-			  QThread::msleep(500);
-			  continue;
-		  }
-		  else {
-			  break;
-		  }
-	  }
-	  else {
-		  tryAgain = true;
-	  }
-	  //Cleanup
-	  if (processHandle != INVALID_HANDLE_VALUE) {
-		  if (exitCode != nullptr) {
-			  //This is actually wrong if the process we started finished before we
-			  //got the event and so we end up with a job handle.
-			  if (!::GetExitCodeProcess(processHandle, exitCode))
-			  {
-				  DWORD error = ::GetLastError();
-				  qDebug() << "Failed to get process exit code: Error " << error;
+	  if (count > 0) {
+		  for (size_t i = 0; i < count; ++i) {
+			  std::wstring processName = getProcessName(processes[i]);
+			  if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
+				  if (!boost::starts_with(processName, L"unknown")) {
+					  currentProcess = processes[i];
+					  m_UserInterface->setProcessName(QString::fromStdWString(processName));
+					  processHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
+					  found = true;
+				  }
 			  }
 		  }
-		  if (handle != processHandle) {
-			  ::CloseHandle(processHandle);
+		  if (!found) {
+			  // it's possible the previous process has deregistered before
+			  // the new one has registered, so we should try one more time
+			  // with a little delay
+			  if (tryAgain) {
+				  tryAgain = false;
+				  QThread::msleep(500);
+				  continue;
+			  }
+			  else {
+				  break;
+			  }
+		  }
+		  else {
+			  tryAgain = true;
+		  }
+		  //Cleanup
+		  if (processHandle != INVALID_HANDLE_VALUE) {
+			  if (exitCode != nullptr) {
+				  //This is actually wrong if the process we started finished before we
+				  //got the event and so we end up with a job handle.
+				  if (!::GetExitCodeProcess(processHandle, exitCode))
+				  {
+					  DWORD error = ::GetLastError();
+					  qDebug() << "Failed to get process exit code: Error " << error;
+				  }
+			  }
+			  if (handle != processHandle) {
+				  ::CloseHandle(processHandle);
+			  }
 		  }
 	  }
-
 	  // keep processing events so the app doesn't appear dead
 	  QCoreApplication::processEvents();
   }
