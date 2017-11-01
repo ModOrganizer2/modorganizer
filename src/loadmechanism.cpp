@@ -142,12 +142,14 @@ void LoadMechanism::deactivateScriptExtender()
 		vfsDLLName = ToQString(AppConfig::vfs64DLLName());
 	}
 	qDebug("USVFS DLL Name: " + vfsDLLName.toLatin1());
-    if (QFile(pluginsDir.absoluteFilePath(vfsDLLName)).exists()) {
-      // remove dll from SE plugins directory
-      if (!pluginsDir.remove(vfsDLLName)) {
-        throw MyException(QObject::tr("Failed to delete %1").arg(pluginsDir.absoluteFilePath(vfsDLLName)));
-      }
-    }
+	if (vfsDLLName != "") {
+		if (QFile(pluginsDir.absoluteFilePath(vfsDLLName)).exists()) {
+			// remove dll from SE plugins directory
+			if (!pluginsDir.remove(vfsDLLName)) {
+				throw MyException(QObject::tr("Failed to delete %1").arg(pluginsDir.absoluteFilePath(vfsDLLName)));
+			}
+		}
+	}
 
     removeHintFile(pluginsDir);
   } catch (const std::exception &e) {
@@ -201,36 +203,37 @@ void LoadMechanism::activateScriptExtender()
     }
 
 #pragma message("implement this for usvfs")
-	QString targetPath;
-	QString vfsDLLPath;
+	std::wstring vfsDLL = L"";
 	if (extender->getArch() == IMAGE_FILE_MACHINE_I386) {
-		targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::vfs32DLLName()));
-		vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::vfs32DLLName());
+		vfsDLL = AppConfig::vfs32DLLName();
 	}
 	else if (extender->getArch() == IMAGE_FILE_MACHINE_AMD64)
 	{
-		targetPath = pluginsDir.absoluteFilePath(ToQString(AppConfig::vfs64DLLName()));
-		vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::vfs64DLLName());
+		vfsDLL = AppConfig::vfs64DLLName();
 	}
+	if (vfsDLL != L"") {
+		QString targetPath = pluginsDir.absoluteFilePath(ToQString(vfsDLL));
+		QString vfsDLLPath = qApp->applicationDirPath() + "/" + QString::fromStdWString(vfsDLL);
 
-	qDebug("DLL USVFS Target Path: " + targetPath.toLatin1());
-	qDebug("DLL USVFS VFS DLL Path: " + vfsDLLPath.toLatin1());
+		qDebug("DLL USVFS Target Path: " + targetPath.toLatin1());
+		qDebug("DLL USVFS VFS DLL Path: " + vfsDLLPath.toLatin1());
 
-    QFile dllFile(targetPath);
+		QFile dllFile(targetPath);
 
-    if (dllFile.exists()) {
-      // may be outdated
-      if (!hashIdentical(targetPath, vfsDLLPath)) {
-        dllFile.remove();
-      }
-    }
+		if (dllFile.exists()) {
+			// may be outdated
+			if (!hashIdentical(targetPath, vfsDLLPath)) {
+				dllFile.remove();
+			}
+		}
 
-    if (!dllFile.exists()) {
-      // install dll to SE plugins
-      if (!QFile::copy(vfsDLLPath, targetPath)) {
-        throw MyException(QObject::tr("Failed to copy %1 to %2").arg(vfsDLLPath, targetPath));
-      }
-    }
+		if (!dllFile.exists()) {
+			// install dll to SE plugins
+			if (!QFile::copy(vfsDLLPath, targetPath)) {
+				throw MyException(QObject::tr("Failed to copy %1 to %2").arg(vfsDLLPath, targetPath));
+			}
+		}
+	}
     writeHintFile(pluginsDir);
   } catch (const std::exception &e) {
     QMessageBox::critical(nullptr, QObject::tr("Failed to set up script extender loading"), e.what());
