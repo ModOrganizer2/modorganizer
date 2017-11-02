@@ -104,17 +104,20 @@ static std::wstring getProcessName(DWORD processId)
   HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
 
   wchar_t buffer[MAX_PATH];
+  wchar_t *fileName = L"unknown";
+
+  if (process == nullptr) return fileName;
+
   if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
-    wchar_t *fileName = wcsrchr(buffer, L'\\');
+    fileName = wcsrchr(buffer, L'\\');
     if (fileName == nullptr) {
       fileName = buffer;
     } else {
       fileName += 1;
     }
-    return fileName;
-  } else {
-    return std::wstring(L"unknown");
   }
+  ::CloseHandle(process);
+  return fileName;
 }
 
 static void startSteam(QWidget *widget)
@@ -363,6 +366,12 @@ bool OrganizerCore::testForSteam()
           PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
 
       if (process != nullptr) {
+
+		  ON_BLOCK_EXIT([&]() {
+			  if (process != INVALID_HANDLE_VALUE)
+				  ::CloseHandle(process);
+		  });
+
         HMODULE module;
         DWORD ignore;
 
@@ -1267,7 +1276,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
             std::wstring processName = getProcessName(processes[i]);
             if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
 				currentProcess = processes[i];
-                if (processHandle != INVALID_HANDLE_VALUE)
+                if (processHandle != INVALID_HANDLE_VALUE && processHandle != handle)
                     ::CloseHandle(processHandle);
                 processHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
                 found = true;
