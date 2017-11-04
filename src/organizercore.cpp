@@ -1321,6 +1321,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
     if (handle != processHandle) {
         ::CloseHandle(handle);
     }
+	delete[] processes;
 
     return res == WAIT_OBJECT_0;
 }
