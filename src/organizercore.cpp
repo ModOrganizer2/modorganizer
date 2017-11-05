@@ -1253,13 +1253,11 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 	LPDWORD processes = new DWORD[maxCount];
 	std::map<DWORD, HANDLE> handles;
 
-	DWORD currentProcess = 0UL;
 	bool tryAgain = true;
 	DWORD moProcess = -1;
 
 	DWORD res;
 	// Wait for a an event on the handle, a key press, mouse click or timeout
-	//TODO: Remove MOBase::isOneOf from this query as it was always returning true.
 	while (
 		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
 			QS_KEY | QS_MOUSE),
@@ -1304,20 +1302,22 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 			}
 		}
 
+		// Update the lock process name with the name of the lowest active PID - though this may not actually be the main process
 		if (handles.size() > 0)
 			m_UserInterface->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
 
+		// If the main wait process dies, we need a backup wait process until the subprocesses close
 		if ((res == WAIT_FAILED) || (res == WAIT_OBJECT_0)) {
 			if (handles.size() > 0) {
-				QThread::msleep(500);
+				// By the time we get here, the main wait function should always immediately continue
+				// Passing in a handle doesn't seem to work for subprocesses
+				::MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_KEY | QS_MOUSE);
 			}
 		}
 
-		// If process handle is still closed, let's give it one more try...
+		// Give the process list a short time to populate
+		// Required for initial USVFS boot and process switching
 		if (handles.size() == 0 && !found) {
-			// it's possible the previous process has deregistered before
-			// the new one has registered, so we should try one more time
-			// with a little delay
 			if (tryAgain) {
 				tryAgain = false;
 				QThread::msleep(500);
