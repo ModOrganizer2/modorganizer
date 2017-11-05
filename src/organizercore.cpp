@@ -1260,7 +1260,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 	// Wait for a an event on the handle, a key press, mouse click or timeout
 	while (
 		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
-			QS_KEY | QS_MOUSE),
+			QS_KEY | QS_MOUSEBUTTON),
 			((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
 
 		if (!::GetVFSProcessList(&numProcesses, processes)) {
@@ -1311,7 +1311,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 			if (handles.size() > 0) {
 				// By the time we get here, the main wait function should always immediately continue
 				// Passing in a handle doesn't seem to work for subprocesses
-				::MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_KEY | QS_MOUSE);
+				::MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
 			}
 		}
 
