@@ -99,25 +99,24 @@ static bool renameFile(const QString &oldName, const QString &newName,
   return QFile::rename(oldName, newName);
 }
 
-static std::wstring getProcessName(DWORD processId)
+static std::wstring getProcessName(HANDLE process)
 {
-  HANDLE process = ::OpenProcess(PROCESS_QUERY_INFORMATION, false, processId);
+	wchar_t buffer[MAX_PATH];
+	wchar_t *fileName = L"unknown";
 
-  wchar_t buffer[MAX_PATH];
-  wchar_t *fileName = L"unknown";
+	if (process == nullptr) return fileName;
 
-  if (process == nullptr) return fileName;
+	if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
+		fileName = wcsrchr(buffer, L'\\');
+		if (fileName == nullptr) {
+			fileName = buffer;
+		}
+		else {
+			fileName += 1;
+		}
+	}
 
-  if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
-    fileName = wcsrchr(buffer, L'\\');
-    if (fileName == nullptr) {
-      fileName = buffer;
-    } else {
-      fileName += 1;
-    }
-  }
-  ::CloseHandle(process);
-  return fileName;
+	return fileName;
 }
 
 static void startSteam(QWidget *widget)
@@ -1247,83 +1246,102 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 
 bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 {
-    HANDLE processHandle = handle;
+	DWORD startPID = ::GetProcessId(handle);
 
-    static const DWORD maxCount = 5;
-    size_t numProcesses         = maxCount;
-    LPDWORD processes = new DWORD[maxCount];
+	static const DWORD maxCount = 5;
+	size_t numProcesses = maxCount;
+	LPDWORD processes = new DWORD[maxCount];
+	std::map<DWORD, HANDLE> handles;
 
-    DWORD currentProcess = 0UL;
-    bool tryAgain = true;
+	DWORD currentProcess = 0UL;
+	bool tryAgain = true;
+	DWORD moProcess = -1;
 
-    DWORD res;
-    // Wait for a an event on the handle, a key press, mouse click or timeout
-    //TODO: Remove MOBase::isOneOf from this query as it was always returning true.
-    while (
-            res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
-                                              QS_KEY | QS_MOUSE),
-                    ((res != WAIT_FAILED) || (res != WAIT_OBJECT_0)) &&
-                    ((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
+	DWORD res;
+	// Wait for a an event on the handle, a key press, mouse click or timeout
+	//TODO: Remove MOBase::isOneOf from this query as it was always returning true.
+	while (
+		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
+			QS_KEY | QS_MOUSE),
+			((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
 
-        if (!::GetVFSProcessList(&numProcesses, processes)) {
-            break;
-        }
+		if (!::GetVFSProcessList(&numProcesses, processes)) {
+			break;
+		}
 
-        bool found = false;
-        size_t count =
-                std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
-        for (size_t i = 0; i < count; ++i) {
-            std::wstring processName = getProcessName(processes[i]);
-            if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-				currentProcess = processes[i];
-                if (processHandle != INVALID_HANDLE_VALUE && processHandle != handle)
-                    ::CloseHandle(processHandle);
-                processHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
-                found = true;
-                if (!boost::starts_with(processName, L"unknown")) {
-                    m_UserInterface->setProcessName(QString::fromStdWString(processName));
-                }
-            }
-        }
-        if (!found) {
-            // it's possible the previous process has deregistered before
-            // the new one has registered, so we should try one more time
-            // with a little delay
-            if (tryAgain) {
-                tryAgain = false;
-                QThread::msleep(500);
-                continue;
-            } else {
-                break;
-            }
-        } else {
-            tryAgain = true;
-        }
+		// Get USvFS processes, build a handle map, and allow to continue if invalid PIDs are supplied
+		bool found = false;
+		size_t count =
+			std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
+		for (size_t i = 0; i < count; ++i) {
+			DWORD currentProcess = processes[i];
+			if (currentProcess != moProcess && handles.count(currentProcess) == 0) {
+				HANDLE currentHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
+				std::wstring processName = getProcessName(currentHandle);
+				if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
+					found = true;
+					if (currentHandle == nullptr || currentHandle == INVALID_HANDLE_VALUE) continue;
+					handles.insert(std::pair<DWORD, HANDLE>(currentProcess, currentHandle));
+				}
+				else
+				{
+					moProcess = processes[i];
+					::CloseHandle(currentHandle);
+				}
+			}
+		}
 
-        // keep processing events so the app doesn't appear dead
-        QCoreApplication::processEvents();
-    }
+		// Clean up tracked handles
+		for (std::map<DWORD, HANDLE>::iterator checkHandle = handles.begin(); checkHandle != handles.end(); ++checkHandle) {
+			if (checkHandle->second != nullptr && checkHandle->second != INVALID_HANDLE_VALUE) {
+				DWORD processExit;
+				BOOL codeCheck = ::GetExitCodeProcess(checkHandle->second, &processExit);
+				if (!codeCheck || processExit != STILL_ACTIVE) {
+					if (!codeCheck) qDebug() << "Checking the process failed: Error Code " << ::GetLastError();
+					::CloseHandle(checkHandle->second);
+					checkHandle = handles.erase(checkHandle);
+				}
+			}
+		}
 
-    if (exitCode != nullptr) {
-        //This is actually wrong if the process we started finished before we
-        //got the event and so we end up with a job handle.
-        if (! ::GetExitCodeProcess(processHandle, exitCode))
-        {
-            DWORD error = ::GetLastError();
-            qDebug() << "Failed to get process exit code: Error " << error;
-        }
-    }
+		if (handles.size() > 0)
+			m_UserInterface->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
 
-    //Cleanup
-    if (processHandle != INVALID_HANDLE_VALUE) {
-        ::CloseHandle(processHandle);
-    }
-    if (handle != processHandle) {
-        ::CloseHandle(handle);
-    }
+		if ((res == WAIT_FAILED) || (res == WAIT_OBJECT_0)) {
+			if (handles.size() > 0) {
+				QThread::msleep(500);
+			}
+		}
+
+		// If process handle is still closed, let's give it one more try...
+		if (handles.size() == 0 && !found) {
+			// it's possible the previous process has deregistered before
+			// the new one has registered, so we should try one more time
+			// with a little delay
+			if (tryAgain) {
+				tryAgain = false;
+				QThread::msleep(500);
+				continue;
+			}
+			else {
+				break;
+			}
+		}
+		else {
+			tryAgain = true;
+		}
+
+		// keep processing events so the app doesn't appear dead
+		QCoreApplication::processEvents();
+	}
+
+	//Cleanup
+	if (handle != INVALID_HANDLE_VALUE) {
+		::CloseHandle(handle);
+	}
 	delete[] processes;
 
-    return res == WAIT_OBJECT_0;
+	return res == WAIT_OBJECT_0;
 }
 
 bool OrganizerCore::onAboutToRun(
@@ -1676,8 +1694,8 @@ void OrganizerCore::loginSuccessful(bool necessary)
     task();
   }
 
-  m_PostLoginTasks.clear();
-  NexusInterface::instance()->loginCompleted();
+	m_PostLoginTasks.clear();
+	NexusInterface::instance()->loginCompleted();
 }
 
 void OrganizerCore::loginSuccessfulUpdate(bool necessary)
