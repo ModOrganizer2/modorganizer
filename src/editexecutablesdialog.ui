@@ -10,6 +10,12 @@
     <height>460</height>
    </rect>
   </property>
+  <property name="minimumSize">
+   <size>
+    <width>200</width>
+    <height>200</height>
+   </size>
+  </property>
   <property name="windowTitle">
    <string>Modify Executables</string>
   </property>
