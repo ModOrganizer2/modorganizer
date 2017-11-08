@@ -420,7 +420,12 @@ void InstallationManager::updateProgress(float percentage)
 void InstallationManager::updateProgressFile(QString const &fileName)
 {
   if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setLabelText(fileName);
+	  if (fileName.size() > 30) {
+		  m_InstallationProgress->setLabelText("..." + fileName.right(27));
+	  }
+	  else {
+		  m_InstallationProgress->setLabelText(fileName);
+	  }
   }
 }
 
