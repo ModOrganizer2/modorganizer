@@ -99,6 +99,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_SCRIPT:    return tr("Scripts");
     case CONTENT_SKSE:      return tr("SKSE Plugins");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
+    case CONTENT_MCM:       return tr("MCM Data");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
   }
 }

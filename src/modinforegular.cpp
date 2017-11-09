@@ -458,6 +458,8 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       m_CachedContent.push_back(CONTENT_SCRIPT);
     if (dir.exists("SkyProc Patchers"))
       m_CachedContent.push_back(CONTENT_SKYPROC);
+    if (dir.exists("MCM"))
+      m_CachedContent.push_back(CONTENT_MCM);
 
     m_LastContentCheck = QTime::currentTime();
   }

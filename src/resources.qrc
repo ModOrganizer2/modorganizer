@@ -82,6 +82,7 @@
         <file alias="mesh">resources/contents/breastplate.png</file>
         <file alias="string">resources/contents/conversation.png</file>
         <file alias="bsa">resources/contents/locked-chest.png</file>
+        <file alias="menu">resources/contents/config.png</file>
     </qresource>
     <qresource prefix="/qt/etc">
         <file>qt.conf</file>

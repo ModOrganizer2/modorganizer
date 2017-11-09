@@ -60,7 +60,7 @@ ModList::ModList(QObject *parent)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game plugins (esp/esm/esl)"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
   m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
   m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
@@ -69,6 +69,7 @@ ModList::ModList(QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
   m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
 
   m_LastCheck.start();
 }
