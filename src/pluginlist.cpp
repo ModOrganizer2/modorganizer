@@ -118,8 +118,15 @@ void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared
     if (!selectedMod.isNull()) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
+      MOShared::FilesOrigin origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
       if (plugins.size() > 0) {
         for (auto plugin : plugins) {
+          MOShared::FileEntry::Ptr file = directoryEntry.findFile(plugin.toStdWString());
+          if (file->getOrigin() != origin.getID()) {
+            const std::vector<int> alternatives = file->getAlternatives();
+            if (std::find(alternatives.begin(), alternatives.end(), origin.getID()) == alternatives.end())
+              continue;
+          }
           std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());
           if (iter != m_ESPsByName.end()) {
             m_ESPs[iter->second].m_ModSelected = true;
