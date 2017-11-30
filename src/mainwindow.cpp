@@ -145,6 +145,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVariantList>
 #include <QWhatsThis>
 #include <QWidgetAction>
+#include <QWebEngineProfile>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -199,6 +200,10 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
 {
+  QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
+  QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
+  QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
+  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
   ui->setupUi(this);
   updateWindowTitle(QString(), false);
 
@@ -868,6 +873,7 @@ void MainWindow::cleanup()
     ui->logList->setModel(nullptr);
   }
 
+  QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
 }
 
