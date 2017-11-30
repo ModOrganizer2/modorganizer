@@ -338,6 +338,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
+      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -350,7 +351,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
-    if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
+    if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+      return QColor(0, 0, 255, 32);
+    } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
       return QColor(0, 255, 0, 32);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
       return QColor(255, 0, 0, 32);
@@ -683,6 +686,38 @@ void ModList::disconnectSlots() {
 int ModList::timeElapsedSinceLastChecked() const
 {
   return m_LastCheck.elapsed();
+}
+
+void ModList::highlightMods(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+{
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+      ModInfo::getByIndex(i)->setPluginSelected(false);
+  }
+  for (QModelIndex idx : selected.indexes()) {
+    QString modName = idx.data().toString();
+
+    const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
+    if (fileEntry.get() != nullptr) {
+      QString fileName;
+      bool archive = false;
+      std::vector<int> origins;
+      {
+        std::vector<int> alternatives = fileEntry->getAlternatives();
+        origins.push_back(fileEntry->getOrigin(archive));
+        origins.insert(origins.end(), alternatives.begin(), alternatives.end());
+      }
+      for (int originId : origins) {
+        MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originId);
+        for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+          if (ModInfo::getByIndex(i)->internalName() == QString::fromStdWString(origin.getName())) {
+            ModInfo::getByIndex(i)->setPluginSelected(true);
+            break;
+          }
+        }
+      }
+    }
+  }
+  notifyChange(0, rowCount() - 1);
 }
 
 IModList::ModStates ModList::state(unsigned int modIndex) const

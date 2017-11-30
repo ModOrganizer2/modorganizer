@@ -357,6 +357,9 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
 
+  connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
+  connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
 
@@ -2118,6 +2121,18 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
       && !m_ModListSortProxy->beingInvalidated()) {
     m_ModListSortProxy->invalidate();
   }*/
+  ui->modList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
+{
+  m_OrganizerCore.pluginList()->highlightPlugins(selected, *m_OrganizerCore.directoryStructure());
+  ui->espList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
+{
+  m_OrganizerCore.modList()->highlightMods(selected, *m_OrganizerCore.directoryStructure());
   ui->modList->verticalScrollBar()->repaint();
 }
 

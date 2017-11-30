@@ -23,6 +23,7 @@ SET(organizer_SRCS
     profile.cpp
     pluginlistsortproxy.cpp
     pluginlist.cpp
+    pluginlistview.cpp
     overwriteinfodialog.cpp
     nxmaccessmanager.cpp
     nexusinterface.cpp
@@ -109,6 +110,7 @@ SET(organizer_HDRS
     profile.h
     pluginlistsortproxy.h
     pluginlist.h
+    pluginlistview.h
     overwriteinfodialog.h
     nxmaccessmanager.h
     nexusinterface.h

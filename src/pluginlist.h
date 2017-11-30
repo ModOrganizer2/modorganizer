@@ -200,6 +200,8 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
+  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry);
+
   void refreshLoadOrder();
 
   void disconnectSlots();
@@ -277,6 +279,7 @@ private:
     QString m_OriginName;
     bool m_IsMaster;
     bool m_IsLight;
+    bool m_ModSelected;
     QString m_Author;
     QString m_Description;
     bool m_HasIni;

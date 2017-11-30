@@ -301,6 +301,11 @@ void ModInfo::setVersion(const VersionInfo &version)
   m_Version = version;
 }
 
+void ModInfo::setPluginSelected(const bool &isSelected)
+{
+  m_PluginSelected = isSelected;
+}
+
 void ModInfo::addCategory(const QString &categoryName)
 {
   int id = CategoryFactory::instance().getCategoryID(categoryName);
