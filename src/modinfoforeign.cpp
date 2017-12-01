@@ -30,12 +30,16 @@ std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   result.push_back(FLAG_FOREIGN);
 
+  if (m_PluginSelected) {
+    result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
+  }
+
   return result;
 }
 
 int ModInfoForeign::getHighlight() const
 {
-  return 0;
+  return m_PluginSelected ? ModInfo::HIGHLIGHT_PLUGIN : ModInfo::HIGHLIGHT_NONE;
 }
 
 QString ModInfoForeign::getDescription() const

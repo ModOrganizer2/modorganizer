@@ -420,6 +420,9 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if (m_Notes.length() != 0) {
     result.push_back(ModInfo::FLAG_NOTES);
   }
+  if (m_PluginSelected) {
+    result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
+  }
   return result;
 }
 
@@ -458,6 +461,8 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       m_CachedContent.push_back(CONTENT_SCRIPT);
     if (dir.exists("SkyProc Patchers"))
       m_CachedContent.push_back(CONTENT_SKYPROC);
+    if (dir.exists("MCM"))
+      m_CachedContent.push_back(CONTENT_MCM);
 
     m_LastContentCheck = QTime::currentTime();
   }
@@ -469,7 +474,12 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 
 int ModInfoRegular::getHighlight() const
 {
-  return isValid() ? HIGHLIGHT_NONE: HIGHLIGHT_INVALID;
+  if (!isValid())
+    return HIGHLIGHT_INVALID;
+  auto flags = getFlags();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) != flags.end())
+    return HIGHLIGHT_PLUGIN;
+  return HIGHLIGHT_NONE;
 }
 
 

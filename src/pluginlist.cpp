@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "scopeguard.h"
 #include "modinfo.h"
+#include "viewmarkingscrollbar.h"
 #include <utility.h>
 #include <iplugingame.h>
 #include <espfile.h>
@@ -107,6 +108,35 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
+void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+{
+  for (auto &esp : m_ESPs) {
+    esp.m_ModSelected = false;
+  }
+  for (QModelIndex idx : selected.indexes()) {
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+    if (!selectedMod.isNull()) {
+      QDir dir(selectedMod->absolutePath());
+      QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
+      MOShared::FilesOrigin origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
+      if (plugins.size() > 0) {
+        for (auto plugin : plugins) {
+          MOShared::FileEntry::Ptr file = directoryEntry.findFile(plugin.toStdWString());
+          if (file->getOrigin() != origin.getID()) {
+            const std::vector<int> alternatives = file->getAlternatives();
+            if (std::find(alternatives.begin(), alternatives.end(), origin.getID()) == alternatives.end())
+              continue;
+          }
+          std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());
+          if (iter != m_ESPsByName.end()) {
+            m_ESPs[iter->second].m_ModSelected = true;
+          }
+        }
+      }
+    }
+  }
+  emit dataChanged(this->index(0, 0), this->index(m_ESPs.size() - 1, this->columnCount() - 1));
+}
 
 void PluginList::refresh(const QString &profileName
                          , const DirectoryEntry &baseDirectory
@@ -752,8 +782,15 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     }
   } else if (role == Qt::ForegroundRole) {
     if ((modelIndex.column() == COL_NAME) &&
-        m_ESPs[index].m_ForceEnabled) {
+      m_ESPs[index].m_ForceEnabled) {
       return QBrush(Qt::gray);
+    }
+  } else if (role == Qt::BackgroundRole
+    || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    if (m_ESPs[index].m_ModSelected) {
+      return QColor(0, 0, 255, 32);
+    } else {
+      return QVariant();
     }
   } else if (role == Qt::FontRole) {
     QFont result;
@@ -1134,7 +1171,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
                              bool hasIni)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),
-    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni)
+    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_ModSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));

@@ -145,6 +145,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QVariantList>
 #include <QWhatsThis>
 #include <QWidgetAction>
+#include <QWebEngineProfile>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -199,6 +200,10 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
 {
+  QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
+  QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
+  QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
+  QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
   ui->setupUi(this);
   updateWindowTitle(QString(), false);
 
@@ -351,6 +356,9 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
+
+  connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
+  connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -868,6 +876,7 @@ void MainWindow::cleanup()
     ui->logList->setModel(nullptr);
   }
 
+  QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
 }
 
@@ -2112,6 +2121,18 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
       && !m_ModListSortProxy->beingInvalidated()) {
     m_ModListSortProxy->invalidate();
   }*/
+  ui->modList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
+{
+  m_OrganizerCore.pluginList()->highlightPlugins(selected, *m_OrganizerCore.directoryStructure());
+  ui->espList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
+{
+  m_OrganizerCore.modList()->highlightMods(selected, *m_OrganizerCore.directoryStructure());
   ui->modList->verticalScrollBar()->repaint();
 }
 
