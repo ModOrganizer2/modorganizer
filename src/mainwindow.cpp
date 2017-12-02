@@ -2126,7 +2126,7 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
 
 void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
 {
-  m_OrganizerCore.pluginList()->highlightPlugins(selected, *m_OrganizerCore.directoryStructure());
+  m_OrganizerCore.pluginList()->highlightPlugins(selected, *m_OrganizerCore.directoryStructure(), *m_OrganizerCore.currentProfile());
   ui->espList->verticalScrollBar()->repaint();
 }
 
