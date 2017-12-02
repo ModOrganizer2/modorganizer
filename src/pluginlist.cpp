@@ -108,14 +108,14 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
-void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
 {
   for (auto &esp : m_ESPs) {
     esp.m_ModSelected = false;
   }
   for (QModelIndex idx : selected.indexes()) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-    if (!selectedMod.isNull()) {
+    if (!selectedMod.isNull() && profile.modEnabled(idx.data(Qt::UserRole + 1).toInt())) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
       MOShared::FilesOrigin origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());

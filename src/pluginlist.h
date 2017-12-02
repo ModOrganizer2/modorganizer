@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <directoryentry.h>
 #include <ipluginlist.h>
+#include "profile.h"
 namespace MOBase { class IPluginGame; }
 
 #include <QString>
@@ -200,7 +201,7 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
-  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry);
+  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
 
   void refreshLoadOrder();
 
