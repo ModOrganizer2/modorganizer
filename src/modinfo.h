@@ -67,7 +67,8 @@ public:
     FLAG_CONFLICT_OVERWRITE,
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
-    FLAG_CONFLICT_REDUNDANT
+    FLAG_CONFLICT_REDUNDANT,
+    FLAG_PLUGIN_SELECTED
   };
 
   enum EContent {
@@ -79,7 +80,8 @@ public:
     CONTENT_SOUND,
     CONTENT_SCRIPT,
     CONTENT_SKSE,
-    CONTENT_SKYPROC
+    CONTENT_SKYPROC,
+    CONTENT_MCM
   };
 
   static const int NUM_CONTENT_TYPES = CONTENT_SKYPROC + 1;
@@ -88,7 +90,8 @@ public:
     HIGHLIGHT_NONE = 0,
     HIGHLIGHT_INVALID = 1,
     HIGHLIGHT_CENTER = 2,
-    HIGHLIGHT_IMPORTANT = 4
+    HIGHLIGHT_IMPORTANT = 4,
+    HIGHLIGHT_PLUGIN = 8
   };
 
   enum EEndorsedState {
@@ -266,6 +269,12 @@ public:
    * @param version new version of the mod
    */
   virtual void setVersion(const MOBase::VersionInfo &version);
+
+  /**
+  * @brief Controls if mod should be highlighted based on plugin selection
+  * @param isSelected whether or not the plugin has a selected mod
+  **/
+  virtual void setPluginSelected(const bool &isSelected);
 
   /**
    * @brief set the newest version of this mod on the nexus
@@ -597,6 +606,8 @@ protected:
   std::set<int> m_Categories;
 
   MOBase::VersionInfo m_Version;
+
+  bool m_PluginSelected = false;
 
 private:
 

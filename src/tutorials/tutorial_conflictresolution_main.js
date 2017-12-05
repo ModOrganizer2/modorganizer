@@ -44,19 +44,19 @@ function getTutorialSteps() {
         },
         function() {
             unhighlight()
-            tutorial.text = qsTr("<img src=\":/MO/gui/emblem_conflict_overwrite\" /> indicates that the mod overwrites files that are also available in another mod.")
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_overwrite\" /> indicates that the mod overwrites files that are also available in another mod.")
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("<img src=\":/MO/gui/emblem_conflict_overwritten\" /> indicates that the mod is <b>partially</b> overwritten by another.")
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_overwritten\" /> indicates that the mod is <b>partially</b> overwritten by another.")
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("<img src=\":/MO/gui/emblem_conflict_mixed\" /> indicates that both of the above is true.")
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_mixed\" /> indicates that both of the above is true.")
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("<img src=\":/MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwrtten by another. You could as well disable it.");
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwrtten by another. You could as well disable it.");
             waitForClick()
         },
         function() {
@@ -65,7 +65,7 @@ function getTutorialSteps() {
         },
         function() {
             tutorial.text = qsTr("Option A: Switch to the \"Data\"-tab if necessary")
-            if (!tutorialControl.waitForTabOpen("tabWidget", 2)) {
+            if (!tutorialControl.waitForTabOpen("tabWidget", 1)) {
                 highlightItem("tabWidget", false)
                 waitForClick()
             } else {
@@ -93,7 +93,7 @@ function getTutorialSteps() {
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("I told you in the \"First Steps\" tutorial how the esp/esm plugins contain changes to the game world "
+            tutorial.text = qsTr("I told you in the \"First Steps\" tutorial how the esp/esm/esl plugins contain changes to the game world "
                                  +"like modifications to the terrain or existing NPCs. Each change like this is stored in a record, hence the "
                                  +"name \"record conflict\". For example when two mods try to change the same location, only one change can become active.")
             waitForClick()
@@ -105,7 +105,7 @@ function getTutorialSteps() {
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("Please open the \"ESPs\"-tab...")
+            tutorial.text = qsTr("Please open the \"Plugins\"-tab...")
             highlightItem("tabWidget", true)
             if (!tutorialControl.waitForTabOpen("tabWidget", 0)) {
                 nextStep()
@@ -120,17 +120,17 @@ function getTutorialSteps() {
         function() {
             unhighlight()
             tutorial.text = qsTr("Unlike with file conflicts, MO does not provide help on finding conflicts. The good news is, there "
-                                 +"already is a perfect tool for that called BOSS. BOSS is available on the Nexus and integrates "
-                                 +"neatly with MO. Basically, if you don't have BOSS yet, install it once this tutorial is over.")
+                                 +"already is a perfect tool for that called LOOT. LOOT is available on the Nexus and integrates "
+                                 +"neatly with MO. Basically, if you don't have LOOT yet, install it once this tutorial is over.")
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("After you installed BOSS in the default location (follow its instructions), start MO again and BOSS should automatically appear as an Executable...")
+            tutorial.text = qsTr("After you installed LOOT in the default location (follow its instructions), start MO again and LOOT should automatically appear as an Executable...")
             highlightItem("startGroup", false)
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("When you run BOSS, it will automatically re-organize plugins for best compatibility (overwriting your manual changes). "
+            tutorial.text = qsTr("When you run LOOT, it will automatically re-organize plugins for best compatibility (overwriting your manual changes). "
                                  +"It will also open a report in your browser that warns about incompatibilities. You should read the report, at least "
                                  +"for new mods.")
             waitForClick()

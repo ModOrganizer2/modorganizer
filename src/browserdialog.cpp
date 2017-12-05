@@ -28,13 +28,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility.h>
 #include "settings.h"
 
+#include <QWebEngineSettings>
 #include <QNetworkCookieJar>
 #include <QNetworkCookie>
 #include <QMenu>
 #include <QInputDialog>
-#include <QWebHistory>
+#include <QWebEngineHistory>
 #include <QDir>
-#include <QWebFrame>
 #include <QDesktopWidget>
 #include <QKeyEvent>
 
@@ -77,8 +77,8 @@ void BrowserDialog::closeEvent(QCloseEvent *event)
 
 void BrowserDialog::initTab(BrowserView *newView)
 {
-  newView->page()->setNetworkAccessManager(m_AccessManager);
-  newView->page()->setForwardUnsupportedContent(true);
+  //newView->page()->setNetworkAccessManager(m_AccessManager);
+  //newView->page()->setForwardUnsupportedContent(true);
 
   connect(newView, SIGNAL(loadProgress(int)), this, SLOT(progress(int)));
   connect(newView, SIGNAL(titleChanged(QString)), this, SLOT(titleChanged(QString)));
@@ -86,14 +86,14 @@ void BrowserDialog::initTab(BrowserView *newView)
   connect(newView, SIGNAL(startFind()), this, SLOT(startSearch()));
   connect(newView, SIGNAL(urlChanged(QUrl)), this, SLOT(urlChanged(QUrl)));
   connect(newView, SIGNAL(openUrlInNewTab(QUrl)), this, SLOT(openInNewTab(QUrl)));
-  connect(newView->page(), SIGNAL(downloadRequested(QNetworkRequest)), this, SLOT(downloadRequested(QNetworkRequest)));
-  connect(newView->page(), SIGNAL(unsupportedContent(QNetworkReply*)), this, SLOT(unsupportedContent(QNetworkReply*)));
+  connect(newView, SIGNAL(downloadRequested(QNetworkRequest)), this, SLOT(downloadRequested(QNetworkRequest)));
+  connect(newView, SIGNAL(unsupportedContent(QNetworkReply*)), this, SLOT(unsupportedContent(QNetworkReply*)));
 
   ui->backBtn->setEnabled(false);
   ui->fwdBtn->setEnabled(false);
   m_Tabs->addTab(newView, tr("new"));
-  newView->settings()->setAttribute(QWebSettings::PluginsEnabled, true);
-  newView->settings()->setAttribute(QWebSettings::AutoLoadImages, true);
+  newView->settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+  newView->settings()->setAttribute(QWebEngineSettings::AutoLoadImages, true);
 }
 
 
@@ -133,10 +133,10 @@ void BrowserDialog::openUrl(const QUrl &url)
 
 void BrowserDialog::maximizeWidth()
 {
-  int viewportWidth = getCurrentView()->page()->viewportSize().width();
+  int viewportWidth = getCurrentView()->page()->contentsSize ().width();
   int frameWidth = width() - viewportWidth;
 
-  int contentWidth = getCurrentView()->page()->mainFrame()->contentsSize().width();
+  int contentWidth = getCurrentView()->page()->contentsSize().width();
 
   QDesktopWidget screen;
   int currentScreen = screen.screenNumber(this);
@@ -190,7 +190,7 @@ QString BrowserDialog::guessFileName(const QString &url)
 void BrowserDialog::unsupportedContent(QNetworkReply *reply)
 {
   try {
-    QWebPage *page = qobject_cast<QWebPage*>(sender());
+    QWebEnginePage *page = qobject_cast<QWebEnginePage*>(sender());
     if (page == nullptr) {
       qCritical("sender not a page");
       return;
@@ -252,10 +252,10 @@ void BrowserDialog::startSearch()
 
 void BrowserDialog::on_searchEdit_returnPressed()
 {
-  BrowserView *currentView = getCurrentView();
-  if (currentView != nullptr) {
-    currentView->findText(ui->searchEdit->text(), QWebPage::FindWrapsAroundDocument);
-  }
+//  BrowserView *currentView = getCurrentView();
+//  if (currentView != nullptr) {
+//    currentView->findText(ui->searchEdit->text(), QWebEnginePage::FindWrapsAroundDocument);
+//  }
 }
 
 void BrowserDialog::on_refreshBtn_clicked()
@@ -274,7 +274,7 @@ void BrowserDialog::on_browserTabWidget_currentChanged(int index)
 
 void BrowserDialog::on_urlEdit_returnPressed()
 {
-  QWebView *currentView = getCurrentView();
+  QWebEngineView *currentView = getCurrentView();
   if (currentView != nullptr) {
     currentView->setUrl(QUrl(ui->urlEdit->text()));
   }

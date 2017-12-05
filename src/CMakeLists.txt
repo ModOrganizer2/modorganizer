@@ -23,6 +23,7 @@ SET(organizer_SRCS
     profile.cpp
     pluginlistsortproxy.cpp
     pluginlist.cpp
+    pluginlistview.cpp
     overwriteinfodialog.cpp
     nxmaccessmanager.cpp
     nexusinterface.cpp
@@ -109,6 +110,7 @@ SET(organizer_HDRS
     profile.h
     pluginlistsortproxy.h
     pluginlist.h
+    pluginlistview.h
     overwriteinfodialog.h
     nxmaccessmanager.h
     nexusinterface.h
@@ -171,6 +173,7 @@ SET(organizer_HDRS
     instancemanager.h
     usvfsconnector.h
     eventfilter.h
+    descriptionpage.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -233,10 +236,11 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 FIND_PACKAGE(Qt5Widgets REQUIRED)
-FIND_PACKAGE(Qt5Declarative REQUIRED)
+FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
+FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
-FIND_PACKAGE(Qt5WebKitWidgets REQUIRED)
+FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
@@ -299,7 +303,7 @@ ENDIF()
 
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
-                      Qt5::Widgets Qt5::WinExtras Qt5::WebKitWidgets
+                      Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
@@ -313,7 +317,7 @@ SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
 
 
-QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebKitWidgets)
+QT5_USE_MODULES(ModOrganizer Widgets Script Qml QuickWidgets Quick Network WebEngineWidgets)
 
 
 ###############
@@ -337,7 +341,7 @@ INSTALL(
     CODE
     "EXECUTE_PROCESS(
         COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
         COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin

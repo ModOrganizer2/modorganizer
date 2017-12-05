@@ -60,7 +60,7 @@ ModList::ModList(QObject *parent)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
   m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
   m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
@@ -69,6 +69,7 @@ ModList::ModList(QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
   m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
 
   m_LastCheck.start();
 }
@@ -337,6 +338,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
+      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -349,7 +351,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
-    if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
+    if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+      return QColor(0, 0, 255, 32);
+    } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
       return QColor(0, 255, 0, 32);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
       return QColor(255, 0, 0, 32);
@@ -682,6 +686,38 @@ void ModList::disconnectSlots() {
 int ModList::timeElapsedSinceLastChecked() const
 {
   return m_LastCheck.elapsed();
+}
+
+void ModList::highlightMods(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+{
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+      ModInfo::getByIndex(i)->setPluginSelected(false);
+  }
+  for (QModelIndex idx : selected.indexes()) {
+    QString modName = idx.data().toString();
+
+    const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
+    if (fileEntry.get() != nullptr) {
+      QString fileName;
+      bool archive = false;
+      std::vector<int> origins;
+      {
+        std::vector<int> alternatives = fileEntry->getAlternatives();
+        origins.push_back(fileEntry->getOrigin(archive));
+        origins.insert(origins.end(), alternatives.begin(), alternatives.end());
+      }
+      for (int originId : origins) {
+        MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originId);
+        for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+          if (ModInfo::getByIndex(i)->internalName() == QString::fromStdWString(origin.getName())) {
+            ModInfo::getByIndex(i)->setPluginSelected(true);
+            break;
+          }
+        }
+      }
+    }
+  }
+  notifyChange(0, rowCount() - 1);
 }
 
 IModList::ModStates ModList::state(unsigned int modIndex) const
@@ -1026,7 +1062,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
                                  "<table cellspacing=7>"
-                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm)</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm/esl)</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</tr>"
                                  "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</tr>"

@@ -187,6 +187,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
   bool res = m_ArchiveHandler->extract(QDir::tempPath(),
@@ -274,6 +275,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
@@ -419,9 +421,10 @@ void InstallationManager::updateProgress(float percentage)
 
 void InstallationManager::updateProgressFile(QString const &fileName)
 {
-  if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setLabelText(fileName);
-  }
+	if (m_InstallationProgress != nullptr) {
+		m_InstallationProgress->setLabelText(fileName);
+		QCoreApplication::processEvents();
+	}
 }
 
 
@@ -563,6 +566,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress->setWindowFlags(
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
   if (!m_ArchiveHandler->extract(targetDirectory,
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),

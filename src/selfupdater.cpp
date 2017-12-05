@@ -124,6 +124,7 @@ void SelfUpdater::testForUpdate()
 {
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
+  try {
   m_GitHub.releases(GitHub::Repository("LePresidente", "modorganizer"),
                     [this](const QJsonArray &releases) {
     QJsonObject newest;
@@ -155,6 +156,11 @@ void SelfUpdater::testForUpdate()
       }
     }
   });
+  }
+  //Catch all is bad by design, should be improved
+  catch (...) {
+		qDebug("Unable to connect to github.com to check version");
+  }
 }
 
 void SelfUpdater::startUpdate()

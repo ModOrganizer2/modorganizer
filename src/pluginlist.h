@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <directoryentry.h>
 #include <ipluginlist.h>
+#include "profile.h"
 namespace MOBase { class IPluginGame; }
 
 #include <QString>
@@ -200,6 +201,8 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
+  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
+
   void refreshLoadOrder();
 
   void disconnectSlots();
@@ -213,6 +216,7 @@ public:
   virtual int loadOrder(const QString &name) const;
   virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool isMaster(const QString &name) const;
+  virtual bool isLight(const QString &name) const;
   virtual QStringList masters(const QString &name) const;
   virtual QString origin(const QString &name) const;
   virtual void setLoadOrder(const QStringList &pluginList) override;
@@ -275,11 +279,17 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
+    bool m_IsLight;
+    bool m_ModSelected;
     QString m_Author;
     QString m_Description;
     bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
+    bool operator < (const ESPInfo& str) const
+    {
+      return (m_LoadOrder < str.m_LoadOrder);
+    }
   };
 
   struct AdditionalInfo {

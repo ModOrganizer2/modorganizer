@@ -279,10 +279,10 @@
        <item row="1" column="1">
         <widget class="QListWidget" name="inactiveESPList">
          <property name="toolTip">
-          <string>List of esps and esms that can not be loaded by the game.</string>
+          <string>List of esps, esms, and esls that can not be loaded by the game.</string>
          </property>
          <property name="whatsThis">
-          <string>List of esps and esms contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
+          <string>List of esps, esms, and esls contained in this plugin that currently can not be loaded by the game. They will not even appear in the esp-list in the main MO-window.
 They usually contain optional functionality, see the readme.
 
 Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
@@ -678,7 +678,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QWebView" name="descriptionView">
+        <widget class="QWebEngineView" name="descriptionView">
          <property name="url">
           <url>
            <string>about:blank</string>
@@ -807,9 +807,9 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QWebView</class>
+   <class>QQuickWidget</class>
    <extends>QWidget</extends>
-   <header>QtWebKitWidgets/QWebView</header>
+   <header>QtQuickWidgets/QQuickWidget</header>
   </customwidget>
  </customwidgets>
  <resources>
