@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
+#include "settings.h"
 #include <appconfig.h>
 #include <utility.h>
 #include <report.h>
@@ -836,7 +837,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDirectory(modInfo->absolutePath());
-  QDir gameDirectory(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
+  QDir gameDirectory(Settings::instance().getOverwriteDirectory());
 
   unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
