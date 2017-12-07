@@ -9,5 +9,9 @@ CMakeLists.txt.user
 edit
 stderr.log
 stdout.log
+vs_stderr.log
+vs_stdout.log
 build
+/vsbuild
+/CMakeFiles
 .idea
