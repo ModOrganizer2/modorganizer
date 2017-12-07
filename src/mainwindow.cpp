@@ -4273,7 +4273,7 @@ void MainWindow::on_bossButton_clicked()
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
                << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath())
-               << "--out" << outPath;
+               << "--out" << QString("\"%1\"").arg(outPath);
 
     if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
