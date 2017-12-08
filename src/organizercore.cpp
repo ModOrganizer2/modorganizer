@@ -630,7 +630,8 @@ bool OrganizerCore::bootstrap() {
   return createDirectory(m_Settings.getProfileDirectory()) &&
          createDirectory(m_Settings.getModDirectory()) &&
          createDirectory(m_Settings.getDownloadDirectory()) &&
-         createDirectory(m_Settings.getOverwriteDirectory());
+         createDirectory(m_Settings.getOverwriteDirectory()) &&
+         createDirectory(QString::fromStdWString(crashDumpsPath())) && cycleDiagnostics();
 }
 
 void OrganizerCore::createDefaultProfile()
@@ -650,6 +651,12 @@ void OrganizerCore::prepareVFS()
 void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType) {
   setGlobalCrashDumpsType(crashDumpsType);
   m_USVFS.updateParams(logLevel, crashDumpsType);
+}
+
+bool OrganizerCore::cycleDiagnostics() {
+  if (int maxDumps = settings().crashDumpsMax())
+    removeOldFiles(QString::fromStdWString(crashDumpsPath()), "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
+  return true;
 }
 
 //static
@@ -1083,6 +1090,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
 
     refreshESPList();
     savePluginList();
+    cycleDiagnostics();
 
     //These callbacks should not fiddle with directoy structure and ESPs.
     m_FinishedRun(binary.absoluteFilePath(), processExitCode);

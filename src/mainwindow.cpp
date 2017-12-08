@@ -3297,6 +3297,7 @@ void MainWindow::on_actionSettings_triggered()
   updateDownloadListDelegate();
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType());
+  m_OrganizerCore.cycleDiagnostics();
 }
 
 
