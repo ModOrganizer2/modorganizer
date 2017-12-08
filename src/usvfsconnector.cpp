@@ -158,6 +158,10 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   progress.setMaximum(static_cast<int>(mapping.size()));
   progress.show();
   int value = 0;
+  int files = 0;
+  int dirs = 0;
+
+  qDebug("Updating VFS mappings...");
 
   ClearVirtualMappings();
 
@@ -173,11 +177,15 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
                                  (map.createTarget ? LINKFLAG_CREATETARGET : 0)
                                      | LINKFLAG_RECURSIVE
                                  );
+      ++dirs;
     } else {
       VirtualLinkFile(map.source.toStdWString().c_str(),
                       map.destination.toStdWString().c_str(), 0);
+      ++files;
     }
   }
+
+  qDebug("VFS mappings updated <linked %d dirs, %d files>", dirs, files);
   /*
     size_t dumpSize = 0;
     CreateVFSDump(nullptr, &dumpSize);

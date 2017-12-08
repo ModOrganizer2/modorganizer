@@ -1181,9 +1181,13 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
           = QString("launch \"%1\" \"%2\" %3")
                 .arg(QDir::toNativeSeparators(dataCwd),
                      QDir::toNativeSeparators(dataBinPath), arguments);
+
+      qDebug() << "Spawning proxyed process <" << cmdline << ">";
+
       return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
+      qDebug() << "Spawning direct process <" << binary.absoluteFilePath() << "," << arguments << "," << currentDirectory.absolutePath() << ">";
       return startBinary(binary, arguments, currentDirectory, true);
     }
   } else {
