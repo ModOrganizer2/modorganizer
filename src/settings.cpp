@@ -28,7 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugin.h>
 #include <iplugingame.h>
 #include <questionboxmemory.h>
-#include <usvfs.h>
+#include <usvfsparameters.h>
 
 #include <QCheckBox>
 #include <QCoreApplication>

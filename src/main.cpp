@@ -48,6 +48,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <eh.h>
 #include <windows_error.h>
+#include <usvfs.h>
 
 #include <QApplication>
 #include <QPushButton>
@@ -127,71 +128,17 @@ bool isNxmLink(const QString &link)
 
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
-  typedef BOOL (WINAPI *FuncMiniDumpWriteDump)(HANDLE process, DWORD pid, HANDLE file, MINIDUMP_TYPE dumpType,
-                                               const PMINIDUMP_EXCEPTION_INFORMATION exceptionParam,
-                                               const PMINIDUMP_USER_STREAM_INFORMATION userStreamParam,
-                                               const PMINIDUMP_CALLBACK_INFORMATION callbackParam);
-  LONG result = EXCEPTION_CONTINUE_SEARCH;
-
-  HMODULE dbgDLL = ::LoadLibrary(L"dbghelp.dll");
-
-  static const int errorLen = 200;
-  char errorBuffer[errorLen + 1];
-  memset(errorBuffer, '\0', errorLen + 1);
-
-  if (dbgDLL) {
-    FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
-    if (funcDump) {
-      QString dataPath = qApp->property("dataPath").toString();
-      QString exeName = QFileInfo(qApp->applicationFilePath()).fileName();
-      QString dumpName = dataPath + "/" + exeName + ".dmp";
-
-      if (QMessageBox::question(nullptr, QObject::tr("Woops"),
-                                QObject::tr("ModOrganizer has crashed! "
-                                            "Should a diagnostic file be created? "
-                                            "If you send me this file (%1) to modorganizer@gmail.com, "
-                                            "the bug is a lot more likely to be fixed. "
-                                            "Please include a short description of what you were "
-                                            "doing when the crash happened"
-                                            ).arg(dumpName),
-                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-
-        HANDLE dumpFile = ::CreateFile(dumpName.toStdWString().c_str(),
-                                       GENERIC_WRITE, FILE_SHARE_WRITE, nullptr,
-                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (dumpFile != INVALID_HANDLE_VALUE) {
-          _MINIDUMP_EXCEPTION_INFORMATION exceptionInfo;
-          exceptionInfo.ThreadId = ::GetCurrentThreadId();
-          exceptionInfo.ExceptionPointers = exceptionPtrs;
-          exceptionInfo.ClientPointers = false;
-
-          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile,
-                                  MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
-
-          ::FlushFileBuffers(dumpFile);
-          ::CloseHandle(dumpFile);
-          if (success) {
-            return EXCEPTION_EXECUTE_HANDLER;
-          }
-          _snprintf(errorBuffer, errorLen, "failed to save minidump to %ls (error %lu)",
-                    dumpName.toStdWString().c_str(), ::GetLastError());
-        } else {
-          _snprintf(errorBuffer, errorLen, "failed to create %ls (error %lu)",
-                    dumpName.toStdWString().c_str(), ::GetLastError());
-        }
-      } else {
-        return result;
-      }
-    } else {
-      _snprintf(errorBuffer, errorLen, "dbghelp.dll outdated");
-    }
-  } else {
-    _snprintf(errorBuffer, errorLen, "dbghelp.dll not found");
+  const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
+  int dumpRes =
+    CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
+  if (!dumpRes) {
+    qCritical("ModOrganizer has crashed, crash dump created.");
+    return EXCEPTION_EXECUTE_HANDLER;
   }
-
-  QMessageBox::critical(nullptr, QObject::tr("Woops"),
-                        QObject::tr("ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1").arg(errorBuffer));
-  return result;
+  else {
+    qCritical("ModOrganizer has crashed, CreateMiniDump failed (%d, error %lu).", dumpRes, GetLastError());
+    return EXCEPTION_CONTINUE_SEARCH;
+  }
 }
 
 static bool HaveWriteAccess(const std::wstring &path)
@@ -448,6 +395,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     QSettings settings(dataPath + "/"
                            + QString::fromStdWString(AppConfig::iniFileName()),
                        QSettings::IniFormat);
+
+    // global crashDumpType sits in OrganizerCore to make a bit less ugly to update it when the settings are changed during runtime
+    OrganizerCore::setGlobalCrashDumpsType(settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt());
+
     qDebug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {

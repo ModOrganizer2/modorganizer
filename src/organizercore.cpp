@@ -47,6 +47,7 @@
 #include <QtGlobal> // for qPrintable, etc
 
 #include <Psapi.h>
+#include <Shlobj.h>
 #include <tchar.h> // for _tcsicmp
 
 #include <limits.h>
@@ -65,6 +66,9 @@
 
 using namespace MOShared;
 using namespace MOBase;
+
+//static
+CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
 
 static bool isOnline()
 {
@@ -643,8 +647,23 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::setLogLevel(int logLevel) {
-  m_USVFS.setLogLevel(logLevel);
+void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType) {
+  setGlobalCrashDumpsType(crashDumpsType);
+  m_USVFS.updateParams(logLevel, crashDumpsType);
+}
+
+//static
+void OrganizerCore::setGlobalCrashDumpsType(int crashDumpsType) {
+  m_globalCrashDumpsType = ::crashDumpsType(crashDumpsType);
+}
+
+//static
+std::wstring OrganizerCore::crashDumpsPath() {
+  wchar_t appDataLocal[MAX_PATH]{ 0 };
+  ::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appDataLocal);
+  std::wstring dumpPath{ appDataLocal };
+  dumpPath += L"\\modorganizer";
+  return dumpPath;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
