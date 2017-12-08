@@ -221,18 +221,6 @@ void Profile::createTweakedIniFile()
     error = true;
   }
 
-  if (localSavesEnabled()) {
-    if (!::WritePrivateProfileStringW(L"General", L"bUseMyGamesDirectory", L"0", ToWString(tweakedIni).c_str())) {
-      error = true;
-    }
-
-    if (!::WritePrivateProfileStringW(L"General", L"SLocalSavePath",
-                                       AppConfig::localSavePlaceholder(),
-                                       ToWString(tweakedIni).c_str())) {
-      error = true;
-    }
-  }
-
   if (error) {
     reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorStringA().c_str()));
   }
