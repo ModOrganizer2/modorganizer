@@ -334,6 +334,26 @@ bool TransferSavesDialog::transferCharacters(
                   sourceFile.absoluteFilePath().toUtf8().constData(),
                   destinationFile.toUtf8().constData());
       }
+
+      QFileInfo sourceFileSE(sourceFile.absolutePath() + "/" + sourceFile.completeBaseName() + "." + m_GamePlugin->savegameSEExtension());
+      if (sourceFileSE.exists()) {
+        QString destinationFileSE(destination.absoluteFilePath(sourceFileSE.fileName()));
+
+        //If the file is already there, let them skip (or not).
+        if (QFile::exists(destinationFileSE)) {
+          if (!testOverwrite(overwriteMode, destinationFileSE)) {
+            continue;
+          }
+          //OK, they want to remove it.
+          QFile::remove(destinationFileSE);
+        }
+
+        if (!method(sourceFileSE.absoluteFilePath(), destinationFileSE)) {
+          qCritical(errmsg,
+            sourceFileSE.absoluteFilePath().toUtf8().constData(),
+            destinationFileSE.toUtf8().constData());
+        }
+      }
     }
   }
   return true;
