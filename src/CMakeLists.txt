@@ -169,6 +169,7 @@ SET(organizer_HDRS
     viewmarkingscrollbar.h
     plugincontainer.h
     organizercore.h
+    ilockedwaitingforprocess.h
     iuserinterface.h
     instancemanager.h
     usvfsconnector.h

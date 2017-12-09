@@ -31,6 +31,7 @@
 #include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
+#include "lockeddialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -1067,8 +1068,9 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
 
 void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite)
 {
+  ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
-    m_UserInterface->lock();
+    uilock = m_UserInterface->lock();
   }
   ON_BLOCK_EXIT([&] () {
     if (m_UserInterface != nullptr) { m_UserInterface->unlock(); }
@@ -1077,7 +1079,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite);
   if (processHandle != INVALID_HANDLE_VALUE) {
     DWORD processExitCode;
-    (void)waitForProcessCompletion(processHandle, &processExitCode);
+    (void)waitForProcessCompletion(processHandle, &processExitCode, uilock);
 
     refreshDirectoryStructure();
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
@@ -1258,24 +1260,50 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
 
-  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory,
-                           steamAppID, customOverwrite);
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
+  if (processHandle != INVALID_HANDLE_VALUE) {
+    std::unique_ptr<LockedDialog> dlg;
+    ILockedWaitingForProcess* uilock = nullptr;
+
+    if (m_UserInterface != nullptr) {
+      uilock = m_UserInterface->lock();
+    }
+    else {
+      // i.e. when running command line shortcuts there is no m_UserInterface
+      dlg.reset(new LockedDialog);
+      dlg->show();
+      dlg->setEnabled(true);
+      uilock = dlg.get();
+    }
+
+    ON_BLOCK_EXIT([&]() {
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->unlock();
+      } });
+
+    DWORD processExitCode;
+    waitForProcessCompletion(processHandle, &processExitCode, uilock);
+    cycleDiagnostics();
+  }
+
+  return processHandle;
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
+  ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
-    m_UserInterface->lock();
+    uilock = m_UserInterface->lock();
   }
 
   ON_BLOCK_EXIT([&] () {
     if (m_UserInterface != nullptr) {
       m_UserInterface->unlock();
     } });
-  return waitForProcessCompletion(handle, exitCode);
+  return waitForProcessCompletion(handle, exitCode, uilock);
 }
 
-bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
+bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
 	DWORD startPID = ::GetProcessId(handle);
 
@@ -1292,7 +1320,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 	while (
 		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
 			QS_KEY | QS_MOUSEBUTTON),
-			((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
+			((uilock == nullptr) || !uilock->unlockClicked())) {
 
 		if (!::GetVFSProcessList(&numProcesses, processes)) {
 			break;
@@ -1335,7 +1363,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
 
 		// Update the lock process name with the name of the lowest active PID - though this may not actually be the main process
 		if (handles.size() > 0)
-			m_UserInterface->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
+			uilock->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
 
 		// If the main wait process dies, we need a backup wait process until the subprocesses close
 		if ((res == WAIT_FAILED) || (res == WAIT_OBJECT_0)) {

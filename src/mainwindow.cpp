@@ -1465,17 +1465,18 @@ void MainWindow::storeSettings(QSettings &settings) {
   }
 }
 
-void MainWindow::lock()
+ILockedWaitingForProcess* MainWindow::lock()
 {
   if (m_LockDialog != nullptr) {
     ++m_LockCount;
-    return;
+    return m_LockDialog;
   }
   m_LockDialog = new LockedDialog(qApp->activeWindow());
   m_LockDialog->show();
   setEnabled(false);
   m_LockDialog->setEnabled(true); //What's the point otherwise?
   ++m_LockCount;
+  return m_LockDialog;
 }
 
 void MainWindow::unlock()
@@ -1491,22 +1492,6 @@ void MainWindow::unlock()
     m_LockDialog->deleteLater();
     m_LockDialog = nullptr;
     setEnabled(true);
-  }
-}
-
-bool MainWindow::unlockClicked()
-{
-  if (m_LockDialog != nullptr) {
-    return m_LockDialog->unlockClicked();
-  } else {
-    return false;
-  }
-}
-
-void MainWindow::setProcessName(QString const &name)
-{
-  if (m_LockDialog != nullptr) {
-    m_LockDialog->setProcessName(name);
   }
 }
 

@@ -3,6 +3,7 @@
 
 
 #include "modinfo.h"
+#include "ilockedwaitingforprocess.h"
 #include <iplugintool.h>
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
@@ -27,12 +28,8 @@ public:
 
   virtual void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) = 0;
 
-  virtual void lock() = 0;
+  virtual ILockedWaitingForProcess* lock() = 0;
   virtual void unlock() = 0;
-  virtual bool unlockClicked() = 0;
-  virtual void setProcessName(QString const &) = 0;
-
-
 };
 
 #endif // IUSERINTERFACE_H

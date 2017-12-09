@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOCKEDDIALOG_H
 #define LOCKEDDIALOG_H
 
+#include "ilockedwaitingforprocess.h"
 #include <QDialog>  // for QDialog
 #include <QObject>  // for Q_OBJECT, slots
 #include <QString>  // for QString
@@ -39,7 +40,7 @@ namespace Ui {
  * data on which Mod Organizer works. After the UI is unlocked (manually or after the
  * external application closed) MO will refresh all of its data sources
  **/
-class LockedDialog : public QDialog
+class LockedDialog : public QDialog, public ILockedWaitingForProcess
 {
     Q_OBJECT
 
@@ -52,13 +53,13 @@ public:
    *
    * @return true if the user clicked the unlock button
    **/
-  bool unlockClicked() const { return m_UnlockClicked; }
+  bool unlockClicked() override { return m_UnlockClicked; }
 
   /**
    * @brief set the name of the process being run
    * @param name of process
    */
-  void setProcessName(const QString &name);
+  void setProcessName(const QString &name) override;
 
 protected:
 

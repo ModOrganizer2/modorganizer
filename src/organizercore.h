@@ -267,7 +267,7 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
+  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
 
 private slots:
 
