@@ -1305,102 +1305,86 @@ bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 
 bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
-	DWORD startPID = ::GetProcessId(handle);
+  bool originalHandle = true;
+  bool newHandle = true;
+  bool uiunlocked = false;
 
-	static const DWORD maxCount = 5;
-	size_t numProcesses = maxCount;
-	LPDWORD processes = new DWORD[maxCount];
-	std::map<DWORD, HANDLE> handles;
+  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
+  DWORD res = WAIT_TIMEOUT;
+  while (handle != INVALID_HANDLE_VALUE && (newHandle || res == WAIT_TIMEOUT || res == INPUT_EVENT))
+  {
+    if (newHandle) {
+      QString processName = QString::fromStdWString(getProcessName(handle));
+      processName += QString(" (%1)").arg(GetProcessId(handle));
+      if (uilock)
+        uilock->setProcessName(processName);
+      qDebug() << "Waiting for"
+        << (originalHandle ? "spawned" : "usvfs")
+        << "process completion :" << processName.toUtf8().constData();
+      newHandle = false;
+    }
 
-	bool tryAgain = true;
-	DWORD moProcess = -1;
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::processEvents();
 
-	DWORD res;
-	// Wait for a an event on the handle, a key press, mouse click or timeout
-	while (
-		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
-			QS_KEY | QS_MOUSEBUTTON),
-			((uilock == nullptr) || !uilock->unlockClicked())) {
+    // Wait for a an event on the handle, a key press, mouse click or timeout
+    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
+    if (res == WAIT_FAILED) {
+      qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
+      break;
+    }
 
-		if (!::GetVFSProcessList(&numProcesses, processes)) {
-			break;
-		}
+    if (uilock && uilock->unlockClicked()) {
+      uiunlocked = true;
+      break;
+    }
 
-		// Get USvFS processes, build a handle map, and allow to continue if invalid PIDs are supplied
-		bool found = false;
-		size_t count =
-			std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
-		for (size_t i = 0; i < count; ++i) {
-			DWORD currentProcess = processes[i];
-			if (currentProcess != moProcess && handles.count(currentProcess) == 0) {
-				HANDLE currentHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
-				std::wstring processName = getProcessName(currentHandle);
-				if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-					found = true;
-					if (currentHandle == nullptr || currentHandle == INVALID_HANDLE_VALUE) continue;
-					handles.insert(std::pair<DWORD, HANDLE>(currentProcess, currentHandle));
-				}
-				else
-				{
-					moProcess = processes[i];
-					::CloseHandle(currentHandle);
-				}
-			}
-		}
+    if (res == WAIT_OBJECT_0) {
+      // process we were waiting on has completed
+      if (originalHandle && !::GetExitCodeProcess(handle, exitCode))
+        qWarning() << "Failed getting exit code of complete process :" << GetLastError();
+      CloseHandle(handle);
+      handle = INVALID_HANDLE_VALUE;
+      originalHandle = false;
 
-		// Clean up tracked handles
-		for (std::map<DWORD, HANDLE>::iterator checkHandle = handles.begin(); checkHandle != handles.end(); ++checkHandle) {
-			if (checkHandle->second != nullptr && checkHandle->second != INVALID_HANDLE_VALUE) {
-				DWORD processExit;
-				BOOL codeCheck = ::GetExitCodeProcess(checkHandle->second, &processExit);
-				if (!codeCheck || processExit != STILL_ACTIVE) {
-					if (!codeCheck) qDebug() << "Checking the process failed: Error Code " << ::GetLastError();
-					::CloseHandle(checkHandle->second);
-					checkHandle = handles.erase(checkHandle);
-				}
-			}
-		}
+      // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
+      QThread::msleep(500);
 
-		// Update the lock process name with the name of the lowest active PID - though this may not actually be the main process
-		if (handles.size() > 0)
-			uilock->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
+      // search if there is another usvfs process active and if so wait for it
+      // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
+      constexpr size_t querySize = 2; // just to be on the safe side
+      DWORD pids[querySize];
+      size_t found = querySize;
+      if (!::GetVFSProcessList(&found, pids)) {
+        qWarning() << "Failed waiting for process completion : GetVFSProcessList failed?!";
+        break;
+      }
 
-		// If the main wait process dies, we need a backup wait process until the subprocesses close
-		if ((res == WAIT_FAILED) || (res == WAIT_OBJECT_0)) {
-			if (handles.size() > 0) {
-				// By the time we get here, the main wait function should always immediately continue
-				// Passing in a handle doesn't seem to work for subprocesses
-				::MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
-			}
-		}
+      for (size_t i = 0; i < found; ++i) {
+        if (pids[i] == GetCurrentProcessId())
+          continue; // obviously don't wait for MO process
+        handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION|SYNCHRONIZE, FALSE, pids[i]);
+        if (handle == INVALID_HANDLE_VALUE) {
+          qWarning() << "Failed waiting for process completion : OpenProcess failed" << GetLastError();
+          continue;
+        }
+        newHandle = true;
+        break;
+      }
+    }
+  }
 
-		// Give the process list a short time to populate
-		// Required for initial USVFS boot and process switching
-		if (handles.size() == 0 && !found) {
-			if (tryAgain) {
-				tryAgain = false;
-				QThread::msleep(500);
-				continue;
-			}
-			else {
-				break;
-			}
-		}
-		else {
-			tryAgain = true;
-		}
+  if (res == WAIT_OBJECT_0)
+    qDebug() << "Waiting for process completion successfull";
+  else if (uiunlocked)
+    qDebug() << "Waiting for process completion aborted by UI";
+  else
+    qDebug() << "Waiting for process completion not successfull :" << res;
 
-		// keep processing events so the app doesn't appear dead
-		QCoreApplication::processEvents();
-	}
+  if (handle != INVALID_HANDLE_VALUE)
+    ::CloseHandle(handle);
 
-	//Cleanup
-	if (handle != INVALID_HANDLE_VALUE) {
-		::CloseHandle(handle);
-	}
-	delete[] processes;
-
-	return res == WAIT_OBJECT_0;
+  return res == WAIT_OBJECT_0;
 }
 
 bool OrganizerCore::onAboutToRun(
