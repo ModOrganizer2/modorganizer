@@ -128,6 +128,12 @@ bool isNxmLink(const QString &link)
 
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
+  if ((exceptionPtrs->ExceptionRecord->ExceptionCode  < 0x80000000)      // non-critical
+    || (exceptionPtrs->ExceptionRecord->ExceptionCode == 0xe06d7363)) {   // cpp exception
+                                                                          // don't report non-critical exceptions
+    return EXCEPTION_CONTINUE_SEARCH;
+  }
+
   const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
   int dumpRes =
     CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
@@ -522,7 +528,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
-  SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+  AddVectoredExceptionHandler(0, MyUnhandledExceptionFilter);
 
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
