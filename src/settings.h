@@ -38,6 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class QCheckBox;
 class QComboBox;
 class QLineEdit;
+class QSpinBox;
 class QListWidget;
 class QWidget;
 
@@ -203,6 +204,16 @@ public:
    * @return the configured log level
    */
   int logLevel() const;
+
+  /**
+  * @return the configured crash dumps type
+  */
+  int crashDumpsType() const;
+
+  /**
+  * @return the configured crash dumps max
+  */
+  int crashDumpsMax() const;
 
   /**
    * @brief set the nexus login information
@@ -371,7 +382,6 @@ private:
   private:
     QComboBox *m_languageBox;
     QComboBox *m_styleBox;
-    QComboBox *m_logLevelBox;
     QCheckBox *m_compactBox;
     QCheckBox *m_showMetaBox;
     QCheckBox *m_usePrereleaseBox;
@@ -391,6 +401,19 @@ private:
     QLineEdit *m_cacheDirEdit;
     QLineEdit *m_profilesDirEdit;
     QLineEdit *m_overwriteDirEdit;
+  };
+
+  class DiagnosticsTab : public SettingsTab
+  {
+  public:
+    DiagnosticsTab(Settings *parent, SettingsDialog &dialog);
+
+    void update();
+
+  private:
+    QComboBox *m_logLevelBox;
+    QComboBox *m_dumpsTypeBox;
+    QSpinBox *m_dumpsMaxEdit;
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */

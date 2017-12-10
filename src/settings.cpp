@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <iplugin.h>
 #include <iplugingame.h>
 #include <questionboxmemory.h>
+#include <usvfsparameters.h>
 
 #include <QCheckBox>
 #include <QCoreApplication>
@@ -38,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QLineEdit>
+#include <QSpinBox>
 #include <QListWidgetItem>
 #include <QLocale>
 #include <QMessageBox>
@@ -334,9 +336,18 @@ bool Settings::offlineMode() const
 
 int Settings::logLevel() const
 {
-  return m_Settings.value("Settings/log_level", 0).toInt();
+  return m_Settings.value("Settings/log_level", static_cast<int>(LogLevel::Info)).toInt();
 }
 
+int Settings::crashDumpsType() const
+{
+  return m_Settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt();
+}
+
+int Settings::crashDumpsMax() const
+{
+  return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
+}
 
 void Settings::setNexusLogin(QString username, QString password)
 {
@@ -581,6 +592,7 @@ void Settings::query(QWidget *parent)
 
   tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PathsTab(this, dialog)));
+  tabs.push_back(std::unique_ptr<SettingsTab>(new DiagnosticsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new NexusTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
@@ -608,7 +620,6 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   : Settings::SettingsTab(m_parent, m_dialog)
   , m_languageBox(m_dialog.findChild<QComboBox *>("languageBox"))
   , m_styleBox(m_dialog.findChild<QComboBox *>("styleBox"))
-  , m_logLevelBox(m_dialog.findChild<QComboBox *>("logLevelBox"))
   , m_compactBox(m_dialog.findChild<QCheckBox *>("compactBox"))
   , m_showMetaBox(m_dialog.findChild<QCheckBox *>("showMetaBox"))
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
@@ -640,7 +651,6 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
     }
   }
 
-  m_logLevelBox->setCurrentIndex(m_parent->logLevel());
   m_compactBox->setChecked(m_parent->compactDownloads());
   m_showMetaBox->setChecked(m_parent->metaDownloads());
   m_usePrereleaseBox->setChecked(m_parent->usePrereleases());
@@ -661,9 +671,6 @@ void Settings::GeneralTab::update()
     m_Settings.setValue("Settings/style", newStyle);
     emit m_parent->styleChanged(newStyle);
   }
-
-  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentIndex());
-
 
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
   m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
@@ -741,6 +748,24 @@ void Settings::PathsTab::update()
   } else {
     m_Settings.remove("Settings/base_directory");
   }
+}
+
+Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_dialog)
+  : Settings::SettingsTab(m_parent, m_dialog)
+  , m_logLevelBox(m_dialog.findChild<QComboBox *>("logLevelBox"))
+  , m_dumpsTypeBox(m_dialog.findChild<QComboBox *>("dumpsTypeBox"))
+  , m_dumpsMaxEdit(m_dialog.findChild<QSpinBox *>("dumpsMaxEdit"))
+{
+  m_logLevelBox->setCurrentIndex(m_parent->logLevel());
+  m_dumpsTypeBox->setCurrentIndex(m_parent->crashDumpsType());
+  m_dumpsMaxEdit->setValue(m_parent->crashDumpsMax());
+}
+
+void Settings::DiagnosticsTab::update()
+{
+  m_Settings.setValue("Settings/log_level", m_logLevelBox->currentIndex());
+  m_Settings.setValue("Settings/crash_dumps_type", m_dumpsTypeBox->currentIndex());
+  m_Settings.setValue("Settings/crash_dumps_max", m_dumpsMaxEdit->value());
 }
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)

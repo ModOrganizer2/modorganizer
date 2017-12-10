@@ -116,10 +116,8 @@ public:
   void storeSettings(QSettings &settings) override;
   void readSettings();
 
-  virtual void lock() override;
+  virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;
-  virtual bool unlockClicked() override;
-  virtual void setProcessName(QString const &name) override;
 
   bool addProfile();
   void refreshDataTree();

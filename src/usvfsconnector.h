@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QThread>
 #include <QFile>
 #include <QDebug>
+#include <usvfsparameters.h>
 
 
 class LogWorker : public QThread {
@@ -67,7 +68,7 @@ public:
   ~UsvfsConnector();
 
   void updateMapping(const MappingType &mapping);
-  void setLogLevel(int logLevel);
+  void updateParams(int logLevel, int crashDumpsType);
 
 private:
 
@@ -76,5 +77,6 @@ private:
 
 };
 
+CrashDumpsType crashDumpsType(int type);
 
 #endif // USVFSCONNECTOR_H

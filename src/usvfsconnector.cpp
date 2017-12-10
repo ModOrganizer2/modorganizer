@@ -19,6 +19,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "usvfsconnector.h"
 #include "settings.h"
+#include "organizercore.h"
+#include "shared/util.h"
 #include <memory>
 #include <sstream>
 #include <iomanip>
@@ -27,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QProgressDialog>
 #include <QDateTime>
 #include <QCoreApplication>
+#include <qstandardpaths.h>
 
 static const char SHMID[] = "mod_organizer_instance";
 
@@ -101,14 +104,33 @@ LogLevel logLevel(int level)
   }
 }
 
+CrashDumpsType crashDumpsType(int type)
+{
+  switch (type) {
+  case CrashDumpsType::Mini:
+    return CrashDumpsType::Mini;
+  case CrashDumpsType::Data:
+    return CrashDumpsType::Data;
+  case CrashDumpsType::Full:
+    return CrashDumpsType::Full;
+  default:
+    return CrashDumpsType::None;
+  }
+}
+
 UsvfsConnector::UsvfsConnector()
 {
   USVFSParameters params;
   LogLevel level = logLevel(Settings::instance().logLevel());
-  USVFSInitParameters(&params, SHMID, false, level);
+  CrashDumpsType dumpType = crashDumpsType(Settings::instance().crashDumpsType());
+
+  std::string dumpPath = MOShared::ToString(OrganizerCore::crashDumpsPath(), true);
+  USVFSInitParameters(&params, SHMID, false, level, dumpType, dumpPath.c_str());
   InitLogging(false);
+
+  qDebug("Initializing VFS <%s, %d, %d, %s>", params.instanceName, params.logLevel, params.crashDumpsType, params.crashDumpsPath);
+
   CreateVFS(&params);
-  SetLogLevel(level);
 
   BlacklistExecutable(L"TSVNCache.exe");
 
@@ -136,6 +158,10 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   progress.setMaximum(static_cast<int>(mapping.size()));
   progress.show();
   int value = 0;
+  int files = 0;
+  int dirs = 0;
+
+  qDebug("Updating VFS mappings...");
 
   ClearVirtualMappings();
 
@@ -151,11 +177,15 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
                                  (map.createTarget ? LINKFLAG_CREATETARGET : 0)
                                      | LINKFLAG_RECURSIVE
                                  );
+      ++dirs;
     } else {
       VirtualLinkFile(map.source.toStdWString().c_str(),
                       map.destination.toStdWString().c_str(), 0);
+      ++files;
     }
   }
+
+  qDebug("VFS mappings updated <linked %d dirs, %d files>", dirs, files);
   /*
     size_t dumpSize = 0;
     CreateVFSDump(nullptr, &dumpSize);
@@ -165,12 +195,6 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   */
 }
 
-void UsvfsConnector::setLogLevel(int logLevel) {
-  switch (logLevel) {
-    case LogLevel::Debug:   SetLogLevel(LogLevel::Debug); break;
-    case LogLevel::Info:    SetLogLevel(LogLevel::Info); break;
-    case LogLevel::Warning: SetLogLevel(LogLevel::Warning); break;
-    case LogLevel::Error:   SetLogLevel(LogLevel::Error); break;
-    default: SetLogLevel(LogLevel::Debug); break;
-  }
+void UsvfsConnector::updateParams(int logLevel, int crashDumpsType) {
+  USVFSUpdateParams(::logLevel(logLevel), ::crashDumpsType(crashDumpsType));
 }

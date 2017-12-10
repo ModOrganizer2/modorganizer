@@ -31,6 +31,7 @@
 #include "appconfig.h"
 #include <report.h>
 #include <questionboxmemory.h>
+#include "lockeddialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -47,6 +48,7 @@
 #include <QtGlobal> // for qPrintable, etc
 
 #include <Psapi.h>
+#include <Shlobj.h>
 #include <tchar.h> // for _tcsicmp
 
 #include <limits.h>
@@ -65,6 +67,9 @@
 
 using namespace MOShared;
 using namespace MOBase;
+
+//static
+CrashDumpsType OrganizerCore::m_globalCrashDumpsType = CrashDumpsType::None;
 
 static bool isOnline()
 {
@@ -626,7 +631,8 @@ bool OrganizerCore::bootstrap() {
   return createDirectory(m_Settings.getProfileDirectory()) &&
          createDirectory(m_Settings.getModDirectory()) &&
          createDirectory(m_Settings.getDownloadDirectory()) &&
-         createDirectory(m_Settings.getOverwriteDirectory());
+         createDirectory(m_Settings.getOverwriteDirectory()) &&
+         createDirectory(QString::fromStdWString(crashDumpsPath())) && cycleDiagnostics();
 }
 
 void OrganizerCore::createDefaultProfile()
@@ -643,8 +649,29 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::setLogLevel(int logLevel) {
-  m_USVFS.setLogLevel(logLevel);
+void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType) {
+  setGlobalCrashDumpsType(crashDumpsType);
+  m_USVFS.updateParams(logLevel, crashDumpsType);
+}
+
+bool OrganizerCore::cycleDiagnostics() {
+  if (int maxDumps = settings().crashDumpsMax())
+    removeOldFiles(QString::fromStdWString(crashDumpsPath()), "*.dmp", maxDumps, QDir::Time|QDir::Reversed);
+  return true;
+}
+
+//static
+void OrganizerCore::setGlobalCrashDumpsType(int crashDumpsType) {
+  m_globalCrashDumpsType = ::crashDumpsType(crashDumpsType);
+}
+
+//static
+std::wstring OrganizerCore::crashDumpsPath() {
+  wchar_t appDataLocal[MAX_PATH]{ 0 };
+  ::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appDataLocal);
+  std::wstring dumpPath{ appDataLocal };
+  dumpPath += L"\\modorganizer";
+  return dumpPath;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -1041,8 +1068,9 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
 
 void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite)
 {
+  ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
-    m_UserInterface->lock();
+    uilock = m_UserInterface->lock();
   }
   ON_BLOCK_EXIT([&] () {
     if (m_UserInterface != nullptr) { m_UserInterface->unlock(); }
@@ -1051,7 +1079,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
   HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite);
   if (processHandle != INVALID_HANDLE_VALUE) {
     DWORD processExitCode;
-    (void)waitForProcessCompletion(processHandle, &processExitCode);
+    (void)waitForProcessCompletion(processHandle, &processExitCode, uilock);
 
     refreshDirectoryStructure();
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
@@ -1064,6 +1092,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
 
     refreshESPList();
     savePluginList();
+    cycleDiagnostics();
 
     //These callbacks should not fiddle with directoy structure and ESPs.
     m_FinishedRun(binary.absoluteFilePath(), processExitCode);
@@ -1154,9 +1183,13 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
           = QString("launch \"%1\" \"%2\" %3")
                 .arg(QDir::toNativeSeparators(dataCwd),
                      QDir::toNativeSeparators(dataBinPath), arguments);
+
+      qDebug() << "Spawning proxyed process <" << cmdline << ">";
+
       return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
+      qDebug() << "Spawning direct process <" << binary.absoluteFilePath() << "," << arguments << "," << currentDirectory.absolutePath() << ">";
       return startBinary(binary, arguments, currentDirectory, true);
     }
   } else {
@@ -1227,121 +1260,131 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
 
-  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory,
-                           steamAppID, customOverwrite);
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
+  if (processHandle != INVALID_HANDLE_VALUE) {
+    std::unique_ptr<LockedDialog> dlg;
+    ILockedWaitingForProcess* uilock = nullptr;
+
+    if (m_UserInterface != nullptr) {
+      uilock = m_UserInterface->lock();
+    }
+    else {
+      // i.e. when running command line shortcuts there is no m_UserInterface
+      dlg.reset(new LockedDialog);
+      dlg->show();
+      dlg->setEnabled(true);
+      uilock = dlg.get();
+    }
+
+    ON_BLOCK_EXIT([&]() {
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->unlock();
+      } });
+
+    DWORD processExitCode;
+    waitForProcessCompletion(processHandle, &processExitCode, uilock);
+    cycleDiagnostics();
+  }
+
+  return processHandle;
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
+  ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
-    m_UserInterface->lock();
+    uilock = m_UserInterface->lock();
   }
 
   ON_BLOCK_EXIT([&] () {
     if (m_UserInterface != nullptr) {
       m_UserInterface->unlock();
     } });
-  return waitForProcessCompletion(handle, exitCode);
+  return waitForProcessCompletion(handle, exitCode, uilock);
 }
 
-bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode)
+bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock)
 {
-	DWORD startPID = ::GetProcessId(handle);
+  bool originalHandle = true;
+  bool newHandle = true;
+  bool uiunlocked = false;
 
-	static const DWORD maxCount = 5;
-	size_t numProcesses = maxCount;
-	LPDWORD processes = new DWORD[maxCount];
-	std::map<DWORD, HANDLE> handles;
+  constexpr DWORD INPUT_EVENT = WAIT_OBJECT_0 + 1;
+  DWORD res = WAIT_TIMEOUT;
+  while (handle != INVALID_HANDLE_VALUE && (newHandle || res == WAIT_TIMEOUT || res == INPUT_EVENT))
+  {
+    if (newHandle) {
+      QString processName = QString::fromStdWString(getProcessName(handle));
+      processName += QString(" (%1)").arg(GetProcessId(handle));
+      if (uilock)
+        uilock->setProcessName(processName);
+      qDebug() << "Waiting for"
+        << (originalHandle ? "spawned" : "usvfs")
+        << "process completion :" << processName.toUtf8().constData();
+      newHandle = false;
+    }
 
-	bool tryAgain = true;
-	DWORD moProcess = -1;
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::processEvents();
 
-	DWORD res;
-	// Wait for a an event on the handle, a key press, mouse click or timeout
-	while (
-		res = ::MsgWaitForMultipleObjects(1, &handle, false, 500,
-			QS_KEY | QS_MOUSEBUTTON),
-			((m_UserInterface == nullptr) || !m_UserInterface->unlockClicked())) {
+    // Wait for a an event on the handle, a key press, mouse click or timeout
+    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
+    if (res == WAIT_FAILED) {
+      qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
+      break;
+    }
 
-		if (!::GetVFSProcessList(&numProcesses, processes)) {
-			break;
-		}
+    if (uilock && uilock->unlockClicked()) {
+      uiunlocked = true;
+      break;
+    }
 
-		// Get USvFS processes, build a handle map, and allow to continue if invalid PIDs are supplied
-		bool found = false;
-		size_t count =
-			std::min<size_t>(static_cast<size_t>(maxCount), numProcesses);
-		for (size_t i = 0; i < count; ++i) {
-			DWORD currentProcess = processes[i];
-			if (currentProcess != moProcess && handles.count(currentProcess) == 0) {
-				HANDLE currentHandle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, currentProcess);
-				std::wstring processName = getProcessName(currentHandle);
-				if (!boost::starts_with(processName, L"ModOrganizer.exe")) {
-					found = true;
-					if (currentHandle == nullptr || currentHandle == INVALID_HANDLE_VALUE) continue;
-					handles.insert(std::pair<DWORD, HANDLE>(currentProcess, currentHandle));
-				}
-				else
-				{
-					moProcess = processes[i];
-					::CloseHandle(currentHandle);
-				}
-			}
-		}
+    if (res == WAIT_OBJECT_0) {
+      // process we were waiting on has completed
+      if (originalHandle && !::GetExitCodeProcess(handle, exitCode))
+        qWarning() << "Failed getting exit code of complete process :" << GetLastError();
+      CloseHandle(handle);
+      handle = INVALID_HANDLE_VALUE;
+      originalHandle = false;
 
-		// Clean up tracked handles
-		for (std::map<DWORD, HANDLE>::iterator checkHandle = handles.begin(); checkHandle != handles.end(); ++checkHandle) {
-			if (checkHandle->second != nullptr && checkHandle->second != INVALID_HANDLE_VALUE) {
-				DWORD processExit;
-				BOOL codeCheck = ::GetExitCodeProcess(checkHandle->second, &processExit);
-				if (!codeCheck || processExit != STILL_ACTIVE) {
-					if (!codeCheck) qDebug() << "Checking the process failed: Error Code " << ::GetLastError();
-					::CloseHandle(checkHandle->second);
-					checkHandle = handles.erase(checkHandle);
-				}
-			}
-		}
+      // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
+      QThread::msleep(500);
 
-		// Update the lock process name with the name of the lowest active PID - though this may not actually be the main process
-		if (handles.size() > 0)
-			m_UserInterface->setProcessName(QString::fromStdWString(getProcessName(handles.begin()->second)));
+      // search if there is another usvfs process active and if so wait for it
+      // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
+      constexpr size_t querySize = 2; // just to be on the safe side
+      DWORD pids[querySize];
+      size_t found = querySize;
+      if (!::GetVFSProcessList(&found, pids)) {
+        qWarning() << "Failed waiting for process completion : GetVFSProcessList failed?!";
+        break;
+      }
 
-		// If the main wait process dies, we need a backup wait process until the subprocesses close
-		if ((res == WAIT_FAILED) || (res == WAIT_OBJECT_0)) {
-			if (handles.size() > 0) {
-				// By the time we get here, the main wait function should always immediately continue
-				// Passing in a handle doesn't seem to work for subprocesses
-				::MsgWaitForMultipleObjects(0, NULL, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
-			}
-		}
+      for (size_t i = 0; i < found; ++i) {
+        if (pids[i] == GetCurrentProcessId())
+          continue; // obviously don't wait for MO process
+        handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION|SYNCHRONIZE, FALSE, pids[i]);
+        if (handle == INVALID_HANDLE_VALUE) {
+          qWarning() << "Failed waiting for process completion : OpenProcess failed" << GetLastError();
+          continue;
+        }
+        newHandle = true;
+        break;
+      }
+    }
+  }
 
-		// Give the process list a short time to populate
-		// Required for initial USVFS boot and process switching
-		if (handles.size() == 0 && !found) {
-			if (tryAgain) {
-				tryAgain = false;
-				QThread::msleep(500);
-				continue;
-			}
-			else {
-				break;
-			}
-		}
-		else {
-			tryAgain = true;
-		}
+  if (res == WAIT_OBJECT_0)
+    qDebug() << "Waiting for process completion successfull";
+  else if (uiunlocked)
+    qDebug() << "Waiting for process completion aborted by UI";
+  else
+    qDebug() << "Waiting for process completion not successfull :" << res;
 
-		// keep processing events so the app doesn't appear dead
-		QCoreApplication::processEvents();
-	}
+  if (handle != INVALID_HANDLE_VALUE)
+    ::CloseHandle(handle);
 
-	//Cleanup
-	if (handle != INVALID_HANDLE_VALUE) {
-		::CloseHandle(handle);
-	}
-	delete[] processes;
-
-	return res == WAIT_OBJECT_0;
+  return res == WAIT_OBJECT_0;
 }
 
 bool OrganizerCore::onAboutToRun(

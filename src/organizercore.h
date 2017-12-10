@@ -158,7 +158,13 @@ public:
 
   void prepareVFS();
 
-  void setLogLevel(int logLevel);
+  void updateVFSParams(int logLevel, int crashDumpsType);
+
+  bool cycleDiagnostics();
+
+  static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
+  static void setGlobalCrashDumpsType(int crashDumpsType);
+  static std::wstring crashDumpsPath();
 
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
@@ -261,7 +267,7 @@ private:
               const MOShared::DirectoryEntry *directoryEntry,
               int createDestination);
 
-  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
+  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
 
 private slots:
 
@@ -319,6 +325,7 @@ private:
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
 
+  static CrashDumpsType m_globalCrashDumpsType;
 };
 
 #endif // ORGANIZERCORE_H
