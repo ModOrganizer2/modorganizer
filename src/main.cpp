@@ -121,21 +121,6 @@ bool bootstrap()
 }
 
 
-bool isNxmLink(const QString &link)
-{
-  return link.startsWith("nxm://", Qt::CaseInsensitive);
-}
-
-bool isMoShortcut(const QString &link)
-{
-  return link.startsWith("moshortcut://", Qt::CaseInsensitive);
-}
-
-QString moShortcutName(const QString &link)
-{
-  return link.mid(strlen("moshortcut://"));
-}
-
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
   if ((exceptionPtrs->ExceptionRecord->ExceptionCode  < 0x80000000)      // non-critical
@@ -477,16 +462,16 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
     if (arguments.size() > 1) {
-      if (isMoShortcut(arguments.at(1))) {
+      if (OrganizerCore::isMoShortcut(arguments.at(1))) {
         try {
-          organizer.runShortcut(moShortcutName(arguments.at(1)));
+          organizer.runShortcut(OrganizerCore::moShortcutName(arguments.at(1)));
           return 0;
         } catch (const std::exception &e) {
           reportError(
             QObject::tr("failed to start shortcut: %1").arg(e.what()));
           return 1;
         }
-      } else if (isNxmLink(arguments.at(1))) {
+      } else if (OrganizerCore::isNxmLink(arguments.at(1))) {
         qDebug("starting download from command line: %s",
                qPrintable(arguments.at(1)));
         organizer.externalMessage(arguments.at(1));
@@ -579,8 +564,10 @@ int main(int argc, char *argv[])
 
   SingleInstance instance(forcePrimary);
   if (!instance.primaryInstance()) {
-    if ((arguments.size() == 2) && isNxmLink(arguments.at(1))) {
-      qDebug("not primary instance, sending download message");
+    if ((arguments.size() == 2)
+      && (OrganizerCore::isMoShortcut(arguments.at(1)) || OrganizerCore::isNxmLink(arguments.at(1))))
+    {
+      qDebug("not primary instance, sending shortcut/download message");
       instance.sendMessage(arguments.at(1));
       return 0;
     } else if (arguments.size() == 1) {

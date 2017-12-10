@@ -85,6 +85,10 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
+  static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
+  static bool isMoShortcut(const QString &link) { return link.startsWith("moshortcut://", Qt::CaseInsensitive); }
+  static QString moShortcutName(const QString &link) { return link.mid(strlen("moshortcut://")); }
+
 
   OrganizerCore(const QSettings &initSettings);
 

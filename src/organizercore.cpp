@@ -578,7 +578,10 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
 
 void OrganizerCore::externalMessage(const QString &message)
 {
-  if (message.left(6).toLower() == "nxm://") {
+  if (isMoShortcut(message)) {
+    runShortcut(moShortcutName(message));
+  }
+  else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
     downloadRequestedNXM(message);
   }
