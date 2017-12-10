@@ -1068,19 +1068,9 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
 
 void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite)
 {
-  ILockedWaitingForProcess* uilock = nullptr;
-  if (m_UserInterface != nullptr) {
-    uilock = m_UserInterface->lock();
-  }
-  ON_BLOCK_EXIT([&] () {
-    if (m_UserInterface != nullptr) { m_UserInterface->unlock(); }
-  });
-
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite);
+  DWORD processExitCode = 0;
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite, &processExitCode);
   if (processHandle != INVALID_HANDLE_VALUE) {
-    DWORD processExitCode;
-    (void)waitForProcessCompletion(processHandle, &processExitCode, uilock);
-
     refreshDirectoryStructure();
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
     // file time. After removing that file, refreshESPList will use the file time as the order
@@ -1092,7 +1082,6 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
 
     refreshESPList();
     savePluginList();
-    cycleDiagnostics();
 
     //These callbacks should not fiddle with directoy structure and ESPs.
     m_FinishedRun(binary.absoluteFilePath(), processExitCode);
@@ -1104,7 +1093,45 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
                                         const QString &profileName,
                                         const QDir &currentDirectory,
                                         const QString &steamAppID,
-                                        const QString &customOverwrite)
+                                        const QString &customOverwrite,
+                                        LPDWORD exitCode)
+{
+  HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
+  if (processHandle != INVALID_HANDLE_VALUE) {
+    std::unique_ptr<LockedDialog> dlg;
+    ILockedWaitingForProcess* uilock = nullptr;
+
+    if (m_UserInterface != nullptr) {
+      uilock = m_UserInterface->lock();
+    }
+    else {
+      // i.e. when running command line shortcuts there is no m_UserInterface
+      dlg.reset(new LockedDialog);
+      dlg->show();
+      dlg->setEnabled(true);
+      uilock = dlg.get();
+    }
+
+    ON_BLOCK_EXIT([&]() {
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->unlock();
+      } });
+
+    DWORD ignoreExitCode;
+    waitForProcessCompletion(processHandle, exitCode ? exitCode : &ignoreExitCode, uilock);
+    cycleDiagnostics();
+  }
+
+  return processHandle;
+}
+
+
+HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
+                                         const QString &arguments,
+                                         const QString &profileName,
+                                         const QDir &currentDirectory,
+                                         const QString &steamAppID,
+                                         const QString &customOverwrite)
 {
   prepareStart();
 
@@ -1199,6 +1226,19 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
   }
 }
 
+HANDLE OrganizerCore::runShortcut(const QString &title)
+{
+  Executable& exe = m_ExecutablesList.find(title);
+
+  return spawnBinaryDirect(
+    exe.m_BinaryInfo, exe.m_Arguments,
+    m_CurrentProfile->name(),
+    exe.m_WorkingDirectory.length() != 0
+    ? exe.m_WorkingDirectory
+    : exe.m_BinaryInfo.absolutePath(),
+    exe.m_SteamAppID, "");
+}
+
 HANDLE OrganizerCore::startApplication(const QString &executable,
                                        const QStringList &args,
                                        const QString &cwd,
@@ -1260,33 +1300,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
 
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
-  if (processHandle != INVALID_HANDLE_VALUE) {
-    std::unique_ptr<LockedDialog> dlg;
-    ILockedWaitingForProcess* uilock = nullptr;
-
-    if (m_UserInterface != nullptr) {
-      uilock = m_UserInterface->lock();
-    }
-    else {
-      // i.e. when running command line shortcuts there is no m_UserInterface
-      dlg.reset(new LockedDialog);
-      dlg->show();
-      dlg->setEnabled(true);
-      uilock = dlg.get();
-    }
-
-    ON_BLOCK_EXIT([&]() {
-      if (m_UserInterface != nullptr) {
-        m_UserInterface->unlock();
-      } });
-
-    DWORD processExitCode;
-    waitForProcessCompletion(processHandle, &processExitCode, uilock);
-    cycleDiagnostics();
-  }
-
-  return processHandle;
+  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)

@@ -145,7 +145,14 @@ public:
                            const QString &profileName,
                            const QDir &currentDirectory,
                            const QString &steamAppID,
-                           const QString &customOverwrite);
+                           const QString &customOverwrite,
+                           LPDWORD exitCode = nullptr);
+
+  HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
+                            const QString &profileName,
+                            const QDir &currentDirectory,
+                            const QString &steamAppID,
+                            const QString &customOverwrite);
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -192,6 +199,7 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
+  HANDLE runShortcut(const QString &title);
   HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
   bool onModInstalled(const std::function<void (const QString &)> &func);
