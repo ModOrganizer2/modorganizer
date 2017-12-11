@@ -120,20 +120,22 @@ bool bootstrap()
   return true;
 }
 
+LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
 
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
   const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
   int dumpRes =
     CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
-  if (!dumpRes) {
+  if (!dumpRes)
     qCritical("ModOrganizer has crashed, crash dump created.");
-    return EXCEPTION_EXECUTE_HANDLER;
-  }
-  else {
+  else
     qCritical("ModOrganizer has crashed, CreateMiniDump failed (%d, error %lu).", dumpRes, GetLastError());
+
+  if (prevUnhandledExceptionFilter)
+    return prevUnhandledExceptionFilter(exceptionPtrs);
+  else
     return EXCEPTION_CONTINUE_SEARCH;
-  }
 }
 
 static bool HaveWriteAccess(const std::wstring &path)
@@ -526,7 +528,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
-  SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+  prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
