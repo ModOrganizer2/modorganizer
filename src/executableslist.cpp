@@ -192,7 +192,7 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
     newExe.m_Arguments = arguments;
     newExe.m_WorkingDirectory = workingDirectory;
     newExe.m_SteamAppID = steamAppID;
-    newExe.m_Flags = 0;
+    newExe.m_Flags = Executable::UseApplicationIcon;
     m_Executables.push_back(newExe);
   }
 }

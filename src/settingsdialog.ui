@@ -486,7 +486,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
             <widget class="QLabel" name="label_29">
               <property name="text">
                 <string>
-                  Dumps are stored in &lt;a href=&quot;%LOCALAPPDATA%\modorganizer&quot;&gt;%LOCALAPPDATA%\modorganizer&lt;/a&gt;.
+                  Dumps are stored in &lt;a href=&quot;%LOCALAPPDATA%\modorganizer\crashDumps&quot;&gt;%LOCALAPPDATA%\modorganizer\crashDumps&lt;/a&gt;.
                   Sending such dumps to the developers can help solve crashes caused by MO.
                   It is recommended to compress the dumps before sending, especially on the larger settings.
                 </string>
