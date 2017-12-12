@@ -483,12 +483,13 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
             </layout>
           </item>
           <item row="4" column="0">
-            <widget class="QLabel" name="label_29">
+            <widget class="QLabel" name="diagnosticsExplainedLabel">
               <property name="text">
                 <string>
-                  Dumps are stored in &lt;a href=&quot;%LOCALAPPDATA%\modorganizer\crashDumps&quot;&gt;%LOCALAPPDATA%\modorganizer\crashDumps&lt;/a&gt;.
-                  Sending such dumps to the developers can help solve crashes caused by MO.
-                  It is recommended to compress the dumps before sending, especially on the larger settings.
+                  Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
+                  and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
+                  Sending logs and/or crash dumps to the developers can help investigate issues.
+                  It is recommended to compress large log and dmp files before sending.
                 </string>
               </property>
               <property name="wordWrap">
