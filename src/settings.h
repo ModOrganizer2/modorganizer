@@ -41,6 +41,7 @@ class QLineEdit;
 class QSpinBox;
 class QListWidget;
 class QWidget;
+class QLabel;
 
 struct ServerInfo;
 
@@ -414,6 +415,7 @@ private:
     QComboBox *m_logLevelBox;
     QComboBox *m_dumpsTypeBox;
     QSpinBox *m_dumpsMaxEdit;
+    QLabel *m_diagnosticsExplainedLabel;
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */

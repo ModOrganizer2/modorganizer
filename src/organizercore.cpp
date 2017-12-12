@@ -670,11 +670,10 @@ void OrganizerCore::setGlobalCrashDumpsType(int crashDumpsType) {
 
 //static
 std::wstring OrganizerCore::crashDumpsPath() {
-  wchar_t appDataLocal[MAX_PATH]{ 0 };
-  ::SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, appDataLocal);
-  std::wstring dumpPath{ appDataLocal };
-  dumpPath += L"\\modorganizer\\crashDumps";
-  return dumpPath;
+  return (
+    qApp->property("dataPath").toString() + "/"
+    + QString::fromStdWString(AppConfig::dumpsDir())
+    ).toStdWString();
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)

@@ -528,8 +528,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
-  prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
-
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
 
@@ -585,6 +583,9 @@ int main(int argc, char *argv[])
       return 1;
     }
     application.setProperty("dataPath", dataPath);
+
+    // initialize dump collection only after "dataPath" since the crashes are stored under it
+    prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
     LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
