@@ -148,6 +148,8 @@ ModInfoDialog::~ModInfoDialog()
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
+  delete ui->descriptionView->page();
+  delete ui->descriptionView;
   delete ui;
   delete m_Settings;
 }
