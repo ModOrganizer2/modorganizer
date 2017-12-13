@@ -1367,26 +1367,8 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       QThread::msleep(500);
 
       // search if there is another usvfs process active and if so wait for it
-      // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
-      constexpr size_t querySize = 2; // just to be on the safe side
-      DWORD pids[querySize];
-      size_t found = querySize;
-      if (!::GetVFSProcessList(&found, pids)) {
-        qWarning() << "Failed waiting for process completion : GetVFSProcessList failed?!";
-        break;
-      }
-
-      for (size_t i = 0; i < found; ++i) {
-        if (pids[i] == GetCurrentProcessId())
-          continue; // obviously don't wait for MO process
-        handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION|SYNCHRONIZE, FALSE, pids[i]);
-        if (handle == INVALID_HANDLE_VALUE) {
-          qWarning() << "Failed waiting for process completion : OpenProcess failed" << GetLastError();
-          continue;
-        }
-        newHandle = true;
-        break;
-      }
+      handle = findAndOpenAUSVFSProcess();
+      newHandle = handle != INVALID_HANDLE_VALUE;
     }
   }
 
@@ -1401,6 +1383,29 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
     ::CloseHandle(handle);
 
   return res == WAIT_OBJECT_0;
+}
+
+HANDLE OrganizerCore::findAndOpenAUSVFSProcess() {
+  // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
+  constexpr size_t querySize = 2; // just to be on the safe side
+  DWORD pids[querySize];
+  size_t found = querySize;
+  if (!::GetVFSProcessList(&found, pids)) {
+    qWarning() << "Failed seeking USVFS processes : GetVFSProcessList failed?!";
+    return INVALID_HANDLE_VALUE;
+  }
+
+  for (size_t i = 0; i < found; ++i) {
+    if (pids[i] == GetCurrentProcessId())
+      continue; // obviously don't wait for MO process
+    HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
+    if (handle != INVALID_HANDLE_VALUE)
+      return handle;
+    else
+      qWarning() << "Failed openning USVFS process " << pids[i] << " : OpenProcess failed" << GetLastError();
+  }
+
+  return INVALID_HANDLE_VALUE;
 }
 
 bool OrganizerCore::onAboutToRun(
