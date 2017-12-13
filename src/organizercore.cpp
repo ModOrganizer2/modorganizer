@@ -1340,53 +1340,40 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       newHandle = false;
     }
 
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::processEvents();
-
     // Wait for a an event on the handle, a key press, mouse click or timeout
-    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
+    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
     if (res == WAIT_FAILED) {
       qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
       break;
     }
 
-    if (uilock && uilock->unlockClicked()) {
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
+
+    if (uilock && uilock->unlockForced()) {
       uiunlocked = true;
       break;
     }
 
     if (res == WAIT_OBJECT_0) {
       // process we were waiting on has completed
-      if (originalHandle && !::GetExitCodeProcess(handle, exitCode))
+      if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
         qWarning() << "Failed getting exit code of complete process :" << GetLastError();
       CloseHandle(handle);
       handle = INVALID_HANDLE_VALUE;
       originalHandle = false;
 
       // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
-      QThread::msleep(500);
+      for (int i = 0; i < 3; ++i) {
+        QThread::msleep(200);
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+      }
 
       // search if there is another usvfs process active and if so wait for it
-      // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
-      constexpr size_t querySize = 2; // just to be on the safe side
-      DWORD pids[querySize];
-      size_t found = querySize;
-      if (!::GetVFSProcessList(&found, pids)) {
-        qWarning() << "Failed waiting for process completion : GetVFSProcessList failed?!";
-        break;
-      }
-
-      for (size_t i = 0; i < found; ++i) {
-        if (pids[i] == GetCurrentProcessId())
-          continue; // obviously don't wait for MO process
-        handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION|SYNCHRONIZE, FALSE, pids[i]);
-        if (handle == INVALID_HANDLE_VALUE) {
-          qWarning() << "Failed waiting for process completion : OpenProcess failed" << GetLastError();
-          continue;
-        }
-        newHandle = true;
-        break;
-      }
+      handle = findAndOpenAUSVFSProcess();
+      newHandle = handle != INVALID_HANDLE_VALUE;
     }
   }
 
@@ -1401,6 +1388,29 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
     ::CloseHandle(handle);
 
   return res == WAIT_OBJECT_0;
+}
+
+HANDLE OrganizerCore::findAndOpenAUSVFSProcess() {
+  // in theory a querySize of 1 is probably enough since the MO process doesn't seem to be returned by GetVFSProcessList
+  constexpr size_t querySize = 2; // just to be on the safe side
+  DWORD pids[querySize];
+  size_t found = querySize;
+  if (!::GetVFSProcessList(&found, pids)) {
+    qWarning() << "Failed seeking USVFS processes : GetVFSProcessList failed?!";
+    return INVALID_HANDLE_VALUE;
+  }
+
+  for (size_t i = 0; i < found; ++i) {
+    if (pids[i] == GetCurrentProcessId())
+      continue; // obviously don't wait for MO process
+    HANDLE handle = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, pids[i]);
+    if (handle != INVALID_HANDLE_VALUE)
+      return handle;
+    else
+      qWarning() << "Failed openning USVFS process " << pids[i] << " : OpenProcess failed" << GetLastError();
+  }
+
+  return INVALID_HANDLE_VALUE;
 }
 
 bool OrganizerCore::onAboutToRun(

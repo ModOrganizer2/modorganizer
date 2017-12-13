@@ -17,16 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LOCKEDDIALOG_H
-#define LOCKEDDIALOG_H
+#pragma once
 
-#include "ilockedwaitingforprocess.h"
-#include <QDialog>  // for QDialog
-#include <QObject>  // for Q_OBJECT, slots
-#include <QString>  // for QString
-
-class QResizeEvent;
-class QWidget;
+#include "lockeddialogbase.h"
 
 namespace Ui {
     class LockedDialog;
@@ -40,38 +33,25 @@ namespace Ui {
  * data on which Mod Organizer works. After the UI is unlocked (manually or after the
  * external application closed) MO will refresh all of its data sources
  **/
-class LockedDialog : public QDialog, public ILockedWaitingForProcess
+class LockedDialog : public LockedDialogBase
 {
     Q_OBJECT
 
 public:
-  explicit LockedDialog(QWidget *parent = 0, const QString &text = "", bool unlockButton = true);
+  explicit LockedDialog(QWidget *parent = 0, bool unlockByButton = false);
   ~LockedDialog();
 
-  /**
-   * @brief see if the user clicked the unlock-button
-   *
-   * @return true if the user clicked the unlock button
-   **/
-  bool unlockClicked() override { return m_UnlockClicked; }
-
-  /**
-   * @brief set the name of the process being run
-   * @param name of process
-   */
   void setProcessName(const QString &name) override;
 
 protected:
 
-  virtual void resizeEvent(QResizeEvent *event);
+  void unlock() override;
 
 private slots:
 
   void on_unlockButton_clicked();
 
 private:
-  Ui::LockedDialog *ui;
-  bool m_UnlockClicked;
-};
 
-#endif // LOCKEDDIALOG_H
+  Ui::LockedDialog *ui;
+};

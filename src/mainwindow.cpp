@@ -59,6 +59,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "lockeddialog.h"
+#include "waitingonclosedialog.h"
 #include "logbuffer.h"
 #include "downloadlistsortproxy.h"
 #include "motddialog.h"
@@ -855,6 +856,8 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+  m_closing = true;
+
   if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
@@ -863,6 +866,16 @@ void MainWindow::closeEvent(QCloseEvent* event)
       return;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
+    }
+  }
+
+  HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess();
+  if (injected_process_still_running != INVALID_HANDLE_VALUE)
+  {
+    m_OrganizerCore.waitForApplication(injected_process_still_running);
+    if (!m_closing) { // if operation cancelled
+      event->ignore();
+      return;
     }
   }
 
@@ -1471,7 +1484,11 @@ ILockedWaitingForProcess* MainWindow::lock()
     ++m_LockCount;
     return m_LockDialog;
   }
-  m_LockDialog = new LockedDialog(qApp->activeWindow());
+  if (m_closing)
+    m_LockDialog = new WaitingOnCloseDialog(this);
+  else
+    m_LockDialog = new LockedDialog(this, true);
+  m_LockDialog->setModal(true);
   m_LockDialog->show();
   setEnabled(false);
   m_LockDialog->setEnabled(true); //What's the point otherwise?
@@ -1488,6 +1505,8 @@ void MainWindow::unlock()
   }
   --m_LockCount;
   if (m_LockCount == 0) {
+    if (m_closing && m_LockDialog->canceled())
+      m_closing = false;
     m_LockDialog->hide();
     m_LockDialog->deleteLater();
     m_LockDialog = nullptr;
