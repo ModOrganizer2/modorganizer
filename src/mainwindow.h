@@ -35,7 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 //when I get round to cleaning up main.cpp
 struct Executable;
 class CategoryFactory;
-class LockedDialog;
+class LockedDialogBase;
 class OrganizerCore;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
@@ -348,8 +348,10 @@ private:
 
   bool m_DidUpdateMasterList;
 
-  LockedDialog *m_LockDialog { nullptr };
+  LockedDialogBase *m_LockDialog { nullptr };
   uint64_t m_LockCount { 0 };
+
+  bool m_closing{ false };
 
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 

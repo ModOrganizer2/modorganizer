@@ -42,7 +42,9 @@ SET(organizer_SRCS
     main.cpp
     loghighlighter.cpp
     logbuffer.cpp
+    lockeddialogbase.cpp
     lockeddialog.cpp
+    waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
     helper.cpp
@@ -128,7 +130,9 @@ SET(organizer_HDRS
     mainwindow.h
     loghighlighter.h
     logbuffer.h
+    lockeddialogbase.h
     lockeddialog.h
+    waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
     helper.h
@@ -200,6 +204,7 @@ SET(organizer_UIS
     messagedialog.ui
     mainwindow.ui
     lockeddialog.ui
+    waitingonclosedialog.ui
     installdialog.ui
     finddialog.ui
     editexecutablesdialog.ui

@@ -26,10 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Qt>                 // for Qt::FramelessWindowHint, etc
 
 LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
-  : QDialog(parent)
+  : LockedDialogBase(parent, !unlockByButton)
   , ui(new Ui::LockedDialog)
-  , m_Unlocked(false)
-  , m_allowClose(!unlockByButton)
 {
   ui->setupUi(this);
 
@@ -38,7 +36,7 @@ LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
   // seem to work. We will ignore pressing the close button if unlockByButton == true
   Qt::WindowFlags flags =
     this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
-  if (!unlockByButton)
+  if (m_allowClose)
     flags |= Qt::WindowCloseButtonHint;
   this->setWindowFlags(flags);
 
@@ -47,13 +45,6 @@ LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
     ui->unlockButton->hide();
     ui->verticalLayout->addItem(
       new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
-  }
-
-  if (parent != nullptr) {
-    QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
-    position.rx() -= this->width() / 2;
-    position.ry() -= this->height() / 2;
-    move(position);
   }
 }
 
@@ -68,35 +59,13 @@ void LockedDialog::setProcessName(const QString &name)
   ui->processLabel->setText(name);
 }
 
-
-void LockedDialog::resizeEvent(QResizeEvent *event)
-{
-  QWidget *par = parentWidget();
-  if (par != nullptr) {
-    QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height() / 2));
-    position.rx() -= event->size().width() / 2;
-    position.ry() -= event->size().height() / 2;
-    move(position);
-  }
-}
-
 void LockedDialog::on_unlockButton_clicked()
 {
   unlock();
 }
 
-void LockedDialog::reject()
-{
-  if (m_allowClose)
-    unlock();
-}
-
-bool LockedDialog::unlockForced() {
-  return m_Unlocked;
-}
-
 void LockedDialog::unlock() {
-  m_Unlocked = true;
+  LockedDialogBase::unlock();
   ui->label->setText("unlocking may take a few seconds");
   ui->unlockButton->setEnabled(false);
 }

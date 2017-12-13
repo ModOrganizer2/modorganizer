@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>WaitingOnCloseDialog</class>
+ <widget class="QDialog" name="WaitingOnCloseDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>317</width>
+    <height>151</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Waiting for virtualized processes</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="toolTip">
+      <string>This dialog should disappear automatically if the application/game is done.</string>
+     </property>
+     <property name="text">
+      <string>Virtualized processes are still running, it is prefered to keep MO running until they are finished.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+    <item>
+      <spacer name="verticalSpacer1">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+    <item>
+    <widget class="QLabel" name="processLabel">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color: grey;</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+    <item>
+      <spacer name="verticalSpacer2">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+    <item>
+      <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0">
+        <item>
+          <widget class="QPushButton" name="closeButton">
+            <property name="text">
+              <string>Close Now</string>
+            </property>
+          </widget>
+        </item>
+        <item>
+          <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+              <size>
+                <width>40</width>
+                <height>20</height>
+              </size>
+            </property>
+          </spacer>
+        </item>
+        <item>
+          <widget class="QPushButton" name="cancelButton">
+            <property name="text">
+              <string>Cancel</string>
+            </property>
+          </widget>
+        </item>
+      </layout>
+    </item>
+    <item>
+      <spacer name="verticalSpacer3">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
