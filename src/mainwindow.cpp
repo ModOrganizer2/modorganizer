@@ -1471,7 +1471,8 @@ ILockedWaitingForProcess* MainWindow::lock()
     ++m_LockCount;
     return m_LockDialog;
   }
-  m_LockDialog = new LockedDialog(qApp->activeWindow());
+  m_LockDialog = new LockedDialog(this, true);
+  m_LockDialog->setModal(true);
   m_LockDialog->show();
   setEnabled(false);
   m_LockDialog->setEnabled(true); //What's the point otherwise?

@@ -1350,7 +1350,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       break;
     }
 
-    if (uilock && uilock->unlockClicked()) {
+    if (uilock && uilock->unlockForced()) {
       uiunlocked = true;
       break;
     }

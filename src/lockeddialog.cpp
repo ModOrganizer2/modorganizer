@@ -25,27 +25,35 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <Qt>                 // for Qt::FramelessWindowHint, etc
 
-LockedDialog::LockedDialog(QWidget *parent, const QString &text, bool unlockButton)
+LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
   : QDialog(parent)
   , ui(new Ui::LockedDialog)
-  , m_UnlockClicked(false)
+  , m_Unlocked(false)
+  , m_allowClose(!unlockByButton)
 {
   ui->setupUi(this);
 
-  this->setWindowFlags(this->windowFlags() | Qt::ToolTip | Qt::FramelessWindowHint);
+  // Supposedly the Qt::CustomizeWindowHint should use a customized window
+  // allowing us to select if there is a close button. In practice this doesn't
+  // seem to work. We will ignore pressing the close button if unlockByButton == true
+  Qt::WindowFlags flags =
+    this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
+  if (!unlockByButton)
+    flags |= Qt::WindowCloseButtonHint;
+  this->setWindowFlags(flags);
+
+  if (!unlockByButton)
+  {
+    ui->unlockButton->hide();
+    ui->verticalLayout->addItem(
+      new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+  }
 
   if (parent != nullptr) {
     QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
     position.rx() -= this->width() / 2;
     position.ry() -= this->height() / 2;
     move(position);
-  }
-
-  if (text.length() > 0) {
-    ui->label->setText(text);
-  }
-  if (!unlockButton) {
-    ui->unlockButton->hide();
   }
 }
 
@@ -74,5 +82,21 @@ void LockedDialog::resizeEvent(QResizeEvent *event)
 
 void LockedDialog::on_unlockButton_clicked()
 {
-  m_UnlockClicked = true;
+  unlock();
+}
+
+void LockedDialog::reject()
+{
+  if (m_allowClose)
+    unlock();
+}
+
+bool LockedDialog::unlockForced() {
+  return m_Unlocked;
+}
+
+void LockedDialog::unlock() {
+  m_Unlocked = true;
+  ui->label->setText("unlocking may take a few seconds");
+  ui->unlockButton->setEnabled(false);
 }
