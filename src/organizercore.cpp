@@ -1357,7 +1357,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
 
     if (res == WAIT_OBJECT_0) {
       // process we were waiting on has completed
-      if (originalHandle && !::GetExitCodeProcess(handle, exitCode))
+      if (originalHandle && exitCode && !::GetExitCodeProcess(handle, exitCode))
         qWarning() << "Failed getting exit code of complete process :" << GetLastError();
       CloseHandle(handle);
       handle = INVALID_HANDLE_VALUE;
