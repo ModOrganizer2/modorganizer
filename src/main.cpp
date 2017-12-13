@@ -578,8 +578,8 @@ int main(int argc, char *argv[])
     try {
       dataPath = InstanceManager::instance().determineDataPath();
     } catch (const std::exception &e) {
-      QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"),
-                            e.what());
+      if (strcmp(e.what(),"Canceled"))
+        QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
       return 1;
     }
     application.setProperty("dataPath", dataPath);
