@@ -2,6 +2,7 @@
 Thumbs.db
 src/moc_*.cpp
 src/ui_*.h
+src/organizer_en.ts
 src/*.qrc.depends
 src/Modorganizer.*
 src/*.bak
