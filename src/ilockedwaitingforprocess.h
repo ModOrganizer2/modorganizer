@@ -6,7 +6,7 @@ class QString;
 class ILockedWaitingForProcess
 {
 public:
-  virtual bool unlockClicked() = 0;
+  virtual bool unlockForced() = 0;
   virtual void setProcessName(QString const &) = 0;
 };
 

@@ -45,7 +45,7 @@ class LockedDialog : public QDialog, public ILockedWaitingForProcess
     Q_OBJECT
 
 public:
-  explicit LockedDialog(QWidget *parent = 0, const QString &text = "", bool unlockButton = true);
+  explicit LockedDialog(QWidget *parent = 0, bool unlockByButton = false);
   ~LockedDialog();
 
   /**
@@ -53,7 +53,7 @@ public:
    *
    * @return true if the user clicked the unlock button
    **/
-  bool unlockClicked() override { return m_UnlockClicked; }
+  bool unlockForced() override;
 
   /**
    * @brief set the name of the process being run
@@ -65,13 +65,18 @@ protected:
 
   virtual void resizeEvent(QResizeEvent *event);
 
+  virtual void reject();
+
 private slots:
 
   void on_unlockButton_clicked();
 
 private:
+  void unlock();
+
   Ui::LockedDialog *ui;
-  bool m_UnlockClicked;
+  bool m_Unlocked;
+  bool m_allowClose;
 };
 
 #endif // LOCKEDDIALOG_H

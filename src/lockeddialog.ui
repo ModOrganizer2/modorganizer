@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Locked</string>
+   <string>Running virtualized processes</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
    <item>
@@ -30,7 +30,19 @@
      </property>
     </widget>
    </item>
-   <item>
+    <item>
+      <spacer name="verticalSpacer1">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+    <item>
     <widget class="QLabel" name="processLabel">
      <property name="font">
       <font>
@@ -48,13 +60,37 @@
      </property>
     </widget>
    </item>
-   <item>
+    <item>
+      <spacer name="verticalSpacer2">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
+    <item>
     <widget class="QPushButton" name="unlockButton">
      <property name="text">
       <string>Unlock</string>
      </property>
     </widget>
    </item>
+    <item>
+      <spacer name="verticalSpacer3">
+        <property name="orientation">
+          <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+          <size>
+            <height>10</height>
+          </size>
+        </property>
+      </spacer>
+    </item>
   </layout>
  </widget>
  <resources/>
