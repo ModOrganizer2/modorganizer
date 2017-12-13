@@ -79,10 +79,11 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
 ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
                                        const QString &espName,
                                        const QStringList &bsaNames,
+                                       ModInfo::EModType modType,
                                        DirectoryEntry **directoryStructure) {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result = ModInfo::Ptr(
-      new ModInfoForeign(modName, espName, bsaNames, directoryStructure));
+      new ModInfoForeign(modName, espName, bsaNames, modType, directoryStructure));
   s_Collection.push_back(result);
   return result;
 }
@@ -224,9 +225,13 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
   UnmanagedMods *unmanaged = game->feature<UnmanagedMods>();
   if (unmanaged != nullptr) {
     for (const QString &modName : unmanaged->mods(!displayForeign)) {
+      ModInfo::EModType modType = game->DLCPlugins().contains(unmanaged->referenceFile(modName).fileName(), Qt::CaseInsensitive) ? ModInfo::EModType::MOD_DLC :
+                         (game->CCPlugins().contains(unmanaged->referenceFile(modName).fileName(), Qt::CaseInsensitive) ? ModInfo::EModType::MOD_CC : ModInfo::EModType::MOD_DEFAULT);
+
       createFromPlugin(unmanaged->displayName(modName),
                        unmanaged->referenceFile(modName).absoluteFilePath(),
                        unmanaged->secondaryFiles(modName),
+                       modType,
                        directoryStructure);
     }
   }

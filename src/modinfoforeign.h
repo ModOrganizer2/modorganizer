@@ -52,7 +52,7 @@ public:
 
 protected:
   ModInfoForeign(const QString &modName, const QString &referenceFile,
-                 const QStringList &archives,
+                 const QStringList &archives, ModInfo::EModType modType,
                  MOShared::DirectoryEntry **directoryStructure);
 private:
 

@@ -50,9 +50,19 @@ QString ModInfoForeign::getDescription() const
 ModInfoForeign::ModInfoForeign(const QString &modName,
                                const QString &referenceFile,
                                const QStringList &archives,
+                               ModInfo::EModType modType,
                                DirectoryEntry **directoryStructure)
     : ModInfoWithConflictInfo(directoryStructure),
       m_ReferenceFile(referenceFile), m_Archives(archives) {
   m_CreationTime = QFileInfo(referenceFile).created();
-  m_Name = "Unmanaged: " + modName;
+  switch (modType) {
+  case ModInfo::EModType::MOD_DLC:
+    m_Name = "DLC: " + modName;
+    break;
+  case ModInfo::EModType::MOD_CC:
+    m_Name = "Creation Club: " + modName;
+    break;
+  default:
+    m_Name = "Unmanaged: " + modName;
+  }
 }
