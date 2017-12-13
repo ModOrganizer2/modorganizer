@@ -1340,15 +1340,16 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       newHandle = false;
     }
 
-    // keep processing events so the app doesn't appear dead
-    QCoreApplication::processEvents();
-
     // Wait for a an event on the handle, a key press, mouse click or timeout
-    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 500, QS_KEY | QS_MOUSEBUTTON);
+    res = MsgWaitForMultipleObjects(1, &handle, FALSE, 200, QS_KEY | QS_MOUSEBUTTON);
     if (res == WAIT_FAILED) {
       qWarning() << "Failed waiting for process completion : MsgWaitForMultipleObjects WAIT_FAILED" << GetLastError();
       break;
     }
+
+    // keep processing events so the app doesn't appear dead
+    QCoreApplication::sendPostedEvents();
+    QCoreApplication::processEvents();
 
     if (uilock && uilock->unlockForced()) {
       uiunlocked = true;
@@ -1364,7 +1365,11 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
       originalHandle = false;
 
       // if the previous process spawned a child process and immediately exits we may miss it if we check immediately
-      QThread::msleep(500);
+      for (int i = 0; i < 3; ++i) {
+        QThread::msleep(200);
+        QCoreApplication::sendPostedEvents();
+        QCoreApplication::processEvents();
+      }
 
       // search if there is another usvfs process active and if so wait for it
       handle = findAndOpenAUSVFSProcess();
