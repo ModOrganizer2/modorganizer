@@ -336,188 +336,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
        </item>
       </layout>
      </widget>
-      <widget class="QWidget" name="diagnosticsTab">
-        <attribute name="title">
-          <string>Diagnostics</string>
-        </attribute>
-        <layout class="QGridLayout" name="gridLayout_4">
-          <item row="0" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
-              <item>
-                <widget class="QLabel" name="label_12">
-                  <property name="text">
-                    <string>Log Level</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="QComboBox" name="logLevelBox">
-                  <property name="toolTip">
-                    <string>Decides the amount of data printed to &quot;ModOrganizer.log&quot;</string>
-                  </property>
-                  <property name="whatsThis">
-                    <string>
-                      Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
-                      &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.
-                    </string>
-                  </property>
-                  <item>
-                    <property name="text">
-                      <string>Debug</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Info (recommended)</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Warning</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Error</string>
-                    </property>
-                  </item>
-                </widget>
-              </item>
-            </layout>
-          </item>
-          <item row="1" column="0">
-            <spacer name="verticalSpacer_9">
-              <property name="orientation">
-                <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-                <size>
-                  <width>20</width>
-                  <height>40</height>
-                </size>
-              </property>
-            </spacer>
-          </item>
-          <item row="2" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_12">
-              <item>
-                <widget class="QLabel" name="label_27">
-                  <property name="text">
-                    <string>Crash Dumps</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="QComboBox" name="dumpsTypeBox">
-                  <property name="toolTip">
-                    <string>Decides which type of crash dumps are collected when injected processes crash.</string>
-                  </property>
-                  <property name="whatsThis">
-                    <string>
-                      Decides which type of crash dumps are collected when injected processes crash.
-                      &quot;None&quot; Disables the generation of crash dumps by MO.
-                      &quot;Mini&quot; Default level which generates small dumps (only stack traces).
-                      &quot;Data&quot; Much larger dumps with additional information which may be need (also data segments).
-                      &quot;Full&quot; Even larger dumps with a full memory dump of the process.
-                    </string>
-                  </property>
-                  <item>
-                    <property name="text">
-                      <string>None</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Mini (recommended)</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Data</string>
-                    </property>
-                  </item>
-                  <item>
-                    <property name="text">
-                      <string>Full</string>
-                    </property>
-                  </item>
-                </widget>
-              </item>
-            </layout>
-          </item>
-          <item row="3" column="0">
-            <layout class="QHBoxLayout" name="horizontalLayout_13">
-              <item>
-                <widget class="QLabel" name="label_28">
-                  <property name="text">
-                    <string>Max Dumps To Keep</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <spacer name="horizontalSpacer_6">
-                  <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                    <size>
-                      <width>60</width>
-                      <height>20</height>
-                    </size>
-                  </property>
-                </spacer>
-              </item>
-              <item>
-                <widget class="QSpinBox" name="dumpsMaxEdit">
-                  <property name="toolTip">
-                    <string>Maximum number of crash dumps to keep on disk. Use 0 for unlimited.</string>
-                  </property>
-                  <property name="whatsThis">
-                    <string>
-                      Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
-                      Set "Crash Dumps" above to None to disable crash dump collection.
-                    </string>
-                  </property>
-                </widget>
-              </item>
-            </layout>
-          </item>
-          <item row="4" column="0">
-            <widget class="QLabel" name="diagnosticsExplainedLabel">
-              <property name="text">
-                <string>
-                  Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
-                  and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
-                  Sending logs and/or crash dumps to the developers can help investigate issues.
-                  It is recommended to compress large log and dmp files before sending.
-                </string>
-              </property>
-              <property name="wordWrap">
-                <bool>true</bool>
-              </property>
-              <property name="toolTip">
-                <string>Hint: right click link and copy link location</string>
-              </property>
-            </widget>
-          </item>
-          <item row="5" column="0">
-            <spacer name="verticalSpacer_10">
-              <property name="orientation">
-                <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeType">
-                <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-                <size>
-                  <width>20</width>
-                  <height>232</height>
-                </size>
-              </property>
-            </spacer>
-          </item>
-        </layout>
-      </widget>
       <widget class="QWidget" name="nexusTab">
       <attribute name="title">
        <string>Nexus</string>
@@ -1164,6 +982,188 @@ For the other games this is not a sufficient replacement for AI!</string>
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="diagnosticsTab">
+        <attribute name="title">
+            <string>Diagnostics</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout_4">
+            <item row="0" column="0">
+                <layout class="QHBoxLayout" name="horizontalLayout_6">
+                    <item>
+                        <widget class="QLabel" name="label_12">
+                            <property name="text">
+                                <string>Log Level</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item>
+                        <widget class="QComboBox" name="logLevelBox">
+                            <property name="toolTip">
+                                <string>Decides the amount of data printed to &quot;ModOrganizer.log&quot;</string>
+                            </property>
+                            <property name="whatsThis">
+                                <string>
+                                    Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
+                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.
+                                </string>
+                            </property>
+                            <item>
+                                <property name="text">
+                                    <string>Debug</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Info (recommended)</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Warning</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Error</string>
+                                </property>
+                            </item>
+                        </widget>
+                    </item>
+                </layout>
+            </item>
+            <item row="1" column="0">
+                <spacer name="verticalSpacer_9">
+                    <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                        <size>
+                            <width>20</width>
+                            <height>40</height>
+                        </size>
+                    </property>
+                </spacer>
+            </item>
+            <item row="2" column="0">
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                    <item>
+                        <widget class="QLabel" name="label_27">
+                            <property name="text">
+                                <string>Crash Dumps</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item>
+                        <widget class="QComboBox" name="dumpsTypeBox">
+                            <property name="toolTip">
+                                <string>Decides which type of crash dumps are collected when injected processes crash.</string>
+                            </property>
+                            <property name="whatsThis">
+                                <string>
+                                    Decides which type of crash dumps are collected when injected processes crash.
+                                    &quot;None&quot; Disables the generation of crash dumps by MO.
+                                    &quot;Mini&quot; Default level which generates small dumps (only stack traces).
+                                    &quot;Data&quot; Much larger dumps with additional information which may be need (also data segments).
+                                    &quot;Full&quot; Even larger dumps with a full memory dump of the process.
+                                </string>
+                            </property>
+                            <item>
+                                <property name="text">
+                                    <string>None</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Mini (recommended)</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Data</string>
+                                </property>
+                            </item>
+                            <item>
+                                <property name="text">
+                                    <string>Full</string>
+                                </property>
+                            </item>
+                        </widget>
+                    </item>
+                </layout>
+            </item>
+            <item row="3" column="0">
+                <layout class="QHBoxLayout" name="horizontalLayout_13">
+                    <item>
+                        <widget class="QLabel" name="label_28">
+                            <property name="text">
+                                <string>Max Dumps To Keep</string>
+                            </property>
+                        </widget>
+                    </item>
+                    <item>
+                        <spacer name="horizontalSpacer_6">
+                            <property name="orientation">
+                                <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                                <size>
+                                    <width>60</width>
+                                    <height>20</height>
+                                </size>
+                            </property>
+                        </spacer>
+                    </item>
+                    <item>
+                        <widget class="QSpinBox" name="dumpsMaxEdit">
+                            <property name="toolTip">
+                                <string>Maximum number of crash dumps to keep on disk. Use 0 for unlimited.</string>
+                            </property>
+                            <property name="whatsThis">
+                                <string>
+                                    Maximum number of crash dumps to keep on disk. Use 0 for unlimited.
+                                    Set "Crash Dumps" above to None to disable crash dump collection.
+                                </string>
+                            </property>
+                        </widget>
+                    </item>
+                </layout>
+            </item>
+            <item row="4" column="0">
+                <widget class="QLabel" name="diagnosticsExplainedLabel">
+                    <property name="text">
+                        <string>
+                            Logs and crash dumps are stored under your current instance in the &lt;a href=&quot;LOGS_FULL_PATH&quot;&gt;LOGS_DIR&lt;/a&gt;
+                            and &lt;a href=&quot;DUMPS_FULL_PATH&quot;&gt;DUMPS_DIR&lt;/a&gt; folders.
+                            Sending logs and/or crash dumps to the developers can help investigate issues.
+                            It is recommended to compress large log and dmp files before sending.
+                        </string>
+                    </property>
+                    <property name="wordWrap">
+                        <bool>true</bool>
+                    </property>
+                    <property name="toolTip">
+                        <string>Hint: right click link and copy link location</string>
+                    </property>
+                </widget>
+            </item>
+            <item row="5" column="0">
+                <spacer name="verticalSpacer_10">
+                    <property name="orientation">
+                        <enum>Qt::Vertical</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>QSizePolicy::Expanding</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                        <size>
+                            <width>20</width>
+                            <height>232</height>
+                        </size>
+                    </property>
+                </spacer>
+            </item>
+        </layout>
+</widget>
     </widget>
    </item>
    <item>

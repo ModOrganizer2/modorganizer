@@ -347,7 +347,26 @@ void PluginList::readLockedOrderFrom(const QString &fileName)
     if ((line.size() > 0) && (line.at(0) != '#')) {
       QList<QByteArray> fields = line.split('|');
       if (fields.count() == 2) {
-        m_LockedOrder[QString::fromUtf8(fields.at(0))] = fields.at(1).trimmed().toInt();
+        int priority = fields.at(1).trimmed().toInt();
+        QString name = QString::fromUtf8(fields.at(0));
+        // Avoid locking a force-enabled plugin
+        if (!m_ESPs[m_ESPsByName.at(name)].m_ForceEnabled) {
+          // Is this an open and unclaimed priority?
+          if (m_ESPs[m_ESPsByPriority.at(priority)].m_ForceEnabled ||
+             std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == priority; }) != m_LockedOrder.end()) {
+            // Attempt to find a priority but step over force-enabled plugins and already-set locks
+            int calcPriority = priority;
+            do {
+              ++calcPriority;
+            } while (calcPriority < m_ESPsByPriority.size() || (m_ESPs[m_ESPsByPriority.at(calcPriority)].m_ForceEnabled &&
+                     std::find_if(m_LockedOrder.begin(), m_LockedOrder.end(), [&](const std::pair<QString, int> &a) { return a.second == calcPriority; }) != m_LockedOrder.end()));
+            // If we have a match, we can reassign the priority...
+            if (calcPriority < m_ESPsByPriority.size())
+              m_LockedOrder[name] = calcPriority;
+          } else {
+            m_LockedOrder[name] = priority;
+          }
+        }
       } else {
         reportError(tr("The file containing locked plugin indices is broken"));
         break;
@@ -467,7 +486,10 @@ bool PluginList::isESPLocked(int index) const
 void PluginList::lockESPIndex(int index, bool lock)
 {
   if (lock) {
-    m_LockedOrder[getName(index).toLower()] = m_ESPs.at(index).m_LoadOrder;
+    if (!m_ESPs.at(index).m_ForceEnabled)
+      m_LockedOrder[getName(index).toLower()] = m_ESPs.at(index).m_LoadOrder;
+    else
+      return;
   } else {
     auto iter = m_LockedOrder.find(getName(index).toLower());
     if (iter != m_LockedOrder.end()) {
@@ -817,7 +839,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     if (m_ESPs[index].m_ForceEnabled) {
-      toolTip += tr("This plugin can't be disabled (enforced by the game)");
+      QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
+      text += tr("<br><b><i>This plugin can't be disabled (enforced by the game).</i></b>");
+      toolTip += text;
     } else {
       QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
       if (m_ESPs[index].m_Author.size() > 0) {

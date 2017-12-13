@@ -101,6 +101,13 @@ public:
     ENDORSED_NEVER
   };
 
+  enum EModType {
+    MOD_DEFAULT,
+    MOD_DLC,
+    MOD_CC
+  };
+
+
 public:
 
   /**
@@ -189,7 +196,7 @@ public:
    * @param bsaNames names of archives
    * @return a new mod
    */
-  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure);
 
   /**
    * @brief retieve a name for one of the CONTENT_ enums
