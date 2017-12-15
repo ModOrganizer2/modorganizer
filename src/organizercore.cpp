@@ -1494,6 +1494,10 @@ void OrganizerCore::refreshBSAList()
     if (m_ActiveArchives.isEmpty()) {
       m_ActiveArchives = m_DefaultArchives;
     }
+    
+    if (m_UserInterface != nullptr) {
+      m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
+    }
 
     m_ArchivesInit = true;
   }
@@ -1572,6 +1576,9 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are avaiable and active
   refreshBSAList();
+  if (m_UserInterface != nullptr) {
+    m_UserInterface->archivesWriter().writeImmediately(false);
+  }
 
   std::vector<QString> archives = enabledArchives();
   m_DirectoryRefresher.setMods(
@@ -1729,6 +1736,9 @@ void OrganizerCore::modStatusChanged(unsigned int index)
             = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
         origin.enable(false);
       }
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->archivesWriter().write();
+      }
     }
     modInfo->clearCaches();
 
@@ -1885,6 +1895,9 @@ bool OrganizerCore::saveCurrentLists()
 
   try {
     savePluginList();
+    if (m_UserInterface != nullptr) {
+      m_UserInterface->archivesWriter().write();
+    }
   } catch (const std::exception &e) {
     reportError(tr("failed to save load order: %1").arg(e.what()));
   }

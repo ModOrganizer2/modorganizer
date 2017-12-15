@@ -94,7 +94,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_PLUGIN:    return tr("Plugins");
     case CONTENT_TEXTURE:   return tr("Textures");
     case CONTENT_MESH:      return tr("Meshes");
-    case CONTENT_BSA:       return tr("BSA");
+    case CONTENT_BSA:       return tr("Bethesda Archive");
     case CONTENT_INTERFACE: return tr("UI Changes");
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");

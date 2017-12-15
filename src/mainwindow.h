@@ -120,11 +120,14 @@ public:
   virtual void unlock() override;
 
   bool addProfile();
+  void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
   void refreshSaveList();
 
   void setModListSorting(int index);
   void setESPListSorting(int index);
+
+  void saveArchiveList();
 
   void registerPluginTool(MOBase::IPluginTool *tool);
   void registerModPage(MOBase::IPluginModPage *modPage);
@@ -147,6 +150,8 @@ public:
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
+
+  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
 public slots:
 
@@ -346,6 +351,8 @@ private:
 
   std::vector<QTreeWidgetItem*> m_RemoveWidget;
 
+  QByteArray m_ArchiveListHash;
+
   bool m_DidUpdateMasterList;
 
   LockedDialogBase *m_LockDialog { nullptr };
@@ -354,6 +361,8 @@ private:
   bool m_closing{ false };
 
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
+
+  MOBase::DelayedFileWriter m_ArchiveListWriter;
 
   enum class ShortcutType {
     Toolbar,
@@ -478,6 +487,8 @@ private slots:
 
   void startExeAction();
 
+  void checkBSAList();
+
   void updateProblemsButton();
 
   void saveModMetas();
@@ -552,6 +563,7 @@ private slots: // ui slots
   void on_categoriesList_itemSelectionChanged();
   void on_linkButton_pressed();
   void on_showHiddenBox_toggled(bool checked);
+  void on_bsaList_itemChanged(QTreeWidgetItem *item, int column);
   void on_bossButton_clicked();
 
   void on_saveButton_clicked();
@@ -561,6 +573,7 @@ private slots: // ui slots
   void on_actionCopy_Log_to_Clipboard_triggered();
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
+  void on_managedArchiveLabel_linkHovered(const QString &link);
 };
 
 

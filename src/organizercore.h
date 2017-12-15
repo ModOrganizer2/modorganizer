@@ -315,6 +315,7 @@ private:
   ModList m_ModList;
   PluginList m_PluginList;
 
+
   QList<std::function<void()>> m_PostLoginTasks;
   QList<std::function<void()>> m_PostRefreshTasks;
 

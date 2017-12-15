@@ -200,6 +200,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
   , m_DidUpdateMasterList(false)
+  , m_ArchiveListWriter(std::bind(&MainWindow::saveArchiveList, this))
 {
   QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
@@ -277,6 +278,8 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->espList->sortByColumn(PluginList::COL_PRIORITY, Qt::AscendingOrder);
   ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
+
+  ui->bsaList->setLocalMoveOnly(true);
 
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
@@ -357,6 +360,9 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
   connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
+
+  m_CheckBSATimer.setSingleShot(true);
+  connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
   connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
@@ -1378,6 +1384,147 @@ static QStringList toStringList(InputIterator current, InputIterator end)
   return result;
 }
 
+void MainWindow::updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives)
+{
+  m_DefaultArchives = defaultArchives;
+  ui->bsaList->clear();
+  ui->bsaList->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+  std::vector<std::pair<UINT32, QTreeWidgetItem*>> items;
+
+  BSAInvalidation * invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  std::vector<FileEntry::Ptr> files = m_OrganizerCore.directoryStructure()->getFiles();
+
+  QStringList plugins = m_OrganizerCore.findFiles("", [](const QString &fileName) -> bool {
+    return fileName.endsWith(".esp", Qt::CaseInsensitive)
+      || fileName.endsWith(".esm", Qt::CaseInsensitive);
+  });
+
+  auto hasAssociatedPlugin = [&](const QString &bsaName) -> bool {
+    for (const QString &pluginName : plugins) {
+      QFileInfo pluginInfo(pluginName);
+      if (bsaName.startsWith(QFileInfo(pluginName).baseName(), Qt::CaseInsensitive)
+        && (m_OrganizerCore.pluginList()->state(pluginInfo.fileName()) == IPluginList::STATE_ACTIVE)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  for (FileEntry::Ptr current : files) {
+    QFileInfo fileInfo(ToQString(current->getName().c_str()));
+
+    if (fileInfo.suffix().toLower() == "bsa" || fileInfo.suffix().toLower() == "ba2") {
+      int index = activeArchives.indexOf(fileInfo.fileName());
+      if (index == -1) {
+        index = 0xFFFF;
+      }
+      else {
+        index += 2;
+      }
+
+      if ((invalidation != nullptr) && invalidation->isInvalidationBSA(fileInfo.fileName())) {
+        index = 1;
+      }
+
+      int originId = current->getOrigin();
+      FilesOrigin & origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
+
+      QTreeWidgetItem * newItem = new QTreeWidgetItem(QStringList()
+        << fileInfo.fileName()
+        << ToQString(origin.getName()));
+      newItem->setData(0, Qt::UserRole, index);
+      newItem->setData(1, Qt::UserRole, originId);
+      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+      newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
+      newItem->setData(0, Qt::UserRole, false);
+      if (m_OrganizerCore.settings().forceEnableCoreFiles()
+        && defaultArchives.contains(fileInfo.fileName())) {
+        newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+        newItem->setData(0, Qt::UserRole, true);
+      } else if (fileInfo.fileName().compare("update.bsa", Qt::CaseInsensitive) == 0) {
+        newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+      } else if (hasAssociatedPlugin(fileInfo.fileName())) {
+        newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+      }
+      if (index < 0) index = 0;
+
+      UINT32 sortValue = ((origin.getPriority() & 0xFFFF) << 16) | (index & 0xFFFF);
+      items.push_back(std::make_pair(sortValue, newItem));
+    }
+  }
+  std::sort(items.begin(), items.end(), BySortValue);
+
+  for (auto iter = items.begin(); iter != items.end(); ++iter) {
+    int originID = iter->second->data(1, Qt::UserRole).toInt();
+
+    FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+    QString modName("data");
+    unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+    if (modIndex != UINT_MAX) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+      modName = modInfo->name();
+    }
+    QList<QTreeWidgetItem*> items = ui->bsaList->findItems(modName, Qt::MatchFixedString);
+    QTreeWidgetItem * subItem = nullptr;
+    if (items.length() > 0) {
+      subItem = items.at(0);
+    }
+    else {
+      subItem = new QTreeWidgetItem(QStringList(modName));
+      subItem->setFlags(subItem->flags() & ~Qt::ItemIsDragEnabled);
+      ui->bsaList->addTopLevelItem(subItem);
+    }
+    subItem->addChild(iter->second);
+    subItem->setExpanded(true);
+  }
+  checkBSAList();
+}
+
+void MainWindow::checkBSAList()
+{
+  DataArchives * archives = m_OrganizerCore.managedGame()->feature<DataArchives>();
+
+  if (archives != nullptr) {
+    ui->bsaList->blockSignals(true);
+    ON_BLOCK_EXIT([&]() { ui->bsaList->blockSignals(false); });
+
+    QStringList defaultArchives = archives->archives(m_OrganizerCore.currentProfile());
+
+    bool warning = false;
+
+    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+      bool modWarning = false;
+      QTreeWidgetItem * tlItem = ui->bsaList->topLevelItem(i);
+      for (int j = 0; j < tlItem->childCount(); ++j) {
+        QTreeWidgetItem * item = tlItem->child(j);
+        QString filename = item->text(0);
+        item->setIcon(0, QIcon());
+        item->setToolTip(0, QString());
+
+        if (item->checkState(0) == Qt::Unchecked) {
+          if (defaultArchives.contains(filename)) {
+            item->setIcon(0, QIcon(":/MO/gui/warning"));
+            item->setToolTip(0, tr("This bsa is enabled in the ini file so it may be required!"));
+            modWarning = true;
+          }
+        }
+      }
+      if (modWarning) {
+        ui->bsaList->expandItem(ui->bsaList->topLevelItem(i));
+        warning = true;
+      }
+    }
+    if (warning) {
+      ui->tabWidget->setTabIcon(1, QIcon(":/MO/gui/warning"));
+    } else {
+      ui->tabWidget->setTabIcon(1, QIcon());
+    }
+  }
+}
+
 void MainWindow::saveModMetas()
 {
   for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
@@ -1524,10 +1671,12 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   if (index == 0) {
     m_OrganizerCore.refreshESPList();
   } else if (index == 1) {
-    refreshDataTree();
+    m_OrganizerCore.refreshBSAList();
   } else if (index == 2) {
-    refreshSaveList();
+    refreshDataTree();
   } else if (index == 3) {
+    refreshSaveList();
+  } else if (index == 4) {
     ui->downloadView->scrollToBottom();
   }
 }
@@ -1806,6 +1955,7 @@ void MainWindow::modorder_changed()
   }
   m_OrganizerCore.refreshBSAList();
   m_OrganizerCore.currentProfile()->modlistWriter().write();
+  m_ArchiveListWriter.write();
   m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
 
   { // refresh selection
@@ -2739,6 +2889,31 @@ void MainWindow::replaceCategories_MenuHandler() {
   }
 
   refreshFilters();
+}
+
+void MainWindow::saveArchiveList()
+{
+  if (m_OrganizerCore.isArchivesInit()) {
+    SafeWriteFile archiveFile(m_OrganizerCore.currentProfile()->getArchivesFileName());
+    for (int i = 0; i < ui->bsaList->topLevelItemCount(); ++i) {
+      QTreeWidgetItem * tlItem = ui->bsaList->topLevelItem(i);
+      for (int j = 0; j < tlItem->childCount(); ++j) {
+        QTreeWidgetItem * item = tlItem->child(j);
+        if (item->checkState(0) == Qt::Checked) {
+          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
+          if (ui->manageArchivesBox->isChecked() ||
+              item->data(0, Qt::UserRole).toBool()) {
+            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
+          }
+        }
+      }
+    }
+    if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
+      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+    }
+  } else {
+    qWarning("archive list not initialised");
+  }
 }
 
 void MainWindow::checkModsForUpdates()
@@ -3957,6 +4132,12 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
   }
 }
 
+void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
+{
+  m_ArchiveListWriter.write();
+  m_CheckBSATimer.start(500);
+}
+
 void MainWindow::on_actionProblems_triggered()
 {
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
@@ -4541,6 +4722,12 @@ void MainWindow::on_categoriesOrBtn_toggled(bool checked)
   if (checked) {
     m_ModListSortProxy->setFilterMode(ModListSortProxy::FILTER_OR);
   }
+}
+
+void MainWindow::on_managedArchiveLabel_linkHovered(const QString&)
+{
+  QToolTip::showText(QCursor::pos(),
+  ui->managedArchiveLabel->toolTip());
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

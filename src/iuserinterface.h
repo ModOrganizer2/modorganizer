@@ -28,6 +28,10 @@ public:
 
   virtual void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) = 0;
 
+  virtual void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives) = 0;
+
+  virtual MOBase::DelayedFileWriterBase &archivesWriter() = 0;
+
   virtual ILockedWaitingForProcess* lock() = 0;
   virtual void unlock() = 0;
 };
