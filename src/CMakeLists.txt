@@ -284,7 +284,7 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/../usvfs/usvfs
+                    ${project_path}/../usvfs/include
                     ${project_path}/game_gamebryo/src
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src)
