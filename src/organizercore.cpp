@@ -1181,7 +1181,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
 
   // need to make sure all data is saved before we start the application
   if (m_CurrentProfile != nullptr) {
-    m_CurrentProfile->modlistWriter().writeImmediately(true);
+    m_CurrentProfile->writeModlistNow(true);
   }
 
   // TODO: should also pass arguments
@@ -1438,7 +1438,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
 {
   // don't lose changes!
   if (saveChanges) {
-    m_CurrentProfile->modlistWriter().writeImmediately(true);
+    m_CurrentProfile->writeModlistNow(true);
   }
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure,
                           m_Settings.displayForeign(), managedGame());
@@ -1460,7 +1460,7 @@ void OrganizerCore::refreshESPList()
     });
     return;
   }
-  m_CurrentProfile->modlistWriter().write();
+  m_CurrentProfile->writeModlist();
 
   // clear list
   try {
@@ -1670,7 +1670,7 @@ std::vector<QString> OrganizerCore::enabledArchives()
 void OrganizerCore::refreshDirectoryStructure()
 {
   if (!m_DirectoryUpdate) {
-    m_CurrentProfile->modlistWriter().writeImmediately(true);
+    m_CurrentProfile->writeModlistNow(true);
 
     m_DirectoryUpdate = true;
     std::vector<std::tuple<QString, QString, int>> activeModList
@@ -1925,7 +1925,7 @@ void OrganizerCore::prepareStart()
   if (m_CurrentProfile == nullptr) {
     return;
   }
-  m_CurrentProfile->modlistWriter().write();
+  m_CurrentProfile->writeModlist();
   m_CurrentProfile->createTweakedIniFile();
   saveCurrentLists();
   m_Settings.setupLoadMechanism();

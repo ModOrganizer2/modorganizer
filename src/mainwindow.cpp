@@ -1958,7 +1958,7 @@ void MainWindow::modorder_changed()
     }
   }
   m_OrganizerCore.refreshBSAList();
-  m_OrganizerCore.currentProfile()->modlistWriter().write();
+  m_OrganizerCore.currentProfile()->writeModlist();
   m_ArchiveListWriter.write();
   m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
 
@@ -2264,7 +2264,7 @@ void MainWindow::restoreBackup_clicked()
 
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
-  m_OrganizerCore.currentProfile()->modlistWriter().write();
+  m_OrganizerCore.currentProfile()->writeModlist();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
@@ -3307,7 +3307,7 @@ void MainWindow::fixMods_clicked(SaveGameInfo::MissingAssets const &missingAsset
       }
     }
 
-    m_OrganizerCore.currentProfile()->modlistWriter().write();
+    m_OrganizerCore.currentProfile()->writeModlist();
     m_OrganizerCore.refreshLists();
 
     std::set<QString> espsToActivate = dialog.getESPsToActivate();
@@ -4678,7 +4678,7 @@ void MainWindow::on_restoreButton_clicked()
 
 void MainWindow::on_saveModsButton_clicked()
 {
-  m_OrganizerCore.currentProfile()->modlistWriter().writeImmediately(true);
+  m_OrganizerCore.currentProfile()->writeModlistNow(true);
   QDateTime now = QDateTime::currentDateTime();
   if (createBackup(m_OrganizerCore.currentProfile()->getModlistFileName(), now)) {
     MessageDialog::showMessage(tr("Backup of modlist created"), this);

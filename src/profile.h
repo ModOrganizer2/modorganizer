@@ -89,7 +89,11 @@ public:
    **/
   static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin);
 
-  MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
+  void writeModlist();
+
+  void writeModlistNow(bool onlyIfPending=false);
+
+  void cancelModlistWrite();
 
   /**
    * @brief test if this profile uses archive invalidation
@@ -297,7 +301,8 @@ signals:
 
 public slots:
 
-  void writeModlistNow();
+  // should only be called by DelayedFileWriter, use writeModlist() and writeModlistNow() instead
+  void doWriteModlist();
 
 private:
 

@@ -940,12 +940,12 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
 
   m_Profile->setModEnabled(row, false);
 
-  m_Profile->modlistWriter().cancel();
+  m_Profile->cancelModlistWrite();
   beginRemoveRows(parent, row, row);
   ModInfo::removeMod(row);
   endRemoveRows();
   m_Profile->refreshModStatus();  // removes the mod from the status list
-  m_Profile->modlistWriter().write(); // this ensures the modified list gets written back before new mods can be installed
+  m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
 
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());

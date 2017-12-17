@@ -66,7 +66,7 @@ void Profile::touchFile(QString fileName)
 }
 
 Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDefaultSettings)
-  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  : m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
   , m_GamePlugin(gamePlugin)
 {
   QString profilesDir = Settings::instance().getProfileDirectory();
@@ -111,7 +111,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
 Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   : m_Directory(directory)
   , m_GamePlugin(gamePlugin)
-  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
 {
   assert(gamePlugin != nullptr);
 
@@ -133,7 +133,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
 
 Profile::Profile(const Profile &reference)
   : m_Directory(reference.m_Directory)
-  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
   , m_GamePlugin(reference.m_GamePlugin)
 
 {
@@ -154,7 +154,22 @@ bool Profile::exists() const
   return m_Directory.exists();
 }
 
-void Profile::writeModlistNow()
+void Profile::writeModlist()
+{
+  m_ModListWriter.write();
+}
+
+void Profile::writeModlistNow(bool onlyIfPending)
+{
+  m_ModListWriter.writeImmediately(onlyIfPending);
+}
+
+void Profile::cancelModlistWrite()
+{
+  m_ModListWriter.cancel();
+}
+
+void Profile::doWriteModlist()
 {
   if (!m_Directory.exists()) return;
 
