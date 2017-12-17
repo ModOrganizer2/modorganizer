@@ -189,6 +189,7 @@ QString InstanceManager::determineDataPath()
 
   if (instanceId.isEmpty() || !QFileInfo::exists(dataPath)) {
     instanceId = chooseInstance(instances());
+    setCurrentInstance(instanceId);
     if (!instanceId.isEmpty()) {
       dataPath = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DataLocation)
@@ -199,8 +200,6 @@ QString InstanceManager::determineDataPath()
   if (instanceId.isEmpty()) {
     return qApp->applicationDirPath();
   } else {
-    setCurrentInstance(instanceId);
-
     createDataPath(dataPath);
 
     return dataPath;
