@@ -220,8 +220,6 @@ private:
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
 
-  void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
-
   void refreshFilters();
 
   /**

@@ -89,6 +89,9 @@ public:
    **/
   static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin);
 
+
+  static void renameModInAllProfiles(const QString& oldName, const QString& newName);
+
   void writeModlist();
 
   void writeModlistNow(bool onlyIfPending=false);
@@ -330,6 +333,8 @@ private:
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
   void finishChangeStatus() const;
+
+  static void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
 private:
 

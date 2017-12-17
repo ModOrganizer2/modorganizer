@@ -2019,71 +2019,9 @@ void MainWindow::installMod_clicked()
   installMod();
 }
 
-void MainWindow::renameModInList(QFile &modList, const QString &oldName, const QString &newName)
-{
-  //TODO this code needs to be merged with ModList::readFrom
-  if (!modList.open(QIODevice::ReadWrite)) {
-    reportError(tr("failed to open %1").arg(modList.fileName()));
-    return;
-  }
-
-  QBuffer outBuffer;
-  outBuffer.open(QIODevice::WriteOnly);
-
-  while (!modList.atEnd()) {
-    QByteArray line = modList.readLine();
-
-    if (line.length() == 0) {
-      // ignore empty lines
-      qWarning("mod list contained invalid data: empty line");
-      continue;
-    }
-
-    char spec = line.at(0);
-    if (spec == '#') {
-      // don't touch comments
-      outBuffer.write(line);
-      continue;
-    }
-
-    QString modName = QString::fromUtf8(line).mid(1).trimmed();
-
-    if (modName.isEmpty()) {
-      // file broken?
-      qWarning("mod list contained invalid data: missing mod name");
-      continue;
-    }
-
-    outBuffer.write(QByteArray(1, spec));
-    if (modName == oldName) {
-      modName = newName;
-    }
-    outBuffer.write(modName.toUtf8().constData());
-    outBuffer.write("\r\n");
-  }
-
-  modList.resize(0);
-  modList.write(outBuffer.buffer());
-  modList.close();
-}
-
-
 void MainWindow::modRenamed(const QString &oldName, const QString &newName)
 {
-  // fix the profiles directly on disc
-  for (int i = 0; i < ui->profileBox->count(); ++i) {
-    QString profileName = ui->profileBox->itemText(i);
-
-    //TODO this functionality should be in the Profile class
-    QString modlistName = QString("%1/%2/modlist.txt")
-                            .arg(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::profilesPath()))
-                            .arg(profileName);
-
-    QFile modList(modlistName);
-    if (modList.exists()) {
-      renameModInList(modList, oldName, newName);
-    }
-  }
+  Profile::renameModInAllProfiles(oldName, newName);
 
   // immediately refresh the active profile because the data in memory is invalid
   m_OrganizerCore.currentProfile()->refreshModStatus();
