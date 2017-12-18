@@ -123,8 +123,8 @@ void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared
         for (auto plugin : plugins) {
           MOShared::FileEntry::Ptr file = directoryEntry.findFile(plugin.toStdWString());
           if (file->getOrigin() != origin.getID()) {
-            const std::vector<int> alternatives = file->getAlternatives();
-            if (std::find(alternatives.begin(), alternatives.end(), origin.getID()) == alternatives.end())
+            const std::vector<std::pair<int, std::wstring>> alternatives = file->getAlternatives();
+            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::wstring>& element) { return element.first == origin.getID(); }) == alternatives.end())
               continue;
           }
           std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());

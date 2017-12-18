@@ -94,7 +94,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_PLUGIN:    return tr("Plugins");
     case CONTENT_TEXTURE:   return tr("Textures");
     case CONTENT_MESH:      return tr("Meshes");
-    case CONTENT_BSA:       return tr("BSA");
+    case CONTENT_BSA:       return tr("Bethesda Archive");
     case CONTENT_INTERFACE: return tr("UI Changes");
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");
@@ -123,9 +123,10 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
 {
   QMutexLocker locker(&s_Mutex);
 
-  if (index >= s_Collection.size()) {
+  if (index >= s_Collection.size() && index != ULONG_MAX) {
     throw MyException(tr("invalid mod index %1").arg(index));
   }
+  if (index == ULONG_MAX) return s_Collection[ModInfo::getIndex("Overwrite")];
   return s_Collection[index];
 }
 

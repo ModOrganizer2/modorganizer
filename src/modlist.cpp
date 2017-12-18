@@ -64,7 +64,7 @@ ModList::ModList(QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
   m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("Bethesda Archive"));
   m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
   m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
   m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
@@ -701,14 +701,13 @@ void ModList::highlightMods(const QItemSelection &selected, const MOShared::Dire
     if (fileEntry.get() != nullptr) {
       QString fileName;
       bool archive = false;
-      std::vector<int> origins;
+      std::vector<std::pair<int, std::wstring>> origins;
       {
-        std::vector<int> alternatives = fileEntry->getAlternatives();
-        origins.push_back(fileEntry->getOrigin(archive));
-        origins.insert(origins.end(), alternatives.begin(), alternatives.end());
+        std::vector<std::pair<int, std::wstring>> alternatives = fileEntry->getAlternatives();
+        origins.insert(origins.end(), std::pair<int, std::wstring>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
       }
-      for (int originId : origins) {
-        MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originId);
+      for (auto originInfo : origins) {
+        MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originInfo.first);
         for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
           if (ModInfo::getByIndex(i)->internalName() == QString::fromStdWString(origin.getName())) {
             ModInfo::getByIndex(i)->setPluginSelected(true);
