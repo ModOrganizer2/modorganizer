@@ -367,8 +367,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
   qDebug("start main application");
-  QPixmap pixmap(splashPath);
-  QSplashScreen splash(pixmap);
 
   QString dataPath = application.property("dataPath").toString();
   qDebug("data path: %s", qPrintable(dataPath));
@@ -382,13 +380,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
   try {
     qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
-    splash.show();
-  } catch (const std::exception &e) {
-    reportError(e.what());
-    return 1;
-  }
 
-  try {
     QSettings settings(dataPath + "/"
                            + QString::fromStdWString(AppConfig::iniFileName()),
                        QSettings::IniFormat);
@@ -487,6 +479,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
         }
       }
     }
+
+    QPixmap pixmap(splashPath);
+    QSplashScreen splash(pixmap);
+    splash.show();
 
     NexusInterface::instance()->getAccessManager()->startLoginCheck();
 
