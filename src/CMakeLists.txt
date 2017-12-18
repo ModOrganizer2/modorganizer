@@ -88,6 +88,7 @@ SET(organizer_SRCS
     instancemanager.cpp
     usvfsconnector.cpp
     eventfilter.cpp
+    moshortcut.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -179,6 +180,7 @@ SET(organizer_HDRS
     usvfsconnector.h
     eventfilter.h
     descriptionpage.h
+    moshortcut.h
 
     shared/windows_error.h
     shared/error_report.h

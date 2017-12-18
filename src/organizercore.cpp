@@ -32,6 +32,7 @@
 #include <report.h>
 #include <questionboxmemory.h>
 #include "lockeddialog.h"
+#include "instancemanager.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -578,8 +579,8 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
 
 void OrganizerCore::externalMessage(const QString &message)
 {
-  if (isMoShortcut(message)) {
-    runShortcut(moShortcutName(message));
+  if (MOShortcut moshortcut{ message }) {
+    runShortcut(moshortcut);
   }
   else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
@@ -1228,9 +1229,15 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   }
 }
 
-HANDLE OrganizerCore::runShortcut(const QString &title)
+HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
 {
-  Executable& exe = m_ExecutablesList.find(title);
+  if (shortcut.hasInstance() && shortcut.instance() != InstanceManager::instance().currentInstance())
+    throw std::runtime_error(
+      QString("Refusing to run executable from different instance %1:%2")
+      .arg(shortcut.instance(),shortcut.executable())
+      .toLocal8Bit().constData());
+
+  Executable& exe = m_ExecutablesList.find(shortcut.executable());
 
   return spawnBinaryDirect(
     exe.m_BinaryInfo, exe.m_Arguments,

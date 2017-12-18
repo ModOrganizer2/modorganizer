@@ -86,7 +86,7 @@ Executable &ExecutablesList::find(const QString &title)
       return exe;
     }
   }
-  throw std::runtime_error(QString("invalid name %1").arg(title).toLocal8Bit().constData());
+  throw std::runtime_error(QString("invalid executable name %1").arg(title).toLocal8Bit().constData());
 }
 
 

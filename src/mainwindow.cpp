@@ -3331,7 +3331,8 @@ void MainWindow::addWindowsLink(const ShortcutType mapping)
     QString executable = QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath());
 
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
-    std::wstring parameter        = ToWString(QString("\"moshortcut://%1\"").arg(selectedExecutable.m_Title));
+    std::wstring parameter        = ToWString(
+      QString("\"moshortcut://%1:%2\"").arg(InstanceManager::instance().currentInstance(),selectedExecutable.m_Title));
     std::wstring description      = ToWString(QString("Run %1 with ModOrganizer").arg(selectedExecutable.m_Title));
     std::wstring iconFile         = ToWString(executable);
     std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(qApp->applicationDirPath()));

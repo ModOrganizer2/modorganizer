@@ -13,6 +13,7 @@
 #include "downloadmanager.h"
 #include "executableslist.h"
 #include "usvfsconnector.h"
+#include "moshortcut.h"
 #include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
@@ -86,9 +87,6 @@ private:
 
 public:
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
-  static bool isMoShortcut(const QString &link) { return link.startsWith("moshortcut://", Qt::CaseInsensitive); }
-  static QString moShortcutName(const QString &link) { return link.mid(strlen("moshortcut://")); }
-
 
   OrganizerCore(const QSettings &initSettings);
 
@@ -203,7 +201,7 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
-  HANDLE runShortcut(const QString &title);
+  HANDLE runShortcut(const MOShortcut& shortcut);
   HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
   HANDLE findAndOpenAUSVFSProcess();

@@ -22,42 +22,25 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 #include <QString>
-#include <QSettings>
 
 
-class InstanceManager {
+class MOShortcut {
 
 public:
+  MOShortcut(const QString& link);
 
-  static InstanceManager &instance();
+  /// true iff intialized using a valid moshortcut link
+  operator bool() const { return m_valid; }
 
-  QString determineDataPath();
-  void clearCurrentInstance();
+  bool hasInstance() const { return m_hasInstance; }
 
-  void overrideInstance(const QString& instanceName);
+  const QString& instance() const { return m_instance; }
 
-  QString currentInstance() const;
-
-private:
-
-  InstanceManager();
-
-  QString instancePath() const;
-
-  QStringList instances() const;
-
-  void setCurrentInstance(const QString &name);
-
-  QString queryInstanceName() const;
-  QString chooseInstance(const QStringList &instanceList) const;
-
-  void createDataPath(const QString &dataPath) const;
-  bool portableInstall() const;
+  const QString& executable() const { return m_executable; }
 
 private:
-
-  QSettings m_AppSettings;
-  bool m_Reset {false};
-  bool m_overrideInstance{false};
-  QString m_overrideInstanceName;
+  QString m_instance;
+  QString m_executable;
+  bool m_valid;
+  bool m_hasInstance;
 };
