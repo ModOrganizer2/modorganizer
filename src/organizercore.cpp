@@ -1002,9 +1002,9 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
   if (file.get() != nullptr) {
     result.append(ToQString(
         m_DirectoryStructure->getOriginByID(file->getOrigin()).getName()));
-    foreach (int i, file->getAlternatives()) {
+    foreach (auto i, file->getAlternatives()) {
       result.append(
-          ToQString(m_DirectoryStructure->getOriginByID(i).getName()));
+          ToQString(m_DirectoryStructure->getOriginByID(i.first).getName()));
     }
   } else {
     qDebug("%s not found", qPrintable(fileName));
@@ -1030,9 +1030,9 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
       info.archive = fromArchive ? ToQString(file->getArchive()) : "";
-      foreach (int idx, file->getAlternatives()) {
+      foreach (auto idx, file->getAlternatives()) {
         info.origins.append(
-            ToQString(m_DirectoryStructure->getOriginByID(idx).getName()));
+            ToQString(m_DirectoryStructure->getOriginByID(idx.first).getName()));
       }
 
       if (filter(info)) {

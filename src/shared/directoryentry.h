@@ -72,7 +72,7 @@ public:
 
   // gets the list of alternative origins (origins with lower priority than the primary one).
   // if sortOrigins has been called, it is sorted by priority (ascending)
-  const std::vector<int> &getAlternatives() const { return m_Alternatives; }
+  const std::vector<std::pair<int, std::wstring>> &getAlternatives() const { return m_Alternatives; }
 
   const std::wstring &getName() const { return m_Name; }
   int getOrigin() const { return m_Origin; }
@@ -96,9 +96,9 @@ private:
 
   Index m_Index;
   std::wstring m_Name;
-  int m_Origin;
+  int m_Origin = -1;
   std::wstring m_Archive;
-  std::vector<int> m_Alternatives;
+  std::vector<std::pair<int, std::wstring>> m_Alternatives;
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
 

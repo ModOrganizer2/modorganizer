@@ -1148,17 +1148,17 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       fileChild->setData(1, Qt::UserRole, source);
       fileChild->setData(1, Qt::UserRole + 1, originID);
 
-      std::vector<int> alternatives = current->getAlternatives();
+      std::vector<std::pair<int, std::wstring>> alternatives = current->getAlternatives();
 
       if (!alternatives.empty()) {
         std::wostringstream altString;
         altString << ToWString(tr("Also in: <br>"));
-        for (std::vector<int>::iterator altIter = alternatives.begin();
+        for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
              altIter != alternatives.end(); ++altIter) {
           if (altIter != alternatives.begin()) {
             altString << " , ";
           }
-          altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(*altIter).getName() << "</font></span>";
+          altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
         }
         fileChild->setToolTip(1, QString("%1").arg(ToQString(altString.str())));
         fileChild->setForeground(1, QBrush(Qt::red));
@@ -1396,7 +1396,8 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
 
   QStringList plugins = m_OrganizerCore.findFiles("", [](const QString &fileName) -> bool {
     return fileName.endsWith(".esp", Qt::CaseInsensitive)
-      || fileName.endsWith(".esm", Qt::CaseInsensitive);
+      || fileName.endsWith(".esm", Qt::CaseInsensitive)
+      || fileName.endsWith(".esl", Qt::CaseInsensitive);
   });
 
   auto hasAssociatedPlugin = [&](const QString &bsaName) -> bool {
@@ -1434,7 +1435,7 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
         << ToQString(origin.getName()));
       newItem->setData(0, Qt::UserRole, index);
       newItem->setData(1, Qt::UserRole, originId);
-      newItem->setFlags(newItem->flags() & ~Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable);
+      newItem->setFlags(newItem->flags() & ~(Qt::ItemIsDropEnabled | Qt::ItemIsUserCheckable));
       newItem->setCheckState(0, (index != -1) ? Qt::Checked : Qt::Unchecked);
       newItem->setData(0, Qt::UserRole, false);
       if (m_OrganizerCore.settings().forceEnableCoreFiles()
@@ -1447,6 +1448,9 @@ void MainWindow::updateBSAList(const QStringList &defaultArchives, const QString
         newItem->setDisabled(true);
       } else if (hasAssociatedPlugin(fileInfo.fileName())) {
         newItem->setCheckState(0, Qt::Checked);
+        newItem->setDisabled(true);
+      } else {
+        newItem->setCheckState(0, Qt::Unchecked);
         newItem->setDisabled(true);
       }
       if (index < 0) index = 0;
@@ -2900,11 +2904,7 @@ void MainWindow::saveArchiveList()
       for (int j = 0; j < tlItem->childCount(); ++j) {
         QTreeWidgetItem * item = tlItem->child(j);
         if (item->checkState(0) == Qt::Checked) {
-          // in managed mode, "register" all enabled archives, otherwise register only the files registered in the ini
-          if (ui->manageArchivesBox->isChecked() ||
-              item->data(0, Qt::UserRole).toBool()) {
-            archiveFile->write(item->text(0).toUtf8().append("\r\n"));
-          }
+          archiveFile->write(item->text(0).toUtf8().append("\r\n"));
         }
       }
     }
@@ -3763,8 +3763,8 @@ void MainWindow::previewDataFile()
     };
 
   addFunc(file->getOrigin());
-  for (int i : file->getAlternatives()) {
-    addFunc(i);
+  for (auto alt : file->getAlternatives()) {
+    addFunc(alt.first);
   }
   if (preview.numVariants() > 0) {
     preview.exec();

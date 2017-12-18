@@ -57,8 +57,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
     std::vector<FileEntry::Ptr> files = origin.getFiles();
     // for all files in this origin
     for (FileEntry::Ptr file : files) {
-      const std::vector<int> &alternatives = file->getAlternatives();
-      if ((alternatives.size() == 0) || (alternatives[0] == dataID)) {
+      const std::vector<std::pair<int, std::wstring>> &alternatives = file->getAlternatives();
+      if ((alternatives.size() == 0) || (alternatives.begin()->first == dataID)) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
@@ -71,9 +71,9 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         }
 
         // for all non-providing alternative origins
-        for (int altId : alternatives) {
-          if ((altId != dataID) && (altId != origin.getID())) {
-            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altId);
+        for (auto altInfo : alternatives) {
+          if ((altInfo.first != dataID) && (altInfo.first != origin.getID())) {
+            FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.first);
             unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
             if (origin.getPriority() > altOrigin.getPriority()) {
               m_OverwriteList.insert(altIndex);
