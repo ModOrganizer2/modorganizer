@@ -39,6 +39,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>                             // for QStringList
 #include <QtDebug>                                 // for qDebug, qWarning, etc
 #include <QtGlobal>                                // for qPrintable
+#include <QBuffer>
+#include <QDirIterator>
 
 #include <Windows.h>
 
@@ -66,7 +68,7 @@ void Profile::touchFile(QString fileName)
 }
 
 Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDefaultSettings)
-  : m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  : m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
   , m_GamePlugin(gamePlugin)
 {
   QString profilesDir = Settings::instance().getProfileDirectory();
@@ -111,7 +113,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
 Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   : m_Directory(directory)
   , m_GamePlugin(gamePlugin)
-  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
 {
   assert(gamePlugin != nullptr);
 
@@ -133,7 +135,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
 
 Profile::Profile(const Profile &reference)
   : m_Directory(reference.m_Directory)
-  , m_ModListWriter(std::bind(&Profile::writeModlistNow, this))
+  , m_ModListWriter(std::bind(&Profile::doWriteModlist, this))
   , m_GamePlugin(reference.m_GamePlugin)
 
 {
@@ -154,7 +156,22 @@ bool Profile::exists() const
   return m_Directory.exists();
 }
 
-void Profile::writeModlistNow()
+void Profile::writeModlist()
+{
+  m_ModListWriter.write();
+}
+
+void Profile::writeModlistNow(bool onlyIfPending)
+{
+  m_ModListWriter.writeImmediately(onlyIfPending);
+}
+
+void Profile::cancelModlistWrite()
+{
+  m_ModListWriter.cancel();
+}
+
+void Profile::doWriteModlist()
 {
   if (!m_Directory.exists()) return;
 
@@ -227,9 +244,83 @@ void Profile::createTweakedIniFile()
   qDebug("%s saved", qPrintable(QDir::toNativeSeparators(tweakedIni)));
 }
 
+// static
+void Profile::renameModInAllProfiles(const QString& oldName, const QString& newName)
+{
+  QDir profilesDir(Settings::instance().getProfileDirectory());
+  profilesDir.setFilter(QDir::AllDirs | QDir::NoDotAndDotDot);
+  QDirIterator profileIter(profilesDir);
+  while (profileIter.hasNext()) {
+    profileIter.next();
+    QFile modList(profileIter.filePath() + "/modlist.txt");
+    if (modList.exists())
+      renameModInList(modList, oldName, newName);
+    else
+      qWarning("Profile has no modlist.txt : %s", qPrintable(profileIter.filePath()));
+  }
+}
+
+// static
+void Profile::renameModInList(QFile &modList, const QString &oldName, const QString &newName)
+{
+  if (!modList.open(QIODevice::ReadOnly)) {
+    reportError(tr("failed to open %1").arg(modList.fileName()));
+    return;
+  }
+
+  QBuffer outBuffer;
+  outBuffer.open(QIODevice::WriteOnly);
+
+  int renamed = 0;
+  while (!modList.atEnd()) {
+    QByteArray line = modList.readLine();
+
+    if (line.length() == 0) {
+      // ignore empty lines
+      qWarning("mod list contained invalid data: empty line");
+      continue;
+    }
+
+    char spec = line.at(0);
+    if (spec == '#') {
+      // don't touch comments
+      outBuffer.write(line);
+      continue;
+    }
+
+    QString modName = QString::fromUtf8(line).mid(1).trimmed();
+
+    if (modName.isEmpty()) {
+      // file broken?
+      qWarning("mod list contained invalid data: missing mod name");
+      continue;
+    }
+
+    outBuffer.write(QByteArray(1, spec));
+    if (modName == oldName) {
+      modName = newName;
+      ++renamed;
+    }
+    outBuffer.write(modName.toUtf8().constData());
+    outBuffer.write("\r\n");
+  }
+  modList.close();
+
+  if (renamed) {
+    modList.open(QIODevice::WriteOnly);
+    modList.write(outBuffer.buffer());
+    modList.close();
+  }
+
+  if (renamed)
+    qDebug("Renamed %d \"%s\" mod to \"%s\" in %s",
+      renamed, qPrintable(oldName), qPrintable(newName), qPrintable(modList.fileName()));
+}
 
 void Profile::refreshModStatus()
 {
+  writeModlistNow(true); // if there are pending changes write them first
+
   QFile file(getModlistFileName());
   if (!file.open(QIODevice::ReadOnly)) {
     throw MyException(tr("\"%1\" is missing or inaccessible").arg(getModlistFileName()));

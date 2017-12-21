@@ -45,6 +45,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
+#include "moshortcut.h"
 
 #include <eh.h>
 #include <windows_error.h>
@@ -367,8 +368,6 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
   qDebug("start main application");
-  QPixmap pixmap(splashPath);
-  QSplashScreen splash(pixmap);
 
   QString dataPath = application.property("dataPath").toString();
   qDebug("data path: %s", qPrintable(dataPath));
@@ -382,13 +381,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
   try {
     qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
-    splash.show();
-  } catch (const std::exception &e) {
-    reportError(e.what());
-    return 1;
-  }
 
-  try {
     QSettings settings(dataPath + "/"
                            + QString::fromStdWString(AppConfig::iniFileName()),
                        QSettings::IniFormat);
@@ -458,9 +451,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
     if (arguments.size() > 1) {
-      if (OrganizerCore::isMoShortcut(arguments.at(1))) {
+      if (MOShortcut shortcut{ arguments.at(1) }) {
         try {
-          organizer.runShortcut(OrganizerCore::moShortcutName(arguments.at(1)));
+          organizer.runShortcut(shortcut);
           return 0;
         } catch (const std::exception &e) {
           reportError(
@@ -487,6 +480,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
         }
       }
     }
+
+    QPixmap pixmap(splashPath);
+    QSplashScreen splash(pixmap);
+    splash.show();
 
     NexusInterface::instance()->getAccessManager()->startLoginCheck();
 
@@ -556,10 +553,12 @@ int main(int argc, char *argv[])
     forcePrimary = true;
   }
 
+  MOShortcut moshortcut{ arguments.size() > 1 ? arguments.at(1) : "" };
+
   SingleInstance instance(forcePrimary);
   if (!instance.primaryInstance()) {
-    if ((arguments.size() == 2)
-      && (OrganizerCore::isMoShortcut(arguments.at(1)) || OrganizerCore::isNxmLink(arguments.at(1))))
+    if (moshortcut ||
+        arguments.size() > 1 && OrganizerCore::isNxmLink(arguments.at(1)))
     {
       qDebug("not primary instance, sending shortcut/download message");
       instance.sendMessage(arguments.at(1));
@@ -576,7 +575,10 @@ int main(int argc, char *argv[])
     QString dataPath;
 
     try {
-      dataPath = InstanceManager::instance().determineDataPath();
+      InstanceManager& instanceManager = InstanceManager::instance();
+      if (moshortcut && moshortcut.hasInstance())
+        instanceManager.overrideInstance(moshortcut.instance());
+      dataPath = instanceManager.determineDataPath();
     } catch (const std::exception &e) {
       if (strcmp(e.what(),"Canceled"))
         QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
@@ -587,7 +589,7 @@ int main(int argc, char *argv[])
     // initialize dump collection only after "dataPath" since the crashes are stored under it
     prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-    LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+    LogBuffer::init(1000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {

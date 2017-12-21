@@ -88,6 +88,7 @@ SET(organizer_SRCS
     instancemanager.cpp
     usvfsconnector.cpp
     eventfilter.cpp
+    moshortcut.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -179,6 +180,7 @@ SET(organizer_HDRS
     usvfsconnector.h
     eventfilter.h
     descriptionpage.h
+    moshortcut.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -282,7 +284,7 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/../usvfs/usvfs
+                    ${project_path}/../usvfs/include
                     ${project_path}/game_gamebryo/src
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src)
@@ -299,7 +301,7 @@ EXECUTE_PROCESS(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -DGITID="${GIT_COMMIT_HASH}")
+ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE -DGITID="${GIT_COMMIT_HASH}")
 
 IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
   SET(usvfs_name usvfs_x64)
@@ -335,14 +337,14 @@ FIND_PROGRAM(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
 
 INSTALL(TARGETS ModOrganizer
         RUNTIME DESTINATION bin)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/ModOrganizer.pdb
+INSTALL(FILES $<TARGET_PDB_FILE:ModOrganizer>
         DESTINATION pdb)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
 # use windeployqt.exe to install all required libraries
-SET(windeploy_parameters --no-translations --no-plugins --libdir dlls --release-with-debug-info --no-compiler-runtime)
+SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
     CODE
     "EXECUTE_PROCESS(
@@ -351,7 +353,12 @@ INSTALL(
         COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
-    )"
+    )
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/platforms ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/imageformats ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets

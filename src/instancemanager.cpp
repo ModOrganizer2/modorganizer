@@ -47,9 +47,19 @@ InstanceManager &InstanceManager::instance()
   return s_Instance;
 }
 
+void InstanceManager::overrideInstance(const QString& instanceName)
+{
+  m_overrideInstanceName = instanceName;
+  m_overrideInstance = true;
+}
+
+
 QString InstanceManager::currentInstance() const
 {
-  return m_AppSettings.value(INSTANCE_KEY, "").toString();
+  if (m_overrideInstance)
+    return m_overrideInstanceName;
+  else
+    return m_AppSettings.value(INSTANCE_KEY, "").toString();
 }
 
 void InstanceManager::clearCurrentInstance()
@@ -177,7 +187,8 @@ void InstanceManager::createDataPath(const QString &dataPath) const
 QString InstanceManager::determineDataPath()
 {
   QString instanceId = currentInstance();
-  if (instanceId.isEmpty() && portableInstall() && !m_Reset) {
+  if (instanceId.isEmpty() && !m_Reset && (m_overrideInstance || portableInstall()))
+  {
     // startup, apparently using portable mode before
     return qApp->applicationDirPath();
   }
@@ -187,8 +198,9 @@ QString InstanceManager::determineDataPath()
         + "/" + instanceId);
 
 
-  if (instanceId.isEmpty() || !QFileInfo::exists(dataPath)) {
+  if (!m_overrideInstance && (instanceId.isEmpty() || !QFileInfo::exists(dataPath))) {
     instanceId = chooseInstance(instances());
+    setCurrentInstance(instanceId);
     if (!instanceId.isEmpty()) {
       dataPath = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DataLocation)
@@ -199,8 +211,6 @@ QString InstanceManager::determineDataPath()
   if (instanceId.isEmpty()) {
     return qApp->applicationDirPath();
   } else {
-    setCurrentInstance(instanceId);
-
     createDataPath(dataPath);
 
     return dataPath;

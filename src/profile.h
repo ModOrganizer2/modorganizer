@@ -89,7 +89,14 @@ public:
    **/
   static Profile *createPtrFrom(const QString &name, const Profile &reference, MOBase::IPluginGame const *gamePlugin);
 
-  MOBase::DelayedFileWriter &modlistWriter() { return m_ModListWriter; }
+
+  static void renameModInAllProfiles(const QString& oldName, const QString& newName);
+
+  void writeModlist();
+
+  void writeModlistNow(bool onlyIfPending=false);
+
+  void cancelModlistWrite();
 
   /**
    * @brief test if this profile uses archive invalidation
@@ -297,7 +304,8 @@ signals:
 
 public slots:
 
-  void writeModlistNow();
+  // should only be called by DelayedFileWriter, use writeModlist() and writeModlistNow() instead
+  void doWriteModlist();
 
 private:
 
@@ -325,6 +333,8 @@ private:
   void mergeTweaks(ModInfo::Ptr modInfo, const QString &tweakedIni) const;
   void touchFile(QString fileName);
   void finishChangeStatus() const;
+
+  static void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
 private:
 

@@ -424,13 +424,13 @@ bool ModList::renameMod(int index, const QString &newName)
     return false;
   }
 
-  // before we rename, write back the current profile so we don't lose changes and to ensure
-  // there is no scheduled asynchronous rewrite anytime soon
-  m_Profile->writeModlistNow();
-
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  if (modInfo->setName(nameFixed)) {
+  if (newName != oldName && modInfo->setName(nameFixed)) {
+    // before we rename, write back the current profile so we don't lose changes and to ensure
+    // there is no scheduled asynchronous rewrite anytime soon
+    m_Profile->writeModlistNow();
+
     // this just disabled the mod in all profiles. The recipient of modRenamed must fix that
     emit modRenamed(oldName, nameFixed);
   }
@@ -940,12 +940,12 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
 
   m_Profile->setModEnabled(row, false);
 
-  m_Profile->modlistWriter().cancel();
+  m_Profile->cancelModlistWrite();
   beginRemoveRows(parent, row, row);
   ModInfo::removeMod(row);
   endRemoveRows();
   m_Profile->refreshModStatus();  // removes the mod from the status list
-  m_Profile->modlistWriter().write(); // this ensures the modified list gets written back before new mods can be installed
+  m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
 
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
