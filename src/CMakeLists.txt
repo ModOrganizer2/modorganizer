@@ -355,8 +355,10 @@ INSTALL(
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/styles)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
     file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/platforms ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/styles ${CMAKE_INSTALL_PREFIX}/bin/styles)
     file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/imageformats ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
