@@ -154,8 +154,44 @@
          <string>Thanks</string>
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
+		<item>
           <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Current Maintainers</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QListWidget" name="listWidget_2">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">LePresidente</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Silarn</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">erasmux</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Diana</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
             <string>Translators</string>
            </property>
@@ -237,7 +273,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
+          <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
             <string>Other Supporter</string>
            </property>
@@ -247,6 +283,11 @@
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
+			   <item>
+               <property name="text">
+                <string notr="true">Al12 (Discord) </string>
+               </property>
+              </item>
               <item>
                <property name="text">
                 <string notr="true">blacksol</string>

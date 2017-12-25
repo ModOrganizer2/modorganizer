@@ -906,11 +906,13 @@ p, li { white-space: pre-wrap; }
                <attribute name="title">
                 <string>Archives</string>
                </attribute>
+			   <property name="visible">
+				<bool>true</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <property name="leftMargin">
                  <number>6</number>
                 </property>
-
                 <property name="topMargin">
                  <number>6</number>
                 </property>
