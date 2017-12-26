@@ -3852,7 +3852,7 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
   ui->downloadView->setModel(sortProxy);
-  ui->downloadView->sortByColumn(1, Qt::AscendingOrder);
+  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
   ui->downloadView->header()->resizeSections(QHeaderView::Fixed);
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
