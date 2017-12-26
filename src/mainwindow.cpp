@@ -2595,6 +2595,8 @@ void MainWindow::createEmptyMod_clicked()
   if (newMod == nullptr) {
     return;
   }
+
+  m_OrganizerCore.refreshModList();
 }
 
 void MainWindow::createModFromOverwrite()
