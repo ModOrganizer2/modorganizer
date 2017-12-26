@@ -426,13 +426,16 @@ bool ModList::renameMod(int index, const QString &newName)
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  if (newName != oldName && modInfo->setName(nameFixed)) {
-    // before we rename, write back the current profile so we don't lose changes and to ensure
-    // there is no scheduled asynchronous rewrite anytime soon
-    m_Profile->writeModlistNow();
+  if (newName != oldName) {
+    // before we rename, ensure there is no scheduled asynchronous to rewrite
+    m_Profile->cancelModlistWrite();
 
-    // this just disabled the mod in all profiles. The recipient of modRenamed must fix that
-    emit modRenamed(oldName, nameFixed);
+
+    if (modInfo->setName(nameFixed))
+      // Notice there is a good chance that setName() updated the modinfo indexes
+      // the modRenamed() call will refresh the indexes in the current profile
+      // and update the modlists in all profiles
+      emit modRenamed(oldName, nameFixed);
   }
 
   // invalidate the currently displayed state of this list
