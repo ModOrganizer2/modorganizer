@@ -78,6 +78,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdarg>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 
@@ -137,6 +138,60 @@ static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *except
     return prevUnhandledExceptionFilter(exceptionPtrs);
   else
     return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// Parses the first parseArgCount arguments of the current process command line and returns
+// them in parsedArgs, the rest of the command line is returned untouched.
+LPCWSTR UntouchedCommandLineArguments(int parseArgCount, std::vector<std::wstring>& parsedArgs)
+{
+  LPCWSTR cmd = GetCommandLineW();
+  LPCWSTR arg = nullptr; // to skip executable name
+  for (; parseArgCount >= 0 && *cmd; ++cmd)
+  {
+    if (*cmd == '"') {
+      int escaped = 0;
+      for (++cmd; *cmd && (*cmd != '"' || escaped % 2 != 0); ++cmd)
+        escaped = *cmd == '\\' ? escaped + 1 : 0;
+    }
+    if (*cmd == ' ') {
+      if (arg)
+        if (cmd-1 > arg && *arg == '"' && *(cmd-1) == '"')
+          parsedArgs.push_back(std::wstring(arg+1, cmd-1));
+        else
+          parsedArgs.push_back(std::wstring(arg, cmd));
+      arg = cmd + 1;
+      --parseArgCount;
+    }
+  }
+  return cmd;
+}
+
+static int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine) {
+  PROCESS_INFORMATION pi{ 0 };
+  STARTUPINFO si{ 0 };
+  si.cb = sizeof(si);
+  std::wstring commandLineCopy = commandLine;
+
+  if (!CreateProcessW(NULL, &commandLineCopy[0], NULL, NULL, FALSE, 0, NULL, workingDirectory, &si, &pi)) {
+    // A bit of a problem where to log the error message here, at least this way you can get the message
+    // using a either DebugView or a live debugger:
+    std::wostringstream ost;
+    ost << L"CreateProcess failed: " << commandLine << ", " << GetLastError();
+    OutputDebugStringW(ost.str().c_str());
+    return -1;
+  }
+
+  WaitForSingleObject(pi.hProcess, INFINITE);
+
+  DWORD exitCode = (DWORD)-1;
+  ::GetExitCodeProcess(pi.hProcess, &exitCode);
+  CloseHandle(pi.hThread);
+  CloseHandle(pi.hProcess);
+  return static_cast<int>(exitCode);
+}
+
+static DWORD WaitForProcess() {
+
 }
 
 static bool HaveWriteAccess(const std::wstring &path)
@@ -532,19 +587,15 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
+  if (argc >= 4) {
+    std::vector<std::wstring> arg;
+    auto args = UntouchedCommandLineArguments(2, arg);
+    if (arg[0] == L"launch")
+      return SpawnWaitProcess(arg[1].c_str(), args);
+  }
+
   MOApplication application(argc, argv);
   QStringList arguments = application.arguments();
-
-  if ((arguments.length() >= 4) && (arguments.at(1) == "launch")) {
-    // all we're supposed to do is launch another process
-    QProcess process;
-    process.setWorkingDirectory(QDir::fromNativeSeparators(arguments.at(2)));
-    process.setProgram(QDir::fromNativeSeparators(arguments.at(3)));
-    process.setArguments(arguments.mid(4));
-    process.start();
-    process.waitForFinished(-1);
-    return process.exitCode();
-  }
 
   setupPath();
 
