@@ -389,6 +389,13 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     // global crashDumpType sits in OrganizerCore to make a bit less ugly to update it when the settings are changed during runtime
     OrganizerCore::setGlobalCrashDumpsType(settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt());
 
+    qDebug("Loaded settings:");
+    settings.beginGroup("Settings");
+    for (auto k : settings.allKeys())
+      qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
+    settings.endGroup();
+
+
     qDebug("initializing core");
     OrganizerCore organizer(settings);
     if (!organizer.bootstrap()) {
