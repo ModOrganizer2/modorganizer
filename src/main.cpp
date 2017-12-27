@@ -447,7 +447,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     qDebug("Loaded settings:");
     settings.beginGroup("Settings");
     for (auto k : settings.allKeys())
-      qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
+      if (!k.contains("username") && !k.contains("password"))
+        qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
     settings.endGroup();
 
 

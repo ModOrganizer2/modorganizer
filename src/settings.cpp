@@ -617,7 +617,7 @@ void Settings::query(QWidget *parent)
     m_Settings.beginGroup("Settings");
     bool first_update = true;
     for (auto k : m_Settings.allKeys())
-      if (m_Settings.value(k).toString() != before[k])
+      if (m_Settings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
       {
         if (first_update) {
           qDebug("Changed settings:");
