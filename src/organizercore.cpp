@@ -1196,30 +1196,35 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
 
     QString modsPath = settings().getModDirectory();
 
+    // Check if this a request with either an executable or a working directory under our mods folder
+    // then will start the processs in a virtualized "environment" with the appropriate paths fixed:
+    // (i.e. mods\FNIS\path\exe => game\data\path\exe)
+    QString cwdPath = currentDirectory.absolutePath();
+    bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
     QString binPath = binary.absoluteFilePath();
-    if (binPath.startsWith(modsPath, Qt::CaseInsensitive)) {
-      // binary was installed as a MO mod. Need to start it through a (hooked)
-      // proxy to ensure pathes are correct
+    bool virtualizedBin = binPath.startsWith(modsPath, Qt::CaseInsensitive);
+    if (virtualizedCwd || virtualizedBin) {
+      if (virtualizedCwd) {
+        int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
+        cwdPath = m_GamePlugin->dataDirectory().absolutePath() + cwdPath.mid(cwdOffset, -1);
+      }
 
-      QString cwdPath = currentDirectory.absolutePath();
+      if (virtualizedBin) {
+        int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+        binPath = m_GamePlugin->dataDirectory().absolutePath() + binPath.mid(binOffset, -1);
+      }
 
-      int binOffset       = binPath.indexOf('/', modsPath.length() + 1);
-      int cwdOffset       = cwdPath.indexOf('/', modsPath.length() + 1);
-      QString dataBinPath = m_GamePlugin->dataDirectory().absolutePath()
-                            + binPath.mid(binOffset, -1);
-      QString dataCwd = m_GamePlugin->dataDirectory().absolutePath()
-                        + cwdPath.mid(cwdOffset, -1);
       QString cmdline
           = QString("launch \"%1\" \"%2\" %3")
-                .arg(QDir::toNativeSeparators(dataCwd),
-                     QDir::toNativeSeparators(dataBinPath), arguments);
+                .arg(QDir::toNativeSeparators(cwdPath),
+                     QDir::toNativeSeparators(binPath), arguments);
 
       qDebug() << "Spawning proxyed process <" << cmdline << ">";
 
       return startBinary(QFileInfo(QCoreApplication::applicationFilePath()),
                          cmdline, QCoreApplication::applicationDirPath(), true);
     } else {
-      qDebug() << "Spawning direct process <" << binary.absoluteFilePath() << "," << arguments << "," << currentDirectory.absolutePath() << ">";
+      qDebug() << "Spawning direct process <" << binPath << "," << arguments << "," << cwdPath << ">";
       return startBinary(binary, arguments, currentDirectory, true);
     }
   } else {

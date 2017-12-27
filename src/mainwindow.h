@@ -425,6 +425,7 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void createModFromOverwrite();
+  void clearOverwrite();
 
   void procError(QProcess::ProcessError error);
   void procFinished(int exitCode, QProcess::ExitStatus exitStatus);

@@ -2595,6 +2595,8 @@ void MainWindow::createEmptyMod_clicked()
   if (newMod == nullptr) {
     return;
   }
+
+  m_OrganizerCore.refreshModList();
 }
 
 void MainWindow::createModFromOverwrite()
@@ -2632,6 +2634,31 @@ void MainWindow::createModFromOverwrite()
             QStringList(QDir::toNativeSeparators(newMod->absolutePath())), this);
 
   m_OrganizerCore.refreshModList();
+}
+
+void MainWindow::clearOverwrite()
+{
+  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
+    std::vector<ModInfo::EFlag> flags = mod->getFlags();
+    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE)
+      != flags.end();
+  });
+
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(overwriteIndex);
+  if (modInfo)
+  {
+    QDir overwriteDir(modInfo->absolutePath());
+    if (QMessageBox::question(this, tr("Are you sure?"),
+      tr("About to recursively delete:\n") + overwriteDir.absolutePath(),
+      QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok)
+    {
+      QStringList delList;
+      for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
+        delList.push_back(overwriteDir.absoluteFilePath(f));
+      shellDelete(delList, true);
+      updateProblemsButton();
+    }
+  }
 }
 
 void MainWindow::cancelModListEditor()
@@ -3072,6 +3099,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         if (QDir(info->absolutePath()).count() > 2) {
           menu->addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
           menu->addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
+          menu->addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
+          menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
         }
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
@@ -3850,7 +3879,7 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
   ui->downloadView->setModel(sortProxy);
-  ui->downloadView->sortByColumn(1, Qt::AscendingOrder);
+  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
   ui->downloadView->header()->resizeSections(QHeaderView::Fixed);
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));

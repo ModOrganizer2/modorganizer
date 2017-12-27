@@ -601,10 +601,31 @@ void Settings::query(QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
   if (dialog.exec() == QDialog::Accepted) {
+    // remember settings before change
+    QMap<QString, QString> before;
+    m_Settings.beginGroup("Settings");
+    for (auto k : m_Settings.allKeys())
+      before[k] = m_Settings.value(k).toString();
+    m_Settings.endGroup();
+
     // transfer modified settings to configuration file
     for (std::unique_ptr<SettingsTab> const &tab: tabs) {
       tab->update();
     }
+
+    // print "changed" settings
+    m_Settings.beginGroup("Settings");
+    bool first_update = true;
+    for (auto k : m_Settings.allKeys())
+      if (m_Settings.value(k).toString() != before[k] && !k.contains("username") && !k.contains("password"))
+      {
+        if (first_update) {
+          qDebug("Changed settings:");
+          first_update = false;
+        }
+        qDebug("  %s=%s", k.toUtf8().data(), m_Settings.value(k).toString().toUtf8().data());
+      }
+    m_Settings.endGroup();
   }
 }
 
