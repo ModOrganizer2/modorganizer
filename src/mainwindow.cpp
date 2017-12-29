@@ -875,7 +875,9 @@ void MainWindow::closeEvent(QCloseEvent* event)
     }
   }
 
-  HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess();
+  std::vector<QString> hiddenList;
+  hiddenList.push_back(QFileInfo(QCoreApplication::applicationFilePath()).fileName());
+  HANDLE injected_process_still_running = m_OrganizerCore.findAndOpenAUSVFSProcess(hiddenList, GetCurrentProcessId());
   if (injected_process_still_running != INVALID_HANDLE_VALUE)
   {
     m_OrganizerCore.waitForApplication(injected_process_still_running);
