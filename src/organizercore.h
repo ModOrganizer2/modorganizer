@@ -204,7 +204,7 @@ public:
   HANDLE runShortcut(const MOShortcut& shortcut);
   HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
-  HANDLE findAndOpenAUSVFSProcess();
+  HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
