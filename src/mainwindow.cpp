@@ -1682,8 +1682,6 @@ void MainWindow::on_tabWidget_currentChanged(int index)
     refreshDataTree();
   } else if (index == 3) {
     refreshSaveList();
-  } else if (index == 4) {
-    ui->downloadView->scrollToBottom();
   }
 }
 
