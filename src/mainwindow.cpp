@@ -331,8 +331,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(progress(int)), this, SLOT(refresher_progress(int)));
   connect(m_OrganizerCore.directoryRefresher(), SIGNAL(error(QString)), this, SLOT(showError(QString)));
 
-  connect(m_OrganizerCore.downloadManager(), SIGNAL(downloadAdded()), ui->downloadView, SLOT(scrollToBottom()));
-
   connect(&m_SavesWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(refreshSavesIfOpen()));
 
   connect(&m_OrganizerCore.settings(), SIGNAL(languageChanged(QString)), this, SLOT(languageChange(QString)));
