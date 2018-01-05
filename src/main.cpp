@@ -419,10 +419,28 @@ void setupPath()
   ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
 }
 
+static QString getVersionDisplayString()
+{
+  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
+  return VersionInfo(version.dwFileVersionMS >> 16,
+    version.dwFileVersionMS & 0xFFFF,
+    version.dwFileVersionLS >> 16,
+    version.dwFileVersionLS & 0xFFFF).displayString();
+}
+
 int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
-  qDebug("start main application");
+
+  qDebug("Starting Mod Organizer version %s revision %s", qPrintable(getVersionDisplayString()),
+#if defined(HGID)
+    HGID
+#elif defined(GITID)
+    GITID
+#else
+    "unknown"
+#endif
+  );
 
   QString dataPath = application.property("dataPath").toString();
   qDebug("data path: %s", qPrintable(dataPath));
