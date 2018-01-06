@@ -1,28 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-    <assemblyIdentity type="win32" name="dlls" version="1.0.0.0" processorArchitecture="x86"/>
-	<file name="7z.dll"/>
-	<file name="archive.dll"/>
-    <file name="d3dcompiler_47.dll"/>
-    <file name="libeay32.dll"/>
-	<file name="libEGL.dll"/>
-	<file name="libGLESV2.dll"/>
-	<file name="liblz4.dll"/>
-	<file name="opengl32sw.dll"/>
-    <file name="Qt5Core.dll"/>
-    <file name="Qt5Gui.dll"/>
-    <file name="Qt5Network.dll"/>
-    <file name="Qt5Positioning.dll"/>
-    <file name="Qt5PrintSupport.dll"/>
-    <file name="Qt5Qml.dll"/>
-    <file name="Qt5Quick.dll"/>
-	<file name="Qt5QuickWidgets.dll"/>
-	<file name="Qt5WebChannel.dll"/>
-	<file name="Qt5SerialPort.dll"/>
-    <file name="Qt5Svg.dll"/>
-	<file name="Qt5WebEngineCore.dll"/>
-    <file name="Qt5WebEngineWidgets.dll"/>
-    <file name="Qt5Widgets.dll"/>
-	<file name="Qt5WinExtras.dll"/>
-	<file name="ssleay32.dll"/>
+  <assemblyIdentity type="win32" name="dlls" version="1.0.0.0" processorArchitecture="x86"/>
+  <file name="7z.dll"/>
+  <file name="archive.dll"/>
+  <file name="d3dcompiler_47.dll"/>
+  <file name="libEGL.dll"/>
+  <file name="libGLESV2.dll"/>
+  <file name="liblz4.dll"/>
+  <file name="opengl32sw.dll"/>
+  <file name="Qt5Core.dll"/>
+  <file name="Qt5Gui.dll"/>
+  <file name="Qt5Network.dll"/>
+  <file name="Qt5Positioning.dll"/>
+  <file name="Qt5PrintSupport.dll"/>
+  <file name="Qt5Qml.dll"/>
+  <file name="Qt5Quick.dll"/>
+  <file name="Qt5QuickWidgets.dll"/>
+  <file name="Qt5WebChannel.dll"/>
+  <file name="Qt5SerialPort.dll"/>
+  <file name="Qt5Svg.dll"/>
+  <file name="Qt5WebEngineCore.dll"/>
+  <file name="Qt5WebEngineWidgets.dll"/>
+  <file name="Qt5Widgets.dll"/>
+  <file name="Qt5WinExtras.dll"/>
 </assembly>
