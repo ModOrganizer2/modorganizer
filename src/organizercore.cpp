@@ -33,6 +33,7 @@
 #include <questionboxmemory.h>
 #include "lockeddialog.h"
 #include "instancemanager.h"
+#include <scriptextender.h>
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -1945,11 +1946,28 @@ void OrganizerCore::syncOverwrite()
   }
 }
 
+QString OrganizerCore::oldMO1HookDll() const
+{
+  if (auto extender = managedGame()->feature<ScriptExtender>()) {
+    QString hookdll = QDir::toNativeSeparators(
+      managedGame()->dataDirectory().absoluteFilePath(extender->PluginPath() + "/hook.dll"));
+    if (QFile(hookdll).exists())
+      return hookdll;
+  }
+  return QString();
+}
+
 std::vector<unsigned int> OrganizerCore::activeProblems() const
 {
   std::vector<unsigned int> problems;
-  if (m_PluginList.enabledCount() > 255) {
-    problems.push_back(PROBLEM_TOOMANYPLUGINS);
+  const auto& hookdll = oldMO1HookDll();
+  if (!hookdll.isEmpty()) {
+    // This warning will now be shown every time the problems are checked, which is a bit
+    // of a "log spam". But since this is a sevre error which will most likely make the
+    // game crash/freeze/etc. and is very hard to diagnose,  this "log spam" will make it
+    // easier for the user to notice the warning.
+    qWarning("hook.dll found in game folder: %s", qPrintable(hookdll));
+    problems.push_back(PROBLEM_MO1SCRIPTEXTENDERWORKAROUND);
   }
   return problems;
 }
@@ -1957,8 +1975,8 @@ std::vector<unsigned int> OrganizerCore::activeProblems() const
 QString OrganizerCore::shortDescription(unsigned int key) const
 {
   switch (key) {
-    case PROBLEM_TOOMANYPLUGINS: {
-      return tr("Too many esps, esms, and esls enabled");
+    case PROBLEM_MO1SCRIPTEXTENDERWORKAROUND: {
+      return tr("MO1 \"Script Extender\" load mechanism has left hook.dll in your game folder");
     } break;
     default: {
       return tr("Description missing");
@@ -1969,15 +1987,13 @@ QString OrganizerCore::shortDescription(unsigned int key) const
 QString OrganizerCore::fullDescription(unsigned int key) const
 {
   switch (key) {
-    case PROBLEM_TOOMANYPLUGINS: {
-      return tr("The game doesn't allow more than 255 active plugins "
-                "(including the official ones) to be loaded. You have to "
-                "disable some unused plugins or "
-                "merge some plugins into one. You can find a guide here: <a "
-                "href=\"http://wiki.step-project.com/"
-                "Guide:Merging_Plugins\">http://wiki.step-project.com/"
-                "Guide:Merging_Plugins</a>");
-    } break;
+    case PROBLEM_MO1SCRIPTEXTENDERWORKAROUND: {
+      return tr("<a href=\"%1\">hook.dll</a> has been found in your game folder (right click to copy the full path). "
+                "This is most likely a leftover of setting the ModOrganizer 1 load mechanism to \"Script Extender\", "
+                "in which case you must remove this file either by changing the load mechanism in ModOrganizer 1 or "
+                "manually removing the file, otherwise the game is likely to crash and burn.").arg(oldMO1HookDll());
+      break;
+    }
     default: {
       return tr("Description missing");
     } break;
