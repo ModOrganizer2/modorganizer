@@ -292,6 +292,7 @@ void PluginContainer::loadPlugins()
   // remove the load check file on success
   loadCheck.remove();
 
+  bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
   bf::at_key<IPluginDiagnose>(m_Plugins).push_back(this);
 
   m_Organizer->connectPlugins(this);

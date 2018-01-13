@@ -266,6 +266,8 @@ private:
 
   bool createDirectory(const QString &path);
 
+  QString oldMO1HookDll() const;
+
   /**
    * @brief return a descriptor of the mappings real file->virtual file
    */
@@ -290,8 +292,7 @@ private slots:
   void loginFailed(const QString &message);
 
 private:
-
-  static const unsigned int PROBLEM_TOOMANYPLUGINS = 1;
+  static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
 
