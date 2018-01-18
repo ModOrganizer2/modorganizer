@@ -46,9 +46,13 @@ private:
 
   QStringList instances() const;
 
+  bool deleteLocalInstance(const QString &instanceId) const;
+
+  QString manageInstances(const QStringList &instanceList) const;
+
   void setCurrentInstance(const QString &name);
 
-  QString queryInstanceName() const;
+  QString queryInstanceName(const QStringList &instanceList) const;
   QString chooseInstance(const QStringList &instanceList) const;
 
   void createDataPath(const QString &dataPath) const;
