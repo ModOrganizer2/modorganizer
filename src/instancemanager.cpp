@@ -179,10 +179,10 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
           .arg(QObject::tr("Choose Instance"))
           .arg(QObject::tr(
               "Each Instance is a full set of MO data files (mods, "
-              "downloads, profiles, configuration, ...). Use multiple "
-              "instances for different games. If your MO folder is "
-              "writable, you can also store a single instance locally (called "
-              "a portable install).")),
+              "downloads, profiles, configuration, ...). You can use multiple "
+			  "instances for different games. Instances are stored in Appdata and can be accessed by all MO installations. "
+			  "If your MO folder is writable, you can also store a single instance locally (called "
+              "a Portable install, and all the MO data files will be inside the installation folder).")),
       nullptr);
   selection.disableCancel();
   for (const QString &instance : instanceList) {
