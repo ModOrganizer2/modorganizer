@@ -157,7 +157,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     {
       QMessageBox msgBox;
       msgBox.setText( QObject::tr("The instance \"%1\" already exists.").arg(instanceId) );
-      msgBox.setInformativeText(QObject::tr("Please choose a different instance name, like: \"%1\1\" .").arg(instanceId));
+      msgBox.setInformativeText(QObject::tr("Please choose a different instance name, like: \"%1 1\" .").arg(instanceId));
       msgBox.exec();
       instanceId="";
     }
