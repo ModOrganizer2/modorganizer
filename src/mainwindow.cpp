@@ -2993,6 +2993,11 @@ void MainWindow::disableVisibleMods()
   }
 }
 
+void MainWindow::openInstanceFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::exportModListCSV()
 {
   SelectionDialog selection(tr("Choose what to export"));
@@ -3071,6 +3076,8 @@ QMenu *MainWindow::modListContextMenu()
   menu->addAction(tr("Refresh"), &m_OrganizerCore, SLOT(profileRefresh()));
 
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
+
+  menu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
   return menu;
 }
 

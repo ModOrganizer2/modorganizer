@@ -73,24 +73,94 @@ void InstanceManager::setCurrentInstance(const QString &name)
   m_AppSettings.setValue(INSTANCE_KEY, name);
 }
 
+bool InstanceManager::deleteLocalInstance(const QString &instanceId) const
+{
+  bool result = true;
+  QString instancePath = QDir::fromNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/" + instanceId);
 
-QString InstanceManager::queryInstanceName() const
+  if (QMessageBox::warning(nullptr, QObject::tr("Deleting folder"),
+                           QObject::tr("I'm about to delete the following folder: \"%1\". Proceed?").arg(instancePath), QMessageBox::No | QMessageBox::Yes, QMessageBox::No) == QMessageBox::No ){
+    return false;
+  }
+
+  if (!MOBase::shellDelete(QStringList(instancePath),true))
+  {
+    qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qPrintable(instancePath), ::GetLastError());
+    if (!MOBase::removeDir(instancePath))
+    {
+      qWarning("regular delete failed too");
+      result = false;
+    }
+  }
+
+  return result;
+}
+
+QString InstanceManager::manageInstances(const QStringList &instanceList) const
+{
+	SelectionDialog selection(
+		QString("<h3>%1</h3><br>%2")
+		.arg(QObject::tr("Choose Instance to Delete"))
+		.arg(QObject::tr("Be Carefull! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.")),
+		nullptr);
+	for (const QString &instance : instanceList)
+	{
+		selection.addChoice(instance, "", instance);
+	}
+
+	if (selection.exec() == QDialog::Rejected) {
+		return(chooseInstance(instances()));
+	}
+	else {
+		QString choice = selection.getChoiceData().toString();
+		{
+			if (QMessageBox::warning(nullptr, QObject::tr("Are you sure?"),
+				QObject::tr("Are you really sure you want to delete the Instance \"%1\" with all its files?").arg(choice), QMessageBox::No | QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
+			{
+				if (!deleteLocalInstance(choice))
+				{
+					QMessageBox::warning(nullptr, QObject::tr("Failed to delete Instance"),
+						QObject::tr("Could not delete Instance \"%1\"").arg(choice), QMessageBox::Ok);
+				}
+			}
+		}
+	}
+	return(manageInstances(instances()));
+}
+
+QString InstanceManager::queryInstanceName(const QStringList &instanceList) const
 {
   QString instanceId;
   while (instanceId.isEmpty()) {
     QInputDialog dialog;
+	
+	dialog.setWindowTitle(QObject::tr("Enter a Name for the new Instance"));
+    dialog.setLabelText(QObject::tr("Enter a new name or select one from the sugested list (only letters and numbers allowed):"));
     // would be neat if we could take the names from the game plugins but
     // the required initialization order requires the ini file to be
     // available *before* we load plugins
-    dialog.setComboBoxItems({ "Oblivion", "Skyrim", "SkyrimSE", "Fallout 3",
-                              "Fallout NV", "Fallout 4" });
+    dialog.setComboBoxItems({ "NewName", "Fallout 4", "SkyrimSE", "Skyrim", "Fallout 3",
+                              "Fallout NV", "FO4VR", "Oblivion" });
     dialog.setComboBoxEditable(true);
-    dialog.setWindowTitle(QObject::tr("Enter Instance Name"));
-    dialog.setLabelText(QObject::tr("Name"));
+    
     if (dialog.exec() == QDialog::Rejected) {
       throw MOBase::MyException(QObject::tr("Canceled"));
     }
     instanceId = dialog.textValue().replace(QRegExp("[^0-9a-zA-Z ]"), "");
+
+    bool alreadyExists=false;
+    for (const QString &instance : instanceList) {
+      if(instanceId==instance)
+        alreadyExists=true;
+    }
+    if(alreadyExists)
+    {
+      QMessageBox msgBox;
+      msgBox.setText( QObject::tr("The instance \"%1\" already exists.").arg(instanceId) );
+      msgBox.setInformativeText(QObject::tr("Please choose a different instance name, like: \"%1 1\" .").arg(instanceId));
+      msgBox.exec();
+      instanceId="";
+    }
   }
   return instanceId;
 }
@@ -100,7 +170,8 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
 {
   enum class Special : uint8_t {
     NewInstance,
-    Portable
+    Portable,
+    Manage
   };
 
   SelectionDialog selection(
@@ -108,10 +179,10 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
           .arg(QObject::tr("Choose Instance"))
           .arg(QObject::tr(
               "Each Instance is a full set of MO data files (mods, "
-              "downloads, profiles, configuration, ...). Use multiple "
-              "instances for different games. If your MO folder is "
-              "writable, you can also store a single instance locally (called "
-              "a portable install).")),
+              "downloads, profiles, configuration, ...). You can use multiple "
+			  "instances for different games. Instances are stored in Appdata and can be accessed by all MO installations. "
+			  "If your MO folder is writable, you can also store a single instance locally (called "
+              "a Portable install, and all the MO data files will be inside the installation folder).")),
       nullptr);
   selection.disableCancel();
   for (const QString &instance : instanceList) {
@@ -128,6 +199,10 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
                         static_cast<uint8_t>(Special::Portable));
   }
 
+  selection.addChoice(QIcon(":/MO/gui/remove"), QObject::tr("Manage Instances"),
+                        QObject::tr("Delete an Instance."),
+                        static_cast<uint8_t>(Special::Manage));
+
   if (selection.exec() == QDialog::Rejected) {
     qDebug("rejected");
     throw MOBase::MyException(QObject::tr("Canceled"));
@@ -139,8 +214,12 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
     return choice.toString();
   } else {
     switch (choice.value<uint8_t>()) {
-      case Special::NewInstance: return queryInstanceName();
+      case Special::NewInstance: return queryInstanceName(instanceList);
       case Special::Portable: return QString();
+      case Special::Manage: {
+
+        return(manageInstances(instances()));
+      }
       default: throw std::runtime_error("invalid selection");
     }
   }

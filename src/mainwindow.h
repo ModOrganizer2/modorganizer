@@ -483,6 +483,7 @@ private slots:
   void enableVisibleMods();
   void disableVisibleMods();
   void exportModListCSV();
+  void openInstanceFolder();
 
   void startExeAction();
 
