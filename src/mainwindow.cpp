@@ -1043,12 +1043,13 @@ void MainWindow::startExeAction()
   if (action != nullptr) {
     const Executable &selectedExecutable(
         m_OrganizerCore.executablesList()->find(action->text()));
+	QString customOverwrite= m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID);
+        selectedExecutable.m_SteamAppID, customOverwrite);
   } else {
     qCritical("not an action?");
   }
@@ -1709,13 +1710,13 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked() {
   const Executable &selectedExecutable(getSelectedExecutable());
-
+  QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
   m_OrganizerCore.spawnBinary(
       selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
       selectedExecutable.m_WorkingDirectory.length() != 0
           ? selectedExecutable.m_WorkingDirectory
           : selectedExecutable.m_BinaryInfo.absolutePath(),
-      selectedExecutable.m_SteamAppID);
+      selectedExecutable.m_SteamAppID, customOverwrite);
 }
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
