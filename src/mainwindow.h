@@ -484,7 +484,10 @@ private slots:
   void disableVisibleMods();
   void exportModListCSV();
   void openInstanceFolder();
-
+  void openDownloadsFolder();
+  void openProfileFolder();
+  void openGameFolder();
+  void openMyGamesFolder();
   void startExeAction();
 
   void checkBSAList();
