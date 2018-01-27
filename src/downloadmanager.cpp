@@ -451,7 +451,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 {
   NXMUrl nxmInfo(url);
 
-  QString managedGame = m_ManagedGame->gameNexusName();
+  QString managedGame = m_ManagedGame->gameShortName();
   qDebug("add nxm download: %s", qPrintable(url));
   if (nxmInfo.game().compare(managedGame, Qt::CaseInsensitive) != 0) {
     qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(managedGame), qPrintable(nxmInfo.game()));
@@ -1246,7 +1246,7 @@ int DownloadManager::startDownloadURLs(const QStringList &urls)
 int DownloadManager::startDownloadNexusFile(int modID, int fileID)
 {
   int newID = m_ActiveDownloads.size();
-  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(m_ManagedGame->gameNexusName()).arg(modID).arg(fileID));
+  addNXMDownload(QString("nxm://%1/mods/%2/files/%3").arg(m_ManagedGame->gameShortName()).arg(modID).arg(fileID));
   return newID;
 }
 
