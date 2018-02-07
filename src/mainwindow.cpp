@@ -1043,12 +1043,13 @@ void MainWindow::startExeAction()
   if (action != nullptr) {
     const Executable &selectedExecutable(
         m_OrganizerCore.executablesList()->find(action->text()));
+	QString customOverwrite= m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID);
+        selectedExecutable.m_SteamAppID, customOverwrite);
   } else {
     qCritical("not an action?");
   }
@@ -1709,13 +1710,13 @@ void MainWindow::installMod(QString fileName)
 
 void MainWindow::on_startButton_clicked() {
   const Executable &selectedExecutable(getSelectedExecutable());
-
+  QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
   m_OrganizerCore.spawnBinary(
       selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
       selectedExecutable.m_WorkingDirectory.length() != 0
           ? selectedExecutable.m_WorkingDirectory
           : selectedExecutable.m_BinaryInfo.absolutePath(),
-      selectedExecutable.m_SteamAppID);
+      selectedExecutable.m_SteamAppID, customOverwrite);
 }
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
@@ -2998,6 +2999,27 @@ void MainWindow::openInstanceFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openProfileFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openDownloadsFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openGameFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->gameDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openMyGamesFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+
 void MainWindow::exportModListCSV()
 {
   SelectionDialog selection(tr("Choose what to export"));
@@ -3068,6 +3090,8 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
 
+  menu->addSeparator();
+
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
   menu->addAction(tr("Disable all visible"), this, SLOT(disableVisibleMods()));
 
@@ -3077,7 +3101,18 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
 
+  menu->addSeparator();
+
   menu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
+
+  menu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
+
+  menu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
+
+  menu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+  menu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
   return menu;
 }
 
@@ -3105,8 +3140,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
           menu->addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
           menu->addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
-          menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
         }
+		menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
