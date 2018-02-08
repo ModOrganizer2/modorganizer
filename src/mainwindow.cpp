@@ -142,6 +142,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QToolTip>
 #include <QTranslator>
 #include <QTreeWidget>
+#include <QTreeWidgetItemIterator>
 #include <QUrl>
 #include <QVariantList>
 #include <QWhatsThis>
@@ -1304,6 +1305,38 @@ void MainWindow::refreshDataTree()
   updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
   tree->insertTopLevelItem(0, subTree);
   subTree->setExpanded(true);
+}
+
+void MainWindow::refreshDataTreeKeepExpandedNodes()
+{
+	QCheckBox *conflictsBox = findChild<QCheckBox*>("conflictsCheckBox");
+	QTreeWidget *tree = findChild<QTreeWidget*>("dataTree");
+
+	QStringList expandedNodes;
+	QTreeWidgetItemIterator it1(tree, QTreeWidgetItemIterator::NotHidden | QTreeWidgetItemIterator::HasChildren);
+	while (*it1) {
+		QTreeWidgetItem *current = (*it1);
+		if (current->isExpanded() && !(current->text(0)=="data")) {
+			expandedNodes.append(current->text(0)+"/"+current->parent()->text(0));
+		}
+		++it1;
+	}
+
+	tree->clear();
+	QStringList columns("data");
+	columns.append("");
+	QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
+	updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
+	tree->insertTopLevelItem(0, subTree);
+	subTree->setExpanded(true);
+	QTreeWidgetItemIterator it2(tree, QTreeWidgetItemIterator::HasChildren);
+	while (*it2) {
+		QTreeWidgetItem *current = (*it2);
+		if (!(current->text(0)=="data") && expandedNodes.contains(current->text(0)+"/"+current->parent()->text(0))) {
+			current->setExpanded(true);
+		}
+		++it2;
+	}
 }
 
 
@@ -3705,7 +3738,7 @@ void MainWindow::hideFile()
 
   if (QFile::rename(oldName, newName)) {
     originModified(m_ContextItem->data(1, Qt::UserRole + 1).toInt());
-    refreshDataTree();
+	refreshDataTreeKeepExpandedNodes();
   } else {
     reportError(tr("failed to rename \"%1\" to \"%2\"").arg(oldName).arg(QDir::toNativeSeparators(newName)));
   }
@@ -3729,7 +3762,7 @@ void MainWindow::unhideFile()
   }
   if (QFile::rename(oldName, newName)) {
     originModified(m_ContextItem->data(1, Qt::UserRole + 1).toInt());
-    refreshDataTree();
+	refreshDataTreeKeepExpandedNodes();
   } else {
     reportError(tr("failed to rename \"%1\" to \"%2\"").arg(QDir::toNativeSeparators(oldName)).arg(QDir::toNativeSeparators(newName)));
   }

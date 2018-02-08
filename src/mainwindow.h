@@ -122,6 +122,7 @@ public:
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
+  void refreshDataTreeKeepExpandedNodes();
   void refreshSaveList();
 
   void setModListSorting(int index);
