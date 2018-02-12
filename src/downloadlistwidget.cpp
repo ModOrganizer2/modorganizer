@@ -318,7 +318,7 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
             if (hidden) {
               menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
             } else {
-              menu.addAction(tr("Remove from View"), this, SLOT(issueRemoveFromView()));
+              menu.addAction(tr("Hide"), this, SLOT(issueRemoveFromView()));
             }
           } else if (state == DownloadManager::STATE_DOWNLOADING){
             menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
@@ -334,8 +334,8 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
         if (!hidden) {
           menu.addSeparator();
-          menu.addAction(tr("Remove Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-          menu.addAction(tr("Remove All..."), this, SLOT(issueRemoveFromViewAll()));
+          menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
         }
         menu.exec(mouseEvent->globalPos());
 
