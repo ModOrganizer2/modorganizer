@@ -636,6 +636,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
+  //Should allow for better scaling of ui with higher resolution displays
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
   if (argc >= 4) {
     std::vector<std::wstring> arg;
     auto args = UntouchedCommandLineArguments(2, arg);
