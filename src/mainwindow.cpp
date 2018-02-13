@@ -3070,10 +3070,14 @@ void MainWindow::exportModListCSV()
       CSVBuilder builder(&buffer);
       builder.setEscapeMode(CSVBuilder::TYPE_STRING, CSVBuilder::QUOTE_ALWAYS);
       std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
-      fields.push_back(std::make_pair(QString("mod_id"), CSVBuilder::TYPE_INTEGER));
+      fields.push_back(std::make_pair(QString("mod_nexus_id"), CSVBuilder::TYPE_INTEGER));
       fields.push_back(std::make_pair(QString("mod_installed_name"), CSVBuilder::TYPE_STRING));
+	  fields.push_back(std::make_pair(QString("mod_priority"), CSVBuilder::TYPE_STRING));
       fields.push_back(std::make_pair(QString("mod_version"), CSVBuilder::TYPE_STRING));
+	  fields.push_back(std::make_pair(QString("mod_install_date"), CSVBuilder::TYPE_STRING));
       fields.push_back(std::make_pair(QString("file_installed_name"), CSVBuilder::TYPE_STRING));
+	  fields.push_back(std::make_pair(QString("mod_nexus_url"), CSVBuilder::TYPE_STRING));
+	  fields.push_back(std::make_pair(QString("mod_primary_category"), CSVBuilder::TYPE_STRING));
 //      fields.push_back(std::make_pair(QString("file_category"), CSVBuilder::TYPE_INTEGER));
       builder.setFields(fields);
 
@@ -3090,10 +3094,14 @@ void MainWindow::exportModListCSV()
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
             (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
-          builder.setRowField("mod_id", info->getNexusID());
+          builder.setRowField("mod_nexus_id", info->getNexusID());
           builder.setRowField("mod_installed_name", info->name());
+		  builder.setRowField("mod_priority",  QString("%1").arg(m_OrganizerCore.currentProfile()->getModPriority(i), 4, 10, QChar('0')));
           builder.setRowField("mod_version", info->getVersion().canonicalString());
+		  builder.setRowField("mod_install_date", info->creationTime().toString("yyyy/MM/dd HH:mm:ss"));
           builder.setRowField("file_installed_name", info->getInstallationFile());
+		  builder.setRowField("mod_nexus_url", info->getURL());
+		  builder.setRowField("mod_primary_category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory()))? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
           builder.writeRow();
         }
       }
