@@ -834,3 +834,8 @@ void Profile::storeSetting(const QString &section, const QString &name,
 {
   m_Settings->setValue(section + "/" + name, value);
 }
+
+void Profile::removeSetting(const QString &section, const QString &name)
+{
+	m_Settings->remove(section + "/" + name);
+}

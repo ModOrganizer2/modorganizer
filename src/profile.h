@@ -292,6 +292,7 @@ public:
 
   void storeSetting(const QString &section, const QString &name,
                     const QVariant &value);
+  void removeSetting(const QString &section, const QString &name);
 
 signals:
 

@@ -115,6 +115,9 @@ void EditExecutablesDialog::saveExecutable()
     m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
                             ui->newFilesModBox->currentText());
   }
+  else {
+	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+  }
 }
 
 
