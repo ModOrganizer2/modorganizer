@@ -3246,15 +3246,22 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addSeparator();
 
-  menu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
+  QMenu *openSubMenu = new QMenu(this);
 
-  menu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
 
-  menu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
+  openSubMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
 
-  menu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+  openSubMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
 
-  menu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+  openSubMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
+
+  openSubMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+  openSubMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+  openSubMenu->setTitle(tr("Open Folder..."));
+
+  menu->addMenu(openSubMenu);
 
   return menu;
 }
@@ -3321,6 +3328,9 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
+
+		menu->addSeparator();
+
         if (info->getNexusID() > 0) {
           switch (info->endorsedState()) {
             case ModInfo::ENDORSED_TRUE: {
@@ -3340,6 +3350,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             } break;
           }
         }
+
+		menu->addSeparator();
 
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
