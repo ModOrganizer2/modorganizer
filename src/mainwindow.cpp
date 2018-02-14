@@ -127,6 +127,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QProcess>
 #include <QProgressDialog>
+#include <QDialogButtonBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRect>
@@ -3055,64 +3056,165 @@ void MainWindow::openMyGamesFolder()
 
 void MainWindow::exportModListCSV()
 {
-  SelectionDialog selection(tr("Choose what to export"));
+	//SelectionDialog selection(tr("Choose what to export"));
 
-  selection.addChoice(tr("Everything"), tr("All installed mods are included in the list"), 0);
-  selection.addChoice(tr("Active Mods"), tr("Only active (checked) mods from your current profile are included"), 1);
-  selection.addChoice(tr("Visible"), tr("All mods visible in the mod list are included"), 2);
+	//selection.addChoice(tr("Everything"), tr("All installed mods are included in the list"), 0);
+	//selection.addChoice(tr("Active Mods"), tr("Only active (checked) mods from your current profile are included"), 1);
+	//selection.addChoice(tr("Visible"), tr("All mods visible in the mod list are included"), 2);
 
-  if (selection.exec() == QDialog::Accepted) {
-    unsigned int numMods = ModInfo::getNumMods();
+	QDialog selection(this);
+	//QLabel descriptionLabel("Choose what to export");
+	//selection->(descriptionLabel);
+	QGridLayout *grid = new QGridLayout;
+	selection.setWindowTitle(tr("Export to csv"));
 
-    try {
-      QBuffer buffer;
-      buffer.open(QIODevice::ReadWrite);
-      CSVBuilder builder(&buffer);
-      builder.setEscapeMode(CSVBuilder::TYPE_STRING, CSVBuilder::QUOTE_ALWAYS);
-      std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
-      fields.push_back(std::make_pair(QString("mod_nexus_id"), CSVBuilder::TYPE_INTEGER));
-      fields.push_back(std::make_pair(QString("mod_installed_name"), CSVBuilder::TYPE_STRING));
-	  fields.push_back(std::make_pair(QString("mod_priority"), CSVBuilder::TYPE_STRING));
-      fields.push_back(std::make_pair(QString("mod_version"), CSVBuilder::TYPE_STRING));
-	  fields.push_back(std::make_pair(QString("mod_install_date"), CSVBuilder::TYPE_STRING));
-      fields.push_back(std::make_pair(QString("file_installed_name"), CSVBuilder::TYPE_STRING));
-	  fields.push_back(std::make_pair(QString("mod_nexus_url"), CSVBuilder::TYPE_STRING));
-	  fields.push_back(std::make_pair(QString("mod_primary_category"), CSVBuilder::TYPE_STRING));
-//      fields.push_back(std::make_pair(QString("file_category"), CSVBuilder::TYPE_INTEGER));
-      builder.setFields(fields);
+	QGroupBox *groupBoxRows = new QGroupBox(tr("Select what mods you want export:"));
+	QRadioButton *all = new QRadioButton(tr("All installed mods"));
+	QRadioButton *active = new QRadioButton(tr("Only active (checked) mods from your current profile"));
+	QRadioButton *visible = new QRadioButton(tr("All currently visible mods in the mod list"));
 
-      builder.writeHeader();
+	QVBoxLayout *vbox = new QVBoxLayout;
+	vbox->addWidget(all);
+	vbox->addWidget(active);
+	vbox->addWidget(visible);
+	vbox->addStretch(1);
+	groupBoxRows->setLayout(vbox);
 
-      for (unsigned int i = 0; i < numMods; ++i) {
-        ModInfo::Ptr info = ModInfo::getByIndex(i);
-        bool enabled = m_OrganizerCore.currentProfile()->modEnabled(i);
-        if ((selection.getChoiceData().toInt() == 1) && !enabled) {
-          continue;
-        } else if ((selection.getChoiceData().toInt() == 2) && !m_ModListSortProxy->filterMatchesMod(info, enabled)) {
-          continue;
-        }
-        std::vector<ModInfo::EFlag> flags = info->getFlags();
-        if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
-            (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
-          builder.setRowField("mod_nexus_id", info->getNexusID());
-          builder.setRowField("mod_installed_name", info->name());
-		  builder.setRowField("mod_priority",  QString("%1").arg(m_OrganizerCore.currentProfile()->getModPriority(i), 4, 10, QChar('0')));
-          builder.setRowField("mod_version", info->getVersion().canonicalString());
-		  builder.setRowField("mod_install_date", info->creationTime().toString("yyyy/MM/dd HH:mm:ss"));
-          builder.setRowField("file_installed_name", info->getInstallationFile());
-		  builder.setRowField("mod_nexus_url", info->getURL());
-		  builder.setRowField("mod_primary_category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory()))? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
-          builder.writeRow();
-        }
-      }
 
-      SaveTextAsDialog saveDialog(this);
-      saveDialog.setText(buffer.data());
-      saveDialog.exec();
-    } catch (const std::exception &e) {
-      reportError(tr("export failed: %1").arg(e.what()));
-    }
-  }
+
+	grid->addWidget(groupBoxRows);
+
+	QButtonGroup *buttonGroupRows = new QButtonGroup();
+	buttonGroupRows->addButton(all, 0);
+	buttonGroupRows->addButton(active, 1);
+	buttonGroupRows->addButton(visible, 2);
+	buttonGroupRows->button(0)->setChecked(true);
+
+
+
+	QGroupBox *groupBoxColumns = new QGroupBox(tr("Choose what Columns to export:"));
+	groupBoxColumns->setFlat(true);
+
+	QCheckBox *mod_Priority = new QCheckBox(tr("Mod_Priority"));
+	mod_Priority->setChecked(true);
+	QCheckBox *mod_Name = new QCheckBox(tr("Mod_Name"));
+	mod_Name->setChecked(true);
+	QCheckBox *mod_Status = new QCheckBox(tr("Mod_Status"));
+	QCheckBox *primary_Category = new QCheckBox(tr("Primary_Category"));
+	QCheckBox *nexus_ID = new QCheckBox(tr("Nexus_ID"));
+	QCheckBox *mod_Nexus_URL = new QCheckBox(tr("Mod_Nexus_URL"));
+	QCheckBox *mod_Version = new QCheckBox(tr("Mod_Version"));
+	QCheckBox *install_Date = new QCheckBox(tr("Install_Date"));
+	QCheckBox *download_File_Name = new QCheckBox(tr("Download_File_Name"));
+
+	QVBoxLayout *vbox1 = new QVBoxLayout;
+	vbox1->addWidget(mod_Priority);
+	vbox1->addWidget(mod_Name);
+	vbox1->addWidget(mod_Status);
+	vbox1->addWidget(primary_Category);
+	vbox1->addWidget(nexus_ID);
+	vbox1->addWidget(mod_Nexus_URL);
+	vbox1->addWidget(mod_Version);
+	vbox1->addWidget(install_Date);
+	vbox1->addWidget(download_File_Name);
+	groupBoxColumns->setLayout(vbox1);
+
+	grid->addWidget(groupBoxColumns);
+
+	QPushButton *ok = new QPushButton("Ok");
+	QPushButton *cancel = new QPushButton("Cancel");
+	QDialogButtonBox *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
+	connect(buttons, SIGNAL(accepted()), &selection, SLOT(accept()));
+	connect(buttons, SIGNAL(rejected()), &selection, SLOT(reject()));
+
+	grid->addWidget(buttons);
+
+	selection.setLayout(grid);
+
+	//connect(ok, SIGNAL(released()), this, SLOT(accept()));
+	//connect(cancel, SIGNAL(released()), this, SLOT(reject()));
+
+	if (selection.exec() == QDialog::Accepted) {
+
+		unsigned int numMods = ModInfo::getNumMods();
+		int selectedRowID = buttonGroupRows->checkedId();
+
+		try {
+			QBuffer buffer;
+			buffer.open(QIODevice::ReadWrite);
+			CSVBuilder builder(&buffer);
+			builder.setEscapeMode(CSVBuilder::TYPE_STRING, CSVBuilder::QUOTE_ALWAYS);
+			std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
+			if (mod_Priority->isChecked())
+				fields.push_back(std::make_pair(QString("#Mod_Priority"), CSVBuilder::TYPE_STRING));
+			if (mod_Name->isChecked())
+				fields.push_back(std::make_pair(QString("#Mod_Name"), CSVBuilder::TYPE_STRING));
+			if (mod_Status->isChecked())
+				fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
+			if (primary_Category->isChecked())
+				fields.push_back(std::make_pair(QString("#Primary_Category"), CSVBuilder::TYPE_STRING));
+			if (nexus_ID->isChecked())
+				fields.push_back(std::make_pair(QString("#Nexus_ID"), CSVBuilder::TYPE_INTEGER));
+			if (mod_Nexus_URL->isChecked())
+				fields.push_back(std::make_pair(QString("#Mod_Nexus_URL"), CSVBuilder::TYPE_STRING));
+			if (mod_Version->isChecked())
+				fields.push_back(std::make_pair(QString("#Mod_Version"), CSVBuilder::TYPE_STRING));
+			if (install_Date->isChecked())
+				fields.push_back(std::make_pair(QString("#Install_Date"), CSVBuilder::TYPE_STRING));
+			if (download_File_Name->isChecked())
+				fields.push_back(std::make_pair(QString("#Download_File_Name"), CSVBuilder::TYPE_STRING));
+
+
+
+			//      fields.push_back(std::make_pair(QString("file_category"), CSVBuilder::TYPE_INTEGER));
+			builder.setFields(fields);
+
+			builder.writeHeader();
+
+			for (unsigned int i = 0; i < numMods; ++i) {
+				ModInfo::Ptr info = ModInfo::getByIndex(i);
+				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(i);
+				if ((selectedRowID == 1) && !enabled) {
+					continue;
+				}
+				else if ((selectedRowID == 2) && !m_ModListSortProxy->filterMatchesMod(info, enabled)) {
+					continue;
+				}
+				std::vector<ModInfo::EFlag> flags = info->getFlags();
+				if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
+					(std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
+					if (mod_Priority->isChecked())
+						builder.setRowField("#Mod_Priority", QString("%1").arg(m_OrganizerCore.currentProfile()->getModPriority(i), 4, 10, QChar('0')));
+					if (mod_Name->isChecked())
+						builder.setRowField("#Mod_Name", info->name());
+					if (mod_Status->isChecked())
+						builder.setRowField("#Mod_Status", (enabled)? "Enabled" : "Disabled");
+					if (primary_Category->isChecked())
+						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
+					if (nexus_ID->isChecked())
+						builder.setRowField("#Nexus_ID", info->getNexusID());
+					if (mod_Nexus_URL->isChecked())
+						builder.setRowField("#Mod_Nexus_URL", info->getURL());
+					if (mod_Version->isChecked())
+						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
+					if (install_Date->isChecked())
+						builder.setRowField("#Install_Date", info->creationTime().toString("yyyy/MM/dd HH:mm:ss"));
+					if (download_File_Name->isChecked())
+						builder.setRowField("#Download_File_Name", info->getInstallationFile());
+
+					builder.writeRow();
+				}
+			}
+
+			SaveTextAsDialog saveDialog(this);
+			saveDialog.setText(buffer.data());
+			saveDialog.exec();
+		}
+		catch (const std::exception &e) {
+			reportError(tr("export failed: %1").arg(e.what()));
+		}
+	}
 }
 
 static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
