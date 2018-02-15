@@ -3063,8 +3063,6 @@ void MainWindow::exportModListCSV()
 	//selection.addChoice(tr("Visible"), tr("All mods visible in the mod list are included"), 2);
 
 	QDialog selection(this);
-	//QLabel descriptionLabel("Choose what to export");
-	//selection->(descriptionLabel);
 	QGridLayout *grid = new QGridLayout;
 	selection.setWindowTitle(tr("Export to csv"));
 
@@ -3132,8 +3130,6 @@ void MainWindow::exportModListCSV()
 
 	selection.setLayout(grid);
 
-	//connect(ok, SIGNAL(released()), this, SLOT(accept()));
-	//connect(cancel, SIGNAL(released()), this, SLOT(reject()));
 
 	if (selection.exec() == QDialog::Accepted) {
 
@@ -3165,9 +3161,6 @@ void MainWindow::exportModListCSV()
 			if (download_File_Name->isChecked())
 				fields.push_back(std::make_pair(QString("#Download_File_Name"), CSVBuilder::TYPE_STRING));
 
-
-
-			//      fields.push_back(std::make_pair(QString("file_category"), CSVBuilder::TYPE_INTEGER));
 			builder.setFields(fields);
 
 			builder.writeHeader();
@@ -3403,7 +3396,10 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
 
   m_ModListSortProxy->setCategoryFilter(categories);
   m_ModListSortProxy->setContentFilter(content);
-  ui->clickBlankButton->setEnabled(categories.size() > 0);
+  ui->clickBlankButton->setEnabled(categories.size() > 0 || content.size() >0);
+  //ui->clearFiltersButton->setStyleSheet("border:5px solid #ff0000;");
+  ui->clearFiltersButton->setVisible(categories.size() > 0 || content.size() > 0);
+
   if (indices.count() == 0) {
     ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<All>")));
   } else if (indices.count() > 1) {
@@ -5028,3 +5024,9 @@ void MainWindow::on_clickBlankButton_clicked()
 {
   deselectFilters();
 }
+
+void MainWindow::on_clearFiltersButton_clicked()
+{
+	deselectFilters();
+}
+

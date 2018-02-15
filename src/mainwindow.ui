@@ -96,6 +96,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="clickBlankButton">
+				      <property name="enabled">
+                 <bool>false</bool>
+               </property>							  
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                  <horstretch>0</horstretch>
@@ -485,6 +488,44 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
+              <item alignment="Qt::AlignLeft">
+               <widget class="QPushButton" name="clearFiltersButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="visible">
+                 <bool>false</bool>
+                </property>
+                <property name="layoutDirection">
+                 <enum>Qt::RightToLeft</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">border:2px solid #ff0000;</string>
+                </property>
+                <property name="text">
+                 <string>Clear all Filters</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>12</width>
+                  <height>12</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QComboBox" name="groupCombo">
                 <property name="focusPolicy">
@@ -729,12 +770,12 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
+					<property name="visible">
+                      <bool>true</bool>
+                    </property>									   																 
                     <property name="text">
                      <string>Sort</string>
-                    </property>
-                    <property name="visible">
-                      <bool>true</bool>
-                    </property>
+                    </property>              
                     <property name="icon">
                      <iconset resource="resources.qrc">
                       <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
