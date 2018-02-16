@@ -2,45 +2,45 @@
 
 Mod Organizer (MO) is a tool for managing mod collections of arbitrary size. It is specifically designed for people who like to experiment with mods and thus need an easy and reliable way to install and uninstall them.
 
-## Alternative Download Location
+## Old Download Location
 
-* [LePresidente/modorganizer/releases](https://github.com/LePresidente/modorganizer/releases)
+* [TanninOne/modorganizer/releases](https://github.com/TanninOne/modorganizer/releases)
 
 ## Building
 
-Please refer to [TanninOne/modorganizer-umbrella](https://github.com/TanninOne/modorganizer-umbrella) for build instructions.
+Please refer to [LePresidente/modorganizer-umbrella](https://github.com/LePresidente/modorganizer-umbrella) for build instructions.
 
 ## Other Repositories
 
 MO consists of multiple repositories on github. The Umbrella project will download them automatically as required. They should however also be buildable individually.
 Here is a complete list:
-* https://github.com/TanninOne/modorganizer
-* https://github.com/TanninOne/modorganizer-uibase
-* https://github.com/TanninOne/modorganizer-hookdll
-* https://github.com/TanninOne/modorganizer-bsatk
-* https://github.com/TanninOne/modorganizer-esptk
-* https://github.com/TanninOne/modorganizer-archive
-* https://github.com/TanninOne/modorganizer-nxmhandler
-* https://github.com/TanninOne/modorganizer-lootcli
-* https://github.com/TanninOne/modorganizer-helper
+* https://github.com/LePresidente/modorganizer
+* https://github.com/LePresidente/modorganizer-uibase
+* https://github.com/LePresidente/modorganizer-hookdll
+* https://github.com/LePresidente/modorganizer-bsatk
+* https://github.com/LePresidente/modorganizer-esptk
+* https://github.com/LePresidente/modorganizer-archive
+* https://github.com/LePresidente/modorganizer-nxmhandler
+* https://github.com/LePresidente/modorganizer-lootcli
+* https://github.com/LePresidente/modorganizer-helper
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
-* https://github.com/TanninOne/modorganizer-tool_configurator
-* https://github.com/TanninOne/modorganizer-tool_inieditor
-* https://github.com/TanninOne/modorganizer-preview_base
-* https://github.com/TanninOne/modorganizer-diagnose_basic
-* https://github.com/TanninOne/modorganizer-installer_quick
-* https://github.com/TanninOne/modorganizer-installer_manual
-* https://github.com/TanninOne/modorganizer-installer_fomod
-* https://github.com/TanninOne/modorganizer-installer_bundle
-* https://github.com/TanninOne/modorganizer-installer_bain
-* https://github.com/TanninOne/modorganizer-game_skyrim
-* https://github.com/TanninOne/modorganizer-game_oblivion
-* https://github.com/TanninOne/modorganizer-game_fallout3
-* https://github.com/TanninOne/modorganizer-game_fallout4
-* https://github.com/TanninOne/modorganizer-game_falloutnv
-* https://github.com/TanninOne/modorganizer-game_gamebryo
-* https://github.com/TanninOne/modorganizer-game_features
-* https://github.com/TanninOne/modorganizer-check_fnis
-* https://github.com/TanninOne/modorganizer-plugin_python
-* https://github.com/TanninOne/modorganizer-bsa_extractor
-* https://github.com/TanninOne/usvfs
+* https://github.com/LePresidente/modorganizer-tool_configurator
+* https://github.com/LePresidente/modorganizer-tool_inieditor
+* https://github.com/LePresidente/modorganizer-preview_base
+* https://github.com/LePresidente/modorganizer-diagnose_basic
+* https://github.com/LePresidente/modorganizer-installer_quick
+* https://github.com/LePresidente/modorganizer-installer_manual
+* https://github.com/LePresidente/modorganizer-installer_fomod
+* https://github.com/LePresidente/modorganizer-installer_bundle
+* https://github.com/LePresidente/modorganizer-installer_bain
+* https://github.com/LePresidente/modorganizer-game_skyrim
+* https://github.com/LePresidente/modorganizer-game_oblivion
+* https://github.com/LePresidente/modorganizer-game_fallout3
+* https://github.com/LePresidente/modorganizer-game_fallout4
+* https://github.com/LePresidente/modorganizer-game_falloutnv
+* https://github.com/LePresidente/modorganizer-game_gamebryo
+* https://github.com/LePresidente/modorganizer-game_features
+* https://github.com/LePresidente/modorganizer-check_fnis
+* https://github.com/LePresidente/modorganizer-plugin_python
+* https://github.com/LePresidente/modorganizer-bsa_extractor
+* https://github.com/LePresidente/usvfs
