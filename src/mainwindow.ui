@@ -1540,13 +1540,13 @@ Right now this has very limited functionality</string>
   <action name="actionChange_Game">
    <property name="icon">
     <iconset resource="resources.qrc">
-     <normaloff>:/MO/gui/app_icon</normaloff>:/MO/gui/app_icon</iconset>
+     <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
    </property>
    <property name="text">
     <string>Change Game</string>
    </property>
    <property name="toolTip">
-    <string>Open the game selection dialog</string>
+    <string>Open the Instance selection dialog to manage a different Game</string>
    </property>
   </action>
  </widget>
