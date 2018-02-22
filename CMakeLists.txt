@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(organizer)
 
 # sets ModOrganizer as StartUp Project in Visual Studio
-set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "${CMAKE_PROJECT_NAME}")
+set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "ModOrganizer")
 
 SET(DEPENDENCIES_DIR CACHE PATH "")
 # hint to find qt in dependencies path
