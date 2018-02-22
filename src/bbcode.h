@@ -20,9 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef BBCODE_H
 #define BBCODE_H
 
-
 #include <QString>
-
 
 namespace BBCode {
 
@@ -32,9 +30,8 @@ namespace BBCode {
  * @param replaceOccured if not nullptr, this parameter will be set to true if any bb tags were replaced
  * @return the same string in html representation
  **/
-QString convertToHTML(const QString &input);
+QString convertToHTML(const QString& input);
 
-}
-
+} // namespace BBCode
 
 #endif // BBCODE_H

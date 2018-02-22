@@ -20,26 +20,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef MODINFODIALOG_H
 #define MODINFODIALOG_H
 
-
 #include "modinfo.h"
 #include "tutorabledialog.h"
 
+#include <QAction>
 #include <QDialog>
-#include <QSignalMapper>
-#include <QSettings>
+#include <QListWidgetItem>
+#include <QModelIndex>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QModelIndex>
-#include <QAction>
-#include <QListWidgetItem>
-#include <QTreeWidgetItem>
+#include <QSettings>
+#include <QSignalMapper>
 #include <QTextCodec>
-#include <set>
+#include <QTreeWidgetItem>
 #include <directoryentry.h>
-
+#include <set>
 
 namespace Ui {
-    class ModInfoDialog;
+class ModInfoDialog;
 }
 
 class QFileSystemModel;
@@ -50,187 +48,184 @@ class CategoryFactory;
  * this is a larger dialog used to visualise information abount the mod.
  * @todo this would probably a good place for a plugin-system
  **/
-class ModInfoDialog : public MOBase::TutorableDialog
-{
+class ModInfoDialog : public MOBase::TutorableDialog {
     Q_OBJECT
 
 public:
-
-  enum ETabs {
-    TAB_TEXTFILES,
-    TAB_INIFILES,
-    TAB_IMAGES,
-    TAB_ESPS,
-    TAB_CONFLICTS,
-    TAB_CATEGORIES,
-    TAB_NEXUS,
-    TAB_NOTES,
-    TAB_FILETREE
-  };
+    enum ETabs {
+        TAB_TEXTFILES,
+        TAB_INIFILES,
+        TAB_IMAGES,
+        TAB_ESPS,
+        TAB_CONFLICTS,
+        TAB_CATEGORIES,
+        TAB_NEXUS,
+        TAB_NOTES,
+        TAB_FILETREE
+    };
 
 public:
+    /**
+     * @brief constructor
+     *
+     * @param modInfo info structure about the mod to display
+     * @param parent parend widget
+     **/
+    explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry* directory, bool unmanaged,
+                           QWidget* parent = 0);
+    ~ModInfoDialog();
 
- /**
-  * @brief constructor
-  *
-  * @param modInfo info structure about the mod to display
-  * @param parent parend widget
-  **/
- explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, QWidget *parent = 0);
-  ~ModInfoDialog();
+    /**
+     * @brief retrieve the (user-modified) version of the mod
+     *
+     * @return the (user-modified) version of the mod
+     **/
+    QString getModVersion() const;
 
-  /**
-   * @brief retrieve the (user-modified) version of the mod
-   *
-   * @return the (user-modified) version of the mod
-   **/
-  QString getModVersion() const;
+    /**
+     * @brief retrieve the (user-modified) mod id
+     *
+     * @return the (user-modified) id of the mod
+     **/
+    const int getModID() const;
 
-  /**
-   * @brief retrieve the (user-modified) mod id
-   *
-   * @return the (user-modified) id of the mod
-   **/
-  const int getModID() const;
+    /**
+     * @brief open the specified tab in the dialog if it's enabled
+     *
+     * @param tab the tab to activate
+     **/
+    void openTab(int tab);
 
-  /**
-   * @brief open the specified tab in the dialog if it's enabled
-   *
-   * @param tab the tab to activate
-   **/
-  void openTab(int tab);
+    void restoreTabState(const QByteArray& state);
 
-  void restoreTabState(const QByteArray &state);
-
-  QByteArray saveTabState() const;
+    QByteArray saveTabState() const;
 
 signals:
 
-  void thumbnailClickedSignal(const QString &filename);
-  void nexusLinkActivated(const QString &link);
-  void downloadRequest(const QString &link);
-  void modOpen(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
-  void originModified(int originID);
-  void endorseMod(ModInfo::Ptr nexusID);
+    void thumbnailClickedSignal(const QString& filename);
+    void nexusLinkActivated(const QString& link);
+    void downloadRequest(const QString& link);
+    void modOpen(const QString& modName, int tab);
+    void modOpenNext();
+    void modOpenPrev();
+    void originModified(int originID);
+    void endorseMod(ModInfo::Ptr nexusID);
 
 public slots:
 
-  void modDetailsUpdated(bool success);
+    void modDetailsUpdated(bool success);
 
 private:
+    void initFiletree(ModInfo::Ptr modInfo);
+    void initINITweaks();
 
-  void initFiletree(ModInfo::Ptr modInfo);
-  void initINITweaks();
+    void refreshLists();
 
-  void refreshLists();
+    void addCategories(const CategoryFactory& factory, const std::set<int>& enabledCategories, QTreeWidgetItem* root,
+                       int rootLevel);
 
-  void addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel);
+    void updateVersionColor();
 
-  void updateVersionColor();
+    void refreshNexusData(int modID);
+    void activateNexusTab();
+    QString getFileCategory(int categoryID);
+    bool recursiveDelete(const QModelIndex& index);
+    void deleteFile(const QModelIndex& index);
+    void openFile(const QModelIndex& index);
+    void saveIniTweaks();
+    void saveCategories(QTreeWidgetItem* currentNode);
+    void saveCurrentTextFile();
+    void saveCurrentIniFile();
+    void openTextFile(const QString& fileName);
+    void openIniFile(const QString& fileName);
+    bool allowNavigateFromTXT();
+    bool allowNavigateFromINI();
+    bool hideFile(const QString& oldName);
+    bool unhideFile(const QString& oldName);
+    void addCheckedCategories(QTreeWidgetItem* tree);
+    void refreshPrimaryCategoriesBox();
 
-  void refreshNexusData(int modID);
-  void activateNexusTab();
-  QString getFileCategory(int categoryID);
-  bool recursiveDelete(const QModelIndex &index);
-  void deleteFile(const QModelIndex &index);
-  void openFile(const QModelIndex &index);
-  void saveIniTweaks();
-  void saveCategories(QTreeWidgetItem *currentNode);
-  void saveCurrentTextFile();
-  void saveCurrentIniFile();
-  void openTextFile(const QString &fileName);
-  void openIniFile(const QString &fileName);
-  bool allowNavigateFromTXT();
-  bool allowNavigateFromINI();
-  bool hideFile(const QString &oldName);
-  bool unhideFile(const QString &oldName);
-  void addCheckedCategories(QTreeWidgetItem *tree);
-  void refreshPrimaryCategoriesBox();
-
-  int tabIndex(const QString &tabId);
+    int tabIndex(const QString& tabId);
 
 private slots:
 
-  void hideConflictFile();
-  void unhideConflictFile();
+    void hideConflictFile();
+    void unhideConflictFile();
 
-  void thumbnailClicked(const QString &fileName);
-  void linkClicked(const QUrl &url);
+    void thumbnailClicked(const QString& fileName);
+    void linkClicked(const QUrl& url);
 
-  void deleteTriggered();
-  void renameTriggered();
-  void openTriggered();
-  void createDirectoryTriggered();
-  void hideTriggered();
-  void unhideTriggered();
+    void deleteTriggered();
+    void renameTriggered();
+    void openTriggered();
+    void createDirectoryTriggered();
+    void hideTriggered();
+    void unhideTriggered();
 
-  void on_closeButton_clicked();
-  void on_saveButton_clicked();
-  void on_activateESP_clicked();
-  void on_deactivateESP_clicked();
-  void on_saveTXTButton_clicked();
-  void on_visitNexusLabel_linkActivated(const QString &link);
-  void on_modIDEdit_editingFinished();
-  void on_versionEdit_editingFinished();
-  void on_iniFileView_textChanged();
-  void on_textFileView_textChanged();
-  void on_tabWidget_currentChanged(int index);
-  void on_primaryCategoryBox_currentIndexChanged(int index);
-  void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
-  void on_textFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_iniTweaksList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
-  void on_fileTree_customContextMenuRequested(const QPoint &pos);
+    void on_closeButton_clicked();
+    void on_saveButton_clicked();
+    void on_activateESP_clicked();
+    void on_deactivateESP_clicked();
+    void on_saveTXTButton_clicked();
+    void on_visitNexusLabel_linkActivated(const QString& link);
+    void on_modIDEdit_editingFinished();
+    void on_versionEdit_editingFinished();
+    void on_iniFileView_textChanged();
+    void on_textFileView_textChanged();
+    void on_tabWidget_currentChanged(int index);
+    void on_primaryCategoryBox_currentIndexChanged(int index);
+    void on_categoriesTree_itemChanged(QTreeWidgetItem* item, int column);
+    void on_textFileList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void on_iniFileList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void on_iniTweaksList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
+    void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem* item, int column);
+    void on_overwriteTree_customContextMenuRequested(const QPoint& pos);
+    void on_fileTree_customContextMenuRequested(const QPoint& pos);
 
-  void on_refreshButton_clicked();
+    void on_refreshButton_clicked();
 
-  void on_endorseBtn_clicked();
+    void on_endorseBtn_clicked();
 
-  void on_nextButton_clicked();
+    void on_nextButton_clicked();
 
-  void on_prevButton_clicked();
+    void on_prevButton_clicked();
 
-  void on_iniTweaksList_customContextMenuRequested(const QPoint &pos);
+    void on_iniTweaksList_customContextMenuRequested(const QPoint& pos);
 
-  void createTweak();
+    void createTweak();
+
 private:
+    Ui::ModInfoDialog* ui;
 
-  Ui::ModInfoDialog *ui;
+    ModInfo::Ptr m_ModInfo;
+    int m_OriginID;
 
-  ModInfo::Ptr m_ModInfo;
-  int m_OriginID;
+    QSignalMapper m_ThumbnailMapper;
+    QString m_RootPath;
 
-  QSignalMapper m_ThumbnailMapper;
-  QString m_RootPath;
+    QFileSystemModel* m_FileSystemModel;
+    QTreeView* m_FileTree;
+    QModelIndexList m_FileSelection;
 
-  QFileSystemModel *m_FileSystemModel;
-  QTreeView *m_FileTree;
-  QModelIndexList m_FileSelection;
+    QSettings* m_Settings;
 
-  QSettings *m_Settings;
+    std::set<int> m_RequestIDs;
+    bool m_RequestStarted;
 
-  std::set<int> m_RequestIDs;
-  bool m_RequestStarted;
+    QAction* m_DeleteAction;
+    QAction* m_RenameAction;
+    QAction* m_OpenAction;
+    QAction* m_NewFolderAction;
+    QAction* m_HideAction;
+    QAction* m_UnhideAction;
 
-  QAction *m_DeleteAction;
-  QAction *m_RenameAction;
-  QAction *m_OpenAction;
-  QAction *m_NewFolderAction;
-  QAction *m_HideAction;
-  QAction *m_UnhideAction;
+    QTreeWidgetItem* m_ConflictsContextItem;
 
-  QTreeWidgetItem *m_ConflictsContextItem;
+    const MOShared::DirectoryEntry* m_Directory;
+    MOShared::FilesOrigin* m_Origin;
 
-  const MOShared::DirectoryEntry *m_Directory;
-  MOShared::FilesOrigin *m_Origin;
-
-  std::map<int, int> m_RealTabPos;
-
+    std::map<int, int> m_RealTabPos;
 };
 
 #endif // MODINFODIALOG_H

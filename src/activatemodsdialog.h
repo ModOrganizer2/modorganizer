@@ -31,46 +31,46 @@ class QWidget;
 #include <set>
 
 namespace Ui {
-    class ActivateModsDialog;
+class ActivateModsDialog;
 }
 
 /**
  * @brief Dialog that is used to batch activate/deactivate mods and plugins
  **/
-class ActivateModsDialog : public MOBase::TutorableDialog
-{
-  Q_OBJECT
+class ActivateModsDialog : public MOBase::TutorableDialog {
+    Q_OBJECT
 
 public:
- /**
-  * @brief constructor
-  *
-  * @param missingPlugins a map containing missing plugins that need to be activated
-  * @param parent ... Defaults to 0.
-  **/
- explicit ActivateModsDialog(SaveGameInfo::MissingAssets const &missingAssets, QWidget *parent = 0);
-  ~ActivateModsDialog();
+    /**
+     * @brief constructor
+     *
+     * @param missingPlugins a map containing missing plugins that need to be activated
+     * @param parent ... Defaults to 0.
+     **/
+    explicit ActivateModsDialog(SaveGameInfo::MissingAssets const& missingAssets, QWidget* parent = 0);
+    ~ActivateModsDialog();
 
-  /**
-   * @brief get a list of mods that the user chose to activate
-   * 
-   * @note This can of ocurse only be called after the dialog has been displayed
-   *
-   * @return set< QString > the mods to activate
-   **/
-  std::set<QString> getModsToActivate();
+    /**
+     * @brief get a list of mods that the user chose to activate
+     *
+     * @note This can of ocurse only be called after the dialog has been displayed
+     *
+     * @return set< QString > the mods to activate
+     **/
+    std::set<QString> getModsToActivate();
 
-  /**
-   * @brief get a list of plugins that should be activated
-   *
-   * @return set< QString > the plugins to activate. This contains only plugins that become available after enabling the mods retrieved with getModsToActivate
-   **/
-  std::set<QString> getESPsToActivate();
+    /**
+     * @brief get a list of plugins that should be activated
+     *
+     * @return set< QString > the plugins to activate. This contains only plugins that become available after enabling
+     *the mods retrieved with getModsToActivate
+     **/
+    std::set<QString> getESPsToActivate();
 
 private slots:
 
 private:
-  Ui::ActivateModsDialog *ui;
+    Ui::ActivateModsDialog* ui;
 };
 
 #endif // ACTIVATEMODSDIALOG_H

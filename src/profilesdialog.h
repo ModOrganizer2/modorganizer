@@ -28,73 +28,72 @@ class QListWidgetItem;
 #include <QObject>
 class QString;
 
-namespace Ui { class ProfilesDialog; }
+namespace Ui {
+class ProfilesDialog;
+}
 
-namespace MOBase { class IPluginGame; }
-
+namespace MOBase {
+class IPluginGame;
+}
 
 /**
  * @brief Dialog that can be used to create/delete/modify profiles
  **/
-class ProfilesDialog : public MOBase::TutorableDialog
-{
-  Q_OBJECT
+class ProfilesDialog : public MOBase::TutorableDialog {
+    Q_OBJECT
 
 public:
+    /**
+     * @brief constructor
+     *
+     * @param profileName currently enabled profile
+     * @param parent parent widget
+     **/
+    explicit ProfilesDialog(const QString& profileName, MOBase::IPluginGame const* game, QWidget* parent = 0);
+    ~ProfilesDialog();
 
- /**
-  * @brief constructor
-  *
-  * @param profileName currently enabled profile
-  * @param parent parent widget
-  **/
- explicit ProfilesDialog(const QString &profileName, MOBase::IPluginGame const *game, QWidget *parent = 0);
-  ~ProfilesDialog();
-
-  /**
-   * @return true if creation of a new profile failed
-   * @todo the notion of a fail state makes little sense in the current dialog
-   **/
-  bool failed() const { return m_FailState; }
+    /**
+     * @return true if creation of a new profile failed
+     * @todo the notion of a fail state makes little sense in the current dialog
+     **/
+    bool failed() const { return m_FailState; }
 
 protected:
-
-  virtual void showEvent(QShowEvent *event);
+    virtual void showEvent(QShowEvent* event);
 
 private slots:
-  void on_localIniFilesBox_stateChanged(int state);
+    void on_localIniFilesBox_stateChanged(int state);
 
 private:
-
-  QListWidgetItem *addItem(const QString &name);
-  void createProfile(const QString &name, bool useDefaultSettings);
-  void createProfile(const QString &name, const Profile &reference);
+    QListWidgetItem* addItem(const QString& name);
+    void createProfile(const QString& name, bool useDefaultSettings);
+    void createProfile(const QString& name, const Profile& reference);
 
 private slots:
 
-  void on_closeButton_clicked();
+    void on_closeButton_clicked();
 
-  void on_addProfileButton_clicked();
+    void on_addProfileButton_clicked();
 
-  void on_invalidationBox_stateChanged(int arg1);
+    void on_invalidationBox_stateChanged(int arg1);
 
-  void on_copyProfileButton_clicked();
+    void on_copyProfileButton_clicked();
 
-  void on_profilesList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_profilesList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
 
-  void on_removeProfileButton_clicked();
+    void on_removeProfileButton_clicked();
 
-  void on_localSavesBox_stateChanged(int arg1);
+    void on_localSavesBox_stateChanged(int arg1);
 
-  void on_transferButton_clicked();
+    void on_transferButton_clicked();
 
-  void on_renameButton_clicked();
+    void on_renameButton_clicked();
 
 private:
-  Ui::ProfilesDialog *ui;
-  QListWidget *m_ProfilesList;
-  bool m_FailState;
-  MOBase::IPluginGame const *m_Game;
+    Ui::ProfilesDialog* ui;
+    QListWidget* m_ProfilesList;
+    bool m_FailState;
+    MOBase::IPluginGame const* m_Game;
 };
 
 #endif // PROFILESDIALOG_H

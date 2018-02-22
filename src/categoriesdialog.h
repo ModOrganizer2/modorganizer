@@ -30,42 +30,36 @@ class CategoriesDialog;
 /**
  * @brief Dialog that allows users to configure mod categories
  **/
-class CategoriesDialog : public MOBase::TutorableDialog
-{
-  Q_OBJECT
-  
+class CategoriesDialog : public MOBase::TutorableDialog {
+    Q_OBJECT
+
 public:
+    explicit CategoriesDialog(QWidget* parent = 0);
+    ~CategoriesDialog();
 
-  explicit CategoriesDialog(QWidget *parent = 0);
-  ~CategoriesDialog();
-
-  /**
-   * @brief store changes here to the global categories store (categories.h)
-   *
-   **/
-  void commitChanges();
+    /**
+     * @brief store changes here to the global categories store (categories.h)
+     *
+     **/
+    void commitChanges();
 
 private slots:
 
-  void on_categoriesTable_customContextMenuRequested(const QPoint &pos);
-  void addCategory_clicked();
-  void removeCategory_clicked();
-  void cellChanged(int row, int column);
+    void on_categoriesTable_customContextMenuRequested(const QPoint& pos);
+    void addCategory_clicked();
+    void removeCategory_clicked();
+    void cellChanged(int row, int column);
 
 private:
-
-  void refreshIDs();
-  void fillTable();
+    void refreshIDs();
+    void fillTable();
 
 private:
+    Ui::CategoriesDialog* ui;
+    int m_ContextRow;
 
-  Ui::CategoriesDialog *ui;
-  int m_ContextRow;
-
-  int m_HighestID;
-  std::set<int> m_IDs;
-
+    int m_HighestID;
+    std::set<int> m_IDs;
 };
 
 #endif // CATEGORIESDIALOG_H
-

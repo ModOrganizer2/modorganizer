@@ -1,13 +1,12 @@
 #ifndef LEAKTRACE_H
 #define LEAKTRACE_H
 
-
 namespace LeakTrace {
 
-void TraceAlloc(void *ptr, const char *functionName, int line);
-void TraceDealloc(void *ptr);
+void TraceAlloc(void* ptr, const char* functionName, int line);
+void TraceDealloc(void* ptr);
 
-};
+}; // namespace LeakTrace
 
 #ifdef TRACE_LEAKS
 

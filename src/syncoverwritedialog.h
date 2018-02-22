@@ -20,36 +20,33 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SYNCOVERWRITEDIALOG_H
 #define SYNCOVERWRITEDIALOG_H
 
-
 #include "tutorabledialog.h"
 #include <QTreeWidgetItem>
 #include <directoryentry.h>
-
 
 namespace Ui {
 class SyncOverwriteDialog;
 }
 
-class SyncOverwriteDialog : public MOBase::TutorableDialog
-{
-  Q_OBJECT
-  
+class SyncOverwriteDialog : public MOBase::TutorableDialog {
+    Q_OBJECT
+
 public:
-  explicit SyncOverwriteDialog(const QString &path, MOShared::DirectoryEntry *directoryStructure, QWidget *parent = 0);
-  ~SyncOverwriteDialog();
+    explicit SyncOverwriteDialog(const QString& path, MOShared::DirectoryEntry* directoryStructure,
+                                 QWidget* parent = 0);
+    ~SyncOverwriteDialog();
 
-  void apply(const QString &modDirectory);
-private:
-  void refresh(const QString &path);
-  void readTree(const QString &path, MOShared::DirectoryEntry *directoryStructure, QTreeWidgetItem *subTree);
-  void applyTo(QTreeWidgetItem *item, const QString &path, const QString &modDirectory);
+    void apply(const QString& modDirectory);
 
 private:
+    void refresh(const QString& path);
+    void readTree(const QString& path, MOShared::DirectoryEntry* directoryStructure, QTreeWidgetItem* subTree);
+    void applyTo(QTreeWidgetItem* item, const QString& path, const QString& modDirectory);
 
-  Ui::SyncOverwriteDialog *ui;
-  QString m_SourcePath;
-  MOShared::DirectoryEntry *m_DirectoryStructure;
-
+private:
+    Ui::SyncOverwriteDialog* ui;
+    QString m_SourcePath;
+    MOShared::DirectoryEntry* m_DirectoryStructure;
 };
 
 #endif // SYNCOVERWRITEDIALOG_H

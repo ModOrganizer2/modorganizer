@@ -3,11 +3,10 @@
 
 class QString;
 
-class ILockedWaitingForProcess
-{
+class ILockedWaitingForProcess {
 public:
-  virtual bool unlockForced() const = 0;
-  virtual void setProcessName(QString const &) = 0;
+    virtual bool unlockForced() const = 0;
+    virtual void setProcessName(QString const&) = 0;
 };
 
 #endif // ILOCKEDWAITINGFORPROCESS_H

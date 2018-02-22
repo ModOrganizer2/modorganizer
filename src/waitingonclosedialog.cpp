@@ -23,49 +23,36 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QResizeEvent>
 #include <QWidget>
-#include <Qt>                 // for Qt::FramelessWindowHint, etc
+#include <Qt> // for Qt::FramelessWindowHint, etc
 
-WaitingOnCloseDialog::WaitingOnCloseDialog(QWidget *parent)
-  : LockedDialogBase(parent,true)
-  , ui(new Ui::WaitingOnCloseDialog)
-{
-  ui->setupUi(this);
+WaitingOnCloseDialog::WaitingOnCloseDialog(QWidget* parent)
+    : LockedDialogBase(parent, true), ui(new Ui::WaitingOnCloseDialog) {
+    ui->setupUi(this);
 
-  // Supposedly the Qt::CustomizeWindowHint should use a customized window
-  // allowing us to select if there is a close button. In practice this doesn't
-  // seem to work. We will ignore pressing the close button if unlockByButton == true
-  Qt::WindowFlags flags =
-    this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
-  if (m_allowClose)
-    flags |= Qt::WindowCloseButtonHint;
-  this->setWindowFlags(flags);
+    // Supposedly the Qt::CustomizeWindowHint should use a customized window
+    // allowing us to select if there is a close button. In practice this doesn't
+    // seem to work. We will ignore pressing the close button if unlockByButton == true
+    Qt::WindowFlags flags =
+        this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
+    if (m_allowClose)
+        flags |= Qt::WindowCloseButtonHint;
+    this->setWindowFlags(flags);
 }
 
-WaitingOnCloseDialog::~WaitingOnCloseDialog()
-{
-    delete ui;
-}
+WaitingOnCloseDialog::~WaitingOnCloseDialog() { delete ui; }
 
+void WaitingOnCloseDialog::setProcessName(const QString& name) { ui->processLabel->setText(name); }
 
-void WaitingOnCloseDialog::setProcessName(const QString &name)
-{
-  ui->processLabel->setText(name);
-}
+void WaitingOnCloseDialog::on_closeButton_clicked() { unlock(); }
 
-void WaitingOnCloseDialog::on_closeButton_clicked()
-{
-  unlock();
-}
-
-void WaitingOnCloseDialog::on_cancelButton_clicked()
-{
-  cancel();
-  unlock();
+void WaitingOnCloseDialog::on_cancelButton_clicked() {
+    cancel();
+    unlock();
 }
 
 void WaitingOnCloseDialog::unlock() {
-  LockedDialogBase::unlock();
-  ui->label->setText("unlocking may take a few seconds");
-  ui->closeButton->setEnabled(false);
-  ui->cancelButton->setEnabled(false);
+    LockedDialogBase::unlock();
+    ui->label->setText("unlocking may take a few seconds");
+    ui->closeButton->setEnabled(false);
+    ui->cancelButton->setEnabled(false);
 }

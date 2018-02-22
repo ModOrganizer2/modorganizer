@@ -28,46 +28,41 @@ namespace Ui {
 class OverwriteInfoDialog;
 }
 
-class OverwriteInfoDialog : public QDialog
-{
-  Q_OBJECT
-  
+class OverwriteInfoDialog : public QDialog {
+    Q_OBJECT
+
 public:
+    explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget* parent = 0);
+    ~OverwriteInfoDialog();
 
-  explicit OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent = 0);
-  ~OverwriteInfoDialog();
+    ModInfo::Ptr modInfo() const { return m_ModInfo; }
 
-  ModInfo::Ptr modInfo() const { return m_ModInfo; }
-
-  void setModInfo(ModInfo::Ptr modInfo);
+    void setModInfo(ModInfo::Ptr modInfo);
 
 private:
-
-  void openFile(const QModelIndex &index);
-  bool recursiveDelete(const QModelIndex &index);
-  void deleteFile(const QModelIndex &index);
+    void openFile(const QModelIndex& index);
+    bool recursiveDelete(const QModelIndex& index);
+    void deleteFile(const QModelIndex& index);
 
 private slots:
 
-  void deleteTriggered();
-  void renameTriggered();
-  void openTriggered();
-  void createDirectoryTriggered();
+    void deleteTriggered();
+    void renameTriggered();
+    void openTriggered();
+    void createDirectoryTriggered();
 
-  void on_filesView_customContextMenuRequested(const QPoint &pos);
+    void on_filesView_customContextMenuRequested(const QPoint& pos);
 
 private:
+    Ui::OverwriteInfoDialog* ui;
+    QFileSystemModel* m_FileSystemModel;
+    QModelIndexList m_FileSelection;
+    QAction* m_DeleteAction;
+    QAction* m_RenameAction;
+    QAction* m_OpenAction;
+    QAction* m_NewFolderAction;
 
-  Ui::OverwriteInfoDialog *ui;
-  QFileSystemModel *m_FileSystemModel;
-  QModelIndexList m_FileSelection;
-  QAction *m_DeleteAction;
-  QAction *m_RenameAction;
-  QAction *m_OpenAction;
-  QAction *m_NewFolderAction;
-
-  ModInfo::Ptr m_ModInfo;
-
+    ModInfo::Ptr m_ModInfo;
 };
 
 #endif // OVERWRITEINFODIALOG_H

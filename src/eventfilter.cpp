@@ -17,17 +17,9 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #include "eventfilter.h"
 
-EventFilter::EventFilter(QObject *parent,
-                         const EventFilter::HandlerFunc &handler)
-  : QObject(parent)
-  , m_Handler(handler)
-{
-}
+EventFilter::EventFilter(QObject* parent, const EventFilter::HandlerFunc& handler)
+    : QObject(parent), m_Handler(handler) {}
 
-bool EventFilter::eventFilter(QObject *obj, QEvent *event)
-{
-  return m_Handler(obj, event);
-}
+bool EventFilter::eventFilter(QObject* obj, QEvent* event) { return m_Handler(obj, event); }
