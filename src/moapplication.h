@@ -23,29 +23,24 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QFileSystemWatcher>
 
-
 class MOApplication : public QApplication {
-Q_OBJECT
+    Q_OBJECT
 public:
+    MOApplication(int& argc, char** argv);
 
-  MOApplication(int &argc, char **argv);
-
-  virtual bool notify (QObject *receiver, QEvent *event);
+    virtual bool notify(QObject* receiver, QEvent* event);
 
 public slots:
 
-  bool setStyleFile(const QString &style);
+    bool setStyleFile(const QString& style);
 
 private slots:
 
-  void updateStyle(const QString &fileName);
+    void updateStyle(const QString& fileName);
 
 private:
-
-  QFileSystemWatcher m_StyleWatcher;
-  QString m_DefaultStyle;
-
+    QFileSystemWatcher m_StyleWatcher;
+    QString m_DefaultStyle;
 };
-
 
 #endif // MOAPPLICATION_H

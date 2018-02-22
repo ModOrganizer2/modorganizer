@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef UTIL_H
 #define UTIL_H
 
-
 #include <string>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -28,23 +27,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOShared {
 
 /// Test if a file (or directory) by the specified name exists
-bool FileExists(const std::string &filename);
-bool FileExists(const std::wstring &filename);
+bool FileExists(const std::string& filename);
+bool FileExists(const std::wstring& filename);
 
-bool FileExists(const std::wstring &searchPath, const std::wstring &filename);
+bool FileExists(const std::wstring& searchPath, const std::wstring& filename);
 
-std::string ToString(const std::wstring &source, bool utf8);
-std::wstring ToWString(const std::string &source, bool utf8);
+std::string ToString(const std::wstring& source, bool utf8);
+std::wstring ToWString(const std::string& source, bool utf8);
 
-std::string &ToLower(std::string &text);
-std::string ToLower(const std::string &text);
+std::string& ToLower(std::string& text);
+std::string ToLower(const std::string& text);
 
-std::wstring &ToLower(std::wstring &text);
-std::wstring ToLower(const std::wstring &text);
+std::wstring& ToLower(std::wstring& text);
+std::wstring ToLower(const std::wstring& text);
 
-bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
+bool CaseInsensitiveEqual(const std::wstring& lhs, const std::wstring& rhs);
 
-VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
+VS_FIXEDFILEINFO GetFileVersion(const std::wstring& fileName);
 
 } // namespace MOShared
 

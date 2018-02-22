@@ -20,62 +20,55 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NEXUSVIEW_H
 #define NEXUSVIEW_H
 
-
 class QEvent;
 class QUrl;
 class QWidget;
-#include <QWebEngineView>
 #include <QWebEnginePage>
+#include <QWebEngineView>
 
 /**
  * @brief web view used to display a nexus page
  **/
-class BrowserView : public QWebEngineView
-{
+class BrowserView : public QWebEngineView {
     Q_OBJECT
 
 public:
-
-  explicit BrowserView(QWidget *parent = 0);
+    explicit BrowserView(QWidget* parent = 0);
 
 signals:
 
-  /**
-   * @brief emitted when the user opens a new window to be displayed in another tab
-   *
-   * @param newView the view for the newly opened window
-   **/
-  void initTab(BrowserView *newView);
+    /**
+     * @brief emitted when the user opens a new window to be displayed in another tab
+     *
+     * @param newView the view for the newly opened window
+     **/
+    void initTab(BrowserView* newView);
 
-  /**
-   * @brief emitted when the user requests a link to be opened in a new tab by middle-clicking
-   *
-   * @param url the url to open
-   */
-  void openUrlInNewTab(const QUrl &url);
+    /**
+     * @brief emitted when the user requests a link to be opened in a new tab by middle-clicking
+     *
+     * @param url the url to open
+     */
+    void openUrlInNewTab(const QUrl& url);
 
-  /**
-   * @brief Ctrl-f was clicked. The containing dialog should activate its find-facility
-   */
-  void startFind();
+    /**
+     * @brief Ctrl-f was clicked. The containing dialog should activate its find-facility
+     */
+    void startFind();
 
-  /**
-   * @brief F3 was pressed. The containing dialog should search again
-   */
-  void findAgain();
+    /**
+     * @brief F3 was pressed. The containing dialog should search again
+     */
+    void findAgain();
 
 protected:
+    virtual QWebEngineView* createWindow(QWebEnginePage::WebWindowType type);
 
-  virtual QWebEngineView *createWindow(QWebEnginePage::WebWindowType type);
-
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-
+    virtual bool eventFilter(QObject* obj, QEvent* event);
 
 private:
-
-  QString m_FindPattern;
-  bool m_MiddleClick;
-
+    QString m_FindPattern;
+    bool m_MiddleClick;
 };
 
 #endif // NEXUSVIEW_H

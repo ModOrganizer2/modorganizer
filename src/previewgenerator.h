@@ -22,32 +22,28 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QString>
 #include <QWidget>
-#include <map>
 #include <functional>
 #include <ipluginpreview.h>
+#include <map>
 
-class PreviewGenerator
-{
+class PreviewGenerator {
 public:
-  PreviewGenerator();
+    PreviewGenerator();
 
-  void registerPlugin(MOBase::IPluginPreview *plugin);
+    void registerPlugin(MOBase::IPluginPreview* plugin);
 
-  bool previewSupported(const QString &fileExtension) const;
+    bool previewSupported(const QString& fileExtension) const;
 
-  QWidget *genPreview(const QString &fileName) const;
-
-private:
-
-  QWidget *genImagePreview(const QString &fileName) const;
-  QWidget *genTxtPreview(const QString &fileName) const;
+    QWidget* genPreview(const QString& fileName) const;
 
 private:
+    QWidget* genImagePreview(const QString& fileName) const;
+    QWidget* genTxtPreview(const QString& fileName) const;
 
-  std::map<QString, MOBase::IPluginPreview*> m_PreviewPlugins;
+private:
+    std::map<QString, MOBase::IPluginPreview*> m_PreviewPlugins;
 
-  QSize m_MaxSize;
-
+    QSize m_MaxSize;
 };
 
 #endif // PREVIEWGENERATOR_H

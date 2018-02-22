@@ -22,28 +22,27 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
-std::string windows_error::constructMessage(const std::string& input, int inErrorCode)
-{
-  std::ostringstream finalMessage;
-  finalMessage << input;
+std::string windows_error::constructMessage(const std::string& input, int inErrorCode) {
+    std::ostringstream finalMessage;
+    finalMessage << input;
 
-  LPSTR buffer = nullptr;
+    LPSTR buffer = nullptr;
 
-  DWORD errorCode = inErrorCode != -1 ? inErrorCode : ::GetLastError();
+    DWORD errorCode = inErrorCode != -1 ? inErrorCode : ::GetLastError();
 
-  // TODO: the message is not english?
-  if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                     nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
-    finalMessage << " (errorcode " << errorCode << ")";
-  } else {
-    LPSTR lastChar = buffer + strlen(buffer) - 2;
-    *lastChar = '\0';
-    finalMessage << " (" << buffer << " [" << errorCode << "])";
-    LocalFree(buffer); // allocated by FormatMessage
-  }
+    // TODO: the message is not english?
+    if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode,
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
+        finalMessage << " (errorcode " << errorCode << ")";
+    } else {
+        LPSTR lastChar = buffer + strlen(buffer) - 2;
+        *lastChar = '\0';
+        finalMessage << " (" << buffer << " [" << errorCode << "])";
+        LocalFree(buffer); // allocated by FormatMessage
+    }
 
-  ::SetLastError(errorCode); // restore error code because FormatMessage might have modified it
-  return finalMessage.str();
+    ::SetLastError(errorCode); // restore error code because FormatMessage might have modified it
+    return finalMessage.str();
 }
 
 } // namespace MOShared

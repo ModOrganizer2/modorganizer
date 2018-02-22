@@ -20,46 +20,31 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "queryoverwritedialog.h"
 #include "ui_queryoverwritedialog.h"
 
-QueryOverwriteDialog::QueryOverwriteDialog(QWidget *parent, Backup b)
-  : QDialog(parent), ui(new Ui::QueryOverwriteDialog),
-    m_Action(ACT_NONE)
-{
-  ui->setupUi(this);
-  ui->backupBox->setChecked(b == BACKUP_YES);
-  QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxQuestion);
-  ui->iconLabel->setPixmap(icon.pixmap(128));
-
+QueryOverwriteDialog::QueryOverwriteDialog(QWidget* parent, Backup b)
+    : QDialog(parent), ui(new Ui::QueryOverwriteDialog), m_Action(ACT_NONE) {
+    ui->setupUi(this);
+    ui->backupBox->setChecked(b == BACKUP_YES);
+    QIcon icon = QApplication::style()->standardIcon(QStyle::SP_MessageBoxQuestion);
+    ui->iconLabel->setPixmap(icon.pixmap(128));
 }
 
-QueryOverwriteDialog::~QueryOverwriteDialog()
-{
-  delete ui;
+QueryOverwriteDialog::~QueryOverwriteDialog() { delete ui; }
+
+bool QueryOverwriteDialog::backup() const { return ui->backupBox->isChecked(); }
+
+void QueryOverwriteDialog::on_mergeBtn_clicked() {
+    this->m_Action = ACT_MERGE;
+    this->accept();
 }
 
-bool QueryOverwriteDialog::backup() const
-{
-  return ui->backupBox->isChecked();
+void QueryOverwriteDialog::on_replaceBtn_clicked() {
+    this->m_Action = ACT_REPLACE;
+    this->accept();
 }
 
-void QueryOverwriteDialog::on_mergeBtn_clicked()
-{
-  this->m_Action = ACT_MERGE;
-  this->accept();
+void QueryOverwriteDialog::on_renameBtn_clicked() {
+    this->m_Action = ACT_RENAME;
+    this->accept();
 }
 
-void QueryOverwriteDialog::on_replaceBtn_clicked()
-{
-  this->m_Action = ACT_REPLACE;
-  this->accept();
-}
-
-void QueryOverwriteDialog::on_renameBtn_clicked()
-{
-  this->m_Action = ACT_RENAME;
-  this->accept();
-}
-
-void QueryOverwriteDialog::on_cancelBtn_clicked()
-{
-  this->reject();
-}
+void QueryOverwriteDialog::on_cancelBtn_clicked() { this->reject(); }

@@ -5,60 +5,46 @@
 
 #include <QTime>
 
-class ModInfoWithConflictInfo : public ModInfo
-{
+class ModInfoWithConflictInfo : public ModInfo {
 
 public:
+    ModInfoWithConflictInfo(MOShared::DirectoryEntry** directoryStructure);
 
-  ModInfoWithConflictInfo(MOShared::DirectoryEntry **directoryStructure);
+    std::vector<ModInfo::EFlag> getFlags() const;
 
-  std::vector<ModInfo::EFlag> getFlags() const;
+    /**
+     * @brief clear all caches held for this mod
+     */
+    virtual void clearCaches();
 
-  /**
-   * @brief clear all caches held for this mod
-   */
-  virtual void clearCaches();
+    virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
 
-  virtual std::set<unsigned int> getModOverwrite() { return m_OverwriteList; }
+    virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
 
-  virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
-
-  virtual void doConflictCheck() const;
-
-private:
-
-  enum EConflictType {
-    CONFLICT_NONE,
-    CONFLICT_OVERWRITE,
-    CONFLICT_OVERWRITTEN,
-    CONFLICT_MIXED,
-    CONFLICT_REDUNDANT
-  };
+    virtual void doConflictCheck() const;
 
 private:
-
-  /**
-   * @return true if there is a conflict for files in this mod
-   */
-  EConflictType isConflicted() const;
-
-  /**
-   * @return true if this mod is completely replaced by others
-   */
-  bool isRedundant() const;
+    enum EConflictType { CONFLICT_NONE, CONFLICT_OVERWRITE, CONFLICT_OVERWRITTEN, CONFLICT_MIXED, CONFLICT_REDUNDANT };
 
 private:
+    /**
+     * @return true if there is a conflict for files in this mod
+     */
+    EConflictType isConflicted() const;
 
-  MOShared::DirectoryEntry **m_DirectoryStructure;
+    /**
+     * @return true if this mod is completely replaced by others
+     */
+    bool isRedundant() const;
 
-  mutable EConflictType m_CurrentConflictState;
-  mutable QTime m_LastConflictCheck;
+private:
+    MOShared::DirectoryEntry** m_DirectoryStructure;
 
-  mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
-  mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
+    mutable EConflictType m_CurrentConflictState;
+    mutable QTime m_LastConflictCheck;
 
+    mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
+    mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
 };
-
-
 
 #endif // MODINFOWITHCONFLICTINFO_H

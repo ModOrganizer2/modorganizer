@@ -26,20 +26,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
  * @brief Syntax highlighter to make log files from mo.dll more readable.
  * @note this is currently not used!
  **/
-class LogHighlighter : public QSyntaxHighlighter
-{
+class LogHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 public:
-    explicit LogHighlighter(QObject *parent = 0);
+    explicit LogHighlighter(QObject* parent = 0);
 
 signals:
 
 public slots:
 
 protected:
-
-  virtual void highlightBlock(const QString &text);
-
+    virtual void highlightBlock(const QString& text);
 };
 
 #endif // LOGHIGHLIGHTER_H

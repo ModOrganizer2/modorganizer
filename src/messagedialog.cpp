@@ -19,74 +19,65 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "messagedialog.h"
 #include "ui_messagedialog.h"
-#include <QTimer>
 #include <QResizeEvent>
+#include <QTimer>
 #include <Windows.h>
 
-MessageDialog::MessageDialog(const QString &text, QWidget *reference) :
-    QDialog(reference),
-    ui(new Ui::MessageDialog)
-{
-  ui->setupUi(this);
+MessageDialog::MessageDialog(const QString& text, QWidget* reference) : QDialog(reference), ui(new Ui::MessageDialog) {
+    ui->setupUi(this);
 
-  // very crude way to ensure no single word in the test is wider than the message window. ellide in the center if necessary
-  QFontMetrics metrics(ui->message->font());
-  QString restrictedText;
-  QStringList lines = text.split("\n");
-  foreach (const QString &line, lines) {
-    QString newLine;
-    QStringList words = line.split(" ");
-    foreach (const QString &word, words) {
-      if (word.length() > 10) {
-        newLine += "<span style=\"nobreak\">" + metrics.elidedText(word, Qt::ElideMiddle, ui->message->maximumWidth()) + "</span>";
-      } else {
-        newLine += word;
-      }
-      newLine += " ";
+    // very crude way to ensure no single word in the test is wider than the message window. ellide in the center if
+    // necessary
+    QFontMetrics metrics(ui->message->font());
+    QString restrictedText;
+    QStringList lines = text.split("\n");
+    foreach (const QString& line, lines) {
+        QString newLine;
+        QStringList words = line.split(" ");
+        foreach (const QString& word, words) {
+            if (word.length() > 10) {
+                newLine += "<span style=\"nobreak\">" +
+                           metrics.elidedText(word, Qt::ElideMiddle, ui->message->maximumWidth()) + "</span>";
+            } else {
+                newLine += word;
+            }
+            newLine += " ";
+        }
+        restrictedText += newLine + "\n";
     }
-    restrictedText += newLine + "\n";
-  }
 
-  ui->message->setText(restrictedText);
-  this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
-  this->setFocusPolicy(Qt::NoFocus);
-  this->setAttribute(Qt::WA_ShowWithoutActivating);
-  QTimer::singleShot(1000 + (text.length() * 40), this, SLOT(hide()));
-  if (reference != nullptr) {
-    QPoint position = reference->mapToGlobal(QPoint(reference->width() / 2, reference->height()));
-    position.rx() -= this->width() / 2;
-    position.ry() -= this->height() + 5;
-    move(position);
-  }
-}
-
-
-MessageDialog::~MessageDialog()
-{
-    delete ui;
-}
-
-
-void MessageDialog::resizeEvent(QResizeEvent *event)
-{
-  QWidget *par = parentWidget();
-  if (par != nullptr) {
-    QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height()));
-    position.rx() -= event->size().width() / 2;
-    position.ry() -= event->size().height() + 5;
-    move(position);
-  }
-}
-
-
-void MessageDialog::showMessage(const QString &text, QWidget *reference, bool bringToFront)
-{
-  qDebug("%s", qPrintable(text));
-  if (reference != nullptr) {
-    if (bringToFront || (qApp->activeWindow() != nullptr)) {
-      MessageDialog *dialog = new MessageDialog(text, reference);
-      dialog->show();
-      reference->activateWindow();
+    ui->message->setText(restrictedText);
+    this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    this->setFocusPolicy(Qt::NoFocus);
+    this->setAttribute(Qt::WA_ShowWithoutActivating);
+    QTimer::singleShot(1000 + (text.length() * 40), this, SLOT(hide()));
+    if (reference != nullptr) {
+        QPoint position = reference->mapToGlobal(QPoint(reference->width() / 2, reference->height()));
+        position.rx() -= this->width() / 2;
+        position.ry() -= this->height() + 5;
+        move(position);
     }
-  }
+}
+
+MessageDialog::~MessageDialog() { delete ui; }
+
+void MessageDialog::resizeEvent(QResizeEvent* event) {
+    QWidget* par = parentWidget();
+    if (par != nullptr) {
+        QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height()));
+        position.rx() -= event->size().width() / 2;
+        position.ry() -= event->size().height() + 5;
+        move(position);
+    }
+}
+
+void MessageDialog::showMessage(const QString& text, QWidget* reference, bool bringToFront) {
+    qDebug("%s", qPrintable(text));
+    if (reference != nullptr) {
+        if (bringToFront || (qApp->activeWindow() != nullptr)) {
+            MessageDialog* dialog = new MessageDialog(text, reference);
+            dialog->show();
+            reference->activateWindow();
+        }
+    }
 }

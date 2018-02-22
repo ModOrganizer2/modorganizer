@@ -23,77 +23,71 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace MOShared {
 
+void reportError(LPCSTR format, ...) {
+    char buffer[1025];
+    memset(buffer, 0, sizeof(char) * 1025);
 
-void reportError(LPCSTR format, ...)
-{
-  char buffer[1025];
-  memset(buffer, 0, sizeof(char) * 1025);
+    va_list argList;
+    va_start(argList, format);
 
-  va_list argList;
-  va_start(argList, format);
+    vsnprintf(buffer, 1024, format, argList);
+    va_end(argList);
 
-  vsnprintf(buffer, 1024, format, argList);
-  va_end(argList);
-
-  MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
+    MessageBoxA(nullptr, buffer, "Error", MB_OK | MB_ICONERROR);
 }
 
-void reportError(LPCWSTR format, ...)
-{
-  WCHAR buffer[1025];
-  memset(buffer, 0, sizeof(WCHAR) * 1025);
+void reportError(LPCWSTR format, ...) {
+    WCHAR buffer[1025];
+    memset(buffer, 0, sizeof(WCHAR) * 1025);
 
-  va_list argList;
-  va_start(argList, format);
+    va_list argList;
+    va_start(argList, format);
 
-  _vsnwprintf_s(buffer, 1024, format, argList);
-  va_end(argList);
+    _vsnwprintf_s(buffer, 1024, format, argList);
+    va_end(argList);
 
-  MessageBoxW(nullptr, buffer, L"Error", MB_OK | MB_ICONERROR);
+    MessageBoxW(nullptr, buffer, L"Error", MB_OK | MB_ICONERROR);
 }
 
+std::string getCurrentErrorStringA() {
+    LPSTR buffer = nullptr;
 
-std::string getCurrentErrorStringA()
-{
-  LPSTR buffer = nullptr;
+    DWORD errorCode = ::GetLastError();
 
-  DWORD errorCode = ::GetLastError();
+    if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode,
+                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
+        ::SetLastError(errorCode);
+        return std::string();
+    } else {
+        LPSTR lastChar = buffer + strlen(buffer) - 2;
+        *lastChar = '\0';
 
-  if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                    nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&buffer, 0, nullptr) == 0) {
-    ::SetLastError(errorCode);
-    return std::string();
-  } else {
-    LPSTR lastChar = buffer + strlen(buffer) - 2;
-	  *lastChar = '\0';
+        std::string result(buffer);
 
-    std::string result(buffer);
-
-    LocalFree(buffer);
-    ::SetLastError(errorCode);
-    return result;
-  }
+        LocalFree(buffer);
+        ::SetLastError(errorCode);
+        return result;
+    }
 }
 
-std::wstring getCurrentErrorStringW()
-{
-  LPWSTR buffer = nullptr;
+std::wstring getCurrentErrorStringW() {
+    LPWSTR buffer = nullptr;
 
-  DWORD errorCode = ::GetLastError();
+    DWORD errorCode = ::GetLastError();
 
-  if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                    nullptr, errorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&buffer, 0, nullptr) == 0) {
-    ::SetLastError(errorCode);
-    return std::wstring();
-  } else {
-    LPWSTR lastChar = buffer + wcslen(buffer) - 2;
-	  *lastChar = '\0';
+    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, errorCode,
+                      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&buffer, 0, nullptr) == 0) {
+        ::SetLastError(errorCode);
+        return std::wstring();
+    } else {
+        LPWSTR lastChar = buffer + wcslen(buffer) - 2;
+        *lastChar = '\0';
 
-    std::wstring result(buffer);
+        std::wstring result(buffer);
 
-    LocalFree(buffer);
-    ::SetLastError(errorCode);
-    return result;
-  }
+        LocalFree(buffer);
+        ::SetLastError(errorCode);
+        return result;
+    }
 }
 } // namespace MOShared

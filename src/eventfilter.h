@@ -19,26 +19,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-
 #include <QObject>
 #include <functional>
 
-
 class EventFilter : public QObject {
 
-  Q_OBJECT
+    Q_OBJECT
 
-  typedef std::function<bool (QObject*, QEvent*)> HandlerFunc;
+    typedef std::function<bool(QObject*, QEvent*)> HandlerFunc;
 
 public:
+    EventFilter(QObject* parent, const HandlerFunc& handler);
 
-  EventFilter(QObject *parent, const HandlerFunc &handler);
-
-  virtual bool eventFilter(QObject *obj , QEvent *event) override;
+    virtual bool eventFilter(QObject* obj, QEvent* event) override;
 
 private:
-
-  HandlerFunc m_Handler;
-
+    HandlerFunc m_Handler;
 };
-

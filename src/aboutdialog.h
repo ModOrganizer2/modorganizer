@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #define ABOUTDIALOG_H
 
 #include <QDialog>
@@ -29,43 +28,38 @@ class QListWidgetItem;
 #include <map>
 
 namespace Ui {
-  class AboutDialog;
+class AboutDialog;
 }
 
-class AboutDialog : public QDialog
-{
-  Q_OBJECT
+class AboutDialog : public QDialog {
+    Q_OBJECT
 
 public:
-  explicit AboutDialog(const QString &version, QWidget *parent = 0);
-  ~AboutDialog();
+    explicit AboutDialog(const QString& version, QWidget* parent = 0);
+    ~AboutDialog();
 
 private:
-
-  enum Licenses {
-    LICENSE_NONE,
-    LICENSE_LGPL3,
-    LICENSE_GPL3,
-    LICENSE_BSD3,
-    LICENSE_BOOST,
-    LICENSE_CCBY3,
-    LICENSE_ZLIB,
-    LICENSE_APACHE2
-  };
+    enum Licenses {
+        LICENSE_NONE,
+        LICENSE_LGPL3,
+        LICENSE_GPL3,
+        LICENSE_BSD3,
+        LICENSE_BOOST,
+        LICENSE_CCBY3,
+        LICENSE_ZLIB,
+        LICENSE_APACHE2
+    };
 
 private:
-
-  void addLicense(const QString &name, Licenses license);
+    void addLicense(const QString& name, Licenses license);
 
 private slots:
-  void on_creditsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_creditsList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
 
 private:
+    Ui::AboutDialog* ui;
 
-  Ui::AboutDialog *ui;
-
-  std::map<int, QString> m_LicenseFiles;
-
+    std::map<int, QString> m_LicenseFiles;
 };
 
 #endif // ABOUTDIALOG_H

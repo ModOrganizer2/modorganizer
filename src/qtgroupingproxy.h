@@ -20,150 +20,143 @@
 #define GROUPINGPROXY_H
 
 #include <QAbstractProxyModel>
+#include <QIcon>
 #include <QModelIndex>
 #include <QMultiHash>
-#include <QStringList>
-#include <QIcon>
 #include <QSet>
+#include <QStringList>
 
 typedef QMap<int, QVariant> ItemData;
 typedef QMap<int, ItemData> RowData;
 
-class QtGroupingProxy : public QAbstractProxyModel
-{
-  Q_OBJECT
+class QtGroupingProxy : public QAbstractProxyModel {
+    Q_OBJECT
 
 public:
+    static const unsigned int FLAG_NOSINGLE = 1;
+    static const unsigned int FLAG_NOGROUPNAME = 2;
 
-  static const unsigned int FLAG_NOSINGLE = 1;
-  static const unsigned int FLAG_NOGROUPNAME = 2;
-
-  enum EAggregateFunction {
-    AGGR_NONE,   // no aggregation, return child elements as list
-    AGGR_EMPTY,  // display nothing
-    AGGR_FIRST,  // return value of the topmost item
-    AGGR_MAX,    // return maximum value
-    AGGR_MIN     // return minimum value
-  };
+    enum EAggregateFunction {
+        AGGR_NONE,  // no aggregation, return child elements as list
+        AGGR_EMPTY, // display nothing
+        AGGR_FIRST, // return value of the topmost item
+        AGGR_MAX,   // return maximum value
+        AGGR_MIN    // return minimum value
+    };
 
 public:
-  explicit QtGroupingProxy( QAbstractItemModel *model, QModelIndex rootNode = QModelIndex(),
-                            int groupedColumn = -1, int groupedRole = Qt::DisplayRole,
-                            unsigned int flags = 0,
-                            int aggregateRole = Qt::DisplayRole);
-  ~QtGroupingProxy();
+    explicit QtGroupingProxy(QAbstractItemModel* model, QModelIndex rootNode = QModelIndex(), int groupedColumn = -1,
+                             int groupedRole = Qt::DisplayRole, unsigned int flags = 0,
+                             int aggregateRole = Qt::DisplayRole);
+    ~QtGroupingProxy();
 
-  void setGroupedColumn( int groupedColumn );
+    void setGroupedColumn(int groupedColumn);
 
-  /* QAbstractProxyModel methods */
-  virtual QModelIndex index( int, int c = 0,
-                             const QModelIndex& parent = QModelIndex() ) const;
-  virtual Qt::ItemFlags flags( const QModelIndex &idx ) const;
-  virtual QModelIndex parent( const QModelIndex &idx ) const;
-  virtual int rowCount( const QModelIndex &idx = QModelIndex() ) const;
-  virtual int columnCount( const QModelIndex &idx ) const;
-  virtual QModelIndex mapToSource( const QModelIndex &idx ) const;
-  virtual QModelIndexList mapToSource( const QModelIndexList &list ) const;
-  virtual QModelIndex mapFromSource( const QModelIndex &idx ) const;
-  virtual QVariant data( const QModelIndex &idx, int role ) const;
-  virtual bool setData( const QModelIndex &index, const QVariant &value,
-                        int role = Qt::EditRole );
-  virtual QVariant headerData ( int section, Qt::Orientation orientation,
-                                int role ) const;
-  virtual bool canFetchMore( const QModelIndex &parent ) const;
-  virtual void fetchMore( const QModelIndex &parent );
-  virtual bool hasChildren( const QModelIndex &parent = QModelIndex() ) const;
-  virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+    /* QAbstractProxyModel methods */
+    virtual QModelIndex index(int, int c = 0, const QModelIndex& parent = QModelIndex()) const;
+    virtual Qt::ItemFlags flags(const QModelIndex& idx) const;
+    virtual QModelIndex parent(const QModelIndex& idx) const;
+    virtual int rowCount(const QModelIndex& idx = QModelIndex()) const;
+    virtual int columnCount(const QModelIndex& idx) const;
+    virtual QModelIndex mapToSource(const QModelIndex& idx) const;
+    virtual QModelIndexList mapToSource(const QModelIndexList& list) const;
+    virtual QModelIndex mapFromSource(const QModelIndex& idx) const;
+    virtual QVariant data(const QModelIndex& idx, int role) const;
+    virtual bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    virtual bool canFetchMore(const QModelIndex& parent) const;
+    virtual void fetchMore(const QModelIndex& parent);
+    virtual bool hasChildren(const QModelIndex& parent = QModelIndex()) const;
+    virtual bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column,
+                              const QModelIndex& parent);
 
-  /* QtGroupingProxy methods */
-  virtual QModelIndex addEmptyGroup( const RowData &data );
-  virtual bool removeGroup( const QModelIndex &idx );
+    /* QtGroupingProxy methods */
+    virtual QModelIndex addEmptyGroup(const RowData& data);
+    virtual bool removeGroup(const QModelIndex& idx);
 
-  QStringList expandedState();
+    QStringList expandedState();
 
 signals:
-  void expandItem(const QModelIndex &index);
+    void expandItem(const QModelIndex& index);
 
 public slots:
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void expanded(const QModelIndex &index);
-  /**
-   * @brief update expanded state
-   * @param index index of the expanded/collapsed item (from the base model!)
-   */
-  void collapsed(const QModelIndex &index);
+    /**
+     * @brief update expanded state
+     * @param index index of the expanded/collapsed item (from the base model!)
+     */
+    void expanded(const QModelIndex& index);
+    /**
+     * @brief update expanded state
+     * @param index index of the expanded/collapsed item (from the base model!)
+     */
+    void collapsed(const QModelIndex& index);
 protected slots:
-  virtual void buildTree();
+    virtual void buildTree();
 
 private slots:
-  void modelDataChanged( const QModelIndex &, const QModelIndex & );
-  void modelRowsAboutToBeInserted( const QModelIndex &, int ,int );
-  void modelRowsInserted( const QModelIndex &, int, int );
-  void modelRowsAboutToBeRemoved( const QModelIndex &, int ,int );
-  void modelRowsRemoved( const QModelIndex &, int, int );
-  void resetModel();
+    void modelDataChanged(const QModelIndex&, const QModelIndex&);
+    void modelRowsAboutToBeInserted(const QModelIndex&, int, int);
+    void modelRowsInserted(const QModelIndex&, int, int);
+    void modelRowsAboutToBeRemoved(const QModelIndex&, int, int);
+    void modelRowsRemoved(const QModelIndex&, int, int);
+    void resetModel();
 
 protected:
-  /** Maps an item to a group.
-          * The return value is a list because an item can put in multiple groups.
-          * Inside the list is a 2 dimensional map.
-          * Mapped to column-number is another map of role-number to QVariant.
-          * This data prepolulates the group-data cache. The rest is gathered on demand
-          * from the children of the group.
-          */
-  virtual QList<RowData> belongsTo( const QModelIndex &idx );
+    /** Maps an item to a group.
+     * The return value is a list because an item can put in multiple groups.
+     * Inside the list is a 2 dimensional map.
+     * Mapped to column-number is another map of role-number to QVariant.
+     * This data prepolulates the group-data cache. The rest is gathered on demand
+     * from the children of the group.
+     */
+    virtual QList<RowData> belongsTo(const QModelIndex& idx);
 
-  /**
-          * calls belongsTo(), checks cached data and adds the index to existing or new groups.
-          * @returns the groups this index was added to where -1 means it was added to the root.
-          */
-  QList<int> addSourceRow( const QModelIndex &idx );
+    /**
+     * calls belongsTo(), checks cached data and adds the index to existing or new groups.
+     * @returns the groups this index was added to where -1 means it was added to the root.
+     */
+    QList<int> addSourceRow(const QModelIndex& idx);
 
-  bool isGroup( const QModelIndex &index ) const;
-  bool isAGroupSelected( const QModelIndexList &list ) const;
+    bool isGroup(const QModelIndex& index) const;
+    bool isAGroupSelected(const QModelIndexList& list) const;
 
-  /** Maintains the group -> sourcemodel row mapping
-          * The reason a QList<int> is use instead of a QMultiHash is that the values have to be
-          * reordered when rows are inserted or removed.
-          * TODO:use some auto-incrementing container class (steveire's?) for the list
-          */
-  QHash<quint32, QList<int> > m_groupHash;
-  /** The data cache of the groups.
-          * This can be pre-loaded with data in belongsTo()
-          */
-  QList<RowData> m_groupMaps;
+    /** Maintains the group -> sourcemodel row mapping
+     * The reason a QList<int> is use instead of a QMultiHash is that the values have to be
+     * reordered when rows are inserted or removed.
+     * TODO:use some auto-incrementing container class (steveire's?) for the list
+     */
+    QHash<quint32, QList<int>> m_groupHash;
+    /** The data cache of the groups.
+     * This can be pre-loaded with data in belongsTo()
+     */
+    QList<RowData> m_groupMaps;
 
-  /** "instuctions" how to create an item in the tree.
-          * This is used by parent( QModelIndex )
-        */
-  struct ParentCreate
-  {
-    int parentCreateIndex;
-    int row;
-  };
-  mutable QList<struct ParentCreate> m_parentCreateList;
-  /** @returns index of the "instructions" to recreate the parent. Will create new if it doesn't exist yet.
-        */
-  int indexOfParentCreate( const QModelIndex &parent ) const;
+    /** "instuctions" how to create an item in the tree.
+     * This is used by parent( QModelIndex )
+     */
+    struct ParentCreate {
+        int parentCreateIndex;
+        int row;
+    };
+    mutable QList<struct ParentCreate> m_parentCreateList;
+    /** @returns index of the "instructions" to recreate the parent. Will create new if it doesn't exist yet.
+     */
+    int indexOfParentCreate(const QModelIndex& parent) const;
 
-  QModelIndexList m_selectedGroups;
+    QModelIndexList m_selectedGroups;
 
-  QModelIndex m_rootNode;
-  int m_groupedColumn;
+    QModelIndex m_rootNode;
+    int m_groupedColumn;
 
-  /* debug function */
-  void dumpGroups() const;
+    /* debug function */
+    void dumpGroups() const;
 
 private:
-  QSet<QString> m_expandedItems;
-  unsigned int m_flags;
-  int m_groupedRole;
+    QSet<QString> m_expandedItems;
+    unsigned int m_flags;
+    int m_groupedRole;
 
-  int m_aggregateRole;
-
+    int m_aggregateRole;
 };
 
-#endif //GROUPINGPROXY_H
+#endif // GROUPINGPROXY_H

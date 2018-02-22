@@ -22,52 +22,37 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QResizeEvent>
 #include <QWidget>
-#include <Qt>                 // for Qt::FramelessWindowHint, etc
+#include <Qt> // for Qt::FramelessWindowHint, etc
 
-LockedDialogBase::LockedDialogBase(QWidget *parent, bool allowClose)
-  : QDialog(parent)
-  , m_Unlocked(false)
-  , m_Canceled(false)
-  , m_allowClose(allowClose)
-{
-  if (parent != nullptr) {
-    QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
-    position.rx() -= this->width() / 2;
-    position.ry() -= this->height() / 2;
-    move(position);
-  }
+LockedDialogBase::LockedDialogBase(QWidget* parent, bool allowClose)
+    : QDialog(parent), m_Unlocked(false), m_Canceled(false), m_allowClose(allowClose) {
+    if (parent != nullptr) {
+        QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
+        position.rx() -= this->width() / 2;
+        position.ry() -= this->height() / 2;
+        move(position);
+    }
 }
 
-void LockedDialogBase::resizeEvent(QResizeEvent *event)
-{
-  QWidget *par = parentWidget();
-  if (par != nullptr) {
-    QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height() / 2));
-    position.rx() -= event->size().width() / 2;
-    position.ry() -= event->size().height() / 2;
-    move(position);
-  }
+void LockedDialogBase::resizeEvent(QResizeEvent* event) {
+    QWidget* par = parentWidget();
+    if (par != nullptr) {
+        QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height() / 2));
+        position.rx() -= event->size().width() / 2;
+        position.ry() -= event->size().height() / 2;
+        move(position);
+    }
 }
 
-void LockedDialogBase::reject()
-{
-  if (m_allowClose)
-    unlock();
+void LockedDialogBase::reject() {
+    if (m_allowClose)
+        unlock();
 }
 
-bool LockedDialogBase::unlockForced() const {
-  return m_Unlocked;
-}
+bool LockedDialogBase::unlockForced() const { return m_Unlocked; }
 
-bool LockedDialogBase::canceled() const {
-  return m_Canceled;
-}
+bool LockedDialogBase::canceled() const { return m_Canceled; }
 
-void LockedDialogBase::unlock() {
-  m_Unlocked = true;
-}
+void LockedDialogBase::unlock() { m_Unlocked = true; }
 
-void LockedDialogBase::cancel() {
-  m_Canceled = true;
-}
-
+void LockedDialogBase::cancel() { m_Canceled = true; }

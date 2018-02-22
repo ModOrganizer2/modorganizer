@@ -17,30 +17,27 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #pragma once
 
-
 #include <QString>
-
 
 class MOShortcut {
 
 public:
-  MOShortcut(const QString& link);
+    MOShortcut(const QString& link);
 
-  /// true iff intialized using a valid moshortcut link
-  operator bool() const { return m_valid; }
+    /// true iff intialized using a valid moshortcut link
+    operator bool() const { return m_valid; }
 
-  bool hasInstance() const { return m_hasInstance; }
+    bool hasInstance() const { return m_hasInstance; }
 
-  const QString& instance() const { return m_instance; }
+    const QString& instance() const { return m_instance; }
 
-  const QString& executable() const { return m_executable; }
+    const QString& executable() const { return m_executable; }
 
 private:
-  QString m_instance;
-  QString m_executable;
-  bool m_valid;
-  bool m_hasInstance;
+    QString m_instance;
+    QString m_executable;
+    bool m_valid;
+    bool m_hasInstance;
 };

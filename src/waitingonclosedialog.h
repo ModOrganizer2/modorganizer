@@ -22,35 +22,32 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "lockeddialogbase.h"
 
 namespace Ui {
-    class WaitingOnCloseDialog;
+class WaitingOnCloseDialog;
 }
 
 /**
  * Similar to the LockedDialog but used for waiting on running process during
  * a process close request which requries a slightly different dialog.
  **/
-class WaitingOnCloseDialog : public LockedDialogBase
-{
+class WaitingOnCloseDialog : public LockedDialogBase {
     Q_OBJECT
 
 public:
-  explicit WaitingOnCloseDialog(QWidget *parent = 0);
-  ~WaitingOnCloseDialog();
+    explicit WaitingOnCloseDialog(QWidget* parent = 0);
+    ~WaitingOnCloseDialog();
 
-  bool canceled() const { return m_Canceled; }
+    bool canceled() const { return m_Canceled; }
 
-  void setProcessName(const QString &name) override;
+    void setProcessName(const QString& name) override;
 
 protected:
-
-  void unlock() override;
+    void unlock() override;
 
 private slots:
 
-  void on_closeButton_clicked();
-  void on_cancelButton_clicked();
+    void on_closeButton_clicked();
+    void on_cancelButton_clicked();
 
 private:
-
-  Ui::WaitingOnCloseDialog *ui;
+    Ui::WaitingOnCloseDialog* ui;
 };

@@ -20,114 +20,107 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NXMACCESSMANAGER_H
 #define NXMACCESSMANAGER_H
 
-
 #include <QNetworkAccessManager>
-#include <QTimer>
 #include <QNetworkReply>
 #include <QProgressDialog>
+#include <QTimer>
 #include <set>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase {
+class IPluginGame;
+}
 
 /**
  * @brief access manager extended to handle nxm links
  **/
-class NXMAccessManager : public QNetworkAccessManager
-{
-  Q_OBJECT
+class NXMAccessManager : public QNetworkAccessManager {
+    Q_OBJECT
 public:
+    explicit NXMAccessManager(QObject* parent, const QString& moVersion);
 
-  explicit NXMAccessManager(QObject *parent, const QString &moVersion);
+    ~NXMAccessManager();
 
-  ~NXMAccessManager();
+    void setNMMVersion(const QString& nmmVersion);
 
-  void setNMMVersion(const QString &nmmVersion);
+    bool loggedIn() const;
 
-  bool loggedIn() const;
+    bool loginAttempted() const;
+    bool loginWaiting() const;
 
-  bool loginAttempted() const;
-  bool loginWaiting() const;
+    void login(const QString& username, const QString& password);
 
-  void login(const QString &username, const QString &password);
+    void showCookies() const;
 
-  void showCookies() const;
+    void clearCookies();
 
-  void clearCookies();
+    QString userAgent(const QString& subModule = QString()) const;
 
-  QString userAgent(const QString &subModule = QString()) const;
+    void startLoginCheck();
 
-  void startLoginCheck();
-
-  void refuseLogin();
+    void refuseLogin();
 
 signals:
 
-  /**
-   * @brief emitted when a nxm:// link is opened
-   *
-   * @param url the nxm-link
-   **/
-  void requestNXMDownload(const QString &url);
+    /**
+     * @brief emitted when a nxm:// link is opened
+     *
+     * @param url the nxm-link
+     **/
+    void requestNXMDownload(const QString& url);
 
-  /**
-   * @brief emitted after a successful login or if login was not necessary
-   *
-   * @param necessary true if a login was necessary and succeeded, false if the user is still logged in
-   **/
-  void loginSuccessful(bool necessary);
+    /**
+     * @brief emitted after a successful login or if login was not necessary
+     *
+     * @param necessary true if a login was necessary and succeeded, false if the user is still logged in
+     **/
+    void loginSuccessful(bool necessary);
 
-  void loginFailed(const QString &message);
+    void loginFailed(const QString& message);
 
-  void credentialsReceived(const QString &userName, bool premium);
+    void credentialsReceived(const QString& userName, bool premium);
 
 private slots:
 
-  void loginChecked();
-  void loginFinished();
-  void loginError(QNetworkReply::NetworkError errorCode);
-  void loginTimeout();
+    void loginChecked();
+    void loginFinished();
+    void loginError(QNetworkReply::NetworkError errorCode);
+    void loginTimeout();
 
 protected:
-
-  virtual QNetworkReply *createRequest(
-      QNetworkAccessManager::Operation operation, const QNetworkRequest &request,
-      QIODevice *device);
+    virtual QNetworkReply* createRequest(QNetworkAccessManager::Operation operation, const QNetworkRequest& request,
+                                         QIODevice* device);
 
 private:
+    void pageLogin();
+    // void dlLogin();
 
-  void pageLogin();
-// void dlLogin();
+    bool hasLoginCookies() const;
 
-  bool hasLoginCookies() const;
-
-  void retrieveCredentials();
-
-private:
-
-  static const std::set<int> s_PremiumAccountStates;
+    void retrieveCredentials();
 
 private:
+    static const std::set<int> s_PremiumAccountStates;
 
-  QTimer m_LoginTimeout;
-  QNetworkReply *m_LoginReply;
-  QProgressDialog *m_ProgressDialog { nullptr };
+private:
+    QTimer m_LoginTimeout;
+    QNetworkReply* m_LoginReply;
+    QProgressDialog* m_ProgressDialog{nullptr};
 
-  QString m_MOVersion;
-  QString m_NMMVersion;
+    QString m_MOVersion;
+    QString m_NMMVersion;
 
-  QString m_Username;
-  QString m_Password;
+    QString m_Username;
+    QString m_Password;
 
-  bool m_LoginAttempted;
-  enum {
-    LOGIN_NOT_CHECKED,
-    LOGIN_CHECKING,
-    LOGIN_NOT_VALID,
-    LOGIN_ATTEMPT_FAILED,
-    LOGIN_REFUSED,
-    LOGIN_VALID
-  } m_LoginState = LOGIN_NOT_CHECKED;
-
+    bool m_LoginAttempted;
+    enum {
+        LOGIN_NOT_CHECKED,
+        LOGIN_CHECKING,
+        LOGIN_NOT_VALID,
+        LOGIN_ATTEMPT_FAILED,
+        LOGIN_REFUSED,
+        LOGIN_VALID
+    } m_LoginState = LOGIN_NOT_CHECKED;
 };
 
 #endif // NXMACCESSMANAGER_H

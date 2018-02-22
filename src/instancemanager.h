@@ -17,51 +17,45 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #pragma once
 
-
-#include <QString>
 #include <QSettings>
-
+#include <QString>
 
 class InstanceManager {
 
 public:
+    static InstanceManager& instance();
 
-  static InstanceManager &instance();
+    QString determineDataPath();
+    void clearCurrentInstance();
 
-  QString determineDataPath();
-  void clearCurrentInstance();
+    void overrideInstance(const QString& instanceName);
 
-  void overrideInstance(const QString& instanceName);
-
-  QString currentInstance() const;
-
-private:
-
-  InstanceManager();
-
-  QString instancePath() const;
-
-  QStringList instances() const;
-
-  bool deleteLocalInstance(const QString &instanceId) const;
-
-  QString manageInstances(const QStringList &instanceList) const;
-
-  void setCurrentInstance(const QString &name);
-
-  QString queryInstanceName(const QStringList &instanceList) const;
-  QString chooseInstance(const QStringList &instanceList) const;
-
-  void createDataPath(const QString &dataPath) const;
-  bool portableInstall() const;
+    QString currentInstance() const;
 
 private:
+    InstanceManager();
 
-  QSettings m_AppSettings;
-  bool m_Reset {false};
-  bool m_overrideInstance{false};
-  QString m_overrideInstanceName;
+    QString instancePath() const;
+
+    QStringList instances() const;
+
+    bool deleteLocalInstance(const QString& instanceId) const;
+
+    QString manageInstances(const QStringList& instanceList) const;
+
+    void setCurrentInstance(const QString& name);
+
+    QString queryInstanceName(const QStringList& instanceList) const;
+    QString chooseInstance(const QStringList& instanceList) const;
+
+    void createDataPath(const QString& dataPath) const;
+    bool portableInstall() const;
+
+private:
+    QSettings m_AppSettings;
+    bool m_Reset{false};
+    bool m_overrideInstance{false};
+    QString m_overrideInstanceName;
 };

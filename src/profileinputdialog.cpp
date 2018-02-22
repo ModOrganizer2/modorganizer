@@ -21,28 +21,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_profileinputdialog.h"
 #include <utility.h>
 
-ProfileInputDialog::ProfileInputDialog(QWidget *parent) :
-  QDialog(parent),
-  ui(new Ui::ProfileInputDialog)
-{
-  ui->setupUi(this);
+ProfileInputDialog::ProfileInputDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ProfileInputDialog) {
+    ui->setupUi(this);
 }
 
-ProfileInputDialog::~ProfileInputDialog()
-{
-  delete ui;
+ProfileInputDialog::~ProfileInputDialog() { delete ui; }
+
+QString ProfileInputDialog::getName() const {
+    QString result = ui->nameEdit->text();
+    MOBase::fixDirectoryName(result);
+    return result;
 }
 
-QString ProfileInputDialog::getName() const
-{
-  QString result = ui->nameEdit->text();
-  MOBase::fixDirectoryName(result);
-  return result;
+bool ProfileInputDialog::getPreferDefaultSettings() const {
+    return ui->defaultSettingsBox->checkState() == Qt::Checked;
 }
-
-
-bool ProfileInputDialog::getPreferDefaultSettings() const
-{
-  return ui->defaultSettingsBox->checkState() == Qt::Checked;
-}
-
