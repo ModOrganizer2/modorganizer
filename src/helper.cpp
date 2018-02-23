@@ -19,8 +19,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "helper.h"
 #include "utility.h"
-#include <LMCons.h>
 #include <report.h>
+#include <LMCons.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -29,61 +29,71 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using MOBase::reportError;
 
+
 namespace Helper {
 
-static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine) {
-    wchar_t fileName[MAX_PATH];
-    _snwprintf(fileName, MAX_PATH, L"%ls\\helper.exe", moDirectory);
 
-    SHELLEXECUTEINFOW execInfo = {0};
+static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
+{
+  wchar_t fileName[MAX_PATH];
+  _snwprintf(fileName, MAX_PATH, L"%ls\\helper.exe", moDirectory);
 
-    execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-    execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
-    execInfo.hwnd = nullptr;
-    execInfo.lpVerb = L"runas";
-    execInfo.lpFile = fileName;
-    execInfo.lpParameters = commandLine;
-    execInfo.lpDirectory = moDirectory;
-    execInfo.nShow = SW_SHOW;
+  SHELLEXECUTEINFOW execInfo = {0};
 
-    ::ShellExecuteExW(&execInfo);
+  execInfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+  execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
+  execInfo.hwnd = nullptr;
+  execInfo.lpVerb = L"runas";
+  execInfo.lpFile = fileName;
+  execInfo.lpParameters = commandLine;
+  execInfo.lpDirectory = moDirectory;
+  execInfo.nShow = SW_SHOW;
 
-    if ((execInfo.hProcess == 0) || (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0)) {
-        reportError(QObject::tr("helper failed"));
-        return false;
-    }
+  ::ShellExecuteExW(&execInfo);
 
-    DWORD exitCode;
-    GetExitCodeProcess(execInfo.hProcess, &exitCode);
-    return exitCode == NOERROR;
+  if ((execInfo.hProcess == 0) || (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0)) {
+    reportError(QObject::tr("helper failed"));
+    return false;
+  }
+
+  DWORD exitCode;
+  GetExitCodeProcess(execInfo.hProcess, &exitCode);
+  return exitCode == NOERROR;
 }
 
-bool init(const std::wstring& moPath, const std::wstring& dataPath) {
-    DWORD userNameLen = UNLEN + 1;
-    wchar_t userName[UNLEN + 1];
 
-    if (!GetUserName(userName, &userNameLen)) {
-        reportError(QObject::tr("failed to determine account name"));
-        return false;
-    }
-    wchar_t* commandLine = new wchar_t[32768];
+bool init(const std::wstring &moPath, const std::wstring &dataPath)
+{
+  DWORD userNameLen = UNLEN + 1;
+  wchar_t userName[UNLEN + 1];
 
-    _snwprintf(commandLine, 32768, L"init \"%ls\" \"%ls\"", dataPath.c_str(), userName);
+  if (!GetUserName(userName, &userNameLen)) {
+    reportError(QObject::tr("failed to determine account name"));
+    return false;
+  }
+  wchar_t *commandLine = new wchar_t[32768];
 
-    bool res = helperExec(moPath.c_str(), commandLine);
-    delete[] commandLine;
+  _snwprintf(commandLine, 32768, L"init \"%ls\" \"%ls\"",
+             dataPath.c_str(), userName);
 
-    return res;
+  bool res = helperExec(moPath.c_str(), commandLine);
+  delete [] commandLine;
+
+  return res;
 }
 
-bool backdateBSAs(const std::wstring& moPath, const std::wstring& dataPath) {
-    wchar_t* commandLine = new wchar_t[32768];
-    _snwprintf(commandLine, 32768, L"backdateBSA \"%ls\"", dataPath.c_str());
 
-    bool res = helperExec(moPath.c_str(), commandLine);
-    delete[] commandLine;
+bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
+{
+  wchar_t *commandLine = new wchar_t[32768];
+  _snwprintf(commandLine, 32768, L"backdateBSA \"%ls\"",
+             dataPath.c_str());
 
-    return res;
+  bool res = helperExec(moPath.c_str(), commandLine);
+  delete [] commandLine;
+
+  return res;
 }
 
-} // namespace Helper
+
+} // namespace

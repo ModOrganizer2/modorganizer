@@ -22,43 +22,52 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include "settings.h"
 
-DownloadListSortProxy::DownloadListSortProxy(const DownloadManager* manager, QObject* parent)
-    : QSortFilterProxyModel(parent), m_Manager(manager), m_CurrentFilter() {}
-
-void DownloadListSortProxy::updateFilter(const QString& filter) {
-    m_CurrentFilter = filter;
-    invalidateFilter();
+DownloadListSortProxy::DownloadListSortProxy(const DownloadManager *manager, QObject *parent)
+  : QSortFilterProxyModel(parent), m_Manager(manager), m_CurrentFilter()
+{
 }
 
-bool DownloadListSortProxy::lessThan(const QModelIndex& left, const QModelIndex& right) const {
-    int leftIndex = left.data().toInt();
-    int rightIndex = right.data().toInt();
-    if ((leftIndex < m_Manager->numTotalDownloads()) && (rightIndex < m_Manager->numTotalDownloads())) {
-        if (left.column() == DownloadList::COL_NAME) {
-            return m_Manager->getFileName(leftIndex).compare(m_Manager->getFileName(rightIndex), Qt::CaseInsensitive) <
-                   0;
-        } else if (left.column() == DownloadList::COL_FILETIME) {
-            return m_Manager->getFileTime(leftIndex) < m_Manager->getFileTime(rightIndex);
-        } else if (left.column() == DownloadList::COL_STATUS) {
-            return m_Manager->getState(leftIndex) < m_Manager->getState(rightIndex);
-        } else {
-            return leftIndex < rightIndex;
-        }
-    } else {
-        return leftIndex < rightIndex;
-    }
+void DownloadListSortProxy::updateFilter(const QString &filter)
+{
+  m_CurrentFilter = filter;
+  invalidateFilter();
 }
 
-bool DownloadListSortProxy::filterAcceptsRow(int sourceRow, const QModelIndex&) const {
-    if (m_CurrentFilter.length() == 0) {
-        return true;
-    } else if (sourceRow < m_Manager->numTotalDownloads()) {
-        int downloadIndex = sourceModel()->index(sourceRow, 0).data().toInt();
 
-        QString displayedName = Settings::instance().metaDownloads() ? m_Manager->getDisplayName(downloadIndex)
-                                                                     : m_Manager->getFileName(downloadIndex);
-        return displayedName.contains(m_CurrentFilter, Qt::CaseInsensitive);
+bool DownloadListSortProxy::lessThan(const QModelIndex &left,
+                                     const QModelIndex &right) const
+{
+  int leftIndex  = left.data().toInt();
+  int rightIndex = right.data().toInt();
+  if ((leftIndex < m_Manager->numTotalDownloads())
+      && (rightIndex < m_Manager->numTotalDownloads())) {
+    if (left.column() == DownloadList::COL_NAME) {
+      return m_Manager->getFileName(leftIndex).compare(m_Manager->getFileName(rightIndex), Qt::CaseInsensitive) < 0;
+    } else if (left.column() == DownloadList::COL_FILETIME) {
+      return m_Manager->getFileTime(leftIndex) < m_Manager->getFileTime(rightIndex);
+    } else if (left.column() == DownloadList::COL_STATUS) {
+      return m_Manager->getState(leftIndex) < m_Manager->getState(rightIndex);
     } else {
-        return false;
+      return leftIndex < rightIndex;
     }
+  } else {
+    return leftIndex < rightIndex;
+  }
+}
+
+
+bool DownloadListSortProxy::filterAcceptsRow(int sourceRow, const QModelIndex&) const
+{
+  if (m_CurrentFilter.length() == 0) {
+    return true;
+  } else if (sourceRow < m_Manager->numTotalDownloads()) {
+    int downloadIndex = sourceModel()->index(sourceRow, 0).data().toInt();
+
+    QString displayedName = Settings::instance().metaDownloads()
+        ? m_Manager->getDisplayName(downloadIndex)
+        : m_Manager->getFileName(downloadIndex);
+    return displayedName.contains(m_CurrentFilter, Qt::CaseInsensitive);
+  } else {
+    return false;
+  }
 }

@@ -17,17 +17,23 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #include "moshortcut.h"
 
-MOShortcut::MOShortcut(const QString& link) : m_valid(link.startsWith("moshortcut://")), m_hasInstance(false) {
-    if (m_valid) {
-        int start = (int)strlen("moshortcut://");
-        int sep = link.indexOf(':', start);
-        if (sep >= 0) {
-            m_hasInstance = true;
-            m_instance = link.mid(start, sep - start);
-            m_executable = link.mid(sep + 1);
-        } else
-            m_executable = link.mid(start);
+
+MOShortcut::MOShortcut(const QString& link)
+  : m_valid(link.startsWith("moshortcut://"))
+  , m_hasInstance(false)
+{
+  if (m_valid) {
+    int start = (int)strlen("moshortcut://");
+    int sep = link.indexOf(':', start);
+    if (sep >= 0) {
+      m_hasInstance = true;
+      m_instance = link.mid(start, sep - start);
+      m_executable = link.mid(sep + 1);
     }
+    else
+      m_executable = link.mid(start);
+  }
 }

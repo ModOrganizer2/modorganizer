@@ -3,14 +3,17 @@
 #ifndef DESCRIPTIONPAGE_H
 #define DESCRIPTIONPAGE_H
 
-class DescriptionPage : public QWebEnginePage {
+class DescriptionPage : public QWebEnginePage
+{
     Q_OBJECT
 
 public:
-    DescriptionPage(QObject* parent = 0) : QWebEnginePage(parent) {}
+    DescriptionPage(QObject* parent = 0) : QWebEnginePage(parent){}
 
-    bool acceptNavigationRequest(const QUrl& url, QWebEnginePage::NavigationType type, bool isMainFrame) {
-        if (type == QWebEnginePage::NavigationTypeLinkClicked) {
+    bool acceptNavigationRequest(const QUrl & url, QWebEnginePage::NavigationType type, bool isMainFrame)
+    {
+        if (type == QWebEnginePage::NavigationTypeLinkClicked)
+        {
             emit linkClicked(url);
             return false;
         }
@@ -19,6 +22,7 @@ public:
 
 signals:
     void linkClicked(const QUrl&);
+
 };
 
-#endif // DESCRIPTIONPAGE_H
+#endif //DESCRIPTIONPAGE_H

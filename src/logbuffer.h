@@ -20,68 +20,76 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
 
-#include <QMutex>
 #include <QObject>
+#include <QMutex>
 #include <QScopedPointer>
 #include <QStringListModel>
 #include <QTime>
 #include <vector>
 
-class LogBuffer : public QAbstractItemModel {
-    Q_OBJECT
+
+class LogBuffer : public QAbstractItemModel
+{
+  Q_OBJECT
 
 public:
-    static void init(int messageCount, QtMsgType minMsgType, const QString& outputFileName);
-    static void log(QtMsgType type, const QMessageLogContext& context, const QString& message);
 
-    static void writeNow();
-    static void cleanQuit();
+  static void init(int messageCount, QtMsgType minMsgType, const QString &outputFileName);
+  static void log(QtMsgType type, const QMessageLogContext &context, const QString &message);
 
-    static LogBuffer* instance() { return s_Instance.data(); }
+  static void writeNow();
+  static void cleanQuit();
+
+  static LogBuffer *instance() { return s_Instance.data(); }
 
 public:
-    virtual ~LogBuffer();
 
-    void logMessage(QtMsgType type, const QString& message);
+  virtual ~LogBuffer();
 
-    // QAbstractItemModel interface
+  void logMessage(QtMsgType type, const QString &message);
+
+  // QAbstractItemModel interface
 public:
-    QModelIndex index(int row, int column, const QModelIndex& parent) const;
-    QModelIndex parent(const QModelIndex& child) const;
-    int rowCount(const QModelIndex& parent) const;
-    int columnCount(const QModelIndex& parent) const;
-    QVariant data(const QModelIndex& index, int role) const;
+  QModelIndex index(int row, int column, const QModelIndex &parent) const;
+  QModelIndex parent(const QModelIndex &child) const;
+  int rowCount(const QModelIndex &parent) const;
+  int columnCount(const QModelIndex &parent) const;
+  QVariant data(const QModelIndex &index, int role) const;
 
 signals:
 
 public slots:
 
 private:
-    explicit LogBuffer(int messageCount, QtMsgType minMsgType, const QString& outputFileName);
-    LogBuffer(const LogBuffer& reference);            // not implemented
-    LogBuffer& operator=(const LogBuffer& reference); // not implemented
 
-    void write() const;
+  explicit LogBuffer(int messageCount, QtMsgType minMsgType, const QString &outputFileName);
+  LogBuffer(const LogBuffer &reference); // not implemented
+  LogBuffer &operator=(const LogBuffer &reference); // not implemented
 
-    static char msgTypeID(QtMsgType type);
+  void write() const;
 
-private:
-    struct Message {
-        QtMsgType type;
-        QTime time;
-        QString message;
-        QString toString() const;
-    };
+  static char msgTypeID(QtMsgType type);
 
 private:
-    static QScopedPointer<LogBuffer> s_Instance;
-    static QMutex s_Mutex;
 
-    QString m_OutFileName;
-    bool m_ShutDown;
-    QtMsgType m_MinMsgType;
-    size_t m_NumMessages;
-    std::vector<Message> m_Messages;
+  struct Message {
+    QtMsgType type;
+    QTime time;
+    QString message;
+    QString toString() const;
+  };
+
+private:
+
+  static QScopedPointer<LogBuffer> s_Instance;
+  static QMutex s_Mutex;
+
+  QString m_OutFileName;
+  bool m_ShutDown;
+  QtMsgType m_MinMsgType;
+  size_t m_NumMessages;
+  std::vector<Message> m_Messages;
+  
 };
 
 #endif // LOGBUFFER_H

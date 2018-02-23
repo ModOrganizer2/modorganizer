@@ -20,8 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef TRANSFERSAVESDIALOG_H
 #define TRANSFERSAVESDIALOG_H
 
-#include "profile.h"
 #include "tutorabledialog.h"
+#include "profile.h"
 
 class QListWidget;
 #include <QObject>
@@ -29,72 +29,73 @@ class QPushButton;
 #include <QString>
 class QWidget;
 
-#include <map>
 #include <memory>
+#include <map>
 #include <vector>
 
-namespace Ui {
-class TransferSavesDialog;
-}
-namespace MOBase {
-class IPluginGame;
-}
-namespace MOBase {
-class ISaveGame;
-}
+namespace Ui { class TransferSavesDialog; }
+namespace MOBase { class IPluginGame; }
+namespace MOBase { class ISaveGame; }
 
 class TransferSavesDialog : public MOBase::TutorableDialog {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    explicit TransferSavesDialog(const Profile& profile, MOBase::IPluginGame const* gamePlugin, QWidget* parent = 0);
-    ~TransferSavesDialog();
+  explicit TransferSavesDialog(const Profile &profile,
+                               MOBase::IPluginGame const *gamePlugin,
+                               QWidget *parent = 0);
+  ~TransferSavesDialog();
 
 private slots:
 
-    void on_moveToLocalBtn_clicked();
+  void on_moveToLocalBtn_clicked();
 
-    void on_doneButton_clicked();
+  void on_doneButton_clicked();
 
-    void on_globalCharacterList_currentTextChanged(const QString& currentText);
+  void on_globalCharacterList_currentTextChanged(const QString &currentText);
 
-    void on_localCharacterList_currentTextChanged(const QString& currentText);
+  void on_localCharacterList_currentTextChanged(const QString &currentText);
 
-    void on_copyToLocalBtn_clicked();
+  void on_copyToLocalBtn_clicked();
 
-    void on_moveToGlobalBtn_clicked();
+  void on_moveToGlobalBtn_clicked();
 
-    void on_copyToGlobalBtn_clicked();
-
-private:
-    enum OverwriteMode { OVERWRITE_ASK, OVERWRITE_YES, OVERWRITE_NO };
+  void on_copyToGlobalBtn_clicked();
 
 private:
-    void refreshGlobalCharacters();
-    void refreshLocalCharacters();
-    void refreshGlobalSaves();
-    void refreshLocalSaves();
-    bool testOverwrite(OverwriteMode& overwriteMode, const QString& destinationFile);
+  enum OverwriteMode { OVERWRITE_ASK, OVERWRITE_YES, OVERWRITE_NO };
 
 private:
-    Ui::TransferSavesDialog* ui;
+  void refreshGlobalCharacters();
+  void refreshLocalCharacters();
+  void refreshGlobalSaves();
+  void refreshLocalSaves();
+  bool testOverwrite(OverwriteMode &overwriteMode,
+                     const QString &destinationFile);
 
-    Profile m_Profile;
+private:
+  Ui::TransferSavesDialog *ui;
 
-    MOBase::IPluginGame const* m_GamePlugin;
+  Profile m_Profile;
 
-    typedef std::unique_ptr<MOBase::ISaveGame const> SaveListItem;
-    typedef std::vector<SaveListItem> SaveList;
-    typedef std::map<QString, SaveList> SaveCollection;
-    SaveCollection m_GlobalSaves;
-    SaveCollection m_LocalSaves;
+  MOBase::IPluginGame const *m_GamePlugin;
 
-    void refreshSaves(SaveCollection& saveCollection, const QString& savedir);
-    void refreshCharacters(SaveCollection const& saveCollection, QListWidget* charList, QPushButton* copy,
-                           QPushButton* move);
+  typedef std::unique_ptr<MOBase::ISaveGame const> SaveListItem;
+  typedef std::vector<SaveListItem> SaveList;
+  typedef std::map<QString, SaveList> SaveCollection;
+  SaveCollection m_GlobalSaves;
+  SaveCollection m_LocalSaves;
 
-    bool transferCharacters(QString const& character, char const* message, SaveList& saves, QString const& dest,
-                            const std::function<bool(const QString&, const QString&)>& method, char const* errmsg);
+  void refreshSaves(SaveCollection &saveCollection, const QString &savedir);
+  void refreshCharacters(SaveCollection const &saveCollection,
+                         QListWidget *charList, QPushButton *copy,
+                         QPushButton *move);
+
+  bool transferCharacters(
+      QString const &character, char const *message, SaveList &saves,
+      QString const &dest,
+      const std::function<bool(const QString &, const QString &)> &method,
+      char const *errmsg);
 };
 
 #endif // TRANSFERSAVESDIALOG_H

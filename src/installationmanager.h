@@ -20,193 +20,198 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef INSTALLATIONMANAGER_H
 #define INSTALLATIONMANAGER_H
 
-#include <guessedvalue.h>
+
 #include <iinstallationmanager.h>
 #include <iplugininstaller.h>
+#include <guessedvalue.h>
 
 #include <QObject>
 #define WIN32_LEAN_AND_MEAN
-#include <QProgressDialog>
 #include <Windows.h>
 #include <archive.h>
-#include <errorcodes.h>
+#include <QProgressDialog>
 #include <set>
+#include <errorcodes.h>
+
 
 /**
  * @brief manages the installation of mod archives
  * This currently supports two special kind of archives:
- * - "simple" archives: properly packaged archives without options, so they can be extracted to the (virtual) data
- *directory directly
+ * - "simple" archives: properly packaged archives without options, so they can be extracted to the (virtual) data directory directly
  * - "complex" bain archives: archives with options for the bain system.
  * All other archives are managed through the manual "InstallDialog"
  * @todo this may be a good place to support plugins
  **/
-class InstallationManager : public QObject, public MOBase::IInstallationManager {
-    Q_OBJECT
+class InstallationManager : public QObject, public MOBase::IInstallationManager
+{
+  Q_OBJECT
 
 public:
-    /**
-     * @brief constructor
-     *
-     * @param parent parent object.
-     **/
-    explicit InstallationManager();
 
-    virtual ~InstallationManager();
+  /**
+   * @brief constructor
+   *
+   * @param parent parent object.
+   **/
+  explicit InstallationManager();
 
-    void setParentWidget(QWidget* widget);
+  virtual ~InstallationManager();
 
-    void setURL(const QString& url);
+  void setParentWidget(QWidget *widget);
 
-    /**
-     * @brief update the directory where mods are to be installed
-     * @param modsDirectory the mod directory
-     * @note this is called a lot, probably redundantly
-     */
-    void setModsDirectory(const QString& modsDirectory) { m_ModsDirectory = modsDirectory; }
+  void setURL(const QString &url);
 
-    /**
-     * @brief update the directory where downloads are stored
-     * @param downloadDirectory the download directory
-     */
-    void setDownloadDirectory(const QString& downloadDirectory) { m_DownloadsDirectory = downloadDirectory; }
+  /**
+   * @brief update the directory where mods are to be installed
+   * @param modsDirectory the mod directory
+   * @note this is called a lot, probably redundantly
+   */
+  void setModsDirectory(const QString &modsDirectory) { m_ModsDirectory = modsDirectory; }
 
-    /**
-     * @brief install a mod from an archive
-     *
-     * @param fileName absolute file name of the archive to install
-     * @param modName suggested name of the mod. If this is empty (the default), a name will be guessed based on the
-     *filename. The user will always have a chance to rename the mod
-     * @return true if the archive was installed, false if installation failed or was refused
-     * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid
-     *or the file is damaged)
-     **/
-    bool install(const QString& fileName, MOBase::GuessedValue<QString>& modName, bool& hasIniTweaks);
+  /**
+   * @brief update the directory where downloads are stored
+   * @param downloadDirectory the download directory
+   */
+  void setDownloadDirectory(const QString &downloadDirectory) { m_DownloadsDirectory = downloadDirectory; }
 
-    /**
-     * @return true if the installation was canceled
-     **/
-    bool wasCancelled();
+  /**
+   * @brief install a mod from an archive
+   *
+   * @param fileName absolute file name of the archive to install
+   * @param modName suggested name of the mod. If this is empty (the default), a name will be guessed based on the filename. The user will always have a chance to rename the mod
+   * @return true if the archive was installed, false if installation failed or was refused
+   * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
+   **/
+  bool install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks);
 
-    /**
-     * @brief retrieve a string describing the specified error code
-     *
-     * @param errorCode an error code as returned by the archiving function
-     * @return the error string
-     * @todo This function doesn't belong here, it is only public because the SelfUpdater class also uses "Archive" to
-     *get to the package.txt file
-     **/
-    static QString getErrorString(Archive::Error errorCode);
+  /**
+   * @return true if the installation was canceled
+   **/
+  bool wasCancelled();
 
-    /**
-     * @brief register an installer-plugin
-     * @param the installer to register
-     */
-    void registerInstaller(MOBase::IPluginInstaller* installer);
+  /**
+   * @brief retrieve a string describing the specified error code
+   *
+   * @param errorCode an error code as returned by the archiving function
+   * @return the error string
+   * @todo This function doesn't belong here, it is only public because the SelfUpdater class also uses "Archive" to get to the package.txt file
+   **/
+  static QString getErrorString(Archive::Error errorCode);
 
-    /**
-     * @return list of file extensions we can install
-     */
-    QStringList getSupportedExtensions() const;
+  /**
+   * @brief register an installer-plugin
+   * @param the installer to register
+   */
+  void registerInstaller(MOBase::IPluginInstaller *installer);
 
-    /**
-     * @brief extract the specified file from the currently open archive to a temporary location
-     * @param (relative) name of the file within the archive
-     * @return the absolute name of the temporary file
-     * @note the call will fail with an exception if no archive is open (plugins deriving
-     *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
-     * @note the temporary file is automatically cleaned up after the installation
-     * @note This call can be very slow if the archive is large and "solid"
-     */
-    virtual QString extractFile(const QString& fileName);
+  /**
+   * @return list of file extensions we can install
+   */
+  QStringList getSupportedExtensions() const;
 
-    /**
-     * @brief extract the specified files from the currently open archive to a temporary location
-     * @param (relative) names of files within the archive
-     * @return the absolute names of the temporary files
-     * @note the call will fail with an exception if no archive is open (plugins deriving
-     *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
-     * @note the temporary file is automatically cleaned up after the installation
-     * @note This call can be very slow if the archive is large and "solid"
-     */
-    virtual QStringList extractFiles(const QStringList& files, bool flatten);
+  /**
+   * @brief extract the specified file from the currently open archive to a temporary location
+   * @param (relative) name of the file within the archive
+   * @return the absolute name of the temporary file
+   * @note the call will fail with an exception if no archive is open (plugins deriving
+   *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
+   * @note the temporary file is automatically cleaned up after the installation
+   * @note This call can be very slow if the archive is large and "solid"
+   */
+  virtual QString extractFile(const QString &fileName);
 
-    /**
-     * @brief installs an archive
-     * @param modName suggested name of the mod
-     * @param archiveFile path to the archive to install
-     * @return the installation result
-     */
-    virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString>& modName,
-                                                                    const QString& archiveName);
+  /**
+   * @brief extract the specified files from the currently open archive to a temporary location
+   * @param (relative) names of files within the archive
+   * @return the absolute names of the temporary files
+   * @note the call will fail with an exception if no archive is open (plugins deriving
+   *       from IPluginInstallerSimple can rely on that, custom installers shouldn't)
+   * @note the temporary file is automatically cleaned up after the installation
+   * @note This call can be very slow if the archive is large and "solid"
+   */
+  virtual QStringList extractFiles(const QStringList &files, bool flatten);
 
-    /**
-     * @brief test if the specified mod name is free. If not, query the user how to proceed
-     * @param modName current possible names for the mod
-     * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
-     * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable
-     * error
-     */
-    virtual bool testOverwrite(MOBase::GuessedValue<QString>& modName, bool* merge = nullptr) const;
+  /**
+   * @brief installs an archive
+   * @param modName suggested name of the mod
+   * @param archiveFile path to the archive to install
+   * @return the installation result
+   */
+  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
+
+  /**
+   * @brief test if the specified mod name is free. If not, query the user how to proceed
+   * @param modName current possible names for the mod
+   * @param merge if this value is not null, the value will be set to whether the use chose to merge or replace
+   * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
+   */
+  virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr) const;
 
 private:
-    void queryPassword(QString* password);
-    void updateProgress(float percentage);
-    void updateProgressFile(const QString& fileName);
-    void report7ZipError(const QString& errorMessage);
 
-    MOBase::DirectoryTree* createFilesTree();
+  void queryPassword(QString *password);
+  void updateProgress(float percentage);
+  void updateProgressFile(const QString &fileName);
+  void report7ZipError(const QString &errorMessage);
 
-    // remap all files in the archive to the directory structure represented by baseNode
-    // files not present in baseNode are disabled
-    void mapToArchive(const MOBase::DirectoryTree::Node* baseNode);
+  MOBase::DirectoryTree *createFilesTree();
 
-    // recursive worker function for mapToArchive
-    void mapToArchive(const MOBase::DirectoryTree::Node* node, QString path, FileData* const* data);
-    bool unpackSingleFile(const QString& fileName);
+  // remap all files in the archive to the directory structure represented by baseNode
+  // files not present in baseNode are disabled
+  void mapToArchive(const MOBase::DirectoryTree::Node *baseNode);
 
-    bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node* node, bool bainStyle);
-    MOBase::DirectoryTree::Node* getSimpleArchiveBase(MOBase::DirectoryTree* dataTree);
+  // recursive worker function for mapToArchive
+  void mapToArchive(const MOBase::DirectoryTree::Node *node, QString path, FileData * const *data);
+  bool unpackSingleFile(const QString &fileName);
 
-    bool doInstall(MOBase::GuessedValue<QString>& modName, int modID, const QString& version,
-                   const QString& newestVersion, int categoryID, const QString& repository);
 
-    QString generateBackupName(const QString& directoryName) const;
+  bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
+  MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-    bool ensureValidModName(MOBase::GuessedValue<QString>& name) const;
+  bool doInstall(MOBase::GuessedValue<QString> &modName,
+                 int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
-    void postInstallCleanup();
+  QString generateBackupName(const QString &directoryName) const;
 
-private:
-    struct ByPriority {
-        bool operator()(MOBase::IPluginInstaller* LHS, MOBase::IPluginInstaller* RHS) const {
-            return LHS->priority() > RHS->priority();
-        }
-    };
+  bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
-    struct CaseInsensitive {
-        bool operator()(const QString& LHS, const QString& RHS) const {
-            return QString::compare(LHS, RHS, Qt::CaseInsensitive) < 0;
-        }
-    };
+  void postInstallCleanup();
 
 private:
-    QWidget* m_ParentWidget;
 
-    QString m_ModsDirectory;
-    QString m_DownloadsDirectory;
+  struct ByPriority {
+    bool operator()(MOBase::IPluginInstaller *LHS, MOBase::IPluginInstaller *RHS) const
+    {
+      return LHS->priority() > RHS->priority();
+    }
+  };
 
-    std::vector<MOBase::IPluginInstaller*> m_Installers;
-    std::set<QString, CaseInsensitive> m_SupportedExtensions;
+  struct CaseInsensitive {
+      bool operator() (const QString &LHS, const QString &RHS) const
+      {
+        return QString::compare(LHS, RHS, Qt::CaseInsensitive) < 0;
+      }
+  };
 
-    Archive* m_ArchiveHandler;
-    QString m_CurrentFile;
+private:
 
-    QProgressDialog* m_InstallationProgress{nullptr};
+  QWidget *m_ParentWidget;
 
-    std::set<QString> m_TempFilesToDelete;
+  QString m_ModsDirectory;
+  QString m_DownloadsDirectory;
 
-    QString m_URL;
+  std::vector<MOBase::IPluginInstaller*> m_Installers;
+  std::set<QString, CaseInsensitive> m_SupportedExtensions;
+
+  Archive *m_ArchiveHandler;
+  QString m_CurrentFile;
+
+  QProgressDialog *m_InstallationProgress { nullptr };
+
+  std::set<QString> m_TempFilesToDelete;
+
+  QString m_URL;
 };
+
 
 #endif // INSTALLATIONMANAGER_H

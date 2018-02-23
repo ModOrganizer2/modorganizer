@@ -26,21 +26,22 @@ namespace Ui {
 class CredentialsDialog;
 }
 
-class CredentialsDialog : public QDialog {
-    Q_OBJECT
-
+class CredentialsDialog : public QDialog
+{
+  Q_OBJECT
+  
 public:
-    explicit CredentialsDialog(QWidget* parent = 0);
-    ~CredentialsDialog();
+  explicit CredentialsDialog(QWidget *parent = 0);
+  ~CredentialsDialog();
 
-    QString username() const;
-    QString password() const;
+  QString username() const;
+  QString password() const;
 
-    bool store() const;
-    bool neverAsk() const;
+  bool store() const;
+  bool neverAsk() const;
 
 private:
-    Ui::CredentialsDialog* ui;
+  Ui::CredentialsDialog *ui;
 };
 
 #endif // CREDENTIALSDIALOG_H

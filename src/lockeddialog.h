@@ -22,33 +22,36 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "lockeddialogbase.h"
 
 namespace Ui {
-class LockedDialog;
+    class LockedDialog;
 }
 
 /**
  * a small borderless dialog displayed while the Mod Organizer UI is locked
  * The dialog contains only a label and a button to force the UI to be unlocked
- *
+ * 
  * The UI gets locked while running external applications since they may modify the
  * data on which Mod Organizer works. After the UI is unlocked (manually or after the
  * external application closed) MO will refresh all of its data sources
  **/
-class LockedDialog : public LockedDialogBase {
+class LockedDialog : public LockedDialogBase
+{
     Q_OBJECT
 
 public:
-    explicit LockedDialog(QWidget* parent = 0, bool unlockByButton = false);
-    ~LockedDialog();
+  explicit LockedDialog(QWidget *parent = 0, bool unlockByButton = false);
+  ~LockedDialog();
 
-    void setProcessName(const QString& name) override;
+  void setProcessName(const QString &name) override;
 
 protected:
-    void unlock() override;
+
+  void unlock() override;
 
 private slots:
 
-    void on_unlockButton_clicked();
+  void on_unlockButton_clicked();
 
 private:
-    Ui::LockedDialog* ui;
+
+  Ui::LockedDialog *ui;
 };

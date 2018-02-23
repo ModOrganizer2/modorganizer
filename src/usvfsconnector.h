@@ -17,54 +17,64 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
 #ifndef USVFSCONNECTOR_H
 #define USVFSCONNECTOR_H
 
-#include <QDebug>
-#include <QFile>
+
+#include <filemapping.h>
 #include <QString>
 #include <QThread>
-#include <filemapping.h>
+#include <QFile>
+#include <QDebug>
 #include <usvfsparameters.h>
+
 
 class LogWorker : public QThread {
 
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    LogWorker();
-    ~LogWorker();
+
+  LogWorker();
+  ~LogWorker();
 
 public slots:
 
-    void process();
-    void exit();
+  void process();
+  void exit();
 
 signals:
 
-    void outputLog(const QString& message);
-    void finished();
+  void outputLog(const QString &message);
+  void finished();
 
 private:
-    std::string m_Buffer;
-    bool m_QuitRequested;
-    QFile m_LogFile;
+
+  std::string m_Buffer;
+  bool m_QuitRequested;
+  QFile m_LogFile;
+
 };
+
 
 class UsvfsConnector : public QObject {
 
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    UsvfsConnector();
-    ~UsvfsConnector();
 
-    void updateMapping(const MappingType& mapping);
-    void updateParams(int logLevel, int crashDumpsType);
+  UsvfsConnector();
+  ~UsvfsConnector();
+
+  void updateMapping(const MappingType &mapping);
+  void updateParams(int logLevel, int crashDumpsType);
 
 private:
-    LogWorker m_LogWorker;
-    QThread m_WorkerThread;
+
+  LogWorker m_LogWorker;
+  QThread m_WorkerThread;
+
 };
 
 CrashDumpsType crashDumpsType(int type);

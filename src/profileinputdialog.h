@@ -26,18 +26,19 @@ namespace Ui {
 class ProfileInputDialog;
 }
 
-class ProfileInputDialog : public QDialog {
-    Q_OBJECT
-
+class ProfileInputDialog : public QDialog
+{
+  Q_OBJECT
+  
 public:
-    explicit ProfileInputDialog(QWidget* parent = 0);
-    ~ProfileInputDialog();
+  explicit ProfileInputDialog(QWidget *parent = 0);
+  ~ProfileInputDialog();
 
-    QString getName() const;
-    bool getPreferDefaultSettings() const;
-
+  QString getName() const;
+  bool getPreferDefaultSettings() const;
+  
 private:
-    Ui::ProfileInputDialog* ui;
+  Ui::ProfileInputDialog *ui;
 };
 
 #endif // PROFILEINPUTDIALOG_H

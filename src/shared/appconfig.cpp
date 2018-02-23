@@ -22,12 +22,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace AppConfig {
 
 #define PARWSTRING wstring
-#define APPPARAM(partype, parid, value)                                                                                \
-    partype parid() { return value; }
+#define APPPARAM(partype, parid, value) partype parid () { return value; }
 #include "appconfig.inc"
 
 namespace MOShared {
 #undef PARWSTRING
 #undef APPPARAM
+
 }
 } // namespace MOShared

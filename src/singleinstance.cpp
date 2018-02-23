@@ -19,85 +19,92 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "singleinstance.h"
 #include "utility.h"
-#include <QLocalSocket>
 #include <report.h>
+#include <QLocalSocket>
 
 static const char s_Key[] = "mo-43d1a3ad-eeb0-4818-97c9-eda5216c29b5";
 static const int s_Timeout = 5000;
 
 using MOBase::reportError;
 
-SingleInstance::SingleInstance(bool forcePrimary, QObject* parent) : QObject(parent), m_PrimaryInstance(false) {
-    m_SharedMem.setKey(s_Key);
-    if (!m_SharedMem.create(1)) {
-        if (forcePrimary) {
-            while (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-                Sleep(500);
-                if (m_SharedMem.create(1)) {
-                    m_PrimaryInstance = true;
-                    break;
-                }
-            }
+SingleInstance::SingleInstance(bool forcePrimary, QObject *parent) :
+  QObject(parent), m_PrimaryInstance(false)
+{
+  m_SharedMem.setKey(s_Key);
+  if (!m_SharedMem.create(1)) {
+    if (forcePrimary) {
+      while (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
+        Sleep(500);
+        if (m_SharedMem.create(1)) {
+          m_PrimaryInstance = true;
+          break;
         }
+      }
+    }
 
-        if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
-            m_SharedMem.attach();
-            m_PrimaryInstance = false;
-        }
-        if ((m_SharedMem.error() != QSharedMemory::NoError) && (m_SharedMem.error() != QSharedMemory::AlreadyExists)) {
-            throw MOBase::MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
-        }
-    } else {
-        m_PrimaryInstance = true;
+    if (m_SharedMem.error() == QSharedMemory::AlreadyExists) {
+      m_SharedMem.attach();
+      m_PrimaryInstance = false;
     }
-    if (m_PrimaryInstance) {
-        connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()));
-        // has to be called before listen
-        m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
-        m_Server.listen(s_Key);
+    if ((m_SharedMem.error() != QSharedMemory::NoError) &&
+        (m_SharedMem.error() != QSharedMemory::AlreadyExists)) {
+      throw MOBase::MyException(tr("SHM error: %1").arg(m_SharedMem.errorString()));
     }
+  } else {
+    m_PrimaryInstance = true;
+  }
+  if (m_PrimaryInstance) {
+    connect(&m_Server, SIGNAL(newConnection()), this, SLOT(receiveMessage()));
+    // has to be called before listen
+    m_Server.setSocketOptions(QLocalServer::WorldAccessOption);
+    m_Server.listen(s_Key);
+  }
 }
 
-void SingleInstance::sendMessage(const QString& message) {
-    if (m_PrimaryInstance) {
-        // nobody there to receive the message
-        return;
-    }
-    QLocalSocket socket(this);
 
-    bool connected = false;
-    for (int i = 0; i < 2 && !connected; ++i) {
-        if (i > 0) {
-            Sleep(250);
-        }
+void SingleInstance::sendMessage(const QString &message)
+{
+  if (m_PrimaryInstance) {
+    // nobody there to receive the message
+    return;
+  }
+  QLocalSocket socket(this);
 
-        // other instance may be just starting up
-        socket.connectToServer(s_Key, QIODevice::WriteOnly);
-        connected = socket.waitForConnected(s_Timeout);
+  bool connected = false;
+  for(int i = 0; i < 2 && !connected; ++i) {
+    if (i > 0) {
+      Sleep(250);
     }
 
-    if (!connected) {
-        reportError(tr("failed to connect to running instance: %1").arg(socket.errorString()));
-        return;
-    }
+    // other instance may be just starting up
+    socket.connectToServer(s_Key, QIODevice::WriteOnly);
+    connected = socket.waitForConnected(s_Timeout);
+  }
 
-    socket.write(message.toUtf8());
-    if (!socket.waitForBytesWritten(s_Timeout)) {
-        reportError(tr("failed to communicate with running instance: %1").arg(socket.errorString()));
-        return;
-    }
+  if (!connected) {
+    reportError(tr("failed to connect to running instance: %1").arg(socket.errorString()));
+    return;
+  }
 
-    socket.disconnectFromServer();
+  socket.write(message.toUtf8());
+  if (!socket.waitForBytesWritten(s_Timeout)) {
+    reportError(tr("failed to communicate with running instance: %1").arg(socket.errorString()));
+    return;
+  }
+
+  socket.disconnectFromServer();
 }
 
-void SingleInstance::receiveMessage() {
-    QLocalSocket* socket = m_Server.nextPendingConnection();
-    if (!socket->waitForReadyRead(s_Timeout)) {
-        reportError(tr("failed to receive data from secondary instance: %1").arg(socket->errorString()));
-        return;
-    }
 
-    QString message = QString::fromUtf8(socket->readAll().constData());
-    emit messageSent(message);
-    socket->disconnectFromServer();
+void SingleInstance::receiveMessage()
+{
+  QLocalSocket *socket = m_Server.nextPendingConnection();
+  if (!socket->waitForReadyRead(s_Timeout)) {
+    reportError(tr("failed to receive data from secondary instance: %1").arg(socket->errorString()));
+    return;
+  }
+
+  QString message = QString::fromUtf8(socket->readAll().constData());
+  emit messageSent(message);
+  socket->disconnectFromServer();
 }

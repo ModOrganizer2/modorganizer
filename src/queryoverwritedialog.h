@@ -26,27 +26,36 @@ namespace Ui {
 class QueryOverwriteDialog;
 }
 
-class QueryOverwriteDialog : public QDialog {
-    Q_OBJECT
+class QueryOverwriteDialog : public QDialog
+{
+  Q_OBJECT
 public:
-    enum Action { ACT_NONE, ACT_MERGE, ACT_REPLACE, ACT_RENAME };
+  enum Action {
+    ACT_NONE,
+    ACT_MERGE,
+    ACT_REPLACE,
+    ACT_RENAME
+  };
 
-    enum Backup { BACKUP_NO, BACKUP_YES };
+  enum Backup {
+    BACKUP_NO,
+    BACKUP_YES
+  };
 
 public:
-    QueryOverwriteDialog(QWidget* parent, Backup b);
-    ~QueryOverwriteDialog();
-    bool backup() const;
-    Action action() const { return m_Action; }
+  QueryOverwriteDialog(QWidget *parent, Backup b);
+  ~QueryOverwriteDialog();
+  bool backup() const;
+  Action action() const { return m_Action; }
 private slots:
-    void on_mergeBtn_clicked();
-    void on_replaceBtn_clicked();
-    void on_renameBtn_clicked();
-    void on_cancelBtn_clicked();
+  void on_mergeBtn_clicked();
+  void on_replaceBtn_clicked();
+  void on_renameBtn_clicked();
+  void on_cancelBtn_clicked();
 
 private:
-    Ui::QueryOverwriteDialog* ui;
-    Action m_Action;
+  Ui::QueryOverwriteDialog *ui;
+  Action m_Action;
 };
 
 #endif // QUERYOVERWRITEDIALOG_H

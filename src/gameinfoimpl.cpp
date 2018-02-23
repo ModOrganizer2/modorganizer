@@ -18,36 +18,39 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "gameinfoimpl.h"
-#include <QDir>
 #include <gameinfo.h>
 #include <utility.h>
+#include <QDir>
+
 
 using namespace MOBase;
 using namespace MOShared;
 
-GameInfoImpl::GameInfoImpl() {}
 
-IGameInfo::Type GameInfoImpl::type() const {
-    switch (GameInfo::instance().getType()) {
-    case GameInfo::TYPE_OBLIVION:
-        return IGameInfo::TYPE_OBLIVION;
-    case GameInfo::TYPE_FALLOUT3:
-        return IGameInfo::TYPE_FALLOUT3;
-    case GameInfo::TYPE_FALLOUT4:
-        return IGameInfo::TYPE_FALLOUT4;
-    case GameInfo::TYPE_FALLOUTNV:
-        return IGameInfo::TYPE_FALLOUTNV;
-    case GameInfo::TYPE_SKYRIM:
-        return IGameInfo::TYPE_SKYRIM;
-    case GameInfo::TYPE_SKYRIMSE:
-        return IGameInfo::TYPE_SKYRIMSE;
-    default:
-        throw MyException(QObject::tr("invalid game type %1").arg(GameInfo::instance().getType()));
-    }
+GameInfoImpl::GameInfoImpl()
+{
 }
 
-QString GameInfoImpl::path() const {
-    return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+IGameInfo::Type GameInfoImpl::type() const
+{
+  switch (GameInfo::instance().getType()) {
+    case GameInfo::TYPE_OBLIVION: return IGameInfo::TYPE_OBLIVION;
+    case GameInfo::TYPE_FALLOUT3: return IGameInfo::TYPE_FALLOUT3;
+    case GameInfo::TYPE_FALLOUT4: return IGameInfo::TYPE_FALLOUT4;
+    case GameInfo::TYPE_FALLOUTNV: return IGameInfo::TYPE_FALLOUTNV;
+    case GameInfo::TYPE_SKYRIM: return IGameInfo::TYPE_SKYRIM;
+	case GameInfo::TYPE_SKYRIMSE: return IGameInfo::TYPE_SKYRIMSE;
+    default: throw MyException(QObject::tr("invalid game type %1").arg(GameInfo::instance().getType()));
+  }
 }
 
-QString GameInfoImpl::binaryName() const { return ToQString(GameInfo::instance().getBinaryName()); }
+
+QString GameInfoImpl::path() const
+{
+  return QDir::fromNativeSeparators(ToQString(GameInfo::instance().getGameDirectory()));
+}
+
+QString GameInfoImpl::binaryName() const
+{
+  return ToQString(GameInfo::instance().getBinaryName());
+}

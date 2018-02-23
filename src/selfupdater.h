@@ -20,14 +20,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef SELFUPDATER_H
 #define SELFUPDATER_H
 
-#include <github.h>
+
 #include <versioninfo.h>
+#include <github.h>
 
 class Archive;
 class NexusInterface;
-namespace MOBase {
-class IPluginGame;
-}
+namespace MOBase { class IPluginGame; }
 
 #include <QFile>
 #include <QObject>
@@ -37,6 +36,7 @@ class IPluginGame;
 
 class QNetworkReply;
 class QProgressDialog;
+
 
 /**
  * @brief manages updates for Mod Organizer itself
@@ -57,88 +57,94 @@ class QProgressDialog;
  *
  * @todo use NexusBridge
  **/
-class SelfUpdater : public QObject {
+class SelfUpdater : public QObject
+{
 
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    /**
-     * @brief constructor
-     *
-     * @param nexusInterface interface to query information from nexus
-     * @param parent parent widget
-     * @todo passing the nexus interface is unneccessary
-     **/
-    explicit SelfUpdater(NexusInterface* nexusInterface);
 
-    virtual ~SelfUpdater();
+  /**
+   * @brief constructor
+   *
+   * @param nexusInterface interface to query information from nexus
+   * @param parent parent widget
+   * @todo passing the nexus interface is unneccessary
+   **/
+  explicit SelfUpdater(NexusInterface *nexusInterface);
 
-    void setUserInterface(QWidget* widget);
+  virtual ~SelfUpdater();
 
-    /**
-     * @brief start the update process
-     * @note this should not be called if there is no update available
-     **/
-    void startUpdate();
+  void setUserInterface(QWidget *widget);
 
-    /**
-     * @return current version of Mod Organizer
-     **/
-    MOBase::VersionInfo getVersion() const { return m_MOVersion; }
+  /**
+   * @brief start the update process
+   * @note this should not be called if there is no update available
+   **/
+  void startUpdate();
+
+  /**
+   * @return current version of Mod Organizer
+   **/
+  MOBase::VersionInfo getVersion() const { return m_MOVersion; }
 
 public slots:
 
-    /**
-     * @brief request information about the current version
-     **/
-    void testForUpdate();
+  /**
+   * @brief request information about the current version
+   **/
+  void testForUpdate();
 
 signals:
 
-    /**
-     * @brief emitted if a restart of the client is necessary to complete the update
-     **/
-    void restart();
+  /**
+   * @brief emitted if a restart of the client is necessary to complete the update
+   **/
+  void restart();
 
-    /**
-     * @brief emitted if an update is available
-     **/
-    void updateAvailable();
+  /**
+   * @brief emitted if an update is available
+   **/
+  void updateAvailable();
 
-    /**
-     * @brief emitted if a message of the day was received
-     **/
-    void motdAvailable(const QString& motd);
+  /**
+   * @brief emitted if a message of the day was received
+   **/
+  void motdAvailable(const QString &motd);
 
 private:
-    void openOutputFile(const QString& fileName);
-    void download(const QString& downloadLink);
-    void installUpdate();
-    void report7ZipError(const QString& errorMessage);
-    void showProgress();
-    void closeProgress();
+
+  void openOutputFile(const QString &fileName);
+  void download(const QString &downloadLink);
+  void installUpdate();
+  void report7ZipError(const QString &errorMessage);
+  void showProgress();
+  void closeProgress();
 
 private slots:
 
-    void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    void downloadReadyRead();
-    void downloadFinished();
-    void downloadCancel();
+  void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+  void downloadReadyRead();
+  void downloadFinished();
+  void downloadCancel();
 
 private:
-    QWidget* m_Parent;
-    MOBase::VersionInfo m_MOVersion;
-    NexusInterface* m_Interface;
-    QFile m_UpdateFile;
-    QNetworkReply* m_Reply;
-    QProgressDialog* m_Progress{nullptr};
-    bool m_Canceled;
-    int m_Attempts;
 
-    Archive* m_ArchiveHandler;
+  QWidget *m_Parent;
+  MOBase::VersionInfo m_MOVersion;
+  NexusInterface *m_Interface;
+  QFile m_UpdateFile;
+  QNetworkReply *m_Reply;
+  QProgressDialog *m_Progress { nullptr };
+  bool m_Canceled;
+  int m_Attempts;
 
-    GitHub m_GitHub;
-    QJsonObject m_UpdateCandidate;
+  Archive *m_ArchiveHandler;
+
+  GitHub m_GitHub;
+  QJsonObject m_UpdateCandidate;
+
 };
+
 
 #endif // SELFUPDATER_H

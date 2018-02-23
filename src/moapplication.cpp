@@ -18,111 +18,126 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "moapplication.h"
-#include <QFile>
-#include <QStringList>
-#include <appconfig.h>
 #include <report.h>
 #include <utility.h>
-#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
-#include <QCleanlooksStyle>
+#include <appconfig.h>
+#include <QFile>
+#include <QStringList>
+#if QT_VERSION < QT_VERSION_CHECK(5,0,0)
 #include <QPlastiqueStyle>
+#include <QCleanlooksStyle>
 #endif
-#include <QPainter>
 #include <QProxyStyle>
 #include <QStyleFactory>
+#include <QPainter>
 #include <QStyleOption>
+
 
 #include <QDebug>
 
+
 using MOBase::reportError;
+
 
 class ProxyStyle : public QProxyStyle {
 public:
-    ProxyStyle(QStyle* baseStyle = 0) : QProxyStyle(baseStyle) {}
+  ProxyStyle(QStyle *baseStyle = 0)
+    : QProxyStyle(baseStyle)
+  {
+  }
 
-    void drawPrimitive(PrimitiveElement element, const QStyleOption* option, QPainter* painter,
-                       const QWidget* widget) const {
-        if (element == QStyle::PE_IndicatorItemViewItemDrop) {
-            painter->setRenderHint(QPainter::Antialiasing, true);
+  void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const {
+    if(element == QStyle::PE_IndicatorItemViewItemDrop) {
+      painter->setRenderHint(QPainter::Antialiasing, true);
 
-            QColor col(option->palette.foreground().color());
-            QPen pen(col);
-            pen.setWidth(2);
-            col.setAlpha(50);
-            QBrush brush(col);
+      QColor col(option->palette.foreground().color());
+      QPen pen(col);
+      pen.setWidth(2);
+      col.setAlpha(50);
+      QBrush brush(col);
 
-            painter->setPen(pen);
-            painter->setBrush(brush);
-            if (option->rect.height() == 0) {
-                QPoint tri[3] = {option->rect.topLeft(), option->rect.topLeft() + QPoint(-5, 5),
-                                 option->rect.topLeft() + QPoint(-5, -5)};
-                painter->drawPolygon(tri, 3);
-                painter->drawLine(QPoint(option->rect.topLeft().x(), option->rect.topLeft().y()),
-                                  option->rect.topRight());
-            } else {
-                painter->drawRoundedRect(option->rect, 5, 5);
-            }
-        } else {
-            QProxyStyle::drawPrimitive(element, option, painter, widget);
-        }
+      painter->setPen(pen);
+      painter->setBrush(brush);
+      if(option->rect.height() == 0) {
+        QPoint tri[3] = {
+          option->rect.topLeft(),
+          option->rect.topLeft() + QPoint(-5,  5),
+          option->rect.topLeft() + QPoint(-5, -5)
+        };
+        painter->drawPolygon(tri, 3);
+        painter->drawLine(QPoint(option->rect.topLeft().x(), option->rect.topLeft().y()), option->rect.topRight());
+      } else {
+        painter->drawRoundedRect(option->rect, 5, 5);
+      }
+    } else {
+      QProxyStyle::drawPrimitive(element, option, painter, widget);
     }
+  }
 };
 
-MOApplication::MOApplication(int& argc, char** argv) : QApplication(argc, argv) {
-    connect(&m_StyleWatcher, SIGNAL(fileChanged(QString)), SLOT(updateStyle(QString)));
-    m_DefaultStyle = style()->objectName();
-    setStyle(new ProxyStyle(style()));
+
+MOApplication::MOApplication(int &argc, char **argv)
+  : QApplication(argc, argv)
+{
+  connect(&m_StyleWatcher, SIGNAL(fileChanged(QString)), SLOT(updateStyle(QString)));
+  m_DefaultStyle = style()->objectName();
+  setStyle(new ProxyStyle(style()));
 }
 
-bool MOApplication::setStyleFile(const QString& styleName) {
-    // remove all files from watch
-    QStringList currentWatch = m_StyleWatcher.files();
-    if (currentWatch.count() != 0) {
-        m_StyleWatcher.removePaths(currentWatch);
-    }
-    // set new stylesheet or clear it
-    if (styleName.length() != 0) {
-        QString styleSheetName =
-            applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
-        if (QFile::exists(styleSheetName)) {
-            m_StyleWatcher.addPath(styleSheetName);
-            updateStyle(styleSheetName);
-        } else {
-            updateStyle(styleName);
-        }
+
+bool MOApplication::setStyleFile(const QString &styleName)
+{
+  // remove all files from watch
+  QStringList currentWatch = m_StyleWatcher.files();
+  if (currentWatch.count() != 0) {
+    m_StyleWatcher.removePaths(currentWatch);
+  }
+  // set new stylesheet or clear it
+  if (styleName.length() != 0) {
+    QString styleSheetName = applicationDirPath() + "/" + MOBase::ToQString(AppConfig::stylesheetsPath()) + "/" + styleName;
+    if (QFile::exists(styleSheetName)) {
+      m_StyleWatcher.addPath(styleSheetName);
+      updateStyle(styleSheetName);
     } else {
-        setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
-        setStyleSheet("");
+      updateStyle(styleName);
     }
-    return true;
+  } else {
+    setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
+    setStyleSheet("");
+  }
+  return true;
 }
 
-bool MOApplication::notify(QObject* receiver, QEvent* event) {
-    try {
-        return QApplication::notify(receiver, event);
-    } catch (const std::exception& e) {
-        qCritical("uncaught exception in handler (object %s, eventtype %d): %s",
-                  receiver->objectName().toUtf8().constData(), event->type(), e.what());
-        reportError(tr("an error occured: %1").arg(e.what()));
-        return false;
-    } catch (...) {
-        qCritical("uncaught non-std exception in handler (object %s, eventtype %d)",
-                  receiver->objectName().toUtf8().constData(), event->type());
-        reportError(tr("an error occured"));
-        return false;
-    }
+
+bool MOApplication::notify(QObject *receiver, QEvent *event)
+{
+  try {
+    return QApplication::notify(receiver, event);
+  } catch (const std::exception &e) {
+    qCritical("uncaught exception in handler (object %s, eventtype %d): %s",
+              receiver->objectName().toUtf8().constData(), event->type(), e.what());
+    reportError(tr("an error occured: %1").arg(e.what()));
+    return false;
+  } catch (...) {
+    qCritical("uncaught non-std exception in handler (object %s, eventtype %d)",
+              receiver->objectName().toUtf8().constData(), event->type());
+    reportError(tr("an error occured"));
+    return false;
+  }
 }
 
-void MOApplication::updateStyle(const QString& fileName) {
-    if (fileName == "Fusion") {
-        setStyle(QStyleFactory::create("fusion"));
-        setStyleSheet("");
+
+void MOApplication::updateStyle(const QString &fileName)
+{
+  if (fileName == "Fusion") {
+    setStyle(QStyleFactory::create("fusion"));
+    setStyleSheet("");
+  } else {
+    setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
+    if (QFile::exists(fileName)) {
+      setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
-        setStyle(new ProxyStyle(QStyleFactory::create(m_DefaultStyle)));
-        if (QFile::exists(fileName)) {
-            setStyleSheet(QString("file:///%1").arg(fileName));
-        } else {
-            qWarning("invalid stylesheet: %s", qPrintable(fileName));
-        }
+      qWarning("invalid stylesheet: %s", qPrintable(fileName));
     }
+  }
 }
