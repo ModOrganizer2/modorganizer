@@ -20,61 +20,75 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "filedialogmemory.h"
 #include <QFileDialog>
 
-FileDialogMemory::FileDialogMemory() {}
 
-void FileDialogMemory::save(QSettings& settings) {
-    settings.remove("recentDirectories");
-    settings.beginWriteArray("recentDirectories");
-    int index = 0;
-    for (std::map<QString, QString>::const_iterator iter = instance().m_Cache.begin(); iter != instance().m_Cache.end();
-         ++iter) {
-        settings.setArrayIndex(index++);
-        settings.setValue("name", iter->first);
-        settings.setValue("directory", iter->second);
-    }
-    settings.endArray();
+FileDialogMemory::FileDialogMemory()
+{
 }
 
-void FileDialogMemory::restore(QSettings& settings) {
-    int size = settings.beginReadArray("recentDirectories");
-    for (int i = 0; i < size; ++i) {
-        settings.setArrayIndex(i);
-        QVariant name = settings.value("name");
-        QVariant dir = settings.value("directory");
-        if (name.isValid() && dir.isValid()) {
-            instance().m_Cache.insert(std::make_pair(name.toString(), dir.toString()));
-        }
-    }
-    settings.endArray();
+
+void FileDialogMemory::save(QSettings &settings)
+{
+  settings.remove("recentDirectories");
+  settings.beginWriteArray("recentDirectories");
+  int index = 0;
+  for (std::map<QString, QString>::const_iterator iter = instance().m_Cache.begin();
+       iter != instance().m_Cache.end(); ++iter) {
+    settings.setArrayIndex(index++);
+    settings.setValue("name", iter->first);
+    settings.setValue("directory", iter->second);
+  }
+  settings.endArray();
 }
 
-QString FileDialogMemory::getOpenFileName(const QString& dirID, QWidget* parent, const QString& caption,
-                                          const QString& dir, const QString& filter, QString* selectedFilter,
-                                          QFileDialog::Options options) {
-    std::pair<std::map<QString, QString>::iterator, bool> currentDir =
-        instance().m_Cache.insert(std::make_pair(dirID, dir));
 
-    QString result =
-        QFileDialog::getOpenFileName(parent, caption, currentDir.first->second, filter, selectedFilter, options);
-    if (!result.isNull()) {
-        instance().m_Cache[dirID] = QFileInfo(result).path();
+void FileDialogMemory::restore(QSettings &settings)
+{
+  int size = settings.beginReadArray("recentDirectories");
+  for (int i = 0; i < size; ++i) {
+    settings.setArrayIndex(i);
+    QVariant name = settings.value("name");
+    QVariant dir  = settings.value("directory");
+    if (name.isValid() && dir.isValid()) {
+      instance().m_Cache.insert(std::make_pair(name.toString(), dir.toString()));
     }
-    return result;
+  }
+  settings.endArray();
 }
 
-QString FileDialogMemory::getExistingDirectory(const QString& dirID, QWidget* parent, const QString& caption,
-                                               const QString& dir, QFileDialog::Options options) {
-    std::pair<std::map<QString, QString>::iterator, bool> currentDir =
-        instance().m_Cache.insert(std::make_pair(dirID, dir));
 
-    QString result = QFileDialog::getExistingDirectory(parent, caption, currentDir.first->second, options);
-    if (!result.isNull()) {
-        instance().m_Cache[dirID] = QFileInfo(result).path();
-    }
-    return result;
+QString FileDialogMemory::getOpenFileName(const QString &dirID, QWidget *parent,
+                 const QString &caption, const QString &dir,
+                 const QString &filter, QString *selectedFilter,
+                 QFileDialog::Options options)
+{
+  std::pair<std::map<QString, QString>::iterator, bool> currentDir =
+      instance().m_Cache.insert(std::make_pair(dirID, dir));
+
+  QString result = QFileDialog::getOpenFileName(parent, caption, currentDir.first->second,
+                                                filter, selectedFilter, options);
+  if (!result.isNull()) {
+    instance().m_Cache[dirID] = QFileInfo(result).path();
+  }
+  return result;
 }
 
-FileDialogMemory& FileDialogMemory::instance() {
-    static FileDialogMemory instance;
-    return instance;
+
+QString FileDialogMemory::getExistingDirectory(const QString &dirID, QWidget *parent,
+                 const QString &caption, const QString &dir, QFileDialog::Options options)
+{
+  std::pair<std::map<QString, QString>::iterator, bool> currentDir =
+      instance().m_Cache.insert(std::make_pair(dirID, dir));
+
+  QString result = QFileDialog::getExistingDirectory(parent, caption, currentDir.first->second, options);
+  if (!result.isNull()) {
+    instance().m_Cache[dirID] = QFileInfo(result).path();
+  }
+  return result;
+}
+
+
+FileDialogMemory &FileDialogMemory::instance()
+{
+  static FileDialogMemory instance;
+  return instance;
 }

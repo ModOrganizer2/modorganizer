@@ -20,28 +20,33 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "loghighlighter.h"
 #include <QRegExp>
 
-LogHighlighter::LogHighlighter(QObject* parent) : QSyntaxHighlighter(parent) {}
+LogHighlighter::LogHighlighter(QObject *parent) :
+    QSyntaxHighlighter(parent)
+{
+}
 
-void LogHighlighter::highlightBlock(const QString& text) {
-    int spacePos = text.indexOf(" ");
-    if (spacePos != -1) {
-        QString type = text.mid(0, spacePos);
-        if (type == "DEBUG") {
-            setFormat(0, text.length(), Qt::gray);
-        } else if (type == "INFO") {
-            setFormat(0, text.length(), Qt::darkGreen);
-        } else if (type == "ERROR") {
-            setFormat(0, text.length(), Qt::red);
-        }
-    }
 
-    int markPos = text.indexOf("injecting to");
-    if (markPos != -1) {
-        setFormat(markPos + 12, text.length(), Qt::blue);
+void LogHighlighter::highlightBlock(const QString &text)
+{
+  int spacePos = text.indexOf(" ");
+  if (spacePos != -1) {
+    QString type = text.mid(0, spacePos);
+    if (type == "DEBUG") {
+      setFormat(0, text.length(), Qt::gray);
+    } else if (type == "INFO") {
+      setFormat(0, text.length(), Qt::darkGreen);
+    } else if (type == "ERROR") {
+      setFormat(0, text.length(), Qt::red);
     }
+  }
 
-    markPos = text.indexOf("using profile");
-    if (markPos != -1) {
-        setFormat(markPos + 13, text.length(), Qt::blue);
-    }
+  int markPos = text.indexOf("injecting to");
+  if (markPos != -1) {
+    setFormat(markPos + 12, text.length(), Qt::blue);
+  }
+
+  markPos = text.indexOf("using profile");
+  if (markPos != -1) {
+    setFormat(markPos + 13, text.length(), Qt::blue);
+  }
 }

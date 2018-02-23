@@ -23,35 +23,49 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QPoint>
 #include <QResizeEvent>
 #include <QWidget>
-#include <Qt> // for Qt::FramelessWindowHint, etc
+#include <Qt>                 // for Qt::FramelessWindowHint, etc
 
-LockedDialog::LockedDialog(QWidget* parent, bool unlockByButton)
-    : LockedDialogBase(parent, !unlockByButton), ui(new Ui::LockedDialog) {
-    ui->setupUi(this);
+LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
+  : LockedDialogBase(parent, !unlockByButton)
+  , ui(new Ui::LockedDialog)
+{
+  ui->setupUi(this);
 
-    // Supposedly the Qt::CustomizeWindowHint should use a customized window
-    // allowing us to select if there is a close button. In practice this doesn't
-    // seem to work. We will ignore pressing the close button if unlockByButton == true
-    Qt::WindowFlags flags =
-        this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
-    if (m_allowClose)
-        flags |= Qt::WindowCloseButtonHint;
-    this->setWindowFlags(flags);
+  // Supposedly the Qt::CustomizeWindowHint should use a customized window
+  // allowing us to select if there is a close button. In practice this doesn't
+  // seem to work. We will ignore pressing the close button if unlockByButton == true
+  Qt::WindowFlags flags =
+    this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
+  if (m_allowClose)
+    flags |= Qt::WindowCloseButtonHint;
+  this->setWindowFlags(flags);
 
-    if (!unlockByButton) {
-        ui->unlockButton->hide();
-        ui->verticalLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
-    }
+  if (!unlockByButton)
+  {
+    ui->unlockButton->hide();
+    ui->verticalLayout->addItem(
+      new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
+  }
 }
 
-LockedDialog::~LockedDialog() { delete ui; }
+LockedDialog::~LockedDialog()
+{
+    delete ui;
+}
 
-void LockedDialog::setProcessName(const QString& name) { ui->processLabel->setText(name); }
 
-void LockedDialog::on_unlockButton_clicked() { unlock(); }
+void LockedDialog::setProcessName(const QString &name)
+{
+  ui->processLabel->setText(name);
+}
+
+void LockedDialog::on_unlockButton_clicked()
+{
+  unlock();
+}
 
 void LockedDialog::unlock() {
-    LockedDialogBase::unlock();
-    ui->label->setText("unlocking may take a few seconds");
-    ui->unlockButton->setEnabled(false);
+  LockedDialogBase::unlock();
+  ui->label->setText("unlocking may take a few seconds");
+  ui->unlockButton->setEnabled(false);
 }

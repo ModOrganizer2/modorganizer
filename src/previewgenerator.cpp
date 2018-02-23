@@ -18,34 +18,38 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "previewgenerator.h"
-#include <QDesktopWidget>
 #include <QFileInfo>
-#include <QImageReader>
 #include <QLabel>
+#include <QImageReader>
 #include <QTextEdit>
+#include <QDesktopWidget>
 #include <utility.h>
 
-PreviewGenerator::PreviewGenerator() {
+PreviewGenerator::PreviewGenerator()
+{
 
-    QDesktopWidget desk;
-    m_MaxSize = desk.screenGeometry().size() * 0.8;
+  QDesktopWidget desk;
+  m_MaxSize = desk.screenGeometry().size() * 0.8;
 }
 
-void PreviewGenerator::registerPlugin(MOBase::IPluginPreview* plugin) {
-    for (const QString& extension : plugin->supportedExtensions()) {
-        m_PreviewPlugins.insert(std::make_pair(extension, plugin));
-    }
+void PreviewGenerator::registerPlugin(MOBase::IPluginPreview *plugin)
+{
+  for (const QString &extension : plugin->supportedExtensions()) {
+    m_PreviewPlugins.insert(std::make_pair(extension, plugin));
+  }
 }
 
-bool PreviewGenerator::previewSupported(const QString& fileExtension) const {
-    return m_PreviewPlugins.find(fileExtension.toLower()) != m_PreviewPlugins.end();
+bool PreviewGenerator::previewSupported(const QString &fileExtension) const
+{
+  return m_PreviewPlugins.find(fileExtension.toLower()) != m_PreviewPlugins.end();
 }
 
-QWidget* PreviewGenerator::genPreview(const QString& fileName) const {
-    auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
-    if (iter != m_PreviewPlugins.end()) {
-        return iter->second->genFilePreview(fileName, m_MaxSize);
-    } else {
-        return nullptr;
-    }
+QWidget *PreviewGenerator::genPreview(const QString &fileName) const
+{
+  auto iter = m_PreviewPlugins.find(QFileInfo(fileName).suffix().toLower());
+  if (iter != m_PreviewPlugins.end()) {
+    return iter->second->genFilePreview(fileName, m_MaxSize);
+  } else {
+    return nullptr;
+  }
 }

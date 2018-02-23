@@ -21,10 +21,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define SPAWN_H
 
 #define WIN32_LEAN_AND_MEAN
-#include <QDir>
-#include <QFileInfo>
-#include <tchar.h>
 #include <windows.h>
+#include <tchar.h>
+#include <QFileInfo>
+#include <QDir>
+
 
 /**
  * @brief a dirty little trick so we can issue a clean restart from startBinary
@@ -43,6 +44,7 @@ private:
   static ExitProxy *s_Instance;
 };*/
 
+
 /**
  * @brief spawn a binary with Mod Organizer injected
  *
@@ -58,7 +60,9 @@ private:
  * @todo is the profile name even used any more?
  * @todo is the hooked parameter used?
  **/
-HANDLE startBinary(const QFileInfo& binary, const QString& arguments, const QDir& currentDirectory, bool hooked,
+HANDLE startBinary(const QFileInfo &binary, const QString &arguments,
+                   const QDir &currentDirectory, bool hooked,
                    HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
 
 #endif // SPAWN_H
+
