@@ -13,7 +13,7 @@ Mod Organizer 2 is an open project in the hands of the community, there are prob
 To have more information, please join the open MO2 Development discord server :* [ModOrganizerDevs](https://discord.gg/vD2ZbfX)
 If you want to help translate MO2 to your language you should join the discord server too and head to the #translation channel.
 To setup a development environment on your machine, there is the [umbrella project](https://github.com/LePresidente/modorganizer-umbrella) that handles that.
-If you want to submit your code changes, please use clang-format on it before you submit it.
+If you want to submit your code changes, please use a good formating style like the default one in Visual Studio.
 
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
 
