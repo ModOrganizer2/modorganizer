@@ -509,7 +509,7 @@ p, li { white-space: pre-wrap; }
                  <enum>Qt::RightToLeft</enum>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">border:2px solid #ff0000;</string>
+                 <string notr="true">border:1px solid #ff0000;</string>
                 </property>
                 <property name="text">
                  <string>Clear all Filters</string>
