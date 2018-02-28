@@ -176,7 +176,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -248,9 +248,33 @@ p, li { white-space: pre-wrap; }
                   <height>16</height>
                  </size>
                 </property>
+				 </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="openFolderMenu">
+                <property name="toolTip">
+                 <string>Quickly open in Explorer relevant Folders...</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/open_folder</normaloff>:/MO/gui/open_folder</iconset>
+                </property>
                </widget>
               </item>
               <item>
+																 
+										 
+														  
+						   
+									  
+						  
+						   
+						
+					 
+					
                <widget class="QPushButton" name="restoreModsButton">
                 <property name="toolTip">
                  <string>Restore Backup...</string>
@@ -439,7 +463,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1,0">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
@@ -944,6 +968,9 @@ p, li { white-space: pre-wrap; }
                </layout>
               </widget>
               <widget class="QWidget" name="bsaTab">
+										
+								  
+						  
                <attribute name="title">
                 <string>Archives</string>
                </attribute>
