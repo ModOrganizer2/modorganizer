@@ -277,6 +277,8 @@ private:
 
   QMenu *modListContextMenu();
 
+  QMenu *openFolderMenu();
+
   std::set<QString> enabledArchives();
 
   void scheduleUpdateButton();
@@ -485,6 +487,7 @@ private slots:
   void disableVisibleMods();
   void exportModListCSV();
   void openInstanceFolder();
+  void openInstallFolder();
   void openDownloadsFolder();
   void openProfileFolder();
   void openGameFolder();

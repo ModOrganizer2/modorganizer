@@ -301,6 +301,8 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
 
+  ui->openFolderMenu->setMenu(openFolderMenu());
+
   updateDownloadListDelegate();
 
   ui->savegameList->installEventFilter(this);
@@ -3033,6 +3035,11 @@ void MainWindow::openInstanceFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openInstallFolder()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::openProfileFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3219,6 +3226,30 @@ static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
   menu->addAction(action);
 }
 
+QMenu *MainWindow::openFolderMenu()
+{	
+
+	QMenu *FolderMenu = new QMenu(this);
+
+
+	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
+
+	FolderMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
+
+	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
+
+	FolderMenu->addAction(tr("Open MO Install folder"), this, SLOT(openInstallFolder()));
+
+	FolderMenu->addSeparator();
+
+	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+
+	return FolderMenu;
+}
+
 QMenu *MainWindow::modListContextMenu()
 {
   QMenu *menu = new QMenu(this);
@@ -3237,24 +3268,6 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
 
-  menu->addSeparator();
-
-  QMenu *openSubMenu = new QMenu(this);
-
-
-  openSubMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
-
-  openSubMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
-
-  openSubMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
-
-  openSubMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
-
-  openSubMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
-
-  openSubMenu->setTitle(tr("Open Folder..."));
-
-  menu->addMenu(openSubMenu);
 
   return menu;
 }
@@ -3698,6 +3711,9 @@ void MainWindow::languageChange(const QString &newLanguage)
   updateProblemsButton();
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
+
+  ui->openFolderMenu->setMenu(openFolderMenu());
+
 }
 
 void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
