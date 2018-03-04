@@ -3326,10 +3326,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
 
+		//Removed as it was redundant, just making the categories look more complicated.
+		/*
         QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
         populateMenuCategories(replaceCategoriesMenu, 0);
         connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
         addMenuAsPushButton(menu, replaceCategoriesMenu);
+		*/
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
