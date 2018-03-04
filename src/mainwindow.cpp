@@ -3321,7 +3321,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
       } else {
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Add/Remove Categories"));
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
