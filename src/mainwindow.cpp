@@ -3035,6 +3035,12 @@ void MainWindow::openInstanceFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openLogsFolder()
+{	
+	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
+	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::openInstallFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3231,6 +3237,11 @@ QMenu *MainWindow::openFolderMenu()
 
 	QMenu *FolderMenu = new QMenu(this);
 
+	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+	FolderMenu->addSeparator();
 
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
 
@@ -3238,13 +3249,19 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
 
-	FolderMenu->addAction(tr("Open MO Install folder"), this, SLOT(openInstallFolder()));
-
 	FolderMenu->addSeparator();
 
-	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 
-	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
+
+
+
+	
+
+	
+
+	
 
 
 	return FolderMenu;

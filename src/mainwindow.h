@@ -487,6 +487,7 @@ private slots:
   void disableVisibleMods();
   void exportModListCSV();
   void openInstanceFolder();
+  void openLogsFolder();
   void openInstallFolder();
   void openDownloadsFolder();
   void openProfileFolder();
