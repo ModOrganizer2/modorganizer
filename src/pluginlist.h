@@ -217,6 +217,7 @@ public:
   virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool isMaster(const QString &name) const;
   virtual bool isLight(const QString &name) const;
+  virtual bool isLightFlagged(const QString &name) const;
   virtual QStringList masters(const QString &name) const;
   virtual QString origin(const QString &name) const;
   virtual void setLoadOrder(const QStringList &pluginList) override;
@@ -280,6 +281,7 @@ private:
     QString m_OriginName;
     bool m_IsMaster;
     bool m_IsLight;
+    bool m_IsLightFlagged;
     bool m_ModSelected;
     QString m_Author;
     QString m_Description;

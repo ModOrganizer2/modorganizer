@@ -57,12 +57,12 @@ ModInfoForeign::ModInfoForeign(const QString &modName,
   m_CreationTime = QFileInfo(referenceFile).created();
   switch (modType) {
   case ModInfo::EModType::MOD_DLC:
-    m_Name = "DLC: " + modName;
+    m_Name = tr("DLC: ") + modName;
     break;
   case ModInfo::EModType::MOD_CC:
-    m_Name = "Creation Club: " + modName;
+    m_Name = tr("Creation Club: ") + modName;
     break;
   default:
-    m_Name = "Unmanaged: " + modName;
+    m_Name = tr("Unmanaged: ") + modName;
   }
 }

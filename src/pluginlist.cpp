@@ -655,6 +655,16 @@ bool PluginList::isLight(const QString &name) const
   }
 }
 
+bool PluginList::isLightFlagged(const QString &name) const
+{
+  auto iter = m_ESPsByName.find(name.toLower());
+  if (iter == m_ESPsByName.end()) {
+    return false;
+  } else {
+    return m_ESPs[iter->second].m_IsLightFlagged;
+  }
+}
+
 QStringList PluginList::masters(const QString &name) const
 {
   auto iter = m_ESPsByName.find(name.toLower());
@@ -781,10 +791,10 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
           for (auto sortedESP: sortESPs) {
             if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
               break;
-            if (sortedESP.m_IsLight && sortedESP.m_LoadOrder != -1)
+            if ((sortedESP.m_IsLight || sortedESP.m_IsLightFlagged) && sortedESP.m_LoadOrder != -1)
               ++numESLs;
           }
-          if (m_ESPs[index].m_IsLight) {
+          if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
             int ESLpos = 254 + ((numESLs+1) / 4096);
             return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs)%4096).toUpper();
           } else {
@@ -819,7 +829,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_IsMaster) {
       result.setItalic(true);
       result.setWeight(QFont::Bold);
-    } else if (m_ESPs[index].m_IsLight) {
+    } else if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
       result.setItalic(true);
     }
     return result;
@@ -1200,8 +1210,9 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
   try {
     ESP::File file(ToWString(fullPath));
     m_IsMaster = file.isMaster();
-	auto extension = name.right(3).toLower();
-	m_IsLight = (extension == "esl"); // The .isLight() header is apparently meaningless.
+    auto extension = name.right(3).toLower();
+    m_IsLight = (extension == "esl");
+    m_IsLightFlagged = file.isLight();
 
     m_Author = QString::fromLatin1(file.author().c_str());
     m_Description = QString::fromLatin1(file.description().c_str());
@@ -1213,6 +1224,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
     qCritical("failed to parse plugin file %s: %s", qPrintable(fullPath), e.what());
     m_IsMaster = false;
     m_IsLight = false;
+    m_IsLightFlagged = false;
   }
 }
 

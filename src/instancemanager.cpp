@@ -133,7 +133,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
   QString instanceId;
   while (instanceId.isEmpty()) {
     QInputDialog dialog;
-	
+
 	dialog.setWindowTitle(QObject::tr("Enter a Name for the new Instance"));
     dialog.setLabelText(QObject::tr("Enter a new name or select one from the sugested list (only letters and numbers allowed):"));
     // would be neat if we could take the names from the game plugins but
@@ -142,7 +142,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     dialog.setComboBoxItems({ "NewName", "Fallout 4", "SkyrimSE", "Skyrim", "Fallout 3",
                               "Fallout NV", "FO4VR", "Oblivion" });
     dialog.setComboBoxEditable(true);
-    
+
     if (dialog.exec() == QDialog::Rejected) {
       throw MOBase::MyException(QObject::tr("Canceled"));
     }

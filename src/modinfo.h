@@ -84,7 +84,7 @@ public:
     CONTENT_MCM
   };
 
-  static const int NUM_CONTENT_TYPES = CONTENT_SKYPROC + 1;
+  static const int NUM_CONTENT_TYPES = CONTENT_MCM + 1;
 
   enum EHighlight {
     HIGHLIGHT_NONE = 0,
