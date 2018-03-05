@@ -3352,8 +3352,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addSeparator();
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
-        menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
+		menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
 
 		menu->addSeparator();
 
