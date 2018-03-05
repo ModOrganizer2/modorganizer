@@ -19,6 +19,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
+#include "descriptionpage.h"
 
 #include "iplugingame.h"
 #include "nexusinterface.h"
@@ -38,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMenu>
 #include <QFileSystemModel>
 #include <QInputDialog>
+#include <QPointer>
 
 #include <Shlwapi.h>
 
@@ -85,11 +87,14 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->notesEdit->setText(modInfo->notes());
 
+  ui->descriptionView->setPage(new DescriptionPage);
+
   connect(&m_ThumbnailMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(thumbnailClickedSignal(const QString&)));
   connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
   connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
-  connect(ui->descriptionView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
-  ui->descriptionView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+  connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
+  //TODO: No easy way to delegate links
+  //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
 
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));
@@ -143,6 +148,8 @@ ModInfoDialog::~ModInfoDialog()
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
+  delete ui->descriptionView->page();
+  delete ui->descriptionView;
   delete ui;
   delete m_Settings;
 }
@@ -259,22 +266,22 @@ void ModInfoDialog::refreshLists()
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
       bool archive;
       if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<int> alternatives = (*iter)->getAlternatives();
+        std::vector<std::pair<int, std::wstring>> alternatives = (*iter)->getAlternatives();
         if (!alternatives.empty()) {
           std::wostringstream altString;
-          for (std::vector<int>::iterator altIter = alternatives.begin();
+          for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
                altIter != alternatives.end(); ++altIter) {
             if (altIter != alternatives.begin()) {
               altString << ", ";
             }
-            altString << m_Directory->getOriginByID(*altIter).getName();
+            altString << m_Directory->getOriginByID(altIter->first).getName();
           }
           QStringList fields(relativeName.prepend("..."));
           fields.append(ToQString(altString.str()));
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
           item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives[0]).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives[0]);
+          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.begin()->first).getName()));
+          item->setData(1, Qt::UserRole + 1, alternatives.begin()->first);
           item->setData(1, Qt::UserRole + 2, archive);
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
@@ -313,7 +320,8 @@ void ModInfoDialog::refreshLists()
           ui->iniFileList->addItem(namePart);
         }
       } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esm", Qt::CaseInsensitive)) {
+                 fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+                 fileName.endsWith(".esl", Qt::CaseInsensitive)) {
         QString relativePath = fileName.mid(m_RootPath.length() + 1);
         if (relativePath.contains('/')) {
           QFileInfo fileInfo(fileName);
@@ -351,14 +359,18 @@ void ModInfoDialog::refreshLists()
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
 {
-  for (size_t i = 0; i < factory.numCategories(); ++i) {
+  for (int i = 0; i < static_cast<int>(factory.numCategories()); ++i) {
     if (factory.getParentID(i) != rootLevel) {
       continue;
     }
     int categoryID = factory.getCategoryID(i);
-    QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
+    QTreeWidgetItem *newItem
+        = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
     newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
-    newItem->setCheckState(0, enabledCategories.find(categoryID) != enabledCategories.end() ? Qt::Checked : Qt::Unchecked);
+    newItem->setCheckState(0, enabledCategories.find(categoryID)
+                                      != enabledCategories.end()
+                                  ? Qt::Checked
+                                  : Qt::Unchecked);
     newItem->setData(0, Qt::UserRole, categoryID);
     if (factory.hasChildren(i)) {
       addCategories(factory, enabledCategories, newItem, categoryID);
@@ -820,11 +832,13 @@ void ModInfoDialog::modDetailsUpdated(bool success)
                     "<body>%1</body>"
                   "</html>").arg(BBCode::convertToHTML(nexusDescription));
 
+      ui->descriptionView->page()->setHtml(descriptionAsHTML);
+
   //    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-      ui->descriptionView->setHtml(descriptionAsHTML);
+  //    ui->descriptionView->setHtml(descriptionAsHTML);
     } else {
   //    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-      ui->descriptionView->setHtml(tr("(description incomplete, please visit nexus)"));
+      ui->descriptionView->page()->setHtml(tr("(description incomplete, please visit nexus)"));
     }
 
     updateVersionColor();
@@ -870,7 +884,7 @@ void ModInfoDialog::on_modIDEdit_editingFinished()
   if (oldID != modID){
     m_ModInfo->setNexusID(modID);
 
-    ui->descriptionView->setHtml("");
+    ui->descriptionView->page()->setHtml("");
     if (modID != 0) {
       m_RequestStarted = false;
       refreshNexusData(modID);

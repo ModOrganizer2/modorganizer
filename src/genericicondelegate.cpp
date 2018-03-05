@@ -24,7 +24,7 @@ QList<QString> GenericIconDelegate::getIcons(const QModelIndex &index) const
 {
   QList<QString> result;
   if (index.isValid()) {
-    foreach (const QVariant &var, index.data(m_Role).toList()) {
+    for (const QVariant &var : index.data(m_Role).toList()) {
       if (!m_Compact || !var.toString().isEmpty()) {
         result.append(var.toString());
       }

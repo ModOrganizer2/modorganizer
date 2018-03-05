@@ -2,11 +2,17 @@
 Thumbs.db
 src/moc_*.cpp
 src/ui_*.h
+src/organizer_en.ts
 src/*.qrc.depends
 src/Modorganizer.*
+src/*.bak
 CMakeLists.txt.user
 edit
 stderr.log
 stdout.log
+vs_stderr.log
+vs_stdout.log
 build
+/vsbuild
+/CMakeFiles
 .idea

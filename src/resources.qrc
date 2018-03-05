@@ -15,6 +15,7 @@
         <file>resources/document-properties.png</file>
         <file>resources/go-up.png</file>
         <file>resources/go-down.png</file>
+        <file>resources/switch-instance-icon.png</file>
         <file alias="profiles">resources/contact-new.png</file>
         <file alias="settings">resources/preferences-system.png</file>
         <file alias="executable">resources/application-x-executable.png</file>
@@ -26,7 +27,6 @@
         <file alias="update_available">resources/software-update-available.png</file>
         <file alias="important">resources/emblem-important.png</file>
         <file alias="check">resources/check.png</file>
-        <file>mo_icon.ico</file>
         <file alias="warning">resources/dialog-warning.png</file>
         <file alias="emblem_backup">resources/symbol-backup.png</file>
         <file alias="icon_tools">resources/applications-accessories.png</file>
@@ -68,6 +68,10 @@
         <file alias="active">resources/status_active.png</file>
         <file alias="awaiting">resources/status_awaiting.png</file>
         <file alias="inactive">resources/status_inactive.png</file>
+        <file alias="app_icon">resources/mo_icon.png</file>
+        <file alias="package">resources/package.png</file>
+        <file alias="instance_switch">resources/switch-instance-icon.png</file>
+        <file alias="open_folder">resources/open-Folder-Icon.png</file>
     </qresource>
     <qresource prefix="/MO/gui/content">
         <file alias="plugin">resources/contents/jigsaw-piece.png</file>
@@ -81,6 +85,7 @@
         <file alias="mesh">resources/contents/breastplate.png</file>
         <file alias="string">resources/contents/conversation.png</file>
         <file alias="bsa">resources/contents/locked-chest.png</file>
+        <file alias="menu">resources/contents/config.png</file>
     </qresource>
     <qresource prefix="/qt/etc">
         <file>qt.conf</file>

@@ -59,6 +59,11 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   m_LoginTimeout.setInterval(30000);
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
+
+  if (networkAccessible() == QNetworkAccessManager::UnknownAccessibility) {
+    // why is this necessary all of a sudden?
+    setNetworkAccessible(QNetworkAccessManager::Accessible);
+  }
 }
 
 NXMAccessManager::~NXMAccessManager()
@@ -105,6 +110,15 @@ void NXMAccessManager::showCookies() const
   }
 }
 
+void NXMAccessManager::clearCookies()
+{
+  PersistentCookieJar *jar = qobject_cast<PersistentCookieJar*>(cookieJar());
+  if (jar != nullptr) {
+    jar->clear();
+  } else {
+    qWarning("failed to clear cookies, invalid cookie jar");
+  }
+}
 
 void NXMAccessManager::startLoginCheck()
 {
@@ -201,7 +215,6 @@ void NXMAccessManager::login(const QString &username, const QString &password)
     emit loginSuccessful(false);
     return;
   }
-
   m_Username = username;
   m_Password = password;
   pageLogin();
@@ -223,7 +236,6 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 void NXMAccessManager::pageLogin()
 {
   qDebug("logging %s in on Nexus", qPrintable(m_Username));
-
   QString requestString = (Nexus_Management_URL + "/Sessions/?Login&uri=%1")
                             .arg(QString(QUrl::toPercentEncoding(Nexus_Management_URL)));
 
@@ -233,8 +245,8 @@ void NXMAccessManager::pageLogin()
   QByteArray postDataQuery;
   QUrlQuery postData;
   postData.addQueryItem("username", m_Username);
-  postData.addQueryItem("password", m_Password);
-  postDataQuery = postData.query(QUrl::FullyEncoded).toUtf8();
+  postData.addQueryItem("password", QUrl::toPercentEncoding(m_Password));
+  postDataQuery = postData.query(QUrl::EncodeReserved).toUtf8();
 
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 

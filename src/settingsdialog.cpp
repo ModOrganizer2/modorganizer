@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "noeditdelegate.h"
 #include "iplugingame.h"
 #include "settings.h"
+#include "instancemanager.h"
+#include "nexusinterface.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
@@ -39,11 +41,13 @@ using namespace MOBase;
 
 
 SettingsDialog::SettingsDialog(QWidget *parent)
-  : TutorableDialog("SettingsDialog", parent), ui(new Ui::SettingsDialog)
+  : TutorableDialog("SettingsDialog", parent)
+  , ui(new Ui::SettingsDialog)
 {
   ui->setupUi(this);
 
-  QShortcut *delShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
+  QShortcut *delShortcut
+      = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
 }
 
@@ -54,13 +58,30 @@ SettingsDialog::~SettingsDialog()
 
 void SettingsDialog::addPlugins(const std::vector<IPlugin*> &plugins)
 {
-  foreach (IPlugin *plugin, plugins) {
+  for (IPlugin *plugin : plugins) {
     ui->pluginsList->addItem(plugin->name());
   }
 }
 
 void SettingsDialog::accept()
 {
+  QString newModPath = ui->modDirEdit->text();
+  newModPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  if ((QDir::fromNativeSeparators(newModPath) !=
+       QDir::fromNativeSeparators(
+           Settings::instance().getModDirectory(true))) &&
+      (QMessageBox::question(
+           nullptr, tr("Confirm"),
+           tr("Changing the mod directory affects all your profiles! "
+              "Mods not present (or named differently) in the new location "
+              "will be disabled in all profiles. "
+              "There is no way to undo this unless you backed up your "
+              "profiles manually. Proceed?"),
+           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
+    return;
+  }
+
   storeSettings(ui->pluginsList->currentItem());
   TutorableDialog::accept();
 }
@@ -89,16 +110,29 @@ void SettingsDialog::on_categoriesBtn_clicked()
 
 void SettingsDialog::on_bsaDateBtn_clicked()
 {
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame const *game
+      = qApp->property("managed_game").value<IPluginGame *>();
   QDir dir = game->dataDirectory();
 
-  Helper::backdateBSAs(qApp->property("dataPath").toString().toStdWString(),
+  Helper::backdateBSAs(qApp->applicationDirPath().toStdWString(),
                        dir.absolutePath().toStdWString());
+}
+
+void SettingsDialog::on_browseBaseDirBtn_clicked()
+{
+  QString temp = QFileDialog::getExistingDirectory(
+      this, tr("Select base directory"), ui->baseDirEdit->text());
+  if (!temp.isEmpty()) {
+    ui->baseDirEdit->setText(temp);
+  }
 }
 
 void SettingsDialog::on_browseDownloadDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), ui->downloadDirEdit->text());
+  QString searchPath = ui->downloadDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select download directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->downloadDirEdit->setText(temp);
   }
@@ -106,7 +140,10 @@ void SettingsDialog::on_browseDownloadDirBtn_clicked()
 
 void SettingsDialog::on_browseModDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), ui->downloadDirEdit->text());
+  QString searchPath = ui->modDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select mod directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->modDirEdit->setText(temp);
   }
@@ -114,9 +151,34 @@ void SettingsDialog::on_browseModDirBtn_clicked()
 
 void SettingsDialog::on_browseCacheDirBtn_clicked()
 {
-  QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), ui->cacheDirEdit->text());
+  QString searchPath = ui->cacheDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select cache directory"), searchPath);
   if (!temp.isEmpty()) {
     ui->cacheDirEdit->setText(temp);
+  }
+}
+
+void SettingsDialog::on_browseProfilesDirBtn_clicked()
+{
+  QString searchPath = ui->profilesDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select profiles directory"), searchPath);
+  if (!temp.isEmpty()) {
+    ui->profilesDirEdit->setText(temp);
+  }
+}
+
+void SettingsDialog::on_browseOverwriteDirBtn_clicked()
+{
+  QString searchPath = ui->overwriteDirEdit->text();
+  searchPath.replace("%BASE_DIR%", ui->baseDirEdit->text());
+
+  QString temp = QFileDialog::getExistingDirectory(this, tr("Select overwrite directory"), searchPath);
+  if (!temp.isEmpty()) {
+    ui->overwriteDirEdit->setText(temp);
   }
 }
 
@@ -184,5 +246,12 @@ void SettingsDialog::deleteBlacklistItem()
 
 void SettingsDialog::on_associateButton_clicked()
 {
-  Settings::instance().registerAsNXMHandler(true);
+  Settings::instance().registerAsNXMHandler(false);
 }
+
+void SettingsDialog::on_clearCacheButton_clicked()
+{
+  QDir(Settings::instance().getCacheDirectory()).removeRecursively();
+  NexusInterface::instance()->clearCache();
+}
+

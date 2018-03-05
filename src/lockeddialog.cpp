@@ -25,27 +25,26 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidget>
 #include <Qt>                 // for Qt::FramelessWindowHint, etc
 
-LockedDialog::LockedDialog(QWidget *parent, const QString &text, bool unlockButton)
-  : QDialog(parent)
+LockedDialog::LockedDialog(QWidget *parent, bool unlockByButton)
+  : LockedDialogBase(parent, !unlockByButton)
   , ui(new Ui::LockedDialog)
-  , m_UnlockClicked(false)
 {
   ui->setupUi(this);
 
-  this->setWindowFlags(this->windowFlags() | Qt::ToolTip | Qt::FramelessWindowHint);
+  // Supposedly the Qt::CustomizeWindowHint should use a customized window
+  // allowing us to select if there is a close button. In practice this doesn't
+  // seem to work. We will ignore pressing the close button if unlockByButton == true
+  Qt::WindowFlags flags =
+    this->windowFlags() | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint;
+  if (m_allowClose)
+    flags |= Qt::WindowCloseButtonHint;
+  this->setWindowFlags(flags);
 
-  if (parent != nullptr) {
-    QPoint position = parent->mapToGlobal(QPoint(parent->width() / 2, parent->height() / 2));
-    position.rx() -= this->width() / 2;
-    position.ry() -= this->height() / 2;
-    move(position);
-  }
-
-  if (text.length() > 0) {
-    ui->label->setText(text);
-  }
-  if (!unlockButton) {
+  if (!unlockByButton)
+  {
     ui->unlockButton->hide();
+    ui->verticalLayout->addItem(
+      new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
   }
 }
 
@@ -60,19 +59,13 @@ void LockedDialog::setProcessName(const QString &name)
   ui->processLabel->setText(name);
 }
 
-
-void LockedDialog::resizeEvent(QResizeEvent *event)
-{
-  QWidget *par = parentWidget();
-  if (par != nullptr) {
-    QPoint position = par->mapToGlobal(QPoint(par->width() / 2, par->height() / 2));
-    position.rx() -= event->size().width() / 2;
-    position.ry() -= event->size().height() / 2;
-    move(position);
-  }
-}
-
 void LockedDialog::on_unlockButton_clicked()
 {
-  m_UnlockClicked = true;
+  unlock();
+}
+
+void LockedDialog::unlock() {
+  LockedDialogBase::unlock();
+  ui->label->setText("unlocking may take a few seconds");
+  ui->unlockButton->setEnabled(false);
 }

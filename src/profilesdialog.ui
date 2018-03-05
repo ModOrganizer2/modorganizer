@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>471</width>
-    <height>318</height>
+    <width>482</width>
+    <height>332</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,6 +42,16 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="text">
         <string>Local Savegames</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="localIniFilesBox">
+       <property name="text">
+        <string>Local Game Settings</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
        </property>
       </widget>
      </item>

@@ -37,14 +37,15 @@ namespace Ui { class TransferSavesDialog; }
 namespace MOBase { class IPluginGame; }
 namespace MOBase { class ISaveGame; }
 
-class TransferSavesDialog : public MOBase::TutorableDialog
-{
+class TransferSavesDialog : public MOBase::TutorableDialog {
   Q_OBJECT
-  
+
 public:
-  explicit TransferSavesDialog(const Profile &profile, MOBase::IPluginGame const *gamePlugin, QWidget *parent = 0);
+  explicit TransferSavesDialog(const Profile &profile,
+                               MOBase::IPluginGame const *gamePlugin,
+                               QWidget *parent = 0);
   ~TransferSavesDialog();
-  
+
 private slots:
 
   void on_moveToLocalBtn_clicked();
@@ -62,23 +63,17 @@ private slots:
   void on_copyToGlobalBtn_clicked();
 
 private:
-
-  enum OverwriteMode {
-    OVERWRITE_ASK,
-    OVERWRITE_YES,
-    OVERWRITE_NO
-  };
+  enum OverwriteMode { OVERWRITE_ASK, OVERWRITE_YES, OVERWRITE_NO };
 
 private:
-
   void refreshGlobalCharacters();
   void refreshLocalCharacters();
   void refreshGlobalSaves();
   void refreshLocalSaves();
-  bool testOverwrite(OverwriteMode &overwriteMode, const QString &destinationFile);
+  bool testOverwrite(OverwriteMode &overwriteMode,
+                     const QString &destinationFile);
 
 private:
-
   Ui::TransferSavesDialog *ui;
 
   Profile m_Profile;
@@ -93,18 +88,14 @@ private:
 
   void refreshSaves(SaveCollection &saveCollection, const QString &savedir);
   void refreshCharacters(SaveCollection const &saveCollection,
-                         QListWidget *charList,
-                         QPushButton *copy,
+                         QListWidget *charList, QPushButton *copy,
                          QPushButton *move);
 
-  bool transferCharacters(QString const &character,
-                          char const *message,
-                          SaveList &saves,
-                          QString const &dest,
-                          bool (method)(QString const &, QString const &),
-                          char const *errmsg
-                          );
-
+  bool transferCharacters(
+      QString const &character, char const *message, SaveList &saves,
+      QString const &dest,
+      const std::function<bool(const QString &, const QString &)> &method,
+      char const *errmsg);
 };
 
 #endif // TRANSFERSAVESDIALOG_H

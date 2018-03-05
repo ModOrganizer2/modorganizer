@@ -45,7 +45,10 @@
             <property name="title">
              <string>Categories</string>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_10">
+            <layout class="QVBoxLayout" name="verticalLayout_10" stretch="6,0,0">
+             <property name="spacing">
+              <number>0</number>
+             </property>
              <property name="leftMargin">
               <number>3</number>
              </property>
@@ -92,25 +95,37 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="clickBlankLabel">
-               <property name="enabled">
-                <bool>false</bool>
+              <widget class="QPushButton" name="clickBlankButton">
+				      <property name="enabled">
+                 <bool>false</bool>
+               </property>							  
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
                </property>
                <property name="text">
-                <string>Click blank area to deselect</string>
+                <string>Clear</string>
+               </property>
+               <property name="flat">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QGroupBox" name="groupBox">
-               <property name="title">
-                <string/>
-               </property>
-               <property name="flat">
-                <bool>false</bool>
-               </property>
-               <property name="checkable">
-                <bool>false</bool>
+              <widget class="QWidget" name="widget" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_11">
                 <item>
@@ -161,7 +176,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -233,9 +248,33 @@ p, li { white-space: pre-wrap; }
                   <height>16</height>
                  </size>
                 </property>
+				 </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="openFolderMenu">
+                <property name="toolTip">
+                 <string>Quickly open in Explorer relevant Folders...</string>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/open_folder</normaloff>:/MO/gui/open_folder</iconset>
+                </property>
                </widget>
               </item>
               <item>
+																 
+										 
+														  
+						   
+									  
+						  
+						   
+						
+					 
+					
                <widget class="QPushButton" name="restoreModsButton">
                 <property name="toolTip">
                  <string>Restore Backup...</string>
@@ -424,7 +463,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1,0">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
@@ -473,8 +512,49 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
+              <item alignment="Qt::AlignLeft">
+               <widget class="QPushButton" name="clearFiltersButton">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="visible">
+                 <bool>false</bool>
+                </property>
+                <property name="layoutDirection">
+                 <enum>Qt::RightToLeft</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">border:1px solid #ff0000;</string>
+                </property>
+                <property name="text">
+                 <string>Clear all Filters</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>12</width>
+                  <height>12</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
               <item>
                <widget class="QComboBox" name="groupCombo">
+                <property name="focusPolicy">
+                 <enum>Qt::ClickFocus</enum>
+                </property>
                 <item>
                  <property name="text">
                   <string>No groups</string>
@@ -714,9 +794,12 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
+					<property name="visible">
+                      <bool>true</bool>
+                    </property>									   																 
                     <property name="text">
                      <string>Sort</string>
-                    </property>
+                    </property>              
                     <property name="icon">
                      <iconset resource="resources.qrc">
                       <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
@@ -773,7 +856,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="QTreeView" name="espList">
+                 <widget class="PluginListView" name="espList">
                   <property name="minimumSize">
                    <size>
                     <width>250</width>
@@ -828,7 +911,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This list contains the esps and esms contained in the active mods. These require their own load order. Use drag&amp;amp;drop to modify this load order. Please note that MO will only save the load order for mods that are active/checked.&lt;br /&gt;There is a great tool named &amp;quot;BOSS&amp;quot; to automatically sort these files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This list contains the esps, esms, and esls contained in the active mods. These require their own load order. Use drag&amp;amp;drop to modify this load order. Please note that MO will only save the load order for mods that are active/checked.&lt;br /&gt;There is a great tool named &amp;quot;BOSS&amp;quot; to automatically sort these files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="dragEnabled">
                    <bool>true</bool>
@@ -885,9 +968,15 @@ p, li { white-space: pre-wrap; }
                </layout>
               </widget>
               <widget class="QWidget" name="bsaTab">
+										
+								  
+						  
                <attribute name="title">
                 <string>Archives</string>
                </attribute>
+			   <property name="visible">
+				<bool>true</bool>
+               </property>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <property name="leftMargin">
                  <number>6</number>
@@ -903,23 +992,23 @@ p, li { white-space: pre-wrap; }
                 </property>
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0,1">
-                  <item>
-                   <widget class="QCheckBox" name="manageArchivesBox">
-                    <property name="text">
-                     <string/>
-                    </property>
-                    <property name="checked">
-                     <bool>true</bool>
-                    </property>
-                   </widget>
-                  </item>
+                  <!--<item>-->
+                   <!--<widget class="QCheckBox" name="manageArchivesBox">-->
+                    <!--<property name="text">-->
+                     <!--<string/>-->
+                    <!--</property>-->
+                    <!--<property name="checked">-->
+                     <!--<bool>true</bool>-->
+                    <!--</property>-->
+                   <!--</widget>-->
+                  <!--</item>-->
                   <item>
                    <widget class="QLabel" name="managedArchiveLabel">
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs are bundles of game assets (textures, scripts, ...). By default, the engine loads these bundles in a separate step from loose files. MO can manage those archives to align their load order with that of loose files:&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;managed&lt;/span&gt;, their load order is specified by the priority of the corresponding mod (left pane), the same as the loose files. You can manually enable any BSA that has no corresponding plugin active.&lt;br/&gt;&lt;/p&gt;&lt;p&gt;If archives are &lt;span style=&quot; font-weight:600;&quot;&gt;not managed&lt;/span&gt; their load order is specified by the priority of the corresponding plugin (right pane, plugins tab). You can then not manually enable BSAs where the plugin isn't active.&lt;/p&gt;&lt;p&gt;In either case you can not disable archives if there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BSAs / BA2s are bundles of game assets (textures, scripts, etc.). By default, the engine loads these bundles in a separate step from loose files. &lt;p&gt;Their load order is specified by the priority of the corresponding plugin (right pane, plugins tab).&lt;/p&gt;&lt;p&gt;If there is a matching plugin, the game will load them no matter what.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Have MO manage archives (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;read more&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Currently detected archives. (&lt;a href=&quot;#&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;What is an archive?&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="wordWrap">
                      <bool>true</bool>
@@ -938,15 +1027,15 @@ p, li { white-space: pre-wrap; }
                   </property>
                   <property name="whatsThis">
                    <string>BSA files are archives (comparable to .zip files) that contain data assets (meshes, textures, ...) to be used by the game. As such they &quot;compete&quot; with loose files in your data directory over which is loaded.
-By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
+                    By default, BSAs that share their base name with an enabled ESP (i.e. plugin.esp and plugin.bsa) are automatically loaded and will have precedence over all loose files, the installation order you set up to the left is then ignored!
 
-BSAs checked here are loaded in such a way that your installation order is obeyed properly.</string>
+                    BSAs checked here are loaded in such a way that your installation order is obeyed properly.</string>
                   </property>
                   <property name="editTriggers">
                    <set>QAbstractItemView::NoEditTriggers</set>
                   </property>
                   <property name="showDropIndicator" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                   <property name="dragEnabled">
                    <bool>false</bool>
@@ -955,10 +1044,10 @@ BSAs checked here are loaded in such a way that your installation order is obeye
                    <bool>false</bool>
                   </property>
                   <property name="dragDropMode">
-                   <enum>QAbstractItemView::DragDrop</enum>
+                   <enum>QAbstractItemView::NoDragDrop</enum>
                   </property>
                   <property name="defaultDropAction">
-                   <enum>Qt::MoveAction</enum>
+                   <enum>Qt::IgnoreAction</enum>
                   </property>
                   <property name="selectionMode">
                    <enum>QAbstractItemView::SingleSelection</enum>
@@ -1288,6 +1377,7 @@ p, li { white-space: pre-wrap; }
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionChange_Game"/>
    <addaction name="actionInstallMod"/>
    <addaction name="actionNexus"/>
    <addaction name="actionAdd_Profile"/>
@@ -1474,6 +1564,18 @@ Right now this has very limited functionality</string>
     <string>Ctrl+C</string>
    </property>
   </action>
+  <action name="actionChange_Game">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
+   </property>
+   <property name="text">
+    <string>Change Game</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the Instance selection dialog to manage a different Game</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1488,9 +1590,9 @@ Right now this has very limited functionality</string>
    <header>modlistview.h</header>
   </customwidget>
   <customwidget>
-   <class>MOBase::SortableTreeWidget</class>
-   <extends>QTreeWidget</extends>
-   <header>sortabletreewidget.h</header>
+   <class>PluginListView</class>
+   <extends>QTreeView</extends>
+   <header>pluginlistview.h</header>
   </customwidget>
  </customwidgets>
  <resources>

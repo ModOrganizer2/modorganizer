@@ -12,6 +12,9 @@
 #include "installationmanager.h"
 #include "downloadmanager.h"
 #include "executableslist.h"
+#include "usvfsconnector.h"
+#include "moshortcut.h"
+#include <directoryentry.h>
 #include <imoinfo.h>
 #include <iplugindiagnose.h>
 #include <versioninfo.h>
@@ -83,6 +86,7 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
+  static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(const QSettings &initSettings);
 
@@ -92,7 +96,7 @@ public:
   void connectPlugins(PluginContainer *container);
   void disconnectPlugins();
 
-  void setManagedGame(const MOBase::IPluginGame *game);
+  void setManagedGame(MOBase::IPluginGame *game);
 
   void updateExecutablesList(QSettings &settings);
 
@@ -134,21 +138,50 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
-  void spawnBinary(const QFileInfo &binary, const QString &arguments = "", const QDir &currentDirectory = QDir(), bool closeAfterStart = true, const QString &steamAppID = "");
-  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments, const QString &profileName, const QDir &currentDirectory, const QString &steamAppID);
+  void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
+                   const QDir &currentDirectory = QDir(),
+                   const QString &steamAppID = "",
+                   const QString &customOverwrite = "");
+
+  HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
+                           const QString &profileName,
+                           const QDir &currentDirectory,
+                           const QString &steamAppID,
+                           const QString &customOverwrite,
+                           LPDWORD exitCode = nullptr);
+
+  HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
+                            const QString &profileName,
+                            const QDir &currentDirectory,
+                            const QString &steamAppID,
+                            const QString &customOverwrite);
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
 
+  static bool createAndMakeWritable(const QString &path);
+  bool bootstrap();
   void createDefaultProfile();
 
   MOBase::DelayedFileWriter &pluginsWriter() { return m_PluginListsWriter; }
+
+  void prepareVFS();
+
+  void updateVFSParams(int logLevel, int crashDumpsType);
+
+  bool cycleDiagnostics();
+
+  static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
+  static void setGlobalCrashDumpsType(int crashDumpsType);
+  static std::wstring crashDumpsPath();
 
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
   QString profileName() const;
   QString profilePath() const;
   QString downloadsPath() const;
+  QString overwritePath() const;
+  QString basePath() const;
   MOBase::VersionInfo appVersion() const;
   MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
@@ -168,15 +201,15 @@ public:
   DownloadManager *downloadManager();
   PluginList *pluginList();
   ModList *modList();
+  HANDLE runShortcut(const MOShortcut& shortcut);
   HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
+  HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
   bool onAboutToRun(const std::function<bool (const QString &)> &func);
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
-
-  //std::vector<std::pair<QString, QString> > fileMapping();
 
 public: // IPluginDiagnose interface
 
@@ -215,6 +248,8 @@ signals:
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
+  void close();
+
 private:
 
   void storeSettings();
@@ -229,13 +264,23 @@ private:
 
   bool testForSteam();
 
-  /*
-   * std::vector<std::pair<QString, QString>> fileMapping(const QString &dataPath,
-                                                       const MOShared::DirectoryEntry *base,
-                                                       const MOShared::DirectoryEntry *directoryEntry);
-*/
+  bool createDirectory(const QString &path);
 
-  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode);
+  QString oldMO1HookDll() const;
+
+  /**
+   * @brief return a descriptor of the mappings real file->virtual file
+   */
+  std::vector<Mapping> fileMapping(const QString &profile,
+                                   const QString &customOverwrite);
+
+  std::vector<Mapping>
+  fileMapping(const QString &dataPath, const QString &relPath,
+              const MOShared::DirectoryEntry *base,
+              const MOShared::DirectoryEntry *directoryEntry,
+              int createDestination);
+
+  bool waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, ILockedWaitingForProcess* uilock);
 
 private slots:
 
@@ -247,15 +292,14 @@ private slots:
   void loginFailed(const QString &message);
 
 private:
-
-  static const unsigned int PROBLEM_TOOMANYPLUGINS = 1;
+  static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
 private:
 
   IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame const *m_GamePlugin;
+  MOBase::IPluginGame *m_GamePlugin;
 
   Profile *m_CurrentProfile;
 
@@ -269,6 +313,7 @@ private:
 
   ModList m_ModList;
   PluginList m_PluginList;
+
 
   QList<std::function<void()>> m_PostLoginTasks;
   QList<std::function<void()>> m_PostRefreshTasks;
@@ -291,7 +336,9 @@ private:
   bool m_ArchivesInit;
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
+  UsvfsConnector m_USVFS;
 
+  static CrashDumpsType m_globalCrashDumpsType;
 };
 
 #endif // ORGANIZERCORE_H

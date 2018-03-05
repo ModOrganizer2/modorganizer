@@ -23,6 +23,7 @@ SET(organizer_SRCS
     profile.cpp
     pluginlistsortproxy.cpp
     pluginlist.cpp
+    pluginlistview.cpp
     overwriteinfodialog.cpp
     nxmaccessmanager.cpp
     nexusinterface.cpp
@@ -31,17 +32,19 @@ SET(organizer_SRCS
     modlist.cpp
     modinfodialog.cpp
     modinfo.cpp
-	modinfobackup.cpp
-	modinfoforeign.cpp
-	modinfooverwrite.cpp
-	modinforegular.cpp
-	modinfowithconflictinfo.cpp
+    modinfobackup.cpp
+    modinfoforeign.cpp
+    modinfooverwrite.cpp
+    modinforegular.cpp
+    modinfowithconflictinfo.cpp
     messagedialog.cpp
     mainwindow.cpp
     main.cpp
     loghighlighter.cpp
     logbuffer.cpp
+    lockeddialogbase.cpp
     lockeddialog.cpp
+    waitingonclosedialog.cpp
     loadmechanism.cpp
     installationmanager.cpp
     helper.cpp
@@ -76,15 +79,17 @@ SET(organizer_SRCS
     previewdialog.cpp
     aboutdialog.cpp
     json.cpp
-    safewritefile.cpp
     modflagicondelegate.cpp
     genericicondelegate.cpp
     organizerproxy.cpp
     viewmarkingscrollbar.cpp
     plugincontainer.cpp
     organizercore.cpp
+    instancemanager.cpp
+    usvfsconnector.cpp
+    eventfilter.cpp
+    moshortcut.cpp
 
-    shared/inject.cpp
     shared/windows_error.cpp
     shared/error_report.cpp
     shared/directoryentry.cpp
@@ -108,6 +113,7 @@ SET(organizer_HDRS
     profile.h
     pluginlistsortproxy.h
     pluginlist.h
+    pluginlistview.h
     overwriteinfodialog.h
     nxmaccessmanager.h
     nexusinterface.h
@@ -116,16 +122,18 @@ SET(organizer_HDRS
     modlist.h
     modinfodialog.h
     modinfo.h
-	modinfobackup.h
-	modinfoforeign.h
-	modinfooverwrite.h
-	modinforegular.h
-	modinfowithconflictinfo.h
+    modinfobackup.h
+    modinfoforeign.h
+    modinfooverwrite.h
+    modinforegular.h
+    modinfowithconflictinfo.h
     messagedialog.h
     mainwindow.h
     loghighlighter.h
     logbuffer.h
+    lockeddialogbase.h
     lockeddialog.h
+    waitingonclosedialog.h
     loadmechanism.h
     installationmanager.h
     helper.h
@@ -160,16 +168,20 @@ SET(organizer_HDRS
     previewdialog.h
     aboutdialog.h
     json.h
-    safewritefile.h
     modflagicondelegate.h
     genericicondelegate.h
     organizerproxy.h
     viewmarkingscrollbar.h
     plugincontainer.h
     organizercore.h
+    ilockedwaitingforprocess.h
     iuserinterface.h
+    instancemanager.h
+    usvfsconnector.h
+    eventfilter.h
+    descriptionpage.h
+    moshortcut.h
 
-    shared/inject.h
     shared/windows_error.h
     shared/error_report.h
     shared/directoryentry.h
@@ -194,6 +206,7 @@ SET(organizer_UIS
     messagedialog.ui
     mainwindow.ui
     lockeddialog.ui
+    waitingonclosedialog.ui
     installdialog.ui
     finddialog.ui
     editexecutablesdialog.ui
@@ -231,19 +244,22 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 FIND_PACKAGE(Qt5Widgets REQUIRED)
-FIND_PACKAGE(Qt5Declarative REQUIRED)
+FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
+FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
-FIND_PACKAGE(Qt5WebKitWidgets REQUIRED)
+FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
+FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
+QT5_CREATE_TRANSLATION(organizer_translations_qm ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
 
 ADD_DEFINITIONS(-DQT_MESSAGELOGCONTEXT)
 
 # Boost
-SET(Boost_USE_STATIC_LIBS        ON)
+SET(Boost_USE_STATIC_LIBS       OFF)
 SET(Boost_USE_MULTITHREADED      ON)
 SET(Boost_USE_STATIC_RUNTIME    OFF)
 FIND_PACKAGE(Boost REQUIRED)
@@ -264,34 +280,52 @@ SET(project_path "${default_project_path}" CACHE PATH "path to the other mo proj
 SET(lib_path "${project_path}/../../install/libs")
 
 
-MESSAGE(STATUS ${lib_path})
-MESSAGE(STATUS ${project_path})
-
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/game_features/src)
+                    ${project_path}/../usvfs/include
+                    ${project_path}/game_gamebryo/src
+                    ${project_path}/game_features/src
+                    ${project_path}/githubpp/src)
+
+
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
                  ${project_path}/../zlib/lib)
 
-ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+EXECUTE_PROCESS(
+  COMMAND git log -1 --format=%h
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_HASH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS})
+ADD_DEFINITIONS(-D_UNICODE -DUNICODE -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS -DBOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE -DGITID="${GIT_COMMIT_HASH}")
+
+IF("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+  SET(usvfs_name usvfs_x64)
+ELSE()
+  SET(usvfs_name usvfs_x86)
+ENDIF()
+
+ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
-                      Qt5::Widgets Qt5::WinExtras Qt5::WebKitWidgets
+                      Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       ${Boost_LIBRARIES}
                       zlibstatic
-                      uibase esptk bsatk
+                      uibase esptk bsatk githubpp
+                      ${usvfs_name}
                       Dbghelp advapi32 Version Shlwapi)
-
-SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS /GL)
+IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO
+                        ${OPTIMIZE_COMPILE_FLAGS})
+ENDIF()
 SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
-                      "/LTCG /INCREMENTAL:NO /LARGEADDRESSAWARE /OPT:REF /OPT:ICF")
+                      "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
 
 
-QT5_USE_MODULES(ModOrganizer Widgets Declarative Network WebKitWidgets)
+QT5_USE_MODULES(ModOrganizer Widgets Script Qml QuickWidgets Quick Network WebEngineWidgets)
 
 
 ###############
@@ -303,23 +337,33 @@ FIND_PROGRAM(WINDEPLOYQT_COMMAND windeployqt PATHS ${qt5bin} NO_DEFAULT_PATH)
 
 INSTALL(TARGETS ModOrganizer
         RUNTIME DESTINATION bin)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/ModOrganizer.pdb
+INSTALL(FILES $<TARGET_PDB_FILE:ModOrganizer>
         DESTINATION pdb)
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
 # use windeployqt.exe to install all required libraries
-SET(windeploy_parameters --no-translations --no-plugins --libdir dlls --release-with-debug-info --no-compiler-runtime)
+SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
     CODE
     "EXECUTE_PROCESS(
         COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
+	# run it a second time because on the first run it misses some files
+	COMMAND
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
         COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
-    )"
+    )
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/styles)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/platforms ${CMAKE_INSTALL_PREFIX}/bin/platforms)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/styles ${CMAKE_INSTALL_PREFIX}/bin/styles)
+    file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/imageformats ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
+    file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets

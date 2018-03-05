@@ -8,13 +8,15 @@ APPPARAM(std::wstring, stylesheetsPath, L"stylesheets")
 APPPARAM(std::wstring, cachePath, L"webcache")
 APPPARAM(std::wstring, tutorialsPath, L"tutorials")
 APPPARAM(std::wstring, logPath, L"logs")
+APPPARAM(std::wstring, dumpsDir, L"crashDumps")
 APPPARAM(std::wstring, profileTweakIni, L"profile_tweaks.ini")
 APPPARAM(std::wstring, logFileName, L"ModOrganizer.log")
 APPPARAM(std::wstring, iniFileName, L"ModOrganizer.ini")
 APPPARAM(std::wstring, proxyDLLTarget, L"steam_api.dll")
 APPPARAM(std::wstring, proxyDLLOrig, L"steam_api_orig.dll") // needs to be identical to the value used in proxydll-project
 APPPARAM(std::wstring, proxyDLLSource, L"proxy.dll")
-APPPARAM(std::wstring, hookDLLName, L"hook.dll") // needs to be identical to the value used in proxydll-project
+APPPARAM(std::wstring, vfs32DLLName, L"usvfs_x86.dll")
+APPPARAM(std::wstring, vfs64DLLName, L"usvfs_x64.dll")
 APPPARAM(const wchar_t*, localSavePlaceholder, L"__MOProfileSave__\\")
 
 APPPARAM(std::wstring, firstStepsTutorial, L"tutorial_firststeps_main.js")

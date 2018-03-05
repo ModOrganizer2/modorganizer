@@ -77,8 +77,19 @@ private slots:
 
   void on_associateButton_clicked();
 
+  void on_clearCacheButton_clicked();
+
+  void on_browseBaseDirBtn_clicked();
+
+  void on_browseOverwriteDirBtn_clicked();
+
+  void on_browseProfilesDirBtn_clicked();
+
 private:
     Ui::SettingsDialog *ui;
+
 };
+
+
 
 #endif // WORKAROUNDDIALOG_H

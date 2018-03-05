@@ -1,0 +1,82 @@
+[main]
+host = https://www.transifex.com
+
+[mod-organizer.organizer]
+file_filter = organizer/organizer_<lang>.ts
+source_file = organizer/organizer_en.ts
+source_lang = en
+
+[mod-organizer.diagnosebasic]
+file_filter = plugins/diagnoseBasic/diagnoseBasic_<lang>.ts
+source_file = plugins/diagnoseBasic/diagnoseBasic_en.ts
+source_lang = en
+
+[mod-organizer.bsaextractor]
+file_filter = plugins/bsaExtractor/bsaExtractor_<lang>.ts
+source_file = plugins/bsaExtractor/bsaExtractor_en.ts
+source_lang = en
+
+[mod-organizer.checkfnis]
+file_filter = plugins/checkFNIS/checkFNIS_<lang>.ts
+source_file = plugins/checkFNIS/checkFNIS_en.ts
+source_lang = en
+
+[mod-organizer.inieditor]
+file_filter = plugins/iniEditor/iniEditor_<lang>.ts
+source_file = plugins/iniEditor/iniEditor_en.ts
+source_lang = en
+
+[mod-organizer.installerbain]
+file_filter = plugins/installerBAIN/installerBAIN_<lang>.ts
+source_file = plugins/installerBAIN/installerBAIN_en.ts
+source_lang = en
+
+[mod-organizer.installerbundle]
+file_filter = plugins/installerBundle/installerBundle_<lang>.ts
+source_file = plugins/installerBundle/installerBundle_en.ts
+source_lang = en
+
+[mod-organizer.installerfomod]
+file_filter = plugins/installerFomod/installerFomod_<lang>.ts
+source_file = plugins/installerFomod/installerFomod_en.ts
+source_lang = en
+
+[mod-organizer.installermanual]
+file_filter = plugins/installerManual/installerManual_<lang>.ts
+source_file = plugins/installerManual/installerManual_en.ts
+source_lang = en
+
+[mod-organizer.installerncc]
+file_filter = plugins/installerNCC/installerNCC_<lang>.ts
+source_file = plugins/installerNCC/installerNCC_en.ts
+source_lang = en
+
+[mod-organizer.installerquick]
+file_filter = plugins/installerQuick/installerQuick_<lang>.ts
+source_file = plugins/installerQuick/installerQuick_en.ts
+source_lang = en
+
+[mod-organizer.nmmimport]
+file_filter = plugins/NMMImport/NMMImport_<lang>.ts
+source_file = plugins/NMMImport/NMMImport_en.ts
+source_lang = en
+
+[mod-organizer.previewbase]
+file_filter = plugins/previewBase/previewBase_<lang>.ts
+source_file = plugins/previewBase/previewBase_en.ts
+source_lang = en
+
+[mod-organizer.previewdds]
+file_filter = plugins/previewDDS/previewDDS_<lang>.ts
+source_file = plugins/previewDDS/previewDDS_en.ts
+source_lang = en
+
+[mod-organizer.proxypython]
+file_filter = plugins/proxyPython/proxyPython_<lang>.ts
+source_file = plugins/proxyPython/proxyPython_en.ts
+source_lang = en
+
+[mod-organizer.configurator]
+file_filter = plugins/pyniEdit/pyniEdit_<lang>.ts
+source_file = plugins/pyniEdit/pyniEdit_en.ts
+source_lang = en

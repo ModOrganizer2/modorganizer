@@ -21,7 +21,7 @@ QDateTime ModInfoForeign::creationTime() const
 QString ModInfoForeign::absolutePath() const
 {
   //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
   return game->dataDirectory().absolutePath();
 }
 
@@ -30,12 +30,16 @@ std::vector<ModInfo::EFlag> ModInfoForeign::getFlags() const
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
   result.push_back(FLAG_FOREIGN);
 
+  if (m_PluginSelected) {
+    result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
+  }
+
   return result;
 }
 
 int ModInfoForeign::getHighlight() const
 {
-  return 0;
+  return m_PluginSelected ? ModInfo::HIGHLIGHT_PLUGIN : ModInfo::HIGHLIGHT_NONE;
 }
 
 QString ModInfoForeign::getDescription() const
@@ -43,12 +47,22 @@ QString ModInfoForeign::getDescription() const
   return tr("This pseudo mod represents content managed outside MO. It isn't modified by MO.");
 }
 
-ModInfoForeign::ModInfoForeign(const QString &referenceFile, const QStringList &archives,
+ModInfoForeign::ModInfoForeign(const QString &modName,
+                               const QString &referenceFile,
+                               const QStringList &archives,
+                               ModInfo::EModType modType,
                                DirectoryEntry **directoryStructure)
-  : ModInfoWithConflictInfo(directoryStructure)
-  , m_ReferenceFile(referenceFile)
-  , m_Archives(archives)
-{
+    : ModInfoWithConflictInfo(directoryStructure),
+      m_ReferenceFile(referenceFile), m_Archives(archives) {
   m_CreationTime = QFileInfo(referenceFile).created();
-  m_Name = "Unmanaged: " + QFileInfo(m_ReferenceFile).baseName();
+  switch (modType) {
+  case ModInfo::EModType::MOD_DLC:
+    m_Name = tr("DLC: ") + modName;
+    break;
+  case ModInfo::EModType::MOD_CC:
+    m_Name = tr("Creation Club: ") + modName;
+    break;
+  default:
+    m_Name = tr("Unmanaged: ") + modName;
+  }
 }

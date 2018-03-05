@@ -10,6 +10,7 @@
 #include <iplugintool.h>
 #include <ipluginproxy.h>
 #include <iplugininstaller.h>
+#include <ipluginfilemapper.h>
 #include <QtPlugin>
 #include <QPluginLoader>
 #include <QFile>
@@ -36,7 +37,8 @@ private:
   boost::fusion::pair<MOBase::IPluginModPage, std::vector<MOBase::IPluginModPage*>>,
   boost::fusion::pair<MOBase::IPluginPreview, std::vector<MOBase::IPluginPreview*>>,
   boost::fusion::pair<MOBase::IPluginTool, std::vector<MOBase::IPluginTool*>>,
-  boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>
+  boost::fusion::pair<MOBase::IPluginProxy, std::vector<MOBase::IPluginProxy*>>,
+  boost::fusion::pair<MOBase::IPluginFileMapper, std::vector<MOBase::IPluginFileMapper*>>
   > PluginMap;
 
   static const unsigned int PROBLEM_PLUGINSNOTLOADED = 1;

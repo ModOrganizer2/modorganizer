@@ -27,7 +27,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <windows.h>
 #include <DbgHelp.h>
 
-#include <inject.h>
 #include <appconfig.h>
 #include <utility.h>
 #include <scopeguard.h>
@@ -45,8 +44,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "moapplication.h"
 #include "tutorialmanager.h"
 #include "nxmaccessmanager.h"
+#include "instancemanager.h"
+#include "moshortcut.h"
+
 #include <eh.h>
 #include <windows_error.h>
+#include <usvfs.h>
 
 #include <QApplication>
 #include <QPushButton>
@@ -75,6 +78,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cstdarg>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 
@@ -84,35 +88,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-bool createAndMakeWritable(const std::wstring &subPath)
-{
+bool createAndMakeWritable(const std::wstring &subPath) {
   QString const dataPath = qApp->property("dataPath").toString();
   QString fullPath = dataPath + "/" + QString::fromStdWString(subPath);
 
-  if (!QDir(fullPath).exists()) {
-    QDir().mkdir(fullPath);
+  if (!QDir(fullPath).exists() && !QDir().mkdir(fullPath)) {
+    QMessageBox::critical(nullptr, QObject::tr("Error"),
+                          QObject::tr("Failed to create \"%1\". Your user "
+                                      "account probably lacks permission.")
+                              .arg(fullPath));
+    return false;
+  } else {
+    return true;
   }
-
-  QFileInfo fileInfo(fullPath);
-  if (!fileInfo.exists() || !fileInfo.isWritable()) {
-    if (QMessageBox::question(nullptr, QObject::tr("Permissions required"),
-        QObject::tr("The current user account doesn't have the required access rights to run "
-           "Mod Organizer. The neccessary changes can be made automatically (the MO directory "
-           "will be made writable for the current user account). You will be asked to run "
-           "\"helper.exe\" with administrative rights."),
-           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Yes) {
-      if (!Helper::init(dataPath.toStdWString())) {
-        return false;
-      }
-    } else {
-      return false;
-    }
-    // no matter which directory didn't exist/wasn't writable, the helper
-    // should have created them all so we don't have to worry this message box would appear repeatedly
-  }
-  return true;
 }
-
 
 bool bootstrap()
 {
@@ -124,138 +113,85 @@ bool bootstrap()
 
   // cycle logfile
   removeOldFiles(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath()),
-                 "ModOrganizer*.log", 5, QDir::Name);
+                 "usvfs*.log", 5, QDir::Name);
 
-  createAndMakeWritable(AppConfig::profilesPath());
-  createAndMakeWritable(AppConfig::modsPath());
-  createAndMakeWritable(AppConfig::downloadPath());
-  createAndMakeWritable(AppConfig::overwritePath());
-  createAndMakeWritable(AppConfig::logPath());
-
-  // verify the hook-dll exists
-  QString dllName = qApp->applicationDirPath() + "/" + ToQString(AppConfig::hookDLLName());
-
-  if (::GetModuleHandleW(ToWString(dllName).c_str()) != nullptr) {
-    throw std::runtime_error("hook.dll already loaded! You can't start Mod Organizer from within itself (not even indirectly)");
+  if (!createAndMakeWritable(AppConfig::logPath())) {
+    return false;
   }
-
-  HMODULE dllMod = ::LoadLibraryW(ToWString(dllName).c_str());
-  if (dllMod == nullptr) {
-    throw windows_error("hook.dll is missing or invalid");
-  }
-  ::FreeLibrary(dllMod);
 
   return true;
 }
 
-void cleanupDir()
-{
-  // files from previous versions of MO that are no longer
-  // required (in that location)
-  QStringList fileNames {
-    "imageformats/",
-    "loot/resources/",
-    "plugins/previewDDS.dll",
-    "dlls/boost_python-vc100-mt-1_55.dll",
-    "dlls/QtCore4.dll",
-    "dlls/QtDeclarative4.dll",
-    "dlls/QtGui4.dll",
-    "dlls/QtNetwork4.dll",
-    "dlls/QtOpenGL4.dll",
-    "dlls/QtScript4.dll",
-    "dlls/QtSql4.dll",
-    "dlls/QtSvg4.dll",
-    "dlls/QtWebKit4.dll",
-    "dlls/QtXml4.dll",
-    "dlls/QtXmlPatterns4.dll",
-    "msvcp100.dll",
-    "msvcr100.dll",
-    "proxy.dll"
-  };
-
-  for (const QString &fileName : fileNames) {
-    QString fullPath = qApp->applicationDirPath() + "/" + fileName;
-    if (QFile::exists(fullPath)) {
-      if (shellDelete(QStringList(fullPath), true)) {
-        qDebug("removed obsolete file %s", qPrintable(fullPath));
-      } else {
-        qDebug("failed to remove obsolete %s", qPrintable(fullPath));
-      }
-    }
-  }
-}
-
-
-bool isNxmLink(const QString &link)
-{
-  return link.startsWith("nxm://", Qt::CaseInsensitive);
-}
+LPTOP_LEVEL_EXCEPTION_FILTER prevUnhandledExceptionFilter = nullptr;
 
 static LONG WINAPI MyUnhandledExceptionFilter(struct _EXCEPTION_POINTERS *exceptionPtrs)
 {
-  typedef BOOL (WINAPI *FuncMiniDumpWriteDump)(HANDLE process, DWORD pid, HANDLE file, MINIDUMP_TYPE dumpType,
-                                               const PMINIDUMP_EXCEPTION_INFORMATION exceptionParam,
-                                               const PMINIDUMP_USER_STREAM_INFORMATION userStreamParam,
-                                               const PMINIDUMP_CALLBACK_INFORMATION callbackParam);
-  LONG result = EXCEPTION_CONTINUE_SEARCH;
+  const std::wstring& dumpPath = OrganizerCore::crashDumpsPath();
+  int dumpRes =
+    CreateMiniDump(exceptionPtrs, OrganizerCore::getGlobalCrashDumpsType(), dumpPath.c_str());
+  if (!dumpRes)
+    qCritical("ModOrganizer has crashed, crash dump created.");
+  else
+    qCritical("ModOrganizer has crashed, CreateMiniDump failed (%d, error %lu).", dumpRes, GetLastError());
 
-  HMODULE dbgDLL = ::LoadLibrary(L"dbghelp.dll");
+  if (prevUnhandledExceptionFilter)
+    return prevUnhandledExceptionFilter(exceptionPtrs);
+  else
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
-  static const int errorLen = 200;
-  char errorBuffer[errorLen + 1];
-  memset(errorBuffer, '\0', errorLen + 1);
-
-  if (dbgDLL) {
-    FuncMiniDumpWriteDump funcDump = (FuncMiniDumpWriteDump)::GetProcAddress(dbgDLL, "MiniDumpWriteDump");
-    if (funcDump) {
-      if (QMessageBox::question(nullptr, QObject::tr("Woops"),
-                                QObject::tr("ModOrganizer has crashed! "
-                                            "Should a diagnostic file be created? "
-                                            "If you send me this file (%1) to sherb@gmx.net, "
-                                            "the bug is a lot more likely to be fixed. "
-                                            "Please include a short description of what you were "
-                                            "doing when the crash happened"
-                                            ).arg(qApp->applicationFilePath().append(".dmp")),
-                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-
-        std::wstring dumpName = ToWString(qApp->applicationFilePath().append(".dmp"));
-
-        HANDLE dumpFile = ::CreateFile(dumpName.c_str(),
-                                       GENERIC_WRITE, FILE_SHARE_WRITE, nullptr,
-                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (dumpFile != INVALID_HANDLE_VALUE) {
-          _MINIDUMP_EXCEPTION_INFORMATION exceptionInfo;
-          exceptionInfo.ThreadId = ::GetCurrentThreadId();
-          exceptionInfo.ExceptionPointers = exceptionPtrs;
-          exceptionInfo.ClientPointers = false;
-
-          BOOL success = funcDump(::GetCurrentProcess(), ::GetCurrentProcessId(), dumpFile,
-                                  MiniDumpNormal, &exceptionInfo, nullptr, nullptr);
-
-          ::FlushFileBuffers(dumpFile);
-          ::CloseHandle(dumpFile);
-          if (success) {
-            return EXCEPTION_EXECUTE_HANDLER;
-          }
-          _snprintf(errorBuffer, errorLen, "failed to save minidump to %ls (error %lu)",
-                    dumpName.c_str(), ::GetLastError());
-        } else {
-          _snprintf(errorBuffer, errorLen, "failed to create %ls (error %lu)",
-                    dumpName.c_str(), ::GetLastError());
-        }
-      } else {
-        return result;
-      }
-    } else {
-      _snprintf(errorBuffer, errorLen, "dbghelp.dll outdated");
+// Parses the first parseArgCount arguments of the current process command line and returns
+// them in parsedArgs, the rest of the command line is returned untouched.
+LPCWSTR UntouchedCommandLineArguments(int parseArgCount, std::vector<std::wstring>& parsedArgs)
+{
+  LPCWSTR cmd = GetCommandLineW();
+  LPCWSTR arg = nullptr; // to skip executable name
+  for (; parseArgCount >= 0 && *cmd; ++cmd)
+  {
+    if (*cmd == '"') {
+      int escaped = 0;
+      for (++cmd; *cmd && (*cmd != '"' || escaped % 2 != 0); ++cmd)
+        escaped = *cmd == '\\' ? escaped + 1 : 0;
     }
-  } else {
-    _snprintf(errorBuffer, errorLen, "dbghelp.dll not found");
+    if (*cmd == ' ') {
+      if (arg)
+        if (cmd-1 > arg && *arg == '"' && *(cmd-1) == '"')
+          parsedArgs.push_back(std::wstring(arg+1, cmd-1));
+        else
+          parsedArgs.push_back(std::wstring(arg, cmd));
+      arg = cmd + 1;
+      --parseArgCount;
+    }
+  }
+  return cmd;
+}
+
+static int SpawnWaitProcess(LPCWSTR workingDirectory, LPCWSTR commandLine) {
+  PROCESS_INFORMATION pi{ 0 };
+  STARTUPINFO si{ 0 };
+  si.cb = sizeof(si);
+  std::wstring commandLineCopy = commandLine;
+
+  if (!CreateProcessW(NULL, &commandLineCopy[0], NULL, NULL, FALSE, 0, NULL, workingDirectory, &si, &pi)) {
+    // A bit of a problem where to log the error message here, at least this way you can get the message
+    // using a either DebugView or a live debugger:
+    std::wostringstream ost;
+    ost << L"CreateProcess failed: " << commandLine << ", " << GetLastError();
+    OutputDebugStringW(ost.str().c_str());
+    return -1;
   }
 
-  QMessageBox::critical(nullptr, QObject::tr("Woops"),
-                        QObject::tr("ModOrganizer has crashed! Unfortunately I was not able to write a diagnostic file: %1").arg(errorBuffer));
-  return result;
+  WaitForSingleObject(pi.hProcess, INFINITE);
+
+  DWORD exitCode = (DWORD)-1;
+  ::GetExitCodeProcess(pi.hProcess, &exitCode);
+  CloseHandle(pi.hThread);
+  CloseHandle(pi.hProcess);
+  return static_cast<int>(exitCode);
+}
+
+static DWORD WaitForProcess() {
+
 }
 
 static bool HaveWriteAccess(const std::wstring &path)
@@ -382,6 +318,9 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
     }
   }
 
+  //The following code would try to determine the right game to mange but it would usually find the wrong one
+  //so it was commented out.
+  /* 
   //OK, we are in a new setup or existing info is useless.
   //See if MO has been installed inside a game directory
   for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
@@ -405,6 +344,7 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       //OK, chop off the last directory and try again
     } while (gameDir.cdUp());
   }
+  */
 
   //Then try a selection dialogue.
   if (!gamePath.isEmpty() || !gameName.isEmpty()) {
@@ -448,139 +388,162 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
   return nullptr;
 }
 
-int main(int argc, char *argv[])
+
+// extend path to include dll directory so plugins don't need a manifest
+// (using AddDllDirectory would be an alternative to this but it seems fairly
+// complicated esp.
+//  since it isn't easily accessible on Windows < 8
+//  SetDllDirectory replaces other search directories and this seems to
+//  propagate to child processes)
+void setupPath()
 {
-  MOApplication application(argc, argv);
+  static const int BUFSIZE = 4096;
 
-  qDebug("application name: %s", qPrintable(application.applicationName()));
+  qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(
+                          QCoreApplication::applicationDirPath())));
 
-  QString instanceID;
-  QFile instanceFile(application.applicationDirPath() + "/INSTANCE");
-  if (instanceFile.open(QIODevice::ReadOnly)) {
-    instanceID = instanceFile.readAll().trimmed();
-  }  
-
-  QString const dataPath =
-      instanceID.isEmpty() ? application.applicationDirPath()
-                           : QDir::fromNativeSeparators(
-                               QStandardPaths::writableLocation(QStandardPaths::DataLocation)
-                               + "/" + instanceID
-                               );
-  application.setProperty("dataPath", dataPath);
-
-  if (!QDir(dataPath).exists()) {
-    if (!QDir().mkpath(dataPath)) {
-      qCritical("failed to create %s", qPrintable(dataPath));
-      return 1;
-    }
+  boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
+  DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
+  if (offset > BUFSIZE) {
+    oldPath.reset(new TCHAR[offset]);
+    ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
   }
 
-  SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+  std::wstring newPath(oldPath.get());
+  newPath += L";";
+  newPath += ToWString(QDir::toNativeSeparators(
+                           QCoreApplication::applicationDirPath()))
+                 .c_str();
+  newPath += L"\\dlls";
 
-  if (!HaveWriteAccess(ToWString(application.applicationDirPath()))) {
-    QStringList arguments = application.arguments();
-    arguments.pop_front();
-    ::ShellExecuteW( nullptr
-                   , L"runas"
-                   , ToWString(QString("\"%1\"").arg(QCoreApplication::applicationFilePath())).c_str()
-                   , ToWString(arguments.join(" ")).c_str()
-                   , ToWString(QDir::currentPath()).c_str(), SW_SHOWNORMAL);
-    return 1;
+  ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
+}
+
+static void preloadSsl()
+{
+  QString appPath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath());
+  if (GetModuleHandleA("libeay32.dll"))
+    qWarning("libeay32.dll already loaded?!");
+  else {
+    QString libeay32 = appPath + "\\libeay32.dll";
+    if (!QFile::exists(libeay32))
+      qWarning("libeay32.dll not found: %s", qPrintable(libeay32));
+    else if (!LoadLibraryW(libeay32.toStdWString().c_str()))
+      qWarning("failed to load: %s, %d", qPrintable(libeay32), GetLastError());
   }
+  if (GetModuleHandleA("ssleay32.dll"))
+    qWarning("ssleay32.dll already loaded?!");
+  else {
+    QString ssleay32 = appPath + "\\ssleay32.dll";
+    if (!QFile::exists(ssleay32))
+      qWarning("ssleay32.dll not found: %s", qPrintable(ssleay32));
+    else if (!LoadLibraryW(ssleay32.toStdWString().c_str()))
+      qWarning("failed to load: %s, %d", qPrintable(ssleay32), GetLastError());
+  }
+}
 
-  QPixmap pixmap(":/MO/gui/splash");
-  QSplashScreen splash(pixmap);
+static QString getVersionDisplayString()
+{
+  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
+  return VersionInfo(version.dwFileVersionMS >> 16,
+    version.dwFileVersionMS & 0xFFFF,
+    version.dwFileVersionLS >> 16,
+    version.dwFileVersionLS & 0xFFFF).displayString();
+}
 
-  try {
-    if (!bootstrap()) {
-      return -1;
-    }
+int runApplication(MOApplication &application, SingleInstance &instance,
+                   const QString &splashPath)
+{
 
-    LogBuffer::init(100, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+  qDebug("Starting Mod Organizer version %s revision %s", qPrintable(getVersionDisplayString()),
+#if defined(HGID)
+    HGID
+#elif defined(GITID)
+    GITID
+#else
+    "unknown"
+#endif
+  );
 
-#if QT_VERSION >= 0x050000 && !defined(QT_NO_SSL)
-    qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#if !defined(QT_NO_SSL)
+  preloadSsl();
+  qDebug("ssl support: %d", QSslSocket::supportsSsl());
+#else
+  qDebug("non-ssl build");
 #endif
 
-    qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
-    qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(application.applicationDirPath())));
-    splash.show();
+  QString dataPath = application.property("dataPath").toString();
+  qDebug("data path: %s", qPrintable(dataPath));
 
-    cleanupDir();
-  } catch (const std::exception &e) {
-    reportError(e.what());
+  if (!bootstrap()) {
+    reportError("failed to set up data paths");
     return 1;
-  }
-
-  { // extend path to include dll directory so plugins don't need a manifest
-    // (using AddDllDirectory would be an alternative to this but it seems fairly complicated esp.
-    //  since it isn't easily accessible on Windows < 8
-    //  SetDllDirectory replaces other search directories and this seems to propagate to child processes)
-    static const int BUFSIZE = 4096;
-
-    boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
-    DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
-    if (offset > BUFSIZE) {
-      oldPath.reset(new TCHAR[offset]);
-      ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
-    }
-
-    std::wstring newPath(oldPath.get());
-    newPath += L";";
-    newPath += ToWString(QDir::toNativeSeparators(QCoreApplication::applicationDirPath())).c_str();
-    newPath += L"\\dlls";
-
-    ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
   }
 
   QStringList arguments = application.arguments();
 
-  bool forcePrimary = false;
-  if (arguments.contains("update")) {
-    arguments.removeAll("update");
-    forcePrimary = true;
-  }
-
   try {
-    SingleInstance instance(forcePrimary);
-    if (!instance.primaryInstance()) {
-      if ((arguments.size() == 2) && isNxmLink(arguments.at(1))) {
-        qDebug("not primary instance, sending download message");
-        instance.sendMessage(arguments.at(1));
-        return 0;
-      } else if (arguments.size() == 1) {
-        QMessageBox::information(nullptr, QObject::tr("Mod Organizer"), QObject::tr("An instance of Mod Organizer is already running"));
-        return 0;
-      }
-    } // we continue for the primary instance OR if MO has been called with parameters
+    qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
 
-    QSettings settings(dataPath + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
+    QSettings settings(dataPath + "/"
+                           + QString::fromStdWString(AppConfig::iniFileName()),
+                       QSettings::IniFormat);
+
+    // global crashDumpType sits in OrganizerCore to make a bit less ugly to update it when the settings are changed during runtime
+    OrganizerCore::setGlobalCrashDumpsType(settings.value("Settings/crash_dumps_type", static_cast<int>(CrashDumpsType::Mini)).toInt());
+
+    qDebug("Loaded settings:");
+    settings.beginGroup("Settings");
+    for (auto k : settings.allKeys())
+      if (!k.contains("username") && !k.contains("password"))
+        qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
+    settings.endGroup();
+
+
     qDebug("initializing core");
     OrganizerCore organizer(settings);
+    if (!organizer.bootstrap()) {
+      reportError("failed to set up data paths");
+      return 1;
+    }
     qDebug("initialize plugins");
     PluginContainer pluginContainer(&organizer);
     pluginContainer.loadPlugins();
 
-    MOBase::IPluginGame *game = determineCurrentGame(application.applicationDirPath(), settings, pluginContainer);
+    MOBase::IPluginGame *game = determineCurrentGame(
+        application.applicationDirPath(), settings, pluginContainer);
     if (game == nullptr) {
       return 1;
     }
+    if (splashPath.startsWith(':')) {
+      // currently using MO splash, see if the plugin contains one
+      QString pluginSplash
+          = QString(":/%1/splash").arg(game->gameShortName());
+      QImage image(pluginSplash);
+      if (!image.isNull()) {
+        image.save(dataPath + "/splash.png");
+      } else {
+        qDebug("no plugin splash");
+      }
+    }
 
     organizer.setManagedGame(game);
-
     organizer.createDefaultProfile();
 
-    //See the pragma - we apparently don't use this so not sure why we check it
     if (!settings.contains("game_edition")) {
       QStringList editions = game->gameVariants();
       if (editions.size() > 1) {
-        SelectionDialog selection(QObject::tr("Please select the game edition you have (MO can't start the game correctly if this is set incorrectly!)"), nullptr);
+        SelectionDialog selection(
+            QObject::tr("Please select the game edition you have (MO can't "
+                        "start the game correctly if this is set "
+                        "incorrectly!)"),
+            nullptr);
         int index = 0;
         for (const QString &edition : editions) {
           selection.addChoice(edition, "", index++);
         }
         if (selection.exec() == QDialog::Rejected) {
-          return -1;
+          return 1;
         } else {
           settings.setValue("game_edition", selection.getChoiceString());
         }
@@ -588,9 +551,8 @@ int main(int argc, char *argv[])
     }
     game->setGameVariant(settings.value("game_edition").toString());
 
-
-#pragma message("edition isn't used?")
-    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(game->gameDirectory().absolutePath())));
+    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(
+                                      game->gameDirectory().absolutePath())));
 
     organizer.updateExecutablesList(settings);
 
@@ -599,27 +561,48 @@ int main(int argc, char *argv[])
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
-    if ((arguments.size() > 1)
-        && !isNxmLink(arguments.at(1))) {
-      QString exeName = arguments.at(1);
-      qDebug("starting %s from command line", qPrintable(exeName));
-      arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-      arguments.removeFirst(); // remove binary name
-      // pass the remaining parameters to the binary
-      try {
-        organizer.startApplication(exeName, arguments, QString(), QString());
-        return 0;
-      } catch (const std::exception &e) {
-        reportError(QObject::tr("failed to start application: %1").arg(e.what()));
-        return 1;
+    if (arguments.size() > 1) {
+      if (MOShortcut shortcut{ arguments.at(1) }) {
+        try {
+          organizer.runShortcut(shortcut);
+          return 0;
+        } catch (const std::exception &e) {
+          reportError(
+            QObject::tr("failed to start shortcut: %1").arg(e.what()));
+          return 1;
+        }
+      } else if (OrganizerCore::isNxmLink(arguments.at(1))) {
+        qDebug("starting download from command line: %s",
+               qPrintable(arguments.at(1)));
+        organizer.externalMessage(arguments.at(1));
+      } else {
+        QString exeName = arguments.at(1);
+        qDebug("starting %s from command line", qPrintable(exeName));
+        arguments.removeFirst(); // remove application name (ModOrganizer.exe)
+        arguments.removeFirst(); // remove binary name
+        // pass the remaining parameters to the binary
+        try {
+          organizer.startApplication(exeName, arguments, QString(), QString());
+          return 0;
+        } catch (const std::exception &e) {
+          reportError(
+              QObject::tr("failed to start application: %1").arg(e.what()));
+          return 1;
+        }
       }
     }
+
+    QPixmap pixmap(splashPath);
+    QSplashScreen splash(pixmap);
+    splash.show();
 
     NexusInterface::instance()->getAccessManager()->startLoginCheck();
 
     qDebug("initializing tutorials");
-    TutorialManager::init(qApp->applicationDirPath() + "/" + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
-                          &organizer);
+    TutorialManager::init(
+        qApp->applicationDirPath() + "/"
+            + QString::fromStdWString(AppConfig::tutorialsPath()) + "/",
+        &organizer);
 
     if (!application.setStyleFile(settings.value("Settings/style", "").toString())) {
       // disable invalid stylesheet
@@ -629,27 +612,98 @@ int main(int argc, char *argv[])
     int res = 1;
     { // scope to control lifetime of mainwindow
       // set up main window and its data structures
-      MainWindow mainWindow(argv[0], settings, organizer, pluginContainer);
+      MainWindow mainWindow(settings, organizer, pluginContainer);
 
-      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application, SLOT(setStyleFile(QString)));
-      QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer, SLOT(externalMessage(QString)));
+      QObject::connect(&mainWindow, SIGNAL(styleChanged(QString)), &application,
+                       SLOT(setStyleFile(QString)));
+      QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
+                       SLOT(externalMessage(QString)));
 
       mainWindow.readSettings();
 
       qDebug("displaying main window");
       mainWindow.show();
 
-      if ((arguments.size() > 1)
-          && isNxmLink(arguments.at(1))) {
-        qDebug("starting download from command line: %s", qPrintable(arguments.at(1)));
-        organizer.externalMessage(arguments.at(1));
-      }
       splash.finish(&mainWindow);
-      res = application.exec();
+      return application.exec();
     }
-    return res;
   } catch (const std::exception &e) {
     reportError(e.what());
     return 1;
   }
+}
+
+
+int main(int argc, char *argv[])
+{
+  //Should allow for better scaling of ui with higher resolution displays
+  QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+  if (argc >= 4) {
+    std::vector<std::wstring> arg;
+    auto args = UntouchedCommandLineArguments(2, arg);
+    if (arg[0] == L"launch")
+      return SpawnWaitProcess(arg[1].c_str(), args);
+  }
+
+  MOApplication application(argc, argv);
+  QStringList arguments = application.arguments();
+
+  setupPath();
+
+  bool forcePrimary = false;
+  if (arguments.contains("update")) {
+    arguments.removeAll("update");
+    forcePrimary = true;
+  }
+
+  MOShortcut moshortcut{ arguments.size() > 1 ? arguments.at(1) : "" };
+
+  SingleInstance instance(forcePrimary);
+  if (!instance.primaryInstance()) {
+    if (moshortcut ||
+        arguments.size() > 1 && OrganizerCore::isNxmLink(arguments.at(1)))
+    {
+      qDebug("not primary instance, sending shortcut/download message");
+      instance.sendMessage(arguments.at(1));
+      return 0;
+    } else if (arguments.size() == 1) {
+      QMessageBox::information(
+          nullptr, QObject::tr("Mod Organizer"),
+          QObject::tr("An instance of Mod Organizer is already running"));
+      return 0;
+    }
+  } // we continue for the primary instance OR if MO was called with parameters
+
+  do {
+    QString dataPath;
+
+    try {
+      InstanceManager& instanceManager = InstanceManager::instance();
+      if (moshortcut && moshortcut.hasInstance())
+        instanceManager.overrideInstance(moshortcut.instance());
+      dataPath = instanceManager.determineDataPath();
+    } catch (const std::exception &e) {
+      if (strcmp(e.what(),"Canceled"))
+        QMessageBox::critical(nullptr, QObject::tr("Failed to set up instance"), e.what());
+      return 1;
+    }
+    application.setProperty("dataPath", dataPath);
+
+    // initialize dump collection only after "dataPath" since the crashes are stored under it
+    prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
+
+    LogBuffer::init(1000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+
+    QString splash = dataPath + "/splash.png";
+    if (!QFile::exists(dataPath + "/splash.png")) {
+      splash = ":/MO/gui/splash";
+    }
+
+    int result = runApplication(application, instance, splash);
+    if (result != INT_MAX) {
+      return result;
+    }
+    argc = 1;
+  } while (true);
 }

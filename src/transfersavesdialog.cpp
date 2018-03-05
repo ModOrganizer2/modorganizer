@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include "isavegame.h"
 #include "savegameinfo.h"
+#include <utility.h>
 
 #include <QtDebug>
 #include <QDateTime>
@@ -159,6 +160,7 @@ bool TransferSavesDialog::testOverwrite(OverwriteMode &overwriteMode, const QStr
   return res == QMessageBox::Yes;
 }
 
+
 #define MOVE_SAVES  "Move all save games of character \"%1\""
 #define COPY_SAVES  "Copy all save games of character \"%1\""
 
@@ -168,13 +170,13 @@ bool TransferSavesDialog::testOverwrite(OverwriteMode &overwriteMode, const QStr
 void TransferSavesDialog::on_moveToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
-  if (transferCharacters(character,
-                         MOVE_SAVES TO_PROFILE,
-                         m_GlobalSaves[character],
-                         m_Profile.savePath(),
-                         QFile::rename,
-                         "Failed to move %s to %s"))
-  {
+  if (transferCharacters(
+          character, MOVE_SAVES TO_PROFILE, m_GlobalSaves[character],
+          m_Profile.savePath(),
+          [this](const QString &source, const QString &destination) -> bool {
+            return shellMove(source, destination, this);
+          },
+          "Failed to move %s to %s")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
     refreshLocalSaves();
@@ -185,12 +187,13 @@ void TransferSavesDialog::on_moveToLocalBtn_clicked()
 void TransferSavesDialog::on_copyToLocalBtn_clicked()
 {
   QString character = ui->globalCharacterList->currentItem()->text();
-  if (transferCharacters(character,
-                         COPY_SAVES TO_PROFILE,
-                         m_GlobalSaves[character],
-                         m_Profile.savePath(),
-                         QFile::copy,
-                         "Failed to copy %s to %s")) {
+  if (transferCharacters(
+          character, COPY_SAVES TO_PROFILE, m_GlobalSaves[character],
+          m_Profile.savePath(),
+          [this](const QString &source, const QString &destination) -> bool {
+            return shellCopy(source, destination, this);
+          },
+          "Failed to copy %s to %s")) {
     refreshLocalSaves();
     refreshLocalCharacters();
   }
@@ -199,12 +202,13 @@ void TransferSavesDialog::on_copyToLocalBtn_clicked()
 void TransferSavesDialog::on_moveToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
-  if (transferCharacters(character,
-                         MOVE_SAVES TO_GLOBAL,
-                         m_LocalSaves[character],
-                         m_GamePlugin->savesDirectory().absolutePath(),
-                         QFile::rename,
-                         "Failed to move %s to %s")) {
+  if (transferCharacters(
+          character, MOVE_SAVES TO_GLOBAL, m_LocalSaves[character],
+          m_GamePlugin->savesDirectory().absolutePath(),
+          [this](const QString &source, const QString &destination) -> bool {
+            return shellMove(source, destination, this);
+          },
+          "Failed to move %s to %s")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
     refreshLocalSaves();
@@ -215,12 +219,13 @@ void TransferSavesDialog::on_moveToGlobalBtn_clicked()
 void TransferSavesDialog::on_copyToGlobalBtn_clicked()
 {
   QString character = ui->localCharacterList->currentItem()->text();
-  if (transferCharacters(character,
-                         COPY_SAVES TO_GLOBAL,
-                         m_LocalSaves[character],
-                         m_GamePlugin->savesDirectory().absolutePath(),
-                         QFile::copy,
-                         "Failed to copy %s to %s")) {
+  if (transferCharacters(
+          character, COPY_SAVES TO_GLOBAL, m_LocalSaves[character],
+          m_GamePlugin->savesDirectory().absolutePath(),
+          [this](const QString &source, const QString &destination) -> bool {
+            return shellCopy(source, destination, this);
+          },
+          "Failed to copy %s to %s")) {
     refreshGlobalSaves();
     refreshGlobalCharacters();
   }
@@ -295,12 +300,11 @@ void TransferSavesDialog::refreshCharacters(const SaveCollection &saveCollection
   }
 }
 
-bool TransferSavesDialog::transferCharacters(QString const &character,
-                                             char const *message,
-                                             SaveList &saves,
-                                             QString const &dest,
-                                             bool (method)(QString const &, QString const &),
-                                             char const *errmsg)
+bool TransferSavesDialog::transferCharacters(
+    QString const &character, char const *message, SaveList &saves,
+    QString const &dest,
+    const std::function<bool(const QString &, const QString &)> &method,
+    char const *errmsg)
 {
   if (QMessageBox::question(this, tr("Confirm"),
         tr(message).arg(character),
@@ -325,10 +329,30 @@ bool TransferSavesDialog::transferCharacters(QString const &character,
         QFile::remove(destinationFile);
       }
 
-      if (! method(sourceFile.absoluteFilePath(), destinationFile)) {
+      if (!method(sourceFile.absoluteFilePath(), destinationFile)) {
         qCritical(errmsg,
                   sourceFile.absoluteFilePath().toUtf8().constData(),
                   destinationFile.toUtf8().constData());
+      }
+
+      QFileInfo sourceFileSE(sourceFile.absolutePath() + "/" + sourceFile.completeBaseName() + "." + m_GamePlugin->savegameSEExtension());
+      if (sourceFileSE.exists()) {
+        QString destinationFileSE(destination.absoluteFilePath(sourceFileSE.fileName()));
+
+        //If the file is already there, let them skip (or not).
+        if (QFile::exists(destinationFileSE)) {
+          if (!testOverwrite(overwriteMode, destinationFileSE)) {
+            continue;
+          }
+          //OK, they want to remove it.
+          QFile::remove(destinationFileSE);
+        }
+
+        if (!method(sourceFileSE.absoluteFilePath(), destinationFileSE)) {
+          qCritical(errmsg,
+            sourceFileSE.absoluteFilePath().toUtf8().constData(),
+            destinationFileSE.toUtf8().constData());
+        }
       }
     }
   }

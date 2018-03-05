@@ -1,4 +1,4 @@
-import QtQuick 1.1
+import QtQuick 2.7
 
 Rectangle {
   radius: 2
@@ -17,7 +17,7 @@ Rectangle {
     anchors.fill: parent
     hoverEnabled: true
 
-    onMousePositionChanged: {
+    onPositionChanged: {
       if (parent.parent.width - (parent.x + mouseX) < tooltip.width + 50) {
         tooltip.x = parent.x +  mouseX - 15 - tooltip.width
       } else {

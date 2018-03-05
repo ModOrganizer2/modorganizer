@@ -60,7 +60,7 @@ private:
  * @todo is the profile name even used any more?
  * @todo is the hooked parameter used?
  **/
-HANDLE startBinary(const QFileInfo &binary, const QString &arguments, const QString &profileName, int logLevel,
+HANDLE startBinary(const QFileInfo &binary, const QString &arguments,
                    const QDir &currentDirectory, bool hooked,
                    HANDLE stdOut = INVALID_HANDLE_VALUE, HANDLE stdErr = INVALID_HANDLE_VALUE);
 

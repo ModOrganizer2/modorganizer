@@ -87,13 +87,19 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
     m_Organizer->settings().registerPlugin(pluginObj);
   }
 
-  { // diagnosis plugins
+  { // diagnosis plugin
     IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(plugin);
     if (diagnose != nullptr) {
       bf::at_key<IPluginDiagnose>(m_Plugins).push_back(diagnose);
       m_DiagnosisConnections.push_back(
             diagnose->onInvalidated([&] () { emit diagnosisUpdate(); })
             );
+    }
+  }
+  { // file mapper plugin
+    IPluginFileMapper *mapper = qobject_cast<IPluginFileMapper*>(plugin);
+    if (mapper != nullptr) {
+      bf::at_key<IPluginFileMapper>(m_Plugins).push_back(mapper);
     }
   }
   { // mod page plugin
@@ -194,7 +200,7 @@ void PluginContainer::unloadPlugins()
 
   bf::for_each(m_Plugins, clearPlugins());
 
-  foreach (const boost::signals2::connection &connection, m_DiagnosisConnections) {
+  for (const boost::signals2::connection &connection : m_DiagnosisConnections) {
     connection.disconnect();
   }
   m_DiagnosisConnections.clear();
@@ -277,7 +283,7 @@ void PluginContainer::loadPlugins()
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load", qPrintable(pluginName));
+          qWarning("plugin \"%s\" failed to load (may be outdated)", qPrintable(pluginName));
         }
       }
     }
@@ -286,6 +292,7 @@ void PluginContainer::loadPlugins()
   // remove the load check file on success
   loadCheck.remove();
 
+  bf::at_key<IPluginDiagnose>(m_Plugins).push_back(m_Organizer);
   bf::at_key<IPluginDiagnose>(m_Plugins).push_back(this);
 
   m_Organizer->connectPlugins(this);

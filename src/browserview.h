@@ -24,13 +24,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class QEvent;
 class QUrl;
 class QWidget;
-#include <QWebView>
-#include <QWebPage>
+#include <QWebEngineView>
+#include <QWebEnginePage>
 
 /**
  * @brief web view used to display a nexus page
  **/
-class BrowserView : public QWebView
+class BrowserView : public QWebEngineView
 {
     Q_OBJECT
 
@@ -66,7 +66,7 @@ signals:
 
 protected:
 
-  virtual QWebView *createWindow(QWebPage::WebWindowType type);
+  virtual QWebEngineView *createWindow(QWebEnginePage::WebWindowType type);
 
   virtual bool eventFilter(QObject *obj, QEvent *event);
 

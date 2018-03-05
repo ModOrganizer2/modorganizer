@@ -52,6 +52,8 @@ public:
 
   void showCookies() const;
 
+  void clearCookies();
+
   QString userAgent(const QString &subModule = QString()) const;
 
   void startLoginCheck();

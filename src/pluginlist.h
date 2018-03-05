@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <directoryentry.h>
 #include <ipluginlist.h>
+#include "profile.h"
 namespace MOBase { class IPluginGame; }
 
 #include <QString>
@@ -110,15 +111,11 @@ public:
    *
    * @param profileName name of the current profile
    * @param baseDirectory the root directory structure representing the virtual data directory
-   * @param pluginsFile file that stores the list of enabled plugins
-   * @param loadOrderFile file that stored the load order (not an official file but used by many tools for skyrim)
    * @param lockedOrderFile list of plugins that shouldn't change load order
    * @todo the profile is not used? If it was, we should pass the Profile-object instead
    **/
   void refresh(const QString &profileName
                , const MOShared::DirectoryEntry &baseDirectory
-               , const QString &pluginsFile
-               , const QString &loadOrderFile
                , const QString &lockedOrderFile);
 
   /**
@@ -165,25 +162,13 @@ public:
   bool isEnabled(int index);
 
   /**
-   * @brief update the plugin status (enabled/disabled) from the specified file
-   *
-   * @param fileName path of the file to load. the filename should be "plugin.txt"
-   * @todo it would make sense to move this into the Profile-class
-   **/
-  void readEnabledFrom(const QString &fileName);
-
-  /**
    * @brief save the plugin status to the specified file
    *
-   * @param pluginFileName path of the plugin.txt to write to
-   * @param loadOrderFileName path of the loadorder.txt to write to
    * @param lockedOrderFileName path of the lockedorder.txt to write to
    * @param deleterFileName file to receive a list of files to hide from the virtual data tree. This is used to hide unchecked plugins if "hideUnchecked" is true
    * @param hideUnchecked if true, plugins that aren't enabled will be hidden from the virtual data directory
    **/
-  void saveTo(const QString &pluginFileName
-              , const QString &loadOrderFileName
-              , const QString &lockedOrderFileName
+  void saveTo(const QString &lockedOrderFileName
               , const QString &deleterFileName
               , bool hideUnchecked) const;
 
@@ -216,19 +201,26 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
+  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
+
   void refreshLoadOrder();
 
   void disconnectSlots();
 
 public:
 
+  virtual QStringList pluginNames() const override;
   virtual PluginStates state(const QString &name) const;
+  virtual void setState(const QString &name, PluginStates state) override;
   virtual int priority(const QString &name) const;
   virtual int loadOrder(const QString &name) const;
+  virtual bool onRefreshed(const std::function<void()> &callback);
   virtual bool isMaster(const QString &name) const;
+  virtual bool isLight(const QString &name) const;
+  virtual bool isLightFlagged(const QString &name) const;
   virtual QStringList masters(const QString &name) const;
   virtual QString origin(const QString &name) const;
-  virtual bool onRefreshed(const std::function<void()> &callback);
+  virtual void setLoadOrder(const QStringList &pluginList) override;
   virtual bool onPluginMoved(const std::function<void (const QString &, int, int)> &func);
   virtual bool onPluginStateChanged(const std::function<void (const QString &, PluginStates)> &func) override;
 
@@ -288,12 +280,18 @@ private:
     FILETIME m_Time;
     QString m_OriginName;
     bool m_IsMaster;
-    bool m_IsDummy;
+    bool m_IsLight;
+    bool m_IsLightFlagged;
+    bool m_ModSelected;
     QString m_Author;
     QString m_Description;
     bool m_HasIni;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
+    bool operator < (const ESPInfo& str) const
+    {
+      return (m_LoadOrder < str.m_LoadOrder);
+    }
   };
 
   struct AdditionalInfo {
@@ -309,15 +307,15 @@ private:
   void syncLoadOrder();
   void updateIndices();
 
-  void writePlugins(const QString &fileName, bool writeUnchecked) const;
   void writeLockedOrder(const QString &fileName) const;
 
-  bool readLoadOrder(const QString &fileName);
   void readLockedOrderFrom(const QString &fileName);
   void setPluginPriority(int row, int &newPriority);
   void changePluginPriority(std::vector<int> rows, int newPriority);
 
   void testMasters();
+
+  void fixPriorities();
 
 private:
 
@@ -327,10 +325,6 @@ private:
   std::map<QString, int> m_ESPsByName;
   std::vector<int> m_ESPsByPriority;
 
-  // maps esp names to the priority specified in loadorder.txt. The esp names are
-  // all lowercase!! This is to work around the fact that BOSS for some reason writes some file with
-  // capitalization that doesn't match the actual name
-  std::map<QString, int> m_ESPLoadOrder;
   std::map<QString, int> m_LockedOrder;
 
   std::map<QString, AdditionalInfo> m_AdditionalInfo; // maps esp names to boss information
@@ -338,16 +332,13 @@ private:
   QString m_CurrentProfile;
   QFontMetrics m_FontMetrics;
 
-  QTextCodec *m_Utf8Codec;
-  QTextCodec *m_LocalCodec;
-
   SignalRefreshed m_Refreshed;
   SignalPluginMoved m_PluginMoved;
   SignalPluginStateChanged m_PluginStateChanged;
 
   QTemporaryFile m_TempFile;
 
-  MOBase::IPluginGame const *m_GamePlugin;
+  const MOBase::IPluginGame *m_GamePlugin;
 
 };
 

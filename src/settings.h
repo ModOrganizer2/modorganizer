@@ -38,8 +38,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class QCheckBox;
 class QComboBox;
 class QLineEdit;
+class QSpinBox;
 class QListWidget;
 class QWidget;
+class QLabel;
 
 struct ServerInfo;
 
@@ -120,9 +122,15 @@ public:
   QString getSteamAppID() const;
 
   /**
+   * retrieves the base directory under which the other directories usually
+   * reside
+   */
+  QString getBaseDirectory() const;
+
+  /**
    * retrieve the directory where downloads are stored (with native separators)
    **/
-  QString getDownloadDirectory() const;
+  QString getDownloadDirectory(bool resolve = true) const;
 
   /**
    * retrieve a sorted list of preferred servers
@@ -132,7 +140,7 @@ public:
   /**
    * retrieve the directory where mods are stored (with native separators)
    **/
-  QString getModDirectory() const;
+  QString getModDirectory(bool resolve = true) const;
 
   /**
    * returns the version of nmm to impersonate when connecting to nexus
@@ -142,7 +150,18 @@ public:
   /**
    * retrieve the directory where the web cache is stored (with native separators)
    **/
-  QString getCacheDirectory() const;
+  QString getCacheDirectory(bool resolve = true) const;
+
+  /**
+   * retrieve the directory where profiles stored (with native separators)
+   **/
+  QString getProfileDirectory(bool resolve = true) const;
+
+  /**
+   * retrieve the directory were new files are stored that can't be assigned
+   * to a mod (with native separators)
+   */
+  QString getOverwriteDirectory(bool resolve = true) const;
 
   /**
    * @return true if the user has set up automatic login to nexus
@@ -186,6 +205,16 @@ public:
    * @return the configured log level
    */
   int logLevel() const;
+
+  /**
+  * @return the configured crash dumps type
+  */
+  int crashDumpsType() const;
+
+  /**
+  * @return the configured crash dumps max
+  */
+  int crashDumpsMax() const;
 
   /**
    * @brief set the nexus login information
@@ -304,6 +333,8 @@ public:
    */
   std::vector<MOBase::IPlugin*> plugins() const { return m_Plugins; }
 
+  bool usePrereleases() const;
+
   /**
    * @brief register MO as the handler for nxm links
    * @param force set to true to enforce the registration dialog to show up,
@@ -324,7 +355,7 @@ private:
   void addStyles(QComboBox *styleBox);
   void readPluginBlacklist();
   void writePluginBlacklist();
-  QString getConfigurablePath(const QString &key, const QString &def) const;
+  QString getConfigurablePath(const QString &key, const QString &def, bool resolve) const;
 
   class SettingsTab
   {
@@ -352,12 +383,39 @@ private:
   private:
     QComboBox *m_languageBox;
     QComboBox *m_styleBox;
-    QComboBox *m_logLevelBox;
+    QCheckBox *m_compactBox;
+    QCheckBox *m_showMetaBox;
+    QCheckBox *m_usePrereleaseBox;
+  };
+
+  class PathsTab : public SettingsTab
+  {
+  public:
+    PathsTab(Settings *parent, SettingsDialog &dialog);
+
+    void update();
+
+  private:
+    QLineEdit *m_baseDirEdit;
     QLineEdit *m_downloadDirEdit;
     QLineEdit *m_modDirEdit;
     QLineEdit *m_cacheDirEdit;
-    QCheckBox *m_compactBox;
-    QCheckBox *m_showMetaBox;
+    QLineEdit *m_profilesDirEdit;
+    QLineEdit *m_overwriteDirEdit;
+  };
+
+  class DiagnosticsTab : public SettingsTab
+  {
+  public:
+    DiagnosticsTab(Settings *parent, SettingsDialog &dialog);
+
+    void update();
+
+  private:
+    QComboBox *m_logLevelBox;
+    QComboBox *m_dumpsTypeBox;
+    QSpinBox *m_dumpsMaxEdit;
+    QLabel *m_diagnosticsExplainedLabel;
   };
 
   /** Display/store the configuration in the 'nexus' tab of the settings dialogue */

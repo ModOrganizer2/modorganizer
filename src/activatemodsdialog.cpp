@@ -35,13 +35,8 @@ ActivateModsDialog::ActivateModsDialog(SaveGameInfo::MissingAssets const &missin
 
   QTableWidget *modsTable = findChild<QTableWidget*>("modsTable");
   QHeaderView *headerView = modsTable->horizontalHeader();
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
   headerView->setSectionResizeMode(0, QHeaderView::Stretch);
   headerView->setSectionResizeMode(1, QHeaderView::Interactive);
-#else
-  headerView->setResizeMode(0, QHeaderView::Stretch);
-  headerView->setResizeMode(1, QHeaderView::Interactive);
-#endif
 
   int row = 0;
 

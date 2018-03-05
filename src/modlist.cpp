@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
+#include "settings.h"
 #include <appconfig.h>
 #include <utility.h>
 #include <report.h>
@@ -60,17 +61,16 @@ ModList::ModList(QObject *parent)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
 {
-  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game plugins (esp/esm)"));
+  m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
   m_ContentIcons[ModInfo::CONTENT_MESH]      = std::make_tuple(":/MO/gui/content/mesh", tr("Meshes"));
-  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("BSA"));
-  m_ContentIcons[ModInfo::CONTENT_MUSIC]     = std::make_tuple(":/MO/gui/content/music", tr("Music"));
+  m_ContentIcons[ModInfo::CONTENT_BSA]       = std::make_tuple(":/MO/gui/content/bsa", tr("Bethesda Archive"));
   m_ContentIcons[ModInfo::CONTENT_SCRIPT]    = std::make_tuple(":/MO/gui/content/script", tr("Scripts (Papyrus)"));
   m_ContentIcons[ModInfo::CONTENT_SKSE]      = std::make_tuple(":/MO/gui/content/skse", tr("Script Extender Plugin"));
   m_ContentIcons[ModInfo::CONTENT_SKYPROC]   = std::make_tuple(":/MO/gui/content/skyproc", tr("SkyProc Patcher"));
-  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound"));
-  m_ContentIcons[ModInfo::CONTENT_STRING]    = std::make_tuple(":/MO/gui/content/string", tr("Strings"));
+  m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
+  m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
 
   m_LastCheck.start();
 }
@@ -339,6 +339,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
+      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -351,7 +352,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
-    if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
+    if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+      return QColor(0, 0, 255, 32);
+    } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
       return QColor(0, 255, 0, 32);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
       return QColor(255, 0, 0, 32);
@@ -421,15 +424,18 @@ bool ModList::renameMod(int index, const QString &newName)
     return false;
   }
 
-  // before we rename, write back the current profile so we don't lose changes and to ensure
-  // there is no scheduled asynchronous rewrite anytime soon
-  m_Profile->writeModlistNow();
-
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  if (modInfo->setName(nameFixed)) {
-    // this just disabled the mod in all profiles. The recipient of modRenamed must fix that
-    emit modRenamed(oldName, nameFixed);
+  if (newName != oldName) {
+    // before we rename, ensure there is no scheduled asynchronous to rewrite
+    m_Profile->cancelModlistWrite();
+
+
+    if (modInfo->setName(nameFixed))
+      // Notice there is a good chance that setName() updated the modinfo indexes
+      // the modRenamed() call will refresh the indexes in the current profile
+      // and update the modlists in all profiles
+      emit modRenamed(oldName, nameFixed);
   }
 
   // invalidate the currently displayed state of this list
@@ -686,6 +692,37 @@ int ModList::timeElapsedSinceLastChecked() const
   return m_LastCheck.elapsed();
 }
 
+void ModList::highlightMods(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+{
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+      ModInfo::getByIndex(i)->setPluginSelected(false);
+  }
+  for (QModelIndex idx : selected.indexes()) {
+    QString modName = idx.data().toString();
+
+    const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
+    if (fileEntry.get() != nullptr) {
+      QString fileName;
+      bool archive = false;
+      std::vector<std::pair<int, std::wstring>> origins;
+      {
+        std::vector<std::pair<int, std::wstring>> alternatives = fileEntry->getAlternatives();
+        origins.insert(origins.end(), std::pair<int, std::wstring>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
+      }
+      for (auto originInfo : origins) {
+        MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originInfo.first);
+        for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+          if (ModInfo::getByIndex(i)->internalName() == QString::fromStdWString(origin.getName())) {
+            ModInfo::getByIndex(i)->setPluginSelected(true);
+            break;
+          }
+        }
+      }
+    }
+  }
+  notifyChange(0, rowCount() - 1);
+}
+
 IModList::ModStates ModList::state(unsigned int modIndex) const
 {
   IModList::ModStates result;
@@ -802,7 +839,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDirectory(modInfo->absolutePath());
-  QDir gameDirectory(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
+  QDir gameDirectory(Settings::instance().getOverwriteDirectory());
 
   unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
@@ -906,12 +943,12 @@ void ModList::removeRowForce(int row, const QModelIndex &parent)
 
   m_Profile->setModEnabled(row, false);
 
-  m_Profile->modlistWriter().cancel();
+  m_Profile->cancelModlistWrite();
   beginRemoveRows(parent, row, row);
   ModInfo::removeMod(row);
   endRemoveRows();
   m_Profile->refreshModStatus();  // removes the mod from the status list
-  m_Profile->modlistWriter().write(); // this ensures the modified list gets written back before new mods can be installed
+  m_Profile->writeModlist(); // this ensures the modified list gets written back before new mods can be installed
 
   if (wasEnabled) {
     emit removeOrigin(modInfo->name());
@@ -1028,17 +1065,18 @@ QString ModList::getColumnToolTip(int column)
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
                                  "<table cellspacing=7>"
-                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm)</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/string\" width=32/></td><td>Strings</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/script\" width=32/></td><td>Scripts (Papyrus)</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</tr>"
-                                 "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/plugin\" width=32/></td><td>Game plugins (esp/esm/esl)</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/interface\" width=32/></td><td>Interface</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/mesh\" width=32/></td><td>Meshes</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/bsa\" width=32/></td><td>BSA</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/texture\" width=32/></td><td>Textures</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/sound\" width=32/></td><td>Sounds</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/music\" width=32/></td><td>Music</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/string\" width=32/></td><td>Strings</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/script\" width=32/></td><td>Scripts (Papyrus)</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/menu\" width=32/></td><td>Mod Configuration Menu</td></tr>"
                                  "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");

@@ -88,8 +88,8 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
     QFileInfo fileInfo(archive);
     if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
       try {
-        directoryStructure->addFromBSA(ToWString(modName), directoryW,
-                                       ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
+        //directoryStructure->addFromBSA(ToWString(modName), directoryW,
+        //                                ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
       } catch (const std::exception &e) {
         throw MyException(tr("failed to parse bsa %1: %2").arg(archive, e.what()));
       }
@@ -144,7 +144,7 @@ void DirectoryRefresher::refresh()
 
   m_DirectoryStructure = new DirectoryEntry(L"data", nullptr, 0);
 
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
   std::wstring dataDirectory = QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
@@ -159,7 +159,7 @@ void DirectoryRefresher::refresh()
     } catch (const std::exception &e) {
       emit error(tr("failed to read mod (%1): %2").arg(iter->modName, e.what()));
     }
-    emit progress((i * 100) / m_Mods.size() + 1);
+    emit progress((i * 100) / static_cast<int>(m_Mods.size()) + 1);
   }
 
   emit progress(100);

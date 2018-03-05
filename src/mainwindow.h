@@ -35,7 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 //when I get round to cleaning up main.cpp
 struct Executable;
 class CategoryFactory;
-class LockedDialog;
+class LockedDialogBase;
 class OrganizerCore;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
@@ -60,6 +60,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QStringList>
 #include <QTime>
 #include <QTimer>
+#include <QHeaderView>
 #include <QVariant>
 #include <Qt>
 
@@ -105,9 +106,9 @@ class MainWindow : public QMainWindow, public IUserInterface
 
   friend class OrganizerProxy;
 
-
 public:
-  explicit MainWindow(const QString &exeName, QSettings &initSettings,
+
+  explicit MainWindow(QSettings &initSettings,
                       OrganizerCore &organizerCore, PluginContainer &pluginContainer,
                       QWidget *parent = 0);
   ~MainWindow();
@@ -115,14 +116,13 @@ public:
   void storeSettings(QSettings &settings) override;
   void readSettings();
 
-  virtual void lock() override;
+  virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;
-  virtual bool unlockClicked() override;
-  virtual void setProcessName(QString const &name) override;
 
   bool addProfile();
   void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
   void refreshDataTree();
+  void refreshDataTreeKeepExpandedNodes();
   void refreshSaveList();
 
   void setModListSorting(int index);
@@ -154,7 +154,6 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
-  void updateWindowTitle(const QString &accountName, bool premium);
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -167,7 +166,6 @@ public slots:
   void modPagePluginInvoke();
 
 signals:
-
 
   /**
    * @brief emitted after the information dialog has been closed
@@ -191,7 +189,15 @@ protected:
   virtual void dragEnterEvent(QDragEnterEvent *event);
   virtual void dropEvent(QDropEvent *event);
 
+private slots:
+  void on_actionChange_Game_triggered();
+
+private slots:
+  void on_clickBlankButton_clicked();
+
 private:
+
+  void cleanup();
 
   void actionToToolButton(QAction *&sourceAction);
 
@@ -214,8 +220,6 @@ private:
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
-
-  void renameModInList(QFile &modList, const QString &oldName, const QString &newName);
 
   void refreshFilters();
 
@@ -247,7 +251,7 @@ private:
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
-  int checkForProblems();
+  size_t checkForProblems();
 
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   QTreeWidgetItem *addFilterItem(QTreeWidgetItem *root, const QString &name, int categoryID, ModListSortProxy::FilterType type);
@@ -273,6 +277,8 @@ private:
 
   QMenu *modListContextMenu();
 
+  QMenu *openFolderMenu();
+
   std::set<QString> enabledArchives();
 
   void scheduleUpdateButton();
@@ -283,6 +289,8 @@ private:
   void stopMonitorSaves();
 
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
+
+  bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
 
 private:
 
@@ -297,8 +305,6 @@ private:
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
-
-  QString m_ExeName;
 
   int m_OldProfileIndex;
 
@@ -350,8 +356,12 @@ private:
 
   bool m_DidUpdateMasterList;
 
-  LockedDialog *m_LockDialog { nullptr };
+  LockedDialogBase *m_LockDialog { nullptr };
   uint64_t m_LockCount { 0 };
+
+  bool m_closing{ false };
+
+  std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
@@ -368,6 +378,8 @@ private:
 
 private slots:
 
+  void updateWindowTitle(const QString &accountName, bool premium);
+
   void showMessage(const QString &message);
   void showError(const QString &message);
 
@@ -380,6 +392,7 @@ private slots:
 
   // modlist context menu
   void installMod_clicked();
+  void createEmptyMod_clicked();
   void restoreBackup_clicked();
   void renameMod_clicked();
   void removeMod_clicked();
@@ -415,6 +428,7 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void createModFromOverwrite();
+  void clearOverwrite();
 
   void procError(QProcess::ProcessError error);
   void procFinished(int exitCode, QProcess::ExitStatus exitStatus);
@@ -437,7 +451,6 @@ private slots:
   void addRemoveCategories_MenuHandler();
   void replaceCategories_MenuHandler();
 
-  void savePrimaryCategory();
   void addPrimaryCategoryCandidates();
 
   void modDetailsUpdated(bool success);
@@ -473,7 +486,12 @@ private slots:
   void enableVisibleMods();
   void disableVisibleMods();
   void exportModListCSV();
-
+  void openInstanceFolder();
+  void openInstallFolder();
+  void openDownloadsFolder();
+  void openProfileFolder();
+  void openGameFolder();
+  void openMyGamesFolder();
   void startExeAction();
 
   void checkBSAList();
@@ -520,6 +538,9 @@ private slots:
   void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
 
+  void modlistSelectionsChanged(const QItemSelection &current);
+  void esplistSelectionsChanged(const QItemSelection &current);
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
@@ -531,8 +552,7 @@ private slots: // ui slots
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
 
-  void on_bsaList_customContextMenuRequested(const QPoint &pos);
-  void bsaList_itemMoved();
+  void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
@@ -562,7 +582,6 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
-  void on_manageArchivesBox_toggled(bool checked);
 };
 
 

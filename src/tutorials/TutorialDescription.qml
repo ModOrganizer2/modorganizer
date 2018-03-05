@@ -1,4 +1,4 @@
-import QtQuick 1.1
+import QtQuick 2.7
 
 // rectangle for description texts
 Rectangle {

@@ -1,6 +1,7 @@
 #include "modinfooverwrite.h"
 
 #include "appconfig.h"
+#include "settings.h"
 
 #include <QApplication>
 #include <QDirIterator>
@@ -21,19 +22,25 @@ bool ModInfoOverwrite::isEmpty() const
 
 QString ModInfoOverwrite::absolutePath() const
 {
-  return QDir::fromNativeSeparators(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::overwritePath()));
+  return Settings::instance().getOverwriteDirectory();
 }
 
 std::vector<ModInfo::EFlag> ModInfoOverwrite::getFlags() const
 {
   std::vector<ModInfo::EFlag> result;
   result.push_back(FLAG_OVERWRITE);
+  if (m_PluginSelected)
+    result.push_back(FLAG_PLUGIN_SELECTED);
   return result;
 }
 
 int ModInfoOverwrite::getHighlight() const
 {
-  return (isValid() ? HIGHLIGHT_IMPORTANT : HIGHLIGHT_INVALID) | HIGHLIGHT_CENTER;
+  int highlight = (isValid() ? HIGHLIGHT_IMPORTANT : HIGHLIGHT_INVALID) | HIGHLIGHT_CENTER;
+  auto flags = getFlags();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) != flags.end())
+    highlight |= HIGHLIGHT_PLUGIN;
+  return highlight;
 }
 
 QString ModInfoOverwrite::getDescription() const
@@ -46,7 +53,7 @@ QStringList ModInfoOverwrite::archives() const
 {
   QStringList result;
   QDir dir(this->absolutePath());
-  for (const QString &archive : dir.entryList(QStringList("*.bsa"))) {
+  for (const QString &archive : dir.entryList(QStringList({ "*.bsa", "*.ba2" }))) {
     result.append(this->absolutePath() + "/" + archive);
   }
   return result;

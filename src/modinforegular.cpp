@@ -420,6 +420,9 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if (m_Notes.length() != 0) {
     result.push_back(ModInfo::FLAG_NOTES);
   }
+  if (m_PluginSelected) {
+    result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
+  }
   return result;
 }
 
@@ -430,28 +433,36 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
   if (m_LastContentCheck.isNull() || (m_LastContentCheck.secsTo(now) > 60)) {
     m_CachedContent.clear();
     QDir dir(absolutePath());
-    if (dir.entryList(QStringList() << "*.esp" << "*.esm").size() > 0) {
+    if (dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl").size() > 0) {
       m_CachedContent.push_back(CONTENT_PLUGIN);
     }
-    if (dir.entryList(QStringList() << "*.bsa").size() > 0) {
+    if (dir.entryList(QStringList() << "*.bsa" << "*.ba2").size() > 0) {
       m_CachedContent.push_back(CONTENT_BSA);
     }
 
-    ScriptExtender *extender = qApp->property("managed_game").value<IPluginGame*>()->feature<ScriptExtender>();
+    ScriptExtender *extender = qApp->property("managed_game")
+                                   .value<IPluginGame *>()
+                                   ->feature<ScriptExtender>();
 
     if (extender != nullptr) {
-      QString sePluginPath = extender->name() + "/plugins";
-      if (dir.exists(sePluginPath)) m_CachedContent.push_back(CONTENT_SKSE);
+      QString sePluginPath = extender->PluginPath();
+      if (dir.exists(sePluginPath))
+        m_CachedContent.push_back(CONTENT_SKSE);
     }
-    if (dir.exists("textures"))   m_CachedContent.push_back(CONTENT_TEXTURE);
-    if (dir.exists("meshes"))     m_CachedContent.push_back(CONTENT_MESH);
-    if (dir.exists("interface")
-        || dir.exists("menus"))   m_CachedContent.push_back(CONTENT_INTERFACE);
-    if (dir.exists("music"))      m_CachedContent.push_back(CONTENT_MUSIC);
-    if (dir.exists("sound"))      m_CachedContent.push_back(CONTENT_SOUND);
-    if (dir.exists("scripts"))    m_CachedContent.push_back(CONTENT_SCRIPT);
-    if (dir.exists("strings"))    m_CachedContent.push_back(CONTENT_STRING);
-    if (dir.exists("SkyProc Patchers"))  m_CachedContent.push_back(CONTENT_SKYPROC);
+    if (dir.exists("textures"))
+      m_CachedContent.push_back(CONTENT_TEXTURE);
+    if (dir.exists("meshes"))
+      m_CachedContent.push_back(CONTENT_MESH);
+    if (dir.exists("interface") || dir.exists("menus"))
+      m_CachedContent.push_back(CONTENT_INTERFACE);
+    if (dir.exists("music") || dir.exists("sound"))
+      m_CachedContent.push_back(CONTENT_SOUND);
+    if (dir.exists("scripts"))
+      m_CachedContent.push_back(CONTENT_SCRIPT);
+    if (dir.exists("SkyProc Patchers"))
+      m_CachedContent.push_back(CONTENT_SKYPROC);
+    if (dir.exists("MCM"))
+      m_CachedContent.push_back(CONTENT_MCM);
 
     m_LastContentCheck = QTime::currentTime();
   }
@@ -463,14 +474,19 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 
 int ModInfoRegular::getHighlight() const
 {
-  return isValid() ? HIGHLIGHT_NONE: HIGHLIGHT_INVALID;
+  if (!isValid())
+    return HIGHLIGHT_INVALID;
+  auto flags = getFlags();
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) != flags.end())
+    return HIGHLIGHT_PLUGIN;
+  return HIGHLIGHT_NONE;
 }
 
 
 QString ModInfoRegular::getDescription() const
 {
   if (!isValid()) {
-    return tr("%1 contains no esp/esm and no asset (textures, meshes, interface, ...) directory").arg(name());
+    return tr("%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory").arg(name());
   } else {
     const std::set<int> &categories = getCategories();
     std::wostringstream categoryString;
@@ -535,7 +551,7 @@ QStringList ModInfoRegular::archives() const
 {
   QStringList result;
   QDir dir(this->absolutePath());
-  for (const QString &archive : dir.entryList(QStringList("*.bsa"))) {
+  for (const QString &archive : dir.entryList(QStringList({ "*.bsa", "*.ba2" }))) {
     result.append(this->absolutePath() + "/" + archive);
   }
   return result;

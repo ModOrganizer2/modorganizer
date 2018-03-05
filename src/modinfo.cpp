@@ -35,6 +35,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <versioninfo.h>
 #include <appconfig.h>
 #include <scriptextender.h>
+#include <unmanagedmods.h>
 
 #include <QApplication>
 #include <QDirIterator>
@@ -75,11 +76,14 @@ ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStru
   return result;
 }
 
-ModInfo::Ptr ModInfo::createFromPlugin(const QString &espName, const QStringList &bsaNames
-                                       , DirectoryEntry ** directoryStructure)
-{
+ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
+                                       const QString &espName,
+                                       const QStringList &bsaNames,
+                                       ModInfo::EModType modType,
+                                       DirectoryEntry **directoryStructure) {
   QMutexLocker locker(&s_Mutex);
-  ModInfo::Ptr result = ModInfo::Ptr(new ModInfoForeign(espName, bsaNames, directoryStructure));
+  ModInfo::Ptr result = ModInfo::Ptr(
+      new ModInfoForeign(modName, espName, bsaNames, modType, directoryStructure));
   s_Collection.push_back(result);
   return result;
 }
@@ -90,14 +94,13 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_PLUGIN:    return tr("Plugins");
     case CONTENT_TEXTURE:   return tr("Textures");
     case CONTENT_MESH:      return tr("Meshes");
-    case CONTENT_BSA:       return tr("BSA");
+    case CONTENT_BSA:       return tr("Bethesda Archive");
     case CONTENT_INTERFACE: return tr("UI Changes");
-    case CONTENT_MUSIC:     return tr("Music");
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");
     case CONTENT_SKSE:      return tr("SKSE Plugins");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
-    case CONTENT_STRING:    return tr("Strings");
+    case CONTENT_MCM:       return tr("MCM Data");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
   }
 }
@@ -112,7 +115,7 @@ void ModInfo::createFromOverwrite()
 unsigned int ModInfo::getNumMods()
 {
   QMutexLocker locker(&s_Mutex);
-  return s_Collection.size();
+  return static_cast<unsigned int>(s_Collection.size());
 }
 
 
@@ -120,9 +123,10 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
 {
   QMutexLocker locker(&s_Mutex);
 
-  if (index >= s_Collection.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+  if (index >= s_Collection.size() && index != ULONG_MAX) {
+    throw MyException(tr("invalid mod index %1").arg(index));
   }
+  if (index == ULONG_MAX) return s_Collection[ModInfo::getIndex("Overwrite")];
   return s_Collection[index];
 }
 
@@ -150,7 +154,7 @@ bool ModInfo::removeMod(unsigned int index)
   QMutexLocker locker(&s_Mutex);
 
   if (index >= s_Collection.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("remove: invalid mod index %1").arg(index));
   }
   // update the indices first
   ModInfo::Ptr modInfo = s_Collection[index];
@@ -219,27 +223,17 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     }
   }
 
-  { // list plugins in the data directory and make a foreign-managed mod out of each
-    QStringList dlcPlugins = game->DLCPlugins();
-    QStringList mainPlugins = game->primaryPlugins();
-    QDir dataDir(game->dataDirectory());
-    for (const QString &file : dataDir.entryList({ "*.esp", "*.esm" })) {
-      if (std::find_if(mainPlugins.begin(), mainPlugins.end(),
-                       [&file](QString const &p) {
-                          return p.compare(file, Qt::CaseInsensitive) == 0; }) == mainPlugins.end()
-          && (displayForeign // show non-dlc bundles only if the user wants them
-              || std::find_if(dlcPlugins.begin(), dlcPlugins.end(),
-                              [&file](QString const &p) {
-                                  return p.compare(file, Qt::CaseInsensitive) == 0; }) != dlcPlugins.end())) {
+  UnmanagedMods *unmanaged = game->feature<UnmanagedMods>();
+  if (unmanaged != nullptr) {
+    for (const QString &modName : unmanaged->mods(!displayForeign)) {
+      ModInfo::EModType modType = game->DLCPlugins().contains(unmanaged->referenceFile(modName).fileName(), Qt::CaseInsensitive) ? ModInfo::EModType::MOD_DLC :
+                         (game->CCPlugins().contains(unmanaged->referenceFile(modName).fileName(), Qt::CaseInsensitive) ? ModInfo::EModType::MOD_CC : ModInfo::EModType::MOD_DEFAULT);
 
-        QFileInfo f(file); //Just so I can get a basename...
-        QStringList archives;
-        for (const QString &archiveName : dataDir.entryList({ f.baseName() + "*.bsa" })) {
-          archives.append(dataDir.absoluteFilePath(archiveName));
-        }
-
-        createFromPlugin(file, archives, directoryStructure);
-      }
+      createFromPlugin(unmanaged->displayName(modName),
+                       unmanaged->referenceFile(modName).absoluteFilePath(),
+                       unmanaged->secondaryFiles(modName),
+                       modType,
+                       directoryStructure);
     }
   }
 
@@ -289,7 +283,7 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
   std::vector<int> modIDs;
 
   //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame const *>();
+  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
 
   modIDs.push_back(game->nexusModOrganizerID());
 
@@ -311,6 +305,11 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
 void ModInfo::setVersion(const VersionInfo &version)
 {
   m_Version = version;
+}
+
+void ModInfo::setPluginSelected(const bool &isSelected)
+{
+  m_PluginSelected = isSelected;
 }
 
 void ModInfo::addCategory(const QString &categoryName)

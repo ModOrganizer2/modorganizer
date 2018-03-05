@@ -28,6 +28,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
+#include "settings.h"
+#include "bbcode.h"
 #include <versioninfo.h>
 #include <report.h>
 #include <util.h>
@@ -49,6 +51,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
+#include <QAbstractButton>
 
 #include <Qt>
 #include <QtDebug>
@@ -83,12 +86,10 @@ template <typename T> static T resolveFunction(QLibrary &lib, const char *name)
 SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
   : m_Parent(nullptr)
   , m_Interface(nexusInterface)
-  , m_UpdateRequestID(-1)
   , m_Reply(nullptr)
   , m_Attempts(3)
-  , m_NexusDownload(nullptr)
 {
-  QLibrary archiveLib("dlls\\archive.dll");
+  QLibrary archiveLib(QCoreApplication::applicationDirPath() + "\\dlls\\archive.dll");
   if (!archiveLib.load()) {
     throw MyException(tr("archive.dll not loaded: \"%1\"").arg(archiveLib.errorString()));
   }
@@ -104,7 +105,8 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
 
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
                             version.dwFileVersionMS & 0xFFFF,
-                            version.dwFileVersionLS >> 16);
+                            version.dwFileVersionLS >> 16,
+                            version.dwFileVersionLS & 0xFFFF);
 }
 
 
@@ -120,33 +122,77 @@ void SelfUpdater::setUserInterface(QWidget *widget)
 
 void SelfUpdater::testForUpdate()
 {
-  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
-    emit updateAvailable();
-    return;
+  // TODO: if prereleases are disabled we could just request the latest release
+  // directly
+  try {
+  m_GitHub.releases(GitHub::Repository("LePresidente", "modorganizer"),
+                    [this](const QJsonArray &releases) {
+    QJsonObject newest;
+    for (const QJsonValue &releaseVal : releases) {
+      QJsonObject release = releaseVal.toObject();
+      if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
+                                         || !release["prerelease"].toBool())) {
+        if (newest.empty() || (VersionInfo(release["tag_name"].toString())
+                               > VersionInfo(newest["tag_name"].toString()))) {
+          newest = release;
+        }
+      }
+    }
+
+    if (!newest.empty()) {
+      VersionInfo newestVer(newest["tag_name"].toString());
+      if (newestVer > this->m_MOVersion) {
+        m_UpdateCandidate = newest;
+        qDebug("update available: %s -> %s",
+               qPrintable(this->m_MOVersion.displayString()),
+               qPrintable(newestVer.displayString()));
+        emit updateAvailable();
+      } else if (newestVer < this->m_MOVersion) {
+        // this could happen if the user switches from using prereleases to
+        // stable builds. Should we downgrade?
+        qDebug("this version is newer than the newest installed one: %s -> %s",
+               qPrintable(this->m_MOVersion.displayString()),
+               qPrintable(newestVer.displayString()));
+      }
+    }
+  });
   }
-  if (m_UpdateRequestID == -1 && m_NexusDownload != nullptr) {
-    m_UpdateRequestID = m_Interface->requestDescription(
-              m_NexusDownload->nexusModOrganizerID(), this, QVariant(),
-              QString(), m_NexusDownload);
+  //Catch all is bad by design, should be improved
+  catch (...) {
+		qDebug("Unable to connect to github.com to check version");
   }
 }
 
 void SelfUpdater::startUpdate()
 {
-  if (QFile::exists(QCoreApplication::applicationDirPath() + "/mo_test_update.7z")) {
-    m_UpdateFile.setFileName(QCoreApplication::applicationDirPath() + "/mo_test_update.7z");
-    installUpdate();
-    return;
-  }
+  // the button can't be pressed if there isn't an update candidate
+  Q_ASSERT(!m_UpdateCandidate.empty());
 
-  if ((m_UpdateRequestID == -1) &&
-      (!m_NewestVersion.isEmpty())) {
-    if (QMessageBox::question(m_Parent, tr("Update"),
-          tr("An update is available (newest version: %1), do you want to install it?").arg(m_NewestVersion),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      m_UpdateRequestID = m_Interface->requestFiles(m_NexusDownload->nexusModOrganizerID(),
-                                                    this, m_NewestVersion, "",
-                                                    m_NexusDownload);
+  QMessageBox query(QMessageBox::Question,
+                    tr("New update available (%1)")
+                        .arg(m_UpdateCandidate["tag_name"].toString()),
+                    BBCode::convertToHTML(m_UpdateCandidate["body"].toString()),
+                    QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
+
+  query.button(QMessageBox::Yes)->setText(tr("Install"));
+
+  int res = query.exec();
+
+  if (query.result() == QMessageBox::Yes) {
+    bool found = false;
+    for (const QJsonValue &assetVal : m_UpdateCandidate["assets"].toArray()) {
+      QJsonObject asset = assetVal.toObject();
+      if (asset["content_type"].toString() == "application/x-msdownload") {
+        openOutputFile(asset["name"].toString());
+        download(asset["browser_download_url"].toString());
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      QMessageBox::warning(
+          m_Parent, tr("Download failed"),
+          tr("Failed to find correct download, please try again later."));
     }
   }
 }
@@ -174,15 +220,21 @@ void SelfUpdater::closeProgress()
   }
 }
 
-void SelfUpdater::download(const QString &downloadLink, const QString &fileName)
+void SelfUpdater::openOutputFile(const QString &fileName)
+{
+  QString outputPath = QDir::fromNativeSeparators(qApp->property("dataPath").toString()) + "/" + fileName;
+  qDebug("downloading to %s", qPrintable(outputPath));
+  m_UpdateFile.setFileName(outputPath);
+  m_UpdateFile.open(QIODevice::WriteOnly);
+}
+
+void SelfUpdater::download(const QString &downloadLink)
 {
   QNetworkAccessManager *accessManager = m_Interface->getAccessManager();
   QUrl dlUrl(downloadLink);
   QNetworkRequest request(dlUrl);
   m_Canceled = false;
   m_Reply = accessManager->get(request);
-  m_UpdateFile.setFileName(QDir::fromNativeSeparators(qApp->property("dataPath").toString()).append("/").append(fileName));
-  m_UpdateFile.open(QIODevice::WriteOnly);
   showProgress();
 
   connect(m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
@@ -220,6 +272,12 @@ void SelfUpdater::downloadFinished()
   int error = QNetworkReply::NoError;
 
   if (m_Reply != nullptr) {
+    if (m_Reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 302) {
+      QUrl url = m_Reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+      m_UpdateFile.reset();
+      download(url.toString());
+      return;
+    }
     m_UpdateFile.write(m_Reply->readAll());
 
     error = m_Reply->error();
@@ -265,237 +323,25 @@ void SelfUpdater::downloadCancel()
 
 void SelfUpdater::installUpdate()
 {
-  const QString mopath = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
+  const QString mopath
+      = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
 
-  QString backupPath = mopath + "/update_backup";
-  QDir().mkdir(backupPath);
+  HINSTANCE res = ::ShellExecuteW(
+      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), nullptr,
+      nullptr, SW_SHOW);
 
-  // rename files that are currently open so we can unpack the update
-  if (!m_ArchiveHandler->open(m_UpdateFile.fileName(), nullptr)) {
-    throw MyException(tr("failed to open archive \"%1\": %2")
-                      .arg(m_UpdateFile.fileName())
-                      .arg(InstallationManager::getErrorString(m_ArchiveHandler->getLastError())));
+  if (res > (HINSTANCE)32) {
+    QCoreApplication::quit();
+  } else {
+    reportError(tr("Failed to start %1: %2")
+                    .arg(m_UpdateFile.fileName())
+                    .arg((int)res));
   }
-
-  // move all files contained in the archive out of the way,
-  // otherwise we can't overwrite everything
-  FileData* const *data;
-  size_t size;
-  m_ArchiveHandler->getFileList(data, size);
-
-  for (size_t i = 0; i < size; ++i) {
-    QString outputName = data[i]->getFileName();
-    if (outputName.startsWith("ModOrganizer\\", Qt::CaseInsensitive)) {
-      outputName = outputName.mid(13);
-      data[i]->addOutputFileName(outputName);
-    } else if (outputName != "ModOrganizer") {
-      data[i]->addOutputFileName(outputName);
-    }
-    QFileInfo file(mopath + "/" + outputName);
-    if (file.exists() && file.isFile()) {
-      if (!shellMove(QStringList(mopath + "/" + outputName),
-                     QStringList(backupPath + "/" + outputName))) {
-        reportError(tr("failed to move outdated files: %1. Please update manually.").arg(windowsErrorString(::GetLastError())));
-        return;
-      }
-    }
-  }
-
-  // now unpack the archive into the mo directory
-  if (!m_ArchiveHandler->extract(mopath, nullptr, nullptr,
-         new MethodCallback<SelfUpdater, void, QString const &>(this, &SelfUpdater::report7ZipError))) {
-    throw std::runtime_error("extracting failed");
-  }
-
-  m_ArchiveHandler->close();
 
   m_UpdateFile.remove();
-
-  QMessageBox::information(m_Parent, tr("Update"), tr("Update installed, Mod Organizer will now be restarted."));
-
-  QProcess newProcess;
-  if (QFile::exists(mopath + "/ModOrganizer.exe")) {
-    newProcess.startDetached(mopath + "/ModOrganizer.exe", QStringList("update"));
-  } else {
-    newProcess.startDetached(mopath + "/ModOrganiser.exe", QStringList("update"));
-  }
-  emit restart();
 }
 
 void SelfUpdater::report7ZipError(QString const &errorMessage)
 {
   QMessageBox::critical(m_Parent, tr("Error"), errorMessage);
-}
-
-
-QString SelfUpdater::retrieveNews(const QString &description)
-{
-  QStringList temp = description.split("[s][/s]");
-  if (temp.length() < 2) {
-    return QString();
-  } else {
-    return temp.at(1);
-  }
-}
-
-
-void SelfUpdater::nxmDescriptionAvailable(int, QVariant, QVariant resultData, int requestID)
-{
-  if (requestID == m_UpdateRequestID) {
-    m_UpdateRequestID = -1;
-
-    QVariantMap result = resultData.toMap();
-    QString motd = retrieveNews(result["description"].toString()).trimmed();
-    if (motd.length() != 0) {
-      emit motdAvailable(motd);
-    }
-
-    m_NewestVersion = result["version"].toString();
-    if (m_NewestVersion.isEmpty()) {
-      QTimer::singleShot(5000, this, SLOT(testForUpdate()));
-    }
-    VersionInfo currentVersion(m_MOVersion);
-    VersionInfo newestVersion(m_NewestVersion);
-
-    if (!m_NewestVersion.isEmpty() && (currentVersion < newestVersion)) {
-      emit updateAvailable();
-    } else if (newestVersion < currentVersion) {
-      qDebug("this version is newer than the current version on nexus (%s vs %s)",
-             currentVersion.canonicalString().toUtf8().constData(),
-             newestVersion.canonicalString().toUtf8().constData());
-    }
-  }
-}
-
-
-void SelfUpdater::nxmFilesAvailable(int, QVariant userData, QVariant resultData, int requestID)
-{
-  if (requestID != m_UpdateRequestID) {
-    return;
-  }
-  QString version = userData.toString();
-
-  m_UpdateRequestID = -1;
-
-  if (!resultData.canConvert<QVariantList>()) {
-    qCritical("invalid files result: %s", resultData.toString().toUtf8().constData());
-    reportError(tr("Failed to parse response. Please report this as a bug and include the file mo_interface.log."));
-    return;
-  }
-
-  QVariantList result = resultData.toList();
-
-  QRegExp updateExpList(QString("updates version ([0-9., ]*) to %1").arg(version));
-  QRegExp updateExpRange(QString("updates version ([0-9.]*) - ([0-9.]*) to %1").arg(version));
-  int updateFileID = -1;
-  QString updateFileName;
-  int mainFileID = -1;
-  QString mainFileName;
-  int mainFileSize = 0;
-
-  for(QVariant file : result) {
-    QVariantMap fileInfo = file.toMap();
-    if (!fileInfo["uri"].toString().endsWith(".7z")) {
-      continue;
-    }
-
-    if (fileInfo["version"].toString() == version) {
-      if (fileInfo["category_id"].toInt() == 2) {
-        QString description = fileInfo["description"].toString();
-        // update
-        if (updateExpList.indexIn(description) != -1) {
-          // there is an update for the newest version of MO, but does
-          // it apply to the current version?
-          QStringList supportedVersions = updateExpList.cap(1).split(QRegExp(",[ ]*"), QString::SkipEmptyParts);
-          if (supportedVersions.contains(m_MOVersion.canonicalString())) {
-            updateFileID = fileInfo["id"].toInt();
-            updateFileName = fileInfo["uri"].toString();
-          } else {
-            qDebug("update not supported from %s", m_MOVersion.canonicalString().toUtf8().constData());
-          }
-        } else if (updateExpRange.indexIn(description) != -1) {
-          VersionInfo rangeLowEnd(updateExpRange.cap(1));
-          VersionInfo rangeHighEnd(updateExpRange.cap(2));
-          if ((rangeLowEnd <= m_MOVersion) &&
-              (m_MOVersion <= rangeHighEnd)) {
-            updateFileID = fileInfo["id"].toInt();
-            updateFileName = fileInfo["uri"].toString();
-            break;
-          } else {
-            qDebug("update not supported from %s", m_MOVersion.canonicalString().toUtf8().constData());
-          }
-        } else {
-          qWarning("invalid update description: %s",
-                   description.toUtf8().constData());
-        }
-      } else if (fileInfo["category_id"].toInt() == 1) {
-        mainFileID = fileInfo["id"].toInt();
-        mainFileName = fileInfo["uri"].toString();
-        mainFileSize = fileInfo["size"].toInt();
-      }
-    }
-  }
-
-  if (updateFileID != -1) {
-    qDebug("update available: %d", updateFileID);
-    m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
-                                    updateFileID, this, updateFileName, "",
-                                    m_NexusDownload);
-  } else if (mainFileID != -1) {
-    qDebug("full download required: %d", mainFileID);
-    if (QMessageBox::question(m_Parent, tr("Update"),
-            tr("No incremental update available for this version, "
-               "the complete package needs to be downloaded (%1 kB)").arg(mainFileSize),
-            QMessageBox::Ok | QMessageBox::Cancel) == QMessageBox::Ok) {
-      m_UpdateRequestID = m_Interface->requestDownloadURL(m_NexusDownload->nexusModOrganizerID(),
-                                    mainFileID, this, mainFileName, "",
-                                    m_NexusDownload);
-    }
-  } else {
-    qCritical("no file for update found");
-    MessageDialog::showMessage(tr("no file for update found. Please update manually."), m_Parent);
-    closeProgress();
-  }
-}
-
-
-void SelfUpdater::nxmRequestFailed(int, int, QVariant, int requestID, const QString &errorMessage)
-{
-  if (requestID == m_UpdateRequestID) {
-    m_UpdateRequestID = -1;
-    if (m_Attempts > 0) {
-      QTimer::singleShot(60000, this, SLOT(testForUpdate()));
-      --m_Attempts;
-    } else {
-      qWarning("Failed to retrieve update information: %s", qPrintable(errorMessage));
-      MessageDialog::showMessage(tr("Failed to retrieve update information: %1").arg(errorMessage), m_Parent, false);
-    }
-  }
-}
-
-
-void SelfUpdater::nxmDownloadURLsAvailable(int, int, QVariant userData, QVariant resultData, int requestID)
-{
-  if (requestID == m_UpdateRequestID) {
-    m_UpdateRequestID = -1;
-    QVariantList serverList = resultData.toList();
-    if (serverList.count() != 0) {
-      std::map<QString, int> dummy;
-      qSort(serverList.begin(), serverList.end(), boost::bind(&DownloadManager::ServerByPreference, dummy, _1, _2));
-
-
-      QVariantMap dlServer = serverList.first().toMap();
-
-      download(dlServer["URI"].toString(), userData.toString());
-    } else {
-      MessageDialog::showMessage(tr("No download server available. Please try again later."), m_Parent);
-      closeProgress();
-    }
-  }
-}
-
-/** Set the game check for updates */
-void SelfUpdater::setNexusDownload(MOBase::IPluginGame const *game)
-{
-  m_NexusDownload = game;
 }

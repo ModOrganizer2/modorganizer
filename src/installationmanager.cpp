@@ -47,6 +47,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QDateTime>
 #include <QDirIterator>
+#include <QDebug>
+#include <QTextDocument>
 
 #include <Shellapi.h>
 
@@ -67,29 +69,32 @@ static T resolveFunction(QLibrary &lib, const char *name)
 {
   T temp = reinterpret_cast<T>(lib.resolve(name));
   if (temp == nullptr) {
-    throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1").arg(lib.errorString()).toLatin1().constData());
+    throw std::runtime_error(QObject::tr("invalid 7-zip32.dll: %1")
+                                 .arg(lib.errorString())
+                                 .toLatin1()
+                                 .constData());
   }
   return temp;
 }
 
-
 InstallationManager::InstallationManager()
-  : m_ParentWidget(nullptr)
-  , m_SupportedExtensions({ "zip", "rar", "7z", "fomod", "001" })
-{
-  QLibrary archiveLib("dlls\\archive.dll");
+    : m_ParentWidget(nullptr),
+      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}) {
+  QLibrary archiveLib(QCoreApplication::applicationDirPath() +
+                      "\\dlls\\archive.dll");
   if (!archiveLib.load()) {
-    throw MyException(tr("archive.dll not loaded: \"%1\"").arg(archiveLib.errorString()));
+    throw MyException(QObject::tr("archive.dll not loaded: \"%1\"")
+                          .arg(archiveLib.errorString()));
   }
 
-  CreateArchiveType CreateArchiveFunc = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
+  CreateArchiveType CreateArchiveFunc
+      = resolveFunction<CreateArchiveType>(archiveLib, "CreateArchive");
 
   m_ArchiveHandler = CreateArchiveFunc();
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
 }
-
 
 InstallationManager::~InstallationManager()
 {
@@ -110,9 +115,9 @@ void InstallationManager::setURL(QString const &url)
 
 void InstallationManager::queryPassword(QString *password)
 {
-  *password = QInputDialog::getText(nullptr, tr("Password required"), tr("Password"), QLineEdit::Password);
+  *password = QInputDialog::getText(nullptr, tr("Password required"),
+                                    tr("Password"), QLineEdit::Password);
 }
-
 
 void InstallationManager::mapToArchive(const DirectoryTree::Node *node, QString path, FileData * const *data)
 {
@@ -182,6 +187,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
 
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
   bool res = m_ArchiveHandler->extract(QDir::tempPath(),
@@ -269,6 +275,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowTitle(tr("Extracting files"));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
@@ -340,7 +347,8 @@ DirectoryTree *InstallationManager::createFilesTree()
             // to uncheck all files in a directory while keeping the dir checked. Those directories are
             // currently not installed.
             DirectoryTree::Node *newNode = new DirectoryTree::Node;
-            newNode->setData(DirectoryTreeInformation(*componentIter, i));
+            newNode->setData(
+                DirectoryTreeInformation(*componentIter, static_cast<int>(i)));
             currentNode->addNode(newNode, false);
             currentNode = newNode;
           } else {
@@ -413,9 +421,10 @@ void InstallationManager::updateProgress(float percentage)
 
 void InstallationManager::updateProgressFile(QString const &fileName)
 {
-  if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setLabelText(fileName);
-  }
+	if (m_InstallationProgress != nullptr) {
+		m_InstallationProgress->setLabelText(fileName);
+		QCoreApplication::processEvents();
+	}
 }
 
 
@@ -557,6 +566,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress->setWindowFlags(
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
+  m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
   if (!m_ArchiveHandler->extract(targetDirectory,
          new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
@@ -632,13 +642,14 @@ void InstallationManager::postInstallCleanup()
   m_TempFilesToDelete.clear();
 
   // try to delete each directory we had temporary files in. the call fails for non-empty directories which is ok
-  foreach (const QString &dir, directoriesToRemove) {
+  for (const QString &dir : directoriesToRemove) {
     QDir().rmdir(dir);
   }
 }
 
-
-bool InstallationManager::install(const QString &fileName, GuessedValue<QString> &modName, bool &hasIniTweaks)
+bool InstallationManager::install(const QString &fileName,
+                                  GuessedValue<QString> &modName,
+                                  bool &hasIniTweaks)
 {
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
@@ -661,12 +672,15 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
     modID = metaFile.value("modID", 0).toInt();
-    modName.update(metaFile.value("name", "").toString(), GUESS_FALLBACK);
+    QTextDocument doc;
+    doc.setHtml(metaFile.value("name", "").toString());
+    modName.update(doc.toPlainText(), GUESS_FALLBACK);
     modName.update(metaFile.value("modName", "").toString(), GUESS_META);
 
     version = metaFile.value("version", "").toString();
     newestVersion = metaFile.value("newestVersion", "").toString();
-    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(metaFile.value("category", 0).toInt());
+    unsigned int categoryIndex = CategoryFactory::instance().resolveNexusID(
+        metaFile.value("category", 0).toInt());
     categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
     repository = metaFile.value("repository", "").toString();
   }
@@ -679,12 +693,13 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   { // guess the mod name and mod if from the file name if there was no meta information
     QString guessedModName;
     int guessedModID = modID;
-    NexusInterface::interpretNexusFileName(QFileInfo(fileName).baseName(), guessedModName, guessedModID, false);
+    NexusInterface::interpretNexusFileName(QFileInfo(fileName).fileName(), guessedModName, guessedModID, false);
     if ((modID == 0) && (guessedModID != -1)) {
       modID = guessedModID;
     } else if (modID != guessedModID) {
       qDebug("passed mod id: %d, guessed id: %d", modID, guessedModID);
     }
+
     modName.update(guessedModName, GUESS_GOOD);
   }
 
@@ -703,7 +718,10 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
   bool archiveOpen = m_ArchiveHandler->open(fileName,
                                             new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
-    qDebug("integrated archiver can't open %s. errorcode %d", qPrintable(fileName), m_ArchiveHandler->getLastError());
+    qDebug("integrated archiver can't open %s: %s (%d)",
+           qPrintable(fileName),
+           qPrintable(getErrorString(m_ArchiveHandler->getLastError())),
+           m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
 
@@ -714,7 +732,7 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
             return LHS->priority() > RHS->priority();
       });
 
-  foreach (IPluginInstaller *installer, m_Installers) {
+  for (IPluginInstaller *installer : m_Installers) {
     // don't use inactive installers (installer can't be null here but vc static code analysis thinks it could)
     if ((installer == nullptr) || !installer->isActive()) {
       continue;
@@ -731,14 +749,18 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
 
     try {
       { // simple case
-        IPluginInstallerSimple *installerSimple = dynamic_cast<IPluginInstallerSimple*>(installer);
-        if ((installerSimple != nullptr) &&
-            (filesTree != nullptr) && (installer->isArchiveSupported(*filesTree))) {
-          installResult = installerSimple->install(modName, *filesTree, version, modID);
+        IPluginInstallerSimple *installerSimple
+            = dynamic_cast<IPluginInstallerSimple *>(installer);
+        if ((installerSimple != nullptr) && (filesTree != nullptr)
+            && (installer->isArchiveSupported(*filesTree))) {
+          installResult
+              = installerSimple->install(modName, *filesTree, version, modID);
           if (installResult == IPluginInstaller::RESULT_SUCCESS) {
             mapToArchive(filesTree.data());
-            // the simple installer only prepares the installation, the rest works the same for all installers
-            if (!doInstall(modName, modID, version, newestVersion, categoryID, repository)) {
+            // the simple installer only prepares the installation, the rest
+            // works the same for all installers
+            if (!doInstall(modName, modID, version, newestVersion, categoryID,
+                           repository)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
           }
@@ -746,13 +768,18 @@ bool InstallationManager::install(const QString &fileName, GuessedValue<QString>
       }
 
       { // custom case
-        IPluginInstallerCustom *installerCustom = dynamic_cast<IPluginInstallerCustom*>(installer);
-        if ((installerCustom != nullptr) &&
-            (((filesTree != nullptr) && installer->isArchiveSupported(*filesTree)) ||
-             ((filesTree == nullptr) && installerCustom->isArchiveSupported(fileName)))) {
-          std::set<QString> installerExtensions = installerCustom->supportedExtensions();
-          if (installerExtensions.find(fileInfo.suffix()) != installerExtensions.end()) {
-            installResult = installerCustom->install(modName, fileName, version, modID);
+        IPluginInstallerCustom *installerCustom
+            = dynamic_cast<IPluginInstallerCustom *>(installer);
+        if ((installerCustom != nullptr)
+            && (((filesTree != nullptr)
+                 && installer->isArchiveSupported(*filesTree))
+                || ((filesTree == nullptr)
+                    && installerCustom->isArchiveSupported(fileName)))) {
+          std::set<QString> installerExt
+              = installerCustom->supportedExtensions();
+          if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
+            installResult
+                = installerCustom->install(modName, fileName, version, modID);
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
               ModInfo::Ptr info = ModInfo::getByIndex(idx);

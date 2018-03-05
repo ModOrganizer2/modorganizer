@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>508</width>
-    <height>335</height>
+    <width>604</width>
+    <height>369</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,12 +19,49 @@
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
         <widget class="QLabel" name="iconLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>250</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>250</width>
+           <height>250</height>
+          </size>
+         </property>
          <property name="text">
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="resources.qrc">:/MO/gui/mo_icon.ico</pixmap>
+          <pixmap resource="resources.qrc">:/MO/gui/splash</pixmap>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -83,7 +120,7 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">Copyright 2011-2015 Sebastian Herbord</string>
+            <string notr="true">Copyright 2011-2016 Sebastian Herbord</string>
            </property>
           </widget>
          </item>
@@ -114,11 +151,47 @@
        </widget>
        <widget class="QWidget" name="credits">
         <attribute name="title">
-         <string>Credits</string>
+         <string>Thanks</string>
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
+		<item>
           <widget class="QGroupBox" name="groupBox">
+           <property name="title">
+            <string>Current Maintainers</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QListWidget" name="listWidget_2">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">LePresidente</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Silarn</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">erasmux</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Diana</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
             <string>Translators</string>
            </property>
@@ -200,9 +273,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
+          <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
-            <string>Others</string>
+            <string>Other Supporter</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7">
             <item>
@@ -210,6 +283,11 @@
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
+			   <item>
+               <property name="text">
+                <string notr="true">Al12 (Discord) </string>
+               </property>
+              </item>
               <item>
                <property name="text">
                 <string notr="true">blacksol</string>
@@ -263,6 +341,11 @@
               <item>
                <property name="text">
                 <string notr="true">thosrtanner</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>ogrotten</string>
                </property>
               </item>
              </widget>

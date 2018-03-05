@@ -24,7 +24,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <bsatk.h>
 #include <boost/bind.hpp>
 #include <boost/scoped_array.hpp>
-#include <boost/foreach.hpp>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <sstream>
@@ -214,9 +213,9 @@ void FilesOrigin::setName(const std::wstring &name)
 std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
 {
   std::vector<FileEntry::Ptr> result;
-  for (FileEntry::Index fileIdx : m_Files) {
-    result.push_back(m_FileRegister.lock()->getFile(fileIdx));
-  }
+  for (FileEntry::Index fileIdx : m_Files)
+    if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx))
+      result.push_back(p);
 
   return result;
 }
@@ -237,9 +236,10 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
     m_FileTime = fileTime;
     m_Archive = archive;
   } else if ((m_Parent != nullptr)
-             && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())) {
-    if (std::find(m_Alternatives.begin(), m_Alternatives.end(), m_Origin) == m_Alternatives.end()) {
-      m_Alternatives.push_back(m_Origin);
+             && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())
+             && (archive.size() == 0 || m_Archive.size() > 0 )) {
+    if (std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &i) -> bool { return i.first == m_Origin; }) == m_Alternatives.end()) {
+      m_Alternatives.push_back(std::pair<int, std::wstring>(m_Origin, m_Archive));
     }
     m_Origin = origin;
     m_FileTime = fileTime;
@@ -250,20 +250,20 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
       // already an origin
       return;
     }
-    for (std::vector<int>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-      if (*iter == origin) {
+    for (std::vector<std::pair<int, std::wstring>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
+      if (iter->first == origin) {
         // already an origin
         return;
       }
       if ((m_Parent != nullptr)
-          && (m_Parent->getOriginByID(*iter).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
-        m_Alternatives.insert(iter, origin);
+          && (m_Parent->getOriginByID(iter->first).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
+        m_Alternatives.insert(iter, std::pair<int, std::wstring>(origin, archive));
         found = true;
         break;
       }
     }
     if (!found) {
-      m_Alternatives.push_back(origin);
+      m_Alternatives.push_back(std::pair<int, std::wstring>(origin, archive));
     }
   }
 }
@@ -273,14 +273,14 @@ bool FileEntry::removeOrigin(int origin)
   if (m_Origin == origin) {
     if (!m_Alternatives.empty()) {
       // find alternative with the highest priority
-      std::vector<int>::iterator currentIter = m_Alternatives.begin();
-      for (std::vector<int>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-        if ((m_Parent->getOriginByID(*iter).getPriority() > m_Parent->getOriginByID(*currentIter).getPriority()) &&
-            (*iter != origin)) {
+      std::vector<std::pair<int, std::wstring>>::iterator currentIter = m_Alternatives.begin();
+      for (std::vector<std::pair<int, std::wstring>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
+        if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority()) &&
+            (iter->first != origin)) {
           currentIter = iter;
         }
       }
-      int currentID = *currentIter;
+      int currentID = currentIter->first;
       m_Alternatives.erase(currentIter);
 
       m_Origin = currentID;
@@ -304,22 +304,12 @@ bool FileEntry::removeOrigin(int origin)
       return true;
     }
   } else {
-    std::vector<int>::iterator newEnd = std::remove(m_Alternatives.begin(), m_Alternatives.end(), origin);
-    m_Alternatives.erase(newEnd, m_Alternatives.end());
+    std::vector<std::pair<int, std::wstring>>::iterator newEnd = std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &i) -> bool { return i.first == origin; });
+    if (newEnd != m_Alternatives.end())
+      m_Alternatives.erase(newEnd, m_Alternatives.end());
   }
   return false;
 }
-
-
-// sorted by priority descending
-static bool ByOriginPriority(DirectoryEntry *entry, int LHS, int RHS)
-{
-  int l = entry->getOriginByID(LHS).getPriority(); if (l < 0) l = INT_MAX;
-  int r = entry->getOriginByID(RHS).getPriority(); if (r < 0) r = INT_MAX;
-
-  return l < r;
-}
-
 
 FileEntry::FileEntry()
   : m_Index(UINT_MAX), m_Name(), m_Origin(-1), m_Parent(nullptr), m_LastAccessed(time(nullptr))
@@ -340,10 +330,23 @@ FileEntry::~FileEntry()
 
 void FileEntry::sortOrigins()
 {
-  m_Alternatives.push_back(m_Origin);
-  std::sort(m_Alternatives.begin(), m_Alternatives.end(), boost::bind(ByOriginPriority, m_Parent, _1, _2));
-  m_Origin = m_Alternatives[m_Alternatives.size() - 1];
-  m_Alternatives.pop_back();
+  m_Alternatives.push_back(std::pair<int, std::wstring>(m_Origin, m_Archive));
+  std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &LHS, const std::pair<int, std::wstring> &RHS) -> bool {
+    if ((!LHS.second.size() && !RHS.second.size()) || (LHS.second.size() && RHS.second.size())) {
+      int l = m_Parent->getOriginByID(LHS.first).getPriority(); if (l < 0) l = INT_MAX;
+      int r = m_Parent->getOriginByID(RHS.first).getPriority(); if (r < 0) r = INT_MAX;
+
+      return l < r;
+    }
+
+    if (RHS.second.size()) return false;
+    return true;
+  });
+  if (!m_Alternatives.empty()) {
+    m_Origin = m_Alternatives.back().first;
+    m_Archive = m_Alternatives.back().second;
+    m_Alternatives.pop_back();
+  }
 }
 
 
@@ -704,7 +707,7 @@ FilesOrigin &DirectoryEntry::getOriginByName(const std::wstring &name) const
   return m_OriginConnection->getByName(name);
 }
 
-
+/*
 int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
 {
   const DirectoryEntry *directory = nullptr;
@@ -718,7 +721,7 @@ int DirectoryEntry::getOrigin(const std::wstring &path, bool &archive)
       return -1;
     }
   }
-}
+}*/
 
 std::vector<FileEntry::Ptr> DirectoryEntry::getFiles() const
 {
@@ -887,9 +890,9 @@ void FileRegister::unregisterFile(FileEntry::Ptr file)
   // unregister from origin
   int originID = file->getOrigin(ignore);
   m_OriginConnection->getByID(originID).removeFile(file->getIndex());
-  const std::vector<int> &alternatives = file->getAlternatives();
+  const std::vector<std::pair<int, std::wstring>> &alternatives = file->getAlternatives();
   for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
-    m_OriginConnection->getByID(*iter).removeFile(file->getIndex());
+    m_OriginConnection->getByID(iter->first).removeFile(file->getIndex());
   }
 
   // unregister from directory
@@ -950,12 +953,12 @@ void FileRegister::removeOriginMulti(std::set<FileEntry::Index> indices, int ori
   // the latter should be faster when there are many files in few directories. since this is called
   // only when disabling an origin that is probably frequently the case
   std::set<DirectoryEntry*> parents;
-  BOOST_FOREACH (const FileEntry::Ptr &file, removedFiles) {
+  for (const FileEntry::Ptr &file : removedFiles) {
     if (file->getParent() != nullptr) {
       parents.insert(file->getParent());
     }
   }
-  BOOST_FOREACH (DirectoryEntry *parent, parents) {
+  for (DirectoryEntry *parent : parents) {
     parent->removeFiles(indices);
   }
 }

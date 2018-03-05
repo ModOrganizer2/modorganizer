@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_editexecutablesdialog.h"
 #include "filedialogmemory.h"
 #include "stackdata.h"
+#include "modlist.h"
 #include <QMessageBox>
 #include <Shellapi.h>
 #include <utility.h>
@@ -29,15 +30,20 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
-EditExecutablesDialog::EditExecutablesDialog(const ExecutablesList &executablesList, QWidget *parent)
+EditExecutablesDialog::EditExecutablesDialog(
+    const ExecutablesList &executablesList, const ModList &modList,
+    Profile *profile, QWidget *parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
   , m_CurrentItem(nullptr)
   , m_ExecutablesList(executablesList)
+  , m_Profile(profile)
 {
   ui->setupUi(this);
 
   refreshExecutablesWidget();
+
+  ui->newFilesModBox->addItems(modList.allMods());
 }
 
 EditExecutablesDialog::~EditExecutablesDialog()
@@ -85,28 +91,34 @@ void EditExecutablesDialog::resetInput()
   ui->argumentsEdit->setText("");
   ui->appIDOverwriteEdit->clear();
   ui->overwriteAppIDBox->setChecked(false);
-  ui->closeCheckBox->setChecked(false);
   ui->useAppIconCheckBox->setChecked(false);
+  ui->newFilesModCheckBox->setChecked(false);
   m_CurrentItem = nullptr;
 }
 
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.updateExecutable(ui->titleEdit->text(),
-                                     QDir::fromNativeSeparators(ui->binaryEdit->text()),
-                                     ui->argumentsEdit->text(),
-                                     QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-                                     (ui->closeCheckBox->checkState() == Qt::Checked) ?
-                                       ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE
-                                     : ExecutableInfo::CloseMOStyle::DEFAULT_STAY,
-                                     ui->overwriteAppIDBox->isChecked() ?
-                                       ui->appIDOverwriteEdit->text() : "",
-                                     Executable::UseApplicationIcon | Executable::CustomExecutable,
-                                     (ui->useAppIconCheckBox->isChecked() ?
-                                       Executable::UseApplicationIcon : Executable::Flags())
-                                     | Executable::CustomExecutable);
+  m_ExecutablesList.updateExecutable(
+        ui->titleEdit->text(),
+        QDir::fromNativeSeparators(ui->binaryEdit->text()),
+        ui->argumentsEdit->text(),
+        QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+        ui->overwriteAppIDBox->isChecked() ?
+          ui->appIDOverwriteEdit->text() : "",
+        Executable::UseApplicationIcon | Executable::CustomExecutable,
+        (ui->useAppIconCheckBox->isChecked() ?
+           Executable::UseApplicationIcon : Executable::Flags())
+        | Executable::CustomExecutable);
+
+  if (ui->newFilesModCheckBox->isChecked()) {
+    m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
+                            ui->newFilesModBox->currentText());
   }
+  else {
+	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+  }
+}
 
 
 void EditExecutablesDialog::delayedRefresh()
@@ -130,15 +142,17 @@ void EditExecutablesDialog::on_addButton_clicked()
 
 void EditExecutablesDialog::on_browseButton_clicked()
 {
-  QString binaryName = FileDialogMemory::getOpenFileName("editExecutableBinary", this,
-            tr("Select a binary"), QString(), tr("Executable (%1)").arg("*.exe *.bat *.jar"));
+  QString binaryName = FileDialogMemory::getOpenFileName(
+      "editExecutableBinary", this, tr("Select a binary"), QString(),
+      tr("Executable (%1)").arg("*.exe *.bat *.jar"));
 
   if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
     QString binaryPath;
     { // try to find java automatically
       std::wstring binaryNameW = ToWString(binaryName);
       WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer)
+          > reinterpret_cast<HINSTANCE>(32)) {
         DWORD binaryType = 0UL;
         if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
           qDebug("failed to determine binary type of \"%ls\": %lu", binaryNameW.c_str(), ::GetLastError());
@@ -214,11 +228,16 @@ bool EditExecutablesDialog::executableChanged()
 {
   if (m_CurrentItem != nullptr) {
     Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
-    return selectedExecutable.m_Arguments != ui->argumentsEdit->text()
+
+    QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+
+    return selectedExecutable.m_Title != ui->titleEdit->text()
+        || selectedExecutable.m_Arguments != ui->argumentsEdit->text()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
+        || !storedCustomOverwrite.isEmpty() != ui->newFilesModCheckBox->isChecked()
+        || !storedCustomOverwrite.isEmpty() && (storedCustomOverwrite != ui->newFilesModBox->currentText())
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
-        || (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE) != ui->closeCheckBox->isChecked()
         || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
   } else {
     QFileInfo fileInfo(ui->binaryEdit->text());
@@ -291,14 +310,6 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
     ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
     ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
-    ui->closeCheckBox->setChecked(selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::DEFAULT_CLOSE);
-    if (selectedExecutable.m_CloseMO == ExecutableInfo::CloseMOStyle::NEVER_CLOSE) {
-      ui->closeCheckBox->setEnabled(false);
-      ui->closeCheckBox->setToolTip(tr("MO must be kept running or this application will not work correctly."));
-    } else {
-      ui->closeCheckBox->setEnabled(true);
-      ui->closeCheckBox->setToolTip(tr("If checked, MO will be closed once the specified executable is run."));
-    }
     ui->removeButton->setEnabled(selectedExecutable.isCustom());
     ui->overwriteAppIDBox->setChecked(!selectedExecutable.m_SteamAppID.isEmpty());
     if (!selectedExecutable.m_SteamAppID.isEmpty()) {
@@ -307,5 +318,23 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
       ui->appIDOverwriteEdit->clear();
     }
     ui->useAppIconCheckBox->setChecked(selectedExecutable.usesOwnIcon());
+
+    int index = -1;
+
+    QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    if (!customOverwrite.isEmpty()) {
+      index = ui->newFilesModBox->findText(customOverwrite);
+      qDebug("find %s -> %d", qPrintable(customOverwrite), index);
+    }
+
+    ui->newFilesModCheckBox->setChecked(index != -1);
+    if (index != -1) {
+      ui->newFilesModBox->setCurrentIndex(index);
+    }
   }
+}
+
+void EditExecutablesDialog::on_newFilesModCheckBox_toggled(bool checked)
+{
+  ui->newFilesModBox->setEnabled(checked);
 }

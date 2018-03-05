@@ -62,7 +62,7 @@ static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 }
 
 
-bool init(const std::wstring &moDirectory)
+bool init(const std::wstring &moPath, const std::wstring &dataPath)
 {
   DWORD userNameLen = UNLEN + 1;
   wchar_t userName[UNLEN + 1];
@@ -74,22 +74,22 @@ bool init(const std::wstring &moDirectory)
   wchar_t *commandLine = new wchar_t[32768];
 
   _snwprintf(commandLine, 32768, L"init \"%ls\" \"%ls\"",
-               moDirectory.c_str(), userName);
+             dataPath.c_str(), userName);
 
-  bool res = helperExec(moDirectory.c_str(), commandLine);
+  bool res = helperExec(moPath.c_str(), commandLine);
   delete [] commandLine;
 
   return res;
 }
 
 
-bool backdateBSAs(const std::wstring &moDirectory, const std::wstring &dataPath)
+bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
 {
   wchar_t *commandLine = new wchar_t[32768];
   _snwprintf(commandLine, 32768, L"backdateBSA \"%ls\"",
              dataPath.c_str());
 
-  bool res = helperExec(moDirectory.c_str(), commandLine);
+  bool res = helperExec(moPath.c_str(), commandLine);
   delete [] commandLine;
 
   return res;

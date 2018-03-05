@@ -21,23 +21,23 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QEvent>
 #include <QKeyEvent>
-#include <QWebFrame>
-#include <QWebElement>
 #include <QNetworkDiskCache>
+#include <QWebEngineContextMenuData>
+#include <QWebEngineSettings>
 #include <QMenu>
 #include <Shlwapi.h>
 #include "utility.h"
 
 
 BrowserView::BrowserView(QWidget *parent)
-  : QWebView(parent)
+  : QWebEngineView(parent)
 {
   installEventFilter(this);
 
-  page()->settings()->setMaximumPagesInCache(10);
+  //page()->settings()->setMaximumPagesInCache(10);
 }
 
-QWebView *BrowserView::createWindow(QWebPage::WebWindowType)
+QWebEngineView *BrowserView::createWindow(QWebEnginePage::WebWindowType)
 {
   BrowserView *newView = new BrowserView(parentWidget());
   emit initTab(newView);
@@ -59,17 +59,18 @@ bool BrowserView::eventFilter(QObject *obj, QEvent *event)
       mouseEvent->ignore();
       return true;
     }
-  } else if (event->type() == QEvent::MouseButtonRelease) {
-    QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-    if (mouseEvent->button() == Qt::MidButton) {
-      QWebHitTestResult hitTest = page()->frameAt(mouseEvent->pos())->hitTestContent(mouseEvent->pos());
-      if (hitTest.linkUrl().isValid()) {
-        emit openUrlInNewTab(hitTest.linkUrl());
-      }
-      mouseEvent->ignore();
-
-      return true;
-    }
+//	TODO This is due to that QTWebEnginePage doesn't support QWebFrame anymore
+//   } else if (event->type() == QEvent::MouseButtonRelease) {
+//    QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+//    if (mouseEvent->button() == Qt::MidButton) {
+//      QWebEngineContextMenuData hitTest = page()->hitTestContent(mouseEvent->pos());
+//      if (hitTest.linkUrl().isValid()) {
+//        emit openUrlInNewTab(hitTest.linkUrl());
+//      }
+//      mouseEvent->ignore();
+//
+//      return true;
+//    }
   }
-  return QWebView::eventFilter(obj, event);
+  return QWebEngineView::eventFilter(obj, event);
 }

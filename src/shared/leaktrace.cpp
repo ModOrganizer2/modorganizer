@@ -33,8 +33,9 @@ static struct __TraceData {
              "%d objects not freed, allocated at:\n%s",
              iter->second.size(), iter->first.toString().c_str());
       printf("Addresses: ");
-      for (int i = 0; i < (std::min<int>)(5, iter->second.size()); ++i) {
-        printf("%p, ", reinterpret_cast<void*>(iter->second[i]));
+      for (int i = 0;
+           i < (std::min<int>)(5, static_cast<int>(iter->second.size())); ++i) {
+        printf("%p, ", reinterpret_cast<void *>(iter->second[i]));
       }
       printf("\n");
     }
