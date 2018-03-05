@@ -27,6 +27,10 @@ Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the d
 * on [GitHub.com](https://github.com/LePresidente/modorganizer/releases)
 * on [NexusMods.com](https://www.nexusmods.com/skyrimspecialedition/mods/6194)
 
+## Old Download Location
+
+* [TanninOne/modorganizer/releases](https://github.com/TanninOne/modorganizer/releases)
+
 ## Building
 
 Please refer to [LePresidente/modorganizer-umbrella](https://github.com/LePresidente/modorganizer-umbrella) for build instructions.
@@ -35,6 +39,7 @@ Please refer to [LePresidente/modorganizer-umbrella](https://github.com/LePresid
 
 MO2 consists of multiple repositories on github. The Umbrella project will download them automatically as required. They should however also be buildable individually.
 Here is a complete list:
+
 * https://github.com/LePresidente/cpython-1
 * https://github.com/LePresidente/githubpp
 * https://github.com/LePresidente/modorganizer
@@ -71,3 +76,4 @@ Here is a complete list:
 * https://github.com/LePresidente/modorganizer-uibase
 * https://github.com/LePresidente/usvfs
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
+
