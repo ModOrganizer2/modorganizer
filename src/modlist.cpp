@@ -424,6 +424,11 @@ bool ModList::renameMod(int index, const QString &newName)
     return false;
   }
 
+  if (ModList::allMods().contains(newName,Qt::CaseInsensitive)) {
+	  MessageDialog::showMessage(tr("Name is already in use by another mod"), nullptr);
+	  return false;
+  }
+
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
   if (newName != oldName) {
