@@ -253,7 +253,7 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QPushButton" name="openFolderMenu">
                 <property name="toolTip">
-                 <string>Quickly open in Explorer relevant Folders...</string>
+                 <string>Show Open Folders menu...</string>
                 </property>
                 <property name="text">
                  <string/>

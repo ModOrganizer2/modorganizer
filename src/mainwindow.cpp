@@ -3035,6 +3035,12 @@ void MainWindow::openInstanceFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openLogsFolder()
+{	
+	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
+	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::openInstallFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3231,6 +3237,11 @@ QMenu *MainWindow::openFolderMenu()
 
 	QMenu *FolderMenu = new QMenu(this);
 
+	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+	FolderMenu->addSeparator();
 
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
 
@@ -3238,13 +3249,19 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
 
-	FolderMenu->addAction(tr("Open MO Install folder"), this, SLOT(openInstallFolder()));
-
 	FolderMenu->addSeparator();
 
-	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 
-	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
+
+
+
+	
+
+	
+
+	
 
 
 	return FolderMenu;
@@ -3304,15 +3321,18 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
       } else {
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Add/Remove Categories"));
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
 
+		//Removed as it was redundant, just making the categories look more complicated.
+		/*
         QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
         populateMenuCategories(replaceCategoriesMenu, 0);
         connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
         addMenuAsPushButton(menu, replaceCategoriesMenu);
+		*/
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
@@ -3332,8 +3352,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addSeparator();
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
-        menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
+		menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
 
 		menu->addSeparator();
 
