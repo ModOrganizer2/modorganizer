@@ -402,6 +402,8 @@ void setupPath()
   qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(
                           QCoreApplication::applicationDirPath())));
 
+  QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
+
   boost::scoped_array<TCHAR> oldPath(new TCHAR[BUFSIZE]);
   DWORD offset = ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), BUFSIZE);
   if (offset > BUFSIZE) {
@@ -409,12 +411,10 @@ void setupPath()
     ::GetEnvironmentVariable(TEXT("PATH"), oldPath.get(), offset);
   }
 
-  std::wstring newPath(oldPath.get());
+  std::wstring newPath(ToWString(QDir::toNativeSeparators(
+    QCoreApplication::applicationDirPath())) + L"\\dlls");
   newPath += L";";
-  newPath += ToWString(QDir::toNativeSeparators(
-                           QCoreApplication::applicationDirPath()))
-                 .c_str();
-  newPath += L"\\dlls";
+  newPath += oldPath.get();
 
   ::SetEnvironmentVariableW(L"PATH", newPath.c_str());
 }

@@ -4596,8 +4596,8 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
   std::vector<std::string> lines;
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
 
-  std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
-  std::tr1::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
+  std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+  std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
   for (const std::string &line : lines) {
     if (line.length() > 0) {
@@ -4609,12 +4609,12 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
       } else {
-        std::tr1::smatch match;
-        if (std::tr1::regex_match(line, match, exRequires)) {
+        std::smatch match;
+        if (std::regex_match(line, match, exRequires)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
-        } else if (std::tr1::regex_match(line, match, exIncompatible)) {
+        } else if (std::regex_match(line, match, exIncompatible)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
