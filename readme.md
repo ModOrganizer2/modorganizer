@@ -59,7 +59,6 @@ Here is a complete list:
 * https://github.com/LePresidente/modorganizer-game_oblivion
 * https://github.com/LePresidente/modorganizer-game_skyrim
 * https://github.com/LePresidente/modorganizer-game_skyrimSE
-* https://github.com/LePresidente/modorganizer-hookdll
 * https://github.com/LePresidente/modorganizer-installer_bain
 * https://github.com/LePresidente/modorganizer-installer_bundle
 * https://github.com/LePresidente/modorganizer-installer_fomod
@@ -75,5 +74,8 @@ Here is a complete list:
 * https://github.com/LePresidente/modorganizer-tool_inibakery
 * https://github.com/LePresidente/modorganizer-uibase
 * https://github.com/LePresidente/usvfs
+
+### Unused Repositories
+* https://github.com/LePresidente/modorganizer-hookdll
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
 
