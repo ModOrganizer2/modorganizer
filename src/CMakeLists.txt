@@ -277,6 +277,7 @@ SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+#TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
 
 
@@ -289,11 +290,9 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src)
 
-
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
-                 ${project_path}/../zlib/lib)
-
+                  ${ZLIB_ROOT}/lib)
 EXECUTE_PROCESS(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
