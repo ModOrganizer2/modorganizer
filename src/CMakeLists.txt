@@ -347,13 +347,16 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
 SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
     CODE
-    "EXECUTE_PROCESS(
-        COMMAND
+    "EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
-	# run it a second time because on the first run it misses some files
-	COMMAND
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
+    # run it a second time because on the first run it misses some files
+    EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
-        COMMAND
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
+    EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
