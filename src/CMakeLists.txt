@@ -368,6 +368,9 @@ INSTALL(
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
 
+# qdds.dll needs installing manually as Qt no longer ships with it by default.
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
                   ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
         DESTINATION bin)
