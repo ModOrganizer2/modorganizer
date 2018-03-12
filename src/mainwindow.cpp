@@ -3201,7 +3201,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL", info->getURL());
+						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance()->getModURL(info->getNexusID()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
 					if (install_Date->isChecked())
