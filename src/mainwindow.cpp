@@ -3201,7 +3201,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL", info->getURL());
+						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance()->getModURL(info->getNexusID()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
 					if (install_Date->isChecked())
@@ -3929,10 +3929,22 @@ void MainWindow::previewDataFile()
   // what we have is an absolute path to the file in its actual location (for the primary origin)
   // what we want is the path relative to the virtual data directory
 
-  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
-  offset = fileName.indexOf("/", offset);
-  fileName = fileName.mid(offset + 1);
+  // we need to look in the virtual directory for the file to make sure the info is up to date.
+
+  // check if the file comes from the actual data folder instead of a mod
+  QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
+  QString relativePath = gameDirectory.relativeFilePath(fileName);
+  if (!relativePath.startsWith("..")) {
+	  fileName = relativePath;
+  }
+  else {
+	  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
+	  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
+	  offset = fileName.indexOf("/", offset);
+	  fileName = fileName.mid(offset + 1);
+  }
+
+  
 
   const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
 

@@ -176,7 +176,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -463,7 +463,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
