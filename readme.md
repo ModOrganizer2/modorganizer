@@ -33,7 +33,7 @@ Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the d
 
 ## Building
 
-Please refer to [LePresidente/modorganizer-umbrella](https://github.com/Modorganizer2/modorganizer-umbrella) for build instructions.
+Please refer to [Modorganizer2/modorganizer-umbrella](https://github.com/Modorganizer2/modorganizer-umbrella) for build instructions.
 
 ## Other Repositories
 
