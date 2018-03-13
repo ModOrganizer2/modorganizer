@@ -12,7 +12,7 @@ Mod Organizer 2 is an open project in the hands of the community, there are prob
 
 To have more information, please join the open MO2 Development discord server :* [ModOrganizerDevs](https://discord.gg/vD2ZbfX)
 If you want to help translate MO2 to your language you should join the discord server too and head to the #translation channel.
-To setup a development environment on your machine, there is the [umbrella project](https://github.com/LePresidente/modorganizer-umbrella) that handles that.
+To setup a development environment on your machine, there is the [umbrella project](https://github.com/Modorganizer2/modorganizer-umbrella) that handles that.
 If you want to submit your code changes, please use a good formating style like the default one in Visual Studio.
 
 Through the work of a few people of the community MO2 has come quite far, now it needs some more of those people to go further.
@@ -24,7 +24,7 @@ Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the d
 
 ## Download Location
 
-* on [GitHub.com](https://github.com/LePresidente/modorganizer/releases)
+* on [GitHub.com](https://github.com/Modorganizer2/modorganizer/releases)
 * on [NexusMods.com](https://www.nexusmods.com/skyrimspecialedition/mods/6194)
 
 ## Old Download Location
@@ -33,7 +33,7 @@ Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the d
 
 ## Building
 
-Please refer to [LePresidente/modorganizer-umbrella](https://github.com/LePresidente/modorganizer-umbrella) for build instructions.
+Please refer to [Modorganizer2/modorganizer-umbrella](https://github.com/Modorganizer2/modorganizer-umbrella) for build instructions.
 
 ## Other Repositories
 
@@ -41,39 +41,41 @@ MO2 consists of multiple repositories on github. The Umbrella project will downl
 Here is a complete list:
 
 * https://github.com/LePresidente/cpython-1
-* https://github.com/LePresidente/githubpp
-* https://github.com/LePresidente/modorganizer
-* https://github.com/LePresidente/modorganizer-archive
-* https://github.com/LePresidente/modorganizer-bsatk
-* https://github.com/LePresidente/modorganizer-bsa_extractor
-* https://github.com/LePresidente/modorganizer-check_fnis
-* https://github.com/LePresidente/modorganizer-diagnose_basic
-* https://github.com/LePresidente/modorganizer-esptk
-* https://github.com/LePresidente/modorganizer-helper
-* https://github.com/LePresidente/modorganizer-game_fallout3
-* https://github.com/LePresidente/modorganizer-game_fallout4
-* https://github.com/LePresidente/modorganizer-game_fallout4vr
-* https://github.com/LePresidente/modorganizer-game_falloutnv
-* https://github.com/LePresidente/modorganizer-game_features
-* https://github.com/LePresidente/modorganizer-game_gamebryo
-* https://github.com/LePresidente/modorganizer-game_oblivion
-* https://github.com/LePresidente/modorganizer-game_skyrim
-* https://github.com/LePresidente/modorganizer-game_skyrimSE
-* https://github.com/LePresidente/modorganizer-hookdll
-* https://github.com/LePresidente/modorganizer-installer_bain
-* https://github.com/LePresidente/modorganizer-installer_bundle
-* https://github.com/LePresidente/modorganizer-installer_fomod
-* https://github.com/LePresidente/modorganizer-installer_manual
-* https://github.com/LePresidente/modorganizer-installer_ncc
-* https://github.com/LePresidente/modorganizer-installer_quick
-* https://github.com/LePresidente/modorganizer-lootcli
-* https://github.com/LePresidente/modorganizer-NCC
-* https://github.com/LePresidente/modorganizer-nxmhandler
-* https://github.com/LePresidente/modorganizer-plugin_python
-* https://github.com/LePresidente/modorganizer-preview_base
-* https://github.com/LePresidente/modorganizer-tool_configurator
-* https://github.com/LePresidente/modorganizer-tool_inibakery
-* https://github.com/LePresidente/modorganizer-uibase
-* https://github.com/LePresidente/usvfs
+* https://github.com/Modorganizer2/githubpp
+* https://github.com/Modorganizer2/modorganizer
+* https://github.com/Modorganizer2/modorganizer-archive
+* https://github.com/Modorganizer2/modorganizer-bsatk
+* https://github.com/Modorganizer2/modorganizer-bsa_extractor
+* https://github.com/Modorganizer2/modorganizer-check_fnis
+* https://github.com/Modorganizer2/modorganizer-diagnose_basic
+* https://github.com/Modorganizer2/modorganizer-esptk
+* https://github.com/Modorganizer2/modorganizer-helper
+* https://github.com/Modorganizer2/modorganizer-game_fallout3
+* https://github.com/Modorganizer2/modorganizer-game_fallout4
+* https://github.com/Modorganizer2/modorganizer-game_fallout4vr
+* https://github.com/Modorganizer2/modorganizer-game_falloutnv
+* https://github.com/Modorganizer2/modorganizer-game_features
+* https://github.com/Modorganizer2/modorganizer-game_gamebryo
+* https://github.com/Modorganizer2/modorganizer-game_oblivion
+* https://github.com/Modorganizer2/modorganizer-game_skyrim
+* https://github.com/Modorganizer2/modorganizer-game_skyrimSE
+* https://github.com/Modorganizer2/modorganizer-installer_bain
+* https://github.com/Modorganizer2/modorganizer-installer_bundle
+* https://github.com/Modorganizer2/modorganizer-installer_fomod
+* https://github.com/Modorganizer2/modorganizer-installer_manual
+* https://github.com/Modorganizer2/modorganizer-installer_ncc
+* https://github.com/Modorganizer2/modorganizer-installer_quick
+* https://github.com/Modorganizer2/modorganizer-lootcli
+* https://github.com/Modorganizer2/modorganizer-NCC
+* https://github.com/Modorganizer2/modorganizer-nxmhandler
+* https://github.com/Modorganizer2/modorganizer-plugin_python
+* https://github.com/Modorganizer2/modorganizer-preview_base
+* https://github.com/Modorganizer2/modorganizer-tool_configurator
+* https://github.com/Modorganizer2/modorganizer-tool_inibakery
+* https://github.com/Modorganizer2/modorganizer-uibase
+* https://github.com/Modorganizer2/usvfs
+
+### Unused Repositories
+* https://github.com/Modorganizer2/modorganizer-hookdll
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
 

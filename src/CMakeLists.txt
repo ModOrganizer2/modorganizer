@@ -277,6 +277,7 @@ SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+#TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
 
 
@@ -289,11 +290,9 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src)
 
-
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
-                 ${project_path}/../zlib/lib)
-
+                  ${ZLIB_ROOT}/lib)
 EXECUTE_PROCESS(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -347,13 +346,16 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
 SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
     CODE
-    "EXECUTE_PROCESS(
-        COMMAND
+    "EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
-	# run it a second time because on the first run it misses some files
-	COMMAND
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
+    # run it a second time because on the first run it misses some files
+    EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
-        COMMAND
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+    )
+    EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
@@ -365,6 +367,9 @@ INSTALL(
     file(RENAME ${CMAKE_INSTALL_PREFIX}/bin/qtplugins/imageformats ${CMAKE_INSTALL_PREFIX}/bin/dlls/imageformats)
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
+
+# qdds.dll needs installing manually as Qt no longer ships with it by default.
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
                   ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
