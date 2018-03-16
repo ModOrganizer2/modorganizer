@@ -73,6 +73,10 @@
         <file alias="instance_switch">resources/switch-instance-icon.png</file>
         <file alias="open_folder">resources/open-Folder-Icon.png</file>
         <file alias="multiply_red">resources/multiply-red.png</file>
+        <file alias="archive_conflict_looser">resources/archive-conflict-looser.png</file>
+        <file alias="archive_conflict_mixed">resources/archive-conflict-mixed.png</file>
+        <file alias="archive_conflict_neutral">resources/archive-conflict-neutral.png</file>
+        <file alias="archive_conflict_winner">resources/archive-conflict-winner.png</file>
     </qresource>
     <qresource prefix="/MO/gui/content">
         <file alias="plugin">resources/contents/jigsaw-piece.png</file>
