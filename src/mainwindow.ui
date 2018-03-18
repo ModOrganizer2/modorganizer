@@ -176,7 +176,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -194,7 +194,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="profileBox">
+               <widget class="QComboBox" name="profileBox">						 
                 <property name="toolTip">
                  <string>Pick a module collection</string>
                 </property>
@@ -463,7 +463,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,0,1,1,1">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
@@ -507,15 +507,25 @@ p, li { white-space: pre-wrap; }
                   <italic>true</italic>
                  </font>
                 </property>
-                <property name="text">
-                 <string/>
-                </property>
                </widget>
               </item>
+			  <item>
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>		
               <item alignment="Qt::AlignLeft">
                <widget class="QPushButton" name="clearFiltersButton">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -523,9 +533,15 @@ p, li { white-space: pre-wrap; }
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>25</height>
+                  <height>22</height>
                  </size>
                 </property>
+				 <property name="baseSize">
+                 <size>
+                  <width>95</width>
+                  <height>0</height>
+                 </size>
+                </property>						  
                 <property name="visible">
                  <bool>false</bool>
                 </property>
@@ -551,7 +567,26 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="groupCombo">
+				<spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>								 
+               <widget class="QComboBox" name="groupCombo">					 
+				<property name="baseSize">
+                 <size>
+                  <width>220</width>
+                  <height>0</height>
+                 </size>
+                </property>						  
                 <property name="focusPolicy">
                  <enum>Qt::ClickFocus</enum>
                 </property>
@@ -573,7 +608,13 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="MOBase::LineEditClear" name="modFilterEdit">
+               <widget class="MOBase::LineEditClear" name="modFilterEdit">					
+			    <property name="baseSize">
+                 <size>
+                  <width>220</width>
+                  <height>0</height>
+                 </size>
+                </property>					  
                 <property name="placeholderText">
                  <string>Namefilter</string>
                 </property>
