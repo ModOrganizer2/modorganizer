@@ -3079,6 +3079,10 @@ void MainWindow::exportModListCSV()
 	QGridLayout *grid = new QGridLayout;
 	selection.setWindowTitle(tr("Export to csv"));
 
+	QLabel *csvDescription = new QLabel();
+	csvDescription->setText(tr("CSV (Comma Separated Values) is a format that can be imported in programs like Excel to create a spreadsheet.\nYou can also use online editors and converters instead."));
+	grid->addWidget(csvDescription);
+
 	QGroupBox *groupBoxRows = new QGroupBox(tr("Select what mods you want export:"));
 	QRadioButton *all = new QRadioButton(tr("All installed mods"));
 	QRadioButton *active = new QRadioButton(tr("Only active (checked) mods from your current profile"));
