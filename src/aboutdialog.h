@@ -60,8 +60,7 @@ private:
     LICENSE_FMT,
     LICENSE_SIP,
     LICENSE_CASTLE,
-    LICENSE_ANTLR,
-    LICENSE_WIX
+    LICENSE_ANTLR
   };
 
 private:

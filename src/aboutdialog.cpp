@@ -54,7 +54,6 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   m_LicenseFiles[LICENSE_SIP] = "sip.txt";
   m_LicenseFiles[LICENSE_CASTLE] = "Castle.txt";
   m_LicenseFiles[LICENSE_ANTLR] = "AntlrBuildTask.txt";
-  m_LicenseFiles[LICENSE_WIX] = "WixToolkit.txt";
 
   addLicense("Qt", LICENSE_LGPL3);
   addLicense("Qt Json", LICENSE_GPL3);
@@ -74,7 +73,6 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   addLicense("spdlog", LICENSE_SPDLOG);
   addLicense("{fmt}", LICENSE_FMT);
   addLicense("SIP", LICENSE_SIP);
-  addLicense("WiX Toolset", LICENSE_WIX);
 
   ui->nameLabel->setText(QString("<span style=\"font-size:12pt; font-weight:600;\">%1 %2</span>").arg(ui->nameLabel->text()).arg(version));
 #if defined(HGID)
