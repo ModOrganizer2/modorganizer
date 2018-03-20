@@ -43,7 +43,7 @@ AboutDialog::AboutDialog(const QString &version, QWidget *parent)
   m_LicenseFiles[LICENSE_GPL2] = "GPL-v2.0.txt";
   m_LicenseFiles[LICENSE_BOOST] = "boost.txt";
   m_LicenseFiles[LICENSE_7ZIP] = "7zip.txt";
-  m_LicenseFiles[LICENSE_CCBY3] = "by-sa3.txt";
+  m_LicenseFiles[LICENSE_CCBY3] = "BY-SA-v3.0.txt";
   m_LicenseFiles[LICENSE_ZLIB] = "zlib.txt";
   m_LicenseFiles[LICENSE_PYTHON] = "python.txt";
   m_LicenseFiles[LICENSE_SSL] = "openssl.txt";
