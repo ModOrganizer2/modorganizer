@@ -1886,7 +1886,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://github.com/LePresidente/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", L"http://github.com/Modorganizer2/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::tutorialTriggered()
@@ -3036,7 +3036,7 @@ void MainWindow::openInstanceFolder()
 }
 
 void MainWindow::openLogsFolder()
-{	
+{
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
 	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
@@ -3237,7 +3237,7 @@ static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 }
 
 QMenu *MainWindow::openFolderMenu()
-{	
+{
 
 	QMenu *FolderMenu = new QMenu(this);
 
@@ -3259,17 +3259,9 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
 
-
-
-	
-
-	
-
-	
-
-
 	return FolderMenu;
 }
+
 
 QMenu *MainWindow::modListContextMenu()
 {
@@ -3950,7 +3942,6 @@ void MainWindow::previewDataFile()
 	  fileName = fileName.mid(offset + 1);
   }
 
-  
 
   const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
@@ -4666,7 +4657,7 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
-   
+
     QStringList parameters;
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
         << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
@@ -5076,4 +5067,3 @@ void MainWindow::on_clearFiltersButton_clicked()
 {
 	deselectFilters();
 }
-
