@@ -3938,7 +3938,9 @@ void MainWindow::previewDataFile()
   // check if the file comes from the actual data folder instead of a mod
   QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
   QString relativePath = gameDirectory.relativeFilePath(fileName);
-  if (!relativePath.startsWith("..")) {
+  QDir direRelativePath = gameDirectory.relativeFilePath(fileName);
+  // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
+  if (!direRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
 	  fileName = relativePath;
   }
   else {
@@ -4668,12 +4670,8 @@ void MainWindow::on_bossButton_clicked()
     QStringList parameters;
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
         << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
+        << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath())
         << "--out" << QString("\"%1\"").arg(outPath);
-
-    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime)
-        parameters << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath());
-    else
-        parameters << "--pluginListPath" << QString("\"%1/plugins.txt\"").arg(m_OrganizerCore.profilePath());
 
     if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
@@ -4793,7 +4791,7 @@ void MainWindow::on_bossButton_clicked()
 
   if (success) {
     m_DidUpdateMasterList = true;
-    /*if (reportURL.length() > 0) {
+    if (reportURL.length() > 0) {
       m_IntegratedBrowser.setWindowTitle("LOOT Report");
       QString report(reportURL.c_str());
       QStringList temp = report.split("?");
@@ -4802,13 +4800,6 @@ void MainWindow::on_bossButton_clicked()
         url.setQuery(temp.at(1).toUtf8());
       }
       m_IntegratedBrowser.openUrl(url);
-    }*/
-
-    // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
-    // refreshESPList will then use the file time as the load order.
-    if (m_OrganizerCore.managedGame()->loadOrderMechanism() != IPluginGame::LoadOrderMechanism::FileTime) {
-      qDebug("removing loadorder.txt");
-      QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
     m_OrganizerCore.refreshESPList();
     m_OrganizerCore.savePluginList();

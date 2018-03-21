@@ -120,14 +120,14 @@
          <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
-            <string notr="true">Copyright 2011-2016 Sebastian Herbord</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright 2011-2016 Sebastian Herbord&lt;/p&gt;&lt;p&gt;Copyright 2016-2018 Mod Organizer 2 contributors&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QLabel" name="label_2">
            <property name="text">
-            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/TanninOne/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/Modorganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="wordWrap">
             <bool>true</bool>
@@ -154,7 +154,7 @@
          <string>Thanks</string>
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
-		<item>
+         <item>
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
             <string>Current Maintainers</string>
@@ -167,12 +167,17 @@
               </property>
               <item>
                <property name="text">
-                <string notr="true">LePresidente</string>
+                <string notr="true">LePresidente (Project Lead)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">Silarn</string>
+                <string>AL12</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Diana</string>
                </property>
               </item>
               <item>
@@ -182,7 +187,7 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">Diana</string>
+                <string notr="true">Silarn</string>
                </property>
               </item>
              </widget>
@@ -203,17 +208,22 @@
               </property>
               <item>
                <property name="text">
-                <string notr="true">pndrev (German)</string>
+                <string notr="true">Scythe1912 (Chinese)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">DaWul (Spanish)</string>
+                <string notr="true">yc0620shen (Chinese)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">Fiama (Spanish)</string>
+                <string notr="true">miraclefreak (Czech)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Cyb3r (Dutch)</string>
                </property>
               </item>
               <item>
@@ -233,22 +243,17 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">Scythe1912 (Chinese)</string>
+                <string>Faron (German)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">yc0620shen (Chinese)</string>
+                <string notr="true">pndrev (German)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string notr="true">miraclefreak (Czech)</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string notr="true">tokcdk  (Russian)</string>
+                <string>Mordan (Greek)</string>
                </property>
               </item>
               <item>
@@ -261,7 +266,37 @@
               </item>
               <item>
                <property name="text">
-                <string>... more (Can't track)</string>
+                <string>Yoosk (Polish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Brgodfx (Portuguese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">tokcdk  (Russian)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">DaWul (Spanish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Fiama (Spanish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Jax (Swedish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>...and all other Transifex contributors!</string>
                </property>
                <property name="toolTip">
                 <string/>
@@ -275,7 +310,7 @@
          <item>
           <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
-            <string>Other Supporter</string>
+            <string>Other Supporters &amp;&amp; Contributors</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7">
             <item>
@@ -283,9 +318,14 @@
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
-			   <item>
+              <item>
                <property name="text">
-                <string notr="true">Al12 (Discord) </string>
+                <string>SuperSandro2000</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>AnyOldName3</string>
                </property>
               </item>
               <item>
