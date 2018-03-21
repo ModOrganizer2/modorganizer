@@ -1886,7 +1886,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://github.com/LePresidente/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", L"http://github.com/Modorganizer2/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::tutorialTriggered()
@@ -3227,7 +3227,7 @@ static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 }
 
 QMenu *MainWindow::openFolderMenu()
-{	
+{
 
 	QMenu *FolderMenu = new QMenu(this);
 
@@ -4628,7 +4628,7 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
-   
+
     QStringList parameters;
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
                << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
@@ -5045,4 +5045,3 @@ void MainWindow::on_clearFiltersButton_clicked()
 {
 	deselectFilters();
 }
-
