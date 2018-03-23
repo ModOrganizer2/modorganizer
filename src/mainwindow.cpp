@@ -3938,9 +3938,9 @@ void MainWindow::previewDataFile()
   // check if the file comes from the actual data folder instead of a mod
   QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
   QString relativePath = gameDirectory.relativeFilePath(fileName);
-  QDir direRelativePath = gameDirectory.relativeFilePath(fileName);
+  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
   // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
-  if (!direRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
+  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
 	  fileName = relativePath;
   }
   else {
