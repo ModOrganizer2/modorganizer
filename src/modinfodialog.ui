@@ -489,6 +489,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        </item>
        <item>
         <widget class="QTreeWidget" name="overwrittenTree">
+         <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+         </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
@@ -497,6 +500,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
          </property>
          <property name="animated">
           <bool>true</bool>
+         </property>
+         <property name="columnCount">
+            <number>2</number>
          </property>
          <attribute name="headerDefaultSectionSize">
           <number>365</number>

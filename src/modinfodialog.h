@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include "tutorabledialog.h"
 #include "plugincontainer.h"
+#include "organizercore.h"
 
 #include <QDialog>
 #include <QSignalMapper>
@@ -77,7 +78,7 @@ public:
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
- explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, QWidget *parent = 0);
+ explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer,QWidget *parent = 0);
   ~ModInfoDialog();
 
   /**
@@ -156,6 +157,7 @@ private slots:
 
   void hideConflictFile();
   void unhideConflictFile();
+  void previewDataFile();
 
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
@@ -186,6 +188,7 @@ private slots:
   void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
+  void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();
@@ -208,6 +211,9 @@ private:
 
   QSignalMapper m_ThumbnailMapper;
   QString m_RootPath;
+
+  OrganizerCore *m_OrganizerCore;
+  PluginContainer *m_PluginContainer;
 
   QFileSystemModel *m_FileSystemModel;
   QTreeView *m_FileTree;

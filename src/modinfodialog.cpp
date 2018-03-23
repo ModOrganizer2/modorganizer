@@ -30,6 +30,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "questionboxmemory.h"
 #include "settings.h"
 #include "categories.h"
+#include "organizercore.h"
+#include "pluginlistsortproxy.h"
+#include "previewgenerator.h"
+#include "previewdialog.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -66,11 +70,12 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 }
 
 
-ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, QWidget *parent)
+ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
   m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr),
-  m_Directory(directory), m_Origin(nullptr)
+  m_Directory(directory), m_Origin(nullptr),
+  m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
@@ -1198,6 +1203,69 @@ void ModInfoDialog::unhideConflictFile()
 }
 
 
+void ModInfoDialog::previewDataFile()
+{
+	QString fileName = QDir::fromNativeSeparators(m_ConflictsContextItem->data(0, Qt::UserRole).toString());
+
+	// what we have is an absolute path to the file in its actual location (for the primary origin)
+	// what we want is the path relative to the virtual data directory
+
+	// we need to look in the virtual directory for the file to make sure the info is up to date.
+
+	// check if the file comes from the actual data folder instead of a mod
+	QDir gameDirectory = m_OrganizerCore->managedGame()->dataDirectory().absolutePath();
+	QString relativePath = gameDirectory.relativeFilePath(fileName);
+	QDir direRelativePath = gameDirectory.relativeFilePath(fileName);
+	// if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
+	if (!direRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
+		fileName = relativePath;
+	}
+	else {
+		// crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
+		int offset = m_OrganizerCore->settings().getModDirectory().size() + 1;
+		offset = fileName.indexOf("/", offset);
+		fileName = fileName.mid(offset + 1);
+	}
+
+
+
+	const FileEntry::Ptr file = m_OrganizerCore->directoryStructure()->searchFile(ToWString(fileName), nullptr);
+
+	if (file.get() == nullptr) {
+		reportError(tr("file not found: %1").arg(fileName));
+		return;
+	}
+
+	// set up preview dialog
+	PreviewDialog preview(fileName);
+	auto addFunc = [&](int originId) {
+		FilesOrigin &origin = m_OrganizerCore->directoryStructure()->getOriginByID(originId);
+		QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
+		if (QFile::exists(filePath)) {
+			// it's very possible the file doesn't exist, because it's inside an archive. we don't support that
+			QWidget *wid = m_PluginContainer->previewGenerator().genPreview(filePath);
+			if (wid == nullptr) {
+				reportError(tr("failed to generate preview for %1").arg(filePath));
+			}
+			else {
+				preview.addVariant(ToQString(origin.getName()), wid);
+			}
+		}
+	};
+
+	addFunc(file->getOrigin());
+	for (auto alt : file->getAlternatives()) {
+		addFunc(alt.first);
+	}
+	if (preview.numVariants() > 0) {
+		preview.exec();
+	}
+	else {
+		QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
+	}
+}
+
+
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
 {
   m_ConflictsContextItem = ui->overwriteTree->itemAt(pos.x(), pos.y());
@@ -1211,9 +1279,35 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
       } else {
         menu.addAction(tr("Hide"), this, SLOT(hideConflictFile()));
       }
+
+	  QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
+	  if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
+		  menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+	  }
+
       menu.exec(ui->overwriteTree->mapToGlobal(pos));
     }
   }
+}
+
+void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
+{
+	//For some reason the m_ConflictsContextItem does not pick up valid data from the overwrittenTree.
+	//TODO: find out what is going wrong.
+	/*m_ConflictsContextItem = ui->overwrittenTree->itemAt(pos.x(), pos.y());
+
+	if (m_ConflictsContextItem != nullptr) {
+		if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
+			QMenu menu;
+
+			QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
+			if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
+				menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+			}
+
+			menu.exec(ui->overwrittenTree->mapToGlobal(pos));
+		}
+	}*/
 }
 
 
