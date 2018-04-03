@@ -288,11 +288,13 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/../usvfs/include
                     ${project_path}/game_gamebryo/src
                     ${project_path}/game_features/src
-                    ${project_path}/githubpp/src)
+                    ${project_path}/githubpp/src
+                    ${LZ4_ROOT}/include)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
-                  ${ZLIB_ROOT}/lib)
+                 ${ZLIB_ROOT}/lib
+                 ${LZ4_ROOT}/dll)
 EXECUTE_PROCESS(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -315,7 +317,7 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
-                      Dbghelp advapi32 Version Shlwapi)
+                      Dbghelp advapi32 Version Shlwapi liblz4)
 IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
   SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO
                         ${OPTIMIZE_COMPILE_FLAGS})
