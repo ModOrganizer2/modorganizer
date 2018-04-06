@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 MOShortcut::MOShortcut(const QString& link)
   : m_valid(link.startsWith("moshortcut://"))
   , m_hasInstance(false)
+  , m_hasExecutable(false)
 {
   if (m_valid) {
     int start = (int)strlen("moshortcut://");
@@ -35,5 +36,7 @@ MOShortcut::MOShortcut(const QString& link)
     }
     else
       m_executable = link.mid(start);
+	if(!(m_executable==""))
+		m_hasExecutable=true;
   }
 }

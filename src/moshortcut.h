@@ -33,6 +33,8 @@ public:
   operator bool() const { return m_valid; }
 
   bool hasInstance() const { return m_hasInstance; }
+  
+  bool hasExecutable() const { return m_hasExecutable; }
 
   const QString& instance() const { return m_instance; }
 
@@ -43,4 +45,5 @@ private:
   QString m_executable;
   bool m_valid;
   bool m_hasInstance;
+  bool m_hasExecutable;
 };

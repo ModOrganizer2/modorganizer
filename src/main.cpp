@@ -561,36 +561,42 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     // if we have a command line parameter, it is either a nxm link or
     // a binary to start
-    if (arguments.size() > 1) {
-      if (MOShortcut shortcut{ arguments.at(1) }) {
-        try {
-          organizer.runShortcut(shortcut);
-          return 0;
-        } catch (const std::exception &e) {
-          reportError(
-            QObject::tr("failed to start shortcut: %1").arg(e.what()));
-          return 1;
-        }
-      } else if (OrganizerCore::isNxmLink(arguments.at(1))) {
-        qDebug("starting download from command line: %s",
-               qPrintable(arguments.at(1)));
-        organizer.externalMessage(arguments.at(1));
-      } else {
-        QString exeName = arguments.at(1);
-        qDebug("starting %s from command line", qPrintable(exeName));
-        arguments.removeFirst(); // remove application name (ModOrganizer.exe)
-        arguments.removeFirst(); // remove binary name
-        // pass the remaining parameters to the binary
-        try {
-          organizer.startApplication(exeName, arguments, QString(), QString());
-          return 0;
-        } catch (const std::exception &e) {
-          reportError(
-              QObject::tr("failed to start application: %1").arg(e.what()));
-          return 1;
-        }
-      }
-    }
+	if (arguments.size() > 1) {
+		if (MOShortcut shortcut{ arguments.at(1) }) {
+			if (shortcut.hasExecutable()) {
+				try {
+					organizer.runShortcut(shortcut);
+					return 0;
+				}
+				catch (const std::exception &e) {
+					reportError(
+						QObject::tr("failed to start shortcut: %1").arg(e.what()));
+					return 1;
+				}
+			}
+		}
+		else if (OrganizerCore::isNxmLink(arguments.at(1))) {
+			qDebug("starting download from command line: %s",
+				qPrintable(arguments.at(1)));
+			organizer.externalMessage(arguments.at(1));
+		}
+		else {
+			QString exeName = arguments.at(1);
+			qDebug("starting %s from command line", qPrintable(exeName));
+			arguments.removeFirst(); // remove application name (ModOrganizer.exe)
+			arguments.removeFirst(); // remove binary name
+			// pass the remaining parameters to the binary
+			try {
+				organizer.startApplication(exeName, arguments, QString(), QString());
+				return 0;
+			}
+			catch (const std::exception &e) {
+				reportError(
+					QObject::tr("failed to start application: %1").arg(e.what()));
+				return 1;
+			}
+		}
+	}
 
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
