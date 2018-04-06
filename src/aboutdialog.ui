@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>604</width>
-    <height>369</height>
+    <width>1010</width>
+    <height>477</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -233,12 +233,22 @@
               </item>
               <item>
                <property name="text">
+                <string>fruttyx (French)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">Jlkawaii (French)</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string notr="true">Rigoletto (French)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Yoplala (French)</string>
                </property>
               </item>
               <item>
@@ -320,12 +330,7 @@
               </property>
               <item>
                <property name="text">
-                <string>SuperSandro2000</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>AnyOldName3</string>
+                <string notr="true">AnyOldName3</string>
                </property>
               </item>
               <item>
@@ -350,6 +355,11 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">Brixified</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">GamerPoet</string>
                </property>
               </item>
@@ -361,6 +371,21 @@
               <item>
                <property name="text">
                 <string notr="true">GSDFan</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">ogrotten</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">Schilduin</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">SuperSandro2000</string>
                </property>
               </item>
               <item>
@@ -381,11 +406,6 @@
               <item>
                <property name="text">
                 <string notr="true">thosrtanner</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>ogrotten</string>
                </property>
               </item>
              </widget>
