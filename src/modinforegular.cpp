@@ -299,7 +299,7 @@ bool ModInfoRegular::setName(const QString &name)
 
     s_ModsByName[m_Name] = index;
 
-    std::sort(s_Collection.begin(), s_Collection.end(), ByName);
+    std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
     updateIndices();
   } else { // otherwise mod isn't registered yet?
     m_Name = name;

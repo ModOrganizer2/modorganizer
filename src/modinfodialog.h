@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfo.h"
 #include "tutorabledialog.h"
+#include "plugincontainer.h"
 
 #include <QDialog>
 #include <QSignalMapper>
