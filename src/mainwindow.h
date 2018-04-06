@@ -553,6 +553,7 @@ private slots: // ui slots
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
 
+  void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);

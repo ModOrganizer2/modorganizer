@@ -4345,6 +4345,18 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
   }
 }
 
+void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
+{
+  m_ContextItem = ui->bsaList->itemAt(pos);
+
+//  m_ContextRow = ui->bsaList->indexOfTopLevelItem(ui->bsaList->itemAt(pos));
+
+  QMenu menu;
+  menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
+
+  menu.exec(ui->bsaList->mapToGlobal(pos));
+}
+
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 {
   m_ArchiveListWriter.write();
