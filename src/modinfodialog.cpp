@@ -298,7 +298,9 @@ void ModInfoDialog::refreshLists()
         QStringList fields(relativeName);
         fields.append(ToQString(realOrigin.getName()));
         QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+        item->setData(0, Qt::UserRole, fileName);
         item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
+        item->setData(1, Qt::UserRole + 2, archive);
         ui->overwrittenTree->addTopLevelItem(item);
         ++numOverwritten;
       }
@@ -1280,10 +1282,10 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
         menu.addAction(tr("Hide"), this, SLOT(hideConflictFile()));
       }
 
-	  QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
-	  if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-		  menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
-	  }
+      QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
+      if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
+        menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+      }
 
       menu.exec(ui->overwriteTree->mapToGlobal(pos));
     }
@@ -1294,7 +1296,7 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 {
 	//For some reason the m_ConflictsContextItem does not pick up valid data from the overwrittenTree.
 	//TODO: find out what is going wrong.
-	/*m_ConflictsContextItem = ui->overwrittenTree->itemAt(pos.x(), pos.y());
+	m_ConflictsContextItem = ui->overwrittenTree->itemAt(pos.x(), pos.y());
 
 	if (m_ConflictsContextItem != nullptr) {
 		if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
@@ -1307,7 +1309,7 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 
 			menu.exec(ui->overwrittenTree->mapToGlobal(pos));
 		}
-	}*/
+	}
 }
 
 
