@@ -1980,7 +1980,6 @@ void MainWindow::directory_refreshed()
   refreshDataTree();
   updateProblemsButton();
   statusBar()->hide();
-  m_OrganizerCore.refreshESPList();
 }
 
 void MainWindow::modorder_changed()
@@ -4811,7 +4810,7 @@ void MainWindow::on_bossButton_clicked()
       }
       m_IntegratedBrowser.openUrl(url);
     }
-    m_OrganizerCore.refreshESPList();
+    m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }
 }
@@ -4888,7 +4887,7 @@ void MainWindow::on_restoreButton_clicked()
       QMessageBox::critical(this, tr("Restore failed"),
                             tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
     }
-    m_OrganizerCore.refreshESPList();
+    m_OrganizerCore.refreshESPList(true);
   }
 }
 
