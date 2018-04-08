@@ -460,7 +460,14 @@ void DownloadManager::addNXMDownload(const QString &url)
     return;
   }
 
+  if (m_PendingDownloads.contains(std::pair<int, int>(nxmInfo.modId(), nxmInfo.fileId()))) {
+    qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(nxmInfo.modId()), qPrintable(nxmInfo.fileId()));
+    QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been started."), QMessageBox::Ok);
+    return;
+  }
+
   emit aboutToUpdate();
+
   m_PendingDownloads.append(std::make_pair(nxmInfo.modId(), nxmInfo.fileId()));
 
   emit update(-1);
