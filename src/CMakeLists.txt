@@ -253,6 +253,7 @@ FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
 QT5_CREATE_TRANSLATION(organizer_translations_qm ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
+ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
 
@@ -372,6 +373,8 @@ INSTALL(
 
 # qdds.dll needs installing manually as Qt no longer ships with it by default.
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
+
+install(FILES ${organizer_translations_qm} DESTINATION bin/translations)
 
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
                   ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
