@@ -314,6 +314,8 @@ public:
    */
   void markUninstalled(int index);
 
+  void markUninstalled(QString download);
+
   /**
    * @brief refreshes the list of downloads
    */
@@ -431,6 +433,7 @@ private slots:
 private:
 
   void createMetaFile(DownloadInfo *info);
+  DownloadManager::DownloadInfo* getDownloadInfo(QString fileName);
 
 public:
 

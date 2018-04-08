@@ -1980,6 +1980,7 @@ void MainWindow::directory_refreshed()
   refreshDataTree();
   updateProblemsButton();
   statusBar()->hide();
+  m_OrganizerCore.refreshESPList();
 }
 
 void MainWindow::modorder_changed()
@@ -2307,10 +2308,7 @@ void MainWindow::removeMod_clicked()
 void MainWindow::modRemoved(const QString &fileName)
 {
   if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {
-    int index = m_OrganizerCore.downloadManager()->indexByName(fileName);
-    if (index >= 0) {
-      m_OrganizerCore.downloadManager()->markUninstalled(index);
-    }
+    m_OrganizerCore.downloadManager()->markUninstalled(fileName);
   }
 }
 
