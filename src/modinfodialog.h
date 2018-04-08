@@ -157,7 +157,10 @@ private slots:
 
   void hideConflictFile();
   void unhideConflictFile();
+  int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
   void previewDataFile();
+  void openDataFile();
+
 
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
