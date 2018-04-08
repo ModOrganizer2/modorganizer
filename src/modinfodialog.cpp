@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
 #include "descriptionpage.h"
+#include "mainwindow.h"
 
 #include "iplugingame.h"
 #include "nexusinterface.h"
@@ -44,6 +45,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileSystemModel>
 #include <QInputDialog>
 #include <QPointer>
+#include <QFileDialog>
 
 #include <Shlwapi.h>
 
@@ -1204,6 +1206,88 @@ void ModInfoDialog::unhideConflictFile()
   }
 }
 
+int ModInfoDialog::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
+{
+	QString extension = targetInfo.suffix();
+	if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+		(extension.compare("com", Qt::CaseInsensitive) == 0) ||
+		(extension.compare("bat", Qt::CaseInsensitive) == 0)) {
+		binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
+		arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+		return 1;
+	}
+	else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
+		binaryInfo = targetInfo;
+		return 1;
+	}
+	else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
+		// types that need to be injected into
+		std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
+		QString binaryPath;
+
+		{ // try to find java automatically
+			WCHAR buffer[MAX_PATH];
+			if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+				DWORD binaryType = 0UL;
+				if (!::GetBinaryTypeW(buffer, &binaryType)) {
+					qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+				}
+				else if (binaryType == SCS_32BIT_BINARY) {
+					binaryPath = ToQString(buffer);
+				}
+			}
+		}
+		if (binaryPath.isEmpty() && (extension == "jar")) {
+			// second attempt: look to the registry
+			QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+			if (javaReg.contains("CurrentVersion")) {
+				QString currentVersion = javaReg.value("CurrentVersion").toString();
+				binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+			}
+		}
+		if (binaryPath.isEmpty()) {
+			binaryPath = QFileDialog::getOpenFileName(this, tr("Select binary"), QString(), tr("Binary") + " (*.exe)");
+		}
+		if (binaryPath.isEmpty()) {
+			return 0;
+		}
+		binaryInfo = QFileInfo(binaryPath);
+		if (extension == "jar") {
+			arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+		}
+		else {
+			arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+		}
+		return 1;
+	}
+	else {
+		return 2;
+	}
+}
+
+void ModInfoDialog::openDataFile()
+{
+	if (m_ConflictsContextItem != nullptr) {
+		QFileInfo targetInfo(m_ConflictsContextItem->data(0, Qt::UserRole).toString());
+		QFileInfo binaryInfo;
+		QString arguments;
+		switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
+		case 1: {
+			m_OrganizerCore->spawnBinaryDirect(
+				binaryInfo, arguments, m_OrganizerCore->currentProfile()->name(),
+				targetInfo.absolutePath(), "", "");
+		} break;
+		case 2: {
+			::ShellExecuteW(nullptr, L"open",
+				ToWString(targetInfo.absoluteFilePath()).c_str(),
+				nullptr, nullptr, SW_SHOWNORMAL);
+		} break;
+		default: {
+			// nop
+		} break;
+		}
+	}
+}
 
 void ModInfoDialog::previewDataFile()
 {
@@ -1282,6 +1366,8 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
         menu.addAction(tr("Hide"), this, SLOT(hideConflictFile()));
       }
 
+	  menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
+
       QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
       if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
         menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
@@ -1294,13 +1380,13 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
 
 void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
 {
-	//For some reason the m_ConflictsContextItem does not pick up valid data from the overwrittenTree.
-	//TODO: find out what is going wrong.
 	m_ConflictsContextItem = ui->overwrittenTree->itemAt(pos.x(), pos.y());
 
 	if (m_ConflictsContextItem != nullptr) {
 		if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
 			QMenu menu;
+
+			menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
 
 			QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
 			if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
