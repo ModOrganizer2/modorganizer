@@ -460,10 +460,25 @@ void DownloadManager::addNXMDownload(const QString &url)
     return;
   }
 
-  if (m_PendingDownloads.contains(std::pair<int, int>(nxmInfo.modId(), nxmInfo.fileId()))) {
-    qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(nxmInfo.modId()), qPrintable(nxmInfo.fileId()));
-    QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been started."), QMessageBox::Ok);
-    return;
+  for (auto pair : m_PendingDownloads) {
+    if (pair.first == nxmInfo.modId() && pair.second == nxmInfo.fileId()) {
+      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(nxmInfo.modId()), qPrintable(nxmInfo.fileId()));
+      QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
+      return;
+    }
+  }
+
+  for (DownloadInfo *download : m_ActiveDownloads) {
+    if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
+      if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
+        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(download->m_FileInfo->modName),
+          qPrintable(download->m_FileInfo->fileName));
+
+        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (%2).")
+          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->name), QMessageBox::Ok);
+        return;
+      }
+    }
   }
 
   emit aboutToUpdate();
