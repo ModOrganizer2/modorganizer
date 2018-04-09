@@ -63,6 +63,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QHeaderView>
 #include <QVariant>
 #include <Qt>
+#include <QtConcurrent/QtConcurrentRun>
 
 class QAction;
 class QAbstractItemModel;
@@ -335,6 +336,8 @@ private:
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
+
+  QFuture<void> m_MetaSave;
 
   QTime m_StartTime;
   //SaveGameInfoWidget *m_CurrentSaveView;

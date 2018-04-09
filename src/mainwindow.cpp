@@ -153,8 +153,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QtGlobal>
 
-#include <QtConcurrent/QtConcurrentRun>
-
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
@@ -901,6 +899,8 @@ void MainWindow::cleanup()
 
   QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
+  m_SaveMetaTimer.stop();
+  m_MetaSave.waitForFinished();
 }
 
 
@@ -1568,9 +1568,13 @@ void MainWindow::checkBSAList()
 
 void MainWindow::saveModMetas()
 {
-  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-    modInfo->saveMeta();
+  if (m_MetaSave.isFinished()) {
+    m_MetaSave = QtConcurrent::run([this]() {
+      for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+        modInfo->saveMeta();
+      }
+    });
   }
 }
 
