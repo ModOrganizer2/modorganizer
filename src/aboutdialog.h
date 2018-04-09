@@ -60,7 +60,8 @@ private:
     LICENSE_FMT,
     LICENSE_SIP,
     LICENSE_CASTLE,
-    LICENSE_ANTLR
+    LICENSE_ANTLR,
+    LICENSE_DXTEX
   };
 
 private:
