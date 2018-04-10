@@ -580,36 +580,20 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     emit aboutToUpdate();
 
     if (index < 0) {
-		if (index == -1) {
-			DownloadState minState = STATE_READY;
+			DownloadState minState = index == -1 ? STATE_READY : STATE_INSTALLED;
 			index = 0;
 			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
 				if ((*iter)->m_State >= minState) {
 					removeFile(index, deleteFile);
 					delete *iter;
 					iter = m_ActiveDownloads.erase(iter);
+          QCoreApplication::processEvents();
 				}
 				else {
 					++iter;
 					++index;
 				}
 			}
-		}
-		else {
-			DownloadState minState = STATE_INSTALLED;
-			index = 0;
-			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
-				if ((*iter)->m_State == minState) {
-					removeFile(index, deleteFile);
-					delete *iter;
-					iter = m_ActiveDownloads.erase(iter);
-				}
-				else {
-					++iter;
-					++index;
-				}
-			}
-		}
     } else {
       if (index >= m_ActiveDownloads.size()) {
         reportError(tr("remove: invalid download index %1").arg(index));
