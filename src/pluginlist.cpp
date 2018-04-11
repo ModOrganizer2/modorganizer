@@ -878,8 +878,12 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
       }
       if (m_ESPs[index].m_HasIni) {
-        text += "<br>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting "
-                "in case of conflicts.";
+        text += "<br>" + tr("There is an ini file connected to this esp. "
+                            "Its settings will be added to your game settings, overwriting in case of conflicts.");
+      }
+      if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
+          text += "<br><br>" + tr("This ESP is flagged as an ESL. "
+                                  "It will adhere to the ESP load order but the records will be loaded in ESL space.");
       }
       toolTip += text;
     }
@@ -901,6 +905,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     }
     if (m_ESPs[index].m_HasIni) {
       result.append(":/MO/gui/attachment");
+    }
+    if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
+        result.append(":/MO/gui/awaiting");
     }
     return result;
   }
