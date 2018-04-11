@@ -23,6 +23,10 @@ public:
 
   virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
 
+  virtual std::set<unsigned int> getModArchiveOverwrite() { return m_ArchiveOverwriteList; }
+
+  virtual std::set<unsigned int> getModArchiveOverwritten() { return m_ArchiveOverwrittenList; }
+
   virtual void doConflictCheck() const;
 
 private:
@@ -43,6 +47,11 @@ private:
   EConflictType isConflicted() const;
 
   /**
+   * @return true if there are archive conflicts for files in this mod
+   */
+  EConflictType isArchiveConflicted() const;
+
+  /**
    * @return true if this mod is completely replaced by others
    */
   bool isRedundant() const;
@@ -52,10 +61,13 @@ private:
   MOShared::DirectoryEntry **m_DirectoryStructure;
 
   mutable EConflictType m_CurrentConflictState;
+  mutable EConflictType m_ArchiveConflictState;
   mutable QTime m_LastConflictCheck;
 
   mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
   mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
+  mutable std::set<unsigned int> m_ArchiveOverwriteList;   // indices of mods with archive files overritten by this mod
+  mutable std::set<unsigned int> m_ArchiveOverwrittenList; // indices of mods with archive files overwriting this mod
 
 };
 

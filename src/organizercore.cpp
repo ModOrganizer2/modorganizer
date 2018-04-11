@@ -1151,7 +1151,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
       info.origins.append(ToQString(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
-      info.archive = fromArchive ? ToQString(file->getArchive()) : "";
+      info.archive = fromArchive ? ToQString(file->getArchive().first) : "";
       foreach (auto idx, file->getAlternatives()) {
         info.origins.append(
             ToQString(m_DirectoryStructure->getOriginByID(idx.first).getName()));
