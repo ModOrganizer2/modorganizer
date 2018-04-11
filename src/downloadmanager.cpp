@@ -462,7 +462,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto pair : m_PendingDownloads) {
     if (pair.first == nxmInfo.modId() && pair.second == nxmInfo.fileId()) {
-      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(nxmInfo.modId()), qPrintable(nxmInfo.fileId()));
+      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(QString(nxmInfo.modId())), qPrintable(QString(nxmInfo.fileId())));
       QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
       return;
     }

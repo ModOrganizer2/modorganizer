@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.11)
 
 CMAKE_POLICY(SET CMP0020 NEW)
 #CMAKE_POLICY(SET CMP0043 NEW)
@@ -249,6 +249,8 @@ FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
+FIND_PACKAGE(Qt5Script REQUIRED)
+FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
@@ -314,6 +316,7 @@ ENDIF()
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
+                      Qt5::Script Qt5::Qml Qt5::QuickWidgets Qt5::Network
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
@@ -325,9 +328,6 @@ IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
 ENDIF()
 SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
                       "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
-
-
-QT5_USE_MODULES(ModOrganizer Widgets Script Qml QuickWidgets Quick Network WebEngineWidgets)
 
 
 ###############

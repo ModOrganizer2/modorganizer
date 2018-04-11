@@ -89,6 +89,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractProxyModel>
 #include <QAction>
 #include <QApplication>
+#include <QButtonGroup>
 #include <QBuffer>
 #include <QCheckBox>
 #include <QClipboard>
