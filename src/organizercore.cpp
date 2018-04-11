@@ -895,6 +895,8 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
                                                ModInfoDialog::TAB_INIFILES);
       }
       m_ModInstalled(modName);
+      m_DownloadManager.markInstalled(fileName);
+      emit modInstalled(modName);
       return modInfo.data();
     } else {
       reportError(tr("mod \"%1\" not found").arg(modName));

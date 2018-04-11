@@ -307,6 +307,8 @@ public:
    */
   void markInstalled(int index);
 
+  void markInstalled(QString download);
+
   /**
    * @brief mark a download as uninstalled
    *

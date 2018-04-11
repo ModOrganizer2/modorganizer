@@ -902,6 +902,22 @@ void DownloadManager::markInstalled(int index)
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
 }
 
+void DownloadManager::markInstalled(QString fileName)
+{
+  int index = indexByName(fileName);
+  if (index >= 0) {
+    markInstalled(index);
+  } else {
+    DownloadInfo *info = getDownloadInfo(fileName);
+    if (info != nullptr) {
+      QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
+      metaFile.setValue("installed", true);
+      metaFile.setValue("uninstalled", false);
+    }
+    delete info;
+  }
+}
+
 DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName)
 {
   return DownloadInfo::createFromMeta(fileName, true);
@@ -927,12 +943,13 @@ void DownloadManager::markUninstalled(QString fileName)
   if (index >= 0) {
     markUninstalled(index);
   } else {
-    DownloadInfo *info = getDownloadInfo(fileName);
+    QString filePath = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + fileName;
+    DownloadInfo *info = getDownloadInfo(filePath);
     if (info != nullptr) {
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("uninstalled", true);
-      setState(info, STATE_UNINSTALLED);
     }
+    delete info;
   }
 }
 
