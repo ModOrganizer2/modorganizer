@@ -64,7 +64,7 @@ public:
 
   time_t lastAccessed() const { return m_LastAccessed; }
 
-  void addOrigin(int origin, FILETIME fileTime, const std::wstring &archive);
+  void addOrigin(int origin, FILETIME fileTime, const std::wstring &archive, int order);
   // remove the specified origin from the list of origins that contain this file. if no origin is left,
   // the file is effectively deleted and true is returned. otherwise, false is returned
   bool removeOrigin(int origin);
@@ -72,13 +72,13 @@ public:
 
   // gets the list of alternative origins (origins with lower priority than the primary one).
   // if sortOrigins has been called, it is sorted by priority (ascending)
-  const std::vector<std::pair<int, std::wstring>> &getAlternatives() const { return m_Alternatives; }
+  const std::vector<std::pair<int, std::pair<std::wstring, int>>> &getAlternatives() const { return m_Alternatives; }
 
   const std::wstring &getName() const { return m_Name; }
   int getOrigin() const { return m_Origin; }
-  int getOrigin(bool &archive) const { archive = (m_Archive.length() != 0); return m_Origin; }
-  const std::wstring &getArchive() const { return m_Archive; }
-  bool isFromArchive() const { return m_Archive.length() != 0; }
+  int getOrigin(bool &archive) const { archive = (m_Archive.first.length() != 0); return m_Origin; }
+  const std::pair<std::wstring, int> &getArchive() const { return m_Archive; }
+  bool isFromArchive(std::wstring archiveName = L"");
   std::wstring getFullPath() const;
   std::wstring getRelativePath() const;
   DirectoryEntry *getParent() { return m_Parent; }
@@ -97,8 +97,8 @@ private:
   Index m_Index;
   std::wstring m_Name;
   int m_Origin = -1;
-  std::wstring m_Archive;
-  std::vector<std::pair<int, std::wstring>> m_Alternatives;
+  std::pair<std::wstring, int> m_Archive;
+  std::vector<std::pair<int, std::pair<std::wstring, int>>> m_Alternatives;
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
 
@@ -141,6 +141,8 @@ public:
 
   void addFile(FileEntry::Index index) { m_Files.insert(index); }
   void removeFile(FileEntry::Index index);
+
+  bool containsArchive(std::wstring archiveName);
 
 private:
 
@@ -221,7 +223,7 @@ public:
 
   // add files to this directory (and subdirectories) from the specified origin. That origin may exist or not
   void addFromOrigin(const std::wstring &originName, const std::wstring &directory, int priority);
-  void addFromBSA(const std::wstring &originName, std::wstring &directory, const std::wstring &fileName, int priority);
+  void addFromBSA(const std::wstring &originName, std::wstring &directory, const std::wstring &fileName, int priority, int order);
 
   void propagateOrigin(int origin);
 
@@ -252,6 +254,8 @@ public:
     * @return fileentry object for the file or nullptr if no file matches
     */
   const FileEntry::Ptr findFile(const std::wstring &name) const;
+
+  bool containsArchive(std::wstring archiveName);
 
   /** search through this directory and all subdirectories for a file by the specified name (relative path).
       if directory is not nullptr, the referenced variable will be set to the path containing the file */
@@ -297,7 +301,7 @@ private:
   DirectoryEntry(const DirectoryEntry &reference);
   DirectoryEntry &operator=(const DirectoryEntry &reference);
 
-  void insert(const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime, const std::wstring &archive) {
+  void insert(const std::wstring &fileName, FilesOrigin &origin, FILETIME fileTime, const std::wstring &archive, int order) {
     std::wstring fileNameLower = ToLower(fileName);
     auto iter = m_Files.find(fileNameLower);
     FileEntry::Ptr file;
@@ -308,12 +312,12 @@ private:
       // TODO this has been observed to cause a crash, no clue why
       m_Files[fileNameLower] = file->getIndex();
     }
-    file->addOrigin(origin.getID(), fileTime, archive);
+    file->addOrigin(origin.getID(), fileTime, archive, order);
     origin.addFile(file->getIndex());
   }
 
   void addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOffset);
-  void addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName);
+  void addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName, int order);
 
   DirectoryEntry *getSubDirectory(const std::wstring &name, bool create, int originID = -1);
 

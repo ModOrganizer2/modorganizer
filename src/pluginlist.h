@@ -116,8 +116,7 @@ public:
    **/
   void refresh(const QString &profileName
                , const MOShared::DirectoryEntry &baseDirectory
-               , const QString &lockedOrderFile
-               , bool refresh);
+               , const QString &lockedOrderFile);
 
   /**
    * @brief enable a plugin based on its name

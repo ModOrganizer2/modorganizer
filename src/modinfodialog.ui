@@ -112,7 +112,7 @@
           <widget class="QLabel" name="label_5">
 		   <property name="enabled">
             <bool>false</bool>
-           </property>						
+           </property>
            <property name="text">
            <string>Ini Tweaks *This feature is non-functional*</string>
            </property>
@@ -122,7 +122,7 @@
           <widget class="QListWidget" name="iniTweaksList">
 			<property name="enabled">
             <bool>false</bool>
-           </property>						
+           </property>
            <property name="maximumSize">
             <size>
              <width>228</width>

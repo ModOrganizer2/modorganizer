@@ -220,12 +220,19 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
   return result;
 }
 
+bool FilesOrigin::containsArchive(std::wstring archiveName)
+{
+  for (FileEntry::Index fileIdx : m_Files)
+    if (FileEntry::Ptr p = m_FileRegister.lock()->getFile(fileIdx))
+      if (p->isFromArchive(archiveName)) return true;
+  return false;
+}
 
 //
 // FileEntry
 //
 
-void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &archive)
+void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &archive, int order)
 {
   m_LastAccessed = time(nullptr);
   if (m_Parent != nullptr) {
@@ -234,36 +241,36 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
   if (m_Origin == -1) {
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = archive;
+    m_Archive = std::pair<std::wstring, int>(archive, order);
   } else if ((m_Parent != nullptr)
              && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())
-             && (archive.size() == 0 || m_Archive.size() > 0 )) {
-    if (std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &i) -> bool { return i.first == m_Origin; }) == m_Alternatives.end()) {
-      m_Alternatives.push_back(std::pair<int, std::wstring>(m_Origin, m_Archive));
+             && (archive.size() == 0 || m_Archive.first.size() > 0 )) {
+    if (std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>> &i) -> bool { return i.first == m_Origin; }) == m_Alternatives.end()) {
+      m_Alternatives.push_back(std::pair<int, std::pair<std::wstring, int>>(m_Origin, m_Archive));
     }
     m_Origin = origin;
     m_FileTime = fileTime;
-    m_Archive = archive;
+    m_Archive = std::pair<std::wstring, int>(archive, order);
   } else {
     bool found = false;
     if (m_Origin == origin) {
       // already an origin
       return;
     }
-    for (std::vector<std::pair<int, std::wstring>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
+    for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
       if (iter->first == origin) {
         // already an origin
         return;
       }
       if ((m_Parent != nullptr)
           && (m_Parent->getOriginByID(iter->first).getPriority() < m_Parent->getOriginByID(origin).getPriority())) {
-        m_Alternatives.insert(iter, std::pair<int, std::wstring>(origin, archive));
+        m_Alternatives.insert(iter, std::pair<int, std::pair<std::wstring, int>>(origin, std::pair<std::wstring, int>(archive, order)));
         found = true;
         break;
       }
     }
     if (!found) {
-      m_Alternatives.push_back(std::pair<int, std::wstring>(origin, archive));
+      m_Alternatives.push_back(std::pair<int, std::pair<std::wstring, int>>(origin, std::pair<std::wstring, int>(archive, order)));
     }
   }
 }
@@ -273,8 +280,8 @@ bool FileEntry::removeOrigin(int origin)
   if (m_Origin == origin) {
     if (!m_Alternatives.empty()) {
       // find alternative with the highest priority
-      std::vector<std::pair<int, std::wstring>>::iterator currentIter = m_Alternatives.begin();
-      for (std::vector<std::pair<int, std::wstring>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
+      std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator currentIter = m_Alternatives.begin();
+      for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
         if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority()) &&
             (iter->first != origin)) {
           currentIter = iter;
@@ -292,9 +299,9 @@ bool FileEntry::removeOrigin(int origin)
       if (!::GetFileTime(file, nullptr, nullptr, &m_FileTime)) {
         // maybe this file is in a bsa, but there is no easy way to find out which. User should refresh
         // the view to find out
-        m_Archive = L"bsa?";
+        m_Archive = std::pair<std::wstring, int>(L"bsa?", -1);
       } else {
-        m_Archive = L"";
+        m_Archive = std::pair<std::wstring, int>(L"", -1);
       }
 
       ::CloseHandle(file);
@@ -304,7 +311,7 @@ bool FileEntry::removeOrigin(int origin)
       return true;
     }
   } else {
-    std::vector<std::pair<int, std::wstring>>::iterator newEnd = std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &i) -> bool { return i.first == origin; });
+    std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator newEnd = std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>> &i) -> bool { return i.first == origin; });
     if (newEnd != m_Alternatives.end())
       m_Alternatives.erase(newEnd, m_Alternatives.end());
   }
@@ -318,7 +325,7 @@ FileEntry::FileEntry()
 }
 
 FileEntry::FileEntry(Index index, const std::wstring &name, DirectoryEntry *parent)
-  : m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L""), m_Parent(parent), m_LastAccessed(time(nullptr))
+  : m_Index(index), m_Name(name), m_Origin(-1), m_Archive(L"", -1), m_Parent(parent), m_LastAccessed(time(nullptr))
 {
   LEAK_TRACE;
 }
@@ -330,16 +337,23 @@ FileEntry::~FileEntry()
 
 void FileEntry::sortOrigins()
 {
-  m_Alternatives.push_back(std::pair<int, std::wstring>(m_Origin, m_Archive));
-  std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::wstring> &LHS, const std::pair<int, std::wstring> &RHS) -> bool {
-    if ((!LHS.second.size() && !RHS.second.size()) || (LHS.second.size() && RHS.second.size())) {
+  m_Alternatives.push_back(std::pair<int, std::pair<std::wstring, int>>(m_Origin, m_Archive));
+  std::sort(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>> &LHS, const std::pair<int, std::pair<std::wstring, int>> &RHS) -> bool {
+    if (!LHS.second.first.size() && !RHS.second.first.size()) {
       int l = m_Parent->getOriginByID(LHS.first).getPriority(); if (l < 0) l = INT_MAX;
       int r = m_Parent->getOriginByID(RHS.first).getPriority(); if (r < 0) r = INT_MAX;
 
       return l < r;
     }
 
-    if (RHS.second.size()) return false;
+    if (LHS.second.first.size() && RHS.second.first.size()) {
+      int l = LHS.second.second; if (l < 0) l = INT_MAX;
+      int r = RHS.second.second; if (r < 0) r = INT_MAX;
+
+      return l > r;
+    }
+
+    if (RHS.second.first.size()) return false;
     return true;
   });
   if (!m_Alternatives.empty()) {
@@ -377,6 +391,16 @@ std::wstring FileEntry::getRelativePath() const
   std::wstring result;
   recurseParents(result, m_Parent); // all intermediate directories
   return result + L"\\" + m_Name;
+}
+
+bool FileEntry::isFromArchive(std::wstring archiveName)
+{
+  if (archiveName.length() == 0) return m_Archive.first.length() != 0;
+  if (m_Archive.first.compare(archiveName) == 0) return true;
+  for (auto alternative : m_Alternatives) {
+    if (alternative.second.first.compare(archiveName) == 0) return true;
+  }
+  return false;
 }
 
 
@@ -451,7 +475,7 @@ void DirectoryEntry::addFromOrigin(const std::wstring &originName, const std::ws
 }
 
 
-void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &directory, const std::wstring &fileName, int priority)
+void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &directory, const std::wstring &fileName, int priority, int order)
 {
   FilesOrigin &origin = createOrigin(originName, directory, priority);
 
@@ -459,23 +483,33 @@ void DirectoryEntry::addFromBSA(const std::wstring &originName, std::wstring &di
   if (::GetFileAttributesExW(fileName.c_str(), GetFileExInfoStandard, &fileData) == 0) {
     throw windows_error("failed to determine file time");
   }
+  FILETIME now;
+  ::GetSystemTimeAsFileTime(&now);
 
-  BSA::Archive archive;
-  BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str(), false);
-  if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
-    std::ostringstream stream;
-    stream << "invalid bsa file: " << ToString(fileName, false) << " errorcode " << res << " - " << ::GetLastError();
-    throw std::runtime_error(stream.str());
-  }
+  const double clfSecondsPer100ns = 100. * 1.E-9;
+
+  ((ULARGE_INTEGER *)&now)->QuadPart -= ((double)5) / clfSecondsPer100ns;
+
   size_t namePos = fileName.find_last_of(L"\\/");
   if (namePos == std::wstring::npos) {
     namePos = 0;
-  } else {
+  }
+  else {
     ++namePos;
   }
 
-  addFiles(origin, archive.getRoot(), fileData.ftLastWriteTime, fileName.substr(namePos));
-  m_Populated = true;
+  if (!containsArchive(fileName.substr(namePos)) || ::CompareFileTime(&fileData.ftLastWriteTime, &now) > 0) {
+    BSA::Archive archive;
+    BSA::EErrorCode res = archive.read(ToString(fileName, false).c_str(), false);
+    if ((res != BSA::ERROR_NONE) && (res != BSA::ERROR_INVALIDHASHES)) {
+      std::ostringstream stream;
+      stream << "invalid bsa file: " << ToString(fileName, false) << " errorcode " << res << " - " << ::GetLastError();
+      throw std::runtime_error(stream.str());
+    }
+
+    addFiles(origin, archive.getRoot(), fileData.ftLastWriteTime, fileName.substr(namePos), order);
+    m_Populated = true;
+  }
 }
 
 void DirectoryEntry::propagateOrigin(int origin)
@@ -536,7 +570,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
           getSubDirectory(findData.cFileName, true, origin.getID())->addFiles(origin, buffer, bufferOffset + offset);
         }
       } else {
-        insert(findData.cFileName, origin, findData.ftLastWriteTime, L"");
+        insert(findData.cFileName, origin, findData.ftLastWriteTime, L"", -1);
       }
       result = ::FindNextFileW(searchHandle, &findData);
     }
@@ -546,12 +580,12 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, wchar_t *buffer, int bufferOf
 }
 
 
-void DirectoryEntry::addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName)
+void DirectoryEntry::addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolder, FILETIME &fileTime, const std::wstring &archiveName, int order)
 {
   // add files
   for (unsigned int fileIdx = 0; fileIdx < archiveFolder->getNumFiles(); ++fileIdx) {
     BSA::File::Ptr file = archiveFolder->getFile(fileIdx);
-    insert(ToWString(file->getName(), true), origin, fileTime, archiveName);
+    insert(ToWString(file->getName(), true), origin, fileTime, archiveName, order);
   }
 
   // recurse into subdirectories
@@ -559,7 +593,7 @@ void DirectoryEntry::addFiles(FilesOrigin &origin, BSA::Folder::Ptr archiveFolde
     BSA::Folder::Ptr folder = archiveFolder->getSubFolder(folderIdx);
     DirectoryEntry *folderEntry = getSubDirectoryRecursive(ToWString(folder->getName(), true), true, origin.getID());
 
-    folderEntry->addFiles(origin, folder, fileTime, archiveName);
+    folderEntry->addFiles(origin, folder, fileTime, archiveName, order);
   }
 }
 
@@ -626,7 +660,7 @@ void DirectoryEntry::insertFile(const std::wstring &filePath, FilesOrigin &origi
 {
   size_t pos = filePath.find_first_of(L"\\/");
   if (pos == std::string::npos) {
-    this->insert(filePath, origin, fileTime, std::wstring());
+    this->insert(filePath, origin, fileTime, std::wstring(), -1);
   } else {
     std::wstring dirName = filePath.substr(0, pos);
     std::wstring rest = filePath.substr(pos + 1);
@@ -667,6 +701,14 @@ void DirectoryEntry::removeFiles(const std::set<FileEntry::Index> &indices)
   }
 }
 
+bool DirectoryEntry::containsArchive(std::wstring archiveName)
+{
+  for (auto iter = m_Files.begin(); iter != m_Files.end(); ++iter) {
+    FileEntry::Ptr entry = m_FileRegister->getFile(iter->second);
+    if (entry->isFromArchive(archiveName)) return true;
+  }
+  return false;
+}
 
 int DirectoryEntry::anyOrigin() const
 {
@@ -890,7 +932,7 @@ void FileRegister::unregisterFile(FileEntry::Ptr file)
   // unregister from origin
   int originID = file->getOrigin(ignore);
   m_OriginConnection->getByID(originID).removeFile(file->getIndex());
-  const std::vector<std::pair<int, std::wstring>> &alternatives = file->getAlternatives();
+  const std::vector<std::pair<int, std::pair<std::wstring, int>>> &alternatives = file->getAlternatives();
   for (auto iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
     m_OriginConnection->getByID(iter->first).removeFile(file->getIndex());
   }
