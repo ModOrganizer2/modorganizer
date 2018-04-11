@@ -4290,27 +4290,40 @@ bool MainWindow::extractProgress(QProgressDialog &progress, int percentage, std:
 void MainWindow::extractBSATriggered()
 {
   QTreeWidgetItem *item = m_ContextItem;
+  QString origin;
 
   QString targetFolder = FileDialogMemory::getExistingDirectory("extractBSA", this, tr("Extract BSA"));
+  QStringList archives = {};
   if (!targetFolder.isEmpty()) {
-    BSA::Archive archive;
-    QString originPath = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(1))).getPath()));
-    QString archivePath =  QString("%1\\%2").arg(originPath).arg(item->text(0));
-
-    BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
-    if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
-      reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
-      return;
+    if (!item->parent()) {
+      for (int i = 0; i < item->childCount(); ++i) {
+        archives.append(item->child(i)->text(0));
+      }
+      origin = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(0))).getPath()));
+    } else {
+      origin = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(1))).getPath()));
+      archives = QStringList({ item->text(0) });
     }
 
-    QProgressDialog progress(this);
-    progress.setMaximum(100);
-    progress.setValue(0);
-    progress.show();
-    archive.extractAll(QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
-                       boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
-    if (result == BSA::ERROR_INVALIDHASHES) {
-      reportError(tr("This archive contains invalid hashes. Some files may be broken."));
+    for (auto archiveName : archives) {
+      BSA::Archive archive;
+      QString archivePath = QString("%1\\%2").arg(origin).arg(archiveName);
+      BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
+      if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
+        reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
+        return;
+      }
+
+      QProgressDialog progress(this);
+      progress.setMaximum(100);
+      progress.setValue(0);
+      progress.show();
+      archive.extractAll(QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
+        boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
+      if (result == BSA::ERROR_INVALIDHASHES) {
+        reportError(tr("This archive contains invalid hashes. Some files may be broken."));
+      }
+      archive.close();
     }
   }
 }
