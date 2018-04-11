@@ -602,9 +602,8 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
 
 void OrganizerCore::externalMessage(const QString &message)
 {
-  if (MOShortcut moshortcut{ message } ) {
-	if(moshortcut.hasExecutable())
-		runShortcut(moshortcut);
+  if (MOShortcut moshortcut{ message }) {
+    runShortcut(moshortcut);
   }
   else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
@@ -895,8 +894,6 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
                                                ModInfoDialog::TAB_INIFILES);
       }
       m_ModInstalled(modName);
-      m_DownloadManager.markInstalled(fileName);
-      emit modInstalled(modName);
       return modInfo.data();
     } else {
       reportError(tr("mod \"%1\" not found").arg(modName));
@@ -1056,7 +1053,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
       info.origins.append(ToQString(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
-      info.archive = fromArchive ? ToQString(file->getArchive()) : "";
+      info.archive = fromArchive ? ToQString(file->getArchive().first) : "";
       foreach (auto idx, file->getAlternatives()) {
         info.origins.append(
             ToQString(m_DirectoryStructure->getOriginByID(idx.first).getName()));
@@ -1109,7 +1106,7 @@ void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &argument
     }
     refreshDirectoryStructure();
 
-    refreshESPList(true);
+    refreshESPList();
     savePluginList();
 
     //These callbacks should not fiddle with directoy structure and ESPs.
@@ -1561,13 +1558,13 @@ void OrganizerCore::refreshModList(bool saveChanges)
   refreshDirectoryStructure();
 }
 
-void OrganizerCore::refreshESPList(bool force)
+void OrganizerCore::refreshESPList()
 {
   if (m_DirectoryUpdate) {
     // don't mess up the esp list if we're currently updating the directory
     // structure
-    m_PostRefreshTasks.append([=]() {
-      this->refreshESPList(force);
+    m_PostRefreshTasks.append([this]() {
+      this->refreshESPList();
     });
     return;
   }
@@ -1576,7 +1573,7 @@ void OrganizerCore::refreshESPList(bool force)
   // clear list
   try {
     m_PluginList.refresh(m_CurrentProfile->name(), *m_DirectoryStructure,
-                         m_CurrentProfile->getLockedOrderFileName(), force);
+                         m_CurrentProfile->getLockedOrderFileName());
   } catch (const std::exception &e) {
     reportError(tr("Failed to refresh list of esps: %1").arg(e.what()));
   }
@@ -1617,7 +1614,7 @@ void OrganizerCore::refreshBSAList()
 void OrganizerCore::refreshLists()
 {
   if ((m_CurrentProfile != nullptr) && m_DirectoryStructure->isPopulated()) {
-    refreshESPList(true);
+    refreshESPList();
     refreshBSAList();
   } // no point in refreshing lists if no files have been added to the directory
     // tree
@@ -1680,7 +1677,7 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
       modInfo->stealFiles());
   DirectoryRefresher::cleanStructure(m_DirectoryStructure);
   // need to refresh plugin list now so we can activate esps
-  refreshESPList(true);
+  refreshESPList();
   // activate all esps of the specified mod so the bsas get activated along with
   // it
   updateModActiveState(index, true);
@@ -1841,7 +1838,7 @@ void OrganizerCore::modStatusChanged(unsigned int index)
       updateModInDirectoryStructure(index, modInfo);
     } else {
       updateModActiveState(index, false);
-      refreshESPList(true);
+      refreshESPList();
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
         FilesOrigin &origin
             = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));

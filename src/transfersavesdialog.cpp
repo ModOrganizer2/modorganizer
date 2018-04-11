@@ -74,11 +74,6 @@ public:
     return { m_File };
   }
 
-  virtual bool hasScriptExtenderFile() const override
-  {
-      return false;
-  }
-
 private:
   QString m_File;
 };
@@ -99,11 +94,6 @@ public:
   MOBase::ISaveGameInfoWidget *getSaveGameWidget(QWidget *) const override
   {
     return nullptr;
-  }
-
-  virtual bool hasScriptExtenderSave(QString const &file) const override
-  {
-    return false;
   }
 };
 
@@ -343,6 +333,26 @@ bool TransferSavesDialog::transferCharacters(
         qCritical(errmsg,
                   sourceFile.absoluteFilePath().toUtf8().constData(),
                   destinationFile.toUtf8().constData());
+      }
+
+      QFileInfo sourceFileSE(sourceFile.absolutePath() + "/" + sourceFile.completeBaseName() + "." + m_GamePlugin->savegameSEExtension());
+      if (sourceFileSE.exists()) {
+        QString destinationFileSE(destination.absoluteFilePath(sourceFileSE.fileName()));
+
+        //If the file is already there, let them skip (or not).
+        if (QFile::exists(destinationFileSE)) {
+          if (!testOverwrite(overwriteMode, destinationFileSE)) {
+            continue;
+          }
+          //OK, they want to remove it.
+          QFile::remove(destinationFileSE);
+        }
+
+        if (!method(sourceFileSE.absoluteFilePath(), destinationFileSE)) {
+          qCritical(errmsg,
+            sourceFileSE.absoluteFilePath().toUtf8().constData(),
+            destinationFileSE.toUtf8().constData());
+        }
       }
     }
   }

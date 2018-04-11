@@ -154,6 +154,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QtGlobal>
 
+#include <QtConcurrent/QtConcurrentRun>
+
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
@@ -1132,9 +1134,9 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         source = modInfo->name();
       }
 
-      std::wstring archive = current->getArchive();
-      if (archive.length() != 0) {
-        source.append(" (").append(ToQString(archive)).append(")");
+      std::pair<std::wstring, int> archive = current->getArchive();
+      if (archive.first.length() != 0) {
+        source.append(" (").append(ToQString(archive.first)).append(")");
       }
       columns.append(source);
       QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
@@ -1154,12 +1156,12 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       fileChild->setData(1, Qt::UserRole, source);
       fileChild->setData(1, Qt::UserRole + 1, originID);
 
-      std::vector<std::pair<int, std::wstring>> alternatives = current->getAlternatives();
+      std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
 
       if (!alternatives.empty()) {
         std::wostringstream altString;
         altString << ToWString(tr("Also in: <br>"));
-        for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
+        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
              altIter != alternatives.end(); ++altIter) {
           if (altIter != alternatives.begin()) {
             altString << " , ";
@@ -2013,9 +2015,16 @@ void MainWindow::modorder_changed()
       for (int i :  modInfo->getModOverwritten()) {
         ModInfo::getByIndex(i)->clearCaches();
       }
+      for (int i : modInfo->getModArchiveOverwrite()) {
+          ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveOverwritten()) {
+          ModInfo::getByIndex(i)->clearCaches();
+      }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
+      m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
       if (m_ModListSortProxy != nullptr) {
         m_ModListSortProxy->invalidate();
       }
@@ -2091,7 +2100,7 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
         WIN32_FIND_DATAW findData;
 		HANDLE hFind;
 		hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
-        filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
+        filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"", -1);
 		FindClose(hFind);
       }
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldOriginName))) {
@@ -2250,8 +2259,10 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
   if (current.isValid()) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
     m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
   } else {
     m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
 /*  if ((m_ModListSortProxy != nullptr)
       && !m_ModListSortProxy->beingInvalidated()) {
@@ -2452,7 +2463,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer,this);
+    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
@@ -2487,6 +2498,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
+      m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
       m_OrganizerCore.refreshLists();
     }
   }

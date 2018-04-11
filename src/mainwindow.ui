@@ -194,7 +194,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="profileBox">						 
+               <widget class="QComboBox" name="profileBox">
                 <property name="toolTip">
                  <string>Pick a module collection</string>
                 </property>
@@ -521,7 +521,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                </spacer>
-              </item>		
+              </item>
               <item alignment="Qt::AlignLeft">
                <widget class="QPushButton" name="clearFiltersButton">
                 <property name="sizePolicy">
@@ -541,7 +541,7 @@ p, li { white-space: pre-wrap; }
                   <width>95</width>
                   <height>0</height>
                  </size>
-                </property>						  
+                </property>
                 <property name="visible">
                  <bool>false</bool>
                 </property>
@@ -579,14 +579,14 @@ p, li { white-space: pre-wrap; }
                 </property>
                </spacer>
               </item>
-              <item>								 
-               <widget class="QComboBox" name="groupCombo">					 
+              <item>
+               <widget class="QComboBox" name="groupCombo">
 				<property name="baseSize">
                  <size>
                   <width>220</width>
                   <height>0</height>
                  </size>
-                </property>						  
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::ClickFocus</enum>
                 </property>
@@ -608,13 +608,13 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="MOBase::LineEditClear" name="modFilterEdit">					
+               <widget class="MOBase::LineEditClear" name="modFilterEdit">
 			    <property name="baseSize">
                  <size>
                   <width>220</width>
                   <height>0</height>
                  </size>
-                </property>					  
+                </property>
                 <property name="placeholderText">
                  <string>Namefilter</string>
                 </property>
