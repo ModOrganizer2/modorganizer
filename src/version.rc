@@ -1,7 +1,7 @@
 #include "Winver.h"
 
-#define VER_FILEVERSION     2,1,1
-#define VER_FILEVERSION_STR "2.1.1\0"
+#define VER_FILEVERSION     2,1,2
+#define VER_FILEVERSION_STR "2.1.2\0"
 
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     VER_FILEVERSION
@@ -10,17 +10,19 @@ FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
 FILEFLAGS       (0)
 FILEOS          VOS__WINDOWS32
 FILETYPE        VFT_APP
-FILESUBTYPE     VFT2_UNKNOWN
+FILESUBTYPE     (0)
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
       BLOCK "040904B0"
       BEGIN
         VALUE "FileVersion", VER_FILEVERSION_STR
-        VALUE "CompanyName", "Tannin\0"
-        VALUE "FileDescription",  "Mod Organizer UI\0"
+        VALUE "CompanyName", "Mod Organizer 2 Team\0"
+        VALUE "FileDescription",  "Main Mod Oranizer 2 UI\0"
         VALUE "OriginalFilename", "ModOrganizer.exe\0"
-        VALUE "ProductName",      "Mod Organizer\0"
+        VALUE "InternalName", "ModOrganizer\0"
+        VALUE "LegalCopyright", "Copyright 2011-2016 Sebastian Herbord\r\nCopyright 2016-2018 Mod Organizer 2 contributors\0"
+        VALUE "ProductName",      "Mod Organizer 2\0"
         VALUE "ProductVersion", VER_FILEVERSION_STR
       END
     END
