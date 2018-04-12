@@ -140,8 +140,15 @@ void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared
 
 void PluginList::refresh(const QString &profileName
                          , const DirectoryEntry &baseDirectory
-                         , const QString &lockedOrderFile)
+                         , const QString &lockedOrderFile
+                         , bool force)
 {
+  if (force) {
+    m_ESPs.clear();
+    m_ESPsByName.clear();
+    m_ESPsByPriority.clear();
+  }
+
   ChangeBracket<PluginList> layoutChange(this);
 
   QStringList primaryPlugins = m_GamePlugin->primaryPlugins();
