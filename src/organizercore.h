@@ -130,7 +130,7 @@ public:
 
   void prepareStart();
 
-  void refreshESPList();
+  void refreshESPList(bool force = false);
   void refreshBSAList();
 
   void refreshDirectoryStructure();

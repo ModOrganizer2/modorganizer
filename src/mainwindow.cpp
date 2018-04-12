@@ -154,8 +154,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDebug>
 #include <QtGlobal>
 
-#include <QtConcurrent/QtConcurrentRun>
-
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
 #include <boost/algorithm/string.hpp>
