@@ -53,6 +53,12 @@ QStringList PluginContainer::pluginFileNames() const
   for (QPluginLoader *loader : m_PluginLoaders) {
     result.append(loader->fileName());
   }
+  std::vector<IPluginProxy *> proxyList = bf::at_key<IPluginProxy>(m_Plugins);
+  for (IPluginProxy *proxy : proxyList) {
+    QStringList proxiedPlugins = proxy->pluginList(
+            QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
+    result.append(proxiedPlugins);
+  }
   return result;
 }
 
