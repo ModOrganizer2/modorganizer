@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "queryoverwritedialog.h"
 #include "ui_queryoverwritedialog.h"
 
+#include <QStyle>
+
 QueryOverwriteDialog::QueryOverwriteDialog(QWidget *parent, Backup b)
   : QDialog(parent), ui(new Ui::QueryOverwriteDialog),
     m_Action(ACT_NONE)

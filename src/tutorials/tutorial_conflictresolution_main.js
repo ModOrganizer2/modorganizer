@@ -65,7 +65,7 @@ function getTutorialSteps() {
         },
         function() {
             tutorial.text = qsTr("Option A: Switch to the \"Data\"-tab if necessary")
-            if (!tutorialControl.waitForTabOpen("tabWidget", 1)) {
+            if (!tutorialControl.waitForTabOpen("tabWidget", 2)) {
                 highlightItem("tabWidget", false)
                 waitForClick()
             } else {

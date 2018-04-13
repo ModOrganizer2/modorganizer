@@ -500,7 +500,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       iter->m_URL = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toString();
       iter->m_Reroute = true;
       m_RequestQueue.enqueue(*iter);
-      nextRequest();
+      //nextRequest();
       return;
     }
     QByteArray data = reply->readAll();

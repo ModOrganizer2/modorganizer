@@ -110,13 +110,19 @@
          </item>
          <item>
           <widget class="QLabel" name="label_5">
+		   <property name="enabled">
+            <bool>false</bool>
+           </property>						
            <property name="text">
-            <string>Ini Tweaks</string>
+           <string>Ini Tweaks *This feature is non-functional*</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QListWidget" name="iniTweaksList">
+			<property name="enabled">
+            <bool>false</bool>
+           </property>						
            <property name="maximumSize">
             <size>
              <width>228</width>
@@ -483,6 +489,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        </item>
        <item>
         <widget class="QTreeWidget" name="overwrittenTree">
+         <property name="contextMenuPolicy">
+           <enum>Qt::CustomContextMenu</enum>
+         </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
@@ -491,6 +500,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
          </property>
          <property name="animated">
           <bool>true</bool>
+         </property>
+         <property name="columnCount">
+            <number>2</number>
          </property>
          <attribute name="headerDefaultSectionSize">
           <number>365</number>

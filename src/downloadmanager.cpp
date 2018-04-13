@@ -460,7 +460,29 @@ void DownloadManager::addNXMDownload(const QString &url)
     return;
   }
 
+  for (auto pair : m_PendingDownloads) {
+    if (pair.first == nxmInfo.modId() && pair.second == nxmInfo.fileId()) {
+      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(QString(nxmInfo.modId())), qPrintable(QString(nxmInfo.fileId())));
+      QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
+      return;
+    }
+  }
+
+  for (DownloadInfo *download : m_ActiveDownloads) {
+    if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
+      if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
+        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(download->m_FileInfo->modName),
+          qPrintable(download->m_FileInfo->fileName));
+
+        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (%2).")
+          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->name), QMessageBox::Ok);
+        return;
+      }
+    }
+  }
+
   emit aboutToUpdate();
+
   m_PendingDownloads.append(std::make_pair(nxmInfo.modId(), nxmInfo.fileId()));
 
   emit update(-1);
@@ -558,36 +580,20 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     emit aboutToUpdate();
 
     if (index < 0) {
-		if (index == -1) {
-			DownloadState minState = STATE_READY;
+			DownloadState minState = index == -1 ? STATE_READY : STATE_INSTALLED;
 			index = 0;
 			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
 				if ((*iter)->m_State >= minState) {
 					removeFile(index, deleteFile);
 					delete *iter;
 					iter = m_ActiveDownloads.erase(iter);
+          QCoreApplication::processEvents();
 				}
 				else {
 					++iter;
 					++index;
 				}
 			}
-		}
-		else {
-			DownloadState minState = STATE_INSTALLED;
-			index = 0;
-			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
-				if ((*iter)->m_State == minState) {
-					removeFile(index, deleteFile);
-					delete *iter;
-					iter = m_ActiveDownloads.erase(iter);
-				}
-				else {
-					++iter;
-					++index;
-				}
-			}
-		}
     } else {
       if (index >= m_ActiveDownloads.size()) {
         reportError(tr("remove: invalid download index %1").arg(index));
@@ -896,6 +902,26 @@ void DownloadManager::markInstalled(int index)
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
 }
 
+void DownloadManager::markInstalled(QString fileName)
+{
+  int index = indexByName(fileName);
+  if (index >= 0) {
+    markInstalled(index);
+  } else {
+    DownloadInfo *info = getDownloadInfo(fileName);
+    if (info != nullptr) {
+      QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
+      metaFile.setValue("installed", true);
+      metaFile.setValue("uninstalled", false);
+    }
+    delete info;
+  }
+}
+
+DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName)
+{
+  return DownloadInfo::createFromMeta(fileName, true);
+}
 
 void DownloadManager::markUninstalled(int index)
 {
@@ -908,6 +934,23 @@ void DownloadManager::markUninstalled(int index)
   metaFile.setValue("uninstalled", true);
 
   setState(m_ActiveDownloads.at(index), STATE_UNINSTALLED);
+}
+
+
+void DownloadManager::markUninstalled(QString fileName)
+{
+  int index = indexByName(fileName);
+  if (index >= 0) {
+    markUninstalled(index);
+  } else {
+    QString filePath = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + fileName;
+    DownloadInfo *info = getDownloadInfo(filePath);
+    if (info != nullptr) {
+      QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
+      metaFile.setValue("uninstalled", true);
+    }
+    delete info;
+  }
 }
 
 

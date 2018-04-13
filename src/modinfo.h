@@ -599,6 +599,7 @@ protected:
   ModInfo();
 
   static void updateIndices();
+  static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
 
 private:
 

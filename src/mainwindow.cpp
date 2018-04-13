@@ -89,6 +89,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractProxyModel>
 #include <QAction>
 #include <QApplication>
+#include <QButtonGroup>
 #include <QBuffer>
 #include <QCheckBox>
 #include <QClipboard>
@@ -152,8 +153,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QDebug>
 #include <QtGlobal>
-
-#include <QtConcurrent/QtConcurrentRun>
 
 #ifndef Q_MOC_RUN
 #include <boost/thread.hpp>
@@ -901,6 +900,8 @@ void MainWindow::cleanup()
 
   QWebEngineProfile::defaultProfile()->clearAllVisitedLinks();
   m_IntegratedBrowser.close();
+  m_SaveMetaTimer.stop();
+  m_MetaSave.waitForFinished();
 }
 
 
@@ -1568,9 +1569,13 @@ void MainWindow::checkBSAList()
 
 void MainWindow::saveModMetas()
 {
-  for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
-    modInfo->saveMeta();
+  if (m_MetaSave.isFinished()) {
+    m_MetaSave = QtConcurrent::run([this]() {
+      for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+        modInfo->saveMeta();
+      }
+    });
   }
 }
 
@@ -1886,7 +1891,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://github.com/LePresidente/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"open", L"http://github.com/Modorganizer2/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::tutorialTriggered()
@@ -2307,10 +2312,7 @@ void MainWindow::removeMod_clicked()
 void MainWindow::modRemoved(const QString &fileName)
 {
   if (!fileName.isEmpty() && !QFileInfo(fileName).isAbsolute()) {
-    int index = m_OrganizerCore.downloadManager()->indexByName(fileName);
-    if (index >= 0) {
-      m_OrganizerCore.downloadManager()->markUninstalled(index);
-    }
+    m_OrganizerCore.downloadManager()->markUninstalled(fileName);
   }
 }
 
@@ -2450,7 +2452,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), this);
+    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer,this);
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
@@ -3035,6 +3037,12 @@ void MainWindow::openInstanceFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openLogsFolder()
+{
+	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
+	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::openInstallFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3072,6 +3080,10 @@ void MainWindow::exportModListCSV()
 	QDialog selection(this);
 	QGridLayout *grid = new QGridLayout;
 	selection.setWindowTitle(tr("Export to csv"));
+
+	QLabel *csvDescription = new QLabel();
+	csvDescription->setText(tr("CSV (Comma Separated Values) is a format that can be imported in programs like Excel to create a spreadsheet.\nYou can also use online editors and converters instead."));
+	grid->addWidget(csvDescription);
 
 	QGroupBox *groupBoxRows = new QGroupBox(tr("Select what mods you want export:"));
 	QRadioButton *all = new QRadioButton(tr("All installed mods"));
@@ -3195,7 +3207,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL", info->getURL());
+						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance()->getModURL(info->getNexusID()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
 					if (install_Date->isChecked())
@@ -3227,10 +3239,15 @@ static void addMenuAsPushButton(QMenu *menu, QMenu *subMenu)
 }
 
 QMenu *MainWindow::openFolderMenu()
-{	
+{
 
 	QMenu *FolderMenu = new QMenu(this);
 
+	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+
+	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+	FolderMenu->addSeparator();
 
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
 
@@ -3238,13 +3255,19 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
 
-	FolderMenu->addAction(tr("Open MO Install folder"), this, SLOT(openInstallFolder()));
-
 	FolderMenu->addSeparator();
 
-	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
+	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 
-	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
+
+
+
+
+
+
+
+
 
 
 	return FolderMenu;
@@ -3304,15 +3327,18 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
       } else {
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Add/Remove Categories"));
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
 
+		//Removed as it was redundant, just making the categories look more complicated.
+		/*
         QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
         populateMenuCategories(replaceCategoriesMenu, 0);
         connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
         addMenuAsPushButton(menu, replaceCategoriesMenu);
+		*/
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
@@ -3332,8 +3358,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addSeparator();
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
-        menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
+		menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
 
 		menu->addSeparator();
 
@@ -3909,10 +3935,24 @@ void MainWindow::previewDataFile()
   // what we have is an absolute path to the file in its actual location (for the primary origin)
   // what we want is the path relative to the virtual data directory
 
-  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
-  offset = fileName.indexOf("/", offset);
-  fileName = fileName.mid(offset + 1);
+  // we need to look in the virtual directory for the file to make sure the info is up to date.
+
+  // check if the file comes from the actual data folder instead of a mod
+  QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
+  QString relativePath = gameDirectory.relativeFilePath(fileName);
+  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
+  // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
+  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
+	  fileName = relativePath;
+  }
+  else {
+	  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
+	  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
+	  offset = fileName.indexOf("/", offset);
+	  fileName = fileName.mid(offset + 1);
+  }
+
+
 
   const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
@@ -4250,27 +4290,40 @@ bool MainWindow::extractProgress(QProgressDialog &progress, int percentage, std:
 void MainWindow::extractBSATriggered()
 {
   QTreeWidgetItem *item = m_ContextItem;
+  QString origin;
 
   QString targetFolder = FileDialogMemory::getExistingDirectory("extractBSA", this, tr("Extract BSA"));
+  QStringList archives = {};
   if (!targetFolder.isEmpty()) {
-    BSA::Archive archive;
-    QString originPath = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(1))).getPath()));
-    QString archivePath =  QString("%1\\%2").arg(originPath).arg(item->text(0));
-
-    BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
-    if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
-      reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
-      return;
+    if (!item->parent()) {
+      for (int i = 0; i < item->childCount(); ++i) {
+        archives.append(item->child(i)->text(0));
+      }
+      origin = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(0))).getPath()));
+    } else {
+      origin = QDir::fromNativeSeparators(ToQString(m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(item->text(1))).getPath()));
+      archives = QStringList({ item->text(0) });
     }
 
-    QProgressDialog progress(this);
-    progress.setMaximum(100);
-    progress.setValue(0);
-    progress.show();
-    archive.extractAll(QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
-                       boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
-    if (result == BSA::ERROR_INVALIDHASHES) {
-      reportError(tr("This archive contains invalid hashes. Some files may be broken."));
+    for (auto archiveName : archives) {
+      BSA::Archive archive;
+      QString archivePath = QString("%1\\%2").arg(origin).arg(archiveName);
+      BSA::EErrorCode result = archive.read(archivePath.toLocal8Bit().constData(), true);
+      if ((result != BSA::ERROR_NONE) && (result != BSA::ERROR_INVALIDHASHES)) {
+        reportError(tr("failed to read %1: %2").arg(archivePath).arg(result));
+        return;
+      }
+
+      QProgressDialog progress(this);
+      progress.setMaximum(100);
+      progress.setValue(0);
+      progress.show();
+      archive.extractAll(QDir::toNativeSeparators(targetFolder).toLocal8Bit().constData(),
+        boost::bind(&MainWindow::extractProgress, this, boost::ref(progress), _1, _2));
+      if (result == BSA::ERROR_INVALIDHASHES) {
+        reportError(tr("This archive contains invalid hashes. Some files may be broken."));
+      }
+      archive.close();
     }
   }
 }
@@ -4305,6 +4358,18 @@ void MainWindow::displayColumnSelection(const QPoint &pos)
     }
     ++i;
   }
+}
+
+void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
+{
+  m_ContextItem = ui->bsaList->itemAt(pos);
+
+//  m_ContextRow = ui->bsaList->indexOfTopLevelItem(ui->bsaList->itemAt(pos));
+
+  QMenu menu;
+  menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
+
+  menu.exec(ui->bsaList->mapToGlobal(pos));
 }
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
@@ -4576,8 +4641,8 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
   std::vector<std::string> lines;
   boost::split(lines, lootOut, boost::is_any_of("\r\n"));
 
-  std::tr1::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
-  std::tr1::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
+  std::regex exRequires("\"([^\"]*)\" requires \"([^\"]*)\", but it is missing\\.");
+  std::regex exIncompatible("\"([^\"]*)\" is incompatible with \"([^\"]*)\", but both are present\\.");
 
   for (const std::string &line : lines) {
     if (line.length() > 0) {
@@ -4589,12 +4654,12 @@ void MainWindow::processLOOTOut(const std::string &lootOut, std::string &errorMe
         qWarning("%s", line.c_str());
         errorMessages.append(boost::algorithm::trim_copy(line.substr(erroridx + 8)) + "\n");
       } else {
-        std::tr1::smatch match;
-        if (std::tr1::regex_match(line, match, exRequires)) {
+        std::smatch match;
+        if (std::regex_match(line, match, exRequires)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("depends on missing \"%1\"").arg(dependency.c_str()));
-        } else if (std::tr1::regex_match(line, match, exIncompatible)) {
+        } else if (std::regex_match(line, match, exIncompatible)) {
           std::string modName(match[1].first, match[1].second);
           std::string dependency(match[2].first, match[2].second);
           m_OrganizerCore.pluginList()->addInformation(modName.c_str(), tr("incompatible with \"%1\"").arg(dependency.c_str()));
@@ -4628,12 +4693,12 @@ void MainWindow::on_bossButton_clicked()
     dialog.show();
 
     QString outPath = QDir::temp().absoluteFilePath("lootreport.json");
-   
+
     QStringList parameters;
     parameters << "--game" << m_OrganizerCore.managedGame()->gameShortName()
-               << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
-               << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath())
-               << "--out" << QString("\"%1\"").arg(outPath);
+        << "--gamePath" << QString("\"%1\"").arg(m_OrganizerCore.managedGame()->gameDirectory().absolutePath())
+        << "--pluginListPath" << QString("\"%1/loadorder.txt\"").arg(m_OrganizerCore.profilePath())
+        << "--out" << QString("\"%1\"").arg(outPath);
 
     if (m_DidUpdateMasterList) {
       parameters << "--skipUpdateMasterlist";
@@ -4753,7 +4818,7 @@ void MainWindow::on_bossButton_clicked()
 
   if (success) {
     m_DidUpdateMasterList = true;
-    /*if (reportURL.length() > 0) {
+    if (reportURL.length() > 0) {
       m_IntegratedBrowser.setWindowTitle("LOOT Report");
       QString report(reportURL.c_str());
       QStringList temp = report.split("?");
@@ -4762,15 +4827,8 @@ void MainWindow::on_bossButton_clicked()
         url.setQuery(temp.at(1).toUtf8());
       }
       m_IntegratedBrowser.openUrl(url);
-    }*/
-
-    // if the game specifies load order by file time, our own load order file needs to be removed because it's outdated.
-    // refreshESPList will then use the file time as the load order.
-    if (m_OrganizerCore.managedGame()->loadOrderMechanism() == IPluginGame::LoadOrderMechanism::FileTime) {
-      qDebug("removing loadorder.txt");
-      QFile::remove(m_OrganizerCore.currentProfile()->getLoadOrderFileName());
     }
-    m_OrganizerCore.refreshESPList();
+    m_OrganizerCore.refreshESPList(false);
     m_OrganizerCore.savePluginList();
   }
 }
@@ -4847,7 +4905,7 @@ void MainWindow::on_restoreButton_clicked()
       QMessageBox::critical(this, tr("Restore failed"),
                             tr("Failed to restore the backup. Errorcode: %1").arg(windowsErrorString(::GetLastError())));
     }
-    m_OrganizerCore.refreshESPList();
+    m_OrganizerCore.refreshESPList(true);
   }
 }
 
@@ -5045,4 +5103,3 @@ void MainWindow::on_clearFiltersButton_clicked()
 {
 	deselectFilters();
 }
-

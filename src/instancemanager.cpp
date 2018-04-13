@@ -105,7 +105,7 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 		nullptr);
 	for (const QString &instance : instanceList)
 	{
-		selection.addChoice(instance, "", instance);
+		selection.addChoice(QIcon(":/MO/gui/multiply_red"), instance, "", instance);
 	}
 
 	if (selection.exec() == QDialog::Rejected) {
@@ -120,7 +120,7 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 				if (!deleteLocalInstance(choice))
 				{
 					QMessageBox::warning(nullptr, QObject::tr("Failed to delete Instance"),
-						QObject::tr("Could not delete Instance \"%1\"").arg(choice), QMessageBox::Ok);
+						QObject::tr("Could not delete Instance \"%1\". \nIf the folder was still in use, restart MO and try again.").arg(choice), QMessageBox::Ok);
 				}
 			}
 		}

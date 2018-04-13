@@ -99,7 +99,7 @@ public:
    * @param filter the filter to test
    * @return number of matching categories
    */
-  unsigned int countCategories(std::tr1::function<bool (const Category &category)> filter);
+  unsigned int countCategories(std::function<bool (const Category &category)> filter);
 
   /**
    * @brief get the id of the parent category

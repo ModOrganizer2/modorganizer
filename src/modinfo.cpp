@@ -55,7 +55,7 @@ QMutex ModInfo::s_Mutex(QMutex::Recursive);
 QString ModInfo::s_HiddenExt(".mohidden");
 
 
-static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
+bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
 {
   return QString::compare(LHS->name(), RHS->name(), Qt::CaseInsensitive) < 0;
 }
@@ -98,7 +98,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_INTERFACE: return tr("UI Changes");
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");
-    case CONTENT_SKSE:      return tr("SKSE Plugins");
+    case CONTENT_SKSE:      return tr("Script Extender");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
     case CONTENT_MCM:       return tr("MCM Data");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
@@ -239,7 +239,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
 
   createFromOverwrite();
 
-  std::sort(s_Collection.begin(), s_Collection.end(), ByName);
+  std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 
   updateIndices();
 }

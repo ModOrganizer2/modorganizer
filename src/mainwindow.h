@@ -63,6 +63,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QHeaderView>
 #include <QVariant>
 #include <Qt>
+#include <QtConcurrent/QtConcurrentRun>
 
 class QAction;
 class QAbstractItemModel;
@@ -336,6 +337,8 @@ private:
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
 
+  QFuture<void> m_MetaSave;
+
   QTime m_StartTime;
   //SaveGameInfoWidget *m_CurrentSaveView;
   MOBase::ISaveGameInfoWidget *m_CurrentSaveView;
@@ -487,6 +490,7 @@ private slots:
   void disableVisibleMods();
   void exportModListCSV();
   void openInstanceFolder();
+  void openLogsFolder();
   void openInstallFolder();
   void openDownloadsFolder();
   void openProfileFolder();
@@ -552,6 +556,7 @@ private slots: // ui slots
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
 
+  void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
