@@ -3725,6 +3725,7 @@ void MainWindow::languageChange(const QString &newLanguage)
   m_CurrentLanguage = newLanguage;
 
   installTranslator("qt");
+  installTranslator("qtbase");
   installTranslator(ToQString(AppConfig::translationPrefix()));
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
