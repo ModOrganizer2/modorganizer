@@ -1232,12 +1232,17 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     if (virtualizedCwd || virtualizedBin) {
       if (virtualizedCwd) {
         int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-        cwdPath = m_GamePlugin->dataDirectory().absolutePath() + cwdPath.mid(cwdOffset, -1);
+		 cwdPath = m_GamePlugin->dataDirectory().absolutePath();
+         if (cwdOffset >= 0)
+            cwdPath += cwdPath.mid(cwdOffset, -1);
+       
       }
 
       if (virtualizedBin) {
         int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-        binPath = m_GamePlugin->dataDirectory().absolutePath() + binPath.mid(binOffset, -1);
+        binPath = m_GamePlugin->dataDirectory().absolutePath();
+		if (binOffset>= 0)
+			binPath += binPath.mid(binOffset, -1);
       }
 
       QString cmdline
