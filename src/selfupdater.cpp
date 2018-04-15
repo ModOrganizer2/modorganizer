@@ -170,10 +170,10 @@ void SelfUpdater::startUpdate()
 
   QMessageBox query(QMessageBox::Question,
                     tr("New update available (%1)")
-                        .arg(m_UpdateCandidate["tag_name"].toString()),
-                    BBCode::convertToHTML(m_UpdateCandidate["body"].toString()),
+                        .arg(m_UpdateCandidate["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
                     QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
-
+	
+  query.setDetailedText(m_UpdateCandidate["body"].toString());
   query.button(QMessageBox::Yes)->setText(tr("Install"));
 
   int res = query.exec();
