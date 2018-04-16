@@ -217,7 +217,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = 0);
+  void displayModInformation(int row, int tab = -1);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);

@@ -2461,9 +2461,24 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(modOpenPrev()), this, SLOT(modOpenPrev()), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
+	
+	//Open the tab first if we want to use the standard indexes of the tabs.
+	if (tab != -1) {
+		dialog.openTab(tab);
+	}
 
-    dialog.openTab(tab);
     dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+
+	//If no tab was specified use the first tab from the left based on the user order.
+	if (tab == -1) {
+		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
+			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
+				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
+				break;
+			}
+		}
+	}
+
     dialog.exec();
     m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
 
