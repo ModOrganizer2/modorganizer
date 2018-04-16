@@ -51,8 +51,9 @@ ModInfoForeign::ModInfoForeign(const QString &modName,
                                const QString &referenceFile,
                                const QStringList &archives,
                                ModInfo::EModType modType,
-                               DirectoryEntry **directoryStructure)
-    : ModInfoWithConflictInfo(directoryStructure),
+                               DirectoryEntry **directoryStructure,
+                               PluginContainer *pluginContainer)
+    : ModInfoWithConflictInfo(pluginContainer, directoryStructure),
       m_ReferenceFile(referenceFile), m_Archives(archives) {
   m_CreationTime = QFileInfo(referenceFile).created();
   switch (modType) {

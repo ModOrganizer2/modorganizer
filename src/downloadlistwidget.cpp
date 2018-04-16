@@ -88,8 +88,8 @@ void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOption
 
 void DownloadListWidgetDelegate::paintPendingDownload(int downloadIndex) const
 {
-  std::pair<int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
-  m_NameLabel->setText(tr("< mod %1 file %2 >").arg(nexusids.first).arg(nexusids.second));
+  std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
+  m_NameLabel->setText(tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids)));
   m_SizeLabel->setText("???");
   m_InstallLabel->setVisible(true);
   m_InstallLabel->setText(tr("Pending"));

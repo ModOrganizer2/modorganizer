@@ -168,7 +168,7 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  bool doInstall(MOBase::GuessedValue<QString> &modName,
+  bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
   QString generateBackupName(const QString &directoryName) const;

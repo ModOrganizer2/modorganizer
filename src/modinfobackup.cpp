@@ -14,7 +14,7 @@ QString ModInfoBackup::getDescription() const
 }
 
 
-ModInfoBackup::ModInfoBackup(const QDir &path, MOShared::DirectoryEntry **directoryStructure)
-  : ModInfoRegular(path, directoryStructure)
+ModInfoBackup::ModInfoBackup(PluginContainer *pluginContainer, QString gameName, const QDir &path, MOShared::DirectoryEntry **directoryStructure)
+  : ModInfoRegular(pluginContainer, gameName, path, directoryStructure)
 {
 }

@@ -51,6 +51,7 @@ namespace MOBase {
 }
 
 class SettingsDialog;
+class PluginContainer;
 
 /**
  * manages the settings for Mod Organizer. The settings are not cached
@@ -88,7 +89,7 @@ public:
    * displays a SettingsDialog that allows the user to change settings. If the
    * user accepts the changes, the settings are immediately written
    **/
-  void query(QWidget *parent);
+  void query(PluginContainer *pluginContainer, QWidget *parent);
 
   /**
    * set up the settings for the specified plugins

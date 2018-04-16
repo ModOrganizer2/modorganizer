@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "instancemanager.h"
 #include "nexusinterface.h"
+#include "plugincontainer.h"
 
 #include <QDirIterator>
 #include <QFileDialog>
@@ -40,9 +41,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 
-SettingsDialog::SettingsDialog(QWidget *parent)
+SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
+  , m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
 
@@ -252,6 +254,6 @@ void SettingsDialog::on_associateButton_clicked()
 void SettingsDialog::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();
-  NexusInterface::instance()->clearCache();
+  NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 

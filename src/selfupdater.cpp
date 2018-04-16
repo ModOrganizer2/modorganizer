@@ -30,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "settings.h"
 #include "bbcode.h"
+#include "plugincontainer.h"
 #include <versioninfo.h>
 #include <report.h>
 #include <util.h>
@@ -118,6 +119,11 @@ SelfUpdater::~SelfUpdater()
 void SelfUpdater::setUserInterface(QWidget *widget)
 {
   m_Parent = widget;
+}
+
+void SelfUpdater::setPluginContainer(PluginContainer *pluginContainer)
+{
+  m_Interface->setPluginContainer(pluginContainer);
 }
 
 void SelfUpdater::testForUpdate()

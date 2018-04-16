@@ -285,7 +285,7 @@ private:
 private slots:
 
   void directory_refreshed();
-  void downloadRequested(QNetworkReply *reply, int modID, const QString &fileName);
+  void downloadRequested(QNetworkReply *reply, QString gameName, int modID, const QString &fileName);
   void removeOrigin(const QString &name);
   void downloadSpeed(const QString &serverName, int bytesPerSecond);
   void loginSuccessful(bool necessary);

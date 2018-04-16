@@ -266,6 +266,7 @@ MainWindow::MainWindow(QSettings &initSettings
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
   }
 
@@ -343,11 +344,11 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(m_OrganizerCore.updater(), SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(m_OrganizerCore.updater(), SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-  connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
-  connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
-  connect(NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
@@ -2347,7 +2348,7 @@ void MainWindow::reinstallMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
   } else {
     QString username, password;
@@ -2355,7 +2356,7 @@ void MainWindow::resumeDownload(int downloadIndex)
       m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
         this->resumeDownload(downloadIndex);
       });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
     }
@@ -2365,13 +2366,13 @@ void MainWindow::resumeDownload(int downloadIndex)
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     mod->endorse(true);
   } else {
     QString username, password;
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, mod));
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2393,12 +2394,12 @@ void MainWindow::dontendorse_clicked()
 void MainWindow::unendorse_clicked()
 {
   QString username, password;
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     ModInfo::getByIndex(m_ContextRow)->endorse(false);
   } else {
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin([this] () { this->unendorse_clicked(); });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2574,8 +2575,9 @@ void MainWindow::ignoreMissingData_clicked()
 void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
+  QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
   if (modID > 0)  {
-    nexusLinkActivated(NexusInterface::instance()->getModURL(modID));
+    nexusLinkActivated(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }
@@ -2921,18 +2923,18 @@ void MainWindow::saveArchiveList()
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
-    m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+    m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString username, password;
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else { // otherwise there will be no endorsement info
       MessageDialog::showMessage(tr("Not logged in, endorsement information will be wrong"),
                                   this, true);
-      m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
+      m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     }
   }
 }
@@ -3207,7 +3209,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance()->getModURL(info->getNexusID()) : "");
+						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance(&m_PluginContainer)->getModURL(info->getNexusID(), info->getGameName()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
 					if (install_Date->isChecked())
@@ -3629,7 +3631,7 @@ void MainWindow::on_actionSettings_triggered()
   bool oldDisplayForeign(settings.displayForeign());
   bool proxy = settings.useProxy();
 
-  settings.query(this);
+  settings.query(&m_PluginContainer, this);
 
   InstallationManager *instManager = m_OrganizerCore.installationManager();
   instManager->setModsDirectory(settings.getModDirectory());
@@ -3661,14 +3663,14 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   if (settings.getCacheDirectory() != oldCacheDirectory) {
-    NexusInterface::instance()->setCacheDirectory(settings.getCacheDirectory());
+    NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
 
   if (proxy != settings.useProxy()) {
     activateProxy(settings.useProxy());
   }
 
-  NexusInterface::instance()->setNMMVersion(settings.getNMMVersion());
+  NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
   updateDownloadListDelegate();
 
@@ -3680,7 +3682,7 @@ void MainWindow::on_actionSettings_triggered()
 void MainWindow::on_actionNexus_triggered()
 {
   ::ShellExecuteW(nullptr, L"open",
-                  NexusInterface::instance()->getGameURL().toStdWString().c_str(),
+                  NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName()).toStdWString().c_str(),
                   nullptr, nullptr, SW_SHOWNORMAL);
 }
 
@@ -4099,10 +4101,10 @@ void MainWindow::on_actionEndorseMO_triggered()
 {
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance()->getGameURL()),
+                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance()->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
+    NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
+          m_OrganizerCore.managedGame()->gameShortName(), m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -4174,7 +4176,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
-        if (NexusInterface::instance()->getAccessManager()->loggedIn() &&
+        if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
             result.contains("voted_by_user")) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
@@ -4197,20 +4199,20 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   }
 }
 
-void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
+void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
   if (resultData.toBool()) {
     ui->actionEndorseMO->setVisible(false);
     QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
   }
 
-  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(int, QVariant, QVariant, int)),
-             this, SLOT(nxmEndorsementToggled(int, QVariant, QVariant, int)))) {
+  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+             this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
   }
 }
 
-void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
+void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultData, int)
 {
   QVariantList serverList = resultData.toList();
 
@@ -4229,7 +4231,7 @@ void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
 }
 
 
-void MainWindow::nxmRequestFailed(int modID, int, QVariant, int, const QString &errorString)
+void MainWindow::nxmRequestFailed(QString, int modID, int, QVariant, int, const QString &errorString)
 {
   if (modID == -1) {
     // must be the update-check that failed

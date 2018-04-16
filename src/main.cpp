@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
 #include "moshortcut.h"
+#include "organizercore.h"
 
 #include <eh.h>
 #include <windows_error.h>
@@ -602,7 +603,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     QSplashScreen splash(pixmap);
     splash.show();
 
-    NexusInterface::instance()->getAccessManager()->startLoginCheck();
+    NexusInterface::instance(&pluginContainer)->getAccessManager()->startLoginCheck();
 
     qDebug("initializing tutorials");
     TutorialManager::init(

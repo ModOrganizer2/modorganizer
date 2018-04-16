@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class Archive;
 class NexusInterface;
+class PluginContainer;
 namespace MOBase { class IPluginGame; }
 
 #include <QFile>
@@ -76,6 +77,8 @@ public:
   virtual ~SelfUpdater();
 
   void setUserInterface(QWidget *widget);
+
+  void setPluginContainer(PluginContainer *pluginContainer);
 
   /**
    * @brief start the update process

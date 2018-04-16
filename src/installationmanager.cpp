@@ -537,7 +537,7 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
+bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
                                     const QString &version, const QString &newestVersion,
                                     int categoryID, const QString &repository)
 {
@@ -582,6 +582,9 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
   // overwrite settings only if they are actually are available or haven't been set before
+  if ((gameName != "") || !settingsFile.contains("gameName")) {
+    settingsFile.setValue("gameName", gameName);
+  }
   if ((modID != 0) || !settingsFile.contains("modid")) {
     settingsFile.setValue("modid", modID);
   }
@@ -662,6 +665,7 @@ bool InstallationManager::install(const QString &fileName,
   modName.update(QFileInfo(fileName).completeBaseName(), GUESS_FALLBACK);
 
   // read out meta information from the download if available
+  QString gameName = "";
   int modID = 0;
   QString version = "";
   QString newestVersion = "";
@@ -671,6 +675,7 @@ bool InstallationManager::install(const QString &fileName,
   QString metaName = fileName + ".meta";
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
+    gameName = metaFile.value("gameName", "").toString();
     modID = metaFile.value("modID", 0).toInt();
     QTextDocument doc;
     doc.setHtml(metaFile.value("name", "").toString());
@@ -759,7 +764,7 @@ bool InstallationManager::install(const QString &fileName,
             mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            if (!doInstall(modName, modID, version, newestVersion, categoryID,
+            if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
                            repository)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
@@ -780,6 +785,15 @@ bool InstallationManager::install(const QString &fileName,
           if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
             installResult
                 = installerCustom->install(modName, fileName, version, modID);
+            if (installResult == IPluginInstaller::RESULT_SUCCESS) {
+              mapToArchive(filesTree.data());
+              // the simple installer only prepares the installation, the rest
+              // works the same for all installers
+              if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
+                repository)) {
+                installResult = IPluginInstaller::RESULT_FAILED;
+              }
+            }
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
               ModInfo::Ptr info = ModInfo::getByIndex(idx);

@@ -24,26 +24,27 @@ namespace {
   }
 }
 
-ModInfoRegular::ModInfoRegular(const QDir &path, DirectoryEntry **directoryStructure)
-  : ModInfoWithConflictInfo(directoryStructure)
+ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, QString gameName, const QDir &path, DirectoryEntry **directoryStructure)
+  : ModInfoWithConflictInfo(pluginContainer, directoryStructure)
+  , m_GameName(gameName)
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
-  , m_NexusBridge()
+  , m_NexusBridge(pluginContainer)
 {
   testValid();
   m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
   readMeta();
 
-  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(int,QVariant,QVariant))
-          , this, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(endorsementToggled(int,QVariant,QVariant))
-          , this, SLOT(nxmEndorsementToggled(int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(int,int,QVariant,QString))
-          , this, SLOT(nxmRequestFailed(int,int,QVariant,QString)));
+  connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
+          , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
+          , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QString))
+          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QString)));
 }
 
 
@@ -71,6 +72,8 @@ void ModInfoRegular::readMeta()
 {
   QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
   m_Notes            = metaFile.value("notes", "").toString();
+  QString tempGameName = metaFile.value("gameName", m_GameName).toString();
+  if (tempGameName != "") m_GameName = tempGameName;
   m_NexusID          = metaFile.value("modid", -1).toInt();
   m_Version.parse(metaFile.value("version", "").toString());
   m_NewestVersion    = metaFile.value("newestVersion", "").toString();
@@ -135,6 +138,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("version", m_Version.canonicalString());
       metaFile.setValue("installationFile", m_InstallationFile);
       metaFile.setValue("repository", m_Repository);
+      metaFile.setValue("gameName", m_GameName);
       metaFile.setValue("modid", m_NexusID);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
@@ -185,7 +189,7 @@ bool ModInfoRegular::downgradeAvailable() const
 }
 
 
-void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
+void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant resultData)
 {
   QVariantMap result = resultData.toMap();
   setNewestVersion(VersionInfo(result["version"].toString()));
@@ -201,7 +205,7 @@ void ModInfoRegular::nxmDescriptionAvailable(int, QVariant, QVariant resultData)
 }
 
 
-void ModInfoRegular::nxmEndorsementToggled(int, QVariant, QVariant resultData)
+void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData)
 {
   m_EndorsedState = resultData.toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
   m_MetaInfoChanged = true;
@@ -210,7 +214,7 @@ void ModInfoRegular::nxmEndorsementToggled(int, QVariant, QVariant resultData)
 }
 
 
-void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString &errorMessage)
+void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
@@ -226,7 +230,7 @@ void ModInfoRegular::nxmRequestFailed(int, int, QVariant userData, const QString
 bool ModInfoRegular::updateNXMInfo()
 {
   if (m_NexusID > 0) {
-    m_NexusBridge.requestDescription(m_NexusID, QVariant());
+    m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
   return false;
@@ -387,7 +391,7 @@ bool ModInfoRegular::remove()
 void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == ENDORSED_TRUE)) {
-    m_NexusBridge.requestToggleEndorsement(getNexusID(), doEndorse, QVariant(1));
+    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), doEndorse, QVariant(1));
   }
 }
 

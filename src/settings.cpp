@@ -584,9 +584,9 @@ void Settings::resetDialogs()
 }
 
 
-void Settings::query(QWidget *parent)
+void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
-  SettingsDialog dialog(parent);
+  SettingsDialog dialog(pluginContainer, parent);
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 

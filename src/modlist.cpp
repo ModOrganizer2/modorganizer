@@ -53,13 +53,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 
-ModList::ModList(QObject *parent)
+ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   : QAbstractItemModel(parent)
   , m_Profile(nullptr)
   , m_NexusInterface(nullptr)
   , m_Modified(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
+  , m_PluginContainer(pluginContainer)
 {
   m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
@@ -219,9 +220,18 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int modID = modInfo->getNexusID();
       if (modID >= 0) {
         return modID;
-      } else {
+      }
+      else {
         return QVariant();
       }
+    } else if (column == COL_GAME) {
+      if (m_PluginContainer != nullptr) {
+        for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
+          if (game->gameShortName() == modInfo->getGameName())
+            return game->gameName();
+        }
+      }
+      return modInfo->getGameName();
     } else if (column == COL_CATEGORY) {
       if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
         return tr("Non-MO");
@@ -309,6 +319,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
   } else if (role == Qt::UserRole + 3) {
     return contentsToIcons(modInfo->getContents());
+  } else if (role == Qt::UserRole + 4) {
+    return modInfo->getGameName();
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -657,6 +669,11 @@ void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const
   m_Overwrite = overwrite;
   m_Overwritten = overwritten;
   notifyChange(0, rowCount() - 1);
+}
+
+void ModList::setPluginContainer(PluginContainer *pluginContianer)
+{
+  m_PluginContainer = pluginContianer;
 }
 
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)
@@ -1051,6 +1068,7 @@ QString ModList::getColumnName(int column)
     case COL_VERSION:  return tr("Version");
     case COL_PRIORITY: return tr("Priority");
     case COL_CATEGORY: return tr("Category");
+    case COL_GAME:     return tr("Source Game");
     case COL_MODID:    return tr("Nexus ID");
     case COL_INSTALLTIME: return tr("Installation");
     default: return tr("unknown");
@@ -1066,6 +1084,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_PRIORITY: return tr("Installation priority of your mod. The higher, the more \"important\" it is and thus "
                                  "overwrites files from mods with lower priority.");
     case COL_CATEGORY: return tr("Category of the mod.");
+    case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"

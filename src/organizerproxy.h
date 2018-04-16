@@ -5,13 +5,14 @@
 #include <imoinfo.h>
 
 class OrganizerCore;
+class PluginContainer;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
 
-  OrganizerProxy(OrganizerCore *organizer, const QString &pluginName);
+  OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName);
 
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
@@ -55,6 +56,7 @@ public:
 private:
 
   OrganizerCore *m_Proxied;
+  PluginContainer *m_PluginContainer;
 
   const QString &m_PluginName;
 

@@ -6,7 +6,7 @@
 #include <QApplication>
 #include <QDirIterator>
 
-ModInfoOverwrite::ModInfoOverwrite()
+ModInfoOverwrite::ModInfoOverwrite(PluginContainer *pluginContainer) : ModInfo(pluginContainer)
 {
   testValid();
 }

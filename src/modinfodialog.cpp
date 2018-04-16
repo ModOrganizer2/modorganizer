@@ -714,7 +714,7 @@ void ModInfoDialog::linkClicked(const QUrl &url)
 {
   //Ideally we'd ask the mod for the game and the web service then pass the game
   //and URL to the web service
-  if (NexusInterface::instance()->isURLGameRelated(url)) {
+  if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
     this->close();
     emit nexusLinkActivated(url.toString());
   } else {
@@ -860,7 +860,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
   if (modID != 0) {
-    QString nexusLink = NexusInterface::instance()->getModURL(modID);
+    QString nexusLink = NexusInterface::instance(m_PluginContainer)->getModURL(modID, m_ModInfo->getGameName());
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);

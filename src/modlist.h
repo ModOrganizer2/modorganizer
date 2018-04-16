@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class QSortFilterProxyModel;
+class PluginContainer;
 
 /**
  * Model presenting an overview of the installed mod
@@ -60,6 +61,7 @@ public:
     COL_CONTENT,
     COL_CATEGORY,
     COL_MODID,
+    COL_GAME,
     COL_VERSION,
     COL_INSTALLTIME,
     COL_PRIORITY,
@@ -76,7 +78,7 @@ public:
    * @brief constructor
    * @todo ensure this view works without a profile set, otherwise there are intransparent dependencies on the initialisation order
    **/
-  ModList(QObject *parent = nullptr);
+  ModList(PluginContainer *pluginContainer, QObject *parent = nullptr);
 
   ~ModList();
 
@@ -106,6 +108,7 @@ public:
   void changeModPriority(int sourceIndex, int newPriority);
 
   void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
+  void setPluginContainer(PluginContainer *pluginContainer);
 
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
@@ -328,6 +331,8 @@ private:
   std::map<ModInfo::EContent, std::tuple<QString, QString> > m_ContentIcons;
 
   QTime m_LastCheck;
+
+  PluginContainer *m_PluginContainer;
 
 };
 

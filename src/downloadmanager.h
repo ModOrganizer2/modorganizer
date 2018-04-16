@@ -38,6 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
+class PluginContainer;
 
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
@@ -162,6 +163,8 @@ public:
    */
   void setShowHidden(bool showHidden);
 
+  void setPluginContainer(PluginContainer *pluginContainer);
+
   /**
    * @brief download from an already open network connection
    *
@@ -179,7 +182,7 @@ public:
    * @param fileInfo information previously retrieved from the nexus network
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
+  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, QString gameName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
 
   /**
    * @brief start a download using a nxm-link
@@ -209,7 +212,7 @@ public:
    * @param index index of the pending download (index in the range [0, numPendingDownloads()[)
    * @return pair of modid, fileid
    */
-  std::pair<int, int> getPendingDownload(int index);
+  std::tuple<QString, int, int> getPendingDownload(int index);
 
   /**
    * @brief retrieve the full path to the download specified by index
@@ -411,15 +414,15 @@ public slots:
 
   void queryInfo(int index);
 
-  void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmFilesAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
@@ -462,7 +465,7 @@ private:
    * @param fileInfo information previously retrieved from the mod page
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QStringList &URLs, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(const QStringList &URLs, QString gameName, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = nullptr) const;
@@ -481,7 +484,7 @@ private:
 
   QDateTime matchDate(const QString &timeString);
 
-  void removePending(int modID, int fileID);
+  void removePending(QString gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);
 
@@ -493,7 +496,7 @@ private:
 
   NexusInterface *m_NexusInterface;
 
-  QVector<std::pair<int, int> > m_PendingDownloads;
+  QVector<std::tuple<QString, int, int>> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
 

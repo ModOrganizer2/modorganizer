@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imodinterface.h"
 #include "versioninfo.h"
 
+class PluginContainer;
+
 class QDateTime;
 class QDir;
 #include <QMutex>
@@ -115,6 +117,7 @@ public:
    **/
   static void updateFromDisc(const QString &modDirectory,
                              MOShared::DirectoryEntry **directoryStructure,
+                             PluginContainer *pluginContainer,
                              bool displayForeign,
                              MOBase::IPluginGame const *game);
 
@@ -176,19 +179,19 @@ public:
    * @param modIDs list of mods (Nexus Mod IDs) to check for updates
    * @return
    */
-  static void checkChunkForUpdate(const std::vector<int> &modIDs, QObject *receiver);
+  static void checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
    **/
-  static int checkAllForUpdate(QObject *receiver);
+  static int checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
   /**
    * @brief create a new mod from the specified directory and add it to the collection
    * @param dir directory to create from
    * @return pointer to the info-structure of the newly created/added mod
    */
-  static ModInfo::Ptr createFrom(const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFrom(PluginContainer *pluginContainer, QString gameName, const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
 
   /**
    * @brief create a new "foreign-managed" mod from a tuple of plugin and archives
@@ -196,7 +199,7 @@ public:
    * @param bsaNames names of archives
    * @return a new mod
    */
-  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
   /**
    * @brief retieve a name for one of the CONTENT_ enums
@@ -411,6 +414,13 @@ public:
   virtual int getNexusID() const = 0;
 
   /**
+  * @brief getter for the source game repository
+  *
+  * @return the source game repository. should default to the active game.
+  **/
+  virtual QString getGameName() const = 0;
+
+  /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
    *         needs to be user-modifiable. Can be < 0 to force a priority below user-modifable mods
    *         or INT_MAX to force priority above all user-modifiables
@@ -596,14 +606,14 @@ signals:
 
 protected:
 
-  ModInfo();
+  ModInfo(PluginContainer *pluginContainer);
 
   static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
 
 private:
 
-  static void createFromOverwrite();
+  static void createFromOverwrite(PluginContainer *pluginContainer);
 
 protected:
 

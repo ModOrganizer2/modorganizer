@@ -61,16 +61,16 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
 }
 
 
-ModInfo::Ptr ModInfo::createFrom(const QDir &dir, DirectoryEntry **directoryStructure)
+ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, QString gameName, const QDir &dir, DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
 //  int id = s_NextID++;
   static QRegExp backupExp(".*backup[0-9]*");
   ModInfo::Ptr result;
   if (backupExp.exactMatch(dir.dirName())) {
-    result = ModInfo::Ptr(new ModInfoBackup(dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, gameName, dir, directoryStructure));
   } else {
-    result = ModInfo::Ptr(new ModInfoRegular(dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, gameName, dir, directoryStructure));
   }
   s_Collection.push_back(result);
   return result;
@@ -80,10 +80,11 @@ ModInfo::Ptr ModInfo::createFromPlugin(const QString &modName,
                                        const QString &espName,
                                        const QStringList &bsaNames,
                                        ModInfo::EModType modType,
-                                       DirectoryEntry **directoryStructure) {
+                                       DirectoryEntry **directoryStructure,
+                                       PluginContainer *pluginContainer) {
   QMutexLocker locker(&s_Mutex);
   ModInfo::Ptr result = ModInfo::Ptr(
-      new ModInfoForeign(modName, espName, bsaNames, modType, directoryStructure));
+      new ModInfoForeign(modName, espName, bsaNames, modType, directoryStructure, pluginContainer));
   s_Collection.push_back(result);
   return result;
 }
@@ -105,11 +106,11 @@ QString ModInfo::getContentTypeName(int contentType)
   }
 }
 
-void ModInfo::createFromOverwrite()
+void ModInfo::createFromOverwrite(PluginContainer *pluginContainer)
 {
   QMutexLocker locker(&s_Mutex);
 
-  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite));
+  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer)));
 }
 
 unsigned int ModInfo::getNumMods()
@@ -207,6 +208,7 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 
 void ModInfo::updateFromDisc(const QString &modDirectory,
                              DirectoryEntry **directoryStructure,
+                             PluginContainer *pluginContainer,
                              bool displayForeign,
                              MOBase::IPluginGame const *game)
 {
@@ -219,7 +221,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     mods.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     QDirIterator modIter(mods);
     while (modIter.hasNext()) {
-      createFrom(QDir(modIter.next()), directoryStructure);
+      createFrom(pluginContainer, game->gameShortName(), QDir(modIter.next()), directoryStructure);
     }
   }
 
@@ -233,11 +235,12 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
                        unmanaged->referenceFile(modName).absoluteFilePath(),
                        unmanaged->secondaryFiles(modName),
                        modType,
-                       directoryStructure);
+                       directoryStructure,
+                       pluginContainer);
     }
   }
 
-  createFromOverwrite();
+  createFromOverwrite(pluginContainer);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 
@@ -259,21 +262,21 @@ void ModInfo::updateIndices()
 }
 
 
-ModInfo::ModInfo()
+ModInfo::ModInfo(PluginContainer *pluginContainer)
   : m_Valid(false), m_PrimaryCategory(-1)
 {
 }
 
 
-void ModInfo::checkChunkForUpdate(const std::vector<int> &modIDs, QObject *receiver)
+void ModInfo::checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName)
 {
   if (modIDs.size() != 0) {
-    NexusInterface::instance()->requestUpdates(modIDs, receiver, QVariant(), QString());
+    NexusInterface::instance(pluginContainer)->requestUpdates(modIDs, receiver, QVariant(), gameName, QString());
   }
 }
 
 
-int ModInfo::checkAllForUpdate(QObject *receiver)
+int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
 {
   // technically this should be 255 but those requests can take nexus fairly long, produce
   // large output and may have been the cause of issue #1166
@@ -284,20 +287,33 @@ int ModInfo::checkAllForUpdate(QObject *receiver)
 
   //I ought to store this, it's used elsewhere
   IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
-
   modIDs.push_back(game->nexusModOrganizerID());
+  checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
 
-  for (const ModInfo::Ptr &mod : s_Collection) {
+  std::multimap<QString, QSharedPointer<ModInfo>> organizedGames;
+  for (auto mod : s_Collection) {
     if (mod->canBeUpdated()) {
-      modIDs.push_back(mod->getNexusID());
-      if (modIDs.size() >= chunkSize) {
-        checkChunkForUpdate(modIDs, receiver);
-        modIDs.clear();
-      }
+      organizedGames.insert(std::pair<QString, QSharedPointer<ModInfo>>(mod->getGameName(), mod));
     }
   }
 
-  checkChunkForUpdate(modIDs, receiver);
+  QString currentGame = "";
+  for (auto game : organizedGames) {
+    if (currentGame != game.first) {
+      if (currentGame != "") {
+        checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
+        modIDs.clear();
+      }
+      currentGame = game.first;
+    }
+    modIDs.push_back(game.second->getNexusID());
+    if (modIDs.size() >= chunkSize) {
+      checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
+      modIDs.clear();
+    }
+  }
+
+  checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
 
   return result;
 }

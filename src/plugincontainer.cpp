@@ -1,4 +1,5 @@
 #include "plugincontainer.h"
+#include "organizercore.h"
 #include "organizerproxy.h"
 #include "report.h"
 #include <ipluginproxy.h>
@@ -67,7 +68,7 @@ bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
   if (plugin == nullptr) {
     return false;
-  } else if (!plugin->init(new OrganizerProxy(m_Organizer, plugin->name()))) {
+  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin->name()))) {
     qWarning("plugin failed to initialize");
     return false;
   }
