@@ -172,6 +172,7 @@ private slots:
   void hideTriggered();
   void unhideTriggered();
 
+  void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
   void on_saveButton_clicked();
   void on_activateESP_clicked();
