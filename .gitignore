@@ -12,6 +12,7 @@ stderr.log
 stdout.log
 vs_stderr.log
 vs_stdout.log
+msbuild.log
 build
 /vsbuild
 /CMakeFiles
