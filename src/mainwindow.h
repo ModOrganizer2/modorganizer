@@ -386,12 +386,16 @@ private slots:
   void showMessage(const QString &message);
   void showError(const QString &message);
 
+
   // main window actions
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
+
+  //modlist shortcuts
+  void openExplorer_activated();
 
   // modlist context menu
   void installMod_clicked();

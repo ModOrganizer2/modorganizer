@@ -150,6 +150,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 #include <QWidgetAction>
 #include <QWebEngineProfile>
+#include <QShortcut>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -368,6 +369,9 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
   connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
+  new QShortcut(QKeySequence(Qt::Key_Enter), this, SLOT(openExplorer_activated()));
+  new QShortcut(QKeySequence(Qt::Key_Return), this, SLOT(openExplorer_activated()));
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -2613,6 +2617,20 @@ void MainWindow::openExplorer_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
 
   ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openExplorer_activated()
+{
+	QItemSelectionModel *selection = ui->modList->selectionModel();
+	if (selection->hasSelection() && selection->selectedRows().count() == 1 && ui->modList->hasFocus()) {
+		
+		QModelIndex idx = selection->currentIndex();
+		ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+		if (modInfo->isRegular()) {
+			::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+		}
+			
+	}
 }
 
 void MainWindow::information_clicked()
