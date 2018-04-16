@@ -1238,17 +1238,19 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     if (virtualizedCwd || virtualizedBin) {
       if (virtualizedCwd) {
         int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-		 cwdPath = m_GamePlugin->dataDirectory().absolutePath();
-         if (cwdOffset >= 0)
-            cwdPath += cwdPath.mid(cwdOffset, -1);
-       
+        QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
+        cwdPath = m_GamePlugin->dataDirectory().absolutePath();
+        if (cwdOffset >= 0)
+          cwdPath += adjustedCwd;
+
       }
 
       if (virtualizedBin) {
         int binOffset = binPath.indexOf('/', modsPath.length() + 1);
+        QString adjustedBin = binPath.mid(binOffset, -1);
         binPath = m_GamePlugin->dataDirectory().absolutePath();
-		if (binOffset>= 0)
-			binPath += binPath.mid(binOffset, -1);
+        if (binOffset >= 0)
+          binPath += adjustedBin;
       }
 
       QString cmdline
