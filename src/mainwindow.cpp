@@ -150,6 +150,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWhatsThis>
 #include <QWidgetAction>
 #include <QWebEngineProfile>
+#include <QShortcut>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -368,6 +369,12 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
   connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
+  new QShortcut(QKeySequence(Qt::Key_Enter), this, SLOT(openExplorer_activated()));
+  new QShortcut(QKeySequence(Qt::Key_Return), this, SLOT(openExplorer_activated()));
+ 
+  new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
+
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -2457,13 +2464,28 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext()), this, SLOT(modOpenNext()), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev()), this, SLOT(modOpenPrev()), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
+	
+	//Open the tab first if we want to use the standard indexes of the tabs.
+	if (tab != -1) {
+		dialog.openTab(tab);
+	}
 
-    dialog.openTab(tab);
     dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+
+	//If no tab was specified use the first tab from the left based on the user order.
+	if (tab == -1) {
+		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
+			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
+				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
+				break;
+			}
+		}
+	}
+
     dialog.exec();
     m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
 
@@ -2504,7 +2526,7 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext()
+void MainWindow::modOpenNext(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
@@ -2515,13 +2537,13 @@ void MainWindow::modOpenNext()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenNext();
+    modOpenNext(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 
-void MainWindow::modOpenPrev()
+void MainWindow::modOpenPrev(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   int row = index.row() - 1;
@@ -2535,9 +2557,9 @@ void MainWindow::modOpenPrev()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenPrev();
+    modOpenPrev(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 
@@ -2598,6 +2620,49 @@ void MainWindow::openExplorer_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
 
   ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openExplorer_activated()
+{
+	if (ui->modList->hasFocus()) {
+		QItemSelectionModel *selection = ui->modList->selectionModel();
+		if (selection->hasSelection() && selection->selectedRows().count() == 1 ) {
+
+			QModelIndex idx = selection->currentIndex();
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+		}
+	}
+
+	if (ui->espList->hasFocus()) {
+		QItemSelectionModel *selection = ui->espList->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() == 1) {
+
+			QModelIndex idx = selection->currentIndex();
+			QString fileName = idx.data().toString();
+
+			
+
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+		}
+	}
+}
+
+void MainWindow::refreshProfile_activated()
+{
+	m_OrganizerCore.profileRefresh();
 }
 
 void MainWindow::information_clicked()
@@ -4522,7 +4587,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
   }
   if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
+    menu.addAction(tr("Lock load order"), this, SLOT(f()));
   }
 
   try {

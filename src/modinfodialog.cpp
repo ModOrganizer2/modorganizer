@@ -721,7 +721,6 @@ void ModInfoDialog::on_deactivateESP_clicked()
 
 void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 {
-  this->close();
   emit nexusLinkActivated(link);
 }
 
@@ -730,7 +729,7 @@ void ModInfoDialog::linkClicked(const QUrl &url)
   //Ideally we'd ask the mod for the game and the web service then pass the game
   //and URL to the web service
   if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
-    this->close();
+
     emit nexusLinkActivated(url.toString());
   } else {
     ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -957,6 +956,11 @@ bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
   return true;
 }
 
+
+void ModInfoDialog::on_openInExplorerButton_clicked()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
 
 void ModInfoDialog::deleteFile(const QModelIndex &index)
 {
@@ -1444,14 +1448,20 @@ void ModInfoDialog::on_endorseBtn_clicked()
 
 void ModInfoDialog::on_nextButton_clicked()
 {
-  emit modOpenNext();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenNext(tab);
+    this->accept();
 }
 
 void ModInfoDialog::on_prevButton_clicked()
 {
-  emit modOpenPrev();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenPrev(tab);
+    this->accept();
 }
 
 

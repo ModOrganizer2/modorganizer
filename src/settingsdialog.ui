@@ -890,6 +890,9 @@ tl;dr-version: If Nexus-features don't work, insert the current version number o
        </item>
        <item>
         <widget class="QCheckBox" name="hideUncheckedBox">
+   		 <property name="enabled">
+			<bool>false</bool>
+         </property>
          <property name="toolTip">
           <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
          </property>

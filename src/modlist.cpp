@@ -724,7 +724,6 @@ void ModList::highlightMods(const QItemSelection &selected, const MOShared::Dire
 
     const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
     if (fileEntry.get() != nullptr) {
-      QString fileName;
       bool archive = false;
       std::vector<std::pair<int, std::wstring>> origins;
       {

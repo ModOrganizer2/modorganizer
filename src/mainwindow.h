@@ -217,7 +217,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = 0);
+  void displayModInformation(int row, int tab = -1);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
@@ -386,12 +386,17 @@ private slots:
   void showMessage(const QString &message);
   void showError(const QString &message);
 
+
   // main window actions
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
+
+  //modlist shortcuts
+  void openExplorer_activated();
+  void refreshProfile_activated();
 
   // modlist context menu
   void installMod_clicked();
@@ -469,8 +474,8 @@ private slots:
   void deselectFilters();
 
   void displayModInformation(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
+  void modOpenNext(int tab=-1);
+  void modOpenPrev(int tab=-1);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

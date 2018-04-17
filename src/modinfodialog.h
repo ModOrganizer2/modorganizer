@@ -112,8 +112,8 @@ signals:
   void nexusLinkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
+  void modOpenNext(int tab=-1);
+  void modOpenPrev(int tab=-1);
   void originModified(int originID);
   void endorseMod(ModInfo::Ptr nexusID);
 
@@ -172,6 +172,7 @@ private slots:
   void hideTriggered();
   void unhideTriggered();
 
+  void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
   void on_saveButton_clicked();
   void on_activateESP_clicked();
