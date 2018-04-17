@@ -372,6 +372,9 @@ MainWindow::MainWindow(QSettings &initSettings
 
   new QShortcut(QKeySequence(Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::Key_Return), this, SLOT(openExplorer_activated()));
+ 
+  new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
+
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -2621,18 +2624,45 @@ void MainWindow::openExplorer_clicked()
 
 void MainWindow::openExplorer_activated()
 {
-	QItemSelectionModel *selection = ui->modList->selectionModel();
-	if (selection->hasSelection() && selection->selectedRows().count() == 1 && ui->modList->hasFocus()) {
-		
-		QModelIndex idx = selection->currentIndex();
-		ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-		std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-		
-		if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-			::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+	if (ui->modList->hasFocus()) {
+		QItemSelectionModel *selection = ui->modList->selectionModel();
+		if (selection->hasSelection() && selection->selectedRows().count() == 1 ) {
+
+			QModelIndex idx = selection->currentIndex();
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
 		}
-			
 	}
+
+	if (ui->espList->hasFocus()) {
+		QItemSelectionModel *selection = ui->espList->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() == 1) {
+
+			QModelIndex idx = selection->currentIndex();
+			QString fileName = idx.data().toString();
+
+			
+
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+		}
+	}
+}
+
+void MainWindow::refreshProfile_activated()
+{
+	m_OrganizerCore.profileRefresh();
 }
 
 void MainWindow::information_clicked()
@@ -4557,7 +4587,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
   }
   if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
+    menu.addAction(tr("Lock load order"), this, SLOT(f()));
   }
 
   try {

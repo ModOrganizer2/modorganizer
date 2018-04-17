@@ -396,6 +396,7 @@ private slots:
 
   //modlist shortcuts
   void openExplorer_activated();
+  void refreshProfile_activated();
 
   // modlist context menu
   void installMod_clicked();
