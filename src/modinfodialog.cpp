@@ -92,6 +92,21 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->modIDEdit->setValidator(new QIntValidator(modIDEdit));
   ui->modIDEdit->setText(QString("%1").arg(modInfo->getNexusID()));
 
+  ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
+  if (organizerCore->managedGame()->validShortNames().size() == 0) {
+    ui->sourceGameEdit->setDisabled(true);
+  } else {
+    for (auto game : pluginContainer->plugins<IPluginGame>()) {
+      for (QString gameName : organizerCore->managedGame()->validShortNames()) {
+        if (game->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+          ui->sourceGameEdit->addItem(game->gameName(), game->gameShortName());
+          break;
+        }
+      }
+    }
+  }
+  ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(m_ModInfo->getGameName()));
+
   ui->notesEdit->setText(modInfo->notes());
 
   ui->descriptionView->setPage(new DescriptionPage);
@@ -897,6 +912,16 @@ void ModInfoDialog::on_modIDEdit_editingFinished()
     if (modID != 0) {
       m_RequestStarted = false;
       refreshNexusData(modID);
+    }
+  }
+}
+
+void ModInfoDialog::on_sourceGameEdit_currentIndexChanged(int)
+{
+  for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
+    if (game->gameName() == ui->sourceGameEdit->currentText()) {
+      m_ModInfo->setGameName(game->gameShortName());
+      return;
     }
   }
 }

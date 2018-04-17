@@ -319,6 +319,12 @@ void ModInfoRegular::setNotes(const QString &notes)
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::setGameName(QString gameName)
+{
+  m_GameName = gameName;
+  m_MetaInfoChanged = true;
+}
+
 void ModInfoRegular::setNexusID(int modID)
 {
   m_NexusID = modID;

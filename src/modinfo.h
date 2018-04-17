@@ -268,6 +268,13 @@ public:
   virtual void setNotes(const QString &notes) = 0;
 
   /**
+  * @brief set/change the source game of this mod
+  *
+  * @param gameName the source game shortName
+  */
+  virtual void setGameName(QString gameName) = 0;
+
+  /**
    * @brief set/change the nexus mod id of this mod
    *
    * @param modID the nexus mod id

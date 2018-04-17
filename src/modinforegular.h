@@ -94,6 +94,13 @@ public:
   void setNotes(const QString &notes);
 
   /**
+   * @brief set/change the source game of this mod
+   *
+   * @param gameName the source game shortName
+   */
+  void setGameName(QString gameName);
+
+  /**
    * @brief set/change the nexus mod id of this mod
    *
    * @param modID the nexus mod id

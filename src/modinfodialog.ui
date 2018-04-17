@@ -110,19 +110,19 @@
          </item>
          <item>
           <widget class="QLabel" name="label_5">
-		   <property name="enabled">
+           <property name="enabled">
             <bool>false</bool>
-           </property>						
+           </property>
            <property name="text">
-           <string>Ini Tweaks *This feature is non-functional*</string>
+            <string>Ini Tweaks *This feature is non-functional*</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QListWidget" name="iniTweaksList">
-			<property name="enabled">
+           <property name="enabled">
             <bool>false</bool>
-           </property>						
+           </property>
            <property name="maximumSize">
             <size>
              <width>228</width>
@@ -238,8 +238,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>28</height>
+            <width>676</width>
+            <height>126</height>
            </rect>
           </property>
           <property name="toolTip">
@@ -490,7 +490,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <widget class="QTreeWidget" name="overwrittenTree">
          <property name="contextMenuPolicy">
-           <enum>Qt::CustomContextMenu</enum>
+          <enum>Qt::CustomContextMenu</enum>
          </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
@@ -502,7 +502,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
           <bool>true</bool>
          </property>
          <property name="columnCount">
-            <number>2</number>
+          <number>2</number>
          </property>
          <attribute name="headerDefaultSectionSize">
           <number>365</number>
@@ -612,6 +612,36 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Mod ID for this mod on Nexus. This is filled in automatically if you downloaded and installed the mod from inside MO. Otherwise you can enter it manually. To find the correct id, find the mod on nexus. The URL will look like this: &lt;/span&gt;&lt;a href=&quot; http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; text-decoration: underline; color:#0000ff;&quot;&gt;http://skyrim.nexusmods.com/downloads/file.php?id=1334&lt;/span&gt;&lt;/a&gt;&lt;a href=&quot;http://www.skyrimnexus.com/downloads/file.php?id=1334&quot;&gt;&lt;span style=&quot; font-size:8pt; color:#000000;&quot;&gt;. In this example, 1334 is the id you're looking for. Besides: The above is the link to Mod Organizer on the Nexus. Why not go there now and endorse?&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>10</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Source Game</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+           <widget class="QComboBox" name="sourceGameEdit">
+             <property name="toolTip">
+               <string>Mod ID for this mod on Nexus.</string>
+             </property>
+           </widget>
          </item>
          <item>
           <spacer name="horizontalSpacer_3">
@@ -819,9 +849,9 @@ p, li { white-space: pre-wrap; }
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QQuickWidget</class>
+   <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header>QtQuickWidgets/QQuickWidget</header>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
   </customwidget>
  </customwidgets>
  <resources>

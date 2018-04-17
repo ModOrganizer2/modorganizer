@@ -14,6 +14,7 @@ public:
   virtual bool updateIgnored() const { return false; }
   virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
+  virtual void setGameName(QString) {}
   virtual void setNexusID(int) {}
   virtual void endorse(bool) {}
   virtual int getFixedPriority() const { return -1; }

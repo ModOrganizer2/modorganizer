@@ -179,6 +179,7 @@ private slots:
   void on_saveTXTButton_clicked();
   void on_visitNexusLabel_linkActivated(const QString &link);
   void on_modIDEdit_editingFinished();
+  void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
   void on_iniFileView_textChanged();
   void on_textFileView_textChanged();
