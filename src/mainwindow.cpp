@@ -2464,8 +2464,8 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext()), this, SLOT(modOpenNext()), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev()), this, SLOT(modOpenPrev()), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 	
@@ -2526,7 +2526,7 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext()
+void MainWindow::modOpenNext(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
@@ -2537,13 +2537,13 @@ void MainWindow::modOpenNext()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenNext();
+    modOpenNext(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 
-void MainWindow::modOpenPrev()
+void MainWindow::modOpenPrev(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   int row = index.row() - 1;
@@ -2557,9 +2557,9 @@ void MainWindow::modOpenPrev()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenPrev();
+    modOpenPrev(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 

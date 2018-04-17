@@ -474,8 +474,8 @@ private slots:
   void deselectFilters();
 
   void displayModInformation(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
+  void modOpenNext(int tab=-1);
+  void modOpenPrev(int tab=-1);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

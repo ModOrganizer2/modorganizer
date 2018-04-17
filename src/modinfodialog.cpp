@@ -1448,14 +1448,20 @@ void ModInfoDialog::on_endorseBtn_clicked()
 
 void ModInfoDialog::on_nextButton_clicked()
 {
-  emit modOpenNext();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenNext(tab);
+    this->accept();
 }
 
 void ModInfoDialog::on_prevButton_clicked()
 {
-  emit modOpenPrev();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenPrev(tab);
+    this->accept();
 }
 
 
