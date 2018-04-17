@@ -2626,7 +2626,9 @@ void MainWindow::openExplorer_activated()
 		
 		QModelIndex idx = selection->currentIndex();
 		ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-		if (modInfo->isRegular()) {
+		std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+		
+		if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
 			::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 		}
 			
