@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include <QMessageBox>
 #include <QMenu>
+#include <QShortcut>
 #include <Shlwapi.h>
 
 
@@ -89,6 +90,9 @@ OverwriteInfoDialog::OverwriteInfoDialog(ModInfo::Ptr modInfo, QWidget *parent)
   m_RenameAction = new QAction(tr("&Rename"), ui->filesView);
   m_OpenAction = new QAction(tr("&Open"), ui->filesView);
   m_NewFolderAction = new QAction(tr("&New Folder"), ui->filesView);
+
+  new QShortcut(QKeySequence::Delete, this, SLOT(delete_activated()));
+
   QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
   QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
   QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
@@ -145,6 +149,36 @@ void OverwriteInfoDialog::deleteFile(const QModelIndex &index)
   }
 }
 
+void OverwriteInfoDialog::delete_activated()
+{
+	if (ui->filesView->hasFocus()) {
+		QItemSelectionModel *selection = ui->filesView->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
+
+			if (selection->selectedRows().count() == 0) {
+				return;
+			}
+			else if (selection->selectedRows().count() == 1) {
+				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+			else {
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+
+			foreach(QModelIndex index, selection->selectedRows()) {
+				deleteFile(index);
+			}
+		}
+	}
+}
 
 void OverwriteInfoDialog::deleteTriggered()
 {

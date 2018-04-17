@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QPointer>
 #include <QFileDialog>
+#include <QShortcut>
 
 #include <Shlwapi.h>
 
@@ -117,6 +118,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   //TODO: No easy way to delegate links
   //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
+
+  new QShortcut(QKeySequence::Delete, this, SLOT(delete_activated()));
 
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));
@@ -973,6 +976,36 @@ void ModInfoDialog::deleteFile(const QModelIndex &index)
   }
 }
 
+void ModInfoDialog::delete_activated()
+{
+	if (ui->fileTree->hasFocus()) {
+		QItemSelectionModel *selection = ui->fileTree->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
+
+			if (selection->selectedRows().count() == 0) {
+				return;
+			}
+			else if (selection->selectedRows().count() == 1) {
+				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+			else {
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+
+			foreach(QModelIndex index, selection->selectedRows()) {
+				deleteFile(index);
+			}
+		}
+	}
+}
 
 void ModInfoDialog::deleteTriggered()
 {

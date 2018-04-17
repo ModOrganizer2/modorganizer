@@ -165,6 +165,8 @@ private slots:
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
 
+  void delete_activated();
+
   void deleteTriggered();
   void renameTriggered();
   void openTriggered();

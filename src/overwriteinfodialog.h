@@ -49,6 +49,8 @@ private:
 
 private slots:
 
+  void delete_activated();
+
   void deleteTriggered();
   void renameTriggered();
   void openTriggered();
