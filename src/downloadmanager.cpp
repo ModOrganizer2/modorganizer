@@ -738,6 +738,20 @@ void DownloadManager::queryInfo(int index)
       return;
     }
   }
+
+  if (info->m_FileInfo->gameName.size() == 0) {
+    SelectionDialog selection(tr("Please select the source game code for %1").arg(getFileName(index)));
+
+    std::vector<std::pair<QString, QString>> choices = m_NexusInterface->getGameChoices(m_ManagedGame);
+    for (auto choice : choices) {
+      selection.addChoice(choice.first, choice.second, choice.first);
+    }
+    if (selection.exec() == QDialog::Accepted) {
+      info->m_FileInfo->gameName = selection.getChoiceData().toString();
+    } else {
+      info->m_FileInfo->gameName = m_ManagedGame->gameShortName();
+    }
+  }
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO);
 }
@@ -1204,13 +1218,11 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
-      // we receive some names html-encoded. This is used to decode it
-      QTextDocument doc;
-      doc.setHtml(fileInfo["modName"].toString());
-      info->m_FileInfo->modName = doc.toPlainText();
       info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
+      info->m_FileInfo->fileName = fileInfo["uri"].toString();
+      info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["description"].toString());
       found = true;
       break;
     }

@@ -270,6 +270,21 @@ QString NexusInterface::getModURL(int modID, QString gameName = "") const
   return QString("%1/mods/%2").arg(getGameURL(gameName)).arg(modID);
 }
 
+std::vector<std::pair<QString, QString>> NexusInterface::getGameChoices(const MOBase::IPluginGame *game)
+{
+  std::vector<std::pair<QString, QString>> choices;
+  choices.push_back(std::pair<QString, QString>(game->gameShortName(), game->gameName()));
+  for (QString gameName : game->validShortNames()) {
+    for (auto gamePlugin : m_PluginContainer->plugins<IPluginGame>()) {
+      if (gamePlugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+        choices.push_back(std::pair<QString, QString>(gamePlugin->gameShortName(), gamePlugin->gameName()));
+        break;
+      }
+    }
+  }
+  return choices;
+}
+
 bool NexusInterface::isModURL(int modID, const QString &url) const
 {
   if (QUrl(url) == QUrl(getModURL(modID))) {
@@ -291,11 +306,11 @@ int NexusInterface::requestDescription(QString gameName, int modID, QObject *rec
   NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmDescriptionAvailable(QString,int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -349,11 +364,11 @@ int NexusInterface::requestFiles(QString gameName, int modID, QObject *receiver,
 {
   NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
-  connect(this, SIGNAL(nxmFilesAvailable(QString,int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmFilesAvailable(QString,int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmFilesAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmFilesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -404,11 +419,11 @@ int NexusInterface::requestToggleEndorsement(QString gameName, int modID, bool e
   requestInfo.m_Endorse = endorse;
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmEndorsementToggled(QString,int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;

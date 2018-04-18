@@ -288,6 +288,8 @@ public:
    */
   void loginCompleted();
 
+  std::vector<std::pair<QString, QString>> getGameChoices(const MOBase::IPluginGame *game);
+
 public:
 
   /**
