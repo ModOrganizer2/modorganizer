@@ -98,6 +98,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCursor>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDirIterator>
 #include <QDragEnterEvent>
@@ -318,6 +319,11 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->groupCombo->installEventFilter(noWheel);
   ui->profileBox->installEventFilter(noWheel);
+
+  if (organizerCore.managedGame()->sortMechanism() == MOBase::IPluginGame::SortMechanism::NONE) {
+    ui->bossButton->setDisabled(true);
+    ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
+  }
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -667,6 +673,7 @@ size_t MainWindow::checkForProblems()
 void MainWindow::about()
 {
   AboutDialog dialog(m_OrganizerCore.getVersion().displayString(), this);
+  connect(&dialog, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
   dialog.exec();
 }
 
@@ -1008,8 +1015,7 @@ void MainWindow::modPagePluginInvoke()
       m_IntegratedBrowser.setWindowTitle(plugin->displayName());
       m_IntegratedBrowser.openUrl(plugin->pageURL());
     } else {
-      ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(),
-                      nullptr, nullptr, SW_SHOWNORMAL);
+      QDesktopServices::openUrl(QUrl(plugin->pageURL()));
     }
   }
 }
@@ -1894,12 +1900,12 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://wiki.step-project.com/Guide:Mod_Organizer", nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl("http://wiki.step-project.com/Guide:Mod_Organizer"));
 }
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://github.com/Modorganizer2/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl("http://github.com/Modorganizer2/modorganizer/issues"));
 }
 
 void MainWindow::tutorialTriggered()
@@ -2461,7 +2467,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   } else {
     modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer,this);
-    connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
+    connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
@@ -2599,7 +2605,7 @@ void MainWindow::visitOnNexus_clicked()
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
   QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
   if (modID > 0)  {
-    nexusLinkActivated(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+    linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }
@@ -3746,22 +3752,13 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  ::ShellExecuteW(nullptr, L"open",
-                  NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName()).toStdWString().c_str(),
-                  nullptr, nullptr, SW_SHOWNORMAL);
-}
-
-
-void MainWindow::nexusLinkActivated(const QString &link)
-{
-  ::ShellExecuteW(nullptr, L"open", ToWString(link).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-  ui->tabWidget->setCurrentIndex(4);
+  QDesktopServices::openUrl(QUrl(NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())));
 }
 
 
 void MainWindow::linkClicked(const QString &url)
 {
-  ::ShellExecuteW(nullptr, L"open", ToWString(url).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl(url));
 }
 
 

@@ -109,7 +109,7 @@ public:
 signals:
 
   void thumbnailClickedSignal(const QString &filename);
-  void nexusLinkActivated(const QString &link);
+  void linkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
   void modOpenNext(int tab=-1);
@@ -164,6 +164,7 @@ private slots:
 
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
+  void linkClicked(QString url);
 
   void delete_activated();
 

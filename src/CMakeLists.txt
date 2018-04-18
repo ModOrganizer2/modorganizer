@@ -30,6 +30,7 @@ SET(organizer_SRCS
     motddialog.cpp
     modlistsortproxy.cpp
     modlist.cpp
+    modidlineedit.cpp
     modinfodialog.cpp
     modinfo.cpp
     modinfobackup.cpp
@@ -120,6 +121,7 @@ SET(organizer_HDRS
     motddialog.h
     modlistsortproxy.h
     modlist.h
+    modidlineedit.h
     modinfodialog.h
     modinfo.h
     modinfobackup.h

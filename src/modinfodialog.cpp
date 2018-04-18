@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "descriptionpage.h"
 #include "mainwindow.h"
 
+#include "modidlineedit.h"
 #include "iplugingame.h"
 #include "nexusinterface.h"
 #include "report.h"
@@ -92,6 +93,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   ui->modIDEdit->setValidator(new QIntValidator(modIDEdit));
   ui->modIDEdit->setText(QString("%1").arg(modInfo->getNexusID()));
+
+  connect(ui->modIDEdit, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
 
   ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
   if (organizerCore->managedGame()->validShortNames().size() == 0) {
@@ -724,7 +727,7 @@ void ModInfoDialog::on_deactivateESP_clicked()
 
 void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 {
-  emit nexusLinkActivated(link);
+  emit linkActivated(link);
 }
 
 void ModInfoDialog::linkClicked(const QUrl &url)
@@ -733,10 +736,15 @@ void ModInfoDialog::linkClicked(const QUrl &url)
   //and URL to the web service
   if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
 
-    emit nexusLinkActivated(url.toString());
+    emit linkActivated(url.toString());
   } else {
     ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   }
+}
+
+void ModInfoDialog::linkClicked(QString url)
+{
+  emit linkActivated(url);
 }
 
 

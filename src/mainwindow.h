@@ -443,7 +443,6 @@ private slots:
 
   // nexus related
   void checkModsForUpdates();
-  void nexusLinkActivated(const QString &link);
 
   void loginFailed(const QString &message);
 

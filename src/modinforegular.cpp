@@ -459,7 +459,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       if (dir.exists(sePluginPath))
         m_CachedContent.push_back(CONTENT_SKSE);
     }
-    if (dir.exists("textures"))
+    if (dir.exists("textures") || dir.exists("icons") || dir.exists("bookart"))
       m_CachedContent.push_back(CONTENT_TEXTURE);
     if (dir.exists("meshes"))
       m_CachedContent.push_back(CONTENT_MESH);
