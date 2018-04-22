@@ -79,6 +79,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   DownloadInfo *info = new DownloadInfo;
 
   QString metaFileName = filePath + ".meta";
+  if (!QFile(metaFileName).exists()) return nullptr;
   QSettings metaFile(metaFileName, QSettings::IniFormat);
   if (!showHidden && metaFile.value("removed", false).toBool()) {
     return nullptr;
@@ -937,8 +938,8 @@ void DownloadManager::markInstalled(QString fileName)
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("installed", true);
       metaFile.setValue("uninstalled", false);
+      delete info;
     }
-    delete info;
   }
 }
 
@@ -972,8 +973,8 @@ void DownloadManager::markUninstalled(QString fileName)
     if (info != nullptr) {
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("uninstalled", true);
+      delete info;
     }
-    delete info;
   }
 }
 
