@@ -645,7 +645,7 @@ void NexusInterface::managedGameChanged(IPluginGame const *game)
 namespace {
   QString get_management_url(MOBase::IPluginGame const *game)
   {
-    return "http://nmm.nexusmods.com/" + game->gameNexusName().toLower();
+    return "https://nmm.nexusmods.com/" + game->gameNexusName().toLower();
   }
 }
 

@@ -42,7 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 namespace {
-  QString const Nexus_Management_URL("http://nmm.nexusmods.com");
+  QString const Nexus_Management_URL("https://nmm.nexusmods.com");
 }
 
 // unfortunately Nexus doesn't seem to document these states, all I know is all these listed
