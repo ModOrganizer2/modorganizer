@@ -254,14 +254,14 @@ QString NexusInterface::getGameURL(QString gameName) const
 {
   IPluginGame *game = getGame(gameName);
   if (game != nullptr) {
-    return "http://www.nexusmods.com/" + game->gameNexusName().toLower();
+    return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
   }
-  return "http://www.nexusmods.com/" + m_Game->gameNexusName().toLower();
+  return "https://www.nexusmods.com/" + m_Game->gameNexusName().toLower();
 }
 
 QString NexusInterface::getOldModsURL() const
 {
-  return "http://" + m_Game->gameNexusName().toLower() + ".nexusmods.com/mods";
+  return "https://" + m_Game->gameNexusName().toLower() + ".nexusmods.com/mods";
 }
 
 
