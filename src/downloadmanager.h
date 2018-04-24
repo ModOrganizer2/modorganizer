@@ -93,7 +93,7 @@ private:
     bool m_Hidden;
 
     static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden);
+    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden, const QString outputDirectory);
 
     /**
      * @brief rename the file

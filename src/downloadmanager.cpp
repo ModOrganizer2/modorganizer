@@ -74,12 +74,13 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   return info;
 }
 
-DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(const QString &filePath, bool showHidden)
+DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(const QString &filePath, bool showHidden, const QString outputDirectory)
 {
   DownloadInfo *info = new DownloadInfo;
 
   QString metaFileName = filePath + ".meta";
-  if (!QFile(metaFileName).exists()) return nullptr;
+  QFileInfo metaFileInfo(metaFileName);
+  if (QDir::fromNativeSeparators(metaFileInfo.path()).compare(QDir::fromNativeSeparators(outputDirectory), Qt::CaseInsensitive) != 0) return nullptr;
   QSettings metaFile(metaFileName, QSettings::IniFormat);
   if (!showHidden && metaFile.value("removed", false).toBool()) {
     return nullptr;
@@ -322,7 +323,7 @@ void DownloadManager::refreshList()
 
       QString fileName = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + file;
 
-      DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden);
+      DownloadInfo *info = DownloadInfo::createFromMeta(fileName, m_ShowHidden, m_OutputDirectory);
       if (info != nullptr) {
         m_ActiveDownloads.push_front(info);
       }
@@ -945,7 +946,7 @@ void DownloadManager::markInstalled(QString fileName)
 
 DownloadManager::DownloadInfo* DownloadManager::getDownloadInfo(QString fileName)
 {
-  return DownloadInfo::createFromMeta(fileName, true);
+  return DownloadInfo::createFromMeta(fileName, true, m_OutputDirectory);
 }
 
 void DownloadManager::markUninstalled(int index)
