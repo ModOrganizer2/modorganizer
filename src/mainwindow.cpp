@@ -376,8 +376,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
   connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
 
-  new QShortcut(QKeySequence(Qt::Key_Enter), this, SLOT(openExplorer_activated()));
-  new QShortcut(QKeySequence(Qt::Key_Return), this, SLOT(openExplorer_activated()));
+  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
+  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
  
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
