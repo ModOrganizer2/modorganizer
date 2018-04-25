@@ -436,14 +436,14 @@ bool ModList::renameMod(int index, const QString &newName)
     return false;
   }
 
-  if (ModList::allMods().contains(newName,Qt::CaseInsensitive)) {
+  if (ModList::allMods().contains(nameFixed, Qt::CaseInsensitive) && nameFixed.toLower()!=ModInfo::getByIndex(index)->name().toLower() ) {
 	  MessageDialog::showMessage(tr("Name is already in use by another mod"), nullptr);
 	  return false;
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  if (newName != oldName) {
+  if (nameFixed != oldName) {
     // before we rename, ensure there is no scheduled asynchronous to rewrite
     m_Profile->cancelModlistWrite();
 
@@ -1211,4 +1211,3 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   }
   return QAbstractItemModel::eventFilter(obj, event);
 }
-
