@@ -1,7 +1,6 @@
 #include "modinforegular.h"
 
 #include "categories.h"
-#include "iplugingame.h"
 #include "messagedialog.h"
 #include "report.h"
 #include "scriptextender.h"
@@ -24,12 +23,13 @@ namespace {
   }
 }
 
-ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, QString gameName, const QDir &path, DirectoryEntry **directoryStructure)
+ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGame *game, const QDir &path, DirectoryEntry **directoryStructure)
   : ModInfoWithConflictInfo(pluginContainer, directoryStructure)
-  , m_GameName(gameName)
   , m_Name(path.dirName())
   , m_Path(path.absolutePath())
   , m_Repository()
+  , m_GameName(game->gameShortName())
+  , m_IsAlternate(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
@@ -38,6 +38,8 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, QString gameNam
   m_CreationTime = QFileInfo(path.absolutePath()).created();
   // read out the meta-file for information
   readMeta();
+  if (m_GameName.compare(game->gameShortName(), Qt::CaseInsensitive) != 0)
+    m_IsAlternate = true;
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
@@ -73,7 +75,7 @@ void ModInfoRegular::readMeta()
   QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
   m_Notes            = metaFile.value("notes", "").toString();
   QString tempGameName = metaFile.value("gameName", m_GameName).toString();
-  if (tempGameName != "") m_GameName = tempGameName;
+  if (tempGameName.size()) m_GameName = tempGameName;
   m_NexusID          = metaFile.value("modid", -1).toInt();
   m_Version.parse(metaFile.value("version", "").toString());
   m_NewestVersion    = metaFile.value("newestVersion", "").toString();
@@ -432,6 +434,9 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   }
   if (m_PluginSelected) {
     result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
+  }
+  if (m_IsAlternate) {
+    result.push_back(ModInfo::FLAG_ALTERNATE_GAME);
   }
   return result;
 }

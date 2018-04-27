@@ -2,7 +2,6 @@
 #define MODINFOREGULAR_H
 
 #include "modinfowithconflictinfo.h"
-
 #include "nexusinterface.h"
 
 /**
@@ -26,6 +25,8 @@ public:
   virtual bool isRegular() const { return true; }
 
   virtual bool isEmpty() const;
+
+  bool isAlternate() { return m_IsAlternate; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -329,7 +330,7 @@ private slots:
 
 protected:
 
-  ModInfoRegular(PluginContainer *pluginContainer, QString gameName, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 private:
 
@@ -349,6 +350,7 @@ private:
   std::set<std::pair<int, int>> m_InstalledFileIDs;
 
   bool m_MetaInfoChanged;
+  bool m_IsAlternate;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
 #include "settings.h"
+#include "modinforegular.h"
 #include <appconfig.h>
 #include <utility.h>
 #include <report.h>
@@ -149,6 +150,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("Alternate game source");
     default: return "";
   }
 }
@@ -758,6 +760,11 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
     }
     if (modInfo->isValid()) {
       result |= IModList::STATE_VALID;
+    }
+    if (modInfo->isRegular()) {
+      QSharedPointer<ModInfoRegular> modInfoRegular = modInfo.staticCast<ModInfoRegular>();
+      if (modInfoRegular->isAlternate())
+        result |= IModList::STATE_ALTERNATE;
     }
     if (modInfo->canBeEnabled()) {
       if (m_Profile->modEnabled(modIndex)) {

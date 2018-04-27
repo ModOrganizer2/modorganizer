@@ -819,7 +819,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.endArray();
   }
 
-  return ModInfo::createFrom(m_PluginContainer, m_GamePlugin->gameShortName(), QDir(targetDirectory), &m_DirectoryStructure)
+  return ModInfo::createFrom(m_PluginContainer, m_GamePlugin, QDir(targetDirectory), &m_DirectoryStructure)
       .data();
 }
 

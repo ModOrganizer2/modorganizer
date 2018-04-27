@@ -70,7 +70,8 @@ public:
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
     FLAG_CONFLICT_REDUNDANT,
-    FLAG_PLUGIN_SELECTED
+    FLAG_PLUGIN_SELECTED,
+    FLAG_ALTERNATE_GAME
   };
 
   enum EContent {
@@ -191,7 +192,7 @@ public:
    * @param dir directory to create from
    * @return pointer to the info-structure of the newly created/added mod
    */
-  static ModInfo::Ptr createFrom(PluginContainer *pluginContainer, QString gameName, const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
 
   /**
    * @brief create a new "foreign-managed" mod from a tuple of plugin and archives

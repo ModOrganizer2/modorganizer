@@ -33,7 +33,7 @@ public:
 
 private:
 
-  ModInfoBackup(PluginContainer *pluginContainer, QString gameName, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoBackup(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 };
 

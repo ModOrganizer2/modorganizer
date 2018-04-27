@@ -61,16 +61,16 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
 }
 
 
-ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, QString gameName, const QDir &dir, DirectoryEntry **directoryStructure)
+ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
 //  int id = s_NextID++;
   static QRegExp backupExp(".*backup[0-9]*");
   ModInfo::Ptr result;
   if (backupExp.exactMatch(dir.dirName())) {
-    result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, gameName, dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, game, dir, directoryStructure));
   } else {
-    result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, gameName, dir, directoryStructure));
+    result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));
   }
   s_Collection.push_back(result);
   return result;
@@ -221,7 +221,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     mods.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     QDirIterator modIter(mods);
     while (modIter.hasNext()) {
-      createFrom(pluginContainer, game->gameShortName(), QDir(modIter.next()), directoryStructure);
+      createFrom(pluginContainer, game, QDir(modIter.next()), directoryStructure);
     }
   }
 
