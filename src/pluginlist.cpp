@@ -485,6 +485,25 @@ int PluginList::enabledCount() const
   return enabled;
 }
 
+int PluginList::getIndexPriority(int index) const
+{
+  int numESLs = 0;
+  std::vector<ESPInfo> sortESPs(m_ESPs);
+  std::sort(sortESPs.begin(), sortESPs.end());
+  for (auto sortedESP : sortESPs) {
+    if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
+      break;
+    if ((sortedESP.m_IsLight || sortedESP.m_IsLightFlagged) && sortedESP.m_LoadOrder != -1)
+      ++numESLs;
+  }
+  if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
+    int ESLpos = 254 + ((numESLs + 1) / 2048);
+    return ESLpos + (numESLs % 2048);
+  } else {
+    return m_ESPs[index].m_LoadOrder - numESLs;
+  }
+}
+
 bool PluginList::isESPLocked(int index) const
 {
   return m_LockedOrder.find(m_ESPs.at(index).m_Name.toLower()) != m_LockedOrder.end();
@@ -802,8 +821,8 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
               ++numESLs;
           }
           if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
-            int ESLpos = 254 + ((numESLs+1) / 4096);
-            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs)%4096).toUpper();
+            int ESLpos = 254 + ((numESLs+1) / 2048);
+            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs)%2048, 3, 16, QChar('0')).toUpper();
           } else {
             return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
           }

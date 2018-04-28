@@ -194,6 +194,7 @@ public:
 
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
+  int getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
 
