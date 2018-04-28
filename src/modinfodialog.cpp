@@ -96,6 +96,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   connect(ui->modIDEdit, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
 
+  QString gameName = modInfo->getGameName();
   ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
   if (organizerCore->managedGame()->validShortNames().size() == 0) {
     ui->sourceGameEdit->setDisabled(true);
@@ -109,7 +110,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       }
     }
   }
-  ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(m_ModInfo->getGameName()));
+  ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(gameName));
 
   ui->notesEdit->setText(modInfo->notes());
 
