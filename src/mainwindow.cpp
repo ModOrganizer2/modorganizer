@@ -1905,7 +1905,7 @@ void MainWindow::wikiTriggered()
 
 void MainWindow::issueTriggered()
 {
-  QDesktopServices::openUrl(QUrl("http://github.com/Modorganizer2/modorganizer/issues"));
+  QDesktopServices::openUrl(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
 }
 
 void MainWindow::tutorialTriggered()

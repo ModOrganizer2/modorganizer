@@ -173,13 +173,13 @@ void BrowserDialog::titleChanged(const QString &title)
 
 QString BrowserDialog::guessFileName(const QString &url)
 {
-  QRegExp uploadsExp(QString("http://.+/uploads/([^/]+)$"));
+  QRegExp uploadsExp(QString("https://.+/uploads/([^/]+)$"));
   if (uploadsExp.indexIn(url) != -1) {
     // these seem to be premium downloads
     return uploadsExp.cap(1);
   }
 
-  QRegExp filesExp(QString("http://.+\\?file=([^&]+)"));
+  QRegExp filesExp(QString("https://.+\\?file=([^&]+)"));
   if (filesExp.indexIn(url) != -1) {
     // a regular manual download?
     return filesExp.cap(1);
