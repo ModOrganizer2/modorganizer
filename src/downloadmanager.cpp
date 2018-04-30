@@ -1431,15 +1431,16 @@ void DownloadManager::downloadFinished()
     if ((info->m_State != STATE_CANCELING) &&
         (info->m_State != STATE_PAUSING)) {
       bool textData = reply->header(QNetworkRequest::ContentTypeHeader).toString().startsWith("text", Qt::CaseInsensitive);
+      if (textData)
+        emit showMessage(tr("Warning: Content type is: %1").arg(reply->header(QNetworkRequest::ContentTypeHeader).toString()));
       if ((info->m_Output.size() == 0) ||
-          ((reply->error() != QNetworkReply::NoError) && (reply->error() != QNetworkReply::OperationCanceledError)) ||
-          textData) {
+          ((reply->error() != QNetworkReply::NoError)
+            && (reply->error() != QNetworkReply::OperationCanceledError)
+            && (reply->error() == QNetworkReply::UnknownContentError && (info->m_Output.size() != reply->header(QNetworkRequest::ContentLengthHeader).toLongLong())))) {
+        if (reply->error() == QNetworkReply::UnknownContentError)
+          emit showMessage(tr("Download header content length: %1 downloaded file size: %2").arg(reply->header(QNetworkRequest::ContentLengthHeader).toLongLong()).arg(info->m_Output.size()));
         if (info->m_Tries == 0) {
-          if (textData && (reply->error() == QNetworkReply::NoError)) {
-            emit showMessage(tr("Download failed. Server reported: %1").arg(QString(data)));
-          } else {
-            emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
-          }
+          emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
         }
         error = true;
         setState(info, STATE_PAUSING);
