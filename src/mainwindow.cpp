@@ -3545,6 +3545,7 @@ void MainWindow::deleteSavegame_clicked()
     } else {
       ISaveGame const *save = info->getSaveGameInfo(name);
       deleteFiles += save->allFiles();
+      delete save;
     }
   }
 
