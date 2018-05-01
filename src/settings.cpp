@@ -295,7 +295,7 @@ QString Settings::getOverwriteDirectory(bool resolve) const
 
 QString Settings::getNMMVersion() const
 {
-  static const QString MIN_NMM_VERSION = "0.61.13";
+  static const QString MIN_NMM_VERSION = "0.65.2";
   QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
   if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
     result = MIN_NMM_VERSION;
