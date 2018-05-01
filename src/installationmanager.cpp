@@ -785,15 +785,6 @@ bool InstallationManager::install(const QString &fileName,
           if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
             installResult
                 = installerCustom->install(modName, fileName, version, modID);
-            if (installResult == IPluginInstaller::RESULT_SUCCESS) {
-              mapToArchive(filesTree.data());
-              // the simple installer only prepares the installation, the rest
-              // works the same for all installers
-              if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
-                repository)) {
-                installResult = IPluginInstaller::RESULT_FAILED;
-              }
-            }
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
               ModInfo::Ptr info = ModInfo::getByIndex(idx);
