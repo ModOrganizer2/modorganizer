@@ -908,12 +908,16 @@ Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_pluginBlacklistList(m_dialog.findChild<QListWidget *>("pluginBlacklist"))
 {
   // display plugin settings
+  QSet<QString> handledNames;
   for (IPlugin *plugin : m_parent->m_Plugins) {
+    if (handledNames.contains(plugin->name()))
+      continue;
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), m_pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
     listItem->setData(Qt::UserRole + 1, m_parent->m_PluginSettings[plugin->name()]);
     listItem->setData(Qt::UserRole + 2, m_parent->m_PluginDescriptions[plugin->name()]);
     m_pluginsList->addItem(listItem);
+    handledNames.insert(plugin->name());
   }
 
   // display plugin blacklist
