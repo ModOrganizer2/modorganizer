@@ -240,9 +240,6 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
           SLOT(managedGameChanged(MOBase::IPluginGame const *)));
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
           &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
-          NexusInterface::instance(m_PluginContainer),
-          SLOT(managedGameChanged(MOBase::IPluginGame const *)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter,
           &DelayedFileWriterBase::write);

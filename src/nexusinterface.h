@@ -349,9 +349,6 @@ signals:
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
-public slots:
-  void managedGameChanged(MOBase::IPluginGame const *game);
-
 private slots:
 
   void requestFinished();
@@ -404,7 +401,7 @@ private:
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
   bool requiresLogin(const NXMRequestInfo &info);
   MOBase::IPluginGame *getGame(QString gameName) const;
-  QString getOldModsURL() const;
+  QString getOldModsURL(QString gameName) const;
 
 private:
 
@@ -418,7 +415,6 @@ private:
   MOBase::VersionInfo m_MOVersion;
   QString m_NMMVersion;
 
-  MOBase::IPluginGame const *m_Game;
   PluginContainer *m_PluginContainer;
 
 };

@@ -247,21 +247,19 @@ bool NexusInterface::isURLGameRelated(const QUrl &url) const
 {
   QString const name(url.toString());
   return name.startsWith(getGameURL("") + "/") ||
-         name.startsWith(getOldModsURL() + "/");
+         name.startsWith(getOldModsURL("") + "/");
 }
 
 QString NexusInterface::getGameURL(QString gameName) const
 {
   IPluginGame *game = getGame(gameName);
-  if (game != nullptr) {
-    return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
-  }
-  return "https://www.nexusmods.com/" + m_Game->gameNexusName().toLower();
+  return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
 }
 
-QString NexusInterface::getOldModsURL() const
+QString NexusInterface::getOldModsURL(QString gameName) const
 {
-  return "https://" + m_Game->gameNexusName().toLower() + ".nexusmods.com/mods";
+  IPluginGame *game = getGame(gameName);
+  return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
 }
 
 
@@ -291,7 +289,7 @@ bool NexusInterface::isModURL(int modID, const QString &url) const
     return true;
   }
   //Try the alternate (old style) mod name
-  QString alt = QString("%1/%2").arg(getOldModsURL()).arg(modID);
+  QString alt = QString("%1/%2").arg(getOldModsURL("")).arg(modID);
   return QUrl(alt) == QUrl(url);
 }
 
@@ -321,22 +319,17 @@ int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *rece
                                    QString gameName, const QString &subModule)
 {
   IPluginGame *game = getGame(gameName);
+  NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
 
-  if (game != nullptr) {
-    NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
-    m_RequestQueue.enqueue(requestInfo);
+  connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)),
+    receiver, SLOT(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-    connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)),
-      receiver, SLOT(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
-  }
-
-  return -1;
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 
@@ -378,20 +371,17 @@ int NexusInterface::requestFiles(QString gameName, int modID, QObject *receiver,
 int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule)
 {
   IPluginGame *gamePlugin = getGame(gameName);
-  if (gamePlugin != nullptr) {
-    NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, gamePlugin);
-    m_RequestQueue.enqueue(requestInfo);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, gamePlugin);
+  m_RequestQueue.enqueue(requestInfo);
 
-    connect(this, SIGNAL(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)),
-      receiver, SLOT(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
-    nextRequest();
-    return requestInfo.m_ID;
-  }
-  return -1;
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 
@@ -438,7 +428,7 @@ bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
 IPluginGame* NexusInterface::getGame(QString gameName) const
 {
   auto gamePlugins = m_PluginContainer->plugins<IPluginGame>();
-  IPluginGame *gamePlugin = nullptr;
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
   for (auto plugin : gamePlugins) {
     if (plugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
       gamePlugin = plugin;
@@ -635,11 +625,6 @@ void NexusInterface::requestTimeout()
       return;
     }
   }
-}
-
-void NexusInterface::managedGameChanged(IPluginGame const *game)
-{
-  m_Game = game;
 }
 
 namespace {
