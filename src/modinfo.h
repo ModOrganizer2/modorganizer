@@ -148,7 +148,7 @@ public:
    * @todo in its current form, this function is broken! There may be multiple mods with the same nexus id,
    *       this function will return only one of them
    **/
-  static std::vector<ModInfo::Ptr> getByModID(int modID);
+  static std::vector<ModInfo::Ptr> getByModID(QString game, int modID);
 
   /**
    * @brief remove a mod by index
@@ -638,7 +638,7 @@ protected:
 private:
 
   static QMutex s_Mutex;
-  static std::map<int, std::vector<unsigned int> > s_ModsByModID;
+  static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
   static int s_NextID;
 
   bool m_Valid;

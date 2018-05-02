@@ -48,7 +48,7 @@ using namespace MOShared;
 
 std::vector<ModInfo::Ptr> ModInfo::s_Collection;
 std::map<QString, unsigned int> ModInfo::s_ModsByName;
-std::map<int, std::vector<unsigned int> > ModInfo::s_ModsByModID;
+std::map<std::pair<QString, int>, std::vector<unsigned int>> ModInfo::s_ModsByModID;
 int ModInfo::s_NextID;
 QMutex ModInfo::s_Mutex(QMutex::Recursive);
 
@@ -132,11 +132,11 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
 }
 
 
-std::vector<ModInfo::Ptr> ModInfo::getByModID(int modID)
+std::vector<ModInfo::Ptr> ModInfo::getByModID(QString game, int modID)
 {
   QMutexLocker locker(&s_Mutex);
 
-  auto iter = s_ModsByModID.find(modID);
+  auto iter = s_ModsByModID.find(std::pair<QString, int>(game, modID));
   if (iter == s_ModsByModID.end()) {
     return std::vector<ModInfo::Ptr>();
   }
@@ -161,11 +161,11 @@ bool ModInfo::removeMod(unsigned int index)
   ModInfo::Ptr modInfo = s_Collection[index];
   s_ModsByName.erase(s_ModsByName.find(modInfo->name()));
 
-  auto iter = s_ModsByModID.find(modInfo->getNexusID());
+  auto iter = s_ModsByModID.find(std::pair<QString, int>(modInfo->getGameName(), modInfo->getNexusID()));
   if (iter != s_ModsByModID.end()) {
     std::vector<unsigned int> indices = iter->second;
     indices.erase(std::remove(indices.begin(), indices.end(), index), indices.end());
-    s_ModsByModID[modInfo->getNexusID()] = indices;
+    s_ModsByModID[std::pair<QString, int>(modInfo->getGameName(), modInfo->getNexusID())] = indices;
   }
 
   // physically remove the mod directory
@@ -255,9 +255,10 @@ void ModInfo::updateIndices()
 
   for (unsigned int i = 0; i < s_Collection.size(); ++i) {
     QString modName = s_Collection[i]->internalName();
+    QString game = s_Collection[i]->getGameName();
     int modID = s_Collection[i]->getNexusID();
     s_ModsByName[modName] = i;
-    s_ModsByModID[modID].push_back(i);
+    s_ModsByModID[std::pair<QString, int>(game, modID)].push_back(i);
   }
 }
 
@@ -289,6 +290,7 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
   modIDs.push_back(game->nexusModOrganizerID());
   checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
+  modIDs.clear();
 
   std::multimap<QString, QSharedPointer<ModInfo>> organizedGames;
   for (auto mod : s_Collection) {

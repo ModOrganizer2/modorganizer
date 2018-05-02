@@ -4231,12 +4231,20 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()
+          && result["game_id"].toInt() == m_OrganizerCore.managedGame()->nexusGameID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
-      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(result["id"].toInt());
+      QString gameName = m_OrganizerCore.managedGame()->gameShortName();
+      for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+        if (game->nexusGameID() == result["game_id"].toInt()) {
+          gameName = game->gameShortName();
+          break;
+        }
+      }
+      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(gameName, result["id"].toInt());
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());

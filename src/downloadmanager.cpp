@@ -895,6 +895,14 @@ int DownloadManager::getModID(int index) const
   return m_ActiveDownloads.at(index)->m_FileInfo->modID;
 }
 
+QString DownloadManager::getGameName(int index) const
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    throw MyException(tr("mod id: invalid download index %1").arg(index));
+  }
+  return m_ActiveDownloads.at(index)->m_FileInfo->gameName;
+}
+
 bool DownloadManager::isHidden(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {

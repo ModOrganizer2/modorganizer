@@ -919,13 +919,14 @@ void OrganizerCore::installDownload(int index)
 {
   try {
     QString fileName = m_DownloadManager.getFilePath(index);
+    QString gameName = m_DownloadManager.getGameName(index);
     int modID        = m_DownloadManager.getModID(index);
     int fileID       = m_DownloadManager.getFileInfo(index)->fileID;
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
     if (modID != 0) {
-      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(modID);
+      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(gameName, modID);
       for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
         std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP)

@@ -289,6 +289,14 @@ public:
   int getModID(int index) const;
 
   /**
+   * @brief retrieve the game name of the downlaod specified by the index
+   *
+   * @param index index of the file to look up
+   * @return the game name
+   **/
+  QString getGameName(int index) const;
+
+  /**
    * @brief determine if the specified file is supposed to be hidden
    * @param index index of the file to look up
    * @return true if the specified file is supposed to be hidden
