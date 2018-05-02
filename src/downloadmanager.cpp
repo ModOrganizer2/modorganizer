@@ -62,7 +62,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
   info->m_PreResumeSize = 0LL;
-  info->m_Progress = 0;
+  info->m_Progress = std::make_pair<int, QString>(0, "0 bytes/sec");
   info->m_ResumePos = 0;
   info->m_FileInfo = new ModRepositoryFileInfo(*fileInfo);
   info->m_Urls = URLs;
@@ -852,7 +852,7 @@ qint64 DownloadManager::getFileSize(int index) const
 }
 
 
-int DownloadManager::getProgress(int index) const
+std::pair<int, QString> DownloadManager::getProgress(int index) const
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
     throw MyException(tr("progress: invalid download index %1").arg(index));
@@ -1076,12 +1076,28 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         if (bytesTotal > info->m_TotalSize) {
           info->m_TotalSize = bytesTotal;
         }
-        int oldProgress = info->m_Progress;
-        info->m_Progress = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
-        TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
-        if (oldProgress != info->m_Progress) {
-          emit update(index);
+        int oldProgress = info->m_Progress.first;
+        info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
+
+        // calculate the download speed
+        double speed = bytesReceived * 1000.0 / info->m_StartTime.elapsed();
+        QString unit;
+        if (speed < 1024) {
+          unit = "bytes/sec";
         }
+        else if (speed < 1024 * 1024) {
+          speed /= 1024;
+          unit = "kB/s";
+        }
+        else {
+          speed /= 1024 * 1024;
+          unit = "MB/s";
+        }
+
+        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 3, 'f', 1).arg(unit);
+
+        TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
+        emit update(index);
       }
     }
   } catch (const std::bad_alloc&) {

@@ -75,7 +75,7 @@ private:
     QNetworkReply *m_Reply;
     QTime m_StartTime;
     qint64 m_PreResumeSize;
-    int m_Progress;
+    std::pair<int, QString> m_Progress;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -259,7 +259,7 @@ public:
    * @param index index of the file to look up
    * @return progress of the download in percent (integer)
    **/
-  int getProgress(int index) const;
+  std::pair<int, QString> getProgress(int index) const;
 
   /**
    * @brief retrieve the current state of the download

@@ -138,7 +138,8 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
   } else {
     m_DoneLabel->setVisible(false);
     m_Progress->setVisible(true);
-    m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+    m_Progress->setValue(m_Manager->getProgress(downloadIndex).first);
+    m_Progress->setFormat(m_Manager->getProgress(downloadIndex).second);
   }
 }
 

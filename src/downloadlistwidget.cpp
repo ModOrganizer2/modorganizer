@@ -53,6 +53,7 @@ DownloadListWidgetDelegate::DownloadListWidgetDelegate(DownloadManager *manager,
   m_InstallLabel = m_ItemWidget->findChild<QLabel*>("installLabel");
 
   m_InstallLabel->setVisible(false);
+  m_Progress->setTextVisible(true);
 
   connect(manager, SIGNAL(stateChanged(int,DownloadManager::DownloadState)), this, SLOT(stateChanged(int,DownloadManager::DownloadState)));
   connect(manager, SIGNAL(downloadRemoved(int)), this, SLOT(resetCache(int)));
@@ -159,7 +160,8 @@ void DownloadListWidgetDelegate::paintRegularDownload(int downloadIndex) const
   } else {
     m_InstallLabel->setVisible(false);
     m_Progress->setVisible(true);
-    m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+    m_Progress->setValue(m_Manager->getProgress(downloadIndex).first);
+    m_Progress->setFormat(m_Manager->getProgress(downloadIndex).second);
   }
 }
 
