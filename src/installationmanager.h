@@ -177,6 +177,16 @@ private:
 
   void postInstallCleanup();
 
+signals:
+
+  void progressUpdate(float percentage);
+  void progressUpdate(QString const fileName);
+
+private slots:
+
+  void doProgressUpdate(float percentage);
+  void doProgressFileUpdate(const QString fileName);
+
 private:
 
   struct ByPriority {

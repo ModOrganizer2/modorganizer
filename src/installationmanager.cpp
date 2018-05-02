@@ -49,6 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QDebug>
 #include <QTextDocument>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <Shellapi.h>
 
@@ -94,6 +95,9 @@ InstallationManager::InstallationManager()
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
+
+  connect(this, SIGNAL(progressUpdate(float)), this, (SLOT(doProgressUpdate(float))));
+  connect(this, SIGNAL(progressUpdate(const QString)), this, (SLOT(doProgressFileUpdate(const QString))));
 }
 
 InstallationManager::~InstallationManager()
@@ -190,10 +194,19 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
-  bool res = m_ArchiveHandler->extract(QDir::tempPath(),
-                                new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-                                nullptr,
-                                new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError));
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      QDir::tempPath(),
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      nullptr,
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  while (!future.isFinished()) {
+    QCoreApplication::processEvents();
+    ::Sleep(50);
+  }
+  bool res = future.result();
 
   return res;
 }
@@ -279,10 +292,19 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
-  if (!m_ArchiveHandler->extract(QDir::tempPath(),
-         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         nullptr,
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      QDir::tempPath(),
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      nullptr,
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  while (!future.isFinished()) {
+    QCoreApplication::processEvents();
+    ::Sleep(50);
+  }
+  if (!future.result()) {
     throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
 
@@ -409,8 +431,22 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
 
 void InstallationManager::updateProgress(float percentage)
 {
+  emit progressUpdate(percentage);
+}
+
+
+void InstallationManager::updateProgressFile(QString const &fileName)
+{
+  emit progressUpdate(fileName);
+}
+
+
+void InstallationManager::doProgressUpdate(float percentage)
+{
   if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
+    QMetaObject::invokeMethod(m_InstallationProgress, "setValue", Qt::QueuedConnection, Q_ARG(int, static_cast<int>(percentage * 100.0)));
+    //m_InstallationProgress->setValue(percent);
+
     if (m_InstallationProgress->wasCanceled()) {
       m_ArchiveHandler->cancel();
       m_InstallationProgress->reset();
@@ -419,12 +455,11 @@ void InstallationManager::updateProgress(float percentage)
 }
 
 
-void InstallationManager::updateProgressFile(QString const &fileName)
+void InstallationManager::doProgressFileUpdate(QString const fileName)
 {
-	if (m_InstallationProgress != nullptr) {
-		m_InstallationProgress->setLabelText(fileName);
-		QCoreApplication::processEvents();
-	}
+  if (m_InstallationProgress != nullptr) {
+    m_InstallationProgress->setLabelText(fileName);
+  }
 }
 
 
@@ -568,10 +603,19 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
-  if (!m_ArchiveHandler->extract(targetDirectory,
-         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      targetDirectory,
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  while (!future.isFinished()) {
+    QCoreApplication::processEvents();
+    ::Sleep(50);
+  }
+  if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
