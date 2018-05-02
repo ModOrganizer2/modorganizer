@@ -155,14 +155,18 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       for (const QString &pluginName : pluginNames) {
         try {
-          QObject *proxiedPlugin = proxy->instantiate(pluginName);
-          if (proxiedPlugin != nullptr) {
-            if (registerPlugin(proxiedPlugin, pluginName)) {
-              qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
-            } else {
-              qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
-                       "you have to update it or delete it if no update exists.",
-                       qPrintable(pluginName));
+          // we get a list of matching plugins as proxies don't necessarily have a good way of supporting multiple inheritance
+          QList<QObject*> matchingPlugins = proxy->instantiate(pluginName);
+          for (QObject *proxiedPlugin : matchingPlugins) {
+            if (proxiedPlugin != nullptr) {
+              if (registerPlugin(proxiedPlugin, pluginName)) {
+                qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
+              }
+              else {
+                qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
+                         "you have to update it or delete it if no update exists.",
+                         qPrintable(pluginName));
+              }
             }
           }
         } catch (const std::exception &e) {
