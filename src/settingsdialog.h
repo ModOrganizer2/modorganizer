@@ -44,8 +44,6 @@ public:
   explicit SettingsDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
   ~SettingsDialog();
 
-  void addPlugins(const std::vector<MOBase::IPlugin*> &plugins);
-
 public slots:
 
   virtual void accept();

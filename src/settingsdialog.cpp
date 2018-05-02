@@ -58,13 +58,6 @@ SettingsDialog::~SettingsDialog()
   delete ui;
 }
 
-void SettingsDialog::addPlugins(const std::vector<IPlugin*> &plugins)
-{
-  for (IPlugin *plugin : plugins) {
-    ui->pluginsList->addItem(plugin->name());
-  }
-}
-
 void SettingsDialog::accept()
 {
   QString newModPath = ui->modDirEdit->text();
