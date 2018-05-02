@@ -288,9 +288,11 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
 
   //I ought to store this, it's used elsewhere
   IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
-  modIDs.push_back(game->nexusModOrganizerID());
-  checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
-  modIDs.clear();
+  if (game->nexusModOrganizerID()) {
+    modIDs.push_back(game->nexusModOrganizerID());
+    checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
+    modIDs.clear();
+  }
 
   std::multimap<QString, QSharedPointer<ModInfo>> organizedGames;
   for (auto mod : s_Collection) {
