@@ -30,6 +30,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Repository()
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
+  , m_Converted(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
@@ -39,7 +40,8 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   // read out the meta-file for information
   readMeta();
   if (m_GameName.compare(game->gameShortName(), Qt::CaseInsensitive) != 0)
-    m_IsAlternate = true;
+    if (!game->primarySources().contains(m_GameName, Qt::CaseInsensitive))
+      m_IsAlternate = true;
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
@@ -82,9 +84,10 @@ void ModInfoRegular::readMeta()
   m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
-  m_Repository = metaFile.value("repository", "Nexus").toString();
-  m_URL = metaFile.value("url", "").toString();
-  m_LastNexusQuery = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  m_Repository       = metaFile.value("repository", "Nexus").toString();
+  m_Converted        = metaFile.value("converted", false).toBool();
+  m_URL              = metaFile.value("url", "").toString();
+  m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       switch (metaFile.value("endorsed").toInt()) {
@@ -146,6 +149,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      metaFile.setValue("converted", m_Converted);
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
@@ -403,6 +407,14 @@ void ModInfoRegular::endorse(bool doEndorse)
   }
 }
 
+void ModInfoRegular::markConverted(bool converted)
+{
+  m_Converted = converted;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
 
 QString ModInfoRegular::absolutePath() const
 {
@@ -435,7 +447,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if (m_PluginSelected) {
     result.push_back(ModInfo::FLAG_PLUGIN_SELECTED);
   }
-  if (m_IsAlternate) {
+  if (m_IsAlternate && !m_Converted) {
     result.push_back(ModInfo::FLAG_ALTERNATE_GAME);
   }
   return result;

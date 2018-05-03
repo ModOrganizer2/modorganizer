@@ -2599,6 +2599,14 @@ void MainWindow::ignoreMissingData_clicked()
   emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
 }
 
+void MainWindow::markConverted_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  info->markConverted(true);
+  connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+}
+
 
 void MainWindow::visitOnNexus_clicked()
 {
@@ -3461,6 +3469,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
           menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
+        }
+
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+          menu->addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
         }
 
         if (info->getNexusID() > 0)  {

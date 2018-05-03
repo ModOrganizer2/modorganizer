@@ -27,6 +27,7 @@ public:
   virtual bool isEmpty() const;
 
   bool isAlternate() { return m_IsAlternate; }
+  bool isConverted() { return m_Converted; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -181,6 +182,11 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse);
+
+  /**
+  * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
+  */
+  virtual void markConverted(bool converted) override;
 
   /**
    * @brief getter for the mod name
@@ -351,6 +357,7 @@ private:
 
   bool m_MetaInfoChanged;
   bool m_IsAlternate;
+  bool m_Converted;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

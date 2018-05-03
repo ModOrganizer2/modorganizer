@@ -569,6 +569,11 @@ public:
   void testValid();
 
   /**
+   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
+   */
+  virtual void markConverted(bool converted) {}
+
+  /**
    * @brief reads meta information from disk
    */
   virtual void readMeta() {}

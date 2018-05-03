@@ -763,7 +763,7 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
     }
     if (modInfo->isRegular()) {
       QSharedPointer<ModInfoRegular> modInfoRegular = modInfo.staticCast<ModInfoRegular>();
-      if (modInfoRegular->isAlternate())
+      if (modInfoRegular->isAlternate() && !modInfoRegular->isConverted())
         result |= IModList::STATE_ALTERNATE;
     }
     if (modInfo->canBeEnabled()) {

@@ -409,6 +409,7 @@ private slots:
   void dontendorse_clicked();
   void unendorse_clicked();
   void ignoreMissingData_clicked();
+  void markConverted_clicked();
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
