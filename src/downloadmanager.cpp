@@ -686,6 +686,9 @@ void DownloadManager::resumeDownloadInt(int index)
     qDebug("request resume from url %s", qPrintable(info->currentURL()));
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
     info->m_ResumePos = info->m_Output.size();
+    std::get<0>(info->m_SpeedDiff) = 0;
+    std::get<1>(info->m_SpeedDiff) = 0;
+    std::get<2>(info->m_SpeedDiff) = 0;
     qDebug("resume at %lld bytes", info->m_ResumePos);
     QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
     request.setRawHeader("Range", rangeHeader);
@@ -1080,7 +1083,8 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         setState(info, STATE_CANCELED);
       } else if (info->m_State == STATE_PAUSING) {
         setState(info, STATE_PAUSED);
-      } else {
+      }
+      else {
         if (bytesTotal > info->m_TotalSize) {
           info->m_TotalSize = bytesTotal;
         }
@@ -1088,7 +1092,11 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
 
         // calculate the download speed
-        double speed = bytesReceived * 1000.0 / info->m_StartTime.elapsed();
+        double speed = (bytesReceived - std::get<1>(info->m_SpeedDiff)) * 1000.0 / // Calculate with the data transferred in the last 5 seconds...
+          (std::get<1>(info->m_SpeedDiff) ? // If we are past 5 seconds
+            (5 * 1000) + (info->m_StartTime.elapsed() - std::get<2>(info->m_SpeedDiff)) : // Divide by 5 seconds + the diff between chunks
+            info->m_StartTime.elapsed()); // Else just use the current elapsed time
+
         QString unit;
         if (speed < 1024) {
           unit = "bytes/sec";
@@ -1103,6 +1111,12 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         }
 
         info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 3, 'f', 1).arg(unit);
+
+        if (info->m_StartTime.elapsed() >= 5 * 1000) {
+          std::get<1>(info->m_SpeedDiff) = std::get<1>(info->m_SpeedDiff) + bytesReceived - std::get<0>(info->m_SpeedDiff);
+          std::get<2>(info->m_SpeedDiff) = info->m_StartTime.elapsed();
+        }
+        std::get<0>(info->m_SpeedDiff) = bytesReceived;
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
