@@ -77,6 +77,8 @@
         <file alias="archive_conflict_mixed">resources/archive-conflict-mixed.png</file>
         <file alias="archive_conflict_neutral">resources/archive-conflict-neutral.png</file>
         <file alias="archive_conflict_winner">resources/archive-conflict-winner.png</file>
+        <file alias="alternate_game_alt">resources/game-warning.png</file>
+        <file alias="alternate_game">resources/game-warning-16.png</file>
     </qresource>
     <qresource prefix="/MO/gui/content">
         <file alias="plugin">resources/contents/jigsaw-piece.png</file>
