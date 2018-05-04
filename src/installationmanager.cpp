@@ -96,8 +96,8 @@ InstallationManager::InstallationManager()
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
 
-  connect(this, SIGNAL(progressUpdate(float)), this, (SLOT(doProgressUpdate(float))));
-  connect(this, SIGNAL(progressUpdate(const QString)), this, (SLOT(doProgressFileUpdate(const QString))));
+  connect(this, SIGNAL(progressUpdate(float)), this, (SLOT(doProgressUpdate(float))), Qt::QueuedConnection);
+  connect(this, SIGNAL(progressUpdate(const QString)), this, (SLOT(doProgressFileUpdate(const QString))), Qt::QueuedConnection);
 }
 
 InstallationManager::~InstallationManager()
@@ -202,10 +202,10 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
       new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
     );
   });
-  while (!future.isFinished()) {
-    QCoreApplication::processEvents();
+  do {
     ::Sleep(50);
-  }
+    QCoreApplication::processEvents();
+  } while (!future.isFinished());
   bool res = future.result();
 
   return res;
@@ -300,10 +300,10 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
       new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
     );
   });
-  while (!future.isFinished()) {
-    QCoreApplication::processEvents();
+  do {
     ::Sleep(50);
-  }
+    QCoreApplication::processEvents();
+  } while (!future.isFinished());
   if (!future.result()) {
     throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
@@ -444,19 +444,12 @@ void InstallationManager::updateProgressFile(QString const &fileName)
 void InstallationManager::doProgressUpdate(float percentage)
 {
   if (m_InstallationProgress != nullptr) {
-    QMetaObject::invokeMethod(this, "setProgressValue", Qt::QueuedConnection, Q_ARG(int, static_cast<int>(percentage * 100.0)));
+    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
 
     if (m_InstallationProgress->wasCanceled()) {
       m_ArchiveHandler->cancel();
       m_InstallationProgress->reset();
     }
-  }
-}
-
-void InstallationManager::setProgressValue(int percentage)
-{
-  if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setValue(percentage);
   }
 }
 
@@ -616,10 +609,10 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
       new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
     );
   });
-  while (!future.isFinished()) {
-    QCoreApplication::processEvents();
+  do {
     ::Sleep(50);
-  }
+    QCoreApplication::processEvents();
+  } while (!future.isFinished());
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;

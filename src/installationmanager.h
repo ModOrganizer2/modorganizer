@@ -186,7 +186,6 @@ private slots:
 
   void doProgressUpdate(float percentage);
   void doProgressFileUpdate(const QString fileName);
-  void setProgressValue(int percentage);
 
 private:
 
