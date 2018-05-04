@@ -30,67 +30,77 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="aboutdialog.ui" line="170"/>
+        <source>LePresidente (Project Lead)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="aboutdialog.ui" line="175"/>
         <source>AL12</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="aboutdialog.ui" line="201"/>
-        <source>Translators</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="226"/>
-        <source>Cyb3r (Dutch)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="236"/>
-        <source>fruttyx (French)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="251"/>
-        <source>Yoplala (French)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="256"/>
-        <source>Faron (German)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="266"/>
-        <source>Mordan (Greek)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="279"/>
-        <source>Yoosk (Polish)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="284"/>
-        <source>Brgodfx (Portuguese)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="304"/>
-        <source>Jax (Swedish)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="309"/>
-        <source>...and all other Transifex contributors!</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="aboutdialog.ui" line="323"/>
         <source>Other Supporters &amp;&amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="440"/>
+        <location filename="aboutdialog.ui" line="292"/>
+        <source>Translators</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="317"/>
+        <source>Cyb3r (Dutch)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="327"/>
+        <source>fruttyx (French)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="342"/>
+        <source>Yoplala (French)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="347"/>
+        <source>Faron (German)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="357"/>
+        <source>Mordan (Greek)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="370"/>
+        <source>Yoosk (Polish)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="375"/>
+        <source>Brgodfx (Portuguese)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="395"/>
+        <source>Jax (Swedish)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="400"/>
+        <source>...and all other Transifex contributors!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="414"/>
+        <source>Major Contributors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="aboutdialog.ui" line="456"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4693,6 +4703,46 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>QObject</name>
     <message>
+        <location filename="../../uibase/src/report.cpp" line="34"/>
+        <location filename="../../uibase/src/report.cpp" line="37"/>
+        <location filename="main.cpp" line="98"/>
+        <location filename="organizercore.cpp" line="651"/>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/safewritefile.cpp" line="33"/>
+        <source>failed to open temporary file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="86"/>
+        <source>removal of &quot;%1&quot; failed: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="93"/>
+        <source>removal of &quot;%1&quot; failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="97"/>
+        <source>&quot;%1&quot; doesn&apos;t exist (remove)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="278"/>
+        <location filename="../../uibase/src/utility.cpp" line="303"/>
+        <source>failed to create directory &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../uibase/src/utility.cpp" line="287"/>
+        <location filename="../../uibase/src/utility.cpp" line="310"/>
+        <source>failed to copy &quot;%1&quot; to &quot;%2&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="categories.cpp" line="149"/>
         <source>Failed to save custom categories</source>
         <translation type="unfinished"></translation>
@@ -4970,14 +5020,6 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="34"/>
-        <location filename="../../uibase/src/report.cpp" line="37"/>
-        <location filename="main.cpp" line="98"/>
-        <location filename="organizercore.cpp" line="651"/>
-        <source>Error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="main.cpp" line="99"/>
         <location filename="organizercore.cpp" line="652"/>
         <source>Failed to create &quot;%1&quot;. Your user account probably lacks permission.</source>
@@ -5130,38 +5172,6 @@ Start elevated anyway? (you will be asked if you want to allow ModOrganizer.exe 
     <message>
         <location filename="spawn.cpp" line="166"/>
         <source>failed to spawn &quot;%1&quot;: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/safewritefile.cpp" line="33"/>
-        <source>failed to open temporary file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/utility.cpp" line="86"/>
-        <source>removal of &quot;%1&quot; failed: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/utility.cpp" line="93"/>
-        <source>removal of &quot;%1&quot; failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/utility.cpp" line="97"/>
-        <source>&quot;%1&quot; doesn&apos;t exist (remove)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/utility.cpp" line="278"/>
-        <location filename="../../uibase/src/utility.cpp" line="303"/>
-        <source>failed to create directory &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../uibase/src/utility.cpp" line="287"/>
-        <location filename="../../uibase/src/utility.cpp" line="310"/>
-        <source>failed to copy &quot;%1&quot; to &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
