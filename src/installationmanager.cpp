@@ -444,8 +444,7 @@ void InstallationManager::updateProgressFile(QString const &fileName)
 void InstallationManager::doProgressUpdate(float percentage)
 {
   if (m_InstallationProgress != nullptr) {
-    QMetaObject::invokeMethod(m_InstallationProgress, "setValue", Qt::QueuedConnection, Q_ARG(int, static_cast<int>(percentage * 100.0)));
-    //m_InstallationProgress->setValue(percent);
+    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
 
     if (m_InstallationProgress->wasCanceled()) {
       m_ArchiveHandler->cancel();
@@ -453,7 +452,6 @@ void InstallationManager::doProgressUpdate(float percentage)
     }
   }
 }
-
 
 void InstallationManager::doProgressFileUpdate(QString const fileName)
 {
