@@ -485,23 +485,9 @@ int PluginList::enabledCount() const
   return enabled;
 }
 
-int PluginList::getIndexPriority(int index) const
+QString PluginList::getIndexPriority(int index) const
 {
-  int numESLs = 0;
-  std::vector<ESPInfo> sortESPs(m_ESPs);
-  std::sort(sortESPs.begin(), sortESPs.end());
-  for (auto sortedESP : sortESPs) {
-    if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
-      break;
-    if ((sortedESP.m_IsLight || sortedESP.m_IsLightFlagged) && sortedESP.m_LoadOrder != -1)
-      ++numESLs;
-  }
-  if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
-    int ESLpos = 254 + ((numESLs + 1) / 4096);
-    return ESLpos + (numESLs % 4096);
-  } else {
-    return m_ESPs[index].m_LoadOrder - numESLs;
-  }
+  return m_ESPs[index].m_Index;
 }
 
 bool PluginList::isESPLocked(int index) const
@@ -751,6 +737,24 @@ void PluginList::updateIndices()
     m_ESPsByName[m_ESPs[i].m_Name.toLower()] = i;
     m_ESPsByPriority.at(static_cast<size_t>(m_ESPs[i].m_Priority)) = i;
   }
+
+  int numESLs = 0;
+  int numSkipped = 0;
+  for (int l = 0; l < m_ESPs.size(); ++l) {
+    int i = m_ESPsByPriority.at(l);
+    if (!m_ESPs[i].m_Enabled) {
+      m_ESPs[i].m_Index = QString();
+      ++numSkipped;
+      continue;
+    }
+    if (m_ESPs[i].m_IsLight || m_ESPs[i].m_IsLightFlagged) {
+      int ESLpos = 254 + ((numESLs + 1) / 4096);
+      m_ESPs[i].m_Index = QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs) % 4096, 3, 16, QChar('0')).toUpper();
+      ++numESLs;
+    } else {
+      m_ESPs[i].m_Index = QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
+    }
+  }
 }
 
 
@@ -808,25 +812,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         return m_ESPs[index].m_Priority;
       } break;
       case COL_MODINDEX: {
-        if (m_ESPs[index].m_LoadOrder == -1) {
-          return QString();
-        } else {
-          int numESLs = 0;
-          std::vector<ESPInfo> sortESPs(m_ESPs);
-          std::sort(sortESPs.begin(), sortESPs.end());
-          for (auto sortedESP: sortESPs) {
-            if (sortedESP.m_LoadOrder == m_ESPs[index].m_LoadOrder)
-              break;
-            if ((sortedESP.m_IsLight || sortedESP.m_IsLightFlagged) && sortedESP.m_LoadOrder != -1)
-              ++numESLs;
-          }
-          if (m_ESPs[index].m_IsLight || m_ESPs[index].m_IsLightFlagged) {
-            int ESLpos = 254 + ((numESLs+1) / 4096);
-            return QString("%1:%2").arg(ESLpos, 2, 16, QChar('0')).arg((numESLs)%4096, 3, 16, QChar('0')).toUpper();
-          } else {
-            return QString("%1").arg(m_ESPs[index].m_LoadOrder - numESLs, 2, 16, QChar('0')).toUpper();
-          }
-        }
+        return m_ESPs[index].m_Index;
       } break;
       default: {
           return QVariant();

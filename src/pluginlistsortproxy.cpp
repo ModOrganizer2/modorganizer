@@ -100,8 +100,8 @@ bool PluginListSortProxy::lessThan(const QModelIndex &left,
       }
     } break;
     case PluginList::COL_MODINDEX: {
-      int leftVal = plugins->isEnabled(left.row()) ? plugins->getIndexPriority(left.row()) : -1;
-      int rightVal = plugins->isEnabled(right.row()) ? plugins->getIndexPriority(right.row()) : -1;
+      QString leftVal = plugins->getIndexPriority(left.row());
+      QString rightVal = plugins->getIndexPriority(right.row());
       return leftVal < rightVal;
     } break;
     default: {

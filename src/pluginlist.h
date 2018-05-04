@@ -194,7 +194,7 @@ public:
 
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
-  int getIndexPriority(int index) const;
+  QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
 
@@ -278,6 +278,7 @@ private:
     bool m_Enabled;
     bool m_ForceEnabled;
     int m_Priority;
+    QString m_Index;
     int m_LoadOrder;
     FILETIME m_Time;
     QString m_OriginName;
