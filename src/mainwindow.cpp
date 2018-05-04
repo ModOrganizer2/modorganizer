@@ -4274,13 +4274,21 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
       }
     } else {
       QString gameName = m_OrganizerCore.managedGame()->gameShortName();
+      bool sameNexus = false;
       for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
         if (game->nexusGameID() == result["game_id"].toInt()) {
           gameName = game->gameShortName();
+          if (game->nexusGameID() == m_OrganizerCore.managedGame()->nexusGameID())
+            sameNexus = true;
           break;
         }
       }
       std::vector<ModInfo::Ptr> info = ModInfo::getByModID(gameName, result["id"].toInt());
+      if (sameNexus) {
+        std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), result["id"].toInt());
+        info.reserve(info.size() + mainInfo.size());
+        info.insert(info.end(), mainInfo.begin(), mainInfo.end());
+      }
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
