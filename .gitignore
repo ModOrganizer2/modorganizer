@@ -7,12 +7,9 @@ src/Modorganizer.*
 src/*.bak
 CMakeLists.txt.user
 edit
-stderr.log
-stdout.log
-vs_stderr.log
-vs_stdout.log
-msbuild.log
-build
-/vsbuild
 /CMakeFiles
 .idea
+/msbuild.log
+/*std*.log
+/*build
+
