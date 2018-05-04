@@ -631,6 +631,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
+      mainWindow.processUpdates();
       mainWindow.readSettings();
 
       qDebug("displaying main window");

@@ -148,6 +148,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTreeWidgetItemIterator>
 #include <QUrl>
 #include <QVariantList>
+#include <QVersionNumber>
 #include <QWhatsThis>
 #include <QWidgetAction>
 #include <QWebEngineProfile>
@@ -1663,6 +1664,29 @@ void MainWindow::readSettings()
   if (settings.value("Settings/use_proxy", false).toBool()) {
     activateProxy(true);
   }
+}
+
+void MainWindow::processUpdates() {
+  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
+  QVersionNumber lastVersion = QVersionNumber::fromString(settings.value("version", "2.1.2").toString()).normalized();
+  QVersionNumber currentVersion = QVersionNumber::fromString(m_OrganizerCore.getVersion().displayString()).normalized();
+  if (!m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+    if (lastVersion < QVersionNumber(2, 1, 3)) {
+      bool lastHidden = true;
+      for (int i = ModList::COL_GAME; i < ui->modList->model()->columnCount(); ++i) {
+        bool hidden = ui->modList->header()->isSectionHidden(i);
+        ui->modList->header()->setSectionHidden(i, lastHidden);
+        lastHidden = hidden;
+      }
+    }
+  }
+
+  if (currentVersion > lastVersion)
+    settings.setValue("version", currentVersion.toString());
+  else if (currentVersion < lastVersion)
+    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previous version (%2).<br>"
+                     "The GUI may not downgrade gracefully, so you may experience oddities.<br>"
+                     "However, there should be no serious issues.").arg(lastVersion.toString()).arg(currentVersion.toString()).toStdWString();
 }
 
 void MainWindow::storeSettings(QSettings &settings) {

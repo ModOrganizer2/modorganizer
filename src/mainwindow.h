@@ -116,6 +116,7 @@ public:
 
   void storeSettings(QSettings &settings) override;
   void readSettings();
+  void processUpdates();
 
   virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;
