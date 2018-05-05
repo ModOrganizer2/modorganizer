@@ -257,6 +257,11 @@ public slots:
    */
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
+  /**
+   * @brief Generate the plugin indexes because something was changed
+   **/
+  void generatePluginIndexes();
+
 signals:
 
  /**

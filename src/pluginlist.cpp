@@ -76,6 +76,7 @@ PluginList::PluginList(QObject *parent)
   : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
 {
+  connect(this, SIGNAL(writePluginsList()), this, SLOT(generatePluginIndexes()));
 }
 
 PluginList::~PluginList()
@@ -738,6 +739,11 @@ void PluginList::updateIndices()
     m_ESPsByPriority.at(static_cast<size_t>(m_ESPs[i].m_Priority)) = i;
   }
 
+  generatePluginIndexes();
+}
+
+void PluginList::generatePluginIndexes()
+{
   int numESLs = 0;
   int numSkipped = 0;
   for (int l = 0; l < m_ESPs.size(); ++l) {
