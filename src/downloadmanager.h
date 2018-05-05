@@ -439,7 +439,7 @@ private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
-  void downloadFinished();
+  void downloadFinished(int index = 0);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString &dirctory);
@@ -460,7 +460,7 @@ public:
    *
    * @return Unique(ish) name
    */
-  QString getDownloadFileName(const QString &baseName) const;
+  QString getDownloadFileName(const QString &baseName, bool rename = false) const;
 
 private:
 

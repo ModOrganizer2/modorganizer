@@ -381,14 +381,6 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
       baseName = dispoName;
     }
   }
-  if (QFile::exists(m_OutputDirectory + "/" + baseName) &&
-      (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
-                             "Do you want to download it again? The new file will receive a different name."),
-                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)) {
-    removePending(gameName, modID, fileID);
-    delete newDownload;
-    return false;
-  }
   newDownload->setName(getDownloadFileName(baseName), false);
 
   startDownload(reply, newDownload, false);
@@ -434,7 +426,6 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
   }
 
   connect(newDownload->m_Reply, SIGNAL(downloadProgress(qint64, qint64)), this, SLOT(downloadProgress(qint64, qint64)));
-  connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
   connect(newDownload->m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
   connect(newDownload->m_Reply, SIGNAL(readyRead()), this, SLOT(downloadReadyRead()));
   connect(newDownload->m_Reply, SIGNAL(metaDataChanged()), this, SLOT(metaDataChanged()));
@@ -449,11 +440,33 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     emit update(-1);
     emit downloadAdded();
 
-    if (reply->isFinished()) {
-      // it's possible the download has already finished before this function ran
-      downloadFinished();
+    if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
+      setState(newDownload, STATE_PAUSING);
+      QCoreApplication::processEvents();
+      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
+          "Do you want to download it again? The new file will receive a different name."),
+          QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        if (reply->isFinished())
+          setState(newDownload, STATE_CANCELED);
+        else
+          setState(newDownload, STATE_CANCELING);
+      } else {
+        newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
+        if (newDownload->m_State == STATE_PAUSED)
+          resumeDownload(indexByName(newDownload->m_FileName));
+        else
+          setState(newDownload, STATE_DOWNLOADING);
+      }
+    }
+
+    QCoreApplication::processEvents();
+
+    if (newDownload->m_State != STATE_DOWNLOADING && reply->isFinished()) {
+      downloadFinished(indexByName(newDownload->m_FileName));
+      return;
     }
   }
+  connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
 }
 
 
@@ -991,10 +1004,10 @@ void DownloadManager::markUninstalled(QString fileName)
 }
 
 
-QString DownloadManager::getDownloadFileName(const QString &baseName) const
+QString DownloadManager::getDownloadFileName(const QString &baseName, bool rename) const
 {
   QString fullPath = m_OutputDirectory + "/" + baseName;
-  if (QFile::exists(fullPath)) {
+  if (QFile::exists(fullPath) && rename) {
     int i = 1;
     while (QFile::exists(QString("%1/%2_%3").arg(m_OutputDirectory).arg(i).arg(baseName))) {
       ++i;
@@ -1035,6 +1048,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     case STATE_PAUSED:
     case STATE_ERROR: {
       info->m_Reply->abort();
+      info->m_Output.close();
     } break;
     case STATE_CANCELED: {
       info->m_Reply->abort();
@@ -1450,11 +1464,14 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
 }
 
 
-void DownloadManager::downloadFinished()
+void DownloadManager::downloadFinished(int index)
 {
-  int index = 0;
+  DownloadInfo *info;
+  if (index)
+    info = m_ActiveDownloads[index];
+  else
+    info = findDownload(this->sender(), &index);
 
-  DownloadInfo *info = findDownload(this->sender(), &index);
   if (info != nullptr) {
     QNetworkReply *reply = info->m_Reply;
     QByteArray data;
