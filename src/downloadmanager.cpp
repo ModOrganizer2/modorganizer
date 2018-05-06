@@ -145,8 +145,10 @@ void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
   QString oldMetaFileName = QString("%1.meta").arg(m_FileName);
   m_FileName = QFileInfo(newName).fileName();
   if ((m_State == DownloadManager::STATE_STARTED) ||
-      (m_State == DownloadManager::STATE_DOWNLOADING)) {
+      (m_State == DownloadManager::STATE_DOWNLOADING) ||
+      (m_State == DownloadManager::STATE_PAUSED)) {
     newName.append(UNFINISHED);
+    oldMetaFileName = QString("%1%2.meta").arg(m_FileName).arg(UNFINISHED);
   }
   if (renameFile) {
     if ((newName != m_Output.fileName()) && !m_Output.rename(newName)) {
@@ -154,10 +156,9 @@ void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
       return;
     }
 
-    QFile metaFile(oldMetaFileName);
-    if (metaFile.exists()) {
+    QFile metaFile(QFileInfo(newName).path() + "/" + oldMetaFileName);
+    if (metaFile.exists())
       metaFile.rename(newName.mid(0).append(".meta"));
-    }
   }
   if (!m_Output.isOpen()) {
     // can't set file name if it's open
@@ -457,7 +458,9 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
         else
           setState(newDownload, STATE_DOWNLOADING);
       }
-    }
+    } else
+      connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+
 
     QCoreApplication::processEvents();
 
@@ -465,8 +468,8 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
       downloadFinished(indexByName(newDownload->m_FileName));
       return;
     }
-  }
-  connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+  } else
+    connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
 }
 
 
@@ -496,11 +499,11 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(download->m_FileInfo->modName),
+        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(download->m_FileInfo->modID),
           qPrintable(download->m_FileInfo->fileName));
 
-        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (%2).")
-          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->name), QMessageBox::Ok);
+        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (mod: %1, file: %2).")
+          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->fileName), QMessageBox::Ok);
         return;
       }
     }
@@ -702,6 +705,8 @@ void DownloadManager::resumeDownloadInt(int index)
     std::get<0>(info->m_SpeedDiff) = 0;
     std::get<1>(info->m_SpeedDiff) = 0;
     std::get<2>(info->m_SpeedDiff) = 0;
+    std::get<3>(info->m_SpeedDiff) = 0;
+    std::get<4>(info->m_SpeedDiff) = 0;
     qDebug("resume at %lld bytes", info->m_ResumePos);
     QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
     request.setRawHeader("Range", rangeHeader);
@@ -1105,11 +1110,17 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         int oldProgress = info->m_Progress.first;
         info->m_Progress.first = ((info->m_ResumePos + bytesReceived) * 100) / (info->m_ResumePos + bytesTotal);
 
+        int elapsed = info->m_StartTime.elapsed();
+        std::get<0>(info->m_SpeedDiff) = bytesReceived - std::get<2>(info->m_SpeedDiff);
+        std::get<1>(info->m_SpeedDiff) = elapsed - std::get<3>(info->m_SpeedDiff);
+        std::get<2>(info->m_SpeedDiff) = bytesReceived;
+        std::get<3>(info->m_SpeedDiff) = elapsed;
+
+        double calc = ((double)std::get<0>(info->m_SpeedDiff)) / (((double)(std::get<1>(info->m_SpeedDiff)) / 5000.0));
+        std::get<4>(info->m_SpeedDiff) = ((calc*0.5) + (std::get<4>(info->m_SpeedDiff)*1.5)) / 2;
+
         // calculate the download speed
-        double speed = (bytesReceived - std::get<1>(info->m_SpeedDiff)) * 1000.0 / // Calculate with the data transferred in the last 5 seconds...
-          (std::get<1>(info->m_SpeedDiff) ? // If we are past 5 seconds
-            (5 * 1000) + (info->m_StartTime.elapsed() - std::get<2>(info->m_SpeedDiff)) : // Divide by 5 seconds + the diff between chunks
-            info->m_StartTime.elapsed()); // Else just use the current elapsed time
+        double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
 
         QString unit;
         if (speed < 1024) {
@@ -1125,12 +1136,6 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         }
 
         info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 3, 'f', 1).arg(unit);
-
-        if (info->m_StartTime.elapsed() >= 5 * 1000) {
-          std::get<1>(info->m_SpeedDiff) = std::get<1>(info->m_SpeedDiff) + bytesReceived - std::get<0>(info->m_SpeedDiff);
-          std::get<2>(info->m_SpeedDiff) = info->m_StartTime.elapsed();
-        }
-        std::get<0>(info->m_SpeedDiff) = bytesReceived;
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
@@ -1551,7 +1556,7 @@ void DownloadManager::downloadFinished(int index)
 
       QString newName = getFileNameFromNetworkReply(reply);
       QString oldName = QFileInfo(info->m_Output).fileName();
-      if (!newName.isEmpty() && (newName != oldName)) {
+      if (!newName.isEmpty() && (oldName.isEmpty())) {
         info->setName(getDownloadFileName(newName), true);
       } else {
         info->setName(m_OutputDirectory + "/" + info->m_FileName, true); // don't rename but remove the ".unfinished" extension
@@ -1594,7 +1599,7 @@ void DownloadManager::metaDataChanged()
   DownloadInfo *info = findDownload(this->sender(), &index);
   if (info != nullptr) {
     QString newName = getFileNameFromNetworkReply(info->m_Reply);
-    if (!newName.isEmpty() && (newName != info->m_FileName)) {
+    if (!newName.isEmpty() && (info->m_FileName.isEmpty())) {
       info->setName(getDownloadFileName(newName), true);
       refreshAlphabeticalTranslation();
       if (!info->m_Output.isOpen() && !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {

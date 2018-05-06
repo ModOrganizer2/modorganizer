@@ -95,9 +95,6 @@ InstallationManager::InstallationManager()
   if (!m_ArchiveHandler->isValid()) {
     throw MyException(getErrorString(m_ArchiveHandler->getLastError()));
   }
-
-  connect(this, SIGNAL(progressUpdate(float)), this, (SLOT(doProgressUpdate(float))), Qt::QueuedConnection);
-  connect(this, SIGNAL(progressUpdate(const QString)), this, (SLOT(doProgressFileUpdate(const QString))), Qt::QueuedConnection);
 }
 
 InstallationManager::~InstallationManager()
@@ -203,9 +200,12 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
     );
   });
   do {
-    ::Sleep(50);
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
-  } while (!future.isFinished());
+  } while (!future.isFinished() || m_InstallationProgress->isVisible());
   bool res = future.result();
 
   return res;
@@ -301,9 +301,12 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     );
   });
   do {
-    ::Sleep(50);
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
-  } while (!future.isFinished());
+  } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
     throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
@@ -431,20 +434,8 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
 
 void InstallationManager::updateProgress(float percentage)
 {
-  emit progressUpdate(percentage);
-}
-
-
-void InstallationManager::updateProgressFile(QString const &fileName)
-{
-  emit progressUpdate(fileName);
-}
-
-
-void InstallationManager::doProgressUpdate(float percentage)
-{
   if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
+    m_Progress = static_cast<int>(percentage * 100.0);
 
     if (m_InstallationProgress->wasCanceled()) {
       m_ArchiveHandler->cancel();
@@ -453,11 +444,10 @@ void InstallationManager::doProgressUpdate(float percentage)
   }
 }
 
-void InstallationManager::doProgressFileUpdate(QString const fileName)
+
+void InstallationManager::updateProgressFile(QString const &fileName)
 {
-  if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setLabelText(fileName);
-  }
+  m_ProgressFile = fileName;
 }
 
 
@@ -610,7 +600,10 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
     );
   });
   do {
-    ::Sleep(50);
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
   } while (!future.isFinished());
   if (!future.result()) {

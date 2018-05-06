@@ -182,11 +182,6 @@ signals:
   void progressUpdate(float percentage);
   void progressUpdate(QString const fileName);
 
-private slots:
-
-  void doProgressUpdate(float percentage);
-  void doProgressFileUpdate(const QString fileName);
-
 private:
 
   struct ByPriority {
@@ -217,6 +212,8 @@ private:
   QString m_CurrentFile;
 
   QProgressDialog *m_InstallationProgress { nullptr };
+  int m_Progress;
+  QString m_ProgressFile;
 
   std::set<QString> m_TempFilesToDelete;
 
