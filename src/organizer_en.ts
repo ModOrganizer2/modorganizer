@@ -35,68 +35,63 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="175"/>
-        <source>AL12</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="aboutdialog.ui" line="201"/>
-        <source>Other Supporters &amp;&amp; Contributors</source>
+        <source>Major Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="292"/>
+        <location filename="aboutdialog.ui" line="222"/>
         <source>Translators</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="317"/>
+        <location filename="aboutdialog.ui" line="247"/>
         <source>Cyb3r (Dutch)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="327"/>
+        <location filename="aboutdialog.ui" line="257"/>
         <source>fruttyx (French)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="342"/>
+        <location filename="aboutdialog.ui" line="272"/>
         <source>Yoplala (French)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="347"/>
+        <location filename="aboutdialog.ui" line="277"/>
         <source>Faron (German)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="357"/>
+        <location filename="aboutdialog.ui" line="287"/>
         <source>Mordan (Greek)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="370"/>
+        <location filename="aboutdialog.ui" line="300"/>
         <source>Yoosk (Polish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="375"/>
+        <location filename="aboutdialog.ui" line="305"/>
         <source>Brgodfx (Portuguese)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="395"/>
+        <location filename="aboutdialog.ui" line="325"/>
         <source>Jax (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="400"/>
+        <location filename="aboutdialog.ui" line="330"/>
         <source>...and all other Transifex contributors!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="414"/>
-        <source>Major Contributors</source>
+        <location filename="aboutdialog.ui" line="344"/>
+        <source>Other Supporters &amp;&amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -625,276 +620,276 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadManager</name>
     <message>
-        <location filename="downloadmanager.cpp" line="153"/>
+        <location filename="downloadmanager.cpp" line="155"/>
         <source>failed to rename &quot;%1&quot; to &quot;%2&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="337"/>
+        <location filename="downloadmanager.cpp" line="338"/>
         <source>Memory allocation error (in refreshing directory).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="385"/>
-        <source>Download again?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="385"/>
-        <source>A file with the same name has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadmanager.cpp" line="431"/>
+        <location filename="downloadmanager.cpp" line="424"/>
         <source>failed to download %1: could not open output file: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="470"/>
+        <location filename="downloadmanager.cpp" line="447"/>
+        <source>Download again?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="447"/>
+        <source>A file with the same name has already been downloaded. Do you want to download it again? The new file will receive a different name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadmanager.cpp" line="486"/>
         <source>Wrong Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="470"/>
+        <location filename="downloadmanager.cpp" line="486"/>
         <source>The download link is for a mod for &quot;%1&quot; but this instance of MO has been set up for &quot;%2&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="478"/>
-        <location filename="downloadmanager.cpp" line="489"/>
+        <location filename="downloadmanager.cpp" line="494"/>
+        <location filename="downloadmanager.cpp" line="505"/>
         <source>Already Started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="478"/>
+        <location filename="downloadmanager.cpp" line="494"/>
         <source>A download for this mod file has already been queued.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="489"/>
-        <source>There is already a download started for this file (%2).</source>
+        <location filename="downloadmanager.cpp" line="505"/>
+        <source>There is already a download started for this file (mod: %1, file: %2).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="509"/>
-        <location filename="downloadmanager.cpp" line="611"/>
+        <location filename="downloadmanager.cpp" line="525"/>
+        <location filename="downloadmanager.cpp" line="627"/>
         <source>remove: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="527"/>
+        <location filename="downloadmanager.cpp" line="543"/>
         <source>failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="533"/>
+        <location filename="downloadmanager.cpp" line="549"/>
         <source>failed to delete meta file for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="576"/>
+        <location filename="downloadmanager.cpp" line="592"/>
         <source>restore: invalid download index: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="629"/>
+        <location filename="downloadmanager.cpp" line="645"/>
         <source>cancel: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="642"/>
+        <location filename="downloadmanager.cpp" line="658"/>
         <source>pause: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="662"/>
+        <location filename="downloadmanager.cpp" line="678"/>
         <source>resume: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="673"/>
+        <location filename="downloadmanager.cpp" line="689"/>
         <source>resume (int): invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="680"/>
+        <location filename="downloadmanager.cpp" line="696"/>
         <source>No known download urls. Sorry, this download can&apos;t be resumed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="716"/>
+        <location filename="downloadmanager.cpp" line="734"/>
         <source>query: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="738"/>
+        <location filename="downloadmanager.cpp" line="756"/>
         <source>Please enter the nexus mod id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="738"/>
+        <location filename="downloadmanager.cpp" line="756"/>
         <source>Mod ID:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="748"/>
+        <location filename="downloadmanager.cpp" line="766"/>
         <source>Please select the source game code for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="778"/>
+        <location filename="downloadmanager.cpp" line="796"/>
         <source>get pending: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="787"/>
+        <location filename="downloadmanager.cpp" line="805"/>
         <source>get path: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="796"/>
+        <location filename="downloadmanager.cpp" line="814"/>
         <source>Main</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="797"/>
+        <location filename="downloadmanager.cpp" line="815"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="798"/>
+        <location filename="downloadmanager.cpp" line="816"/>
         <source>Optional</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="799"/>
+        <location filename="downloadmanager.cpp" line="817"/>
         <source>Old</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="800"/>
+        <location filename="downloadmanager.cpp" line="818"/>
         <source>Misc</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="801"/>
+        <location filename="downloadmanager.cpp" line="819"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="808"/>
+        <location filename="downloadmanager.cpp" line="826"/>
         <source>display name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="828"/>
+        <location filename="downloadmanager.cpp" line="846"/>
         <source>file name: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="837"/>
+        <location filename="downloadmanager.cpp" line="855"/>
         <source>file time: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="851"/>
+        <location filename="downloadmanager.cpp" line="869"/>
         <source>file size: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="861"/>
+        <location filename="downloadmanager.cpp" line="879"/>
         <source>progress: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="871"/>
+        <location filename="downloadmanager.cpp" line="889"/>
         <source>state: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="881"/>
+        <location filename="downloadmanager.cpp" line="899"/>
         <source>infocomplete: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="896"/>
-        <location filename="downloadmanager.cpp" line="904"/>
+        <location filename="downloadmanager.cpp" line="914"/>
+        <location filename="downloadmanager.cpp" line="922"/>
         <source>mod id: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="912"/>
+        <location filename="downloadmanager.cpp" line="930"/>
         <source>ishidden: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="921"/>
+        <location filename="downloadmanager.cpp" line="939"/>
         <source>file info: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="931"/>
+        <location filename="downloadmanager.cpp" line="949"/>
         <source>mark installed: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="966"/>
+        <location filename="downloadmanager.cpp" line="984"/>
         <source>mark uninstalled: invalid download index %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1126"/>
+        <location filename="downloadmanager.cpp" line="1145"/>
         <source>Memory allocation error (in processing progress event).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1139"/>
+        <location filename="downloadmanager.cpp" line="1158"/>
         <source>Memory allocation error (in processing downloaded data).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1273"/>
+        <location filename="downloadmanager.cpp" line="1292"/>
         <source>Information updated</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1275"/>
-        <location filename="downloadmanager.cpp" line="1289"/>
+        <location filename="downloadmanager.cpp" line="1294"/>
+        <location filename="downloadmanager.cpp" line="1308"/>
         <source>No matching file found on Nexus! Maybe this file is no longer available or it was renamed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1277"/>
+        <location filename="downloadmanager.cpp" line="1296"/>
         <source>No file on Nexus matches the selected file by name. Please manually choose the correct one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1406"/>
+        <location filename="downloadmanager.cpp" line="1425"/>
         <source>No download server available. Please try again later.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1449"/>
+        <location filename="downloadmanager.cpp" line="1468"/>
         <source>Failed to request file info from nexus: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1473"/>
+        <location filename="downloadmanager.cpp" line="1495"/>
         <source>Warning: Content type is: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1479"/>
+        <location filename="downloadmanager.cpp" line="1501"/>
         <source>Download header content length: %1 downloaded file size: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1481"/>
+        <location filename="downloadmanager.cpp" line="1503"/>
         <source>Download failed: %1 (%2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadmanager.cpp" line="1584"/>
+        <location filename="downloadmanager.cpp" line="1606"/>
         <source>failed to re-open %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1212,98 +1207,98 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>InstallationManager</name>
     <message>
-        <location filename="installationmanager.cpp" line="122"/>
+        <location filename="installationmanager.cpp" line="119"/>
         <source>Password required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="123"/>
+        <location filename="installationmanager.cpp" line="120"/>
         <source>Password</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="192"/>
+        <location filename="installationmanager.cpp" line="189"/>
         <location filename="installationmanager.cpp" line="289"/>
         <source>Extracting files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="500"/>
+        <location filename="installationmanager.cpp" line="490"/>
         <source>failed to create backup</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="509"/>
+        <location filename="installationmanager.cpp" line="499"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="509"/>
+        <location filename="installationmanager.cpp" line="499"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="562"/>
+        <location filename="installationmanager.cpp" line="552"/>
         <source>Invalid name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="563"/>
+        <location filename="installationmanager.cpp" line="553"/>
         <source>The name you entered is invalid, please enter a different one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="701"/>
+        <location filename="installationmanager.cpp" line="694"/>
         <source>File format &quot;%1&quot; not supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="864"/>
+        <location filename="installationmanager.cpp" line="857"/>
         <source>None of the available installer plugins were able to handle that archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="874"/>
+        <location filename="installationmanager.cpp" line="867"/>
         <source>no error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="877"/>
+        <location filename="installationmanager.cpp" line="870"/>
         <source>7z.dll not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="880"/>
+        <location filename="installationmanager.cpp" line="873"/>
         <source>7z.dll isn&apos;t valid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="883"/>
+        <location filename="installationmanager.cpp" line="876"/>
         <source>archive not found</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="886"/>
+        <location filename="installationmanager.cpp" line="879"/>
         <source>failed to open archive</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="889"/>
+        <location filename="installationmanager.cpp" line="882"/>
         <source>unsupported archive type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="892"/>
+        <location filename="installationmanager.cpp" line="885"/>
         <source>internal library error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="895"/>
+        <location filename="installationmanager.cpp" line="888"/>
         <source>archive invalid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installationmanager.cpp" line="899"/>
+        <location filename="installationmanager.cpp" line="892"/>
         <source>unknown archive error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4237,120 +4232,120 @@ Continue?</source>
 <context>
     <name>PluginList</name>
     <message>
-        <location filename="pluginlist.cpp" line="91"/>
+        <location filename="pluginlist.cpp" line="92"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="92"/>
+        <location filename="pluginlist.cpp" line="93"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="93"/>
+        <location filename="pluginlist.cpp" line="94"/>
         <source>Mod Index</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="94"/>
+        <location filename="pluginlist.cpp" line="95"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="95"/>
-        <location filename="pluginlist.cpp" line="107"/>
+        <location filename="pluginlist.cpp" line="96"/>
+        <location filename="pluginlist.cpp" line="108"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="103"/>
+        <location filename="pluginlist.cpp" line="104"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="104"/>
+        <location filename="pluginlist.cpp" line="105"/>
         <source>Load priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites data from plugins with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="106"/>
+        <location filename="pluginlist.cpp" line="107"/>
         <source>The modindex determines the formids of objects originating from this mods.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="196"/>
+        <location filename="pluginlist.cpp" line="197"/>
         <source>failed to update esp info for file %1 (source id: %2), error: %3</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="269"/>
+        <location filename="pluginlist.cpp" line="270"/>
         <source>esp not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="276"/>
-        <location filename="pluginlist.cpp" line="288"/>
+        <location filename="pluginlist.cpp" line="277"/>
+        <location filename="pluginlist.cpp" line="289"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="276"/>
+        <location filename="pluginlist.cpp" line="277"/>
         <source>Really enable all plugins?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="288"/>
+        <location filename="pluginlist.cpp" line="289"/>
         <source>Really disable all plugins?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="378"/>
+        <location filename="pluginlist.cpp" line="379"/>
         <source>The file containing locked plugin indices is broken</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="878"/>
-        <location filename="pluginlist.cpp" line="882"/>
+        <location filename="pluginlist.cpp" line="870"/>
+        <location filename="pluginlist.cpp" line="874"/>
         <source>&lt;b&gt;Origin&lt;/b&gt;: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="879"/>
+        <location filename="pluginlist.cpp" line="871"/>
         <source>&lt;br&gt;&lt;b&gt;&lt;i&gt;This plugin can&apos;t be disabled (enforced by the game).&lt;/i&gt;&lt;/b&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="884"/>
+        <location filename="pluginlist.cpp" line="876"/>
         <source>Author</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="887"/>
+        <location filename="pluginlist.cpp" line="879"/>
         <source>Description</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="890"/>
+        <location filename="pluginlist.cpp" line="882"/>
         <source>Missing Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="897"/>
+        <location filename="pluginlist.cpp" line="889"/>
         <source>Enabled Masters</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="900"/>
+        <location filename="pluginlist.cpp" line="892"/>
         <source>There is an ini file connected to this esp. Its settings will be added to your game settings, overwriting in case of conflicts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="904"/>
+        <location filename="pluginlist.cpp" line="896"/>
         <source>This ESP is flagged as an ESL. It will adhere to the ESP load order but the records will be loaded in ESL space.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="1075"/>
+        <location filename="pluginlist.cpp" line="1067"/>
         <source>failed to restore load order for %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5125,12 +5120,12 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="454"/>
+        <location filename="pluginlist.cpp" line="455"/>
         <source>failed to access %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="pluginlist.cpp" line="468"/>
+        <location filename="pluginlist.cpp" line="469"/>
         <source>failed to set file time %1</source>
         <translation type="unfinished"></translation>
     </message>
