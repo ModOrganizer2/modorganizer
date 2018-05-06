@@ -240,6 +240,13 @@ SOURCE_GROUP(Source FILES ${organizer_SRCS})
 SOURCE_GROUP(Headers FILES ${organizer_HDRS})
 SOURCE_GROUP(UI FILES ${organizer_UIS})
 
+# MO projects
+SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
+GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
+
+SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+#TODO this should not be a hardcoded path
+SET(lib_path "${project_path}/../../install/libs")
 
 # Qt5
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -275,16 +282,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 FIND_PACKAGE(zlib REQUIRED)
 # TODO FindZlib doesn't find the static zlib library
-
-
-# MO projects
-SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
-GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
-
-SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
-#TODO this should not be a hardcoded path
-SET(lib_path "${project_path}/../../install/libs")
-
 
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
