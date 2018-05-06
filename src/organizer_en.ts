@@ -95,7 +95,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="aboutdialog.ui" line="456"/>
+        <location filename="aboutdialog.ui" line="466"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>

@@ -386,12 +386,22 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">GrantSP</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">GSDFan</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string notr="true">ogrotten</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">outdatedtv</string>
                </property>
               </item>
               <item>
