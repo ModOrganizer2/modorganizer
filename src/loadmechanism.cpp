@@ -126,7 +126,7 @@ void LoadMechanism::deactivateScriptExtender()
     IPluginGame const *game = qApp->property("managed_game").value<IPluginGame*>();
     ScriptExtender *extender = game->feature<ScriptExtender>();
     if (extender == nullptr) {
-      throw MyException(QObject::tr("game doesn't support a script extender"));
+      return;
     }
 
     QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->PluginPath());
@@ -193,7 +193,7 @@ void LoadMechanism::activateScriptExtender()
     IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
     ScriptExtender *extender = game->feature<ScriptExtender>();
     if (extender == nullptr) {
-      throw MyException(QObject::tr("game doesn't support a script extender"));
+      return;
     }
 
     QDir pluginsDir(game->gameDirectory().absolutePath() + "/data/" + extender->PluginPath());
