@@ -60,6 +60,11 @@ IModInterface *OrganizerProxy::getMod(const QString &name) const
   return m_Proxied->getMod(name);
 }
 
+IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
+{
+  return m_Proxied->getGame(gameName);
+}
+
 IModInterface *OrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)
 {
   return m_Proxied->createMod(name);

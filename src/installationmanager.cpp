@@ -819,7 +819,7 @@ bool InstallationManager::install(const QString &fileName,
               = installerCustom->supportedExtensions();
           if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
             installResult
-                = installerCustom->install(modName, fileName, version, modID);
+                = installerCustom->install(modName, gameName, fileName, version, modID);
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
               ModInfo::Ptr info = ModInfo::getByIndex(idx);

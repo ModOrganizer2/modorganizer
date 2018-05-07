@@ -789,6 +789,15 @@ MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
   return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
 }
 
+MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
+{
+  for (IPluginGame *game : m_PluginContainer->plugins<IPluginGame>()) {
+    if (game->gameShortName().compare(name, Qt::CaseInsensitive) == 0)
+      return game;
+  }
+  return nullptr;
+}
+
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
   bool merge = false;

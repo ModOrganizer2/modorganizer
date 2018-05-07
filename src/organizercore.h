@@ -184,6 +184,7 @@ public:
   QString basePath() const;
   MOBase::VersionInfo appVersion() const;
   MOBase::IModInterface *getMod(const QString &name) const;
+  MOBase::IPluginGame *getGame(const QString &gameName) const;
   MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   bool removeMod(MOBase::IModInterface *mod);
   void modDataChanged(MOBase::IModInterface *mod);
