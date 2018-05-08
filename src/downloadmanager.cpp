@@ -499,7 +499,7 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(download->m_FileInfo->modID),
+        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(QString(download->m_FileInfo->modID)),
           qPrintable(download->m_FileInfo->fileName));
 
         QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (mod: %1, file: %2).")
