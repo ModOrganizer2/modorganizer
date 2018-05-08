@@ -109,11 +109,11 @@ public:
 signals:
 
   void thumbnailClickedSignal(const QString &filename);
-  void nexusLinkActivated(const QString &link);
+  void linkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
+  void modOpenNext(int tab=-1);
+  void modOpenPrev(int tab=-1);
   void originModified(int originID);
   void endorseMod(ModInfo::Ptr nexusID);
 
@@ -164,6 +164,9 @@ private slots:
 
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
+  void linkClicked(QString url);
+
+  void delete_activated();
 
   void deleteTriggered();
   void renameTriggered();
@@ -172,6 +175,7 @@ private slots:
   void hideTriggered();
   void unhideTriggered();
 
+  void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
   void on_saveButton_clicked();
   void on_activateESP_clicked();
@@ -179,6 +183,7 @@ private slots:
   void on_saveTXTButton_clicked();
   void on_visitNexusLabel_linkActivated(const QString &link);
   void on_modIDEdit_editingFinished();
+  void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
   void on_iniFileView_textChanged();
   void on_textFileView_textChanged();

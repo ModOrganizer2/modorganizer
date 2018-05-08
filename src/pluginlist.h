@@ -194,6 +194,7 @@ public:
 
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
+  QString getIndexPriority(int index) const;
   bool isESPLocked(int index) const;
   void lockESPIndex(int index, bool lock);
 
@@ -256,6 +257,11 @@ public slots:
    */
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
+  /**
+   * @brief Generate the plugin indexes because something was changed
+   **/
+  void generatePluginIndexes();
+
 signals:
 
  /**
@@ -277,6 +283,7 @@ private:
     bool m_Enabled;
     bool m_ForceEnabled;
     int m_Priority;
+    QString m_Index;
     int m_LoadOrder;
     FILETIME m_Time;
     QString m_OriginName;

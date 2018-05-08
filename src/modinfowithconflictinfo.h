@@ -10,7 +10,7 @@ class ModInfoWithConflictInfo : public ModInfo
 
 public:
 
-  ModInfoWithConflictInfo(MOShared::DirectoryEntry **directoryStructure);
+  ModInfoWithConflictInfo(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure);
 
   std::vector<ModInfo::EFlag> getFlags() const;
 

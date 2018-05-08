@@ -2,7 +2,6 @@
 #define MODINFOREGULAR_H
 
 #include "modinfowithconflictinfo.h"
-
 #include "nexusinterface.h"
 
 /**
@@ -26,6 +25,9 @@ public:
   virtual bool isRegular() const { return true; }
 
   virtual bool isEmpty() const;
+
+  bool isAlternate() { return m_IsAlternate; }
+  bool isConverted() { return m_Converted; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -92,6 +94,13 @@ public:
    * @param notes new notes
    */
   void setNotes(const QString &notes);
+
+  /**
+   * @brief set/change the source game of this mod
+   *
+   * @param gameName the source game shortName
+   */
+  void setGameName(QString gameName);
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -175,6 +184,11 @@ public:
   virtual void endorse(bool doEndorse);
 
   /**
+  * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
+  */
+  virtual void markConverted(bool converted) override;
+
+  /**
    * @brief getter for the mod name
    *
    * @return the mod name
@@ -206,6 +220,14 @@ public:
    * @return file used to install this mod from
    */
   virtual QString getInstallationFile() const { return m_InstallationFile; }
+
+  /**
+   * @brief getter for the source game repository
+   *
+   * @return the source game repository. should default to the active game.
+   **/
+  QString getGameName() const { return m_GameName; }
+
   /**
    * @brief getter for the nexus mod id
    *
@@ -308,13 +330,13 @@ private:
 
 private slots:
 
-  void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData);
-  void nxmEndorsementToggled(int, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(int modID, int fileID, QVariant userData, const QString &errorMessage);
+  void nxmDescriptionAvailable(QString, int modID, QVariant userData, QVariant resultData);
+  void nxmEndorsementToggled(QString, int, QVariant userData, QVariant resultData);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, const QString &errorMessage);
 
 protected:
 
-  ModInfoRegular(const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoRegular(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 private:
 
@@ -325,6 +347,7 @@ private:
   QString m_NexusDescription;
   QString m_Repository;
   QString m_URL;
+  QString m_GameName;
 
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
@@ -333,6 +356,8 @@ private:
   std::set<std::pair<int, int>> m_InstalledFileIDs;
 
   bool m_MetaInfoChanged;
+  bool m_IsAlternate;
+  bool m_Converted;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

@@ -14,6 +14,7 @@ public:
   virtual bool updateIgnored() const { return false; }
   virtual bool downgradeAvailable() const { return false; }
   virtual bool updateNXMInfo() { return false; }
+  virtual void setGameName(QString) {}
   virtual void setNexusID(int) {}
   virtual void endorse(bool) {}
   virtual int getFixedPriority() const { return -1; }
@@ -32,7 +33,7 @@ public:
 
 private:
 
-  ModInfoBackup(const QDir &path, MOShared::DirectoryEntry **directoryStructure);
+  ModInfoBackup(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &path, MOShared::DirectoryEntry **directoryStructure);
 
 };
 

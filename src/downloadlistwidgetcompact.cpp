@@ -88,8 +88,8 @@ void DownloadListWidgetCompactDelegate::drawCache(QPainter *painter, const QStyl
 
 void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) const
 {
-  std::pair<int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
-  m_NameLabel->setText(tr("< mod %1 file %2 >").arg(nexusids.first).arg(nexusids.second));
+  std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
+  m_NameLabel->setText(tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids)));
   if (m_SizeLabel != nullptr) {
     m_SizeLabel->setText("???");
   }
@@ -138,7 +138,8 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
   } else {
     m_DoneLabel->setVisible(false);
     m_Progress->setVisible(true);
-    m_Progress->setValue(m_Manager->getProgress(downloadIndex));
+    m_Progress->setValue(m_Manager->getProgress(downloadIndex).first);
+    m_Progress->setFormat(m_Manager->getProgress(downloadIndex).second);
   }
 }
 

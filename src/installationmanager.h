@@ -168,7 +168,7 @@ private:
   bool isSimpleArchiveTopLayer(const MOBase::DirectoryTree::Node *node, bool bainStyle);
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
-  bool doInstall(MOBase::GuessedValue<QString> &modName,
+  bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
   QString generateBackupName(const QString &directoryName) const;
@@ -176,6 +176,11 @@ private:
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
   void postInstallCleanup();
+
+signals:
+
+  void progressUpdate(float percentage);
+  void progressUpdate(QString const fileName);
 
 private:
 
@@ -207,6 +212,8 @@ private:
   QString m_CurrentFile;
 
   QProgressDialog *m_InstallationProgress { nullptr };
+  int m_Progress;
+  QString m_ProgressFile;
 
   std::set<QString> m_TempFilesToDelete;
 

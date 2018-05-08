@@ -49,6 +49,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDirIterator>
 #include <QDebug>
 #include <QTextDocument>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <Shellapi.h>
 
@@ -190,10 +191,22 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
 
-  bool res = m_ArchiveHandler->extract(QDir::tempPath(),
-                                new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-                                nullptr,
-                                new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError));
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      QDir::tempPath(),
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      nullptr,
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  do {
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
+    QCoreApplication::processEvents();
+  } while (!future.isFinished() || m_InstallationProgress->isVisible());
+  bool res = future.result();
 
   return res;
 }
@@ -279,10 +292,22 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
   m_InstallationProgress->show();
 
   // unpack only the files we need for the installer
-  if (!m_ArchiveHandler->extract(QDir::tempPath(),
-         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         nullptr,
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      QDir::tempPath(),
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      nullptr,
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  do {
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
+    QCoreApplication::processEvents();
+  } while (!future.isFinished() || m_InstallationProgress->isVisible());
+  if (!future.result()) {
     throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
   }
 
@@ -410,7 +435,8 @@ DirectoryTree::Node *InstallationManager::getSimpleArchiveBase(DirectoryTree *da
 void InstallationManager::updateProgress(float percentage)
 {
   if (m_InstallationProgress != nullptr) {
-    m_InstallationProgress->setValue(static_cast<int>(percentage * 100.0));
+    m_Progress = static_cast<int>(percentage * 100.0);
+
     if (m_InstallationProgress->wasCanceled()) {
       m_ArchiveHandler->cancel();
       m_InstallationProgress->reset();
@@ -421,10 +447,7 @@ void InstallationManager::updateProgress(float percentage)
 
 void InstallationManager::updateProgressFile(QString const &fileName)
 {
-	if (m_InstallationProgress != nullptr) {
-		m_InstallationProgress->setLabelText(fileName);
-		QCoreApplication::processEvents();
-	}
+  m_ProgressFile = fileName;
 }
 
 
@@ -537,7 +560,7 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
   return true;
 }
 
-bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
+bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
                                     const QString &version, const QString &newestVersion,
                                     int categoryID, const QString &repository)
 {
@@ -568,10 +591,22 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   m_InstallationProgress->setWindowModality(Qt::WindowModal);
   m_InstallationProgress->setFixedSize(600, 100);
   m_InstallationProgress->show();
-  if (!m_ArchiveHandler->extract(targetDirectory,
-         new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
-         new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError))) {
+  QFuture<bool> future = QtConcurrent::run([&]() -> bool {
+    return m_ArchiveHandler->extract(
+      targetDirectory,
+      new MethodCallback<InstallationManager, void, float>(this, &InstallationManager::updateProgress),
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::updateProgressFile),
+      new MethodCallback<InstallationManager, void, QString const &>(this, &InstallationManager::report7ZipError)
+    );
+  });
+  do {
+    if (m_Progress != m_InstallationProgress->value())
+      m_InstallationProgress->setValue(m_Progress);
+    if (m_ProgressFile != m_InstallationProgress->labelText())
+      m_InstallationProgress->setLabelText(m_ProgressFile);
+    QCoreApplication::processEvents();
+  } while (!future.isFinished());
+  if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
       return false;
     } else {
@@ -582,6 +617,9 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, int modID,
   QSettings settingsFile(targetDirectory + "/meta.ini", QSettings::IniFormat);
 
   // overwrite settings only if they are actually are available or haven't been set before
+  if ((gameName != "") || !settingsFile.contains("gameName")) {
+    settingsFile.setValue("gameName", gameName);
+  }
   if ((modID != 0) || !settingsFile.contains("modid")) {
     settingsFile.setValue("modid", modID);
   }
@@ -662,6 +700,7 @@ bool InstallationManager::install(const QString &fileName,
   modName.update(QFileInfo(fileName).completeBaseName(), GUESS_FALLBACK);
 
   // read out meta information from the download if available
+  QString gameName = "";
   int modID = 0;
   QString version = "";
   QString newestVersion = "";
@@ -671,6 +710,7 @@ bool InstallationManager::install(const QString &fileName,
   QString metaName = fileName + ".meta";
   if (QFile(metaName).exists()) {
     QSettings metaFile(metaName, QSettings::IniFormat);
+    gameName = metaFile.value("gameName", "").toString();
     modID = metaFile.value("modID", 0).toInt();
     QTextDocument doc;
     doc.setHtml(metaFile.value("name", "").toString());
@@ -759,7 +799,7 @@ bool InstallationManager::install(const QString &fileName,
             mapToArchive(filesTree.data());
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
-            if (!doInstall(modName, modID, version, newestVersion, categoryID,
+            if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
                            repository)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
@@ -779,7 +819,7 @@ bool InstallationManager::install(const QString &fileName,
               = installerCustom->supportedExtensions();
           if (installerExt.find(fileInfo.suffix()) != installerExt.end()) {
             installResult
-                = installerCustom->install(modName, fileName, version, modID);
+                = installerCustom->install(modName, gameName, fileName, version, modID);
             unsigned int idx = ModInfo::getIndex(modName);
             if (idx != UINT_MAX) {
               ModInfo::Ptr info = ModInfo::getByIndex(idx);

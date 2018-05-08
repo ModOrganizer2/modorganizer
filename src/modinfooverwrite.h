@@ -21,6 +21,7 @@ public:
   virtual void setCategory(int, bool) {}
   virtual bool setName(const QString&) { return false; }
   virtual void setNotes(const QString&) {}
+  virtual void setGameName(QString) {}
   virtual void setNexusID(int) {}
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void ignoreUpdate(bool) {}
@@ -40,6 +41,7 @@ public:
   virtual MOBase::VersionInfo getNewestVersion() const { return QString(); }
   virtual QString getInstallationFile() const { return ""; }
   virtual int getFixedPriority() const { return INT_MAX; }
+  virtual QString getGameName() const { return ""; }
   virtual int getNexusID() const { return -1; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const;
@@ -52,7 +54,7 @@ public:
 
 private:
 
-  ModInfoOverwrite();
+  ModInfoOverwrite(PluginContainer *pluginContainer);
 
 };
 

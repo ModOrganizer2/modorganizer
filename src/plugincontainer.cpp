@@ -1,4 +1,5 @@
 #include "plugincontainer.h"
+#include "organizercore.h"
 #include "organizerproxy.h"
 #include "report.h"
 #include <ipluginproxy.h>
@@ -53,6 +54,12 @@ QStringList PluginContainer::pluginFileNames() const
   for (QPluginLoader *loader : m_PluginLoaders) {
     result.append(loader->fileName());
   }
+  std::vector<IPluginProxy *> proxyList = bf::at_key<IPluginProxy>(m_Plugins);
+  for (IPluginProxy *proxy : proxyList) {
+    QStringList proxiedPlugins = proxy->pluginList(
+            QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
+    result.append(proxiedPlugins);
+  }
   return result;
 }
 
@@ -61,7 +68,7 @@ bool PluginContainer::verifyPlugin(IPlugin *plugin)
 {
   if (plugin == nullptr) {
     return false;
-  } else if (!plugin->init(new OrganizerProxy(m_Organizer, plugin->name()))) {
+  } else if (!plugin->init(new OrganizerProxy(m_Organizer, this, plugin->name()))) {
     qWarning("plugin failed to initialize");
     return false;
   }
@@ -148,14 +155,18 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
             QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath()));
       for (const QString &pluginName : pluginNames) {
         try {
-          QObject *proxiedPlugin = proxy->instantiate(pluginName);
-          if (proxiedPlugin != nullptr) {
-            if (registerPlugin(proxiedPlugin, pluginName)) {
-              qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
-            } else {
-              qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
-                       "you have to update it or delete it if no update exists.",
-                       qPrintable(pluginName));
+          // we get a list of matching plugins as proxies don't necessarily have a good way of supporting multiple inheritance
+          QList<QObject*> matchingPlugins = proxy->instantiate(pluginName);
+          for (QObject *proxiedPlugin : matchingPlugins) {
+            if (proxiedPlugin != nullptr) {
+              if (registerPlugin(proxiedPlugin, pluginName)) {
+                qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
+              }
+              else {
+                qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
+                         "you have to update it or delete it if no update exists.",
+                         qPrintable(pluginName));
+              }
             }
           }
         } catch (const std::exception &e) {

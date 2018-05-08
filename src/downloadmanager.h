@@ -38,6 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
+class PluginContainer;
 
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
@@ -74,7 +75,8 @@ private:
     QNetworkReply *m_Reply;
     QTime m_StartTime;
     qint64 m_PreResumeSize;
-    int m_Progress;
+    std::pair<int, QString> m_Progress;
+    std::tuple<int, int, int, int, int> m_SpeedDiff;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -92,7 +94,7 @@ private:
     bool m_Hidden;
 
     static DownloadInfo *createNew(const MOBase::ModRepositoryFileInfo *fileInfo, const QStringList &URLs);
-    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden);
+    static DownloadInfo *createFromMeta(const QString &filePath, bool showHidden, const QString outputDirectory);
 
     /**
      * @brief rename the file
@@ -112,7 +114,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)) {}
   };
 
 public:
@@ -162,6 +164,8 @@ public:
    */
   void setShowHidden(bool showHidden);
 
+  void setPluginContainer(PluginContainer *pluginContainer);
+
   /**
    * @brief download from an already open network connection
    *
@@ -179,7 +183,7 @@ public:
    * @param fileInfo information previously retrieved from the nexus network
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
+  bool addDownload(QNetworkReply *reply, const QStringList &URLs, const QString &fileName, QString gameName, int modID, int fileID = 0, const MOBase::ModRepositoryFileInfo *fileInfo = new MOBase::ModRepositoryFileInfo());
 
   /**
    * @brief start a download using a nxm-link
@@ -209,7 +213,7 @@ public:
    * @param index index of the pending download (index in the range [0, numPendingDownloads()[)
    * @return pair of modid, fileid
    */
-  std::pair<int, int> getPendingDownload(int index);
+  std::tuple<QString, int, int> getPendingDownload(int index);
 
   /**
    * @brief retrieve the full path to the download specified by index
@@ -256,7 +260,7 @@ public:
    * @param index index of the file to look up
    * @return progress of the download in percent (integer)
    **/
-  int getProgress(int index) const;
+  std::pair<int, QString> getProgress(int index) const;
 
   /**
    * @brief retrieve the current state of the download
@@ -284,6 +288,14 @@ public:
    * @return the nexus mod id
    **/
   int getModID(int index) const;
+
+  /**
+   * @brief retrieve the game name of the downlaod specified by the index
+   *
+   * @param index index of the file to look up
+   * @return the game name
+   **/
+  QString getGameName(int index) const;
 
   /**
    * @brief determine if the specified file is supposed to be hidden
@@ -411,15 +423,15 @@ public slots:
 
   void queryInfo(int index);
 
-  void nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmFilesAvailable(int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
@@ -427,7 +439,7 @@ private slots:
 
   void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
   void downloadReadyRead();
-  void downloadFinished();
+  void downloadFinished(int index = 0);
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString &dirctory);
@@ -448,7 +460,7 @@ public:
    *
    * @return Unique(ish) name
    */
-  QString getDownloadFileName(const QString &baseName) const;
+  QString getDownloadFileName(const QString &baseName, bool rename = false) const;
 
 private:
 
@@ -462,7 +474,7 @@ private:
    * @param fileInfo information previously retrieved from the mod page
    * @return true if the download was started, false if it wasn't. The latter currently only happens if there is a duplicate and the user decides not to download again
    **/
-  bool addDownload(const QStringList &URLs, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
+  bool addDownload(const QStringList &URLs, QString gameName, int modID, int fileID, const MOBase::ModRepositoryFileInfo *fileInfo);
 
   // important: the caller has to lock the list-mutex, otherwise the DownloadInfo-pointer might get invalidated at any time
   DownloadInfo *findDownload(QObject *reply, int *index = nullptr) const;
@@ -481,7 +493,7 @@ private:
 
   QDateTime matchDate(const QString &timeString);
 
-  void removePending(int modID, int fileID);
+  void removePending(QString gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);
 
@@ -493,7 +505,7 @@ private:
 
   NexusInterface *m_NexusInterface;
 
-  QVector<std::pair<int, int> > m_PendingDownloads;
+  QVector<std::tuple<QString, int, int>> m_PendingDownloads;
 
   QVector<DownloadInfo*> m_ActiveDownloads;
 

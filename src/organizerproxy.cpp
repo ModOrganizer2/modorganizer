@@ -2,6 +2,7 @@
 
 #include "appconfig.h"
 #include "organizercore.h"
+#include "plugincontainer.h"
 
 #include <QApplication>
 
@@ -9,15 +10,16 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, const QString &pluginName)
+OrganizerProxy::OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName)
   : m_Proxied(organizer)
+  , m_PluginContainer(pluginContainer)
   , m_PluginName(pluginName)
 {
 }
 
 IModRepositoryBridge *OrganizerProxy::createNexusBridge() const
 {
-  return new NexusBridge(m_PluginName);
+  return new NexusBridge(m_PluginContainer, m_PluginName);
 }
 
 QString OrganizerProxy::profileName() const
@@ -56,6 +58,11 @@ VersionInfo OrganizerProxy::appVersion() const
 IModInterface *OrganizerProxy::getMod(const QString &name) const
 {
   return m_Proxied->getMod(name);
+}
+
+IPluginGame *OrganizerProxy::getGame(const QString &gameName) const
+{
+  return m_Proxied->getGame(gameName);
 }
 
 IModInterface *OrganizerProxy::createMod(MOBase::GuessedValue<QString> &name)

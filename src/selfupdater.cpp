@@ -30,6 +30,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "settings.h"
 #include "bbcode.h"
+#include "plugincontainer.h"
 #include <versioninfo.h>
 #include <report.h>
 #include <util.h>
@@ -120,6 +121,11 @@ void SelfUpdater::setUserInterface(QWidget *widget)
   m_Parent = widget;
 }
 
+void SelfUpdater::setPluginContainer(PluginContainer *pluginContainer)
+{
+  m_Interface->setPluginContainer(pluginContainer);
+}
+
 void SelfUpdater::testForUpdate()
 {
   // TODO: if prereleases are disabled we could just request the latest release
@@ -170,10 +176,10 @@ void SelfUpdater::startUpdate()
 
   QMessageBox query(QMessageBox::Question,
                     tr("New update available (%1)")
-                        .arg(m_UpdateCandidate["tag_name"].toString()),
-                    BBCode::convertToHTML(m_UpdateCandidate["body"].toString()),
+                        .arg(m_UpdateCandidate["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
                     QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
-
+	
+  query.setDetailedText(m_UpdateCandidate["body"].toString());
   query.button(QMessageBox::Yes)->setText(tr("Install"));
 
   int res = query.exec();

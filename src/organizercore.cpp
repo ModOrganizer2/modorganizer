@@ -192,15 +192,15 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   , m_GameName()
   , m_CurrentProfile(nullptr)
   , m_Settings(initSettings)
-  , m_Updater(NexusInterface::instance())
+  , m_Updater(NexusInterface::instance(m_PluginContainer))
   , m_AboutToRun()
   , m_FinishedRun()
   , m_ModInstalled()
-  , m_ModList(this)
+  , m_ModList(m_PluginContainer, this)
   , m_PluginList(this)
   , m_DirectoryRefresher()
   , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
-  , m_DownloadManager(NexusInterface::instance(), this)
+  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
   , m_InstallationManager()
   , m_RefresherThread()
   , m_AskForNexusPW(false)
@@ -211,8 +211,8 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
   m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
 
-  NexusInterface::instance()->setCacheDirectory(m_Settings.getCacheDirectory());
-  NexusInterface::instance()->setNMMVersion(m_Settings.getNMMVersion());
+  NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
+  NexusInterface::instance(m_PluginContainer)->setNMMVersion(m_Settings.getNMMVersion());
 
   MOBase::QuestionBoxMemory::init(initSettings.fileName());
 
@@ -227,9 +227,9 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   connect(&m_ModList, SIGNAL(removeOrigin(QString)), this,
           SLOT(removeOrigin(QString)));
 
-  connect(NexusInterface::instance()->getAccessManager(),
+  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
           SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
-  connect(NexusInterface::instance()->getAccessManager(),
+  connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
           SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
 
   // This seems awfully imperative
@@ -240,9 +240,6 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
           SLOT(managedGameChanged(MOBase::IPluginGame const *)));
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
           &m_PluginList, SLOT(managedGameChanged(MOBase::IPluginGame const *)));
-  connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
-          NexusInterface::instance(),
-          SLOT(managedGameChanged(MOBase::IPluginGame const *)));
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter,
           &DelayedFileWriterBase::write);
@@ -454,7 +451,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
   // TODO this has nothing to do with executables list move to an appropriate
   // function!
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure,
-                          m_Settings.displayForeign(), managedGame());
+                          m_PluginContainer, m_Settings.displayForeign(), managedGame());
 }
 
 void OrganizerCore::setUserInterface(IUserInterface *userInterface,
@@ -504,6 +501,9 @@ void OrganizerCore::connectPlugins(PluginContainer *container)
   m_DownloadManager.setSupportedExtensions(
       m_InstallationManager.getSupportedExtensions());
   m_PluginContainer = container;
+  m_Updater.setPluginContainer(m_PluginContainer);
+  m_DownloadManager.setPluginContainer(m_PluginContainer);
+  m_ModList.setPluginContainer(m_PluginContainer);
 
   if (!m_GameName.isEmpty()) {
     m_GamePlugin = m_PluginContainer->managedGame(m_GameName);
@@ -518,6 +518,9 @@ void OrganizerCore::disconnectPlugins()
   m_ModInstalled.disconnect_all_slots();
   m_ModList.disconnectSlots();
   m_PluginList.disconnectSlots();
+  m_Updater.setPluginContainer(nullptr);
+  m_DownloadManager.setPluginContainer(nullptr);
+  m_ModList.setPluginContainer(nullptr);
 
   m_Settings.clearPlugins();
   m_GamePlugin      = nullptr;
@@ -540,7 +543,7 @@ Settings &OrganizerCore::settings()
 bool OrganizerCore::nexusLogin(bool retry)
 {
   NXMAccessManager *accessManager
-      = NexusInterface::instance()->getAccessManager();
+      = NexusInterface::instance(m_PluginContainer)->getAccessManager();
 
   if ((accessManager->loginAttempted() || accessManager->loggedIn())
       && !retry) {
@@ -612,12 +615,12 @@ void OrganizerCore::externalMessage(const QString &message)
   }
 }
 
-void OrganizerCore::downloadRequested(QNetworkReply *reply, int modID,
+void OrganizerCore::downloadRequested(QNetworkReply *reply, QString gameName, int modID,
                                       const QString &fileName)
 {
   try {
-    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, modID, 0,
-                                      new ModRepositoryFileInfo(modID))) {
+    if (m_DownloadManager.addDownload(reply, QStringList(), fileName, gameName, modID, 0,
+                                      new ModRepositoryFileInfo(gameName, modID))) {
       MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
     }
   } catch (const std::exception &e) {
@@ -739,7 +742,7 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
 
 MOBase::IModRepositoryBridge *OrganizerCore::createNexusBridge() const
 {
-  return new NexusBridge();
+  return new NexusBridge(m_PluginContainer);
 }
 
 QString OrganizerCore::profileName() const
@@ -786,6 +789,15 @@ MOBase::IModInterface *OrganizerCore::getMod(const QString &name) const
   return index == UINT_MAX ? nullptr : ModInfo::getByIndex(index).data();
 }
 
+MOBase::IPluginGame *OrganizerCore::getGame(const QString &name) const
+{
+  for (IPluginGame *game : m_PluginContainer->plugins<IPluginGame>()) {
+    if (game->gameShortName().compare(name, Qt::CaseInsensitive) == 0)
+      return game;
+  }
+  return nullptr;
+}
+
 MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
 {
   bool merge = false;
@@ -813,7 +825,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.endArray();
   }
 
-  return ModInfo::createFrom(QDir(targetDirectory), &m_DirectoryStructure)
+  return ModInfo::createFrom(m_PluginContainer, m_GamePlugin, QDir(targetDirectory), &m_DirectoryStructure)
       .data();
 }
 
@@ -913,13 +925,14 @@ void OrganizerCore::installDownload(int index)
 {
   try {
     QString fileName = m_DownloadManager.getFilePath(index);
+    QString gameName = m_DownloadManager.getGameName(index);
     int modID        = m_DownloadManager.getModID(index);
     int fileID       = m_DownloadManager.getFileInfo(index)->fileID;
     GuessedValue<QString> modName;
 
     // see if there already are mods with the specified mod id
     if (modID != 0) {
-      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(modID);
+      std::vector<ModInfo::Ptr> modInfo = ModInfo::getByModID(gameName, modID);
       for (auto iter = modInfo.begin(); iter != modInfo.end(); ++iter) {
         std::vector<ModInfo::EFlag> flags = (*iter)->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP)
@@ -1232,12 +1245,19 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     if (virtualizedCwd || virtualizedBin) {
       if (virtualizedCwd) {
         int cwdOffset = cwdPath.indexOf('/', modsPath.length() + 1);
-        cwdPath = m_GamePlugin->dataDirectory().absolutePath() + cwdPath.mid(cwdOffset, -1);
+        QString adjustedCwd = cwdPath.mid(cwdOffset, -1);
+        cwdPath = m_GamePlugin->dataDirectory().absolutePath();
+        if (cwdOffset >= 0)
+          cwdPath += adjustedCwd;
+
       }
 
       if (virtualizedBin) {
         int binOffset = binPath.indexOf('/', modsPath.length() + 1);
-        binPath = m_GamePlugin->dataDirectory().absolutePath() + binPath.mid(binOffset, -1);
+        QString adjustedBin = binPath.mid(binOffset, -1);
+        binPath = m_GamePlugin->dataDirectory().absolutePath();
+        if (binOffset >= 0)
+          binPath += adjustedBin;
       }
 
       QString cmdline
@@ -1552,7 +1572,7 @@ void OrganizerCore::refreshModList(bool saveChanges)
     m_CurrentProfile->writeModlistNow(true);
   }
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure,
-                          m_Settings.displayForeign(), managedGame());
+                          m_PluginContainer, m_Settings.displayForeign(), managedGame());
 
   m_CurrentProfile->refreshModStatus();
 
@@ -1719,8 +1739,13 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
 
   // no mod found that could handle the download. Is it a nexus mod?
   if (url.host() == "www.nexusmods.com") {
+    QString gameName = "";
     int modID  = 0;
     int fileID = 0;
+    QRegExp nameExp("www\.nexusmods\.com/(\\a+)/");
+    if (nameExp.indexIn(url.toString()) != -1) {
+      gameName = nameExp.cap(1);
+    }
     QRegExp modExp("mods/(\\d+)");
     if (modExp.indexIn(url.toString()) != -1) {
       modID = modExp.cap(1).toInt();
@@ -1730,7 +1755,7 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
       fileID = fileExp.cap(1).toInt();
     }
     m_DownloadManager.addDownload(reply,
-                                  new ModRepositoryFileInfo(modID, fileID));
+                                  new ModRepositoryFileInfo(gameName, modID, fileID));
   } else {
     if (QMessageBox::question(qApp->activeWindow(), tr("Download?"),
                               tr("A download has been started but no installed "
@@ -1827,7 +1852,7 @@ void OrganizerCore::profileRefresh()
   // have to refresh mods twice (again in refreshModList), otherwise the refresh
   // isn't complete. Not sure why
   ModInfo::updateFromDisc(m_Settings.getModDirectory(), &m_DirectoryStructure,
-                          m_Settings.displayForeign(), managedGame());
+                          m_PluginContainer, m_Settings.displayForeign(), managedGame());
   m_CurrentProfile->refreshModStatus();
 
   refreshModList();
@@ -1885,7 +1910,7 @@ void OrganizerCore::loginSuccessful(bool necessary)
   }
 
 	m_PostLoginTasks.clear();
-	NexusInterface::instance()->loginCompleted();
+	NexusInterface::instance(m_PluginContainer)->loginCompleted();
 }
 
 void OrganizerCore::loginSuccessfulUpdate(bool necessary)
@@ -1920,7 +1945,7 @@ void OrganizerCore::loginFailed(const QString &message)
                                qApp->activeWindow());
     m_PostLoginTasks.clear();
   }
-  NexusInterface::instance()->loginCompleted();
+  NexusInterface::instance(m_PluginContainer)->loginCompleted();
 }
 
 void OrganizerCore::loginFailedUpdate(const QString &message)

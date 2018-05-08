@@ -1,9 +1,11 @@
 #ifndef PLUGINCONTAINER_H
 #define PLUGINCONTAINER_H
 
-
-#include "organizercore.h"
 #include "previewgenerator.h"
+
+class OrganizerCore;
+class IUserInterface;
+
 #include <iplugindiagnose.h>
 #include <ipluginmodpage.h>
 #include <iplugingame.h>

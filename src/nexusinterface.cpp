@@ -36,48 +36,48 @@ using namespace MOBase;
 using namespace MOShared;
 
 
-NexusBridge::NexusBridge(const QString &subModule)
-  : m_Interface(NexusInterface::instance())
+NexusBridge::NexusBridge(PluginContainer *pluginContainer, const QString &subModule)
+  : m_Interface(NexusInterface::instance(pluginContainer))
   , m_SubModule(subModule)
 {
 }
 
-void NexusBridge::requestDescription(int modID, QVariant userData)
+void NexusBridge::requestDescription(QString gameName, int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDescription(modID, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestDescription(gameName, modID, this, userData, m_SubModule));
 }
 
-void NexusBridge::requestFiles(int modID, QVariant userData)
+void NexusBridge::requestFiles(QString gameName, int modID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFiles(modID, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestFiles(gameName, modID, this, userData, m_SubModule));
 }
 
-void NexusBridge::requestFileInfo(int modID, int fileID, QVariant userData)
+void NexusBridge::requestFileInfo(QString gameName, int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestFileInfo(modID, fileID, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestFileInfo(gameName, modID, fileID, this, userData, m_SubModule));
 }
 
-void NexusBridge::requestDownloadURL(int modID, int fileID, QVariant userData)
+void NexusBridge::requestDownloadURL(QString gameName, int modID, int fileID, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestDownloadURL(modID, fileID, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestDownloadURL(gameName, modID, fileID, this, userData, m_SubModule));
 }
 
-void NexusBridge::requestToggleEndorsement(int modID, bool endorse, QVariant userData)
+void NexusBridge::requestToggleEndorsement(QString gameName, int modID, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(modID, endorse, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(gameName, modID, endorse, this, userData, m_SubModule));
 }
 
-void NexusBridge::nxmDescriptionAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
 
-    emit descriptionAvailable(modID, userData, resultData);
+    emit descriptionAvailable(gameName, modID, userData, resultData);
   }
 }
 
-void NexusBridge::nxmFilesAvailable(int modID, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
@@ -100,43 +100,43 @@ void NexusBridge::nxmFilesAvailable(int modID, QVariant userData, QVariant resul
       fileInfoList.append(temp);
     }
 
-    emit filesAvailable(modID, userData, fileInfoList);
+    emit filesAvailable(gameName, modID, userData, fileInfoList);
   }
 }
 
-void NexusBridge::nxmFileInfoAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit fileInfoAvailable(modID, fileID, userData, resultData);
+    emit fileInfoAvailable(gameName, modID, fileID, userData, resultData);
   }
 }
 
-void NexusBridge::nxmDownloadURLsAvailable(int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit downloadURLsAvailable(modID, fileID, userData, resultData);
+    emit downloadURLsAvailable(gameName, modID, fileID, userData, resultData);
   }
 }
 
-void NexusBridge::nxmEndorsementToggled(int modID, QVariant userData, QVariant resultData, int requestID)
+void NexusBridge::nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit endorsementToggled(modID, userData, resultData);
+    emit endorsementToggled(gameName, modID, userData, resultData);
   }
 }
 
-void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage)
+void NexusBridge::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit requestFailed(modID, fileID, userData, errorMessage);
+    emit requestFailed(gameName, modID, fileID, userData, errorMessage);
   }
 }
 
@@ -144,8 +144,8 @@ void NexusBridge::nxmRequestFailed(int modID, int fileID, QVariant userData, int
 QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
-NexusInterface::NexusInterface()
-  : m_NMMVersion()
+NexusInterface::NexusInterface(PluginContainer *pluginContainer)
+  : m_NMMVersion(), m_PluginContainer(pluginContainer)
 {
   VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
   m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
@@ -167,9 +167,9 @@ NexusInterface::~NexusInterface()
   cleanup();
 }
 
-NexusInterface *NexusInterface::instance()
+NexusInterface *NexusInterface::instance(PluginContainer *pluginContainer)
 {
-  static NexusInterface s_Instance;
+  static NexusInterface s_Instance(pluginContainer);
   return &s_Instance;
 }
 
@@ -246,24 +246,41 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
 bool NexusInterface::isURLGameRelated(const QUrl &url) const
 {
   QString const name(url.toString());
-  return name.startsWith(getGameURL() + "/") ||
-         name.startsWith(getOldModsURL() + "/");
+  return name.startsWith(getGameURL("") + "/") ||
+         name.startsWith(getOldModsURL("") + "/");
 }
 
-QString NexusInterface::getGameURL() const
+QString NexusInterface::getGameURL(QString gameName) const
 {
-  return "http://www.nexusmods.com/" + m_Game->gameNexusName().toLower();
+  IPluginGame *game = getGame(gameName);
+  return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
 }
 
-QString NexusInterface::getOldModsURL() const
+QString NexusInterface::getOldModsURL(QString gameName) const
 {
-  return "http://" + m_Game->gameNexusName().toLower() + ".nexusmods.com/mods";
+  IPluginGame *game = getGame(gameName);
+  return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
 }
 
 
-QString NexusInterface::getModURL(int modID) const
+QString NexusInterface::getModURL(int modID, QString gameName = "") const
 {
-  return QString("%1/mods/%2").arg(getGameURL()).arg(modID);
+  return QString("%1/mods/%2").arg(getGameURL(gameName)).arg(modID);
+}
+
+std::vector<std::pair<QString, QString>> NexusInterface::getGameChoices(const MOBase::IPluginGame *game)
+{
+  std::vector<std::pair<QString, QString>> choices;
+  choices.push_back(std::pair<QString, QString>(game->gameShortName(), game->gameName()));
+  for (QString gameName : game->validShortNames()) {
+    for (auto gamePlugin : m_PluginContainer->plugins<IPluginGame>()) {
+      if (gamePlugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+        choices.push_back(std::pair<QString, QString>(gamePlugin->gameShortName(), gamePlugin->gameName()));
+        break;
+      }
+    }
+  }
+  return choices;
 }
 
 bool NexusInterface::isModURL(int modID, const QString &url) const
@@ -272,21 +289,26 @@ bool NexusInterface::isModURL(int modID, const QString &url) const
     return true;
   }
   //Try the alternate (old style) mod name
-  QString alt = QString("%1/%2").arg(getOldModsURL()).arg(modID);
+  QString alt = QString("%1/%2").arg(getOldModsURL("")).arg(modID);
   return QUrl(alt) == QUrl(url);
 }
 
-int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant userData,
+void NexusInterface::setPluginContainer(PluginContainer *pluginContainer)
+{
+  m_PluginContainer = pluginContainer;
+}
+
+int NexusInterface::requestDescription(QString gameName, int modID, QObject *receiver, QVariant userData,
                                        const QString &subModule, MOBase::IPluginGame const *game)
 {
   NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_DESCRIPTION, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmDescriptionAvailable(int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmDescriptionAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -294,16 +316,17 @@ int NexusInterface::requestDescription(int modID, QObject *receiver, QVariant us
 
 
 int NexusInterface::requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData,
-                                   const QString &subModule, MOBase::IPluginGame const *game)
+                                   QString gameName, const QString &subModule)
 {
+  IPluginGame *game = getGame(gameName);
   NXMRequestInfo requestInfo(modIDs, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)),
-          receiver, SLOT(nxmUpdatesAvailable(std::vector<int>,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)),
+    receiver, SLOT(nxmUpdatesAvailable(std::vector<int>, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -325,72 +348,72 @@ void NexusInterface::fakeFiles()
   fileMap["size"] = "512";
   result.append(fileMap);
 
-  emit nxmFilesAvailable(1234, "fake", result, id++);
+  emit nxmFilesAvailable("fakeGame", 1234, "fake", result, id++);
 }
 
 
-int NexusInterface::requestFiles(int modID, QObject *receiver, QVariant userData,
+int NexusInterface::requestFiles(QString gameName, int modID, QObject *receiver, QVariant userData,
                                  const QString &subModule, MOBase::IPluginGame const *game)
 {
   NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_FILES, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
-  connect(this, SIGNAL(nxmFilesAvailable(int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmFilesAvailable(int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmFilesAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmFilesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
 }
 
 
-int NexusInterface::requestFileInfo(int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule,
-                                     MOBase::IPluginGame const *game)
+int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule)
 {
-  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, game);
+  IPluginGame *gamePlugin = getGame(gameName);
+  NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, gamePlugin);
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmFileInfoAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmFileInfoAvailable(QString, int, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
 }
 
 
-int NexusInterface::requestDownloadURL(int modID, int fileID, QObject *receiver, QVariant userData,
+int NexusInterface::requestDownloadURL(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData,
                                        const QString &subModule, MOBase::IPluginGame const *game)
 {
   NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_DOWNLOADURL, userData, subModule, game);
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)),
+          receiver, SLOT(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString,int,int,QVariant,int,QString)),
+          receiver, SLOT(nxmRequestFailed(QString,int,int,QVariant,int,QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
 }
 
 
-int NexusInterface::requestToggleEndorsement(int modID, bool endorse, QObject *receiver, QVariant userData,
+int NexusInterface::requestToggleEndorsement(QString gameName, int modID, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
 {
   NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
   requestInfo.m_Endorse = endorse;
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmEndorsementToggled(int,QVariant,QVariant,int)),
-          receiver, SLOT(nxmEndorsementToggled(int,QVariant,QVariant,int)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(int,int,QVariant,int,QString)),
-          receiver, SLOT(nxmRequestFailed(int,int,QVariant,int,QString)), Qt::UniqueConnection);
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QString)), Qt::UniqueConnection);
 
   nextRequest();
   return requestInfo.m_ID;
@@ -400,6 +423,19 @@ bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
 {
   return (info.m_Type == NXMRequestInfo::TYPE_TOGGLEENDORSEMENT)
       || (info.m_Type == NXMRequestInfo::TYPE_DOWNLOADURL);
+}
+
+IPluginGame* NexusInterface::getGame(QString gameName) const
+{
+  auto gamePlugins = m_PluginContainer->plugins<IPluginGame>();
+  IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
+  for (auto plugin : gamePlugins) {
+    if (plugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gamePlugin = plugin;
+      break;
+    }
+  }
+  return gamePlugin;
 }
 
 void NexusInterface::cleanup()
@@ -492,7 +528,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 
   if (reply->error() != QNetworkReply::NoError) {
     qWarning("request failed: %s", reply->errorString().toUtf8().constData());
-    emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->errorString());
+    emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->errorString());
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 301) {
@@ -510,33 +546,33 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
         nexusError = tr("empty response");
       }
       qDebug("nexus error: %s", qPrintable(nexusError));
-      emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
+      emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
       QVariant result = QtJson::parse(data, ok);
       if (result.isValid() && ok) {
         switch (iter->m_Type) {
           case NXMRequestInfo::TYPE_DESCRIPTION: {
-            emit nxmDescriptionAvailable(iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+            emit nxmDescriptionAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_FILES: {
-            emit nxmFilesAvailable(iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+            emit nxmFilesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_FILEINFO: {
-            emit nxmFileInfoAvailable(iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
+            emit nxmFileInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_DOWNLOADURL: {
-            emit nxmDownloadURLsAvailable(iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
+            emit nxmDownloadURLsAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_GETUPDATES: {
             emit nxmUpdatesAvailable(iter->m_ModIDList, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-            emit nxmEndorsementToggled(iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+            emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
         }
       } else {
-        emit nxmRequestFailed(iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, tr("invalid response"));
+        emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, tr("invalid response"));
       }
     }
   }
@@ -591,15 +627,10 @@ void NexusInterface::requestTimeout()
   }
 }
 
-void NexusInterface::managedGameChanged(IPluginGame const *game)
-{
-  m_Game = game;
-}
-
 namespace {
   QString get_management_url(MOBase::IPluginGame const *game)
   {
-    return "http://nmm.nexusmods.com/" + game->gameNexusName().toLower();
+    return "https://legacy-api.nexusmods.com/" + game->gameNexusName().toLower();
   }
 }
 
@@ -620,6 +651,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameShortName())
   , m_Endorse(false)
 {}
 
@@ -641,6 +673,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameShortName())
   , m_Endorse(false)
 {}
 
@@ -662,5 +695,6 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameShortName())
   , m_Endorse(false)
 {}

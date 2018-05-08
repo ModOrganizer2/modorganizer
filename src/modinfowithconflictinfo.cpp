@@ -6,8 +6,8 @@
 using namespace MOBase;
 using namespace MOShared;
 
-ModInfoWithConflictInfo::ModInfoWithConflictInfo(DirectoryEntry **directoryStructure)
-  : m_DirectoryStructure(directoryStructure) {}
+ModInfoWithConflictInfo::ModInfoWithConflictInfo(PluginContainer *pluginContainer, DirectoryEntry **directoryStructure)
+  : ModInfo(pluginContainer), m_DirectoryStructure(directoryStructure) {}
 
 void ModInfoWithConflictInfo::clearCaches()
 {

@@ -753,6 +753,7 @@ bool Profile::enableLocalSettings(bool enable)
   QString backupFile = getIniFileName() + "_";
   if (enable) {
     if (m_Directory.exists(backupFile)) {
+
       shellRename(backupFile, getIniFileName());
     } else {
       IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();

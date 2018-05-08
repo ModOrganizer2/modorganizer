@@ -125,7 +125,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="copyrightText">
            <property name="text">
             <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.&lt;/p&gt;&lt;p&gt;See the GNU General Public License for more details.&lt;/p&gt;&lt;p&gt;Source code can be found at &lt;a href=&quot;https://github.com/Modorganizer2/modorganizer&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;GitHub&lt;/span&gt;&lt;/a&gt;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
@@ -153,8 +153,8 @@
         <attribute name="title">
          <string>Thanks</string>
         </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_0">
+         <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
             <string>Current Maintainers</string>
@@ -167,12 +167,12 @@
               </property>
               <item>
                <property name="text">
-                <string notr="true">LePresidente (Project Lead)</string>
+                <string>LePresidente (Project Lead)</string>
                </property>
               </item>
               <item>
                <property name="text">
-                <string>AL12</string>
+                <string notr="true">AL12</string>
                </property>
               </item>
               <item>
@@ -195,8 +195,29 @@
            </layout>
           </widget>
          </item>
-         <item>
+         <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_2">
+           <property name="title">
+            <string>Major Contributors</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
+            <item>
+             <widget class="QListWidget" name="listWidget_2">
+              <property name="selectionMode">
+               <enum>QAbstractItemView::NoSelection</enum>
+              </property>
+              <item>
+               <property name="text">
+                <string notr="true">AnyOldName3 (Python Plugins)</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="0" column="1" rowspan="2">
+          <widget class="QGroupBox" name="groupBox_3">
            <property name="title">
             <string>Translators</string>
            </property>
@@ -317,8 +338,8 @@
            </layout>
           </widget>
          </item>
-         <item>
-          <widget class="QGroupBox" name="groupBox_3">
+         <item row="0" column="2" rowspan="2">
+          <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
             <string>Other Supporters &amp;&amp; Contributors</string>
            </property>
@@ -328,11 +349,6 @@
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
-              <item>
-               <property name="text">
-                <string notr="true">AnyOldName3</string>
-               </property>
-              </item>
               <item>
                <property name="text">
                 <string notr="true">blacksol</string>
@@ -370,12 +386,22 @@
               </item>
               <item>
                <property name="text">
+                <string notr="true">GrantSP</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">GSDFan</string>
                </property>
               </item>
               <item>
                <property name="text">
                 <string notr="true">ogrotten</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">outdatedtv</string>
                </property>
               </item>
               <item>

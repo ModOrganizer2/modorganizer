@@ -116,6 +116,7 @@ public:
 
   void storeSettings(QSettings &settings) override;
   void readSettings();
+  void processUpdates();
 
   virtual ILockedWaitingForProcess* lock() override;
   virtual void unlock() override;
@@ -217,7 +218,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = 0);
+  void displayModInformation(int row, int tab = -1);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
@@ -386,12 +387,17 @@ private slots:
   void showMessage(const QString &message);
   void showError(const QString &message);
 
+
   // main window actions
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
+
+  //modlist shortcuts
+  void openExplorer_activated();
+  void refreshProfile_activated();
 
   // modlist context menu
   void installMod_clicked();
@@ -404,6 +410,7 @@ private slots:
   void dontendorse_clicked();
   void unendorse_clicked();
   void ignoreMissingData_clicked();
+  void markConverted_clicked();
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
@@ -438,7 +445,6 @@ private slots:
 
   // nexus related
   void checkModsForUpdates();
-  void nexusLinkActivated(const QString &link);
 
   void loginFailed(const QString &message);
 
@@ -461,16 +467,16 @@ private slots:
   void modInstalled(const QString &modName);
 
   void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
-  void nxmEndorsementToggled(int, QVariant, QVariant resultData, int);
-  void nxmDownloadURLs(int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
+  void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
 
   void editCategories();
   void deselectFilters();
 
   void displayModInformation(const QString &modName, int tab);
-  void modOpenNext();
-  void modOpenPrev();
+  void modOpenNext(int tab=-1);
+  void modOpenPrev(int tab=-1);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

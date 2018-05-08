@@ -5,13 +5,14 @@
 #include <imoinfo.h>
 
 class OrganizerCore;
+class PluginContainer;
 
 class OrganizerProxy : public MOBase::IOrganizer
 {
 
 public:
 
-  OrganizerProxy(OrganizerCore *organizer, const QString &pluginName);
+  OrganizerProxy(OrganizerCore *organizer, PluginContainer *pluginContainer, const QString &pluginName);
 
   virtual MOBase::IModRepositoryBridge *createNexusBridge() const;
   virtual QString profileName() const;
@@ -21,6 +22,7 @@ public:
   virtual QString basePath() const;
   virtual MOBase::VersionInfo appVersion() const;
   virtual MOBase::IModInterface *getMod(const QString &name) const;
+  virtual MOBase::IPluginGame *getGame(const QString &gameName) const;
   virtual MOBase::IModInterface *createMod(MOBase::GuessedValue<QString> &name);
   virtual bool removeMod(MOBase::IModInterface *mod);
   virtual void modDataChanged(MOBase::IModInterface *mod);
@@ -55,6 +57,7 @@ public:
 private:
 
   OrganizerCore *m_Proxied;
+  PluginContainer *m_PluginContainer;
 
   const QString &m_PluginName;
 

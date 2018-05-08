@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
 #include "settings.h"
+#include "modinforegular.h"
 #include <appconfig.h>
 #include <utility.h>
 #include <report.h>
@@ -53,13 +54,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 
-ModList::ModList(QObject *parent)
+ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   : QAbstractItemModel(parent)
   , m_Profile(nullptr)
   , m_NexusInterface(nullptr)
   , m_Modified(false)
   , m_FontMetrics(QFont())
   , m_DropOnItems(false)
+  , m_PluginContainer(pluginContainer)
 {
   m_ContentIcons[ModInfo::CONTENT_PLUGIN]    = std::make_tuple(":/MO/gui/content/plugin", tr("Game Plugins (ESP/ESM/ESL)"));
   m_ContentIcons[ModInfo::CONTENT_INTERFACE] = std::make_tuple(":/MO/gui/content/interface", tr("Interface"));
@@ -148,6 +150,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("Alternate game source");
     default: return "";
   }
 }
@@ -219,9 +222,18 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int modID = modInfo->getNexusID();
       if (modID >= 0) {
         return modID;
-      } else {
+      }
+      else {
         return QVariant();
       }
+    } else if (column == COL_GAME) {
+      if (m_PluginContainer != nullptr) {
+        for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
+          if (game->gameShortName() == modInfo->getGameName())
+            return game->gameName();
+        }
+      }
+      return modInfo->getGameName();
     } else if (column == COL_CATEGORY) {
       if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
         return tr("Non-MO");
@@ -309,6 +321,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
   } else if (role == Qt::UserRole + 3) {
     return contentsToIcons(modInfo->getContents());
+  } else if (role == Qt::UserRole + 4) {
+    return modInfo->getGameName();
   } else if (role == Qt::FontRole) {
     QFont result;
     if (column == COL_NAME) {
@@ -424,14 +438,14 @@ bool ModList::renameMod(int index, const QString &newName)
     return false;
   }
 
-  if (ModList::allMods().contains(newName,Qt::CaseInsensitive)) {
+  if (ModList::allMods().contains(nameFixed, Qt::CaseInsensitive) && nameFixed.toLower()!=ModInfo::getByIndex(index)->name().toLower() ) {
 	  MessageDialog::showMessage(tr("Name is already in use by another mod"), nullptr);
 	  return false;
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
   QString oldName = modInfo->name();
-  if (newName != oldName) {
+  if (nameFixed != oldName) {
     // before we rename, ensure there is no scheduled asynchronous to rewrite
     m_Profile->cancelModlistWrite();
 
@@ -659,6 +673,11 @@ void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const
   notifyChange(0, rowCount() - 1);
 }
 
+void ModList::setPluginContainer(PluginContainer *pluginContianer)
+{
+  m_PluginContainer = pluginContianer;
+}
+
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)
 {
   if (m_ChangeInfo.name.isEmpty()) {
@@ -707,7 +726,6 @@ void ModList::highlightMods(const QItemSelection &selected, const MOShared::Dire
 
     const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
     if (fileEntry.get() != nullptr) {
-      QString fileName;
       bool archive = false;
       std::vector<std::pair<int, std::wstring>> origins;
       {
@@ -742,6 +760,11 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
     }
     if (modInfo->isValid()) {
       result |= IModList::STATE_VALID;
+    }
+    if (modInfo->isRegular()) {
+      QSharedPointer<ModInfoRegular> modInfoRegular = modInfo.staticCast<ModInfoRegular>();
+      if (modInfoRegular->isAlternate() && !modInfoRegular->isConverted())
+        result |= IModList::STATE_ALTERNATE;
     }
     if (modInfo->canBeEnabled()) {
       if (m_Profile->modEnabled(modIndex)) {
@@ -1051,6 +1074,7 @@ QString ModList::getColumnName(int column)
     case COL_VERSION:  return tr("Version");
     case COL_PRIORITY: return tr("Priority");
     case COL_CATEGORY: return tr("Category");
+    case COL_GAME:     return tr("Source Game");
     case COL_MODID:    return tr("Nexus ID");
     case COL_INSTALLTIME: return tr("Installation");
     default: return tr("unknown");
@@ -1066,6 +1090,7 @@ QString ModList::getColumnToolTip(int column)
     case COL_PRIORITY: return tr("Installation priority of your mod. The higher, the more \"important\" it is and thus "
                                  "overwrites files from mods with lower priority.");
     case COL_CATEGORY: return tr("Category of the mod.");
+    case COL_GAME:     return tr("The source game which was the origin of this mod.");
     case COL_MODID:    return tr("Id of the mod as used on Nexus.");
     case COL_FLAGS:    return tr("Emblemes to highlight things that might require attention.");
     case COL_CONTENT:  return tr("Depicts the content of the mod:<br>"
@@ -1193,4 +1218,3 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   }
   return QAbstractItemModel::eventFilter(obj, event);
 }
-

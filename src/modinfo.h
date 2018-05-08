@@ -23,6 +23,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "imodinterface.h"
 #include "versioninfo.h"
 
+class PluginContainer;
+
 class QDateTime;
 class QDir;
 #include <QMutex>
@@ -68,7 +70,8 @@ public:
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
     FLAG_CONFLICT_REDUNDANT,
-    FLAG_PLUGIN_SELECTED
+    FLAG_PLUGIN_SELECTED,
+    FLAG_ALTERNATE_GAME
   };
 
   enum EContent {
@@ -115,6 +118,7 @@ public:
    **/
   static void updateFromDisc(const QString &modDirectory,
                              MOShared::DirectoryEntry **directoryStructure,
+                             PluginContainer *pluginContainer,
                              bool displayForeign,
                              MOBase::IPluginGame const *game);
 
@@ -144,7 +148,7 @@ public:
    * @todo in its current form, this function is broken! There may be multiple mods with the same nexus id,
    *       this function will return only one of them
    **/
-  static std::vector<ModInfo::Ptr> getByModID(int modID);
+  static std::vector<ModInfo::Ptr> getByModID(QString game, int modID);
 
   /**
    * @brief remove a mod by index
@@ -176,19 +180,19 @@ public:
    * @param modIDs list of mods (Nexus Mod IDs) to check for updates
    * @return
    */
-  static void checkChunkForUpdate(const std::vector<int> &modIDs, QObject *receiver);
+  static void checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
    **/
-  static int checkAllForUpdate(QObject *receiver);
+  static int checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
   /**
    * @brief create a new mod from the specified directory and add it to the collection
    * @param dir directory to create from
    * @return pointer to the info-structure of the newly created/added mod
    */
-  static ModInfo::Ptr createFrom(const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, MOShared::DirectoryEntry **directoryStructure);
 
   /**
    * @brief create a new "foreign-managed" mod from a tuple of plugin and archives
@@ -196,7 +200,7 @@ public:
    * @param bsaNames names of archives
    * @return a new mod
    */
-  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure);
+  static ModInfo::Ptr createFromPlugin(const QString &modName, const QString &espName, const QStringList &bsaNames, ModInfo::EModType modType, MOShared::DirectoryEntry **directoryStructure, PluginContainer *pluginContainer);
 
   /**
    * @brief retieve a name for one of the CONTENT_ enums
@@ -263,6 +267,13 @@ public:
    * @param notes new notes
    */
   virtual void setNotes(const QString &notes) = 0;
+
+  /**
+  * @brief set/change the source game of this mod
+  *
+  * @param gameName the source game shortName
+  */
+  virtual void setGameName(QString gameName) = 0;
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -411,6 +422,13 @@ public:
   virtual int getNexusID() const = 0;
 
   /**
+  * @brief getter for the source game repository
+  *
+  * @return the source game repository. should default to the active game.
+  **/
+  virtual QString getGameName() const = 0;
+
+  /**
    * @return the fixed priority of mods of this type or INT_MIN if the priority of mods
    *         needs to be user-modifiable. Can be < 0 to force a priority below user-modifable mods
    *         or INT_MAX to force priority above all user-modifiables
@@ -551,6 +569,11 @@ public:
   void testValid();
 
   /**
+   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
+   */
+  virtual void markConverted(bool converted) {}
+
+  /**
    * @brief reads meta information from disk
    */
   virtual void readMeta() {}
@@ -596,14 +619,14 @@ signals:
 
 protected:
 
-  ModInfo();
+  ModInfo(PluginContainer *pluginContainer);
 
   static void updateIndices();
   static bool ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS);
 
 private:
 
-  static void createFromOverwrite();
+  static void createFromOverwrite(PluginContainer *pluginContainer);
 
 protected:
 
@@ -620,7 +643,7 @@ protected:
 private:
 
   static QMutex s_Mutex;
-  static std::map<int, std::vector<unsigned int> > s_ModsByModID;
+  static std::map<std::pair<QString, int>, std::vector<unsigned int> > s_ModsByModID;
   static int s_NextID;
 
   bool m_Valid;

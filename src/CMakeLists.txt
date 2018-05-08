@@ -30,6 +30,7 @@ SET(organizer_SRCS
     motddialog.cpp
     modlistsortproxy.cpp
     modlist.cpp
+    modidlineedit.cpp
     modinfodialog.cpp
     modinfo.cpp
     modinfobackup.cpp
@@ -120,6 +121,7 @@ SET(organizer_HDRS
     motddialog.h
     modlistsortproxy.h
     modlist.h
+    modidlineedit.h
     modinfodialog.h
     modinfo.h
     modinfobackup.h
@@ -238,6 +240,13 @@ SOURCE_GROUP(Source FILES ${organizer_SRCS})
 SOURCE_GROUP(Headers FILES ${organizer_HDRS})
 SOURCE_GROUP(UI FILES ${organizer_UIS})
 
+# MO projects
+SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
+GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
+
+SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+#TODO this should not be a hardcoded path
+SET(lib_path "${project_path}/../../install/libs")
 
 # Qt5
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -249,12 +258,12 @@ FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
-FIND_PACKAGE(Qt5Script REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
-QT5_CREATE_TRANSLATION(organizer_translations_qm ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
+SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
+QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
 ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
@@ -273,16 +282,6 @@ LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 FIND_PACKAGE(zlib REQUIRED)
 # TODO FindZlib doesn't find the static zlib library
-
-
-# MO projects
-SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
-GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
-
-SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
-#TODO this should not be a hardcoded path
-SET(lib_path "${project_path}/../../install/libs")
-
 
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
@@ -316,18 +315,27 @@ ENDIF()
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
-                      Qt5::Script Qt5::Qml Qt5::QuickWidgets Qt5::Network
+                      Qt5::Qml Qt5::QuickWidgets Qt5::Network
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
                       Dbghelp advapi32 Version Shlwapi liblz4)
-IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
-  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO
-                        ${OPTIMIZE_COMPILE_FLAGS})
+
+IF (MSVC)
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest")
 ENDIF()
-SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO
-                      "/LARGEADDRESSAWARE ${OPTIMIZE_LINK_FLAGS}")
+IF (MSVC AND "${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
+  # 32 bits
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS "/LARGEADDRESSAWARE")
+ENDIF()
+
+IF (NOT "${OPTIMIZE_COMPILE_FLAGS}" STREQUAL "")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS_RELWITHDEBINFO ${OPTIMIZE_COMPILE_FLAGS})
+ENDIF()
+IF (NOT "${OPTIMIZE_LINK_FLAGS}" STREQUAL "")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES LINK_FLAGS_RELWITHDEBINFO ${OPTIMIZE_LINK_FLAGS})
+ENDIF()
 
 
 ###############

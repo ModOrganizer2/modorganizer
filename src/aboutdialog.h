@@ -40,6 +40,10 @@ public:
   explicit AboutDialog(const QString &version, QWidget *parent = 0);
   ~AboutDialog();
 
+signals:
+
+  void linkClicked(QString link);
+
 private:
 
   enum Licenses {
@@ -70,6 +74,7 @@ private:
 
 private slots:
   void on_creditsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+  void on_copyrightText_linkActivated(const QString &link);
 
 private:
 

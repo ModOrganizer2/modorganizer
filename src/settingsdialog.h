@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDialog>
 #include <QListWidgetItem>
 
+class PluginContainer;
+
 namespace Ui {
     class SettingsDialog;
 }
@@ -39,10 +41,8 @@ class SettingsDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
-  explicit SettingsDialog(QWidget *parent = 0);
+  explicit SettingsDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
   ~SettingsDialog();
-
-  void addPlugins(const std::vector<MOBase::IPlugin*> &plugins);
 
 public slots:
 
@@ -87,7 +87,7 @@ private slots:
 
 private:
     Ui::SettingsDialog *ui;
-
+    PluginContainer *m_PluginContainer;
 };
 
 

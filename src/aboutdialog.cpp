@@ -114,3 +114,8 @@ void AboutDialog::on_creditsList_currentItemChanged(QListWidgetItem *current, QL
     ui->licenseText->setText(tr("No license"));
   }
 }
+
+void AboutDialog::on_copyrightText_linkActivated(const QString &link)
+{
+  emit linkClicked(link);
+}

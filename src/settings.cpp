@@ -133,7 +133,11 @@ void Settings::registerAsNXMHandler(bool force)
   std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
   std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
   std::wstring mode = force ? L"forcereg" : L"reg";
-  std::wstring parameters = mode + L" " + m_GamePlugin->gameShortName().toStdWString() + L" \"" + executable + L"\"";
+  std::wstring parameters = mode + L" " + m_GamePlugin->gameShortName().toStdWString();
+  for (QString altGame : m_GamePlugin->validShortNames()) {
+    parameters += L"," + altGame.toStdWString();
+  }
+  parameters += L" \"" + executable + L"\"";
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
   if ((int)res <= 32) {
     QMessageBox::critical(nullptr, tr("Failed"),
@@ -291,7 +295,7 @@ QString Settings::getOverwriteDirectory(bool resolve) const
 
 QString Settings::getNMMVersion() const
 {
-  static const QString MIN_NMM_VERSION = "0.61.13";
+  static const QString MIN_NMM_VERSION = "0.65.2";
   QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
   if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
     result = MIN_NMM_VERSION;
@@ -584,9 +588,9 @@ void Settings::resetDialogs()
 }
 
 
-void Settings::query(QWidget *parent)
+void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
-  SettingsDialog dialog(parent);
+  SettingsDialog dialog(pluginContainer, parent);
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
@@ -904,12 +908,16 @@ Settings::PluginsTab::PluginsTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_pluginBlacklistList(m_dialog.findChild<QListWidget *>("pluginBlacklist"))
 {
   // display plugin settings
+  QSet<QString> handledNames;
   for (IPlugin *plugin : m_parent->m_Plugins) {
+    if (handledNames.contains(plugin->name()))
+      continue;
     QListWidgetItem *listItem = new QListWidgetItem(plugin->name(), m_pluginsList);
     listItem->setData(Qt::UserRole, QVariant::fromValue((void*)plugin));
     listItem->setData(Qt::UserRole + 1, m_parent->m_PluginSettings[plugin->name()]);
     listItem->setData(Qt::UserRole + 2, m_parent->m_PluginDescriptions[plugin->name()]);
     m_pluginsList->addItem(listItem);
+    handledNames.insert(plugin->name());
   }
 
   // display plugin blacklist

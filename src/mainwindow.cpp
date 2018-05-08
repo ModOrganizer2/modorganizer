@@ -98,6 +98,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QCursor>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QDesktopServices>
 #include <QDialog>
 #include <QDirIterator>
 #include <QDragEnterEvent>
@@ -147,9 +148,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTreeWidgetItemIterator>
 #include <QUrl>
 #include <QVariantList>
+#include <QVersionNumber>
 #include <QWhatsThis>
 #include <QWidgetAction>
 #include <QWebEngineProfile>
+#include <QShortcut>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -266,6 +269,7 @@ MainWindow::MainWindow(QSettings &initSettings
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
   }
 
@@ -317,6 +321,11 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->groupCombo->installEventFilter(noWheel);
   ui->profileBox->installEventFilter(noWheel);
 
+  if (organizerCore.managedGame()->sortMechanism() == MOBase::IPluginGame::SortMechanism::NONE) {
+    ui->bossButton->setDisabled(true);
+    ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
+  }
+
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
@@ -343,11 +352,11 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(m_OrganizerCore.updater(), SIGNAL(updateAvailable()), this, SLOT(updateAvailable()));
   connect(m_OrganizerCore.updater(), SIGNAL(motdAvailable(QString)), this, SLOT(motdReceived(QString)));
 
-  connect(NexusInterface::instance(), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
-  connect(NexusInterface::instance(), SIGNAL(nxmDownloadURLsAvailable(int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(int,int,QVariant,QVariant,int)));
-  connect(NexusInterface::instance(), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
-  connect(NexusInterface::instance()->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
@@ -367,6 +376,12 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(ui->espList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(esplistSelectionsChanged(QItemSelection)));
   connect(ui->modList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(modlistSelectionsChanged(QItemSelection)));
+
+  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
+  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
+ 
+  new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
+
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -659,6 +674,7 @@ size_t MainWindow::checkForProblems()
 void MainWindow::about()
 {
   AboutDialog dialog(m_OrganizerCore.getVersion().displayString(), this);
+  connect(&dialog, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
   dialog.exec();
 }
 
@@ -1000,8 +1016,7 @@ void MainWindow::modPagePluginInvoke()
       m_IntegratedBrowser.setWindowTitle(plugin->displayName());
       m_IntegratedBrowser.openUrl(plugin->pageURL());
     } else {
-      ::ShellExecuteW(nullptr, L"open", ToWString(plugin->pageURL().toString()).c_str(),
-                      nullptr, nullptr, SW_SHOWNORMAL);
+      QDesktopServices::openUrl(QUrl(plugin->pageURL()));
     }
   }
 }
@@ -1651,6 +1666,29 @@ void MainWindow::readSettings()
   }
 }
 
+void MainWindow::processUpdates() {
+  QSettings settings(qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::iniFileName()), QSettings::IniFormat);
+  QVersionNumber lastVersion = QVersionNumber::fromString(settings.value("version", "2.1.2").toString()).normalized();
+  QVersionNumber currentVersion = QVersionNumber::fromString(m_OrganizerCore.getVersion().displayString()).normalized();
+  if (!m_OrganizerCore.settings().directInterface().value("first_start", true).toBool()) {
+    if (lastVersion < QVersionNumber(2, 1, 3)) {
+      bool lastHidden = true;
+      for (int i = ModList::COL_GAME; i < ui->modList->model()->columnCount(); ++i) {
+        bool hidden = ui->modList->header()->isSectionHidden(i);
+        ui->modList->header()->setSectionHidden(i, lastHidden);
+        lastHidden = hidden;
+      }
+    }
+  }
+
+  if (currentVersion > lastVersion)
+    settings.setValue("version", currentVersion.toString());
+  else if (currentVersion < lastVersion)
+    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previous version (%2).<br>"
+                     "The GUI may not downgrade gracefully, so you may experience oddities.<br>"
+                     "However, there should be no serious issues.").arg(lastVersion.toString()).arg(currentVersion.toString()).toStdWString();
+}
+
 void MainWindow::storeSettings(QSettings &settings) {
   settings.setValue("group_state", ui->groupCombo->currentIndex());
 
@@ -1886,12 +1924,12 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://wiki.step-project.com/Guide:Mod_Organizer", nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl("http://wiki.step-project.com/Guide:Mod_Organizer"));
 }
 
 void MainWindow::issueTriggered()
 {
-  ::ShellExecuteW(nullptr, L"open", L"http://github.com/Modorganizer2/modorganizer/issues", nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl("https://github.com/Modorganizer2/modorganizer/issues"));
 }
 
 void MainWindow::tutorialTriggered()
@@ -2347,7 +2385,7 @@ void MainWindow::reinstallMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
   } else {
     QString username, password;
@@ -2355,7 +2393,7 @@ void MainWindow::resumeDownload(int downloadIndex)
       m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
         this->resumeDownload(downloadIndex);
       });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
     }
@@ -2365,13 +2403,13 @@ void MainWindow::resumeDownload(int downloadIndex)
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     mod->endorse(true);
   } else {
     QString username, password;
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, mod));
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2393,12 +2431,12 @@ void MainWindow::dontendorse_clicked()
 void MainWindow::unendorse_clicked()
 {
   QString username, password;
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
     ModInfo::getByIndex(m_ContextRow)->endorse(false);
   } else {
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin([this] () { this->unendorse_clicked(); });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2453,16 +2491,31 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   } else {
     modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer,this);
-    connect(&dialog, SIGNAL(nexusLinkActivated(QString)), this, SLOT(nexusLinkActivated(QString)));
+    connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext()), this, SLOT(modOpenNext()), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev()), this, SLOT(modOpenPrev()), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
+    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
+	
+	//Open the tab first if we want to use the standard indexes of the tabs.
+	if (tab != -1) {
+		dialog.openTab(tab);
+	}
 
-    dialog.openTab(tab);
     dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+
+	//If no tab was specified use the first tab from the left based on the user order.
+	if (tab == -1) {
+		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
+			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
+				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
+				break;
+			}
+		}
+	}
+
     dialog.exec();
     m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
 
@@ -2503,7 +2556,7 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext()
+void MainWindow::modOpenNext(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
@@ -2514,13 +2567,13 @@ void MainWindow::modOpenNext()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenNext();
+    modOpenNext(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 
-void MainWindow::modOpenPrev()
+void MainWindow::modOpenPrev(int tab)
 {
   QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
   int row = index.row() - 1;
@@ -2534,9 +2587,9 @@ void MainWindow::modOpenPrev()
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
     // skip overwrite and backups
-    modOpenPrev();
+    modOpenPrev(tab);
   } else {
-    displayModInformation(m_ContextRow);
+    displayModInformation(m_ContextRow,tab);
   }
 }
 
@@ -2570,12 +2623,21 @@ void MainWindow::ignoreMissingData_clicked()
   emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
 }
 
+void MainWindow::markConverted_clicked()
+{
+  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+  info->markConverted(true);
+  connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+}
+
 
 void MainWindow::visitOnNexus_clicked()
 {
   int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
+  QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
   if (modID > 0)  {
-    nexusLinkActivated(NexusInterface::instance()->getModURL(modID));
+    linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
   } else {
     MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
   }
@@ -2596,6 +2658,49 @@ void MainWindow::openExplorer_clicked()
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
 
   ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openExplorer_activated()
+{
+	if (ui->modList->hasFocus()) {
+		QItemSelectionModel *selection = ui->modList->selectionModel();
+		if (selection->hasSelection() && selection->selectedRows().count() == 1 ) {
+
+			QModelIndex idx = selection->currentIndex();
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+		}
+	}
+
+	if (ui->espList->hasFocus()) {
+		QItemSelectionModel *selection = ui->espList->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() == 1) {
+
+			QModelIndex idx = selection->currentIndex();
+			QString fileName = idx.data().toString();
+
+			
+
+			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+			}
+
+		}
+	}
+}
+
+void MainWindow::refreshProfile_activated()
+{
+	m_OrganizerCore.profileRefresh();
 }
 
 void MainWindow::information_clicked()
@@ -2921,18 +3026,18 @@ void MainWindow::saveArchiveList()
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
-  if (NexusInterface::instance()->getAccessManager()->loggedIn()) {
-    m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+    m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString username, password;
     if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      NexusInterface::instance()->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
     } else { // otherwise there will be no endorsement info
       MessageDialog::showMessage(tr("Not logged in, endorsement information will be wrong"),
                                   this, true);
-      m_ModsToUpdate = ModInfo::checkAllForUpdate(this);
+      m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     }
   }
 }
@@ -3207,7 +3312,7 @@ void MainWindow::exportModListCSV()
 					if (nexus_ID->isChecked())
 						builder.setRowField("#Nexus_ID", info->getNexusID());
 					if (mod_Nexus_URL->isChecked())
-						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance()->getModURL(info->getNexusID()) : "");
+						builder.setRowField("#Mod_Nexus_URL",(info->getNexusID()>0)? NexusInterface::instance(&m_PluginContainer)->getModURL(info->getNexusID(), info->getGameName()) : "");
 					if (mod_Version->isChecked())
 						builder.setRowField("#Mod_Version", info->getVersion().canonicalString());
 					if (install_Date->isChecked())
@@ -3390,6 +3495,10 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
+          menu->addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
+        }
+
         if (info->getNexusID() > 0)  {
           menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
         } else if ((info->getURL() != "")) {
@@ -3472,6 +3581,7 @@ void MainWindow::deleteSavegame_clicked()
     } else {
       ISaveGame const *save = info->getSaveGameInfo(name);
       deleteFiles += save->allFiles();
+      delete save;
     }
   }
 
@@ -3629,7 +3739,7 @@ void MainWindow::on_actionSettings_triggered()
   bool oldDisplayForeign(settings.displayForeign());
   bool proxy = settings.useProxy();
 
-  settings.query(this);
+  settings.query(&m_PluginContainer, this);
 
   InstallationManager *instManager = m_OrganizerCore.installationManager();
   instManager->setModsDirectory(settings.getModDirectory());
@@ -3661,14 +3771,14 @@ void MainWindow::on_actionSettings_triggered()
   }
 
   if (settings.getCacheDirectory() != oldCacheDirectory) {
-    NexusInterface::instance()->setCacheDirectory(settings.getCacheDirectory());
+    NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
 
   if (proxy != settings.useProxy()) {
     activateProxy(settings.useProxy());
   }
 
-  NexusInterface::instance()->setNMMVersion(settings.getNMMVersion());
+  NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
   updateDownloadListDelegate();
 
@@ -3679,22 +3789,13 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  ::ShellExecuteW(nullptr, L"open",
-                  NexusInterface::instance()->getGameURL().toStdWString().c_str(),
-                  nullptr, nullptr, SW_SHOWNORMAL);
-}
-
-
-void MainWindow::nexusLinkActivated(const QString &link)
-{
-  ::ShellExecuteW(nullptr, L"open", ToWString(link).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-  ui->tabWidget->setCurrentIndex(4);
+  QDesktopServices::openUrl(QUrl(NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())));
 }
 
 
 void MainWindow::linkClicked(const QString &url)
 {
-  ::ShellExecuteW(nullptr, L"open", ToWString(url).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QDesktopServices::openUrl(QUrl(url));
 }
 
 
@@ -3725,7 +3826,11 @@ void MainWindow::languageChange(const QString &newLanguage)
   m_CurrentLanguage = newLanguage;
 
   installTranslator("qt");
+  installTranslator("qtbase");
   installTranslator(ToQString(AppConfig::translationPrefix()));
+  for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
+    installTranslator(QFileInfo(fileName).baseName());
+  }
   ui->retranslateUi(this);
   qDebug("loaded language %s", qPrintable(newLanguage));
 
@@ -4096,10 +4201,10 @@ void MainWindow::on_actionEndorseMO_triggered()
 {
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance()->getGameURL()),
+                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    NexusInterface::instance()->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
+    NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
+          m_OrganizerCore.managedGame()->gameShortName(), m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -4162,16 +4267,32 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()) {
+    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()
+          && result["game_id"].toInt() == m_OrganizerCore.managedGame()->nexusGameID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
-      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(result["id"].toInt());
+      QString gameName = m_OrganizerCore.managedGame()->gameShortName();
+      bool sameNexus = false;
+      for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+        if (game->nexusGameID() == result["game_id"].toInt()) {
+          gameName = game->gameShortName();
+          if (game->nexusGameID() == m_OrganizerCore.managedGame()->nexusGameID())
+            sameNexus = true;
+          break;
+        }
+      }
+      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(gameName, result["id"].toInt());
+      if (sameNexus) {
+        std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), result["id"].toInt());
+        info.reserve(info.size() + mainInfo.size());
+        info.insert(info.end(), mainInfo.begin(), mainInfo.end());
+      }
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
-        if (NexusInterface::instance()->getAccessManager()->loggedIn() &&
+        if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
             result.contains("voted_by_user")) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
@@ -4194,20 +4315,20 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   }
 }
 
-void MainWindow::nxmEndorsementToggled(int, QVariant, QVariant resultData, int)
+void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
   if (resultData.toBool()) {
     ui->actionEndorseMO->setVisible(false);
     QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
   }
 
-  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(int, QVariant, QVariant, int)),
-             this, SLOT(nxmEndorsementToggled(int, QVariant, QVariant, int)))) {
+  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+             this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
   }
 }
 
-void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
+void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultData, int)
 {
   QVariantList serverList = resultData.toList();
 
@@ -4226,7 +4347,7 @@ void MainWindow::nxmDownloadURLs(int, int, QVariant, QVariant resultData, int)
 }
 
 
-void MainWindow::nxmRequestFailed(int modID, int, QVariant, int, const QString &errorString)
+void MainWindow::nxmRequestFailed(QString, int modID, int, QVariant, int, const QString &errorString)
 {
   if (modID == -1) {
     // must be the update-check that failed
@@ -4516,7 +4637,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
   }
   if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
+    menu.addAction(tr("Lock load order"), this, SLOT(f()));
   }
 
   try {

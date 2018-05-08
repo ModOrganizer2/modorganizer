@@ -22,6 +22,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "descriptionpage.h"
 #include "mainwindow.h"
 
+#include "modidlineedit.h"
 #include "iplugingame.h"
 #include "nexusinterface.h"
 #include "report.h"
@@ -46,6 +47,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QInputDialog>
 #include <QPointer>
 #include <QFileDialog>
+#include <QShortcut>
 
 #include <Shlwapi.h>
 
@@ -92,6 +94,24 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->modIDEdit->setValidator(new QIntValidator(modIDEdit));
   ui->modIDEdit->setText(QString("%1").arg(modInfo->getNexusID()));
 
+  connect(ui->modIDEdit, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
+
+  QString gameName = modInfo->getGameName();
+  ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
+  if (organizerCore->managedGame()->validShortNames().size() == 0) {
+    ui->sourceGameEdit->setDisabled(true);
+  } else {
+    for (auto game : pluginContainer->plugins<IPluginGame>()) {
+      for (QString gameName : organizerCore->managedGame()->validShortNames()) {
+        if (game->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+          ui->sourceGameEdit->addItem(game->gameName(), game->gameShortName());
+          break;
+        }
+      }
+    }
+  }
+  ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(gameName));
+
   ui->notesEdit->setText(modInfo->notes());
 
   ui->descriptionView->setPage(new DescriptionPage);
@@ -102,6 +122,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   //TODO: No easy way to delegate links
   //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
+
+  new QShortcut(QKeySequence::Delete, this, SLOT(delete_activated()));
 
   if (directory->originExists(ToWString(modInfo->name()))) {
     m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));
@@ -706,20 +728,24 @@ void ModInfoDialog::on_deactivateESP_clicked()
 
 void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
 {
-  this->close();
-  emit nexusLinkActivated(link);
+  emit linkActivated(link);
 }
 
 void ModInfoDialog::linkClicked(const QUrl &url)
 {
   //Ideally we'd ask the mod for the game and the web service then pass the game
   //and URL to the web service
-  if (NexusInterface::instance()->isURLGameRelated(url)) {
-    this->close();
-    emit nexusLinkActivated(url.toString());
+  if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
+
+    emit linkActivated(url.toString());
   } else {
     ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   }
+}
+
+void ModInfoDialog::linkClicked(QString url)
+{
+  emit linkActivated(url);
 }
 
 
@@ -860,7 +886,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
   if (modID != 0) {
-    QString nexusLink = NexusInterface::instance()->getModURL(modID);
+    QString nexusLink = NexusInterface::instance(m_PluginContainer)->getModURL(modID, m_ModInfo->getGameName());
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);
@@ -901,6 +927,16 @@ void ModInfoDialog::on_modIDEdit_editingFinished()
   }
 }
 
+void ModInfoDialog::on_sourceGameEdit_currentIndexChanged(int)
+{
+  for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
+    if (game->gameName() == ui->sourceGameEdit->currentText()) {
+      m_ModInfo->setGameName(game->gameShortName());
+      return;
+    }
+  }
+}
+
 void ModInfoDialog::on_versionEdit_editingFinished()
 {
   VersionInfo version(ui->versionEdit->text());
@@ -933,6 +969,11 @@ bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 }
 
 
+void ModInfoDialog::on_openInExplorerButton_clicked()
+{
+	::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void ModInfoDialog::deleteFile(const QModelIndex &index)
 {
 
@@ -944,6 +985,36 @@ void ModInfoDialog::deleteFile(const QModelIndex &index)
   }
 }
 
+void ModInfoDialog::delete_activated()
+{
+	if (ui->fileTree->hasFocus()) {
+		QItemSelectionModel *selection = ui->fileTree->selectionModel();
+
+		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
+
+			if (selection->selectedRows().count() == 0) {
+				return;
+			}
+			else if (selection->selectedRows().count() == 1) {
+				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+			else {
+				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
+					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+					return;
+				}
+			}
+
+			foreach(QModelIndex index, selection->selectedRows()) {
+				deleteFile(index);
+			}
+		}
+	}
+}
 
 void ModInfoDialog::deleteTriggered()
 {
@@ -1419,14 +1490,20 @@ void ModInfoDialog::on_endorseBtn_clicked()
 
 void ModInfoDialog::on_nextButton_clicked()
 {
-  emit modOpenNext();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenNext(tab);
+    this->accept();
 }
 
 void ModInfoDialog::on_prevButton_clicked()
 {
-  emit modOpenPrev();
-  this->accept();
+	int currentTab = ui->tabWidget->currentIndex();
+	int tab = m_RealTabPos[currentTab];
+
+    emit modOpenPrev(tab);
+    this->accept();
 }
 
 

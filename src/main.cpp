@@ -46,6 +46,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "instancemanager.h"
 #include "moshortcut.h"
+#include "organizercore.h"
 
 #include <eh.h>
 #include <windows_error.h>
@@ -71,6 +72,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDesktopServices>
 #include <QLibraryInfo>
 #include <QSslSocket>
+#include <QtPlatformHeaders/QWindowsWindowFunctions>
 
 #include <boost/scoped_array.hpp>
 
@@ -480,6 +482,8 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     return 1;
   }
 
+  QWindowsWindowFunctions::setWindowActivationBehavior(QWindowsWindowFunctions::AlwaysActivateWindow);
+
   QStringList arguments = application.arguments();
 
   try {
@@ -538,6 +542,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                         "start the game correctly if this is set "
                         "incorrectly!)"),
             nullptr);
+        selection.setWindowFlag(Qt::WindowStaysOnTopHint, true);
         int index = 0;
         for (const QString &edition : editions) {
           selection.addChoice(edition, "", index++);
@@ -601,8 +606,9 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
     splash.show();
+    splash.activateWindow();
 
-    NexusInterface::instance()->getAccessManager()->startLoginCheck();
+    NexusInterface::instance(&pluginContainer)->getAccessManager()->startLoginCheck();
 
     qDebug("initializing tutorials");
     TutorialManager::init(
@@ -625,10 +631,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
       QObject::connect(&instance, SIGNAL(messageSent(QString)), &organizer,
                        SLOT(externalMessage(QString)));
 
+      mainWindow.processUpdates();
       mainWindow.readSettings();
 
       qDebug("displaying main window");
       mainWindow.show();
+      mainWindow.activateWindow();
 
       splash.finish(&mainWindow);
       return application.exec();
