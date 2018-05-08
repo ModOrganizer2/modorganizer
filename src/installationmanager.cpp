@@ -182,6 +182,7 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
+    m_Progress = 0;
   });
   m_InstallationProgress->setWindowFlags(
         m_InstallationProgress->windowFlags() & ~Qt::WindowContextHelpButtonHint);
@@ -202,8 +203,6 @@ bool InstallationManager::unpackSingleFile(const QString &fileName)
   do {
     if (m_Progress != m_InstallationProgress->value())
       m_InstallationProgress->setValue(m_Progress);
-    if (m_ProgressFile != m_InstallationProgress->labelText())
-      m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   bool res = future.result();
@@ -283,6 +282,7 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
+    m_Progress = 0;
   });
   m_InstallationProgress->setWindowFlags(
         m_InstallationProgress->windowFlags() & (~Qt::WindowContextHelpButtonHint));
@@ -303,8 +303,6 @@ QStringList InstallationManager::extractFiles(const QStringList &filesOrig, bool
   do {
     if (m_Progress != m_InstallationProgress->value())
       m_InstallationProgress->setValue(m_Progress);
-    if (m_ProgressFile != m_InstallationProgress->labelText())
-      m_InstallationProgress->setLabelText(m_ProgressFile);
     QCoreApplication::processEvents();
   } while (!future.isFinished() || m_InstallationProgress->isVisible());
   if (!future.result()) {
@@ -584,6 +582,8 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
+    m_Progress = 0;
+    m_ProgressFile = QString();
   });
 
   m_InstallationProgress->setWindowFlags(
