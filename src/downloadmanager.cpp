@@ -464,7 +464,10 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
 
     QCoreApplication::processEvents();
 
-    if (newDownload->m_State != STATE_DOWNLOADING && reply->isFinished()) {
+    if (newDownload->m_State != STATE_DOWNLOADING &&
+      newDownload->m_State != STATE_READY &&
+      newDownload->m_State != STATE_FETCHINGMODINFO &&
+      reply->isFinished()) {
       downloadFinished(indexByName(newDownload->m_FileName));
       return;
     }
@@ -690,6 +693,14 @@ void DownloadManager::resumeDownloadInt(int index)
     return;
   }
   DownloadInfo *info = m_ActiveDownloads[index];
+
+  // Check for finished download;
+  if (info->m_TotalSize <= info->m_Output.size()) {
+    setState(info, STATE_DOWNLOADING);
+    downloadFinished(index);
+    return;
+  }
+
   if (info->isPausedState()) {
     if ((info->m_Urls.size() == 0)
         || ((info->m_Urls.size() == 1) && (info->m_Urls[0].size() == 0))) {
