@@ -854,7 +854,8 @@ bool InstallationManager::install(const QString &fileName,
     }
   }
 
-  reportError(tr("None of the available installer plugins were able to handle that archive"));
+  reportError(tr("None of the available installer plugins were able to handle that archive.\n"
+    "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
   return false;
 }
 
