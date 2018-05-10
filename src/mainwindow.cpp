@@ -4637,7 +4637,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
   }
   if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), this, SLOT(f()));
+    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
   }
 
   try {
