@@ -699,7 +699,9 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
 
     int row = ModInfo::getIndex(info->name());
     info->testValid();
+    emit aboutToChangeData();
     emit dataChanged(index(row, 0), index(row, columnCount()));
+    emit postDataChanged();
   } else {
     qCritical("modInfoChanged not called after modInfoAboutToChange");
   }
