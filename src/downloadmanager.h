@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QNetworkReply>
 #include <QTime>
+#include <QTimer>
 #include <QVector>
 #include <QMap>
 #include <QStringList>
@@ -443,6 +444,7 @@ private slots:
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString &dirctory);
+  void checkDownloadTimeout();
 
 private:
 
@@ -524,6 +526,8 @@ private:
   QRegExp m_DateExpression;
 
   MOBase::IPluginGame const *m_ManagedGame;
+
+  QTimer m_TimeoutTimer;
 };
 
 

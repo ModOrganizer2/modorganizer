@@ -70,6 +70,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   info->m_Tries = AUTOMATIC_RETRIES;
   info->m_State = STATE_STARTED;
   info->m_TaskProgressId = TaskProgressManager::instance().getId();
+  info->m_Reply = nullptr;
 
   return info;
 }
@@ -136,6 +137,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   info->m_FileInfo->fileCategory = metaFile.value("fileCategory", 0).toInt();
   info->m_FileInfo->repository = metaFile.value("repository", "Nexus").toString();
   info->m_FileInfo->userData = metaFile.value("userData").toMap();
+  info->m_Reply = nullptr;
 
   return info;
 }
@@ -182,6 +184,9 @@ DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent
     m_DateExpression("/Date\\((\\d+)\\)/")
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
+  m_TimeoutTimer.setSingleShot(false);
+  connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
+  m_TimeoutTimer.start(5 * 1000);
 }
 
 
@@ -695,7 +700,7 @@ void DownloadManager::resumeDownloadInt(int index)
   DownloadInfo *info = m_ActiveDownloads[index];
 
   // Check for finished download;
-  if (info->m_TotalSize <= info->m_Output.size()) {
+  if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr) {
     setState(info, STATE_DOWNLOADING);
     downloadFinished(index);
     return;
@@ -1631,4 +1636,16 @@ void DownloadManager::directoryChanged(const QString&)
 void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)
 {
   m_ManagedGame = managedGame;
+}
+
+void DownloadManager::checkDownloadTimeout()
+{
+  for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
+    if (m_ActiveDownloads[i]->m_StartTime.elapsed() - std::get<3>(m_ActiveDownloads[i]->m_SpeedDiff) > 5 * 1000 &&
+        m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING) {
+      pauseDownload(i);
+      downloadFinished(i);
+      resumeDownload(i);
+    }
+  }
 }
