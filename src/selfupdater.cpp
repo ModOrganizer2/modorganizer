@@ -133,7 +133,6 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     {
       // Trust the string to make sense
       m_MOVersion = VersionInfo(versionString);
-      qDebug() << "<: " << (m_MOVersion < VersionInfo(2, 1, 4)) << ", >: " << (m_MOVersion > VersionInfo(2, 1, 4));
     }
   }
   else
