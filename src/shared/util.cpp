@@ -174,5 +174,33 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
   }
 }
 
+std::wstring GetFileVersionString(const std::wstring &fileName)
+{
+  DWORD handle = 0UL;
+  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
+  if (size == 0) {
+    throw windows_error("failed to determine file version info size");
+  }
+
+  boost::scoped_array<char> buffer(new char[size]);
+  try {
+    handle = 0UL;
+    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer.get())) {
+      throw windows_error("failed to determine file version info");
+    }
+
+    LPVOID strBuffer = nullptr;
+    UINT strLength = 0;
+    if (!::VerQueryValue(buffer.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &strBuffer, &strLength)) {
+      throw windows_error("failed to determine file version");
+    }
+
+    return std::wstring((LPCTSTR)strBuffer);
+  }
+  catch (...) {
+    throw;
+  }
+}
+
 
 } // namespace MOShared
