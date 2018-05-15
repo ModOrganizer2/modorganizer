@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <DbgHelp.h>
 #include <set>
 #include <boost/scoped_array.hpp>
+#include <QApplication>
 
 namespace MOShared {
 
@@ -199,6 +200,51 @@ std::wstring GetFileVersionString(const std::wstring &fileName)
   }
   catch (...) {
     throw;
+  }
+}
+
+MOBase::VersionInfo createVersionInfo()
+{
+  VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
+
+  if (version.dwFileFlags | VS_FF_PRERELEASE)
+  {
+    // Pre-release builds need annotating
+    QString versionString = QString::fromStdWString(GetFileVersionString(QApplication::applicationFilePath().toStdWString()));
+
+    // The pre-release flag can be set without the string specifying what type of pre-release
+    bool noLetters = true;
+    for (QChar character : versionString)
+    {
+      if (character.isLetter())
+      {
+        noLetters = false;
+        break;
+      }
+    }
+
+    if (noLetters)
+    {
+      // Default to pre-alpha when release type is unspecified
+      return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
+                                 version.dwFileVersionMS & 0xFFFF,
+                                 version.dwFileVersionLS >> 16,
+                                 version.dwFileVersionLS & 0xFFFF,
+                                 MOBase::VersionInfo::RELEASE_PREALPHA);
+    }
+    else
+    {
+      // Trust the string to make sense
+      return MOBase::VersionInfo(versionString);
+    }
+  }
+  else
+  {
+    // Non-pre-release builds just need their version numbers reading
+    return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
+                               version.dwFileVersionMS & 0xFFFF,
+                               version.dwFileVersionLS >> 16,
+                               version.dwFileVersionLS & 0xFFFF);
   }
 }
 

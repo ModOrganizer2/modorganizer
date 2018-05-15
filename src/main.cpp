@@ -446,11 +446,7 @@ static void preloadSsl()
 
 static QString getVersionDisplayString()
 {
-  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
-  return VersionInfo(version.dwFileVersionMS >> 16,
-    version.dwFileVersionMS & 0xFFFF,
-    version.dwFileVersionLS >> 16,
-    version.dwFileVersionLS & 0xFFFF).displayString();
+  return createVersionInfo().displayString();
 }
 
 int runApplication(MOApplication &application, SingleInstance &instance,
