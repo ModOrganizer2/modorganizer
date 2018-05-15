@@ -700,7 +700,8 @@ void DownloadManager::resumeDownloadInt(int index)
   DownloadInfo *info = m_ActiveDownloads[index];
 
   // Check for finished download;
-  if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr) {
+  if (info->m_TotalSize <= info->m_Output.size() && info->m_Reply != nullptr
+      && info->m_Reply->isOpen() && info->m_Reply->isFinished() && info->m_State != STATE_ERROR) {
     setState(info, STATE_DOWNLOADING);
     downloadFinished(index);
     return;
@@ -717,15 +718,17 @@ void DownloadManager::resumeDownloadInt(int index)
     }
     qDebug("request resume from url %s", qPrintable(info->currentURL()));
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
-    info->m_ResumePos = info->m_Output.size();
+    if (info->m_State != STATE_ERROR) {
+      info->m_ResumePos = info->m_Output.size();
+      QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
+      request.setRawHeader("Range", rangeHeader);
+    }
     std::get<0>(info->m_SpeedDiff) = 0;
     std::get<1>(info->m_SpeedDiff) = 0;
     std::get<2>(info->m_SpeedDiff) = 0;
     std::get<3>(info->m_SpeedDiff) = 0;
     std::get<4>(info->m_SpeedDiff) = 0;
     qDebug("resume at %lld bytes", info->m_ResumePos);
-    QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
-    request.setRawHeader("Range", rangeHeader);
     startDownload(m_NexusInterface->getAccessManager()->get(request), info, true);
   }
   emit update(index);
@@ -1511,15 +1514,14 @@ void DownloadManager::downloadFinished(int index)
         emit showMessage(tr("Warning: Content type is: %1").arg(reply->header(QNetworkRequest::ContentTypeHeader).toString()));
       if ((info->m_Output.size() == 0) ||
           ((reply->error() != QNetworkReply::NoError)
-            && (reply->error() != QNetworkReply::OperationCanceledError)
-            && (reply->error() == QNetworkReply::UnknownContentError && (info->m_Output.size() != reply->header(QNetworkRequest::ContentLengthHeader).toLongLong())))) {
+            && (reply->error() != QNetworkReply::OperationCanceledError))) {
         if (reply->error() == QNetworkReply::UnknownContentError)
           emit showMessage(tr("Download header content length: %1 downloaded file size: %2").arg(reply->header(QNetworkRequest::ContentLengthHeader).toLongLong()).arg(info->m_Output.size()));
         if (info->m_Tries == 0) {
           emit showMessage(tr("Download failed: %1 (%2)").arg(reply->errorString()).arg(reply->error()));
         }
         error = true;
-        setState(info, STATE_PAUSING);
+        setState(info, STATE_ERROR);
       }
     }
 
@@ -1529,19 +1531,15 @@ void DownloadManager::downloadFinished(int index)
       if (info->m_Output.isOpen()) {
         info->m_Output.write(info->m_Reply->readAll());
       }
-
-      if (error) {
-        setState(info, STATE_ERROR);
-      } else {
-        setState(info, STATE_PAUSED);
-      }
     }
 
-    if (info->m_State == STATE_CANCELED) {
+    if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
       emit aboutToUpdate();
       info->m_Output.remove();
       delete info;
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
+      if (error)
+        emit showMessage(tr("We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers."));
       emit update(-1);
     } else if (info->isPausedState()) {
       info->m_Output.close();
