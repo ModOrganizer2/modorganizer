@@ -102,47 +102,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
 
-  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
-
-  if (version.dwFileFlags | VS_FF_PRERELEASE)
-  {
-    // Pre-release builds need annotating
-    QString versionString = QString::fromStdWString(GetFileVersionString(ToWString(QApplication::applicationFilePath())));
-
-    // The pre-release flag can be set without the string specifying what type of pre-release
-    bool noLetters = true;
-    for (QChar character : versionString)
-    {
-      if (character.isLetter())
-      {
-        noLetters = false;
-        break;
-      }
-    }
-
-    if (noLetters)
-    {
-      // Default to pre-alpha when release type is unspecified
-      m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
-                                version.dwFileVersionMS & 0xFFFF,
-                                version.dwFileVersionLS >> 16,
-                                version.dwFileVersionLS & 0xFFFF,
-                                VersionInfo::RELEASE_PREALPHA);
-    }
-    else
-    {
-      // Trust the string to make sense
-      m_MOVersion = VersionInfo(versionString);
-    }
-  }
-  else
-  {
-    // Non-pre-release builds just need their version numbers reading
-    m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
-                              version.dwFileVersionMS & 0xFFFF,
-                              version.dwFileVersionLS >> 16,
-                              version.dwFileVersionLS & 0xFFFF);
-  }
+  m_MOVersion = createVersionInfo();
 }
 
 

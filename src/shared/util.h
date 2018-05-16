@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
+#include <versioninfo.h>
+
 namespace MOShared {
 
 /// Test if a file (or directory) by the specified name exists
@@ -46,6 +48,7 @@ bool CaseInsensitiveEqual(const std::wstring &lhs, const std::wstring &rhs);
 
 VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName);
 std::wstring GetFileVersionString(const std::wstring &fileName);
+MOBase::VersionInfo createVersionInfo();
 
 } // namespace MOShared
 
