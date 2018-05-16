@@ -719,6 +719,7 @@ void DownloadManager::resumeDownloadInt(int index)
     }
     qDebug("request resume from url %s", qPrintable(info->currentURL()));
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
+    request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
     if (info->m_State != STATE_ERROR) {
       info->m_ResumePos = info->m_Output.size();
       QByteArray rangeHeader = "bytes=" + QByteArray::number(info->m_ResumePos) + "-";
@@ -1641,7 +1642,8 @@ void DownloadManager::checkDownloadTimeout()
 {
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i]->m_StartTime.elapsed() - std::get<3>(m_ActiveDownloads[i]->m_SpeedDiff) > 5 * 1000 &&
-        m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING) {
+        m_ActiveDownloads[i]->m_State == STATE_DOWNLOADING && m_ActiveDownloads[i]->m_Reply != nullptr &&
+        m_ActiveDownloads[i]->m_Reply->isOpen()) {
       pauseDownload(i);
       downloadFinished(i);
       resumeDownload(i);
