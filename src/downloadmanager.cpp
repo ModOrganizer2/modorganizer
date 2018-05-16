@@ -54,6 +54,7 @@ using namespace MOBase;
 static const char UNFINISHED[] = ".unfinished";
 
 unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
+int DownloadManager::m_DirWatcherDisabler = 0;
 
 
 DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo *fileInfo, const QStringList &URLs)
@@ -142,6 +143,25 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   return info;
 }
 
+void DownloadManager::startDisableDirWatcher()
+{
+	DownloadManager::m_DirWatcherDisabler++;
+}
+
+
+void DownloadManager::endDisableDirWatcher()
+{
+	if (DownloadManager::m_DirWatcherDisabler > 0)
+	{
+		if (DownloadManager::m_DirWatcherDisabler == 1)
+			QCoreApplication::processEvents();
+		DownloadManager::m_DirWatcherDisabler--;
+	}
+	else {
+		DownloadManager::m_DirWatcherDisabler = 0;
+	}
+}
+
 void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
 {
   QString oldMetaFileName = QString("%1.meta").arg(m_FileName);
@@ -180,7 +200,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_DirWatcherDisabler(0), m_ShowHidden(false),
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
     m_DateExpression("/Date\\((\\d+)\\)/")
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
@@ -280,20 +300,7 @@ void DownloadManager::setPluginContainer(PluginContainer *pluginContainer)
 }
 
 
-void DownloadManager::startDisableDirWatcher()
-{
-	m_DirWatcherDisabler++;
-}
 
-
-void DownloadManager::endDisableDirWatcher()
-{
-	QCoreApplication::processEvents();
-	if (m_DirWatcherDisabler > 0)
-		m_DirWatcherDisabler--;
-	else
-		m_DirWatcherDisabler = 0;
-}
 
 
 
@@ -359,9 +366,9 @@ void DownloadManager::refreshList()
       }
     }
 
-    if (m_ActiveDownloads.size() != downloadsBefore) {
+    //if (m_ActiveDownloads.size() != downloadsBefore) {
       qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
-    }
+    //}
     emit update(-1);
 
 		//let watcher trigger refreshes again
@@ -597,9 +604,10 @@ void DownloadManager::removeFile(int index, bool deleteFile)
     }
   } else {
     QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-    metaSettings.setValue("removed", true);
+		if(!download->m_Hidden)
+			metaSettings.setValue("removed", true);
   }
-
+	
 	endDisableDirWatcher();
 }
 
@@ -682,6 +690,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     } else {
       if (index >= m_ActiveDownloads.size()) {
         reportError(tr("remove: invalid download index %1").arg(index));
+				//emit update(-1);
 				endDisableDirWatcher();
         return;
       }
@@ -690,11 +699,12 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       delete m_ActiveDownloads.at(index);
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
-		endDisableDirWatcher();
     emit update(-1);
+		endDisableDirWatcher();
   } catch (const std::exception &e) {
     qCritical("failed to remove download: %s", e.what());
   }
+	refreshList();
 }
 
 
@@ -1710,7 +1720,7 @@ void DownloadManager::metaDataChanged()
 
 void DownloadManager::directoryChanged(const QString&)
 {
-	if(m_DirWatcherDisabler==0)
+	if(DownloadManager::m_DirWatcherDisabler==0)
 		refreshList();
 }
 
