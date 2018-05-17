@@ -54,6 +54,7 @@ using namespace MOBase;
 static const char UNFINISHED[] = ".unfinished";
 
 unsigned int DownloadManager::DownloadInfo::s_NextDownloadID = 1U;
+int DownloadManager::m_DirWatcherDisabler = 0;
 
 
 DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const ModRepositoryFileInfo *fileInfo, const QStringList &URLs)
@@ -142,6 +143,25 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
   return info;
 }
 
+void DownloadManager::startDisableDirWatcher()
+{
+	DownloadManager::m_DirWatcherDisabler++;
+}
+
+
+void DownloadManager::endDisableDirWatcher()
+{
+	if (DownloadManager::m_DirWatcherDisabler > 0)
+	{
+		if (DownloadManager::m_DirWatcherDisabler == 1)
+			QCoreApplication::processEvents();
+		DownloadManager::m_DirWatcherDisabler--;
+	}
+	else {
+		DownloadManager::m_DirWatcherDisabler = 0;
+	}
+}
+
 void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
 {
   QString oldMetaFileName = QString("%1.meta").arg(m_FileName);
@@ -209,8 +229,10 @@ bool DownloadManager::downloadsInProgress()
   return false;
 }
 
+
 void DownloadManager::pauseAll()
 {
+
   // first loop: pause all downloads
   for (int i = 0; i < m_ActiveDownloads.count(); ++i) {
     if (m_ActiveDownloads[i]->m_State < STATE_READY) {
@@ -238,6 +260,7 @@ void DownloadManager::pauseAll()
       ::Sleep(100);
     }
   }
+
 }
 
 
@@ -276,9 +299,17 @@ void DownloadManager::setPluginContainer(PluginContainer *pluginContainer)
   m_NexusInterface->setPluginContainer(pluginContainer);
 }
 
+
+
+
+
+
 void DownloadManager::refreshList()
 {
   try {
+		//avoid triggering other refreshes
+		startDisableDirWatcher();
+
     int downloadsBefore = m_ActiveDownloads.size();
 
     // remove finished downloads
@@ -335,10 +366,14 @@ void DownloadManager::refreshList()
       }
     }
 
-    if (m_ActiveDownloads.size() != downloadsBefore) {
+    //if (m_ActiveDownloads.size() != downloadsBefore) {
       qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
-    }
+    //}
     emit update(-1);
+
+		//let watcher trigger refreshes again
+		endDisableDirWatcher();
+
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
   }
@@ -388,7 +423,10 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
       baseName = dispoName;
     }
   }
+
+	startDisableDirWatcher();
   newDownload->setName(getDownloadFileName(baseName), false);
+	endDisableDirWatcher();
 
   startDownload(reply, newDownload, false);
 //  emit update(-1);
@@ -458,7 +496,9 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
         else
           setState(newDownload, STATE_CANCELING);
       } else {
+				startDisableDirWatcher();
         newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
+				endDisableDirWatcher();
         if (newDownload->m_State == STATE_PAUSED)
           resumeDownload(indexByName(newDownload->m_FileName));
         else
@@ -530,6 +570,9 @@ void DownloadManager::addNXMDownload(const QString &url)
 
 void DownloadManager::removeFile(int index, bool deleteFile)
 {
+	//Avoid triggering refreshes from DirWatcher
+	startDisableDirWatcher();
+
   if (index >= m_ActiveDownloads.size()) {
     throw MyException(tr("remove: invalid download index %1").arg(index));
   }
@@ -540,6 +583,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
       (download->m_State == STATE_DOWNLOADING)) {
     // shouldn't have been possible
     qCritical("tried to remove active download");
+		endDisableDirWatcher();
     return;
   }
 
@@ -550,6 +594,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   if (deleteFile) {
     if (!shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete %1").arg(filePath));
+			endDisableDirWatcher();
       return;
     }
 
@@ -559,8 +604,11 @@ void DownloadManager::removeFile(int index, bool deleteFile)
     }
   } else {
     QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-    metaSettings.setValue("removed", true);
+		if(!download->m_Hidden)
+			metaSettings.setValue("removed", true);
   }
+	
+	endDisableDirWatcher();
 }
 
 class LessThanWrapper
@@ -606,14 +654,22 @@ void DownloadManager::restoreDownload(int index)
 
   QString filePath = m_OutputDirectory + "/" + download->m_FileName;
 
+	//avoid dirWatcher triggering refreshes
+	startDisableDirWatcher();
+
   QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
   metaSettings.setValue("removed", false);
+
+	endDisableDirWatcher();
 }
 
 
 void DownloadManager::removeDownload(int index, bool deleteFile)
 {
   try {
+		//avoid dirWatcher triggering refreshes
+		startDisableDirWatcher();
+
     emit aboutToUpdate();
 
     if (index < 0) {
@@ -634,6 +690,8 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     } else {
       if (index >= m_ActiveDownloads.size()) {
         reportError(tr("remove: invalid download index %1").arg(index));
+				//emit update(-1);
+				endDisableDirWatcher();
         return;
       }
 
@@ -642,9 +700,11 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
     emit update(-1);
+		endDisableDirWatcher();
   } catch (const std::exception &e) {
     qCritical("failed to remove download: %s", e.what());
   }
+	refreshList();
 }
 
 
@@ -970,10 +1030,15 @@ void DownloadManager::markInstalled(int index)
     throw MyException(tr("mark installed: invalid download index %1").arg(index));
   }
 
+	//Avoid triggering refreshes from DirWatcher
+	startDisableDirWatcher();
+
   DownloadInfo *info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
   metaFile.setValue("uninstalled", false);
+
+	endDisableDirWatcher();
 
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
 }
@@ -986,10 +1051,15 @@ void DownloadManager::markInstalled(QString fileName)
   } else {
     DownloadInfo *info = getDownloadInfo(fileName);
     if (info != nullptr) {
+			//Avoid triggering refreshes from DirWatcher
+			startDisableDirWatcher();
+
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("installed", true);
       metaFile.setValue("uninstalled", false);
       delete info;
+
+			endDisableDirWatcher();
     }
   }
 }
@@ -1005,9 +1075,14 @@ void DownloadManager::markUninstalled(int index)
     throw MyException(tr("mark uninstalled: invalid download index %1").arg(index));
   }
 
+	//Avoid triggering refreshes from DirWatcher
+	startDisableDirWatcher();
+
   DownloadInfo *info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("uninstalled", true);
+
+	endDisableDirWatcher();
 
   setState(m_ActiveDownloads.at(index), STATE_UNINSTALLED);
 }
@@ -1022,9 +1097,15 @@ void DownloadManager::markUninstalled(QString fileName)
     QString filePath = QDir::fromNativeSeparators(m_OutputDirectory) + "/" + fileName;
     DownloadInfo *info = getDownloadInfo(filePath);
     if (info != nullptr) {
+
+			//Avoid triggering refreshes from DirWatcher
+			startDisableDirWatcher();
+
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("uninstalled", true);
       delete info;
+
+			endDisableDirWatcher();
     }
   }
 }
@@ -1183,6 +1264,9 @@ void DownloadManager::downloadReadyRead()
 
 void DownloadManager::createMetaFile(DownloadInfo *info)
 {
+	//Avoid triggering refreshes from DirWatcher
+	startDisableDirWatcher();
+
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()), QSettings::IniFormat);
   metaFile.setValue("gameName", info->m_FileInfo->gameName);
   metaFile.setValue("modID", info->m_FileInfo->modID);
@@ -1204,6 +1288,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
                               (info->m_State == DownloadManager::STATE_ERROR));
   metaFile.setValue("removed", info->m_Hidden);
 
+	endDisableDirWatcher();
   // slightly hackish...
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i] == info) {
@@ -1572,11 +1657,14 @@ void DownloadManager::downloadFinished(int index)
 
       QString newName = getFileNameFromNetworkReply(reply);
       QString oldName = QFileInfo(info->m_Output).fileName();
+
+			startDisableDirWatcher();
       if (!newName.isEmpty() && (oldName.isEmpty())) {
         info->setName(getDownloadFileName(newName), true);
       } else {
         info->setName(m_OutputDirectory + "/" + info->m_FileName, true); // don't rename but remove the ".unfinished" extension
       }
+			endDisableDirWatcher();
 
       if (!isNexus) {
         setState(info, STATE_READY);
@@ -1616,7 +1704,9 @@ void DownloadManager::metaDataChanged()
   if (info != nullptr) {
     QString newName = getFileNameFromNetworkReply(info->m_Reply);
     if (!newName.isEmpty() && (info->m_FileName.isEmpty())) {
+			startDisableDirWatcher();
       info->setName(getDownloadFileName(newName), true);
+			endDisableDirWatcher();
       refreshAlphabeticalTranslation();
       if (!info->m_Output.isOpen() && !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
         reportError(tr("failed to re-open %1").arg(info->m_FileName));
@@ -1630,7 +1720,8 @@ void DownloadManager::metaDataChanged()
 
 void DownloadManager::directoryChanged(const QString&)
 {
-  refreshList();
+	if(DownloadManager::m_DirWatcherDisabler==0)
+		refreshList();
 }
 
 void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)

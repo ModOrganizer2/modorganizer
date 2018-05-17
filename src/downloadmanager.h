@@ -144,6 +144,17 @@ public:
    **/
   void setOutputDirectory(const QString &outputDirectory);
 
+	/**
+	* @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called
+	* 
+	**/
+	static void startDisableDirWatcher();
+
+	/**
+	* @brief re-enables feedback from the downlods fileSystemWhatcher after disableDownloadsWatcherStart() was called
+	**/
+	static void endDisableDirWatcher();
+
   /**
    * @return current download directory
    **/
@@ -518,6 +529,12 @@ private:
   QVector<int> m_AlphabeticalTranslation;
 
   QFileSystemWatcher m_DirWatcher;
+
+	//The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
+	//so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.
+	//Notably using QSettings to edit a file creates a temporarily .lock file that causes the Watcher to trigger multiple listRefreshes freezing the ui. 
+	static int m_DirWatcherDisabler;
+
 
   std::map<QString, int> m_DownloadFails;
 
