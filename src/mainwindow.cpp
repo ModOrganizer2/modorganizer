@@ -242,7 +242,28 @@ MainWindow::MainWindow(QSettings &initSettings
 
   updateProblemsButton();
 
-  updateToolBar();
+  // Setup toolbar
+  QWidget *spacer = new QWidget(ui->toolBar);
+  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
+
+  if (toolBtn->menu() == nullptr) {
+    actionToToolButton(ui->actionTool);
+  }
+
+  actionToToolButton(ui->actionHelp);
+  createHelpWidget();
+  
+  for (QAction *action : ui->toolBar->actions()) {
+    if (action->isSeparator()) {
+      // insert spacers
+      ui->toolBar->insertWidget(action, spacer);
+      m_Sep = action;
+      // m_Sep would only use the last seperator anyway, and we only have the one anyway?
+      break;
+    }
+  }
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -560,41 +581,22 @@ void MainWindow::updateToolBar()
   for (QAction *action : ui->toolBar->actions()) {
     if (action->objectName().startsWith("custom__")) {
       ui->toolBar->removeAction(action);
+      action->deleteLater();
     }
   }
 
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setObjectName("custom__spacer");
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
-
-  if (toolBtn->menu() == nullptr) {
-    actionToToolButton(ui->actionTool);
-  }
-
-  actionToToolButton(ui->actionHelp);
-  createHelpWidget();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->isSeparator()) {
-      // insert spacers
-      ui->toolBar->insertWidget(action, spacer);
-
-      std::vector<Executable>::iterator begin, end;
-      m_OrganizerCore.executablesList()->getExecutables(begin, end);
-      for (auto iter = begin; iter != end; ++iter) {
-        if (iter->isShownOnToolbar()) {
-          QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
-                                           iter->m_Title,
-                                           ui->toolBar);
-          exeAction->setObjectName(QString("custom__") + iter->m_Title);
-          if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
-            qDebug("failed to connect trigger?");
-          }
-          ui->toolBar->insertAction(action, exeAction);
-        }
+  std::vector<Executable>::iterator begin, end;
+  m_OrganizerCore.executablesList()->getExecutables(begin, end);
+  for (auto iter = begin; iter != end; ++iter) {
+    if (iter->isShownOnToolbar()) {
+      QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
+                                        iter->m_Title,
+                                        ui->toolBar);
+      exeAction->setObjectName(QString("custom__") + iter->m_Title);
+      if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
+        qDebug("failed to connect trigger?");
       }
+      ui->toolBar->insertAction(m_Sep, exeAction);
     }
   }
 }

@@ -304,6 +304,8 @@ private:
 
   Ui::MainWindow *ui;
 
+  QAction *m_Sep; // Executable Shortcuts are added after this. Non owning.
+
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
