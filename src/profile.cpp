@@ -59,6 +59,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+namespace {
+// Locks a directory at `path` from deletion.
+// This does not apply to it's children.
+HANDLE createLock(QDir qpath) {
+  auto path = qpath.absolutePath().toStdWString();
+  auto ret = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                          FILE_FLAG_BACKUP_SEMANTICS, NULL);
+  assert(ret != INVALID_HANDLE_VALUE);
+  return ret;
+}
+}
+
 void Profile::touchFile(QString fileName)
 {
   QFile modList(m_Directory.filePath(fileName));
@@ -86,6 +98,8 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   }
   QString fullPath = profilesDir + "/" + fixedName;
   m_Directory = QDir(fullPath);
+  
+  m_lock = FileLock(createLock(m_Directory));
 
   try {
     // create files. Needs to happen after m_Directory was set!
@@ -124,6 +138,8 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
     touchFile(m_Directory.filePath("modlist.txt"));
   }
+  
+  m_lock = FileLock(createLock(m_Directory));
 
   IPluginGame::ProfileSettings settings = IPluginGame::MODS
                                         | IPluginGame::SAVEGAMES;
@@ -840,3 +856,5 @@ void Profile::removeSetting(const QString &section, const QString &name)
 {
 	m_Settings->remove(section + "/" + name);
 }
+
+void MyProfile::FileLockDeleter::operator()(void* h) { ::CloseHandle(h); }
