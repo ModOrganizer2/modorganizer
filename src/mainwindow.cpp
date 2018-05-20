@@ -3155,6 +3155,13 @@ void MainWindow::openInstallFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openPluginsFolder()
+{
+	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
+	::ShellExecuteW(nullptr, L"explore", ToWString(pluginsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+
 void MainWindow::openProfileFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3366,15 +3373,9 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 
+	FolderMenu->addAction(tr("Open MO2 Plugins folder"), this, SLOT(openPluginsFolder()));
+
 	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
-
-
-
-
-
-
-
-
 
 
 	return FolderMenu;

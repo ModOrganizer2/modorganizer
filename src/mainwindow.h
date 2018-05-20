@@ -500,6 +500,7 @@ private slots:
   void openInstanceFolder();
   void openLogsFolder();
   void openInstallFolder();
+	void openPluginsFolder();
   void openDownloadsFolder();
   void openProfileFolder();
   void openGameFolder();
