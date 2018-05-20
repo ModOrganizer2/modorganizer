@@ -87,6 +87,25 @@ void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOption
 }
 
 
+QString DownloadListWidgetDelegate::sizeFormat(quint64 size) const
+{
+	qreal calc = size;
+	QStringList list;
+	list << "KB" << "MB" << "GB" << "TB";
+
+	QStringListIterator i(list);
+	QString unit("byte(s)");
+
+	while (calc >= 1024.0 && i.hasNext())
+	{
+		unit = i.next();
+		calc /= 1024.0;
+	}
+
+	return QString().setNum(calc, 'f', 2) + " " + unit;
+}
+
+
 void DownloadListWidgetDelegate::paintPendingDownload(int downloadIndex) const
 {
   std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
@@ -106,7 +125,7 @@ void DownloadListWidgetDelegate::paintRegularDownload(int downloadIndex) const
     name.append("...");
   }
   m_NameLabel->setText(name);
-  m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1024));
+  m_SizeLabel->setText(sizeFormat(m_Manager->getFileSize(downloadIndex) ));
   DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
   if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
     QPalette labelPalette;
