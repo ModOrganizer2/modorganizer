@@ -645,22 +645,38 @@ void DownloadManager::refreshAlphabeticalTranslation()
 
 void DownloadManager::restoreDownload(int index)
 {
-  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    throw MyException(tr("restore: invalid download index: %1").arg(index));
-  }
 
-  DownloadInfo *download = m_ActiveDownloads.at(index);
-  download->m_Hidden = false;
+	if (index < 0) {
+		DownloadState minState = STATE_READY ;
+		index = 0;
 
-  QString filePath = m_OutputDirectory + "/" + download->m_FileName;
+		for (QVector<DownloadInfo*>::const_iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter ) {
+			
+			if ((*iter)->m_State >= minState) {
+				restoreDownload(index);
+			}
+			index++;
+		}
+	}
+	else {
+		if (index >= m_ActiveDownloads.size()) {
+			throw MyException(tr("restore: invalid download index: %1").arg(index));
+		}
 
-	//avoid dirWatcher triggering refreshes
-	startDisableDirWatcher();
+		DownloadInfo *download = m_ActiveDownloads.at(index);
+		if (download->m_Hidden) {
+			download->m_Hidden = false;
 
-  QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-  metaSettings.setValue("removed", false);
+			QString filePath = m_OutputDirectory + "/" + download->m_FileName;
 
-	endDisableDirWatcher();
+			//avoid dirWatcher triggering refreshes
+			startDisableDirWatcher();
+				QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
+			metaSettings.setValue("removed", false);
+
+			endDisableDirWatcher();
+		}
+	}
 }
 
 
@@ -680,7 +696,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
 					removeFile(index, deleteFile);
 					delete *iter;
 					iter = m_ActiveDownloads.erase(iter);
-          QCoreApplication::processEvents();
+          //QCoreApplication::processEvents();
 				}
 				else {
 					++iter;

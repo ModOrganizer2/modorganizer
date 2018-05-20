@@ -219,8 +219,14 @@ void DownloadListWidgetCompactDelegate::issueRemoveFromView()
 
 void DownloadListWidgetCompactDelegate::issueRestoreToView()
 {
-  emit restoreDownload(m_ContextIndex.row());
+		emit restoreDownload(m_ContextIndex.row());
 }
+
+void DownloadListWidgetCompactDelegate::issueRestoreToViewAll()
+{
+	emit restoreDownload(-1);
+}
+
 
 void DownloadListWidgetCompactDelegate::issueCancel()
 {
@@ -318,11 +324,15 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
         }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
-        if (!hidden) {
-          menu.addSeparator();
-          menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-          menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
-        }
+				if (!hidden) {
+					menu.addSeparator();
+					menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+					menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
+				}
+				if (hidden) {
+					menu.addSeparator();
+					menu.addAction(tr("Un-Hide All..."), this, SLOT(issueRestoreToViewAll()));
+				}
         menu.exec(mouseEvent->globalPos());
 
         event->accept();

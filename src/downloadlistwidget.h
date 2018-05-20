@@ -89,6 +89,7 @@ private slots:
   void issueDelete();
   void issueRemoveFromView();
   void issueRestoreToView();
+	void issueRestoreToViewAll();
   void issueCancel();
   void issuePause();
   void issueResume();
