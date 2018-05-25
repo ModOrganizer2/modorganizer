@@ -35,7 +35,7 @@ class DownloadListWidgetCompact;
 class DownloadListWidgetCompact : public QWidget
 {
   Q_OBJECT
-  
+
 public:
   explicit DownloadListWidgetCompact(QWidget *parent = 0);
   ~DownloadListWidgetCompact();
@@ -69,6 +69,7 @@ signals:
   void cancelDownload(int index);
   void pauseDownload(int index);
   void resumeDownload(int index);
+  void visitOnNexus(int index);
 
 protected:
 
@@ -87,7 +88,8 @@ private slots:
   void issueDelete();
   void issueRemoveFromView();
   void issueRestoreToView();
-	void issueRestoreToViewAll();
+  void issueRestoreToViewAll();
+  void issueVisitOnNexus();
   void issueCancel();
   void issuePause();
   void issueResume();
@@ -120,4 +122,3 @@ private:
 };
 
 #endif // DOWNLOADLISTWIDGETCOMPACT_H
-

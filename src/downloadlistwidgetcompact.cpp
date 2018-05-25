@@ -209,12 +209,21 @@ void DownloadListWidgetCompactDelegate::issueQueryInfo()
 
 void DownloadListWidgetCompactDelegate::issueDelete()
 {
-  emit removeDownload(m_ContextIndex.row(), true);
+	if (QMessageBox::question(nullptr, tr("Are you sure?"),
+		tr("This will permanently delete the selected download."),
+		QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+		emit removeDownload(m_ContextIndex.row(), true);
+	}
 }
 
 void DownloadListWidgetCompactDelegate::issueRemoveFromView()
 {
   emit removeDownload(m_ContextIndex.row(), false);
+}
+
+void DownloadListWidgetCompactDelegate::issueVisitOnNexus()
+{
+	emit visitOnNexus(m_ContextIndex.row());
 }
 
 void DownloadListWidgetCompactDelegate::issueRestoreToView()
@@ -305,7 +314,10 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
             menu.addAction(tr("Install"), this, SLOT(issueInstall()));
             if (m_Manager->isInfoIncomplete(m_ContextIndex.row())) {
               menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+            }else {
+              menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
             }
+            menu.addSeparator();
             menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
             if (hidden) {
               menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
@@ -324,15 +336,15 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
         }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
-				if (!hidden) {
-					menu.addSeparator();
-					menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-					menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
-				}
-				if (hidden) {
-					menu.addSeparator();
-					menu.addAction(tr("Un-Hide All..."), this, SLOT(issueRestoreToViewAll()));
-				}
+        if (!hidden) {
+          menu.addSeparator();
+          menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
+        }
+        if (hidden) {
+          menu.addSeparator();
+          menu.addAction(tr("Un-Hide All..."), this, SLOT(issueRestoreToViewAll()));
+        }
         menu.exec(mouseEvent->globalPos());
 
         event->accept();
@@ -345,4 +357,3 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
 
   return QItemDelegate::editorEvent(event, model, option, index);
 }
-

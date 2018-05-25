@@ -36,6 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QRegExp>
 #include <QDirIterator>
+#include <QDesktopServices>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QCoreApplication>
@@ -607,7 +608,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
 		if(!download->m_Hidden)
 			metaSettings.setValue("removed", true);
   }
-	
+
 	endDisableDirWatcher();
 }
 
@@ -651,7 +652,7 @@ void DownloadManager::restoreDownload(int index)
 		index = 0;
 
 		for (QVector<DownloadInfo*>::const_iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter ) {
-			
+
 			if ((*iter)->m_State >= minState) {
 				restoreDownload(index);
 			}
@@ -874,6 +875,34 @@ void DownloadManager::queryInfo(int index)
   }
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO);
+}
+
+void DownloadManager::visitOnNexus(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("VisitNexus: invalid download index %1").arg(index));
+    return;
+  }
+  DownloadInfo *info = m_ActiveDownloads[index];
+
+  if (info->m_FileInfo->repository != "Nexus") {
+    qWarning("Visiting mod page is currently only possible with Nexus");
+    return;
+  }
+
+  if (info->m_State < DownloadManager::STATE_READY) {
+    // UI shouldn't allow this
+    return;
+  }
+  int modID = info->m_FileInfo->modID;
+
+  QString gameName = info->m_FileInfo->gameName;
+  if (modID > 0) {
+    QDesktopServices::openUrl(QUrl(m_NexusInterface->getModURL(modID, gameName)));
+  }
+  else {
+    emit showMessage(tr("Nexus ID for this Mod is unknown"));
+  }
 }
 
 

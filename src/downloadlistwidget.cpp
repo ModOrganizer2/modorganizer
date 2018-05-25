@@ -245,7 +245,11 @@ void DownloadListWidgetDelegate::issueQueryInfo()
 
 void DownloadListWidgetDelegate::issueDelete()
 {
-  emit removeDownload(m_ContextRow, true);
+	if (QMessageBox::question(nullptr, tr("Delete Files?"),
+		tr("This will permanently delete the selected download."),
+		QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+		emit removeDownload(m_ContextRow, true);
+	}
 }
 
 void DownloadListWidgetDelegate::issueRemoveFromView()
@@ -261,6 +265,11 @@ void DownloadListWidgetDelegate::issueRestoreToView()
 void DownloadListWidgetDelegate::issueRestoreToViewAll()
 {
 	emit restoreDownload(-1);
+}
+
+void DownloadListWidgetDelegate::issueVisitOnNexus()
+{
+	emit visitOnNexus(m_ContextRow);
 }
 
 
@@ -281,7 +290,7 @@ void DownloadListWidgetDelegate::issueResume()
 
 void DownloadListWidgetDelegate::issueDeleteAll()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Delete Files?"),
                             tr("This will remove all finished downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, true);
@@ -290,7 +299,7 @@ void DownloadListWidgetDelegate::issueDeleteAll()
 
 void DownloadListWidgetDelegate::issueDeleteCompleted()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Delete Files?"),
                             tr("This will remove all installed downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, true);
@@ -340,7 +349,12 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
             menu.addAction(tr("Install"), this, SLOT(issueInstall()));
             if (m_Manager->isInfoIncomplete(m_ContextRow)) {
               menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+            }else {
+              menu.addAction(tr("Visit on Nexus"), this,SLOT(issueVisitOnNexus()));
             }
+            
+            menu.addSeparator();
+
             menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
             if (hidden) {
               menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));

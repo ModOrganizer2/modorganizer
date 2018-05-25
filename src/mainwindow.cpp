@@ -254,7 +254,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   actionToToolButton(ui->actionHelp);
   createHelpWidget();
-  
+
   for (QAction *action : ui->toolBar->actions()) {
     if (action->isSeparator()) {
       // insert spacers
@@ -400,7 +400,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
- 
+
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
 
@@ -2336,9 +2336,11 @@ void MainWindow::removeMod_clicked()
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
+        DownloadManager::startDisableDirWatcher();
         for (QString name : modNames) {
           m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
         }
+        DownloadManager::endDisableDirWatcher();
       }
     } else {
       m_OrganizerCore.modList()->removeRow(m_ContextRow, QModelIndex());
@@ -2500,7 +2502,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
-	
+
 	//Open the tab first if we want to use the standard indexes of the tabs.
 	if (tab != -1) {
 		dialog.openTab(tab);
@@ -2687,7 +2689,7 @@ void MainWindow::openExplorer_activated()
 			QModelIndex idx = selection->currentIndex();
 			QString fileName = idx.data().toString();
 
-			
+
 
 			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -4239,6 +4241,7 @@ void MainWindow::updateDownloadListDelegate()
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));

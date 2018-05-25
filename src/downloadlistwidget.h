@@ -71,6 +71,7 @@ signals:
   void cancelDownload(int index);
   void pauseDownload(int index);
   void resumeDownload(int index);
+  void visitOnNexus(int index);
 
 protected:
 
@@ -80,7 +81,7 @@ protected:
 
 private:
 
-	
+
   void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
 
 private slots:
@@ -89,7 +90,8 @@ private slots:
   void issueDelete();
   void issueRemoveFromView();
   void issueRestoreToView();
-	void issueRestoreToViewAll();
+  void issueRestoreToViewAll();
+  void issueVisitOnNexus();
   void issueCancel();
   void issuePause();
   void issueResume();
