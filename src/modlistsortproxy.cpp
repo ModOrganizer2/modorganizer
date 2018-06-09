@@ -208,6 +208,16 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
       if (leftTime != rightTime)
         return leftTime < rightTime;
     } break;
+    case ModList::COL_GAME: {
+      if (leftMod->getGameName() != rightMod->getGameName()) {
+        lt = leftMod->getGameName() < rightMod->getGameName();
+      }
+      else {
+        int comp = QString::compare(leftMod->name(), rightMod->name(), Qt::CaseInsensitive);
+        if (comp != 0)
+          lt = comp < 0;
+       }
+    } break;
     case ModList::COL_PRIORITY: {
       // nop, already compared by priority
     } break;
