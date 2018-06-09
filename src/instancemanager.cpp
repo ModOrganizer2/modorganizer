@@ -146,7 +146,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     if (dialog.exec() == QDialog::Rejected) {
       throw MOBase::MyException(QObject::tr("Canceled"));
     }
-    instanceId = dialog.textValue().replace(QRegExp("[^0-9a-zA-Z ]"), "");
+    instanceId = dialog.textValue().replace(QRegExp("[^0-9a-zA-Z ]"), "").remove(QRegExp("( )*$"));
 
     bool alreadyExists=false;
     for (const QString &instance : instanceList) {
