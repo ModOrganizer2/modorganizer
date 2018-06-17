@@ -4971,7 +4971,7 @@ bool MainWindow::createBackup(const QString &filePath, const QDateTime &time)
   QString outPath = filePath + "." + time.toString(PATTERN_BACKUP_DATE);
   if (shellCopy(QStringList(filePath), QStringList(outPath), this)) {
     QFileInfo fileInfo(filePath);
-    removeOldFiles(fileInfo.absolutePath(), fileInfo.fileName() + PATTERN_BACKUP_GLOB, 3, QDir::Name);
+    removeOldFiles(fileInfo.absolutePath(), fileInfo.fileName() + PATTERN_BACKUP_GLOB, 10, QDir::Name);
     return true;
   } else {
     return false;
