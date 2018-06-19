@@ -785,7 +785,13 @@ void DownloadManager::resumeDownloadInt(int index)
     return;
   }
 
-  if (info->isPausedState()) {
+  if (info->isPausedState() || info->m_State == STATE_PAUSING) {
+    if (info->m_State == STATE_PAUSING) {
+      if (info->m_Output.isOpen()) {
+        info->m_Output.write(info->m_Reply->readAll());
+        setState(info, STATE_PAUSED);
+      }
+    }
     if ((info->m_Urls.size() == 0)
         || ((info->m_Urls.size() == 1) && (info->m_Urls[0].size() == 0))) {
       emit showMessage(tr("No known download urls. Sorry, this download can't be resumed."));
@@ -1662,6 +1668,7 @@ void DownloadManager::downloadFinished(int index)
     } else if (info->m_State == STATE_PAUSING) {
       if (info->m_Output.isOpen()) {
         info->m_Output.write(info->m_Reply->readAll());
+        setState(info, STATE_PAUSED);
       }
     }
 
@@ -1673,7 +1680,7 @@ void DownloadManager::downloadFinished(int index)
       if (error)
         emit showMessage(tr("We were unable to download the file due to errors after four retries. There may be an issue with the Nexus servers."));
       emit update(-1);
-    } else if (info->isPausedState()) {
+    } else if (info->isPausedState() || info->m_State == STATE_PAUSING) {
       info->m_Output.close();
       createMetaFile(info);
       emit update(index);
