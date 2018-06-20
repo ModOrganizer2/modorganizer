@@ -114,7 +114,7 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
     m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
   }
 
-  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
     m_DoneLabel->setVisible(true);
     m_Progress->setVisible(false);
     m_DoneLabel->setText(QString("%1<img src=\":/MO/gui/inactive\">").arg(tr("Paused")));
@@ -297,7 +297,7 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
       QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
       if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY) {
         emit installDownload(sourceIndex.row());
-      } else if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) {
+      } else if ((m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) || (m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_PAUSING)) {
         emit resumeDownload(sourceIndex.row());
       }
       return true;
@@ -327,7 +327,7 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
           } else if (state == DownloadManager::STATE_DOWNLOADING){
             menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
             menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
             menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
             menu.addAction(tr("Resume"), this, SLOT(issueResume()));
           }

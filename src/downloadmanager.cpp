@@ -206,7 +206,7 @@ DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
   m_TimeoutTimer.setSingleShot(false);
-  connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
+  //connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
   m_TimeoutTimer.start(5 * 1000);
 }
 
@@ -1668,8 +1668,8 @@ void DownloadManager::downloadFinished(int index)
     } else if (info->m_State == STATE_PAUSING) {
       if (info->m_Output.isOpen()) {
         info->m_Output.write(info->m_Reply->readAll());
-        setState(info, STATE_PAUSED);
       }
+      setState(info, STATE_PAUSED);
     }
 
     if (info->m_State == STATE_CANCELED || (info->m_Tries == 0 && error)) {
