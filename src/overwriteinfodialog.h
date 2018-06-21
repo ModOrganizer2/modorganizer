@@ -56,6 +56,7 @@ private slots:
   void openTriggered();
   void createDirectoryTriggered();
 
+  void on_explorerButton_clicked();
   void on_filesView_customContextMenuRequested(const QPoint &pos);
 
 private:
