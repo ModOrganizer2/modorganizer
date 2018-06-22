@@ -403,6 +403,7 @@ private:
     QLineEdit *m_cacheDirEdit;
     QLineEdit *m_profilesDirEdit;
     QLineEdit *m_overwriteDirEdit;
+    QLineEdit *m_managedGameDirEdit;
   };
 
   class DiagnosticsTab : public SettingsTab
