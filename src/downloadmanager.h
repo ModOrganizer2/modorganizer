@@ -78,6 +78,7 @@ private:
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
     std::tuple<int, int, int, int, int> m_SpeedDiff;
+    bool m_HasData;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -115,7 +116,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
   };
 
 public:

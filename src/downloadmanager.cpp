@@ -1251,6 +1251,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
   try {
     DownloadInfo *info = findDownload(this->sender(), &index);
     if (info != nullptr) {
+      info->m_HasData = true;
       if (info->m_State == STATE_CANCELING) {
         setState(info, STATE_CANCELED);
       } else if (info->m_State == STATE_PAUSING) {
@@ -1637,7 +1638,7 @@ void DownloadManager::downloadFinished(int index)
   if (info != nullptr) {
     QNetworkReply *reply = info->m_Reply;
     QByteArray data;
-    if (reply->isOpen()) {
+    if (reply->isOpen() && info->m_HasData) {
       data = reply->readAll();
       info->m_Output.write(data);
     }
@@ -1666,7 +1667,7 @@ void DownloadManager::downloadFinished(int index)
     if (info->m_State == STATE_CANCELING) {
       setState(info, STATE_CANCELED);
     } else if (info->m_State == STATE_PAUSING) {
-      if (info->m_Output.isOpen()) {
+      if (info->m_Output.isOpen() && info->m_HasData) {
         info->m_Output.write(info->m_Reply->readAll());
       }
       setState(info, STATE_PAUSED);
