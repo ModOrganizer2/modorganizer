@@ -4204,12 +4204,16 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionEndorseMO_triggered()
 {
+  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+  IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+  if (!game) return;
+
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())),
+                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->gameShortName(), m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
+      game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -4274,8 +4278,11 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()
-          && result["game_id"].toInt() == m_OrganizerCore.managedGame()->nexusGameID()) {
+    // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+    IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+    if (game
+          && result["id"].toInt() == game->nexusModOrganizerID()
+          && result["game_id"].toInt() == game->nexusGameID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
@@ -4326,7 +4333,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
 {
   if (resultData.toBool()) {
     ui->actionEndorseMO->setVisible(false);
-    QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
   }
 
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
