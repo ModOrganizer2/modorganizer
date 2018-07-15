@@ -505,13 +505,23 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
         else
           setState(newDownload, STATE_DOWNLOADING);
       }
+
+      QCoreApplication::processEvents();
+
+      if (newDownload->m_State != STATE_DOWNLOADING &&
+        newDownload->m_State != STATE_READY &&
+        newDownload->m_State != STATE_FETCHINGMODINFO &&
+        reply->isFinished()) {
+        downloadFinished(indexByName(newDownload->m_FileName));
+        return;
+      }
     } else
-      connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+        connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
 
 
     QCoreApplication::processEvents();
 
-    if (newDownload->m_State != STATE_DOWNLOADING &&
+    if (//newDownload->m_State != STATE_DOWNLOADING &&
       newDownload->m_State != STATE_READY &&
       newDownload->m_State != STATE_FETCHINGMODINFO &&
       reply->isFinished()) {
