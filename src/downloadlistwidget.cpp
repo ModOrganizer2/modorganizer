@@ -82,7 +82,7 @@ void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOption
 {
   QRect rect = option.rect;
   rect.setLeft(0);
-  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2));
+  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3));
   painter->drawPixmap(rect, cache);
 }
 
@@ -193,7 +193,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       return;
     }
 
-    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
+    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3), option.rect.height()));
 
     int downloadIndex = index.data().toInt();
 

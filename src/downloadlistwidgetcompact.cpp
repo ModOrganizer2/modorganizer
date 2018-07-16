@@ -81,10 +81,27 @@ void DownloadListWidgetCompactDelegate::drawCache(QPainter *painter, const QStyl
 {
   QRect rect = option.rect;
   rect.setLeft(0);
-  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2));
+  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3));
   painter->drawPixmap(rect, cache);
 }
 
+QString DownloadListWidgetCompactDelegate::sizeFormat(quint64 size) const
+{
+  qreal calc = size;
+  QStringList list;
+  list << "KB" << "MB" << "GB" << "TB";
+
+  QStringListIterator i(list);
+  QString unit("byte(s)");
+
+  while (calc >= 1024.0 && i.hasNext())
+  {
+    unit = i.next();
+    calc /= 1024.0;
+  }
+
+  return QString().setNum(calc, 'f', 2) + " " + unit;
+}
 
 void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) const
 {
@@ -110,8 +127,8 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
 
   DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
 
-  if ((m_SizeLabel != nullptr) && (state >= DownloadManager::STATE_READY)) {
-    m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1048576));
+  if ((m_SizeLabel != nullptr)) {
+    m_SizeLabel->setText(sizeFormat(m_Manager->getFileSize(downloadIndex)));
   }
 
   if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
@@ -153,7 +170,7 @@ void DownloadListWidgetCompactDelegate::paint(QPainter *painter, const QStyleOpt
       return;
     }
 
-    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
+    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3), option.rect.height()));
     if (index.row() % 2 == 1) {
       m_ItemWidget->setBackgroundRole(QPalette::AlternateBase);
     } else {
