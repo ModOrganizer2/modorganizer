@@ -64,7 +64,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
   info->m_PreResumeSize = 0LL;
-  info->m_Progress = std::make_pair<int, QString>(0, "0 bytes/sec");
+  info->m_Progress = std::make_pair<int, QString>(0, "     0.0 Bytes/s ");
   info->m_ResumePos = 0;
   info->m_FileInfo = new ModRepositoryFileInfo(*fileInfo);
   info->m_Urls = URLs;
@@ -1277,19 +1277,19 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         double speed = (std::get<4>(info->m_SpeedDiff) * 1000.0) / (5 * 1000);
 
         QString unit;
-        if (speed < 1024) {
-          unit = "bytes/sec";
+        if (speed < 1000) {
+          unit = "Bytes/s";
         }
-        else if (speed < 1024 * 1024) {
+        else if (speed/1024 < 1000) {
           speed /= 1024;
-          unit = "kB/s";
+          unit = "KB/s";
         }
         else {
           speed /= 1024 * 1024;
           unit = "MB/s";
         }
 
-        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 3, 'f', 1).arg(unit);
+        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 8, 'f', 1,' ').arg(unit, -8, ' ');
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
