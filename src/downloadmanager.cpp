@@ -505,13 +505,25 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
         else
           setState(newDownload, STATE_DOWNLOADING);
       }
+
+      QCoreApplication::processEvents();
+
+      //tried adding this here to see if this avoided the duplicate downloads to insta complete since here I did use STATE_DOWNLOADING but it doesn't seem to matter.
+      if (newDownload->m_State != STATE_DOWNLOADING &&
+        newDownload->m_State != STATE_READY &&
+        newDownload->m_State != STATE_FETCHINGMODINFO &&
+        reply->isFinished()) {
+        downloadFinished(indexByName(newDownload->m_FileName));
+        return;
+      }
     } else
-      connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
+        connect(newDownload->m_Reply, SIGNAL(finished()), this, SLOT(downloadFinished()));
 
 
     QCoreApplication::processEvents();
 
-    if (newDownload->m_State != STATE_DOWNLOADING &&
+    //commented out the STATE_DOWNLOADING part since the downloads where gettting stuck while still in the downloading state.
+    if (//newDownload->m_State != STATE_DOWNLOADING &&
       newDownload->m_State != STATE_READY &&
       newDownload->m_State != STATE_FETCHINGMODINFO &&
       reply->isFinished()) {
