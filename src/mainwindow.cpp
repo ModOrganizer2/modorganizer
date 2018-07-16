@@ -3123,8 +3123,17 @@ void MainWindow::ignoreUpdate() {
 
 void MainWindow::unignoreUpdate()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(false);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(false);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(false);
+  }
 }
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
