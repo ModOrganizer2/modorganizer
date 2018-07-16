@@ -74,6 +74,7 @@ signals:
 
 protected:
 
+  QString sizeFormat(quint64 size) const;
   bool editorEvent(QEvent *event, QAbstractItemModel *model,
                    const QStyleOptionViewItem &option, const QModelIndex &index);
 
