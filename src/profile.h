@@ -36,6 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <tuple>
 #include <vector>
+#include <memory>
 
 
 namespace MOBase { class IPluginGame; }
@@ -351,6 +352,12 @@ private:
   unsigned int m_NumRegularMods;
 
   MOBase::DelayedFileWriter m_ModListWriter;
+  
+  struct FileLockDeleter {
+      void operator()(void* h);
+  };
+  using FileLock = std::unique_ptr<void, FileLockDeleter>;
+  FileLock m_lock;
 
 };
 
