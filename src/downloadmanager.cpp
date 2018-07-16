@@ -1655,7 +1655,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
 void DownloadManager::downloadFinished(int index)
 {
   DownloadInfo *info;
-  if (index)
+  if (index >= 0)
     info = m_ActiveDownloads[index];
   else
     info = findDownload(this->sender(), &index);
