@@ -2683,9 +2683,17 @@ void MainWindow::visitWebPage_clicked()
 
 void MainWindow::openExplorer_clicked()
 {
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-
-  ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+  }
+  else {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
 }
 
 void MainWindow::openExplorer_activated()
