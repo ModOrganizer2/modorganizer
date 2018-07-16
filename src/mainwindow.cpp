@@ -3108,8 +3108,17 @@ void MainWindow::changeVersioningScheme() {
 }
 
 void MainWindow::ignoreUpdate() {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(true);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(true);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(true);
+  }
 }
 
 void MainWindow::unignoreUpdate()
