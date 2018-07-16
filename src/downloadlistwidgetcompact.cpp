@@ -292,6 +292,15 @@ void DownloadListWidgetCompactDelegate::issueDeleteCompleted()
   }
 }
 
+void DownloadListWidgetCompactDelegate::issueDeleteUninstalled()
+{
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+    tr("This will remove all uninstalled downloads from this list and from disk."),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-3, true);
+  }
+}
+
 void DownloadListWidgetCompactDelegate::issueRemoveFromViewAll()
 {
   if (QMessageBox::question(nullptr, tr("Are you sure?"),
@@ -307,6 +316,15 @@ void DownloadListWidgetCompactDelegate::issueRemoveFromViewCompleted()
                             tr("This will permanently remove all installed downloads from this list (but NOT from disk)."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, false);
+  }
+}
+
+void DownloadListWidgetCompactDelegate::issueRemoveFromViewUninstalled()
+{
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+    tr("This will permanently remove all uninstalled downloads from this list (but NOT from disk)."),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-3, false);
   }
 }
 
@@ -359,10 +377,12 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
           menu.addSeparator();
         }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
+        menu.addAction(tr("Delete Uninstalled..."), this, SLOT(issueDeleteUninstalled()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
         if (!hidden) {
           menu.addSeparator();
           menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Hide Uninstalled..."), this, SLOT(issueRemoveFromViewUninstalled()));
           menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
         }
         if (hidden) {

@@ -690,7 +690,13 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     emit aboutToUpdate();
 
     if (index < 0) {
-			DownloadState minState = index == -1 ? STATE_READY : STATE_INSTALLED;
+      DownloadState minState;
+      if (index == -3) {
+        minState = STATE_UNINSTALLED;
+      } 
+      else
+			  minState = index == -1 ? STATE_READY : STATE_INSTALLED;
+
 			index = 0;
 			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
 				if ((*iter)->m_State >= minState) {

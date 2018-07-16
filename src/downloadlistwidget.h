@@ -99,8 +99,10 @@ private slots:
   void issueResume();
   void issueDeleteAll();
   void issueDeleteCompleted();
+  void issueDeleteUninstalled();
   void issueRemoveFromViewAll();
   void issueRemoveFromViewCompleted();
+  void issueRemoveFromViewUninstalled();
   void issueQueryInfo();
 
   void stateChanged(int row, DownloadManager::DownloadState);
