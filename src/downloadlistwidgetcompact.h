@@ -70,6 +70,7 @@ signals:
   void pauseDownload(int index);
   void resumeDownload(int index);
   void visitOnNexus(int index);
+  void openInDownloadsFolder(int index);
 
 protected:
 
@@ -90,6 +91,7 @@ private slots:
   void issueRestoreToView();
   void issueRestoreToViewAll();
   void issueVisitOnNexus();
+  void issueOpenInDownloadsFolder();
   void issueCancel();
   void issuePause();
   void issueResume();

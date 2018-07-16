@@ -438,6 +438,8 @@ public slots:
 
 	void visitOnNexus(int index);
 
+  void openInDownloadsFolder(int index);
+
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);

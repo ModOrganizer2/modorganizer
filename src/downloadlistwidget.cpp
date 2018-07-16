@@ -272,6 +272,10 @@ void DownloadListWidgetDelegate::issueVisitOnNexus()
 	emit visitOnNexus(m_ContextRow);
 }
 
+void DownloadListWidgetDelegate::issueOpenInDownloadsFolder()
+{
+  emit openInDownloadsFolder(m_ContextRow);
+}
 
 void DownloadListWidgetDelegate::issueCancel()
 {
@@ -352,6 +356,8 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
             }else {
               menu.addAction(tr("Visit on Nexus"), this,SLOT(issueVisitOnNexus()));
             }
+
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
             
             menu.addSeparator();
 
@@ -364,9 +370,11 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
           } else if (state == DownloadManager::STATE_DOWNLOADING){
             menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
             menu.addAction(tr("Pause"), this, SLOT(issuePause()));
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
           } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
-            menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
+            menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
             menu.addAction(tr("Resume"), this, SLOT(issueResume()));
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
           }
 
           menu.addSeparator();
