@@ -230,6 +230,16 @@ bool DownloadManager::downloadsInProgress()
   return false;
 }
 
+bool DownloadManager::downloadsInProgressNoPause()
+{
+  for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter) {
+    if ((*iter)->m_State < STATE_READY && (*iter)->m_State != STATE_PAUSED) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 void DownloadManager::pauseAll()
 {

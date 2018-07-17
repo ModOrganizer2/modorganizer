@@ -883,7 +883,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
   m_closing = true;
 
-  if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
+  if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {

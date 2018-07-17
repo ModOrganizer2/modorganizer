@@ -139,6 +139,13 @@ public:
   bool downloadsInProgress();
 
   /**
+  * @brief determine if a download is currently in progress, does not count paused ones.
+  *
+  * @return true if there is currently a download in progress (that is not paused already).
+  **/
+  bool downloadsInProgressNoPause();
+
+  /**
    * @brief set the output directory to write to
    *
    * @param outputDirectory the new output directory
