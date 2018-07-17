@@ -2872,6 +2872,44 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
 }
 
+void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
+{
+  if (!index.isValid()) {
+    return;
+  }
+
+  if (m_OrganizerCore.pluginList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
+    // don't interpret double click if we only just checked a plugin
+    return;
+  }
+
+  QModelIndex sourceIdx = mapToModel(m_OrganizerCore.pluginList(), index);
+  if (!sourceIdx.isValid()) {
+    return;
+  }
+  try {
+
+    QItemSelectionModel *selection = ui->espList->selectionModel();
+
+    if (selection->hasSelection() && selection->selectedRows().count() == 1) {
+
+      QModelIndex idx = selection->currentIndex();
+      QString fileName = idx.data().toString();
+
+
+      displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      ui->espList->closePersistentEditor(index);
+      
+
+    }
+  }
+  catch (const std::exception &e) {
+    reportError(e.what());
+  }
+}
+
 bool MainWindow::populateMenuCategories(QMenu *menu, int targetID)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);

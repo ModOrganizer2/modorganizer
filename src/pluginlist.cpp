@@ -77,6 +77,7 @@ PluginList::PluginList(QObject *parent)
   , m_FontMetrics(QFont())
 {
   connect(this, SIGNAL(writePluginsList()), this, SLOT(generatePluginIndexes()));
+  m_LastCheck.start();
 }
 
 PluginList::~PluginList()
@@ -583,6 +584,11 @@ void PluginList::disconnectSlots() {
   m_PluginStateChanged.disconnect_all_slots();
 }
 
+int PluginList::timeElapsedSinceLastChecked() const
+{
+  return m_LastCheck.elapsed();
+}
+
 QStringList PluginList::pluginNames() const
 {
   QStringList result;
@@ -954,6 +960,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   if (role == Qt::CheckStateRole) {
     m_ESPs[modIndex.row()].m_Enabled =
         value.toInt() == Qt::Checked || m_ESPs[modIndex.row()].m_ForceEnabled;
+    m_LastCheck.restart();
     emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
