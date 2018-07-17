@@ -181,8 +181,16 @@ void PluginList::refresh(const QString &profileName
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
+
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
+
+        std::set<QString> loadedArchives;
+        QString originPath = QString::fromWCharArray(origin.getPath().c_str()); 
+        QDir dir(QDir::toNativeSeparators(originPath));
+        for (QString filename : dir.entryList(QStringList() << QFileInfo(filename).baseName() + "*.bsa" << QFileInfo(filename).baseName() + "*.ba2")) {
+          loadedArchives.insert(filename);
+        }
 
         QString originName = ToQString(origin.getName());
         unsigned int modIndex = ModInfo::getIndex(originName);
@@ -191,7 +199,7 @@ void PluginList::refresh(const QString &profileName
           originName = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni, loadedArchives));
         m_ESPs.rbegin()->m_Priority = -1;
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
@@ -888,8 +896,15 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
       if (!enabledMasters.empty()) {
         text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
       }
+      if (!m_ESPs[index].m_Archives.empty()) {
+        text += "<br><b>" + tr("Loads Archives") + "</b>: " + SetJoin(m_ESPs[index].m_Archives, ", ");
+        text += "<br>" + tr("There are Archives connected to this plugin. "
+          "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
+          "Loose files will always overwrite assets from Archives.");
+      }
       if (m_ESPs[index].m_HasIni) {
-        text += "<br>" + tr("There is an ini file connected to this esp. "
+        text += "<br><b>" + tr("Loads INI settings") + "</b>: ";
+        text += "<br>" + tr("There is an ini file connected to this plugin. "
                             "Its settings will be added to your game settings, overwriting in case of conflicts.");
       }
       if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
@@ -916,6 +931,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     }
     if (m_ESPs[index].m_HasIni) {
       result.append(":/MO/gui/attachment");
+    }
+    if (!m_ESPs[index].m_Archives.empty()) {
+      result.append(":/MO/gui/archive_conflict_neutral");
     }
     if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
         result.append(":/MO/gui/awaiting");
@@ -1228,9 +1246,9 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
-                             bool hasIni)
+                             bool hasIni, std::set<QString> archives)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),
-    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_ModSelected(false)
+    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_Archives(archives), m_ModSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));

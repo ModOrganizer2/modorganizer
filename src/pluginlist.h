@@ -277,7 +277,7 @@ private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni);
+    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;
@@ -294,6 +294,7 @@ private:
     QString m_Author;
     QString m_Description;
     bool m_HasIni;
+    std::set<QString> m_Archives;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
     bool operator < (const ESPInfo& str) const
