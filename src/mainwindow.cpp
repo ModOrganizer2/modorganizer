@@ -2619,20 +2619,44 @@ void MainWindow::displayModInformation(int row, int tab)
 
 void MainWindow::ignoreMissingData_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  QDir(info->absolutePath()).mkdir("textures");
-  info->testValid();
-  connect(this, SIGNAL(modListDataChanged(QModelIndex,QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex,QModelIndex)));
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+      QDir(info->absolutePath()).mkdir("textures");
+      info->testValid();
+      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 
-  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    }
+  } else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    QDir(info->absolutePath()).mkdir("textures");
+    info->testValid();
+    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+
+    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  }
 }
 
 void MainWindow::markConverted_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->markConverted(true);
-  connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+      info->markConverted(true);
+      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    }
+  } else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->markConverted(true);
+    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  }
 }
 
 
@@ -2659,9 +2683,17 @@ void MainWindow::visitWebPage_clicked()
 
 void MainWindow::openExplorer_clicked()
 {
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-
-  ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+  }
+  else {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
 }
 
 void MainWindow::openExplorer_activated()
@@ -3076,14 +3108,32 @@ void MainWindow::changeVersioningScheme() {
 }
 
 void MainWindow::ignoreUpdate() {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(true);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(true);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(true);
+  }
 }
 
 void MainWindow::unignoreUpdate()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(false);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(false);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(false);
+  }
 }
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
@@ -4204,12 +4254,16 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionEndorseMO_triggered()
 {
+  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+  IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+  if (!game) return;
+
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())),
+                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->gameShortName(), m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
+      game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -4274,8 +4328,11 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()
-          && result["game_id"].toInt() == m_OrganizerCore.managedGame()->nexusGameID()) {
+    // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+    IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+    if (game
+          && result["id"].toInt() == game->nexusModOrganizerID()
+          && result["game_id"].toInt() == game->nexusGameID()) {
       if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
@@ -4326,7 +4383,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
 {
   if (resultData.toBool()) {
     ui->actionEndorseMO->setVisible(false);
-    QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
   }
 
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
