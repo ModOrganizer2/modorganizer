@@ -102,6 +102,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_SKSE:      return tr("Script Extender");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
     case CONTENT_MCM:       return tr("MCM Data");
+    case CONTENT_INI:       return tr("INI files");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
   }
 }

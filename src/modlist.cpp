@@ -73,6 +73,7 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
   m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
+  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", tr("INI files"));
 
   m_LastCheck.start();
 }
@@ -1109,6 +1110,7 @@ QString ModList::getColumnToolTip(int column)
                                  "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</td></tr>"
                                  "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</td></tr>"
                                  "<tr><td><img src=\":/MO/gui/content/menu\" width=32/></td><td>Mod Configuration Menu</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/inifile\" width=32/></td><td>INI files</td></tr>"
                                  "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");

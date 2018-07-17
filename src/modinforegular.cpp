@@ -466,6 +466,10 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
     if (dir.entryList(QStringList() << "*.bsa" << "*.ba2").size() > 0) {
       m_CachedContent.push_back(CONTENT_BSA);
     }
+    //use >1 for ini files since there is meta.ini in all mods already.
+    if (dir.entryList(QStringList() << "*.ini").size() > 1) {
+      m_CachedContent.push_back(CONTENT_INI);
+    }
 
     ScriptExtender *extender = qApp->property("managed_game")
                                    .value<IPluginGame *>()
