@@ -906,7 +906,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
         text += "<br><b>" + tr("Loads Archives") + "</b>: " + SetJoin(m_ESPs[index].m_Archives, ", ");
         text += "<br>" + tr("There are Archives connected to this plugin. "
           "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
-          "Loose files will always overwrite assets from Archives.");
+          "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
       }
       if (m_ESPs[index].m_HasIni) {
         text += "<br><b>" + tr("Loads INI settings") + "</b>: ";
