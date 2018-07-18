@@ -244,6 +244,11 @@ signals:
    */
   void fileMoved(const QString &relativePath, const QString &oldOriginName, const QString &newOriginName);
 
+  /**
+  * @brief emitted to have the overwrite folder cleared
+  */
+  void clearOverwrite();
+
   void aboutToChangeData();
 
   void postDataChanged();

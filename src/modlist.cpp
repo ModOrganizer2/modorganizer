@@ -999,6 +999,15 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 
   bool success = false;
 
+  if (count == 1) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+    if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
+      emit clearOverwrite();
+      success = true;
+    }
+  }
+
   for (int i = 0; i < count; ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(row + i);
     if (!modInfo->isRegular()) {
