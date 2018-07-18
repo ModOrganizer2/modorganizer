@@ -1002,7 +1002,7 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
   if (count == 1) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-    if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
+    if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) && (QDir(modInfo->absolutePath()).count() > 2)) {
       emit clearOverwrite();
       success = true;
     }
