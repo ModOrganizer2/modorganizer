@@ -2896,13 +2896,20 @@ void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
       QModelIndex idx = selection->currentIndex();
       QString fileName = idx.data().toString();
 
+      if (ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)) == UINT_MAX)
+        return;
 
-      displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-      // workaround to cancel the editor that might have opened because of
-      // selection-click
-      ui->espList->closePersistentEditor(index);
-      
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
+      if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+
+        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+        // workaround to cancel the editor that might have opened because of
+        // selection-click
+        ui->espList->closePersistentEditor(index);
+
+      }
     }
   }
   catch (const std::exception &e) {
