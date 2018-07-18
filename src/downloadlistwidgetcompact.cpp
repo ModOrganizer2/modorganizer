@@ -107,9 +107,9 @@ void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) 
 {
   std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(downloadIndex);
   m_NameLabel->setText(tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids)));
-  if (m_SizeLabel != nullptr) {
-    m_SizeLabel->setText("???");
-  }
+  //if (m_SizeLabel != nullptr) {
+  //  m_SizeLabel->setText("???");
+  //}
   m_DoneLabel->setVisible(true);
   m_DoneLabel->setText(tr("Pending"));
   m_Progress->setVisible(false);
@@ -127,9 +127,13 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
 
   DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
 
-  if ((m_SizeLabel != nullptr)) {
-    m_SizeLabel->setText(sizeFormat(m_Manager->getFileSize(downloadIndex)));
+  if (m_SizeLabel != nullptr) {
+    m_SizeLabel->setText(sizeFormat(m_Manager->getFileSize(downloadIndex)) + "  ");
+    m_SizeLabel->setVisible(true);
   }
+  //else {
+  //  m_SizeLabel->setVisible(false);
+  //}
 
   if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
     m_DoneLabel->setVisible(true);
