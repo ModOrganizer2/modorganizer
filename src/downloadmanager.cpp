@@ -1321,7 +1321,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
         if (speed < 1000) {
           unit = "Bytes/s";
         }
-        else if (speed/1024 < 1000) {
+        else if (speed < 1000*1024) {
           speed /= 1024;
           unit = "KB/s";
         }
