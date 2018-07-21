@@ -502,6 +502,7 @@ private slots:
   void openInstallFolder();
 	void openPluginsFolder();
   void openDownloadsFolder();
+  void openModsFolder();
   void openProfileFolder();
   void openGameFolder();
   void openMyGamesFolder();

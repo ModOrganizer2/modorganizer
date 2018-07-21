@@ -3272,6 +3272,11 @@ void MainWindow::openDownloadsFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openModsFolder()
+{
+  ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getModDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 void MainWindow::openGameFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->gameDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3464,6 +3469,8 @@ QMenu *MainWindow::openFolderMenu()
 	FolderMenu->addSeparator();
 
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
+
+  FolderMenu->addAction(tr("Open Mods folder"), this, SLOT(openModsFolder()));
 
 	FolderMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
 
