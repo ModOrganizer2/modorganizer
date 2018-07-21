@@ -2546,12 +2546,12 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
 	  //checks whether to update the BSAList
 	  if (forceRefresh) {
-		  m_OrganizerCore.refreshLists();
+			m_OrganizerCore.refreshLists();
 		}
 	  else
-	  {
-		m_OrganizerCore.refreshESPList(true);
-	  }
+		{
+			m_OrganizerCore.refreshESPList(true);
+		}
     }
   }
 }
@@ -2879,7 +2879,6 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   }
 }
 
-//New function that causes temp freeze
 void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
 {
   if (!index.isValid()) {
