@@ -1243,7 +1243,7 @@ p, li { white-space: pre-wrap; }
                      <enum>Qt::ScrollBarAlwaysOn</enum>
                     </property>
                     <property name="horizontalScrollBarPolicy">
-                     <enum>Qt::ScrollBarAlwaysOff</enum>
+                      <enum>Qt::ScrollBarAsNeeded</enum>
                     </property>
                     <property name="dragEnabled">
                      <bool>true</bool>
@@ -1276,7 +1276,10 @@ p, li { white-space: pre-wrap; }
                      <bool>true</bool>
                     </property>
                     <attribute name="headerDefaultSectionSize">
-                     <number>100</number>
+                     <number>50</number>
+                    </attribute>
+					<attribute name="headerMinimumSectionSize">
+                     <number>15</number>
                     </attribute>
                     <attribute name="headerStretchLastSection">
                      <bool>true</bool>
