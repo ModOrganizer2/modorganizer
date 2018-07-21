@@ -149,7 +149,7 @@ public:
 
   virtual void disconnectPlugins();
 
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab, bool forceRefresh = true);
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
@@ -218,7 +218,7 @@ private:
   QList<MOBase::IOrganizer::FileInfo> findFileInfos(const QString &path, const std::function<bool (const MOBase::IOrganizer::FileInfo &)> &filter) const;
 
   bool modifyExecutablesDialog();
-  void displayModInformation(int row, int tab = -1);
+  void displayModInformation(int row, int tab = -1, bool forceRefresh = true);
   void testExtractBSA(int modIndex);
 
   void writeDataToFile(QFile &file, const QString &directory, const MOShared::DirectoryEntry &directoryEntry);
