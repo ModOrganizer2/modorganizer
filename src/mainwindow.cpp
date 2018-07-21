@@ -2468,8 +2468,7 @@ void MainWindow::overwriteClosed(int)
   m_OrganizerCore.refreshDirectoryStructure();
 }
 
-
-void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab)
+void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab, bool forceRefresh)
 {
   if (!m_OrganizerCore.modList()->modInfoAboutToChange(modInfo)) {
     qDebug("A different mod information dialog is open. If this is incorrect, please restart MO");
@@ -2544,7 +2543,15 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
-      m_OrganizerCore.refreshLists();
+
+	  //checks whether to update the BSAList
+	  if (forceRefresh) {
+			m_OrganizerCore.refreshLists();
+		}
+	  else
+		{
+			m_OrganizerCore.refreshESPList(true);
+		}
     }
   }
 }
@@ -2610,10 +2617,10 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
 }
 
 
-void MainWindow::displayModInformation(int row, int tab)
+void MainWindow::displayModInformation(int row, int tab, bool forceRefresh)
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  displayModInformation(modInfo, row, tab);
+  displayModInformation(modInfo, row, tab, forceRefresh);
 }
 
 
@@ -2904,7 +2911,8 @@ void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
 
       if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
 
-        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+		//when tab closes refreshes only ESPList
+        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)),-1,false);
         // workaround to cancel the editor that might have opened because of
         // selection-click
         ui->espList->closePersistentEditor(index);
