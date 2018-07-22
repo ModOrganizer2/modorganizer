@@ -1228,6 +1228,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
     } else if (keyEvent->key() == Qt::Key_Space) {
       return toggleSelection(itemView);
     }
+    return QAbstractItemModel::eventFilter(obj, event);
   }
   return QAbstractItemModel::eventFilter(obj, event);
 }
