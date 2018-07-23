@@ -72,6 +72,15 @@ static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RH
   return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
 }
 
+static QString TruncateString(const QString& text) {
+  QString new_text = text;
+  if (new_text.length() > 1024) {
+    new_text.truncate(1024);
+    new_text += "...";
+  }
+  return new_text;
+}
+
 PluginList::PluginList(QObject *parent)
   : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
@@ -187,7 +196,7 @@ void PluginList::refresh(const QString &profileName
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
 
         std::set<QString> loadedArchives;
-        QString originPath = QString::fromWCharArray(origin.getPath().c_str()); 
+        QString originPath = QString::fromWCharArray(origin.getPath().c_str());
         QDir dir(QDir::toNativeSeparators(originPath));
         for (QString filename : dir.entryList(QStringList() << QFileInfo(filename).baseName() + "*.bsa" << QFileInfo(filename).baseName() + "*.ba2")) {
           loadedArchives.insert(filename);
@@ -887,23 +896,23 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     } else {
       QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
       if (m_ESPs[index].m_Author.size() > 0) {
-        text += "<br><b>" + tr("Author") + "</b>: " + m_ESPs[index].m_Author;
+        text += "<br><b>" + tr("Author") + "</b>: " + TruncateString(m_ESPs[index].m_Author);
       }
       if (m_ESPs[index].m_Description.size() > 0) {
-        text += "<br><b>" + tr("Description") + "</b>: " + m_ESPs[index].m_Description;
+        text += "<br><b>" + tr("Description") + "</b>: " + TruncateString(m_ESPs[index].m_Description);
       }
       if (m_ESPs[index].m_MasterUnset.size() > 0) {
-        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + SetJoin(m_ESPs[index].m_MasterUnset, ", ") + "</b>";
+        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + TruncateString(SetJoin(m_ESPs[index].m_MasterUnset, ", ")) + "</b>";
       }
       std::set<QString> enabledMasters;
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
       if (!enabledMasters.empty()) {
-        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
+        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
       }
       if (!m_ESPs[index].m_Archives.empty()) {
-        text += "<br><b>" + tr("Loads Archives") + "</b>: " + SetJoin(m_ESPs[index].m_Archives, ", ");
+        text += "<br><b>" + tr("Loads Archives") + "</b>: " + TruncateString(SetJoin(m_ESPs[index].m_Archives, ", "));
         text += "<br>" + tr("There are Archives connected to this plugin. "
           "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
           "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
