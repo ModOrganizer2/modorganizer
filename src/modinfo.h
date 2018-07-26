@@ -70,6 +70,9 @@ public:
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
     FLAG_CONFLICT_REDUNDANT,
+    FLAG_ARCHIVE_CONFLICT_OVERWRITE,
+    FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
+    FLAG_ARCHIVE_CONFLICT_MIXED,
     FLAG_PLUGIN_SELECTED,
     FLAG_ALTERNATE_GAME
   };
@@ -593,6 +596,16 @@ public:
    * @return list of mods (as mod index) that overwrite this one. Updates may be delayed
    */
   virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
+
+  /**
+   * @return retrieve list of mods (as mod index) with archives that are overwritten by this one. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+  * @return list of mods (as mod index) with archives that overwrite this one. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
 
   /**
    * @brief update conflict information

@@ -295,10 +295,10 @@ void ModInfoDialog::refreshLists()
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
       bool archive;
       if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::wstring>> alternatives = (*iter)->getAlternatives();
+        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
         if (!alternatives.empty()) {
           std::wostringstream altString;
-          for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
+          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
                altIter != alternatives.end(); ++altIter) {
             if (altIter != alternatives.begin()) {
               altString << ", ";

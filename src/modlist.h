@@ -110,6 +110,8 @@ public:
   void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
   void setPluginContainer(PluginContainer *pluginContainer);
 
+  void setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
+
   bool modInfoAboutToChange(ModInfo::Ptr info);
   void modInfoChanged(ModInfo::Ptr info);
 
@@ -327,6 +329,8 @@ private:
 
   std::set<unsigned int> m_Overwrite;
   std::set<unsigned int> m_Overwritten;
+  std::set<unsigned int> m_ArchiveOverwrite;
+  std::set<unsigned int> m_ArchiveOverwritten;
 
   TModInfoChange m_ChangeInfo;
 

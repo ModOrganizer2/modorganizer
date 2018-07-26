@@ -48,6 +48,9 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return ":/MO/gui/emblem_conflict_overwritten";
     case ModInfo::FLAG_CONFLICT_MIXED: return ":/MO/gui/emblem_conflict_mixed";
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return ":MO/gui/emblem_conflict_redundant";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return ":/MO/gui/archive_conflict_mixed";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_conflict_winner";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_conflict_loser";
     case ModInfo::FLAG_ALTERNATE_GAME: return ":MO/gui/alternate_game";
     default: return QString();
   }

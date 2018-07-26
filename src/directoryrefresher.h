@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 #include <set>
 #include <tuple>
+#include "profile.h"
 
 
 /**
