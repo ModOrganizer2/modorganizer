@@ -241,7 +241,7 @@ void SettingsDialog::deleteBlacklistItem()
 
 void SettingsDialog::on_associateButton_clicked()
 {
-  Settings::instance().registerAsNXMHandler(false);
+  Settings::instance().registerAsNXMHandler(true);
 }
 
 void SettingsDialog::on_clearCacheButton_clicked()
