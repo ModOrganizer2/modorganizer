@@ -2544,10 +2544,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
-      //TODO: change this to always work once the BSA parsing is back in place.
-      if (ui->bsaList->isVisible())
-        m_OrganizerCore.refreshBSAList();
-      m_OrganizerCore.refreshESPList();
+      m_OrganizerCore.refreshLists();
     }
   }
 }
