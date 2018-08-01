@@ -354,7 +354,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
-      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -368,11 +367,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return QColor(0, 0, 255, 32);
+      return QColor(0, 0, 255, 64);
     } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
-      return QColor(0, 255, 0, 32);
+      return QColor(0, 255, 0, 64);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
-      return QColor(255, 0, 0, 32);
+      return QColor(255, 0, 0, 64);
     } else {
       return QVariant();
     }
