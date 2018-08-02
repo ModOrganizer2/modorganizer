@@ -2059,10 +2059,17 @@ void MainWindow::modorder_changed()
       for (int i : modInfo->getModArchiveOverwritten()) {
           ModInfo::getByIndex(i)->clearCaches();
       }
+      for (int i : modInfo->getModArchiveLooseOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveLooseOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
       m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
+      m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
       if (m_ModListSortProxy != nullptr) {
         m_ModListSortProxy->invalidate();
       }
@@ -2298,9 +2305,11 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
     m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
     m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
+    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
   } else {
     m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
 /*  if ((m_ModListSortProxy != nullptr)
       && !m_ModListSortProxy->beingInvalidated()) {

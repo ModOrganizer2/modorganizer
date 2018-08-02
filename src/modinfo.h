@@ -67,10 +67,12 @@ public:
     FLAG_NOTENDORSED,
     FLAG_NOTES,
     FLAG_CONFLICT_OVERWRITE,
-	FLAG_CONFLICT_LOOSE_OVERWRITE_ARCHIVE,
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
     FLAG_CONFLICT_REDUNDANT,
+    FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
+    FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
+    FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED,
     FLAG_ARCHIVE_CONFLICT_OVERWRITE,
     FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
     FLAG_ARCHIVE_CONFLICT_MIXED,
@@ -607,6 +609,16 @@ public:
   * @return list of mods (as mod index) with archives that overwrite this one. Updates may be delayed
   */
   virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
+
+  /**
+  * @return retrieve list of mods (as mod index) with archives that are overwritten by thos mod's loose files. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+  * @return list of mods (as mod index) with loose files that overwrite this one's archive files. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveLooseOverwritten() { return std::set<unsigned int>(); }
 
   /**
    * @brief update conflict information
