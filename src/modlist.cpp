@@ -158,9 +158,10 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
         output << QString("<i>%1</i>").arg(modInfo->notes()).replace("\n", "<br>");
       return output.join("<br>");
     }
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites files");
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
-    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
+    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
+    case ModInfo::FLAG_CONFLICT_LOOSE_OVERWRITE_ARCHIVE: return tr("Loose files overwrite another archive");
+    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
+    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("Alternate game source");
     case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
