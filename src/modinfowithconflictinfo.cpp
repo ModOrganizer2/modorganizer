@@ -34,7 +34,8 @@ std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
   }
   switch (isLooseArchiveConflicted()) {
     case CONFLICT_MIXED: {
-      result.push_back(ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED);
+      result.push_back(ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE);
+	  result.push_back(ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN);
     } break;
     case CONFLICT_OVERWRITE: {
       result.push_back(ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE);
