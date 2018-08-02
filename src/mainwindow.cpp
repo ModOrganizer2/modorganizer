@@ -2554,10 +2554,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
                                              , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
       m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
-      //TODO: change this to always work once the BSA parsing is back in place.
-      if (ui->bsaList->isVisible())
-        m_OrganizerCore.refreshBSAList();
-      m_OrganizerCore.refreshESPList();
+      m_OrganizerCore.refreshLists();
     }
   }
 }
@@ -2874,14 +2871,30 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     return;
   }
 
-  try {
-    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-    displayModInformation(sourceIdx.row());
-    // workaround to cancel the editor that might have opened because of
-    // selection-click
-    ui->modList->closePersistentEditor(index);
-  } catch (const std::exception &e) {
-    reportError(e.what());
+  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+  if (modifiers.testFlag(Qt::ControlModifier)) {
+    try {
+      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+      openExplorer_clicked();
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      ui->modList->closePersistentEditor(index);
+    }
+    catch (const std::exception &e) {
+      reportError(e.what());
+    }
+  }
+  else {
+    try {
+      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+      displayModInformation(sourceIdx.row());
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      ui->modList->closePersistentEditor(index);
+    }
+    catch (const std::exception &e) {
+      reportError(e.what());
+    }
   }
 }
 
@@ -2917,11 +2930,20 @@ void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
 
       if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
 
-        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-        // workaround to cancel the editor that might have opened because of
-        // selection-click
-        ui->espList->closePersistentEditor(index);
+        Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+        if (modifiers.testFlag(Qt::ControlModifier)) {
+          openExplorer_activated();
+          // workaround to cancel the editor that might have opened because of
+          // selection-click
+          ui->espList->closePersistentEditor(index);
+        }
+        else {
 
+          displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+          // workaround to cancel the editor that might have opened because of
+          // selection-click
+          ui->espList->closePersistentEditor(index);
+        }
       }
     }
   }
