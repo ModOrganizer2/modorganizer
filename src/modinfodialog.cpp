@@ -307,11 +307,18 @@ void ModInfoDialog::refreshLists()
           }
           QStringList fields(relativeName.prepend("..."));
           fields.append(ToQString(altString.str()));
-          QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+
+          QTreeWidgetItem *item = new QTreeWidgetItem(fields);        
           item->setData(0, Qt::UserRole, fileName);
           item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
           item->setData(1, Qt::UserRole + 1, alternatives.back().first);
           item->setData(1, Qt::UserRole + 2, archive);
+          if (archive) {
+            QFont font = item->font(0);
+            font.setItalic(true);
+            item->setFont(0, font);
+            item->setFont(1, font);
+          }
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
         } else {// otherwise don't display the file
@@ -325,6 +332,12 @@ void ModInfoDialog::refreshLists()
         item->setData(0, Qt::UserRole, fileName);
         item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
         item->setData(1, Qt::UserRole + 2, archive);
+        if (archive) {
+          QFont font = item->font(0);
+          font.setItalic(true);
+          item->setFont(0, font);
+          item->setFont(1, font);
+        }
         ui->overwrittenTree->addTopLevelItem(item);
         ++numOverwritten;
       }
