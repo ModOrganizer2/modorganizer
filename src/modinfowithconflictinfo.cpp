@@ -80,7 +80,18 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         if (file->getOrigin() != origin.getID()) {
           FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(file->getOrigin());
           unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
-          if (file->getArchive().first.size() == 0)
+          std::pair<std::wstring, int> archiveData;
+          if (file->getOrigin() == origin.getID())
+            archiveData = file->getArchive();
+          else {
+            for (auto alts : alternatives) {
+              if (alts.first == origin.getID()) {
+                archiveData = alts.second;
+                break;
+              }
+            }
+          }
+          if (archiveData.first.size() == 0)
               m_OverwrittenList.insert(altIndex);
           else
               m_ArchiveOverwrittenList.insert(altIndex);
@@ -117,7 +128,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
               }
             } else {
               if (archiveData.first.size() == 0) {
-                m_ArchiveOverwrittenList.insert(altIndex);
+                m_ArchiveOverwriteList.insert(altIndex);
               } else {
                 if (archiveData.second > altInfo.second.second) {
                   m_ArchiveOverwriteList.insert(altIndex);
