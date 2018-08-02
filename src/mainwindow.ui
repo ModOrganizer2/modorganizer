@@ -96,9 +96,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="clickBlankButton">
-				      <property name="enabled">
-                 <bool>false</bool>
-               </property>							  
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
                  <horstretch>0</horstretch>
@@ -194,7 +194,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="profileBox">						 
+               <widget class="QComboBox" name="profileBox">
                 <property name="toolTip">
                  <string>Pick a module collection</string>
                 </property>
@@ -248,7 +248,7 @@ p, li { white-space: pre-wrap; }
                   <height>16</height>
                  </size>
                 </property>
-				 </widget>
+               </widget>
               </item>
               <item>
                <widget class="QPushButton" name="openFolderMenu">
@@ -265,16 +265,6 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-																 
-										 
-														  
-						   
-									  
-						  
-						   
-						
-					 
-					
                <widget class="QPushButton" name="restoreModsButton">
                 <property name="toolTip">
                  <string>Restore Backup...</string>
@@ -509,7 +499,7 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
-			  <item>
+              <item>
                <spacer name="horizontalSpacer_5">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
@@ -521,7 +511,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                </spacer>
-              </item>		
+              </item>
               <item alignment="Qt::AlignLeft">
                <widget class="QPushButton" name="clearFiltersButton">
                 <property name="sizePolicy">
@@ -536,12 +526,12 @@ p, li { white-space: pre-wrap; }
                   <height>22</height>
                  </size>
                 </property>
-				 <property name="baseSize">
+                <property name="baseSize">
                  <size>
                   <width>95</width>
                   <height>0</height>
                  </size>
-                </property>						  
+                </property>
                 <property name="visible">
                  <bool>false</bool>
                 </property>
@@ -567,7 +557,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-				<spacer name="horizontalSpacer_4">
+               <spacer name="horizontalSpacer_4">
                 <property name="orientation">
                  <enum>Qt::Horizontal</enum>
                 </property>
@@ -579,14 +569,14 @@ p, li { white-space: pre-wrap; }
                 </property>
                </spacer>
               </item>
-              <item>								 
-               <widget class="QComboBox" name="groupCombo">					 
-				<property name="baseSize">
+              <item>
+               <widget class="QComboBox" name="groupCombo">
+                <property name="baseSize">
                  <size>
                   <width>220</width>
                   <height>0</height>
                  </size>
-                </property>						  
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::ClickFocus</enum>
                 </property>
@@ -608,13 +598,13 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="MOBase::LineEditClear" name="modFilterEdit">					
-			    <property name="baseSize">
+               <widget class="MOBase::LineEditClear" name="modFilterEdit">
+                <property name="baseSize">
                  <size>
                   <width>220</width>
                   <height>0</height>
                  </size>
-                </property>					  
+                </property>
                 <property name="placeholderText">
                  <string>Namefilter</string>
                 </property>
@@ -835,12 +825,12 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
-					<property name="visible">
-                      <bool>true</bool>
-                    </property>									   																 
+                    <property name="visible">
+                     <bool>true</bool>
+                    </property>
                     <property name="text">
                      <string>Sort</string>
-                    </property>              
+                    </property>
                     <property name="icon">
                      <iconset resource="resources.qrc">
                       <normaloff>:/MO/gui/sort</normaloff>:/MO/gui/sort</iconset>
@@ -954,6 +944,9 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This list contains the esps, esms, and esls contained in the active mods. These require their own load order. Use drag&amp;amp;drop to modify this load order. Please note that MO will only save the load order for mods that are active/checked.&lt;br /&gt;There is a great tool named &amp;quot;BOSS&amp;quot; to automatically sort these files.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
+                  <property name="editTriggers">
+                   <set>QAbstractItemView::EditKeyPressed|QAbstractItemView::SelectedClicked</set>
+                  </property>
                   <property name="dragEnabled">
                    <bool>true</bool>
                   </property>
@@ -987,6 +980,9 @@ p, li { white-space: pre-wrap; }
                   <property name="sortingEnabled">
                    <bool>true</bool>
                   </property>
+                  <property name="expandsOnDoubleClick">
+                   <bool>false</bool>
+                  </property>
                   <attribute name="headerStretchLastSection">
                    <bool>false</bool>
                   </attribute>
@@ -1009,15 +1005,12 @@ p, li { white-space: pre-wrap; }
                </layout>
               </widget>
               <widget class="QWidget" name="bsaTab">
-										
-								  
-						  
+               <property name="visible">
+                <bool>false</bool>
+               </property>
                <attribute name="title">
                 <string>Archives</string>
                </attribute>
-			   <property name="visible">
-				<bool>true</bool>
-               </property>
                <layout class="QVBoxLayout" name="verticalLayout_9">
                 <property name="leftMargin">
                  <number>6</number>
@@ -1032,17 +1025,7 @@ p, li { white-space: pre-wrap; }
                  <number>6</number>
                 </property>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0,1">
-                  <!--<item>-->
-                   <!--<widget class="QCheckBox" name="manageArchivesBox">-->
-                    <!--<property name="text">-->
-                     <!--<string/>-->
-                    <!--</property>-->
-                    <!--<property name="checked">-->
-                     <!--<bool>true</bool>-->
-                    <!--</property>-->
-                   <!--</widget>-->
-                  <!--</item>-->
+                 <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0">
                   <item>
                    <widget class="QLabel" name="managedArchiveLabel">
                     <property name="toolTip">
@@ -1072,50 +1055,24 @@ p, li { white-space: pre-wrap; }
 
                     BSAs checked here are loaded in such a way that your installation order is obeyed properly.</string>
                   </property>
-                  <property name="editTriggers">
-                   <set>QAbstractItemView::NoEditTriggers</set>
-                  </property>
                   <property name="showDropIndicator" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragEnabled">
+                  <property name="dragEnabled" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropOverwriteMode">
+                  <property name="dragDropOverwriteMode" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropMode">
-                   <enum>QAbstractItemView::NoDragDrop</enum>
-                  </property>
-                  <property name="defaultDropAction">
-                   <enum>Qt::IgnoreAction</enum>
-                  </property>
-                  <property name="selectionMode">
-                   <enum>QAbstractItemView::SingleSelection</enum>
-                  </property>
-                  <property name="selectionBehavior">
-                   <enum>QAbstractItemView::SelectRows</enum>
-                  </property>
-                  <property name="indentation">
+                  <property name="indentation" stdset="0">
                    <number>20</number>
                   </property>
-                  <property name="itemsExpandable">
+                  <property name="itemsExpandable" stdset="0">
                    <bool>true</bool>
                   </property>
-                  <property name="columnCount">
+                  <property name="columnCount" stdset="0">
                    <number>1</number>
                   </property>
-                  <attribute name="headerVisible">
-                   <bool>false</bool>
-                  </attribute>
-                  <attribute name="headerDefaultSectionSize">
-                   <number>200</number>
-                  </attribute>
-                  <column>
-                   <property name="text">
-                    <string>File</string>
-                   </property>
-                  </column>
                  </widget>
                 </item>
                </layout>
@@ -1286,7 +1243,7 @@ p, li { white-space: pre-wrap; }
                      <enum>Qt::ScrollBarAlwaysOn</enum>
                     </property>
                     <property name="horizontalScrollBarPolicy">
-                     <enum>Qt::ScrollBarAlwaysOff</enum>
+                      <enum>Qt::ScrollBarAsNeeded</enum>
                     </property>
                     <property name="dragEnabled">
                      <bool>true</bool>
@@ -1319,7 +1276,10 @@ p, li { white-space: pre-wrap; }
                      <bool>true</bool>
                     </property>
                     <attribute name="headerDefaultSectionSize">
-                     <number>100</number>
+                     <number>50</number>
+                    </attribute>
+					<attribute name="headerMinimumSectionSize">
+                     <number>15</number>
                     </attribute>
                     <attribute name="headerStretchLastSection">
                      <bool>true</bool>
@@ -1600,9 +1560,6 @@ Right now this has very limited functionality</string>
   <action name="actionCopy_Log_to_Clipboard">
    <property name="text">
     <string>Copy Log to Clipboard</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
    </property>
   </action>
   <action name="actionChange_Game">

@@ -712,9 +712,10 @@ Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
   , m_cacheDirEdit(m_dialog.findChild<QLineEdit *>("cacheDirEdit"))
   , m_profilesDirEdit(m_dialog.findChild<QLineEdit *>("profilesDirEdit"))
   , m_overwriteDirEdit(m_dialog.findChild<QLineEdit *>("overwriteDirEdit"))
+  , m_managedGameDirEdit(m_dialog.findChild<QLineEdit *>("managedGameDirEdit"))
 {
   m_baseDirEdit->setText(m_parent->getBaseDirectory());
-
+  m_managedGameDirEdit->setText(m_parent->m_GamePlugin->gameDirectory().absoluteFilePath(m_parent->m_GamePlugin->binaryName()));
   QString basePath = parent->getBaseDirectory();
   QDir baseDir(basePath);
   for (const auto &dir : {

@@ -71,13 +71,17 @@ signals:
   void cancelDownload(int index);
   void pauseDownload(int index);
   void resumeDownload(int index);
+  void visitOnNexus(int index);
+  void openInDownloadsFolder(int index);
 
 protected:
 
+	QString sizeFormat(quint64 size) const;
   bool editorEvent(QEvent *event, QAbstractItemModel *model,
                    const QStyleOptionViewItem &option, const QModelIndex &index);
 
 private:
+
 
   void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
 
@@ -87,13 +91,18 @@ private slots:
   void issueDelete();
   void issueRemoveFromView();
   void issueRestoreToView();
+  void issueRestoreToViewAll();
+  void issueVisitOnNexus();
+  void issueOpenInDownloadsFolder();
   void issueCancel();
   void issuePause();
   void issueResume();
   void issueDeleteAll();
   void issueDeleteCompleted();
+  void issueDeleteUninstalled();
   void issueRemoveFromViewAll();
   void issueRemoveFromViewCompleted();
+  void issueRemoveFromViewUninstalled();
   void issueQueryInfo();
 
   void stateChanged(int row, DownloadManager::DownloadState);

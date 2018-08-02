@@ -102,12 +102,7 @@ SelfUpdater::SelfUpdater(NexusInterface *nexusInterface)
     throw MyException(InstallationManager::getErrorString(m_ArchiveHandler->getLastError()));
   }
 
-  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
-
-  m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
-                            version.dwFileVersionMS & 0xFFFF,
-                            version.dwFileVersionLS >> 16,
-                            version.dwFileVersionLS & 0xFFFF);
+  m_MOVersion = createVersionInfo();
 }
 
 

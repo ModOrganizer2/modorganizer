@@ -102,6 +102,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_SKSE:      return tr("Script Extender");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
     case CONTENT_MCM:       return tr("MCM Data");
+    case CONTENT_INI:       return tr("INI files");
     default: throw MyException(tr("invalid content type %1").arg(contentType));
   }
 }
@@ -286,9 +287,9 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   int result = 0;
   std::vector<int> modIDs;
 
-  //I ought to store this, it's used elsewhere
-  IPluginGame const *game = qApp->property("managed_game").value<IPluginGame *>();
-  if (game->nexusModOrganizerID()) {
+  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+  IPluginGame const *game = pluginContainer->managedGame("Skyrim Special Edition");
+  if (game && game->nexusModOrganizerID()) {
     modIDs.push_back(game->nexusModOrganizerID());
     checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
     modIDs.clear();

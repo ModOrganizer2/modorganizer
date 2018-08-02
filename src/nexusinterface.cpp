@@ -147,10 +147,7 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
   : m_NMMVersion(), m_PluginContainer(pluginContainer)
 {
-  VS_FIXEDFILEINFO version = GetFileVersion(ToWString(QApplication::applicationFilePath()));
-  m_MOVersion = VersionInfo(version.dwFileVersionMS >> 16,
-                            version.dwFileVersionMS & 0xFFFF,
-                            version.dwFileVersionLS >> 16);
+  m_MOVersion = createVersionInfo();
 
   m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString());
   m_DiskCache = new QNetworkDiskCache(this);

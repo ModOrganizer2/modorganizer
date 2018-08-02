@@ -186,6 +186,86 @@ QStringList toStringList(InputIterator current, InputIterator end)
   return result;
 }
 
+bool checkService()
+{
+  SC_HANDLE serviceManagerHandle = NULL;
+  SC_HANDLE serviceHandle = NULL;
+  LPSERVICE_STATUS_PROCESS serviceStatus = NULL;
+  LPQUERY_SERVICE_CONFIG serviceConfig = NULL;
+  bool serviceRunning = true;
+
+  DWORD bytesNeeded;
+
+  try {
+    serviceManagerHandle = OpenSCManager(NULL, NULL, SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
+    if (!serviceManagerHandle) {
+      qWarning("failed to open service manager (query status) (error %d)", GetLastError());
+      throw 1;
+    }
+
+    serviceHandle = OpenService(serviceManagerHandle, L"EventLog", SERVICE_QUERY_STATUS | SERVICE_QUERY_CONFIG);
+    if (!serviceHandle) {
+      qWarning("failed to open EventLog service (query status) (error %d)", GetLastError());
+      throw 2;
+    }
+
+    if (QueryServiceConfig(serviceHandle, NULL, 0, &bytesNeeded)
+      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
+      qWarning("failed to get size of service config (error %d)", GetLastError());
+      throw 3;
+    }
+
+    DWORD serviceConfigSize = bytesNeeded;
+    serviceConfig = (LPQUERY_SERVICE_CONFIG)LocalAlloc(LMEM_FIXED, serviceConfigSize);
+    if (!QueryServiceConfig(serviceHandle, serviceConfig, serviceConfigSize, &bytesNeeded)) {
+      qWarning("failed to query service config (error %d)", GetLastError());
+      throw 4;
+    }
+
+    if (serviceConfig->dwStartType == SERVICE_DISABLED) {
+      qCritical("Windows Event Log service is disabled!");
+      serviceRunning = false;
+    }
+
+    if (QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, NULL, 0, &bytesNeeded)
+      || (GetLastError() != ERROR_INSUFFICIENT_BUFFER)) {
+      qWarning("failed to get size of service status (error %d)", GetLastError());
+      throw 5;
+    }
+
+    DWORD serviceStatusSize = bytesNeeded;
+    serviceStatus = (LPSERVICE_STATUS_PROCESS)LocalAlloc(LMEM_FIXED, serviceStatusSize);
+    if (!QueryServiceStatusEx(serviceHandle, SC_STATUS_PROCESS_INFO, (LPBYTE)serviceStatus, serviceStatusSize, &bytesNeeded)) {
+      qWarning("failed to query service status (error %d)", GetLastError());
+      throw 6;
+    }
+
+    if (serviceStatus->dwCurrentState != SERVICE_RUNNING) {
+      qCritical("Windows Event Log service is not running");
+      serviceRunning = false;
+    }
+  }
+  catch (int e) {
+    UNUSED_VAR(e);
+    serviceRunning = false;
+  }
+
+  if (serviceStatus) {
+    LocalFree(serviceStatus);
+  }
+  if (serviceConfig) {
+    LocalFree(serviceConfig);
+  }
+  if (serviceHandle) {
+    CloseServiceHandle(serviceHandle);
+  }
+  if (serviceManagerHandle) {
+    CloseServiceHandle(serviceManagerHandle);
+  }
+
+  return serviceRunning;
+}
+
 OrganizerCore::OrganizerCore(const QSettings &initSettings)
   : m_UserInterface(nullptr)
   , m_PluginContainer(nullptr)
@@ -472,6 +552,8 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
             SLOT(modRemoved(QString)));
     connect(&m_ModList, SIGNAL(removeSelectedMods()), widget,
             SLOT(removeMod_clicked()));
+    connect(&m_ModList, SIGNAL(clearOverwrite()), widget,
+      SLOT(clearOverwrite()));
     connect(&m_ModList, SIGNAL(requestColumnSelect(QPoint)), widget,
             SLOT(displayColumnSelection(QPoint)));
     connect(&m_ModList, SIGNAL(fileMoved(QString, QString, QString)), widget,
@@ -1190,6 +1272,11 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                               ToWString(m_Settings.getSteamAppID()).c_str());
   }
 
+  QWidget *window = qApp->activeWindow();
+  if ((window != nullptr) && (!window->isVisible())) {
+    window = nullptr;
+  }
+
   // This could possibly be extracted somewhere else but it's probably for when
   // we have more than one provider of game registration.
   if ((QFileInfo(
@@ -1200,16 +1287,12 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
               .exists())
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
-      QWidget *window = qApp->activeWindow();
-      if ((window != nullptr) && (!window->isVisible())) {
-        window = nullptr;
-      }
       if (QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
             tr("Start Steam?"),
             tr("Steam is required to be running already to correctly start the game. "
                "Should MO try to start steam now?"),
             QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
-        startSteam(qApp->activeWindow());
+        startSteam(window);
       }
     }
   }
@@ -1229,10 +1312,24 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     try {
       m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
     } catch (const std::exception &e) {
-      QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
+      QMessageBox::warning(window, tr("Error"), e.what());
       return INVALID_HANDLE_VALUE;
     }
 
+    // Check if the Windows Event Logging service is running.  For some reason, this seems to be
+    // critical to the successful running of usvfs.
+    if (!checkService()) {
+      if (QuestionBoxMemory::query(window, QString("eventLogService"), binary.fileName(),
+            tr("Windows Event Log Error"),
+            tr("The Windows Event Log service is disabled and/or not running.  This prevents"
+              " USVFS from running properly.  Your mods may not be working in the executable"
+              " that you are launching.  Note that you may have to restart MO and/or your PC"
+              " after the service is fixed.\n\nContinue launching %1?").arg(binary.fileName()),
+            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
+        return INVALID_HANDLE_VALUE;
+      }
+    }
+      
     QString modsPath = settings().getModDirectory();
 
     // Check if this a request with either an executable or a working directory under our mods folder

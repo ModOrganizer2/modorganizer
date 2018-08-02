@@ -242,7 +242,28 @@ MainWindow::MainWindow(QSettings &initSettings
 
   updateProblemsButton();
 
-  updateToolBar();
+  // Setup toolbar
+  QWidget *spacer = new QWidget(ui->toolBar);
+  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
+
+  if (toolBtn->menu() == nullptr) {
+    actionToToolButton(ui->actionTool);
+  }
+
+  actionToToolButton(ui->actionHelp);
+  createHelpWidget();
+
+  for (QAction *action : ui->toolBar->actions()) {
+    if (action->isSeparator()) {
+      // insert spacers
+      ui->toolBar->insertWidget(action, spacer);
+      m_Sep = action;
+      // m_Sep would only use the last seperator anyway, and we only have the one anyway?
+      break;
+    }
+  }
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -379,7 +400,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Enter), this, SLOT(openExplorer_activated()));
   new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Return), this, SLOT(openExplorer_activated()));
- 
+
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
 
@@ -560,41 +581,22 @@ void MainWindow::updateToolBar()
   for (QAction *action : ui->toolBar->actions()) {
     if (action->objectName().startsWith("custom__")) {
       ui->toolBar->removeAction(action);
+      action->deleteLater();
     }
   }
 
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setObjectName("custom__spacer");
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
-
-  if (toolBtn->menu() == nullptr) {
-    actionToToolButton(ui->actionTool);
-  }
-
-  actionToToolButton(ui->actionHelp);
-  createHelpWidget();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->isSeparator()) {
-      // insert spacers
-      ui->toolBar->insertWidget(action, spacer);
-
-      std::vector<Executable>::iterator begin, end;
-      m_OrganizerCore.executablesList()->getExecutables(begin, end);
-      for (auto iter = begin; iter != end; ++iter) {
-        if (iter->isShownOnToolbar()) {
-          QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
-                                           iter->m_Title,
-                                           ui->toolBar);
-          exeAction->setObjectName(QString("custom__") + iter->m_Title);
-          if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
-            qDebug("failed to connect trigger?");
-          }
-          ui->toolBar->insertAction(action, exeAction);
-        }
+  std::vector<Executable>::iterator begin, end;
+  m_OrganizerCore.executablesList()->getExecutables(begin, end);
+  for (auto iter = begin; iter != end; ++iter) {
+    if (iter->isShownOnToolbar()) {
+      QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
+                                        iter->m_Title,
+                                        ui->toolBar);
+      exeAction->setObjectName(QString("custom__") + iter->m_Title);
+      if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
+        qDebug("failed to connect trigger?");
       }
+      ui->toolBar->insertAction(m_Sep, exeAction);
     }
   }
 }
@@ -881,7 +883,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
   m_closing = true;
 
-  if (m_OrganizerCore.downloadManager()->downloadsInProgress()) {
+  if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
@@ -2334,9 +2336,11 @@ void MainWindow::removeMod_clicked()
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
         // use mod names instead of indexes because those become invalid during the removal
+        DownloadManager::startDisableDirWatcher();
         for (QString name : modNames) {
           m_OrganizerCore.modList()->removeRowForce(ModInfo::getIndex(name), QModelIndex());
         }
+        DownloadManager::endDisableDirWatcher();
       }
     } else {
       m_OrganizerCore.modList()->removeRow(m_ContextRow, QModelIndex());
@@ -2498,7 +2502,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
     connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
-	
+
 	//Open the tab first if we want to use the standard indexes of the tabs.
 	if (tab != -1) {
 		dialog.openTab(tab);
@@ -2615,20 +2619,44 @@ void MainWindow::displayModInformation(int row, int tab)
 
 void MainWindow::ignoreMissingData_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  QDir(info->absolutePath()).mkdir("textures");
-  info->testValid();
-  connect(this, SIGNAL(modListDataChanged(QModelIndex,QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex,QModelIndex)));
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+      QDir(info->absolutePath()).mkdir("textures");
+      info->testValid();
+      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 
-  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    }
+  } else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    QDir(info->absolutePath()).mkdir("textures");
+    info->testValid();
+    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+
+    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  }
 }
 
 void MainWindow::markConverted_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->markConverted(true);
-  connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-  emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      int row_idx = idx.data(Qt::UserRole + 1).toInt();
+      ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
+      info->markConverted(true);
+      connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+      emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
+    }
+  } else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->markConverted(true);
+    connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
+    emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
+  }
 }
 
 
@@ -2655,9 +2683,17 @@ void MainWindow::visitWebPage_clicked()
 
 void MainWindow::openExplorer_clicked()
 {
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-
-  ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+  }
+  else {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
 }
 
 void MainWindow::openExplorer_activated()
@@ -2685,7 +2721,7 @@ void MainWindow::openExplorer_activated()
 			QModelIndex idx = selection->currentIndex();
 			QString fileName = idx.data().toString();
 
-			
+
 
 			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -2825,13 +2861,83 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
     return;
   }
 
+  Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+  if (modifiers.testFlag(Qt::ControlModifier)) {
+    try {
+      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+      openExplorer_clicked();
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      ui->modList->closePersistentEditor(index);
+    }
+    catch (const std::exception &e) {
+      reportError(e.what());
+    }
+  }
+  else {
+    try {
+      m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+      displayModInformation(sourceIdx.row());
+      // workaround to cancel the editor that might have opened because of
+      // selection-click
+      ui->modList->closePersistentEditor(index);
+    }
+    catch (const std::exception &e) {
+      reportError(e.what());
+    }
+  }
+}
+
+void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
+{
+  if (!index.isValid()) {
+    return;
+  }
+
+  if (m_OrganizerCore.pluginList()->timeElapsedSinceLastChecked() <= QApplication::doubleClickInterval()) {
+    // don't interpret double click if we only just checked a plugin
+    return;
+  }
+
+  QModelIndex sourceIdx = mapToModel(m_OrganizerCore.pluginList(), index);
+  if (!sourceIdx.isValid()) {
+    return;
+  }
   try {
-    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-    displayModInformation(sourceIdx.row());
-    // workaround to cancel the editor that might have opened because of
-    // selection-click
-    ui->modList->closePersistentEditor(index);
-  } catch (const std::exception &e) {
+
+    QItemSelectionModel *selection = ui->espList->selectionModel();
+
+    if (selection->hasSelection() && selection->selectedRows().count() == 1) {
+
+      QModelIndex idx = selection->currentIndex();
+      QString fileName = idx.data().toString();
+
+      if (ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)) == UINT_MAX)
+        return;
+
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+      if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+
+        Qt::KeyboardModifiers modifiers = QApplication::queryKeyboardModifiers();
+        if (modifiers.testFlag(Qt::ControlModifier)) {
+          openExplorer_activated();
+          // workaround to cancel the editor that might have opened because of
+          // selection-click
+          ui->espList->closePersistentEditor(index);
+        }
+        else {
+
+          displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+          // workaround to cancel the editor that might have opened because of
+          // selection-click
+          ui->espList->closePersistentEditor(index);
+        }
+      }
+    }
+  }
+  catch (const std::exception &e) {
     reportError(e.what());
   }
 }
@@ -3072,14 +3178,32 @@ void MainWindow::changeVersioningScheme() {
 }
 
 void MainWindow::ignoreUpdate() {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(true);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(true);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(true);
+  }
 }
 
 void MainWindow::unignoreUpdate()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  info->ignoreUpdate(false);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      info->ignoreUpdate(false);
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    info->ignoreUpdate(false);
+  }
 }
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
@@ -3153,6 +3277,13 @@ void MainWindow::openInstallFolder()
 	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+void MainWindow::openPluginsFolder()
+{
+	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
+	::ShellExecuteW(nullptr, L"explore", ToWString(pluginsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+
 void MainWindow::openProfileFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3161,6 +3292,11 @@ void MainWindow::openProfileFolder()
 void MainWindow::openDownloadsFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openModsFolder()
+{
+  ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getModDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::openGameFolder()
@@ -3356,6 +3492,8 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open Instance folder"), this, SLOT(openInstanceFolder()));
 
+  FolderMenu->addAction(tr("Open Mods folder"), this, SLOT(openModsFolder()));
+
 	FolderMenu->addAction(tr("Open Profile folder"), this, SLOT(openProfileFolder()));
 
 	FolderMenu->addAction(tr("Open Downloads folder"), this, SLOT(openDownloadsFolder()));
@@ -3364,15 +3502,9 @@ QMenu *MainWindow::openFolderMenu()
 
 	FolderMenu->addAction(tr("Open MO2 Install folder"), this, SLOT(openInstallFolder()));
 
+	FolderMenu->addAction(tr("Open MO2 Plugins folder"), this, SLOT(openPluginsFolder()));
+
 	FolderMenu->addAction(tr("Open MO2 Logs folder"), this, SLOT(openLogsFolder()));
-
-
-
-
-
-
-
-
 
 
 	return FolderMenu;
@@ -4199,12 +4331,16 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionEndorseMO_triggered()
 {
+  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+  IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+  if (!game) return;
+
   if (QMessageBox::question(this, tr("Endorse Mod Organizer"),
                             tr("Do you want to endorse Mod Organizer on %1 now?").arg(
-                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())),
+                                      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
-          m_OrganizerCore.managedGame()->gameShortName(), m_OrganizerCore.managedGame()->nexusModOrganizerID(), true, this, QVariant(), QString());
+      game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
 }
 
@@ -4231,11 +4367,13 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
   ui->downloadView->setModel(sortProxy);
-  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
-  ui->downloadView->header()->resizeSections(QHeaderView::Fixed);
+  //ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
+  ui->downloadView->header()->resizeSections(QHeaderView::Stretch);
 
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
@@ -4267,9 +4405,13 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
   QVariantList resultList = resultData.toList();
   for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
     QVariantMap result = iter->toMap();
-    if (result["id"].toInt() == m_OrganizerCore.managedGame()->nexusModOrganizerID()
-          && result["game_id"].toInt() == m_OrganizerCore.managedGame()->nexusGameID()) {
-      if (!result["voted_by_user"].toBool()) {
+    // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+    IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+    if (game
+          && result["id"].toInt() == game->nexusModOrganizerID()
+          && result["game_id"].toInt() == game->nexusGameID()) {
+      if (result["voted_by_user"].type() != QVariant::Invalid &&
+          !result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
@@ -4293,7 +4435,8 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
-            result.contains("voted_by_user")) {
+            result.contains("voted_by_user") &&
+            result["voted_by_user"].type() != QVariant::Invalid) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
@@ -4319,7 +4462,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
 {
   if (resultData.toBool()) {
     ui->actionEndorseMO->setVisible(false);
-    QMessageBox::question(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
   }
 
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
@@ -4637,7 +4780,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
   }
   if (hasUnlocked) {
-    menu.addAction(tr("Lock load order"), this, SLOT(f()));
+    menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
   }
 
   try {
@@ -4965,7 +5108,7 @@ bool MainWindow::createBackup(const QString &filePath, const QDateTime &time)
   QString outPath = filePath + "." + time.toString(PATTERN_BACKUP_DATE);
   if (shellCopy(QStringList(filePath), QStringList(outPath), this)) {
     QFileInfo fileInfo(filePath);
-    removeOldFiles(fileInfo.absolutePath(), fileInfo.fileName() + PATTERN_BACKUP_GLOB, 3, QDir::Name);
+    removeOldFiles(fileInfo.absolutePath(), fileInfo.fileName() + PATTERN_BACKUP_GLOB, 10, QDir::Name);
     return true;
   } else {
     return false;

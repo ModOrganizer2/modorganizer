@@ -82,8 +82,27 @@ void DownloadListWidgetDelegate::drawCache(QPainter *painter, const QStyleOption
 {
   QRect rect = option.rect;
   rect.setLeft(0);
-  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2));
+  rect.setWidth(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3));
   painter->drawPixmap(rect, cache);
+}
+
+
+QString DownloadListWidgetDelegate::sizeFormat(quint64 size) const
+{
+	qreal calc = size;
+	QStringList list;
+	list << "KB" << "MB" << "GB" << "TB";
+
+	QStringListIterator i(list);
+	QString unit("byte(s)");
+
+	while (calc >= 1024.0 && i.hasNext())
+	{
+		unit = i.next();
+		calc /= 1024.0;
+	}
+
+	return QString().setNum(calc, 'f', 2) + " " + unit;
 }
 
 
@@ -106,9 +125,9 @@ void DownloadListWidgetDelegate::paintRegularDownload(int downloadIndex) const
     name.append("...");
   }
   m_NameLabel->setText(name);
-  m_SizeLabel->setText(QString::number(m_Manager->getFileSize(downloadIndex) / 1024));
+  m_SizeLabel->setText(sizeFormat(m_Manager->getFileSize(downloadIndex) ));
   DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
-  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
+  if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
     QPalette labelPalette;
     m_InstallLabel->setVisible(true);
     m_Progress->setVisible(false);
@@ -174,7 +193,7 @@ void DownloadListWidgetDelegate::paint(QPainter *painter, const QStyleOptionView
       return;
     }
 
-    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2), option.rect.height()));
+    m_ItemWidget->resize(QSize(m_View->columnWidth(0) + m_View->columnWidth(1) + m_View->columnWidth(2) + m_View->columnWidth(3), option.rect.height()));
 
     int downloadIndex = index.data().toInt();
 
@@ -226,7 +245,11 @@ void DownloadListWidgetDelegate::issueQueryInfo()
 
 void DownloadListWidgetDelegate::issueDelete()
 {
-  emit removeDownload(m_ContextRow, true);
+	if (QMessageBox::question(nullptr, tr("Delete Files?"),
+		tr("This will permanently delete the selected download."),
+		QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+		emit removeDownload(m_ContextRow, true);
+	}
 }
 
 void DownloadListWidgetDelegate::issueRemoveFromView()
@@ -236,7 +259,22 @@ void DownloadListWidgetDelegate::issueRemoveFromView()
 
 void DownloadListWidgetDelegate::issueRestoreToView()
 {
-  emit restoreDownload(m_ContextRow);
+		emit restoreDownload(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueRestoreToViewAll()
+{
+	emit restoreDownload(-1);
+}
+
+void DownloadListWidgetDelegate::issueVisitOnNexus()
+{
+	emit visitOnNexus(m_ContextRow);
+}
+
+void DownloadListWidgetDelegate::issueOpenInDownloadsFolder()
+{
+  emit openInDownloadsFolder(m_ContextRow);
 }
 
 void DownloadListWidgetDelegate::issueCancel()
@@ -256,7 +294,7 @@ void DownloadListWidgetDelegate::issueResume()
 
 void DownloadListWidgetDelegate::issueDeleteAll()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Delete Files?"),
                             tr("This will remove all finished downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-1, true);
@@ -265,10 +303,19 @@ void DownloadListWidgetDelegate::issueDeleteAll()
 
 void DownloadListWidgetDelegate::issueDeleteCompleted()
 {
-  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+  if (QMessageBox::question(nullptr, tr("Delete Files?"),
                             tr("This will remove all installed downloads from this list and from disk."),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     emit removeDownload(-2, true);
+  }
+}
+
+void DownloadListWidgetDelegate::issueDeleteUninstalled()
+{
+  if (QMessageBox::question(nullptr, tr("Delete Files?"),
+    tr("This will remove all uninstalled downloads from this list and from disk."),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-3, true);
   }
 }
 
@@ -290,6 +337,15 @@ void DownloadListWidgetDelegate::issueRemoveFromViewCompleted()
   }
 }
 
+void DownloadListWidgetDelegate::issueRemoveFromViewUninstalled()
+{
+  if (QMessageBox::question(nullptr, tr("Are you sure?"),
+    tr("This will remove all uninstalled downloads from this list (but NOT from disk)."),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    emit removeDownload(-3, false);
+  }
+}
+
 bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *model,
                                    const QStyleOptionViewItem &option, const QModelIndex &index)
 {
@@ -298,7 +354,7 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
       QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
       if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY) {
         emit installDownload(sourceIndex.row());
-      } else if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) {
+      } else if ((m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED) || (m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_PAUSING)) {
         emit resumeDownload(sourceIndex.row());
       }
       return true;
@@ -315,7 +371,14 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
             menu.addAction(tr("Install"), this, SLOT(issueInstall()));
             if (m_Manager->isInfoIncomplete(m_ContextRow)) {
               menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+            }else {
+              menu.addAction(tr("Visit on Nexus"), this,SLOT(issueVisitOnNexus()));
             }
+
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+            
+            menu.addSeparator();
+
             menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
             if (hidden) {
               menu.addAction(tr("Un-Hide"), this, SLOT(issueRestoreToView()));
@@ -325,20 +388,30 @@ bool DownloadListWidgetDelegate::editorEvent(QEvent *event, QAbstractItemModel *
           } else if (state == DownloadManager::STATE_DOWNLOADING){
             menu.addAction(tr("Cancel"), this, SLOT(issueCancel()));
             menu.addAction(tr("Pause"), this, SLOT(issuePause()));
-          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR)) {
-            menu.addAction(tr("Remove"), this, SLOT(issueDelete()));
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
+          } else if ((state == DownloadManager::STATE_PAUSED) || (state == DownloadManager::STATE_ERROR) || (state == DownloadManager::STATE_PAUSING)) {
+            menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
             menu.addAction(tr("Resume"), this, SLOT(issueResume()));
+            menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
           }
 
           menu.addSeparator();
         }
         menu.addAction(tr("Delete Installed..."), this, SLOT(issueDeleteCompleted()));
+        menu.addAction(tr("Delete Uninstalled..."), this, SLOT(issueDeleteUninstalled()));
         menu.addAction(tr("Delete All..."), this, SLOT(issueDeleteAll()));
-        if (!hidden) {
-          menu.addSeparator();
-          menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
-          menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
-        }
+
+				if (!hidden) {
+					menu.addSeparator();
+					menu.addAction(tr("Hide Installed..."), this, SLOT(issueRemoveFromViewCompleted()));
+          menu.addAction(tr("Hide Uninstalled..."), this, SLOT(issueRemoveFromViewUninstalled()));
+					menu.addAction(tr("Hide All..."), this, SLOT(issueRemoveFromViewAll()));
+				}
+				if (hidden) {
+					menu.addSeparator();
+					menu.addAction(tr("Un-Hide All..."), this, SLOT(issueRestoreToViewAll()));
+				}
+
         menu.exec(mouseEvent->globalPos());
 
         event->accept();

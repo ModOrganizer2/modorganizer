@@ -27,6 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <DbgHelp.h>
 #include <set>
 #include <boost/scoped_array.hpp>
+#include <QApplication>
 
 namespace MOShared {
 
@@ -171,6 +172,79 @@ VS_FIXEDFILEINFO GetFileVersion(const std::wstring &fileName)
     return result;
   } catch (...) {
     throw;
+  }
+}
+
+std::wstring GetFileVersionString(const std::wstring &fileName)
+{
+  DWORD handle = 0UL;
+  DWORD size = ::GetFileVersionInfoSizeW(fileName.c_str(), &handle);
+  if (size == 0) {
+    throw windows_error("failed to determine file version info size");
+  }
+
+  boost::scoped_array<char> buffer(new char[size]);
+  try {
+    handle = 0UL;
+    if (!::GetFileVersionInfoW(fileName.c_str(), handle, size, buffer.get())) {
+      throw windows_error("failed to determine file version info");
+    }
+
+    LPVOID strBuffer = nullptr;
+    UINT strLength = 0;
+    if (!::VerQueryValue(buffer.get(), L"\\StringFileInfo\\040904B0\\ProductVersion", &strBuffer, &strLength)) {
+      throw windows_error("failed to determine file version");
+    }
+
+    return std::wstring((LPCTSTR)strBuffer);
+  }
+  catch (...) {
+    throw;
+  }
+}
+
+MOBase::VersionInfo createVersionInfo()
+{
+  VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
+
+  if (version.dwFileFlags | VS_FF_PRERELEASE)
+  {
+    // Pre-release builds need annotating
+    QString versionString = QString::fromStdWString(GetFileVersionString(QApplication::applicationFilePath().toStdWString()));
+
+    // The pre-release flag can be set without the string specifying what type of pre-release
+    bool noLetters = true;
+    for (QChar character : versionString)
+    {
+      if (character.isLetter())
+      {
+        noLetters = false;
+        break;
+      }
+    }
+
+    if (noLetters)
+    {
+      // Default to pre-alpha when release type is unspecified
+      return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
+                                 version.dwFileVersionMS & 0xFFFF,
+                                 version.dwFileVersionLS >> 16,
+                                 version.dwFileVersionLS & 0xFFFF,
+                                 MOBase::VersionInfo::RELEASE_PREALPHA);
+    }
+    else
+    {
+      // Trust the string to make sense
+      return MOBase::VersionInfo(versionString);
+    }
+  }
+  else
+  {
+    // Non-pre-release builds just need their version numbers reading
+    return MOBase::VersionInfo(version.dwFileVersionMS >> 16,
+                               version.dwFileVersionMS & 0xFFFF,
+                               version.dwFileVersionLS >> 16,
+                               version.dwFileVersionLS & 0xFFFF);
   }
 }
 

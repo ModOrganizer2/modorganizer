@@ -304,6 +304,8 @@ private:
 
   Ui::MainWindow *ui;
 
+  QAction *m_Sep; // Executable Shortcuts are added after this. Non owning.
+
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
@@ -498,7 +500,9 @@ private slots:
   void openInstanceFolder();
   void openLogsFolder();
   void openInstallFolder();
+	void openPluginsFolder();
   void openDownloadsFolder();
+  void openModsFolder();
   void openProfileFolder();
   void openGameFolder();
   void openMyGamesFolder();
@@ -571,6 +575,7 @@ private slots: // ui slots
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
+  void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_savegameList_customContextMenuRequested(const QPoint &pos);
   void on_startButton_clicked();

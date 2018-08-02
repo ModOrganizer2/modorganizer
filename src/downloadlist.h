@@ -39,7 +39,8 @@ public:
   enum EColumn {
     COL_NAME = 0,
     COL_FILETIME,
-    COL_STATUS
+    COL_STATUS,
+    COL_SIZE
   };
 
 public:

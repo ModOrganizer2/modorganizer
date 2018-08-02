@@ -87,6 +87,9 @@
           <property name="text">
            <string notr="true">KB</string>
           </property>
+		  <property name="visible">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
        </layout>

@@ -131,11 +131,12 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 QString InstanceManager::queryInstanceName(const QStringList &instanceList) const
 {
   QString instanceId;
+  QString dialogText;
   while (instanceId.isEmpty()) {
     QInputDialog dialog;
 
-	dialog.setWindowTitle(QObject::tr("Enter a Name for the new Instance"));
-    dialog.setLabelText(QObject::tr("Enter a new name or select one from the sugested list (only letters and numbers allowed):"));
+	  dialog.setWindowTitle(QObject::tr("Enter a Name for the new Instance"));
+    dialog.setLabelText(QObject::tr("Enter a new name or select one from the suggested list:"));
     // would be neat if we could take the names from the game plugins but
     // the required initialization order requires the ini file to be
     // available *before* we load plugins
@@ -146,7 +147,17 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     if (dialog.exec() == QDialog::Rejected) {
       throw MOBase::MyException(QObject::tr("Canceled"));
     }
-    instanceId = dialog.textValue().replace(QRegExp("[^0-9a-zA-Z ]"), "");
+    dialogText = dialog.textValue();
+    instanceId = sanitizeInstanceName(dialogText);
+    if (instanceId != dialogText) {
+      if (QMessageBox::question( nullptr, 
+                                QObject::tr("Invalid instance name"),
+                                QObject::tr("The instance name \"%1\" is invalid.  Use the name \"%2\" instead?").arg(dialogText,instanceId),
+                                QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
+        instanceId="";
+        continue;
+        }
+    }
 
     bool alreadyExists=false;
     for (const QString &instance : instanceList) {
@@ -296,3 +307,21 @@ QString InstanceManager::determineDataPath()
   }
 }
 
+
+QString InstanceManager::sanitizeInstanceName(const QString &name) const
+{
+  QString new_name = name;
+
+  // Restrict the allowed characters
+  new_name = new_name.remove(QRegExp("[^A-Za-z0-9 _=+;!@#$%^'\\-\\.\\[\\]\\{\\}\\(\\)]"));
+
+  // Don't end in spaces and periods
+  new_name = new_name.remove(QRegExp("\\.*$"));
+  new_name = new_name.remove(QRegExp(" *$"));
+  
+  // Recurse until stuff stops changing
+  if (new_name != name) {
+    return sanitizeInstanceName(new_name);
+  }
+  return new_name;
+}

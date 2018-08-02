@@ -224,12 +224,12 @@ void NXMAccessManager::login(const QString &username, const QString &password)
 QString NXMAccessManager::userAgent(const QString &subModule) const
 {
   QStringList comments;
-  comments << "compatible to Nexus Client v" + m_NMMVersion;
+  comments << "Nexus Client v" + m_NMMVersion;
   if (!subModule.isEmpty()) {
     comments << "module: " + subModule;
   }
 
-  return  QString("Mod Organizer v%1 (%2)").arg(m_MOVersion, comments.join("; "));
+  return  QString("Mod Organizer/%1 (%2)").arg(m_MOVersion, comments.join("; "));
 }
 
 

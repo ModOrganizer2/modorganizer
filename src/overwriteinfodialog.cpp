@@ -261,6 +261,10 @@ void OverwriteInfoDialog::createDirectoryTriggered()
   ui->filesView->edit(newIndex);
 }
 
+void OverwriteInfoDialog::on_explorerButton_clicked()
+{
+  ::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)
 {

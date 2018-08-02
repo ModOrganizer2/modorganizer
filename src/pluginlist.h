@@ -28,6 +28,7 @@ namespace MOBase { class IPluginGame; }
 #include <QString>
 #include <QListWidget>
 #include <QTimer>
+#include <QTime>
 #include <QTemporaryFile>
 
 #pragma warning(push)
@@ -192,6 +193,8 @@ public:
    */
   int enabledCount() const;
 
+  int timeElapsedSinceLastChecked() const;
+
   QString getName(int index) const { return m_ESPs.at(index).m_Name; }
   int getPriority(int index) const { return m_ESPs.at(index).m_Priority; }
   QString getIndexPriority(int index) const;
@@ -273,11 +276,12 @@ signals:
 
  void writePluginsList();
 
+
 private:
 
   struct ESPInfo {
 
-    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni);
+    ESPInfo(const QString &name, bool enabled, const QString &originName, const QString &fullPath, bool hasIni, std::set<QString> archives);
     QString m_Name;
     QString m_FullPath;
     bool m_Enabled;
@@ -294,6 +298,7 @@ private:
     QString m_Author;
     QString m_Description;
     bool m_HasIni;
+    std::set<QString> m_Archives;
     std::set<QString> m_Masters;
     mutable std::set<QString> m_MasterUnset;
     bool operator < (const ESPInfo& str) const
@@ -345,6 +350,8 @@ private:
   SignalPluginStateChanged m_PluginStateChanged;
 
   QTemporaryFile m_TempFile;
+
+  QTime m_LastCheck;
 
   const MOBase::IPluginGame *m_GamePlugin;
 

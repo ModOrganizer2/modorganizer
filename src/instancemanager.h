@@ -50,6 +50,7 @@ private:
 
   QString manageInstances(const QStringList &instanceList) const;
 
+  QString sanitizeInstanceName(const QString &name) const;
   void setCurrentInstance(const QString &name);
 
   QString queryInstanceName(const QStringList &instanceList) const;

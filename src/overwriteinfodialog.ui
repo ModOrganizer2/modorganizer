@@ -14,6 +14,13 @@
    <string>Overwrite</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item alignment="Qt::AlignLeft">
+    <widget class="QPushButton" name="explorerButton">
+     <property name="text">
+      <string>Open in Explorer</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QTreeView" name="filesView">
      <property name="contextMenuPolicy">

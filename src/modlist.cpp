@@ -73,6 +73,7 @@ ModList::ModList(PluginContainer *pluginContainer, QObject *parent)
   m_ContentIcons[ModInfo::CONTENT_SOUND]     = std::make_tuple(":/MO/gui/content/sound", tr("Sound or Music"));
   m_ContentIcons[ModInfo::CONTENT_TEXTURE]   = std::make_tuple(":/MO/gui/content/texture", tr("Textures"));
   m_ContentIcons[ModInfo::CONTENT_MCM]       = std::make_tuple(":/MO/gui/content/menu", tr("MCM Configuration"));
+  m_ContentIcons[ModInfo::CONTENT_INI]       = std::make_tuple(":/MO/gui/content/inifile", tr("INI files"));
 
   m_LastCheck.start();
 }
@@ -353,7 +354,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
-      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -367,11 +367,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return QColor(0, 0, 255, 32);
+      return QColor(0, 0, 255, 64);
     } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
-      return QColor(0, 255, 0, 32);
+      return QColor(0, 255, 0, 64);
     } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
-      return QColor(255, 0, 0, 32);
+      return QColor(255, 0, 0, 64);
     } else {
       return QVariant();
     }
@@ -699,7 +699,9 @@ void ModList::modInfoChanged(ModInfo::Ptr info)
 
     int row = ModInfo::getIndex(info->name());
     info->testValid();
+    emit aboutToChangeData();
     emit dataChanged(index(row, 0), index(row, columnCount()));
+    emit postDataChanged();
   } else {
     qCritical("modInfoChanged not called after modInfoAboutToChange");
   }
@@ -996,6 +998,15 @@ bool ModList::removeRows(int row, int count, const QModelIndex &parent)
 
   bool success = false;
 
+  if (count == 1) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+    if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) && (QDir(modInfo->absolutePath()).count() > 2)) {
+      emit clearOverwrite();
+      success = true;
+    }
+  }
+
   for (int i = 0; i < count; ++i) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(row + i);
     if (!modInfo->isRegular()) {
@@ -1107,6 +1118,7 @@ QString ModList::getColumnToolTip(int column)
                                  "<tr><td><img src=\":/MO/gui/content/skse\" width=32/></td><td>Script Extender plugins</td></tr>"
                                  "<tr><td><img src=\":/MO/gui/content/skyproc\" width=32/></td><td>SkyProc Patcher</td></tr>"
                                  "<tr><td><img src=\":/MO/gui/content/menu\" width=32/></td><td>Mod Configuration Menu</td></tr>"
+                                 "<tr><td><img src=\":/MO/gui/content/inifile\" width=32/></td><td>INI files</td></tr>"
                                  "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
     default: return tr("unknown");
@@ -1215,6 +1227,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
     } else if (keyEvent->key() == Qt::Key_Space) {
       return toggleSelection(itemView);
     }
+    return QAbstractItemModel::eventFilter(obj, event);
   }
   return QAbstractItemModel::eventFilter(obj, event);
 }

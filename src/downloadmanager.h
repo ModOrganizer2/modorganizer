@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFile>
 #include <QNetworkReply>
 #include <QTime>
+#include <QTimer>
 #include <QVector>
 #include <QMap>
 #include <QStringList>
@@ -77,6 +78,7 @@ private:
     qint64 m_PreResumeSize;
     std::pair<int, QString> m_Progress;
     std::tuple<int, int, int, int, int> m_SpeedDiff;
+    bool m_HasData;
     DownloadState m_State;
     int m_CurrentUrl;
     QStringList m_Urls;
@@ -114,7 +116,7 @@ private:
   private:
     static unsigned int s_NextDownloadID;
   private:
-    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)) {}
+    DownloadInfo() : m_TotalSize(0), m_ReQueried(false), m_Hidden(false), m_SpeedDiff(std::tuple<int,int,int,int,int>(0,0,0,0,0)), m_HasData(false) {}
   };
 
 public:
@@ -137,11 +139,29 @@ public:
   bool downloadsInProgress();
 
   /**
+  * @brief determine if a download is currently in progress, does not count paused ones.
+  *
+  * @return true if there is currently a download in progress (that is not paused already).
+  **/
+  bool downloadsInProgressNoPause();
+
+  /**
    * @brief set the output directory to write to
    *
    * @param outputDirectory the new output directory
    **/
   void setOutputDirectory(const QString &outputDirectory);
+
+	/**
+	* @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called
+	* 
+	**/
+	static void startDisableDirWatcher();
+
+	/**
+	* @brief re-enables feedback from the downlods fileSystemWhatcher after disableDownloadsWatcherStart() was called
+	**/
+	static void endDisableDirWatcher();
 
   /**
    * @return current download directory
@@ -423,6 +443,10 @@ public slots:
 
   void queryInfo(int index);
 
+	void visitOnNexus(int index);
+
+  void openInDownloadsFolder(int index);
+
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
 
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
@@ -443,6 +467,7 @@ private slots:
   void downloadError(QNetworkReply::NetworkError error);
   void metaDataChanged();
   void directoryChanged(const QString &dirctory);
+  void checkDownloadTimeout();
 
 private:
 
@@ -517,6 +542,12 @@ private:
 
   QFileSystemWatcher m_DirWatcher;
 
+	//The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
+	//so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.
+	//Notably using QSettings to edit a file creates a temporarily .lock file that causes the Watcher to trigger multiple listRefreshes freezing the ui. 
+	static int m_DirWatcherDisabler;
+
+
   std::map<QString, int> m_DownloadFails;
 
   bool m_ShowHidden;
@@ -524,6 +555,8 @@ private:
   QRegExp m_DateExpression;
 
   MOBase::IPluginGame const *m_ManagedGame;
+
+  QTimer m_TimeoutTimer;
 };
 
 

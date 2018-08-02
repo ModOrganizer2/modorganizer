@@ -40,7 +40,7 @@ int DownloadList::rowCount(const QModelIndex&) const
 
 int DownloadList::columnCount(const QModelIndex&) const
 {
-  return 3;
+  return 4;
 }
 
 
@@ -63,6 +63,7 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
     switch (section) {
       case COL_NAME: return tr("Name");
       case COL_FILETIME: return tr("Filetime");
+      case COL_SIZE: return tr("Size");
       default: return tr("Done");
     }
   } else {

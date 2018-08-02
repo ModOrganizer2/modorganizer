@@ -72,11 +72,21 @@ static bool ByDate(const PluginList::ESPInfo& LHS, const PluginList::ESPInfo& RH
   return QFileInfo(LHS.m_FullPath).lastModified() < QFileInfo(RHS.m_FullPath).lastModified();
 }
 
+static QString TruncateString(const QString& text) {
+  QString new_text = text;
+  if (new_text.length() > 1024) {
+    new_text.truncate(1024);
+    new_text += "...";
+  }
+  return new_text;
+}
+
 PluginList::PluginList(QObject *parent)
   : QAbstractItemModel(parent)
   , m_FontMetrics(QFont())
 {
   connect(this, SIGNAL(writePluginsList()), this, SLOT(generatePluginIndexes()));
+  m_LastCheck.start();
 }
 
 PluginList::~PluginList()
@@ -181,8 +191,16 @@ void PluginList::refresh(const QString &profileName
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
+
         QString iniPath = QFileInfo(filename).baseName() + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
+
+        std::set<QString> loadedArchives;
+        QString originPath = QString::fromWCharArray(origin.getPath().c_str());
+        QDir dir(QDir::toNativeSeparators(originPath));
+        for (QString filename : dir.entryList(QStringList() << QFileInfo(filename).baseName() + "*.bsa" << QFileInfo(filename).baseName() + "*.ba2")) {
+          loadedArchives.insert(filename);
+        }
 
         QString originName = ToQString(origin.getName());
         unsigned int modIndex = ModInfo::getIndex(originName);
@@ -191,7 +209,7 @@ void PluginList::refresh(const QString &profileName
           originName = modInfo->name();
         }
 
-        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni));
+        m_ESPs.push_back(ESPInfo(filename, forceEnabled, originName, ToQString(current->getFullPath()), hasIni, loadedArchives));
         m_ESPs.rbegin()->m_Priority = -1;
       } catch (const std::exception &e) {
         reportError(tr("failed to update esp info for file %1 (source id: %2), error: %3").arg(filename).arg(current->getOrigin(archive)).arg(e.what()));
@@ -575,6 +593,11 @@ void PluginList::disconnectSlots() {
   m_PluginStateChanged.disconnect_all_slots();
 }
 
+int PluginList::timeElapsedSinceLastChecked() const
+{
+  return m_LastCheck.elapsed();
+}
+
 QStringList PluginList::pluginNames() const
 {
   QStringList result;
@@ -838,7 +861,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   } else if (role == Qt::BackgroundRole
     || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (m_ESPs[index].m_ModSelected) {
-      return QColor(0, 0, 255, 32);
+      return QColor(0, 0, 255, 64);
     } else {
       return QVariant();
     }
@@ -873,23 +896,30 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     } else {
       QString text = tr("<b>Origin</b>: %1").arg(m_ESPs[index].m_OriginName);
       if (m_ESPs[index].m_Author.size() > 0) {
-        text += "<br><b>" + tr("Author") + "</b>: " + m_ESPs[index].m_Author;
+        text += "<br><b>" + tr("Author") + "</b>: " + TruncateString(m_ESPs[index].m_Author);
       }
       if (m_ESPs[index].m_Description.size() > 0) {
-        text += "<br><b>" + tr("Description") + "</b>: " + m_ESPs[index].m_Description;
+        text += "<br><b>" + tr("Description") + "</b>: " + TruncateString(m_ESPs[index].m_Description);
       }
       if (m_ESPs[index].m_MasterUnset.size() > 0) {
-        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + SetJoin(m_ESPs[index].m_MasterUnset, ", ") + "</b>";
+        text += "<br><b>" + tr("Missing Masters") + "</b>: <b>" + TruncateString(SetJoin(m_ESPs[index].m_MasterUnset, ", ")) + "</b>";
       }
       std::set<QString> enabledMasters;
       std::set_difference(m_ESPs[index].m_Masters.begin(), m_ESPs[index].m_Masters.end(),
                           m_ESPs[index].m_MasterUnset.begin(), m_ESPs[index].m_MasterUnset.end(),
                           std::inserter(enabledMasters, enabledMasters.end()));
       if (!enabledMasters.empty()) {
-        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + SetJoin(enabledMasters, ", ");
+        text += "<br><b>" + tr("Enabled Masters") + "</b>: " + TruncateString(SetJoin(enabledMasters, ", "));
+      }
+      if (!m_ESPs[index].m_Archives.empty()) {
+        text += "<br><b>" + tr("Loads Archives") + "</b>: " + TruncateString(SetJoin(m_ESPs[index].m_Archives, ", "));
+        text += "<br>" + tr("There are Archives connected to this plugin. "
+          "Their assets will be added to your game, overwriting in case of conflicts following the plugin order. "
+          "Loose files will always overwrite assets from Archives. (This flag only checks for Archives from the same mod as the plugin)");
       }
       if (m_ESPs[index].m_HasIni) {
-        text += "<br>" + tr("There is an ini file connected to this esp. "
+        text += "<br><b>" + tr("Loads INI settings") + "</b>: ";
+        text += "<br>" + tr("There is an ini file connected to this plugin. "
                             "Its settings will be added to your game settings, overwriting in case of conflicts.");
       }
       if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
@@ -917,6 +947,9 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
     if (m_ESPs[index].m_HasIni) {
       result.append(":/MO/gui/attachment");
     }
+    if (!m_ESPs[index].m_Archives.empty()) {
+      result.append(":/MO/gui/archive_conflict_neutral");
+    }
     if (m_ESPs[index].m_IsLightFlagged && !m_ESPs[index].m_IsLight) {
         result.append(":/MO/gui/awaiting");
     }
@@ -936,6 +969,7 @@ bool PluginList::setData(const QModelIndex &modIndex, const QVariant &value, int
   if (role == Qt::CheckStateRole) {
     m_ESPs[modIndex.row()].m_Enabled =
         value.toInt() == Qt::Checked || m_ESPs[modIndex.row()].m_ForceEnabled;
+    m_LastCheck.restart();
     emit dataChanged(modIndex, modIndex);
 
     refreshLoadOrder();
@@ -1228,9 +1262,9 @@ bool PluginList::eventFilter(QObject *obj, QEvent *event)
 
 PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
                              const QString &originName, const QString &fullPath,
-                             bool hasIni)
+                             bool hasIni, std::set<QString> archives)
   : m_Name(name), m_FullPath(fullPath), m_Enabled(enabled), m_ForceEnabled(enabled),
-    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_ModSelected(false)
+    m_Priority(0), m_LoadOrder(-1), m_OriginName(originName), m_HasIni(hasIni), m_Archives(archives), m_ModSelected(false)
 {
   try {
     ESP::File file(ToWString(fullPath));
