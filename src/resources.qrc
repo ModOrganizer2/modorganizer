@@ -47,7 +47,8 @@
         <file alias="emblem_conflict_mixed">resources/conflict-mixed.png</file>
         <file alias="emblem_conflict_overwrite">resources/conflict-overwrite.png</file>
         <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
-        <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
+        <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file> 
+        <file alias="emblem_conflict_loose_overwrite_archive">resources/conflict-overwrite-blue.png</file>
         <file alias="emblem_notes">resources/accessories-text-editor.png</file>
         <file alias="version_date">resources/x-office-calendar.png</file>
         <file alias="warning_16">resources/dialog-warning_16.png</file>
