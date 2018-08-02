@@ -350,7 +350,7 @@ void FileEntry::sortOrigins()
       int l = LHS.second.second; if (l < 0) l = INT_MAX;
       int r = RHS.second.second; if (r < 0) r = INT_MAX;
 
-      return l > r;
+      return l < r;
     }
 
     if (RHS.second.first.size()) return false;

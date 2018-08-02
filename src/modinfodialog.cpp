@@ -309,8 +309,8 @@ void ModInfoDialog::refreshLists()
           fields.append(ToQString(altString.str()));
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
           item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.begin()->first).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives.begin()->first);
+          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
+          item->setData(1, Qt::UserRole + 1, alternatives.back().first);
           item->setData(1, Qt::UserRole + 2, archive);
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;

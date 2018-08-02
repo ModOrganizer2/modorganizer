@@ -72,8 +72,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
     std::vector<FileEntry::Ptr> files = origin.getFiles();
     // for all files in this origin
     for (FileEntry::Ptr file : files) {
-      const std::vector<std::pair<int, std::pair<std::wstring, int>>> &alternatives = file->getAlternatives();
-      if ((alternatives.size() == 0) || (alternatives.begin()->first == dataID)) {
+      auto alternatives = file->getAlternatives();
+      if ((alternatives.size() == 0) || (alternatives.back().first == dataID)) {
         // no alternatives -> no conflict
         providesAnything = true;
       } else {
@@ -83,7 +83,7 @@ void ModInfoWithConflictInfo::doConflictCheck() const
           if (file->getArchive().first.size() == 0)
               m_OverwrittenList.insert(altIndex);
           else
-              m_ArchiveOverwriteList.insert(altIndex);
+              m_ArchiveOverwrittenList.insert(altIndex);
         } else {
           providesAnything = true;
         }
@@ -92,30 +92,40 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         bool found = file->getOrigin() == origin.getID();
         std::pair<std::wstring, int> archiveData;
         if (found)
-            archiveData = file->getArchive();
+          archiveData = file->getArchive();
+        else {
+          for (auto alts : alternatives) {
+            if (alts.first == origin.getID()) {
+              archiveData = alts.second;
+              break;
+            }
+          }
+        }
         for (auto altInfo : alternatives) {
           if ((altInfo.first != dataID) && (altInfo.first != origin.getID())) {
             FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.first);
             unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
-            if (!found) {
-                if (altInfo.second.first.size() == 0)
-                    m_OverwrittenList.insert(altIndex);
-                else
-                    m_ArchiveOverwrittenList.insert(altIndex);
+            if (altInfo.second.first.size() == 0) {
+              if (archiveData.first.size() == 0) {
+                if (origin.getPriority() > altOrigin.getPriority()) {
+                  m_OverwriteList.insert(altIndex);
+                } else {
+                  m_OverwrittenList.insert(altIndex);
+                }
+              } else {
+                m_ArchiveOverwrittenList.insert(altIndex);
+              }
             } else {
-                if (archiveData.first.size() == 0)
-                    m_OverwriteList.insert(altIndex);
-                else
-                    m_ArchiveOverwrittenList.insert(altIndex);
+              if (archiveData.first.size() == 0) {
+                m_ArchiveOverwrittenList.insert(altIndex);
+              } else {
+                if (archiveData.second > altInfo.second.second) {
+                  m_ArchiveOverwriteList.insert(altIndex);
+                } else if (archiveData.second < altInfo.second.second) {
+                  m_ArchiveOverwrittenList.insert(altIndex);
+                }
+              }
             }
-            /*if (origin.getPriority() > altOrigin.getPriority()) {
-              m_OverwriteList.insert(altIndex);
-            } else {
-              m_OverwrittenList.insert(altIndex);
-            }*/
-          } else {
-            found = true;
-            archiveData = altInfo.second;
           }
         }
       }
