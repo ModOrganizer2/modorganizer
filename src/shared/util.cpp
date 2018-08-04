@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/scoped_array.hpp>
 #include <QApplication>
 
+#define USE_CONST_CAST_IN_STD_STRING_C_STR
+
 namespace MOShared {
 
 
@@ -112,11 +114,33 @@ std::string &ToLower(std::string &text)
   return text;
 }
 
+std::string &ToLower(const std::string &Src, std::string &Dst)
+{
+#ifndef USE_CONST_CAST_IN_STD_STRING_C_STR
+  if (Src.empty())
+  {
+    Dst.clear();
+    return;
+  }
+
+  std::vector<char> Buff(Src.begin(), Src.end());
+  CharLowerBuffA(&Buff.front(), static_cast<DWORD>(Buff.size()));
+  Dst.assign(Buff.begin(), Buff.end());
+
+  return Dst;
+#else
+  Dst = Src;
+  CharLowerBuffA(const_cast<CHAR *>(Dst.c_str()), static_cast<DWORD>(Dst.size()));
+  return Dst;
+#endif
+}
+
+
 std::string ToLower(const std::string &text)
 {
   std::string result(text);
-  std::transform(result.begin(), result.end(), result.begin(), locToLower);
-  return result;
+  
+  return ToLower(text,result);
 }
 
 std::wstring &ToLower(std::wstring &text)
@@ -125,12 +149,20 @@ std::wstring &ToLower(std::wstring &text)
   return text;
 }
 
+std::wstring &ToLower(const std::wstring &Src, std::wstring &Dst)
+{
+  Dst = Src;
+  CharLowerBuffW(const_cast<WCHAR *>(Dst.c_str()), static_cast<DWORD>(Dst.size()));
+  return Dst;
+}
+
 std::wstring ToLower(const std::wstring &text)
 {
   std::wstring result(text);
-  std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
+  CharLowerBuffW(&result[0], static_cast<DWORD>(result.size()));
   return result;
-}
+  // return ToLower(text, result);
+} 
 
 bool CaseInsenstiveComparePred(wchar_t lhs, wchar_t rhs)
 {
