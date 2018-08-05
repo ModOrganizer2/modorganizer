@@ -162,6 +162,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/assign.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #endif
 
 #include <shlobj.h>
@@ -5135,7 +5136,7 @@ QString MainWindow::queryRestore(const QString &filePath)
   SelectionDialog dialog(tr("Choose backup to restore"), this);
   QRegExp exp(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX);
   QRegExp exp2(pluginFileInfo.fileName() + "\\.(.*)");
-  for(const QFileInfo &info : files) {
+  for(const QFileInfo &info : boost::adaptors::reverse(files)) {
     if (exp.exactMatch(info.fileName())) {
       QDateTime time = QDateTime::fromString(exp.cap(1), PATTERN_BACKUP_DATE);
       dialog.addChoice(time.toString(), "", exp.cap(1));
