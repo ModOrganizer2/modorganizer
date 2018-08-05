@@ -257,6 +257,9 @@ MainWindow::MainWindow(QSettings &initSettings
   createHelpWidget();
 
   for (QAction *action : ui->toolBar->actions()) {
+    // set the name of the widget to the name of the action to allow styling
+    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
+
     if (action->isSeparator()) {
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
