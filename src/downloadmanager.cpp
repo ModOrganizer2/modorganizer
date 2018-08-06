@@ -930,7 +930,7 @@ void DownloadManager::visitOnNexus(int index)
 void DownloadManager::openInDownloadsFolder(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("VisitNexus: invalid download index %1").arg(index));
+    reportError(tr("OpenFileInDownloadsFolder: invalid download index %1").arg(index));
     return;
   }
   QString params = "/select,\"";
