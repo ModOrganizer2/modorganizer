@@ -247,7 +247,7 @@ void DownloadListWidgetCompactDelegate::issueVisitOnNexus()
 	emit visitOnNexus(m_ContextIndex.row());
 }
 
-void DownloadListWidgetDelegate::issueOpenFile()
+void DownloadListWidgetCompactDelegate::issueOpenFile()
 {
   emit openFile(m_ContextIndex.row());
 }

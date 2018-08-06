@@ -935,13 +935,12 @@ void DownloadManager::openFile(int index)
   }
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)) + "\"";
 
-    ::ShellExecuteW(nullptr, nullptr, L"open", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
+    ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(getFilePath(index))).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     return;
   }
 
-  ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
   return;
 }
 
