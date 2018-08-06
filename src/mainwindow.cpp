@@ -3561,7 +3561,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
           menu->addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
         }
-		menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
+        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
