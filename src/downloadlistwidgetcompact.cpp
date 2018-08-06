@@ -247,6 +247,11 @@ void DownloadListWidgetCompactDelegate::issueVisitOnNexus()
 	emit visitOnNexus(m_ContextIndex.row());
 }
 
+void DownloadListWidgetDelegate::issueOpenFile()
+{
+  emit openFile(m_ContextIndex.row());
+}
+
 void DownloadListWidgetCompactDelegate::issueOpenInDownloadsFolder()
 {
   emit openInDownloadsFolder(m_ContextIndex.row());
@@ -361,6 +366,7 @@ bool DownloadListWidgetCompactDelegate::editorEvent(QEvent *event, QAbstractItem
             }else {
               menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
             }
+            menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
             menu.addAction(tr("Show in Folder"), this, SLOT(issueOpenInDownloadsFolder()));
             menu.addSeparator();
             menu.addAction(tr("Delete"), this, SLOT(issueDelete()));
