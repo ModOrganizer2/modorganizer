@@ -930,19 +930,12 @@ void DownloadManager::visitOnNexus(int index)
 void DownloadManager::openFile(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("VisitNexus: invalid download index %1").arg(index));
+    reportError(tr("OpenFile: invalid download index %1").arg(index));
     return;
   }
-  QString params = "/select,\"";
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
     params = params + QDir::toNativeSeparators(getFilePath(index)) + "\"";
-
-    ::ShellExecuteW(nullptr, nullptr, L"open", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
-    return;
-  }
-  else if (path.exists(getFileName(index) + ".unfinished")) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)+".unfinished") + "\"";
 
     ::ShellExecuteW(nullptr, nullptr, L"open", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
     return;
