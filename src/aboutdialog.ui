@@ -190,6 +190,11 @@
                 <string notr="true">Silarn</string>
                </property>
               </item>
+			  <item>
+               <property name="text">
+                <string notr="true">LostDragonist</string>
+               </property>
+              </item>
              </widget>
             </item>
            </layout>
@@ -208,7 +213,7 @@
               </property>
               <item>
                <property name="text">
-                <string notr="true">AnyOldName3 (Python Plugins)</string>
+                <string notr="true">AnyOldName3</string>
                </property>
               </item>
              </widget>
