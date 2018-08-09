@@ -7,6 +7,14 @@ ModInfo::EFlag ModFlagIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLIC
                                                          , ModInfo::FLAG_CONFLICT_OVERWRITTEN
                                                          , ModInfo::FLAG_CONFLICT_REDUNDANT };
 
+ModInfo::EFlag ModFlagIconDelegate::m_ArchiveLooseConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED
+                                                                     , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE
+                                                                     , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN };
+
+ModInfo::EFlag ModFlagIconDelegate::m_ArchiveConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
+                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE
+                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN };
+
 ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent)
   : IconDelegate(parent)
 {
@@ -19,9 +27,38 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
     std::vector<ModInfo::EFlag> flags = info->getFlags();
 
-    { // insert conflict icon first to provide nicer alignment
+    // insert conflict icons to provide nicer alignment
+    { // insert loose file conflicts first
       auto iter = std::find_first_of(flags.begin(), flags.end(),
                                      m_ConflictFlags, m_ConflictFlags + 4);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      } else {
+        result.append(QString());
+      }
+    }
+
+    { // insert archive vs loose conflicts second
+      int pad = 2;
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+        m_ArchiveLooseConflictFlags, m_ArchiveLooseConflictFlags + 4);
+      while (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+        pad--;
+        iter = std::find_first_of(flags.begin(), flags.end(),
+          m_ArchiveLooseConflictFlags, m_ArchiveLooseConflictFlags + 4);
+      }
+      while (pad > 0) {
+        result.append(QString());
+        pad--;
+      }
+    }
+
+    { // insert archive conflicts last
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+        m_ArchiveConflictFlags, m_ArchiveConflictFlags + 4);
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
