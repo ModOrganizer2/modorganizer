@@ -861,7 +861,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   } else if (role == Qt::BackgroundRole
     || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (m_ESPs[index].m_ModSelected) {
-      return QColor(0, 0, 255, 32);
+      return QColor(0, 0, 255, 64);
     } else {
       return QVariant();
     }

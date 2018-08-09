@@ -1561,9 +1561,6 @@ Right now this has very limited functionality</string>
    <property name="text">
     <string>Copy Log to Clipboard</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+C</string>
-   </property>
   </action>
   <action name="actionChange_Game">
    <property name="icon">

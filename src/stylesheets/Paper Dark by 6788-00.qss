@@ -1,4 +1,4 @@
-/* v3.0 Paper Dark by 6788-00 */
+/* v3.0.1 Paper Dark by 6788-00 */
 /* https://6788-00.tumblr.com/ */
 
 /* Main Window */
@@ -54,7 +54,6 @@ QToolBar::separator {
 }
 
 QToolButton {
-	background: #1A1A1A;
 	padding: 4px 6px;
 	border-radius: 6px;
 	margin: 4px 4px 0px 4px;
@@ -413,6 +412,8 @@ QProgressBar {
 
 QProgressBar::chunk {
     background: #007E7E;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
 /* Right Pane and Tab Bars */
@@ -448,7 +449,8 @@ QTabBar::tab:disabled {
 }
 
 QTabBar::tab:selected {
-	color: #007272;
+	background: #007272;
+	color: #FFFFFF;
 
 }
 
@@ -504,4 +506,45 @@ QSlider::handle:horizontal:hover {
 QTableView {
 	gridline-color: #222222;
 	border: 0px;
+}
+
+QListWidget::item#executablesListBox {
+	/* fixes the black text problem on the Modify Executables window */
+	color: #D3D3D3;
+}
+
+/* downloads tab */
+
+QWidget#downloadTab QAbstractScrollArea {
+	/* background of the entire downloads tab */
+	background: #242424;
+}
+
+DownloadListWidget QFrame, 
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #141414;
+}
+
+DownloadListWidget QFrame#frame {
+	/* outer box of an entry on the Downloads tab */
+	border: 2px solid #141414;
+}
+
+DownloadListWidget QLabel#installLabel {
+	color: none;
+}
+
+DownloadListWidget QFrame:clicked {
+	background: #007E7E;
+}
+
+/* compact downloads view */
+
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #141414;
+	padding: 4px;
 }

@@ -162,6 +162,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/assign.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #endif
 
 #include <shlobj.h>
@@ -256,6 +257,9 @@ MainWindow::MainWindow(QSettings &initSettings
   createHelpWidget();
 
   for (QAction *action : ui->toolBar->actions()) {
+    // set the name of the widget to the name of the action to allow styling
+    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
+
     if (action->isSeparator()) {
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
@@ -3576,7 +3580,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
           menu->addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
         }
-		menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
+        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
@@ -4392,6 +4396,7 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
+  connect(ui->downloadView->itemDelegate(), SIGNAL(openFile(int)), m_OrganizerCore.downloadManager(), SLOT(openFile(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
@@ -5154,7 +5159,7 @@ QString MainWindow::queryRestore(const QString &filePath)
   SelectionDialog dialog(tr("Choose backup to restore"), this);
   QRegExp exp(pluginFileInfo.fileName() + PATTERN_BACKUP_REGEX);
   QRegExp exp2(pluginFileInfo.fileName() + "\\.(.*)");
-  for(const QFileInfo &info : files) {
+  for(const QFileInfo &info : boost::adaptors::reverse(files)) {
     if (exp.exactMatch(info.fileName())) {
       QDateTime time = QDateTime::fromString(exp.cap(1), PATTERN_BACKUP_DATE);
       dialog.addChoice(time.toString(), "", exp.cap(1));

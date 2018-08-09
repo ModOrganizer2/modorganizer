@@ -363,3 +363,7 @@ QTreeView::branch:open:has-children:has-siblings
   border-image: none;
   image: url(:/stylesheet/branch-open.png);
 }
+
+DownloadListWidget QLabel#installLabel {
+  color: none;
+}

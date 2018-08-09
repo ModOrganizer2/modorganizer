@@ -360,7 +360,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       int highlight = modInfo->getHighlight();
       if (highlight & ModInfo::HIGHLIGHT_IMPORTANT)    return QBrush(Qt::darkRed);
       else if (highlight & ModInfo::HIGHLIGHT_INVALID) return QBrush(Qt::darkGray);
-      else if (highlight & ModInfo::HIGHLIGHT_PLUGIN)  return QBrush(Qt::darkBlue);
     } else if (column == COL_VERSION) {
       if (!modInfo->getNewestVersion().isValid()) {
         return QVariant();
@@ -380,7 +379,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
-      return QColor(0, 0, 255, 32);
+      return QColor(0, 0, 255, 64);
     } else if ((overwrite && (archiveOverwritten || archiveLooseOverwritten)) ||
       (overwritten && (archiveOverwrite || archiveLooseOverwrite)) ||
       (archiveOverwrite && (overwritten || archiveLooseOverwritten)) ||
@@ -388,11 +387,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       (archiveLooseOverwrite && (overwritten || archiveOverwritten)) ||
       (archiveLooseOverwritten && (overwrite || archiveLooseOverwrite))
       ) {
-        return QColor(255, 0, 255, 32);
+        return QColor(255, 0, 255, 64);
     } else if (overwrite || archiveOverwrite || archiveLooseOverwrite) {
-      return QColor(0, 255, 0, 32);
+      return QColor(0, 255, 0, 64);
     } else if (overwritten || archiveOverwritten || archiveLooseOverwritten) {
-      return QColor(255, 0, 0, 32);
+      return QColor(255, 0, 0, 64);
     } else {
       return QVariant();
     }
