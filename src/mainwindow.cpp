@@ -4417,8 +4417,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
     if (game
           && result["id"].toInt() == game->nexusModOrganizerID()
           && result["game_id"].toInt() == game->nexusGameID()) {
-      if (result["voted_by_user"].type() != QVariant::Invalid &&
-          !result["voted_by_user"].toBool()) {
+      if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
@@ -4442,8 +4441,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
-            result.contains("voted_by_user") &&
-            result["voted_by_user"].type() != QVariant::Invalid) {
+            result.contains("voted_by_user")) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
