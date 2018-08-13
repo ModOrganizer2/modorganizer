@@ -1961,8 +1961,7 @@ void MainWindow::on_actionInstallMod_triggered()
 void MainWindow::on_actionAdd_Profile_triggered()
 {
   for (;;) {
-    //Note: Calling this with an invalid profile name. Not quite sure why
-    ProfilesDialog profilesDialog(m_OrganizerCore.managedGame()->gameDirectory().absolutePath(),
+    ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
                                   m_OrganizerCore.managedGame(),
                                   this);
     // workaround: need to disable monitoring of the saves directory, otherwise the active
