@@ -2011,15 +2011,20 @@ void MainWindow::setESPListSorting(int index)
 
 void MainWindow::refresher_progress(int percent)
 {
-  if (percent == 100) {
-    m_RefreshProgress->setVisible(false);
-    statusBar()->hide();
-  } else if (!m_RefreshProgress->isVisible()) {
-    statusBar()->show();
-    m_RefreshProgress->setVisible(true);
-    m_RefreshProgress->setRange(0, 100);
-    m_RefreshProgress->setValue(percent);
-  }
+	if (percent == 100)
+	{
+		m_RefreshProgress->setVisible(false);
+		statusBar()->hide();
+		this->setEnabled(true);
+	}
+	else if (!m_RefreshProgress->isVisible())
+	{
+		this->setEnabled(false);
+		statusBar()->show();
+		m_RefreshProgress->setVisible(true);
+		m_RefreshProgress->setRange(0, 100);
+		m_RefreshProgress->setValue(percent);
+	}
 }
 
 void MainWindow::directory_refreshed()
