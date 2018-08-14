@@ -15,7 +15,7 @@ private:
   QString getFlagIcon(ModInfo::EFlag flag) const;
 private:
   static ModInfo::EFlag m_ConflictFlags[4];
-  static ModInfo::EFlag m_ArchiveLooseConflictFlags[3];
+  static ModInfo::EFlag m_ArchiveLooseConflictFlags[2];
   static ModInfo::EFlag m_ArchiveConflictFlags[3];
 };
 
