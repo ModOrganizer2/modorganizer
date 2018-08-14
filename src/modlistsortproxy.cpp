@@ -244,7 +244,6 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
       (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE) ||
       (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN) ||
       (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED) ||
-      (flag == ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED) ||
       (flag == ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE) ||
       (flag == ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN)) {
       return true;

@@ -7,8 +7,7 @@ ModInfo::EFlag ModFlagIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLIC
                                                          , ModInfo::FLAG_CONFLICT_OVERWRITTEN
                                                          , ModInfo::FLAG_CONFLICT_REDUNDANT };
 
-ModInfo::EFlag ModFlagIconDelegate::m_ArchiveLooseConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED
-                                                                     , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE
+ModInfo::EFlag ModFlagIconDelegate::m_ArchiveLooseConflictFlags[2] = { ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE
                                                                      , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN };
 
 ModInfo::EFlag ModFlagIconDelegate::m_ArchiveConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
@@ -39,26 +38,33 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
       }
     }
 
-    { // insert archive vs loose conflicts second
-      int pad = 2;
-      auto iter = std::find_first_of(flags.begin(), flags.end(),
-        m_ArchiveLooseConflictFlags, m_ArchiveLooseConflictFlags + 4);
-      while (iter != flags.end()) {
+    { // insert loose vs archive overwrite second
+      auto iter = std::find(flags.begin(), flags.end(),
+        ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE);
+      if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
-        pad--;
-        iter = std::find_first_of(flags.begin(), flags.end(),
-          m_ArchiveLooseConflictFlags, m_ArchiveLooseConflictFlags + 4);
       }
-      while (pad > 0) {
+      else {
         result.append(QString());
-        pad--;
+      }
+    }
+
+    { // insert loose vs archive overwritten third
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+        m_ArchiveLooseConflictFlags + 1, m_ArchiveLooseConflictFlags + 2);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      }
+      else {
+        result.append(QString());
       }
     }
 
     { // insert archive conflicts last
       auto iter = std::find_first_of(flags.begin(), flags.end(),
-        m_ArchiveConflictFlags, m_ArchiveConflictFlags + 4);
+        m_ArchiveConflictFlags, m_ArchiveConflictFlags + 3);
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
@@ -87,7 +93,7 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return ":/MO/gui/emblem_conflict_overwritten";
     case ModInfo::FLAG_CONFLICT_MIXED: return ":/MO/gui/emblem_conflict_mixed";
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return ":MO/gui/emblem_conflict_redundant";
-    case ModInfo::FLAG_ALTERNATE_GAME: return ":MO/gui/alternate_game";
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_MIXED: return ":/MO/gui/archive_loose_conflict_mixed";
     case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_loose_conflict_overwrite";
     case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_loose_conflict_overwritten";
     case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return ":/MO/gui/archive_conflict_mixed";

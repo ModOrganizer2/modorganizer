@@ -108,27 +108,31 @@ static auto locToLower = [] (char in) -> char {
 
 std::string &ToLower(std::string &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), locToLower);
+  //std::transform(text.begin(), text.end(), text.begin(), locToLower);
+  CharLowerBuffA(const_cast<CHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
 std::string ToLower(const std::string &text)
 {
   std::string result(text);
-  std::transform(result.begin(), result.end(), result.begin(), locToLower);
+  //std::transform(result.begin(), result.end(), result.begin(), locToLower);
+  CharLowerBuffA(const_cast<CHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
 
 std::wstring &ToLower(std::wstring &text)
 {
-  std::transform(text.begin(), text.end(), text.begin(), locToLowerW);
+  //std::transform(text.begin(), text.end(), text.begin(), locToLowerW);
+  CharLowerBuffW(const_cast<WCHAR *>(text.c_str()), static_cast<DWORD>(text.size()));
   return text;
 }
 
 std::wstring ToLower(const std::wstring &text)
 {
   std::wstring result(text);
-  std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
+  //std::transform(result.begin(), result.end(), result.begin(), locToLowerW);
+  CharLowerBuffW(const_cast<WCHAR *>(result.c_str()), static_cast<DWORD>(result.size()));
   return result;
 }
 
