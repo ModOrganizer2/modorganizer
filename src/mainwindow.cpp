@@ -3642,7 +3642,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
         }
 
-        menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
+        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       }
 
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
