@@ -428,6 +428,10 @@ private slots:
   void hideFile();
   void unhideFile();
 
+  // pluginlist context menu
+  void enableSelectedPlugins_clicked();
+  void disableSelectedPlugins_clicked();
+
   void linkToolbar();
   void linkDesktop();
   void linkMenu();

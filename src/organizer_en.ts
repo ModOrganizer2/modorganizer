@@ -2565,6 +2565,7 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3565"/>
+        <location filename="mainwindow.cpp" line="3645"/>
         <source>Open in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2660,8 +2661,10 @@ You can also use online editors and converters instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="3565"/>
         <location filename="mainwindow.cpp" line="3645"/>
-        <source>Open in explorer</source>
+        <source>Open in Explorer</source>
+        <oldsource>Open in explorer</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

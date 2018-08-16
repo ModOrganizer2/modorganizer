@@ -4170,6 +4170,19 @@ void MainWindow::unhideFile()
   }
 }
 
+
+void MainWindow::enableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->enableSelected(ui->espList->selectionModel());
+}
+
+
+void MainWindow::disableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
+}
+
+
 void MainWindow::previewDataFile()
 {
   QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
@@ -4761,6 +4774,11 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   m_ContextRow = m_PluginListSortProxy->mapToSource(ui->espList->indexAt(pos)).row();
 
   QMenu menu;
+  menu.addAction(tr("Enable selected"), this, SLOT(enableSelectedPlugins_clicked()));
+  menu.addAction(tr("Disable selected"), this, SLOT(disableSelectedPlugins_clicked()));
+
+  menu.addSeparator();
+
   menu.addAction(tr("Enable all"), m_OrganizerCore.pluginList(), SLOT(enableAll()));
   menu.addAction(tr("Disable all"), m_OrganizerCore.pluginList(), SLOT(disableAll()));
 
