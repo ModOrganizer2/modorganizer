@@ -417,6 +417,8 @@ private slots:
   void visitWebPage_clicked();
   void openExplorer_clicked();
   void information_clicked();
+  void enableSelectedMods_clicked();
+  void disableSelectedMods_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
   void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);

@@ -3597,13 +3597,19 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             menu->addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
           }
         }
+
+        menu->addSeparator();
+
+        menu->addAction(tr("Enable selected"), this, SLOT(enableSelectedMods_clicked()));
+        menu->addAction(tr("Disable selected"), this, SLOT(disableSelectedMods_clicked()));
+
         menu->addSeparator();
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
-		menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
+		    menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
 
-		menu->addSeparator();
+		    menu->addSeparator();
 
         if (info->getNexusID() > 0) {
           switch (info->endorsedState()) {
@@ -4180,6 +4186,18 @@ void MainWindow::enableSelectedPlugins_clicked()
 void MainWindow::disableSelectedPlugins_clicked()
 {
   m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
+}
+
+
+void MainWindow::enableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->enableSelected(ui->modList->selectionModel());
+}
+
+
+void MainWindow::disableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->disableSelected(ui->modList->selectionModel());
 }
 
 
