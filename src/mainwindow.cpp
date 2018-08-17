@@ -5012,6 +5012,9 @@ void MainWindow::on_bossButton_clicked()
     createStdoutPipe(&stdOutRead, &stdOutWrite);
     try {
       m_OrganizerCore.prepareVFS();
+    } catch (const UsvfsConnectorException &e) {
+      qDebug(e.what());
+      return;
     } catch (const std::exception &e) {
       QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
       return;

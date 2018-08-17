@@ -21,7 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef USVFSCONNECTOR_H
 #define USVFSCONNECTOR_H
 
-
+#include <exception>
 #include <filemapping.h>
 #include <QString>
 #include <QThread>
@@ -54,6 +54,20 @@ private:
   std::string m_Buffer;
   bool m_QuitRequested;
   QFile m_LogFile;
+
+};
+
+
+class UsvfsConnectorException : public std::exception {
+
+public:
+  UsvfsConnectorException(const QString &text)
+    : std::exception(), m_Message(text.toLocal8Bit()) {}
+
+  virtual const char* what() const throw()
+  { return m_Message.constData(); }
+private:
+  QByteArray m_Message;
 
 };
 
