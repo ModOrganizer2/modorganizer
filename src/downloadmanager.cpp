@@ -703,7 +703,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       DownloadState minState;
       if (index == -3) {
         minState = STATE_UNINSTALLED;
-      } 
+      }
       else
 			  minState = index == -1 ? STATE_READY : STATE_INSTALLED;
 
@@ -1445,18 +1445,6 @@ QDateTime DownloadManager::matchDate(const QString &timeString)
 }
 
 
-static EFileCategory convertFileCategory(int id)
-{
-  // TODO: need to handle file categories in the mod page plugin
-  switch (id) {
-    case 0: return TYPE_MAIN;
-    case 1: return TYPE_UPDATE;
-    case 2: return TYPE_OPTION;
-    default: return TYPE_MAIN;
-  }
-}
-
-
 void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
@@ -1493,7 +1481,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
-      info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+      info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
       info->m_FileInfo->fileName = fileInfo["uri"].toString();
@@ -1518,7 +1506,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
         QVariantMap fileInfo = selection.getChoiceData().toMap();
         info->m_FileInfo->name = fileInfo["name"].toString();
         info->m_FileInfo->version.parse(fileInfo["version"].toString());
-        info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+        info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
         info->m_FileInfo->fileID = fileInfo["id"].toInt();
       } else {
         emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));

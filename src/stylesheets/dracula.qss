@@ -8,6 +8,10 @@ QScrollArea, QAbstractScrollArea {
     color: #bbbbbb;
 	}
 
+QWidget:disabled {
+    color: #808080;
+}
+
 QApplication,
 QMainWindow, QFrame, QDockWidget, QDialog, QFileDialog, QMessageBox,
 QRadioButton,

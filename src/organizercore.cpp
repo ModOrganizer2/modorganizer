@@ -1311,6 +1311,9 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   if (m_AboutToRun(binary.absoluteFilePath())) {
     try {
       m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
+    } catch (const UsvfsConnectorException &e) {
+      qDebug(e.what());
+      return INVALID_HANDLE_VALUE;
     } catch (const std::exception &e) {
       QMessageBox::warning(window, tr("Error"), e.what());
       return INVALID_HANDLE_VALUE;

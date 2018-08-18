@@ -257,9 +257,6 @@ MainWindow::MainWindow(QSettings &initSettings
   createHelpWidget();
 
   for (QAction *action : ui->toolBar->actions()) {
-    // set the name of the widget to the name of the action to allow styling
-    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
-
     if (action->isSeparator()) {
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
@@ -444,6 +441,11 @@ MainWindow::MainWindow(QSettings &initSettings
 
   refreshExecutablesList();
   updateToolBar();
+
+  for (QAction *action : ui->toolBar->actions()) {
+    // set the name of the widget to the name of the action to allow styling
+    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
+  }
 }
 
 
@@ -1959,8 +1961,7 @@ void MainWindow::on_actionInstallMod_triggered()
 void MainWindow::on_actionAdd_Profile_triggered()
 {
   for (;;) {
-    //Note: Calling this with an invalid profile name. Not quite sure why
-    ProfilesDialog profilesDialog(m_OrganizerCore.managedGame()->gameDirectory().absolutePath(),
+    ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
                                   m_OrganizerCore.managedGame(),
                                   this);
     // workaround: need to disable monitoring of the saves directory, otherwise the active
@@ -3620,13 +3621,19 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             menu->addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
           }
         }
+
+        menu->addSeparator();
+
+        menu->addAction(tr("Enable selected"), this, SLOT(enableSelectedMods_clicked()));
+        menu->addAction(tr("Disable selected"), this, SLOT(disableSelectedMods_clicked()));
+
         menu->addSeparator();
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
-		menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
+		    menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
 
-		menu->addSeparator();
+		    menu->addSeparator();
 
         if (info->getNexusID() > 0) {
           switch (info->endorsedState()) {
@@ -3665,7 +3672,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
         }
 
-        menu->addAction(tr("Open in explorer"), this, SLOT(openExplorer_clicked()));
+        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       }
 
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
@@ -4193,6 +4200,31 @@ void MainWindow::unhideFile()
   }
 }
 
+
+void MainWindow::enableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->enableSelected(ui->espList->selectionModel());
+}
+
+
+void MainWindow::disableSelectedPlugins_clicked()
+{
+  m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
+}
+
+
+void MainWindow::enableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->enableSelected(ui->modList->selectionModel());
+}
+
+
+void MainWindow::disableSelectedMods_clicked()
+{
+  m_OrganizerCore.modList()->disableSelected(ui->modList->selectionModel());
+}
+
+
 void MainWindow::previewDataFile()
 {
   QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
@@ -4439,8 +4471,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
     if (game
           && result["id"].toInt() == game->nexusModOrganizerID()
           && result["game_id"].toInt() == game->nexusGameID()) {
-      if (result["voted_by_user"].type() != QVariant::Invalid &&
-          !result["voted_by_user"].toBool()) {
+      if (!result["voted_by_user"].toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
@@ -4464,8 +4495,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
-            result.contains("voted_by_user") &&
-            result["voted_by_user"].type() != QVariant::Invalid) {
+            result.contains("voted_by_user")) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
@@ -4786,6 +4816,11 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   m_ContextRow = m_PluginListSortProxy->mapToSource(ui->espList->indexAt(pos)).row();
 
   QMenu menu;
+  menu.addAction(tr("Enable selected"), this, SLOT(enableSelectedPlugins_clicked()));
+  menu.addAction(tr("Disable selected"), this, SLOT(disableSelectedPlugins_clicked()));
+
+  menu.addSeparator();
+
   menu.addAction(tr("Enable all"), m_OrganizerCore.pluginList(), SLOT(enableAll()));
   menu.addAction(tr("Disable all"), m_OrganizerCore.pluginList(), SLOT(disableAll()));
 
@@ -5001,6 +5036,9 @@ void MainWindow::on_bossButton_clicked()
     createStdoutPipe(&stdOutRead, &stdOutWrite);
     try {
       m_OrganizerCore.prepareVFS();
+    } catch (const UsvfsConnectorException &e) {
+      qDebug(e.what());
+      return;
     } catch (const std::exception &e) {
       QMessageBox::warning(qApp->activeWindow(), tr("Error"), e.what());
       return;

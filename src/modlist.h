@@ -173,6 +173,10 @@ public slots:
 
   void dropModeUpdate(bool dropOnItems);
 
+  void enableSelected(const QItemSelectionModel *selectionModel);
+
+  void disableSelected(const QItemSelectionModel *selectionModel);
+
 signals:
 
   /**
