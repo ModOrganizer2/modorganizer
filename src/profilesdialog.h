@@ -95,6 +95,7 @@ private:
   QListWidget *m_ProfilesList;
   bool m_FailState;
   MOBase::IPluginGame const *m_Game;
+  QString m_ActiveProfileName;
 };
 
 #endif // PROFILESDIALOG_H
