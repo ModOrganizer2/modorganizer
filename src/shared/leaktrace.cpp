@@ -1,11 +1,9 @@
 #include "leaktrace.h"
 #include "stackdata.h"
 #include <Windows.h>
-#include <DbgHelp.h>
 #include <set>
 #include <map>
 #include <vector>
-#include <sstream>
 #include <algorithm>
 
 
@@ -25,17 +23,19 @@ static struct __TraceData {
 
   ~__TraceData() {
     std::map<StackData, std::vector<unsigned long> > result;
-    for (auto iter = m_Traces.begin(); iter != m_Traces.end(); ++iter) {
-      result[iter->second].push_back(iter->first);
+    for (auto& m_Trace : m_Traces)
+    {
+      result[m_Trace.second].push_back(m_Trace.first);
     }
-    for (auto iter = result.begin(); iter != result.end(); ++iter) {
+    for (auto& iter : result)
+    {
       printf("-----------------------------------\n"
              "%d objects not freed, allocated at:\n%s",
-             iter->second.size(), iter->first.toString().c_str());
+             static_cast<int>(iter.second.size()), iter.first.toString().c_str());
       printf("Addresses: ");
       for (int i = 0;
-           i < (std::min<int>)(5, static_cast<int>(iter->second.size())); ++i) {
-        printf("%p, ", reinterpret_cast<void *>(iter->second[i]));
+           i < (std::min<int>)(5, static_cast<int>(iter.second.size())); ++i) {
+        printf("%p, ", reinterpret_cast<void *>(iter.second[i]));
       }
       printf("\n");
     }

@@ -74,12 +74,12 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 }
 
 
-ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
+ModInfoDialog::ModInfoDialog(const ModInfo::Ptr& modInfo, const DirectoryEntry *directory, const bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
-  m_ThumbnailMapper(this), m_RequestStarted(false),
-  m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr),
-  m_Directory(directory), m_Origin(nullptr),
-  m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
+  m_ThumbnailMapper(this), m_OrganizerCore(organizerCore),
+  m_PluginContainer(pluginContainer), m_RequestStarted(false), m_DeleteAction(nullptr),
+  m_RenameAction(nullptr), m_OpenAction(nullptr),
+  m_Directory(directory), m_Origin(nullptr)
 {
   ui->setupUi(this);
   this->setWindowTitle(modInfo->name());
@@ -87,22 +87,22 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   m_RootPath = modInfo->absolutePath();
 
-  QString metaFileName = m_RootPath.mid(0).append("/meta.ini");
+	const auto metaFileName = m_RootPath.mid(0).append("/meta.ini");
   m_Settings = new QSettings(metaFileName, QSettings::IniFormat);
 
-  QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
+	const auto modIDEdit = findChild<QLineEdit*>("modIDEdit");
   ui->modIDEdit->setValidator(new QIntValidator(modIDEdit));
   ui->modIDEdit->setText(QString("%1").arg(modInfo->getNexusID()));
 
   connect(ui->modIDEdit, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
 
-  QString gameName = modInfo->getGameName();
+	const auto gameName = modInfo->getGameName();
   ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
-  if (organizerCore->managedGame()->validShortNames().size() == 0) {
+  if (organizerCore->managedGame()->validShortNames().empty()) {
     ui->sourceGameEdit->setDisabled(true);
   } else {
     for (auto game : pluginContainer->plugins<IPluginGame>()) {
-      for (QString gameName : organizerCore->managedGame()->validShortNames()) {
+      for (auto gameName : organizerCore->managedGame()->validShortNames()) {
         if (game->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
           ui->sourceGameEdit->addItem(game->gameName(), game->gameShortName());
           break;
@@ -132,7 +132,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
-  refreshLists();
+  //m_OrganizerCore->profileRefresh();
+  refreshLists(); //refreshes BSA + Plugin
 
   if (unmanaged) {
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
@@ -144,7 +145,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
   } else {
-    initFiletree(modInfo);
+    initFiletree();
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
@@ -163,7 +164,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
                              (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 
   // activate first enabled tab
-  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+  for (auto i = 0; i < ui->tabWidget->count(); ++i) {
     if (ui->tabWidget->isTabEnabled(i)) {
       ui->tabWidget->setCurrentIndex(i);
       break;
@@ -190,14 +191,14 @@ void ModInfoDialog::initINITweaks()
   for (int i = 0; i < numTweaks; ++i) {
     m_Settings->setArrayIndex(i);
     QList<QListWidgetItem*> items = ui->iniTweaksList->findItems(m_Settings->value("name").toString(), Qt::MatchFixedString);
-    if (items.size() != 0) {
+    if (!items.empty()) {
       items.at(0)->setCheckState(Qt::Checked);
     }
   }
   m_Settings->endArray();
 }
 
-void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
+void ModInfoDialog::initFiletree()
 {
   ui->fileTree = findChild<QTreeView*>("fileTree");
 
@@ -214,11 +215,11 @@ void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
   m_UnhideAction = new QAction(tr("&Unhide"), ui->fileTree);
   m_OpenAction = new QAction(tr("&Open"), ui->fileTree);
   m_NewFolderAction = new QAction(tr("&New Folder"), ui->fileTree);
-  QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
-  QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
-  QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
-  QObject::connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
-  QObject::connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
+  connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
+  connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
+  connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
+  connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
+  connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
   connect(m_UnhideAction, SIGNAL(triggered()), this, SLOT(unhideTriggered()));
 }
 
@@ -281,123 +282,156 @@ QByteArray ModInfoDialog::saveTabState() const
 
 void ModInfoDialog::refreshLists()
 {
-  int numNonConflicting = 0;
-  int numOverwrite = 0;
-  int numOverwritten = 0;
+	auto numNonConflicting = 0;
+	auto numOverwrite = 0;
+	auto numOverwritten = 0;
 
-  ui->overwriteTree->clear();
-  ui->overwrittenTree->clear();
+	ui->overwriteTree->clear();
+	ui->overwrittenTree->clear();
 
-  if (m_Origin != nullptr) {
-    std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
-      QString fileName = relativeName.mid(0).prepend(m_RootPath);
-      bool archive;
-      if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
-        if (!alternatives.empty()) {
-          std::wostringstream altString;
-          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-               altIter != alternatives.end(); ++altIter) {
-            if (altIter != alternatives.begin()) {
-              altString << ", ";
-            }
-            altString << m_Directory->getOriginByID(altIter->first).getName();
-          }
-          QStringList fields(relativeName.prepend("..."));
-          fields.append(ToQString(altString.str()));
+	if (m_Origin != nullptr)
+	{
+		auto files = m_Origin->getFiles();
+		for (auto& file : files)
+		{
+			auto relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+			const auto fileName = relativeName.mid(0).prepend(m_RootPath);
+			bool archive;
+			if (file->getOrigin(archive) == m_Origin->getID())
+			{
+				auto alternatives = file->getAlternatives();
+				if (!alternatives.empty())
+				{
+					std::wostringstream altString;
+					for (auto altIter = alternatives.begin();
+					     altIter != alternatives.end(); ++altIter)
+					{
+						if (altIter != alternatives.begin())
+						{
+							altString << ", ";
+						}
+						altString << m_Directory->getOriginByID(altIter->first).getName();
+					}
+					QStringList fields(relativeName.prepend("..."));
+					fields.append(ToQString(altString.str()));
 
-          QTreeWidgetItem *item = new QTreeWidgetItem(fields);        
-          item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives.back().first);
-          item->setData(1, Qt::UserRole + 2, archive);
-          if (archive) {
-            QFont font = item->font(0);
-            font.setItalic(true);
-            item->setFont(0, font);
-            item->setFont(1, font);
-          }
-          ui->overwriteTree->addTopLevelItem(item);
-          ++numOverwrite;
-        } else {// otherwise don't display the file
-          ++numNonConflicting;
-        }
-      } else {
-        FilesOrigin &realOrigin = m_Directory->getOriginByID((*iter)->getOrigin(archive));
-        QStringList fields(relativeName);
-        fields.append(ToQString(realOrigin.getName()));
-        QTreeWidgetItem *item = new QTreeWidgetItem(fields);
-        item->setData(0, Qt::UserRole, fileName);
-        item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
-        item->setData(1, Qt::UserRole + 2, archive);
-        if (archive) {
-          QFont font = item->font(0);
-          font.setItalic(true);
-          item->setFont(0, font);
-          item->setFont(1, font);
-        }
-        ui->overwrittenTree->addTopLevelItem(item);
-        ++numOverwritten;
-      }
-    }
-  }
+					//Data tree
+					auto item = new QTreeWidgetItem(fields);
+					item->setData(0, Qt::UserRole, fileName);
+					item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
+					item->setData(1, Qt::UserRole + 1, alternatives.back().first);
+					item->setData(1, Qt::UserRole + 2, archive);
+					if (archive)
+					{
+						auto font = item->font(0);
+						font.setItalic(true);
+						item->setFont(0, font);
+						item->setFont(1, font);
+					}
+					ui->overwriteTree->addTopLevelItem(item);
+					++numOverwrite;
+				}
+				else
+				{
+					// otherwise don't display the file
+					++numNonConflicting;
+				}
+			}
+			else
+			{
+				auto& realOrigin = m_Directory->getOriginByID(file->getOrigin(archive));
+				QStringList fields(relativeName);
+				fields.append(ToQString(realOrigin.getName()));
+				auto item = new QTreeWidgetItem(fields);
+				item->setData(0, Qt::UserRole, fileName);
+				item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
+				item->setData(1, Qt::UserRole + 2, archive);
+				if (archive)
+				{
+					auto font = item->font(0);
+					font.setItalic(true);
+					item->setFont(0, font);
+					item->setFont(1, font);
+				}
+				ui->overwrittenTree->addTopLevelItem(item);
+				++numOverwritten;
+			}
+		}
+	}
 
-  if (m_RootPath.length() > 0) {
-    QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
-    while (dirIterator.hasNext()) {
-      QString fileName = dirIterator.next();
+	if (m_RootPath.length() > 0)
+	{
+		QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
+		while (dirIterator.hasNext())
+		{
+			auto fileName = dirIterator.next();
 
-      if (fileName.endsWith(".txt", Qt::CaseInsensitive)) {
-        ui->textFileList->addItem(fileName.mid(m_RootPath.length() + 1));
-      } else if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
-                 !fileName.endsWith("meta.ini")) {
-        QString namePart = fileName.mid(m_RootPath.length() + 1);
-        if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive)) {
-          QListWidgetItem *newItem = new QListWidgetItem(namePart.mid(11), ui->iniTweaksList);
-          newItem->setData(Qt::UserRole, namePart);
-          newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
-          newItem->setCheckState(Qt::Unchecked);
-          ui->iniTweaksList->addItem(newItem);
-        } else {
-          ui->iniFileList->addItem(namePart);
-        }
-      } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esm", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esl", Qt::CaseInsensitive)) {
-        QString relativePath = fileName.mid(m_RootPath.length() + 1);
-        if (relativePath.contains('/')) {
-          QFileInfo fileInfo(fileName);
-          QListWidgetItem *newItem = new QListWidgetItem(fileInfo.fileName());
-          newItem->setData(Qt::UserRole, relativePath);
-          ui->inactiveESPList->addItem(newItem);
-        } else {
-          ui->activeESPList->addItem(relativePath);
-        }
-      } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
-                 (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
-        QImage image = QImage(fileName);
-        if (!image.isNull()) {
-          if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-            image = image.scaledToWidth(128);
-          } else {
-            image = image.scaledToHeight(96);
-          }
+			if (fileName.endsWith(".txt", Qt::CaseInsensitive))
+			{
+				ui->textFileList->addItem(fileName.mid(m_RootPath.length() + 1));
+			}
+			else if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
+				!fileName.endsWith("meta.ini"))
+			{
+				auto namePart = fileName.mid(m_RootPath.length() + 1);
+				if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive))
+				{
+					auto newItem = new QListWidgetItem(namePart.mid(11), ui->iniTweaksList);
+					newItem->setData(Qt::UserRole, namePart);
+					newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
+					newItem->setCheckState(Qt::Unchecked);
+					ui->iniTweaksList->addItem(newItem);
+				}
+				else
+				{
+					ui->iniFileList->addItem(namePart);
+				}
+			}
+			else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
+				fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+				fileName.endsWith(".esl", Qt::CaseInsensitive))
+			{
+				auto relativePath = fileName.mid(m_RootPath.length() + 1);
+				if (relativePath.contains('/'))
+				{
+					QFileInfo fileInfo(fileName);
+					auto newItem = new QListWidgetItem(fileInfo.fileName());
+					newItem->setData(Qt::UserRole, relativePath);
+					ui->inactiveESPList->addItem(newItem);
+				}
+				else
+				{
+					ui->activeESPList->addItem(relativePath);
+				}
+			}
+			else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
+				(fileName.endsWith(".jpg", Qt::CaseInsensitive)))
+			{
+				auto image = QImage(fileName);
+				if (!image.isNull())
+				{
+					if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34)
+					{
+						image = image.scaledToWidth(128);
+					}
+					else
+					{
+						image = image.scaledToHeight(96);
+					}
 
-          QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
-          thumbnailButton->setIconSize(QSize(image.width(), image.height()));
-          connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
-          m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
-          ui->thumbnailArea->addWidget(thumbnailButton);
-        }
-      }
-    }
-  }
+					auto thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
+					thumbnailButton->setIconSize(QSize(image.width(), image.height()));
+					connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
+					m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
+					ui->thumbnailArea->addWidget(thumbnailButton);
+				}
+			}
+		}
+	}
 
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
+	ui->overwriteCount->display(numOverwrite);
+	ui->overwrittenCount->display(numOverwritten);
+	ui->noConflictCount->display(numNonConflicting);
 }
 
 
@@ -1001,28 +1035,28 @@ void ModInfoDialog::deleteFile(const QModelIndex &index)
 void ModInfoDialog::delete_activated()
 {
 	if (ui->fileTree->hasFocus()) {
-		QItemSelectionModel *selection = ui->fileTree->selectionModel();
+		const auto selection = ui->fileTree->selectionModel();
 
 		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
 
 			if (selection->selectedRows().count() == 0) {
 				return;
 			}
-			else if (selection->selectedRows().count() == 1) {
-				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
+			if (selection->selectedRows().count() == 1) {
+				const auto fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
 				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete \"%1\"?").arg(fileName),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+				                          QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
 			}
 			else {
 				if (QMessageBox::question(this, tr("Confirm"), tr("Are sure you want to delete the selected files?"),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+				                          QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
 					return;
 				}
 			}
 
-			foreach(QModelIndex index, selection->selectedRows()) {
+			foreach(const QModelIndex index, selection->selectedRows()) {
 				deleteFile(index);
 			}
 		}

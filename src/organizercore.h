@@ -85,7 +85,9 @@ private:
   typedef boost::signals2::signal<void (const QString&, unsigned int)> SignalFinishedRunApplication;
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
+
 public:
+
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(const QSettings &initSettings);
@@ -134,7 +136,7 @@ public:
   void refreshBSAList();
 
   void refreshDirectoryStructure();
-  void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
+  void updateModInDirectoryStructure(const unsigned index, const ModInfo::Ptr& modInfo);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
@@ -174,6 +176,9 @@ public:
   static CrashDumpsType getGlobalCrashDumpsType() { return m_globalCrashDumpsType; }
   static void setGlobalCrashDumpsType(int crashDumpsType);
   static std::wstring crashDumpsPath();
+
+  bool get_archive_conflicts() const;
+  void set_archive_conflicts(bool enable_archive_conflicts);
 
 public:
   MOBase::IModRepositoryBridge *createNexusBridge() const;
@@ -295,12 +300,10 @@ private slots:
 private:
   static const unsigned int PROBLEM_MO1SCRIPTEXTENDERWORKAROUND = 1;
 
-private:
-
-  IUserInterface *m_UserInterface;
+	IUserInterface *m_UserInterface;
   PluginContainer *m_PluginContainer;
   QString m_GameName;
-  MOBase::IPluginGame *m_GamePlugin;
+  MOBase::IPluginGame *m_GamePlugin{};
 
   Profile *m_CurrentProfile;
 
@@ -340,6 +343,8 @@ private:
   UsvfsConnector m_USVFS;
 
   static CrashDumpsType m_globalCrashDumpsType;
+
+  bool enable_archive_parsing_{ true };
 };
 
 #endif // ORGANIZERCORE_H
