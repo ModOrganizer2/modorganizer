@@ -192,7 +192,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
   }
 
   QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile (including local savegames if any)?"),
-                         QMessageBox::Yes | QMessageBox::No);
+                         QMessageBox::Yes | QMessageBox::No, this);
 
   if (confirmBox.exec() == QMessageBox::Yes) {
     QString profilePath;
