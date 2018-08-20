@@ -39,13 +39,31 @@ class LockedDialogBase;
 class OrganizerCore;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
-namespace BSA { class Archive; }
-#include "iplugingame.h" //namespace MOBase { class IPluginGame; }
-namespace MOBase { class IPluginModPage; }
-namespace MOBase { class IPluginTool; }
-namespace MOBase { class ISaveGame; }
 
-namespace MOShared { class DirectoryEntry; }
+namespace BSA
+{
+	class Archive;
+}
+
+namespace MOBase
+{
+	class IPluginModPage;
+}
+
+namespace MOBase
+{
+	class IPluginTool;
+}
+
+namespace MOBase
+{
+	class ISaveGame;
+}
+
+namespace MOShared
+{
+	class DirectoryEntry;
+}
 
 #include <QByteArray>
 #include <QDir>
@@ -61,7 +79,6 @@ namespace MOShared { class DirectoryEntry; }
 #include <QTime>
 #include <QTimer>
 #include <QHeaderView>
-#include <QVariant>
 #include <Qt>
 #include <QtConcurrent/QtConcurrentRun>
 
@@ -109,52 +126,52 @@ class MainWindow : public QMainWindow, public IUserInterface
 
 public:
 
-  explicit MainWindow(QSettings &initSettings,
-                      OrganizerCore &organizerCore, PluginContainer &pluginContainer,
-                      QWidget *parent = 0);
-  ~MainWindow();
+	explicit MainWindow(QSettings& initSettings,
+		OrganizerCore& organizerCore, PluginContainer& pluginContainer,
+		QWidget* parent = nullptr);
+	~MainWindow();
 
-  void storeSettings(QSettings &settings) override;
-  void readSettings();
-  void processUpdates();
+	void storeSettings(QSettings& settings) override;
+	void readSettings();
+	void processUpdates();
 
-  virtual ILockedWaitingForProcess* lock() override;
-  virtual void unlock() override;
+	ILockedWaitingForProcess* lock() override;
+	void unlock() override;
 
-  bool addProfile();
-  void updateBSAList(const QStringList &defaultArchives, const QStringList &activeArchives);
-  void refreshDataTree();
-  void refreshDataTreeKeepExpandedNodes();
-  void refreshSaveList();
+	bool addProfile();
+	void updateBSAList(const QStringList& defaultArchives, const QStringList& activeArchives) override;
+	void refreshDataTree();
+	void refreshDataTreeKeepExpandedNodes();
+	void refreshSaveList();
 
-  void setModListSorting(int index);
-  void setESPListSorting(int index);
+	void setModListSorting(int index);
+	void setESPListSorting(int index);
 
-  void saveArchiveList();
+	void saveArchiveList();
 
-  void registerPluginTool(MOBase::IPluginTool *tool);
-  void registerModPage(MOBase::IPluginModPage *modPage);
+	void registerPluginTool(MOBase::IPluginTool* tool) override;
+	void registerModPage(MOBase::IPluginModPage* modPage) override;
 
-  void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
+	void addPrimaryCategoryCandidates(QMenu* primaryCategoryMenu, const ModInfo::Ptr& info);
 
-  void createStdoutPipe(HANDLE *stdOutRead, HANDLE *stdOutWrite);
-  std::string readFromPipe(HANDLE stdOutRead);
-  void processLOOTOut(const std::string &lootOut, std::string &errorMessages, QProgressDialog &dialog);
+	static void createStdoutPipe(HANDLE* stdOutRead, HANDLE* stdOutWrite);
+	static std::string readFromPipe(HANDLE stdOutRead);
+	void processLOOTOut(const std::string& lootOut, std::string& errorMessages, QProgressDialog& dialog);
 
-  void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
+	void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
 
-  QString getOriginDisplayName(int originID);
+	QString getOriginDisplayName(int originID);
 
-  void installTranslator(const QString &name);
+	void installTranslator(const QString& name) override;
 
-  virtual void disconnectPlugins();
+	void disconnectPlugins() override;
 
-  void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
+	void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab) override;
 
-  virtual bool closeWindow();
-  virtual void setWindowEnabled(bool enabled);
+	bool closeWindow() override;
+	void setWindowEnabled(bool enabled) override;
 
-  virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
+	MOBase::DelayedFileWriterBase& archivesWriter() override { return m_ArchiveListWriter; }
 
 public slots:
 
@@ -184,12 +201,12 @@ signals:
 
 protected:
 
-  virtual void showEvent(QShowEvent *event);
-  virtual void closeEvent(QCloseEvent *event);
-  virtual bool eventFilter(QObject *obj, QEvent *event);
-  virtual void resizeEvent(QResizeEvent *event);
-  virtual void dragEnterEvent(QDragEnterEvent *event);
-  virtual void dropEvent(QDropEvent *event);
+	void showEvent(QShowEvent* event) override;
+	void closeEvent(QCloseEvent* event) override;
+	bool eventFilter(QObject* object, QEvent* event) override;
+	void resizeEvent(QResizeEvent* event) override;
+	void dragEnterEvent(QDragEnterEvent* event) override;
+	void dropEvent(QDropEvent* event) override;
 
 private slots:
   void on_actionChange_Game_triggered();
@@ -251,7 +268,7 @@ private:
 
   void createHelpWidget();
 
-  bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
+  bool extractProgress(QProgressDialog &extractProgress, int percentage, const std::string& fileName);
 
   size_t checkForProblems();
 
@@ -266,7 +283,7 @@ private:
 
   HANDLE nextChildProcess();
 
-  bool errorReported(QString &logFile);
+	static bool errorReported(QString &logFile);
 
   void updateESPLock(bool locked);
 
@@ -314,7 +331,7 @@ private:
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
   QProgressBar *m_RefreshProgress;
-  bool m_Refreshing;
+  bool m_Refreshing{};
 
   QStringList m_DefaultArchives;
 
@@ -325,16 +342,16 @@ private:
 
   int m_OldExecutableIndex;
 
-  int m_ContextRow;
+  int m_ContextRow{};
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
 
   CategoryFactory &m_CategoryFactory;
 
-  int m_ModsToUpdate;
+  int m_ModsToUpdate{};
 
-  bool m_LoginAttempted;
+  bool m_LoginAttempted{};
 
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
@@ -367,6 +384,8 @@ private:
 
   bool m_closing{ false };
 
+  bool show_data_archives{ true };
+
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
@@ -387,13 +406,13 @@ private slots:
   void updateWindowTitle(const QString &accountName, bool premium);
 
   void showMessage(const QString &message);
-  void showError(const QString &message);
+	static void showError(const QString &message);
 
 
   // main window actions
-  void helpTriggered();
-  void issueTriggered();
-  void wikiTriggered();
+	static void helpTriggered();
+	static void issueTriggered();
+	static void wikiTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
 
@@ -456,7 +475,7 @@ private slots:
 
   void loginFailed(const QString &message);
 
-  void linkClicked(const QString &url);
+	static void linkClicked(const QString &url);
 
   void updateAvailable();
 
@@ -474,10 +493,10 @@ private slots:
 
   void modInstalled(const QString &modName);
 
-  void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
-  void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
-  void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmUpdatesAvailable(const std::vector<int>& modIDs, const QVariant& userData, const QVariant& resultData, int requestID);
+  void nxmEndorsementToggled(const QString&, int, const QVariant&, const QVariant& resultData, int);
+  void nxmDownloadURLs(const QString&, int modID, int fileID, QVariant userData, const QVariant& resultData, int requestID);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int requestID, const QString& errorString);
 
   void editCategories();
   void deselectFilters();
@@ -494,7 +513,7 @@ private slots:
   void hookUpWindowTutorials();
 
   void resumeDownload(int downloadIndex);
-  void endorseMod(ModInfo::Ptr mod);
+  void endorseMod(const ModInfo::Ptr& mod);
   void cancelModListEditor();
 
   void lockESPIndex();
@@ -577,6 +596,7 @@ private slots: // ui slots
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
+  void on_show_archive_data_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);

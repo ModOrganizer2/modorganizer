@@ -62,9 +62,9 @@ class UsvfsConnectorException : public std::exception {
 
 public:
   UsvfsConnectorException(const QString &text)
-    : std::exception(), m_Message(text.toLocal8Bit()) {}
+    : m_Message(text.toLocal8Bit()) {}
 
-  virtual const char* what() const throw()
+	const char* what() const noexcept override
   { return m_Message.constData(); }
 private:
   QByteArray m_Message;

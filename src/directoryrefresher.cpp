@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "utility.h"
-#include "report.h"
 #include "modinfo.h"
 
 #include <QApplication>
@@ -85,7 +84,7 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
                                               int priority, const QString &directory, const QStringList &archives)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
-  QStringList loadOrder = QStringList();
+  //QStringList loadOrder = QStringList();
 
   for (const QString &archive : archives) {
     QFileInfo fileInfo(archive);
