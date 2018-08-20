@@ -254,6 +254,11 @@ public:
   bool displayForeign() const;
 
   /**
+  * @return true if the user wants to have archive being parsed to show conflicts and contents
+  */
+  bool enable_archive_parsing() const;
+
+  /**
    * @brief sets the new motd hash
    **/
   void setMotDHash(uint hash);
@@ -470,7 +475,7 @@ private:
   public:
     WorkaroundsTab(Settings *m_parent, SettingsDialog &m_dialog);
 
-    void update();
+    void update() override;
 
   private:
     QLineEdit *m_appIDEdit;
@@ -479,11 +484,12 @@ private:
     QCheckBox *m_hideUncheckedBox;
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
+	QCheckBox *m_enable_archive_parsing_;
   };
 
 private slots:
 
-  void resetDialogs();
+	static void resetDialogs();
 
 signals:
 
@@ -494,7 +500,7 @@ private:
 
   static Settings *s_Instance;
 
-  MOBase::IPluginGame const *m_GamePlugin;
+  MOBase::IPluginGame const *m_GamePlugin{};
 
   QSettings m_Settings;
 

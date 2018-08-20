@@ -266,27 +266,21 @@ bool checkService()
   return serviceRunning;
 }
 
-OrganizerCore::OrganizerCore(const QSettings &initSettings)
-  : m_UserInterface(nullptr)
-  , m_PluginContainer(nullptr)
-  , m_GameName()
-  , m_CurrentProfile(nullptr)
-  , m_Settings(initSettings)
-  , m_Updater(NexusInterface::instance(m_PluginContainer))
-  , m_AboutToRun()
-  , m_FinishedRun()
-  , m_ModInstalled()
-  , m_ModList(m_PluginContainer, this)
-  , m_PluginList(this)
-  , m_DirectoryRefresher()
-  , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
-  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
-  , m_InstallationManager()
-  , m_RefresherThread()
-  , m_AskForNexusPW(false)
-  , m_DirectoryUpdate(false)
-  , m_ArchivesInit(false)
-  , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
+OrganizerCore::OrganizerCore(const QSettings& initSettings)
+	: m_UserInterface(nullptr)
+	  , m_PluginContainer(nullptr)
+	  , m_GameName()
+	  , m_CurrentProfile(nullptr)
+	  , m_Settings(initSettings)
+	  , m_Updater(NexusInterface::instance(m_PluginContainer))
+	  ,m_ModList(m_PluginContainer, this)
+	  , m_PluginList(this)
+	  , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
+	  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
+	  ,m_AskForNexusPW(false)
+	  , m_DirectoryUpdate(false)
+	  , m_ArchivesInit(false)
+	  , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
 {
   m_DownloadManager.setOutputDirectory(m_Settings.getDownloadDirectory());
   m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
@@ -784,6 +778,16 @@ std::wstring OrganizerCore::crashDumpsPath() {
     qApp->property("dataPath").toString() + "/"
     + QString::fromStdWString(AppConfig::dumpsDir())
     ).toStdWString();
+}
+
+bool OrganizerCore::get_archive_conflicts() const
+{
+	return enable_archive_parsing_;
+}
+
+void OrganizerCore::set_archive_conflicts(const bool enable_archive_parsing)
+{
+	enable_archive_parsing_ = enable_archive_parsing;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -1790,8 +1794,8 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   m_PluginListsWriter.writeImmediately(false);
 }
 
-void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
-                                                  ModInfo::Ptr modInfo)
+void OrganizerCore::updateModInDirectoryStructure(const unsigned index,
+                                                  const ModInfo::Ptr& modInfo)
 {
   // add files of the bsa to the directory structure
   m_DirectoryRefresher.addModFilesToStructure(
@@ -1893,12 +1897,14 @@ IPluginGame const *OrganizerCore::managedGame() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
-    }
-    archiveFile.close();
+  if (enable_archive_parsing_) {
+	  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+	  if (archiveFile.open(QIODevice::ReadOnly)) {
+		  while (!archiveFile.atEnd()) {
+			  result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+		  }
+		  archiveFile.close();
+	  }
   }
   return result;
 }

@@ -188,7 +188,7 @@ unsigned int ModInfo::getIndex(const QString &name)
 {
   QMutexLocker locker(&s_Mutex);
 
-  std::map<QString, unsigned int>::iterator iter = s_ModsByName.find(name);
+	const auto iter = s_ModsByName.find(name);
   if (iter == s_ModsByName.end()) {
     return UINT_MAX;
   }
@@ -210,7 +210,7 @@ unsigned int ModInfo::findMod(const boost::function<bool (ModInfo::Ptr)> &filter
 void ModInfo::updateFromDisc(const QString &modDirectory,
                              DirectoryEntry **directoryStructure,
                              PluginContainer *pluginContainer,
-                             bool displayForeign,
+                             const bool displayForeign,
                              MOBase::IPluginGame const *game)
 {
   QMutexLocker lock(&s_Mutex);

@@ -37,6 +37,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <boost/signals2.hpp>
 #endif
 #include <set>
+#include <utility>
 #include <vector>
 #include <QVector>
 
@@ -306,7 +307,7 @@ private:
 
   struct TModInfo {
     TModInfo(unsigned int index, ModInfo::Ptr modInfo)
-        : modInfo(modInfo), nameOrder(index), priorityOrder(0), modIDOrder(0), categoryOrder(0) {}
+        : modInfo(std::move(modInfo)), nameOrder(index), priorityOrder(0), modIDOrder(0), categoryOrder(0) {}
     ModInfo::Ptr modInfo;
     unsigned int nameOrder;
     unsigned int priorityOrder;
