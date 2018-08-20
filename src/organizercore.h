@@ -211,6 +211,8 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
+  bool getArchiveParsing() const;
+  void setArchiveParsing(bool archiveParsing);
 
 public: // IPluginDiagnose interface
 
@@ -335,6 +337,7 @@ private:
   bool m_AskForNexusPW;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
+  bool enableArchiveParsing_{ m_Settings.enableArchiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;
