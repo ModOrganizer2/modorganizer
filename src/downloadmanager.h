@@ -524,6 +524,8 @@ private:
 
   static QString getFileTypeString(int fileType);
 
+  void writeData(DownloadInfo *info);
+
 private:
 
   static const int AUTOMATIC_RETRIES = 3;

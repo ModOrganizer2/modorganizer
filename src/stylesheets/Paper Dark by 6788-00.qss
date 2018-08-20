@@ -380,8 +380,8 @@ QMenu::item:selected {
 }
 
 QMenu::item:disabled {
-	background: #FFFFFF;
-	color: #6C6C6C;
+    background: #242424;
+    color: #808080;
 }
 
 QMenu::separator {   

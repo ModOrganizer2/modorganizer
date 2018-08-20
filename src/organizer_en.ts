@@ -2886,7 +2886,7 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4562"/>
-        <location filename="mainwindow.cpp" line="5016"/>
+        <location filename="mainwindow.cpp" line="5019"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2966,79 +2966,79 @@ You can also use online editors and converters instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5089"/>
+        <location filename="mainwindow.cpp" line="5092"/>
         <source>loot failed. Exit code was: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5111"/>
+        <location filename="mainwindow.cpp" line="5114"/>
         <source>failed to start loot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5114"/>
+        <location filename="mainwindow.cpp" line="5117"/>
         <source>failed to run loot: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5118"/>
+        <location filename="mainwindow.cpp" line="5121"/>
         <source>Errors occured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5165"/>
+        <location filename="mainwindow.cpp" line="5168"/>
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5175"/>
+        <location filename="mainwindow.cpp" line="5178"/>
         <source>Choose backup to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5188"/>
+        <location filename="mainwindow.cpp" line="5191"/>
         <source>No Backups</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5188"/>
+        <location filename="mainwindow.cpp" line="5191"/>
         <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5209"/>
-        <location filename="mainwindow.cpp" line="5231"/>
+        <location filename="mainwindow.cpp" line="5212"/>
+        <location filename="mainwindow.cpp" line="5234"/>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5210"/>
-        <location filename="mainwindow.cpp" line="5232"/>
+        <location filename="mainwindow.cpp" line="5213"/>
+        <location filename="mainwindow.cpp" line="5235"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5221"/>
+        <location filename="mainwindow.cpp" line="5224"/>
         <source>Backup of modlist created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5327"/>
+        <location filename="mainwindow.cpp" line="5330"/>
         <source>A file with the same name has already been downloaded. What would you like to do?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5329"/>
+        <location filename="mainwindow.cpp" line="5332"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5330"/>
+        <location filename="mainwindow.cpp" line="5333"/>
         <source>Rename new file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5331"/>
+        <location filename="mainwindow.cpp" line="5334"/>
         <source>Ignore file</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4199,108 +4199,108 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1315"/>
+        <location filename="organizercore.cpp" line="1318"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1323"/>
+        <location filename="organizercore.cpp" line="1326"/>
         <source>Windows Event Log Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1324"/>
+        <location filename="organizercore.cpp" line="1327"/>
         <source>The Windows Event Log service is disabled and/or not running.  This prevents USVFS from running properly.  Your mods may not be working in the executable that you are launching.  Note that you may have to restart MO and/or your PC after the service is fixed.
 
 Continue launching %1?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1412"/>
+        <location filename="organizercore.cpp" line="1415"/>
         <source>No profile set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1698"/>
+        <location filename="organizercore.cpp" line="1701"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1782"/>
+        <location filename="organizercore.cpp" line="1785"/>
         <source>Multiple esps/esls activated, please check that they don&apos;t conflict.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1857"/>
+        <location filename="organizercore.cpp" line="1860"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1858"/>
+        <location filename="organizercore.cpp" line="1861"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1992"/>
+        <location filename="organizercore.cpp" line="1995"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1999"/>
-        <location filename="organizercore.cpp" line="2016"/>
+        <location filename="organizercore.cpp" line="2002"/>
+        <location filename="organizercore.cpp" line="2019"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2023"/>
+        <location filename="organizercore.cpp" line="2026"/>
         <source>Login failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2024"/>
+        <location filename="organizercore.cpp" line="2027"/>
         <source>Login failed, try again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2033"/>
+        <location filename="organizercore.cpp" line="2036"/>
         <source>login failed: %1. Download will not be associated with an account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2041"/>
+        <location filename="organizercore.cpp" line="2044"/>
         <source>login failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2051"/>
+        <location filename="organizercore.cpp" line="2054"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2104"/>
+        <location filename="organizercore.cpp" line="2107"/>
         <source>MO1 &quot;Script Extender&quot; load mechanism has left hook.dll in your game folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2107"/>
-        <location filename="organizercore.cpp" line="2123"/>
+        <location filename="organizercore.cpp" line="2110"/>
+        <location filename="organizercore.cpp" line="2126"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2116"/>
+        <location filename="organizercore.cpp" line="2119"/>
         <source>&lt;a href=&quot;%1&quot;&gt;hook.dll&lt;/a&gt; has been found in your game folder (right click to copy the full path). This is most likely a leftover of setting the ModOrganizer 1 load mechanism to &quot;Script Extender&quot;, in which case you must remove this file either by changing the load mechanism in ModOrganizer 1 or manually removing the file, otherwise the game is likely to crash and burn.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2150"/>
+        <location filename="organizercore.cpp" line="2153"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2222"/>
+        <location filename="organizercore.cpp" line="2225"/>
         <source>The designated write target &quot;%1&quot; is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
