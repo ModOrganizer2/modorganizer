@@ -474,6 +474,11 @@ uint Settings::getMotDHash() const
   return m_Settings.value("motd_hash", 0).toUInt();
 }
 
+bool Settings::archiveParsing() const
+{
+	return m_Settings.value("Settings/archive_parsing", true).toBool();
+}
+
 QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) const
 {
   auto iterPlugin = m_PluginSettings.find(pluginName);
@@ -1085,6 +1090,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
   , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
+  , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -1119,7 +1125,8 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
   m_lockGUIBox->setChecked(m_parent->lockGUI());
-
+  m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
+  
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
 }
@@ -1137,6 +1144,7 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
   m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
+  m_Settings.setValue("Settings/archive_parsing", m_enableArchiveParsingBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
 

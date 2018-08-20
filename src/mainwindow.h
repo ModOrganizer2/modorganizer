@@ -373,6 +373,8 @@ private:
 
   bool m_closing{ false };
 
+  bool m_showArchiveData{ true };
+
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
@@ -600,6 +602,7 @@ private slots: // ui slots
   void on_btnRefreshDownloads_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
+  void on_showArchiveDataCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);

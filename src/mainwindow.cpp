@@ -448,6 +448,19 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
 
+  if (m_OrganizerCore.getArchiveParsing())
+  {
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+	  ui->showArchiveDataCheckBox->setEnabled(true);
+	  m_showArchiveData = true;
+  }
+  else
+  {
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+	  ui->showArchiveDataCheckBox->setEnabled(false);
+	  m_showArchiveData = false;
+  }
+
   refreshExecutablesList();
   updateToolBar();
 
@@ -1250,11 +1263,15 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
       }
+      
+      bool isArchive = false;
+			int originID = current->getOrigin(isArchive);
+      if (!m_showArchiveData && isArchive) {
+        continue;
+      }
 
       QString fileName = ToQString(current->getName());
       QStringList columns(fileName);
-      bool isArchive = false;
-      int originID = current->getOrigin(isArchive);
       FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
       QString source("data");
       unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
@@ -4351,6 +4368,27 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.profileRefresh();
   }
 
+  const auto state = settings.archiveParsing();
+  if (state != m_OrganizerCore.getArchiveParsing())
+  {
+	  m_OrganizerCore.setArchiveParsing(state);
+	  if (!state)
+	  {
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+		  ui->showArchiveDataCheckBox->setEnabled(false);
+		  m_showArchiveData = false;
+	  }
+	  else
+	  {
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+		  ui->showArchiveDataCheckBox->setEnabled(true);
+		  m_showArchiveData = true;
+	  }
+	  m_OrganizerCore.refreshModList();
+	  m_OrganizerCore.refreshDirectoryStructure();
+	  m_OrganizerCore.refreshLists();
+  }
+
   if (settings.getCacheDirectory() != oldCacheDirectory) {
     NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
@@ -5985,3 +6023,17 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
   }
   settings.setValue(key, dialog.saveGeometry());
 }
+
+void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
+{
+	if (m_OrganizerCore.getArchiveParsing() && checked)
+	{
+		m_showArchiveData = checked;
+	}
+	else
+	{
+		m_showArchiveData = false;
+	}
+	refreshDataTree();
+}
+

@@ -281,6 +281,11 @@ public:
   void setMotDHash(uint hash);
 
   /**
+  * @return true if the user wants to have archives being parsed to show conflicts and contents
+  */
+  bool archiveParsing() const;
+
+  /**
    * @return hash of the last displayed message of the day
    **/
   uint getMotDHash() const;
@@ -514,6 +519,7 @@ private:
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
     QCheckBox *m_lockGUIBox;
+    QCheckBox *m_enableArchiveParsingBox;
   };
 
 private slots:
