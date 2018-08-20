@@ -273,14 +273,11 @@ OrganizerCore::OrganizerCore(const QSettings& initSettings)
 	  , m_CurrentProfile(nullptr)
 	  , m_Settings(initSettings)
 	  , m_Updater(NexusInterface::instance(m_PluginContainer))
-	  , m_AboutToRun()
-	  , m_FinishedRun()
-	  , m_ModList(m_PluginContainer, this)
+	  ,m_ModList(m_PluginContainer, this)
 	  , m_PluginList(this)
 	  , m_DirectoryStructure(new DirectoryEntry(L"data", nullptr, 0))
 	  , m_DownloadManager(NexusInterface::instance(m_PluginContainer), this)
-	  , m_InstallationManager()
-	  , m_AskForNexusPW(false)
+	  ,m_AskForNexusPW(false)
 	  , m_DirectoryUpdate(false)
 	  , m_ArchivesInit(false)
 	  , m_PluginListsWriter(std::bind(&OrganizerCore::savePluginList, this))
@@ -320,6 +317,8 @@ OrganizerCore::OrganizerCore(const QSettings& initSettings)
 
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter,
           &DelayedFileWriterBase::write);
+
+  bool enable_archive_parsing_{ true };
 
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
@@ -781,6 +780,16 @@ std::wstring OrganizerCore::crashDumpsPath() {
     qApp->property("dataPath").toString() + "/"
     + QString::fromStdWString(AppConfig::dumpsDir())
     ).toStdWString();
+}
+
+bool OrganizerCore::get_archive_conflicts() const
+{
+	return enable_archive_parsing_;
+}
+
+void OrganizerCore::set_archive_conflicts(const bool enable_archive_parsing)
+{
+	enable_archive_parsing_ = enable_archive_parsing;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -1890,12 +1899,14 @@ IPluginGame const *OrganizerCore::managedGame() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
-    }
-    archiveFile.close();
+  if (enable_archive_parsing_) {
+	  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+	  if (archiveFile.open(QIODevice::ReadOnly)) {
+		  while (!archiveFile.atEnd()) {
+			  result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+		  }
+		  archiveFile.close();
+	  }
   }
   return result;
 }
