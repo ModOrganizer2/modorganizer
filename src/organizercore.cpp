@@ -318,8 +318,6 @@ OrganizerCore::OrganizerCore(const QSettings& initSettings)
   connect(&m_PluginList, &PluginList::writePluginsList, &m_PluginListsWriter,
           &DelayedFileWriterBase::write);
 
-  bool enable_archive_parsing_{ true };
-
   // make directory refresher run in a separate thread
   m_RefresherThread.start();
   m_DirectoryRefresher.moveToThread(&m_RefresherThread);
