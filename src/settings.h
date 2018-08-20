@@ -254,7 +254,7 @@ public:
   bool displayForeign() const;
 
   /**
-  * @return true if the user wants to see non-official plugins installed outside MO in his mod list
+  * @return true if the user wants to have archive being parsed to show conflicts and contents
   */
   bool enable_archive_parsing() const;
 
