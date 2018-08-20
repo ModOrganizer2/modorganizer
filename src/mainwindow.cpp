@@ -433,8 +433,20 @@ MainWindow::MainWindow(QSettings& initSettings
 	  MainWindow::registerModPage(modPagePlugin);
   }
 
-  ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
-  ui->show_archive_data->setCheckState(Qt::Checked);
+	ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
+	if (m_OrganizerCore.get_archive_conflicts())
+	{
+		ui->show_archive_data->setCheckState(Qt::Checked);
+		ui->show_archive_data->setEnabled(true);
+		show_data_archives = true;
+	}
+	else
+	{
+		ui->show_archive_data->setCheckState(Qt::Unchecked);
+		ui->show_archive_data->setEnabled(false);
+		show_data_archives = false;
+	}
+  
 
   // refresh profiles so the current profile can be activated
   refreshProfiles(false);
