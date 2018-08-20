@@ -2672,15 +2672,15 @@ void MainWindow::backupMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
   } else {
-    QString username, password;
-    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+    QString apiKey;
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
         this->resumeDownload(downloadIndex);
       });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
     }
@@ -2690,13 +2690,13 @@ void MainWindow::resumeDownload(int downloadIndex)
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     mod->endorse(true);
   } else {
-    QString username, password;
-    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+    QString apiKey;
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, mod));
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -2750,13 +2750,13 @@ void MainWindow::dontendorse_clicked()
 
 void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
-  QString username, password;
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+  QString apiKey;
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     ModInfo::getByIndex(m_ContextRow)->endorse(false);
   } else {
-    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->unendorse_clicked(); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
@@ -3974,14 +3974,14 @@ void MainWindow::saveArchiveList()
 void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
-    QString username, password;
-    if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+    QString apiKey;
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else { // otherwise there will be no endorsement info
       MessageDialog::showMessage(tr("Not logged in, endorsement information will be wrong"),
                                   this, true);
@@ -5363,7 +5363,7 @@ void MainWindow::on_actionEndorseMO_triggered()
                                       NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
-      game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
+      game->gameShortName(), game->nexusModOrganizerID(), m_OrganizerCore.getVersion().canonicalString(), true, this, QVariant(), QString());
   }
 }
 
@@ -5470,7 +5470,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
       for (auto iter = info.begin(); iter != info.end(); ++iter) {
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
-        if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
+        if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated() &&
             result.contains("voted_by_user") &&
             Settings::instance().endorsementIntegration()) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
@@ -5496,14 +5496,18 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
-  if (resultData.toBool()) {
+  QMap results = resultData.toMap();
+  if (results["code"].toInt() == 200) {
+    if (results["status"].toString().compare("Endorsed") == 0) {
+      QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+    } else {
+      QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
+    }
     ui->actionEndorseMO->setVisible(false);
-    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-  }
-
-  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
-             this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
-    qCritical("failed to disconnect endorsement slot");
+    if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+      this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
+      qCritical("failed to disconnect endorsement slot");
+    }
   }
 }
 
@@ -5843,7 +5847,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   }
 
   menu.addSeparator();
-  
+
 
   QModelIndex idx = ui->espList->selectionModel()->currentIndex();
   unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString()));

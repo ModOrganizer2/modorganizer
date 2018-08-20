@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <QPushButton>
 #include <QSet>
 #include <QSettings>
 #include <QString>
@@ -188,7 +189,7 @@ public:
    * @param password (out) received the password for nexus
    * @return true if automatic login is active, false otherwise
    **/
-  bool getNexusLogin(QString &username, QString &password) const;
+  bool getNexusApiKey(QString &apiKey) const;
 
   /**
    * @brief retrieve the login information for steam
@@ -249,7 +250,7 @@ public:
    * @param username username
    * @param password password
    */
-  void setNexusLogin(QString username, QString password);
+  void setNexusApiKey(QString apiKey);
 
   /**
    * @brief set the steam login information
@@ -475,13 +476,10 @@ private:
   {
   public:
     NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
-
     void update();
 
   private:
-    QCheckBox *m_loginCheckBox;
-    QLineEdit *m_usernameEdit;
-    QLineEdit *m_passwordEdit;
+    QPushButton *m_nexusConnect;
     QCheckBox *m_offlineBox;
     QCheckBox *m_proxyBox;
     QListWidget *m_knownServersList;
@@ -537,6 +535,8 @@ private:
 private slots:
 
   void resetDialogs();
+  void processApiKey(const QString &);
+  void checkApiKey(QPushButton *nexusButton);
 
 signals:
 

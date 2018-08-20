@@ -267,6 +267,7 @@ FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
+FIND_PACKAGE(Qt5WebSockets REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
@@ -325,7 +326,7 @@ ENDIF()
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
-                      Qt5::Qml Qt5::QuickWidgets Qt5::Network
+                      Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
@@ -368,12 +369,12 @@ SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls 
 INSTALL(
     CODE
     "EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     # run it a second time because on the first run it misses some files
     EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     EXECUTE_PROCESS(COMMAND

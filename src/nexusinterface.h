@@ -96,7 +96,7 @@ public:
    * @param modID id of the mod caller is interested in
    * @param userData user data to be returned with the result
    */
-  virtual void requestToggleEndorsement(QString gameName, int modID, bool endorse, QVariant userData);
+  virtual void requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QVariant userData);
 
 public slots:
 
@@ -255,9 +255,9 @@ public:
    * @param userData user data to be returned with the result
    * @return int an id to identify the request
    */
-  int requestToggleEndorsement(QString gameName, int modID, bool endorse, QObject *receiver, QVariant userData, const QString &subModule)
+  int requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData, const QString &subModule)
   {
-    return requestToggleEndorsement(gameName, modID, endorse, receiver, userData, subModule, getGame(gameName));
+    return requestToggleEndorsement(gameName, modID, modVersion, endorse, receiver, userData, subModule, getGame(gameName));
   }
 
   /**
@@ -269,7 +269,7 @@ public:
    * @param game the game with which the mods are associated
    * @return int an id to identify the request
    */
-  int requestToggleEndorsement(QString gameName, int modID, bool endorse, QObject *receiver, QVariant userData, const QString &subModule,
+  int requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData, const QString &subModule,
                                MOBase::IPluginGame const *game);
 
   /**
@@ -363,6 +363,7 @@ private:
 
   struct NXMRequestInfo {
     int m_ModID;
+    QString m_ModVersion;
     std::vector<int> m_ModIDList;
     int m_FileID;
     QNetworkReply *m_Reply;
@@ -385,6 +386,7 @@ private:
     int m_Endorse;
 
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 

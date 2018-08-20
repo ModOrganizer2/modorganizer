@@ -245,7 +245,7 @@ public slots:
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
 
-  bool nexusLogin(bool retry = false);
+  bool nexusApi(bool retry = false);
 
 signals:
 
@@ -267,7 +267,7 @@ private:
 
   QString commitSettings(const QString &iniFile);
 
-  bool queryLogin(QString &username, QString &password);
+  bool queryApi(QString &apiKey);
 
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
@@ -341,7 +341,6 @@ private:
 
   QThread m_RefresherThread;
 
-  bool m_AskForNexusPW;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
   bool m_ArchiveParsing{ m_Settings.archiveParsing() };

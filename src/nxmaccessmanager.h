@@ -43,12 +43,12 @@ public:
 
   void setNMMVersion(const QString &nmmVersion);
 
-  bool loggedIn() const;
+  bool validated() const;
 
-  bool loginAttempted() const;
-  bool loginWaiting() const;
+  bool validateAttempted() const;
+  bool validateWaiting() const;
 
-  void login(const QString &username, const QString &password);
+  void apiCheck(const QString &apiKey);
 
   void showCookies() const;
 
@@ -56,9 +56,11 @@ public:
 
   QString userAgent(const QString &subModule = QString()) const;
 
-  void startLoginCheck();
+  QString apiKey() const;
 
-  void refuseLogin();
+  void startValidationCheck();
+
+  void refuseValidation();
 
 signals:
 
@@ -74,18 +76,17 @@ signals:
    *
    * @param necessary true if a login was necessary and succeeded, false if the user is still logged in
    **/
-  void loginSuccessful(bool necessary);
+  void validateSuccessful(bool necessary);
 
-  void loginFailed(const QString &message);
+  void validateFailed(const QString &message);
 
   void credentialsReceived(const QString &userName, bool premium);
 
 private slots:
 
-  void loginChecked();
-  void loginFinished();
-  void loginError(QNetworkReply::NetworkError errorCode);
-  void loginTimeout();
+  void validateFinished();
+  void validateError(QNetworkReply::NetworkError errorCode);
+  void validateTimeout();
 
 protected:
 
@@ -95,38 +96,24 @@ protected:
 
 private:
 
-  void pageLogin();
-// void dlLogin();
-
-  bool hasLoginCookies() const;
-
-  void retrieveCredentials();
-
-private:
-
-  static const std::set<int> s_PremiumAccountStates;
-
-private:
-
-  QTimer m_LoginTimeout;
-  QNetworkReply *m_LoginReply;
+  QTimer m_ValidateTimeout;
+  QNetworkReply *m_ValidateReply;
   QProgressDialog *m_ProgressDialog { nullptr };
 
   QString m_MOVersion;
   QString m_NMMVersion;
 
-  QString m_Username;
-  QString m_Password;
+  QString m_ApiKey;
 
-  bool m_LoginAttempted;
+  bool m_ValidateAttempted;
   enum {
-    LOGIN_NOT_CHECKED,
-    LOGIN_CHECKING,
-    LOGIN_NOT_VALID,
-    LOGIN_ATTEMPT_FAILED,
-    LOGIN_REFUSED,
-    LOGIN_VALID
-  } m_LoginState = LOGIN_NOT_CHECKED;
+    VALIDATE_NOT_CHECKED,
+    VALIDATE_CHECKING,
+    VALIDATE_NOT_VALID,
+    VALIDATE_ATTEMPT_FAILED,
+    VALIDATE_REFUSED,
+    VALIDATE_VALID
+  } m_ValidateState = VALIDATE_NOT_CHECKED;
 
 };
 

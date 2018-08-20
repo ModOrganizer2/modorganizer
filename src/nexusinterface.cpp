@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QNetworkCookieJar>
+#include <QJsonDocument>
 
 #include <regex>
 
@@ -62,9 +63,9 @@ void NexusBridge::requestDownloadURL(QString gameName, int modID, int fileID, QV
   m_RequestIDs.insert(m_Interface->requestDownloadURL(gameName, modID, fileID, this, userData, m_SubModule));
 }
 
-void NexusBridge::requestToggleEndorsement(QString gameName, int modID, bool endorse, QVariant userData)
+void NexusBridge::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QVariant userData)
 {
-  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(gameName, modID, endorse, this, userData, m_SubModule));
+  m_RequestIDs.insert(m_Interface->requestToggleEndorsement(gameName, modID, modVersion, endorse, this, userData, m_SubModule));
 }
 
 void NexusBridge::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -85,17 +86,18 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
 
     QList<ModRepositoryFileInfo> fileInfoList;
 
-    QVariantList resultList = resultData.toList();
+    QVariantMap resultInfo = resultData.toMap();
+    QList resultList = resultInfo["files"].toList();
 
     for (const QVariant &file : resultList) {
       ModRepositoryFileInfo temp;
       QVariantMap fileInfo = file.toMap();
-      temp.uri = fileInfo["uri"].toString();
+      temp.uri = fileInfo["file_name"].toString();
       temp.name = fileInfo["name"].toString();
-      temp.description = fileInfo["description"].toString();
+      temp.description = fileInfo["changelog_html"].toString();
       temp.version = VersionInfo(fileInfo["version"].toString());
       temp.categoryID = fileInfo["category_id"].toInt();
-      temp.fileID = fileInfo["id"].toInt();
+      temp.fileID = fileInfo["file_id"].toInt();
       temp.fileSize = fileInfo["size"].toInt();
       fileInfoList.append(temp);
     }
@@ -399,10 +401,10 @@ int NexusInterface::requestDownloadURL(QString gameName, int modID, int fileID, 
 }
 
 
-int NexusInterface::requestToggleEndorsement(QString gameName, int modID, bool endorse, QObject *receiver, QVariant userData,
+int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
+  NXMRequestInfo requestInfo(modID, modVersion, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
   requestInfo.m_Endorse = endorse;
   m_RequestQueue.enqueue(requestInfo);
 
@@ -456,11 +458,11 @@ void NexusInterface::nextRequest()
     return;
   }
 
-  if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->loggedIn()) {
-    if (!getAccessManager()->loginAttempted()) {
+  if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->validated()) {
+    if (!getAccessManager()->validateAttempted()) {
       emit needLogin();
       return;
-    } else if (getAccessManager()->loginWaiting()) {
+    } else if (getAccessManager()->validateWaiting()) {
       return;
     }
   }
@@ -469,42 +471,51 @@ void NexusInterface::nextRequest()
   info.m_Timeout = new QTimer(this);
   info.m_Timeout->setInterval(60000);
 
+  QJsonObject postObject;
+  QJsonDocument postData(postObject);
+
   QString url;
   if (!info.m_Reroute) {
     bool hasParams = false;
     switch (info.m_Type) {
       case NXMRequestInfo::TYPE_DESCRIPTION: {
-        url = QString("%1/Mods/%2/").arg(info.m_URL).arg(info.m_ModID);
+        url = QString("%1/games/%2/mods/%3").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
       } break;
       case NXMRequestInfo::TYPE_FILES: {
-        url = QString("%1/Files/indexfrommod/%2/").arg(info.m_URL).arg(info.m_ModID);
+        url = QString("%1/games/%2/mods/%3/files").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
       } break;
       case NXMRequestInfo::TYPE_FILEINFO: {
-        url = QString("%1/Files/%2/").arg(info.m_URL).arg(info.m_FileID);
+        url = QString("%1/games/%2/mods/%3/files/%4").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
       } break;
       case NXMRequestInfo::TYPE_DOWNLOADURL: {
-        url = QString("%1/Files/download/%2").arg(info.m_URL).arg(info.m_FileID);
+        url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
       } break;
       case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
-        url = QString("%1/Mods/toggleendorsement/%2?lvote=%3").arg(info.m_URL).arg(info.m_ModID).arg(!info.m_Endorse);
-        hasParams = true;
+        QString endorse = info.m_Endorse ? "endorse" : "abstain";
+        url = QString("%1/games/%2/mods/%3/%4").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(endorse);
+        postObject.insert("Version", info.m_ModVersion);
+        postData.setObject(postObject);
       } break;
       case NXMRequestInfo::TYPE_GETUPDATES: {
         QString modIDList = VectorJoin<int>(info.m_ModIDList, ",");
         modIDList = "[" + modIDList + "]";
         url = QString("%1/Mods/GetUpdates?ModList=%2").arg(info.m_URL).arg(modIDList);
-        hasParams = true;
       } break;
     }
-    url.append(QString("%1game_id=%2").arg(hasParams ? '&' : '?').arg(info.m_NexusGameID));
   } else {
     url = info.m_URL;
   }
   QNetworkRequest request(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/xml");
-  request.setRawHeader("User-Agent", m_AccessManager->userAgent(info.m_SubModule).toUtf8());
+  request.setRawHeader("apikey", m_AccessManager->apiKey().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_AccessManager->userAgent(info.m_SubModule));
+  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+  request.setRawHeader("Protocol-Version", "0.5.5");
+  request.setRawHeader("Application-Version", QApplication::applicationVersion().toUtf8());
 
-  info.m_Reply = m_AccessManager->get(request);
+  if (postData.object().isEmpty())
+    info.m_Reply = m_AccessManager->get(request);
+  else
+    info.m_Reply = m_AccessManager->post(request, postData.toJson());
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));
   connect(info.m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
@@ -627,7 +638,7 @@ void NexusInterface::requestTimeout()
 namespace {
   QString get_management_url(MOBase::IPluginGame const *game)
   {
-    return "https://legacy-api.nexusmods.com/" + game->gameNexusName().toLower();
+    return "https://api.nexusmods.com/v1";
   }
 }
 
@@ -638,6 +649,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
                                                , MOBase::IPluginGame const *game
                                                )
   : m_ModID(modID)
+  , m_ModVersion("0")
   , m_FileID(0)
   , m_Reply(nullptr)
   , m_Type(type)
@@ -648,7 +660,30 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
-  , m_GameName(game->gameShortName())
+  , m_GameName(game->gameNexusName())
+  , m_Endorse(false)
+{}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
+  , QString modVersion
+  , NexusInterface::NXMRequestInfo::Type type
+  , QVariant userData
+  , const QString &subModule
+  , MOBase::IPluginGame const *game
+)
+  : m_ModID(modID)
+  , m_ModVersion(modVersion)
+  , m_FileID(0)
+  , m_Reply(nullptr)
+  , m_Type(type)
+  , m_UserData(userData)
+  , m_Timeout(nullptr)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(get_management_url(game))
+  , m_SubModule(subModule)
+  , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameNexusName())
   , m_Endorse(false)
 {}
 
@@ -659,6 +694,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
                                                , MOBase::IPluginGame const *game
                                                )
   : m_ModID(-1)
+  , m_ModVersion("0")
   , m_ModIDList(modIDList)
   , m_FileID(0)
   , m_Reply(nullptr)
@@ -670,18 +706,19 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(std::vector<int> modIDList
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
-  , m_GameName(game->gameShortName())
+  , m_GameName(game->gameNexusName())
   , m_Endorse(false)
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
-                                               , int fileID
-                                               , NexusInterface::NXMRequestInfo::Type type
-                                               , QVariant userData
-                                               , const QString &subModule
-                                               , MOBase::IPluginGame const *game
-                                               )
+  , int fileID
+  , NexusInterface::NXMRequestInfo::Type type
+  , QVariant userData
+  , const QString &subModule
+  , MOBase::IPluginGame const *game
+)
   : m_ModID(modID)
+  , m_ModVersion("0")
   , m_FileID(fileID)
   , m_Reply(nullptr)
   , m_Type(type)
@@ -692,6 +729,6 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_URL(get_management_url(game))
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
-  , m_GameName(game->gameShortName())
+  , m_GameName(game->gameNexusName())
   , m_Endorse(false)
 {}

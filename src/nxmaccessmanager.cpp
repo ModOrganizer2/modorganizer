@@ -42,21 +42,16 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 
 namespace {
-  QString const Nexus_Management_URL("https://legacy-api.nexusmods.com");
+  QString const nexusBaseUrl("https://api.nexusmods.com/v1");
 }
-
-// unfortunately Nexus doesn't seem to document these states, all I know is all these listed
-// are considered premium (27 should be lifetime premium)
-const std::set<int> NXMAccessManager::s_PremiumAccountStates { 4, 6, 13, 27, 31, 32 };
-
 
 NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
   : QNetworkAccessManager(parent)
-  , m_LoginReply(nullptr)
+  , m_ValidateReply(nullptr)
   , m_MOVersion(moVersion)
 {
-  m_LoginTimeout.setSingleShot(true);
-  m_LoginTimeout.setInterval(30000);
+  m_ValidateTimeout.setSingleShot(true);
+  m_ValidateTimeout.setInterval(30000);
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 
@@ -68,9 +63,9 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
 
 NXMAccessManager::~NXMAccessManager()
 {
-  if (m_LoginReply != nullptr) {
-    m_LoginReply->deleteLater();
-    m_LoginReply = nullptr;
+  if (m_ValidateReply != nullptr) {
+    m_ValidateReply->deleteLater();
+    m_ValidateReply = nullptr;
   }
 }
 
@@ -102,7 +97,7 @@ QNetworkReply *NXMAccessManager::createRequest(
 
 void NXMAccessManager::showCookies() const
 {
-  QUrl url(Nexus_Management_URL + "/");
+  QUrl url(nexusBaseUrl + "/");
   for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
     qDebug("%s - %s (expires: %s)",
            cookie.name().constData(), cookie.value().constData(),
@@ -120,104 +115,77 @@ void NXMAccessManager::clearCookies()
   }
 }
 
-void NXMAccessManager::startLoginCheck()
+void NXMAccessManager::startValidationCheck()
 {
-  if (hasLoginCookies()) {
-    qDebug("validating login cookies");
-    QNetworkRequest request(Nexus_Management_URL + "/Sessions/?Validate");
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-    request.setRawHeader("User-Agent", userAgent().toUtf8());
+  qDebug("Checking Nexus API Key...");
+  QString requestString = nexusBaseUrl + "/users/validate";
 
-    m_LoginReply = get(request);
-    m_LoginTimeout.start();
-    m_LoginState = LOGIN_CHECKING;
-    connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginChecked()));
-    connect(m_LoginReply, SIGNAL(error(QNetworkReply::NetworkError)),
-            this, SLOT(loginError(QNetworkReply::NetworkError)));
-  }
-}
-
-
-void NXMAccessManager::retrieveCredentials()
-{
-  qDebug("retrieving credentials");
-
-  QNetworkRequest request(Nexus_Management_URL + "/Core/Libs/Flamework/Entities/User?GetCredentials");
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
+  QNetworkRequest request(requestString);
+  request.setRawHeader("APIKEY", m_ApiKey.toUtf8());
   request.setRawHeader("User-Agent", userAgent().toUtf8());
 
-  QNetworkReply *reply = get(request);
-  QTimer timeout;
-  connect(&timeout, &QTimer::timeout, [reply] () {
-    reply->deleteLater();
-  });
-  timeout.start();
+  m_ProgressDialog = new QProgressDialog(nullptr);
+  m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
+  QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
+  buttons.at(0)->setEnabled(false);
+  m_ProgressDialog->show();
+  QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
 
-  connect(reply, &QNetworkReply::finished, [reply, this] () {
-    QJsonDocument jdoc = QJsonDocument::fromJson(reply->readAll());
-    QJsonArray credentialsData = jdoc.array();
-    emit credentialsReceived(credentialsData.at(2).toString(),
-                             s_PremiumAccountStates.find(credentialsData.at(1).toInt())
-                                                         != s_PremiumAccountStates.end());
-    reply->deleteLater();
-  });
-
-  connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
-          [=] (QNetworkReply::NetworkError) {
-    qDebug("failed to retrieve account credentials: %s", qUtf8Printable(reply->errorString()));
-    reply->deleteLater();
-  });
+  m_ValidateReply = get(request);
+  m_ValidateTimeout.start();
+  m_ValidateState = VALIDATE_CHECKING;
+  connect(m_ValidateReply, SIGNAL(finished()), this, SLOT(validateFinished()));
+  connect(m_ValidateReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(validateError(QNetworkReply::NetworkError)));
 }
 
 
-bool NXMAccessManager::loggedIn() const
+bool NXMAccessManager::validated() const
 {
-  if (m_LoginState == LOGIN_CHECKING) {
+  if (m_ValidateState == VALIDATE_CHECKING) {
     QProgressDialog progress;
     progress.setLabelText(tr("Verifying Nexus login"));
     progress.show();
-    while (m_LoginState == LOGIN_CHECKING) {
+    while (m_ValidateState == VALIDATE_CHECKING) {
       QCoreApplication::processEvents();
       QThread::msleep(100);
     }
     progress.hide();
   }
 
-  return m_LoginState == LOGIN_VALID;
+  return m_ValidateState == VALIDATE_VALID;
 }
 
 
-void NXMAccessManager::refuseLogin()
+void NXMAccessManager::refuseValidation()
 {
-  m_LoginState = LOGIN_REFUSED;
+  m_ValidateState = VALIDATE_REFUSED;
 }
 
 
-bool NXMAccessManager::loginAttempted() const
+bool NXMAccessManager::validateAttempted() const
 {
-  return m_LoginState != LOGIN_NOT_CHECKED;
+  return m_ValidateState != VALIDATE_NOT_CHECKED;
 }
 
 
-bool NXMAccessManager::loginWaiting() const
+bool NXMAccessManager::validateWaiting() const
 {
-  return m_LoginReply != nullptr;
+  return m_ValidateReply != nullptr;
 }
 
 
-void NXMAccessManager::login(const QString &username, const QString &password)
+void NXMAccessManager::apiCheck(const QString &apiKey)
 {
-  if (m_LoginReply != nullptr) {
+  if (m_ValidateReply != nullptr) {
     return;
   }
 
-  if (m_LoginState == LOGIN_VALID) {
-    emit loginSuccessful(false);
+  if (m_ValidateState == VALIDATE_VALID) {
+    emit validateSuccessful(false);
     return;
   }
-  m_Username = username;
-  m_Password = password;
-  pageLogin();
+  m_ApiKey = apiKey;
+  startValidationCheck();
 }
 
 
@@ -233,119 +201,64 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 }
 
 
-void NXMAccessManager::pageLogin()
+QString NXMAccessManager::apiKey() const
 {
-  qDebug("logging %s in on Nexus", qUtf8Printable(m_Username));
-  QString requestString = (Nexus_Management_URL + "/Sessions/?Login&uri=%1")
-                            .arg(QString(QUrl::toPercentEncoding(Nexus_Management_URL)));
-
-  QNetworkRequest request(requestString);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-
-  QByteArray postDataQuery;
-  QUrlQuery postData;
-  postData.addQueryItem("username", m_Username);
-  postData.addQueryItem("password", QUrl::toPercentEncoding(m_Password));
-  postDataQuery = postData.query(QUrl::EncodeReserved).toUtf8();
-
-  request.setRawHeader("User-Agent", userAgent().toUtf8());
-
-  m_ProgressDialog = new QProgressDialog(nullptr);
-  m_ProgressDialog->setLabelText(tr("Logging into Nexus"));
-  QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
-  buttons.at(0)->setEnabled(false);
-  m_ProgressDialog->show();
-  QCoreApplication::processEvents(); // for some reason the whole app hangs during the login. This way the user has at least a little feedback
-
-  m_LoginReply = post(request, postDataQuery);
-  m_LoginTimeout.start();
-  m_LoginState = LOGIN_CHECKING;
-  connect(m_LoginReply, SIGNAL(finished()), this, SLOT(loginFinished()));
-  connect(m_LoginReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(loginError(QNetworkReply::NetworkError)));
+  return m_ApiKey;
 }
 
 
-void NXMAccessManager::loginTimeout()
+void NXMAccessManager::validateTimeout()
 {
-  m_LoginReply->deleteLater();
-  m_LoginReply = nullptr;
-  m_LoginAttempted = false; // this usually means we might have success later
-  m_Username.clear();
-  m_Password.clear();
-  m_LoginState = LOGIN_NOT_VALID;
+  m_ValidateReply->deleteLater();
+  m_ValidateReply = nullptr;
+  m_ValidateAttempted = false; // this usually means we might have success later
+  m_ApiKey.clear();
+  m_ValidateState = VALIDATE_NOT_VALID;
 
-  emit loginFailed(tr("timeout"));
+  emit validateFailed(tr("timeout"));
 }
 
 
-void NXMAccessManager::loginError(QNetworkReply::NetworkError)
+void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 {
   qDebug("login error");
   if (m_ProgressDialog != nullptr) {
     m_ProgressDialog->deleteLater();
     m_ProgressDialog = nullptr;
   }
-  m_Username.clear();
-  m_Password.clear();
-  m_LoginState = LOGIN_NOT_VALID;
+  m_ApiKey.clear();
+  m_ValidateState = VALIDATE_NOT_VALID;
 
-  if (m_LoginReply != nullptr) {
-    emit loginFailed(m_LoginReply->errorString());
-    m_LoginReply->deleteLater();
-    m_LoginReply = nullptr;
+  if (m_ValidateReply != nullptr) {
+    emit validateFailed(m_ValidateReply->errorString());
+    m_ValidateReply->deleteLater();
+    m_ValidateReply = nullptr;
   } else {
-    emit loginFailed(tr("Unknown error"));
+    emit validateFailed(tr("Unknown error"));
   }
 }
 
 
-bool NXMAccessManager::hasLoginCookies() const
-{
-  QUrl url(Nexus_Management_URL + "/");
-  QList<QNetworkCookie> cookies = cookieJar()->cookiesForUrl(url);
-  for (const QNetworkCookie &cookie : cookies) {
-    if (cookie.name() == "sid") {
-      return true;
-    }
-  }
-  return false;
-}
-
-
-void NXMAccessManager::loginFinished()
+void NXMAccessManager::validateFinished()
 {
   if (m_ProgressDialog != nullptr) {
     m_ProgressDialog->deleteLater();
     m_ProgressDialog = nullptr;
   }
 
-  m_LoginReply->deleteLater();
-  m_LoginReply = nullptr;
-  m_Username.clear();
-  m_Password.clear();
+  if (m_ValidateReply != nullptr) {
+    QJsonDocument jdoc = QJsonDocument::fromJson(m_ValidateReply->readAll());
+    QJsonObject credentialsData = jdoc.object();
+    QString test = jdoc.toJson();
+    QString name = credentialsData.value("name").toString();
+    bool premium = credentialsData.value("is_premium?").toBool();
+    emit credentialsReceived(credentialsData.value("name").toString(),
+      credentialsData.value("is_premium?").toBool());
 
-  if (hasLoginCookies()) {
-    m_LoginState = LOGIN_VALID;
-    retrieveCredentials();
-    emit loginSuccessful(true);
-  } else {
-    m_LoginState = LOGIN_NOT_VALID;
-    emit loginFailed(tr("Please check your password"));
+    m_ValidateReply->deleteLater();
+    m_ValidateReply = nullptr;
+
+    m_ValidateState = VALIDATE_VALID;
+    emit validateSuccessful(true);
   }
-}
-
-
-void NXMAccessManager::loginChecked()
-{
-  QNetworkReply *reply = static_cast<QNetworkReply*>(sender());
-  QByteArray data = reply->readAll();
-  m_LoginState = data == "null" ? LOGIN_NOT_VALID
-                                : LOGIN_VALID;
-  if (m_LoginState == LOGIN_VALID) {
-    retrieveCredentials();
-  } else {
-    qDebug("cookies seem to be invalid");
-  }
-  m_LoginReply->deleteLater();
-  m_LoginReply = nullptr;
 }

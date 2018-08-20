@@ -1536,10 +1536,10 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   if (!info->version.isValid()) {
     info->version = info->newestVersion;
   }
-  info->fileName = result["uri"].toString();
+  info->fileName = result["file_name"].toString();
   info->fileCategory = result["category_id"].toInt();
-  info->fileTime = matchDate(result["date"].toString());
-  info->description = BBCode::convertToHTML(result["description"].toString());
+  info->fileTime = matchDate(result["uploaded_timestamp"].toString());
+  info->description = BBCode::convertToHTML(result["changelog_html"].toString());
 
   info->repository = "Nexus";
   info->gameName = gameName;
@@ -1554,22 +1554,11 @@ static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, i
 {
   int result = 0;
 
-  int users = map["ConnectedUsers"].toInt();
-  // 0 users is probably a sign that the server is offline. Since there is currently no
-  // mechanism to try a different server, we avoid those without users
-  if (users == 0) {
-    result -= 500;
-  } else {
-    result -= users;
-  }
-
-  auto preference = preferredServers.find(map["Name"].toString());
+  auto preference = preferredServers.find(map["name"].toString());
 
   if (preference != preferredServers.end()) {
     result += 100 + preference->second * 20;
   }
-
-  if (map["IsPremium"].toBool()) result += 5;
 
   return result;
 }

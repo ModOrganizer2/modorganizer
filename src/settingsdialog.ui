@@ -469,48 +469,11 @@ p, li { white-space: pre-wrap; }
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QCheckBox" name="loginCheckBox">
-            <property name="toolTip">
-             <string/>
-            </property>
-            <property name="whatsThis">
-             <string>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</string>
-            </property>
-            <property name="text">
-             <string>Automatically Log-In to Nexus</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QPushButton" name="nexusConnect">
               <property name="text">
-               <string>Username</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="usernameEdit">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Password</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="passwordEdit">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="echoMode">
-               <enum>QLineEdit::Password</enum>
+               <string>Connect to Nexus</string>
               </property>
              </widget>
             </item>
@@ -1387,9 +1350,6 @@ programs you are intentionally running.</string>
   <tabstop>browseProfilesDirBtn</tabstop>
   <tabstop>overwriteDirEdit</tabstop>
   <tabstop>browseOverwriteDirBtn</tabstop>
-  <tabstop>loginCheckBox</tabstop>
-  <tabstop>usernameEdit</tabstop>
-  <tabstop>passwordEdit</tabstop>
   <tabstop>clearCacheButton</tabstop>
   <tabstop>associateButton</tabstop>
   <tabstop>knownServersList</tabstop>

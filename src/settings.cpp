@@ -332,15 +332,12 @@ QString Settings::getNMMVersion() const
   return result;
 }
 
-bool Settings::getNexusLogin(QString &username, QString &password) const
+bool Settings::getNexusApiKey(QString &apiKey) const
 {
-  if (m_Settings.value("Settings/nexus_login", false).toBool()) {
-    username = m_Settings.value("Settings/nexus_username", "").toString();
-    password = deObfuscate(m_Settings.value("Settings/nexus_password", "").toString());
-    return true;
-  } else {
+  if (m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty())
     return false;
-  }
+  apiKey = deObfuscate(m_Settings.value("Settings/nexus_api_key", "").toString());
+  return true;
 }
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
@@ -431,11 +428,9 @@ QString Settings::executablesBlacklist() const
   ).toString();
 }
 
-void Settings::setNexusLogin(QString username, QString password)
+void Settings::setNexusApiKey(QString apiKey)
 {
-  m_Settings.setValue("Settings/nexus_login", true);
-  m_Settings.setValue("Settings/nexus_username", username);
-  m_Settings.setValue("Settings/nexus_password", obfuscate(password));
+  m_Settings.setValue("Settings/nexus_api_key", obfuscate(apiKey));
 }
 
 void Settings::setSteamLogin(QString username, QString password)
@@ -674,11 +669,29 @@ void Settings::resetDialogs()
   QuestionBoxMemory::resetDialogs();
 }
 
+void Settings::processApiKey(const QString &apiKey)
+{
+  m_Settings.setValue("Settings/nexus_api_key", obfuscate(apiKey));
+}
+
+void Settings::checkApiKey(QPushButton *nexusButton)
+{
+  if (m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty()) {
+    nexusButton->setEnabled(true);
+    nexusButton->setText("Connect to Nexus");
+    QMessageBox::warning(qApp->activeWindow(), tr("Error"),
+      tr("Failed to retrieve a Nexus API key! Please try again."
+        "A browser window should open asking you to authorize."));
+  }
+}
+
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
   SettingsDialog dialog(pluginContainer, parent);
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
+  connect(&dialog, SIGNAL(processApiKey(const QString &)), this, SLOT(processApiKey(const QString &)));
+  connect(&dialog, SIGNAL(closeApiConnection(QPushButton *)), this, SLOT(checkApiKey(QPushButton *)));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
@@ -960,9 +973,7 @@ void Settings::DiagnosticsTab::update()
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   : Settings::SettingsTab(parent, dialog)
-  , m_loginCheckBox(dialog.findChild<QCheckBox *>("loginCheckBox"))
-  , m_usernameEdit(dialog.findChild<QLineEdit *>("usernameEdit"))
-  , m_passwordEdit(dialog.findChild<QLineEdit *>("passwordEdit"))
+  , m_nexusConnect(dialog.findChild<QPushButton *>("nexusConnect"))
   , m_offlineBox(dialog.findChild<QCheckBox *>("offlineBox"))
   , m_proxyBox(dialog.findChild<QCheckBox *>("proxyBox"))
   , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
@@ -970,10 +981,9 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
         dialog.findChild<QListWidget *>("preferredServersList"))
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
 {
-  if (parent->automaticLoginEnabled()) {
-    m_loginCheckBox->setChecked(true);
-    m_usernameEdit->setText(m_Settings.value("Settings/nexus_username", "").toString());
-    m_passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
+  if (!m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty()) {
+    m_nexusConnect->setText("Nexus API Key Stored");
+    m_nexusConnect->setDisabled(true);
   }
 
   m_offlineBox->setChecked(parent->offlineMode());
@@ -1009,6 +1019,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
 
 void Settings::NexusTab::update()
 {
+  /*
   if (m_loginCheckBox->isChecked()) {
     m_Settings.setValue("Settings/nexus_login", true);
     m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
@@ -1018,6 +1029,7 @@ void Settings::NexusTab::update()
     m_Settings.remove("Settings/nexus_username");
     m_Settings.remove("Settings/nexus_password");
   }
+  */
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
   m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());

@@ -216,8 +216,10 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
   setNewestVersion(VersionInfo(result["version"].toString()));
   setNexusDescription(result["description"].toString());
 
-  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("voted_by_user"))) {
-    setEndorsedState(result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE);
+  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("endorsement"))) {
+    QVariantMap endorsement = result["endorsement"].toMap();
+    QString endorsementStatus = endorsement["endorse_status"].toString();
+    setEndorsedState(endorsementStatus.compare("Endorsed") == 0 ? ENDORSED_TRUE : ENDORSED_FALSE);
   }
   m_LastNexusQuery = QDateTime::currentDateTime();
   //m_MetaInfoChanged = true;
@@ -228,10 +230,17 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
 
 void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData)
 {
-  m_EndorsedState = resultData.toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
-  m_MetaInfoChanged = true;
-  saveMeta();
-  emit modDetailsUpdated(true);
+  QMap results = resultData.toMap();
+  if (results["code"].toInt() == 200 || results["code"].toInt() == 201) {
+    if (results["status"].toString().compare("Endorsed") == 0) {
+      m_EndorsedState = ENDORSED_TRUE;
+    } else {
+      m_EndorsedState = ENDORSED_FALSE;
+    }
+    m_MetaInfoChanged = true;
+    saveMeta();
+    emit modDetailsUpdated(true);
+  }
 }
 
 
@@ -435,7 +444,7 @@ bool ModInfoRegular::remove()
 void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == ENDORSED_TRUE)) {
-    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), doEndorse, QVariant(1));
+    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), m_Version.canonicalString(), doEndorse, QVariant(1));
   }
 }
 

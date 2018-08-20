@@ -621,7 +621,10 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     splash.show();
     splash.activateWindow();
 
-    NexusInterface::instance(&pluginContainer)->getAccessManager()->startLoginCheck();
+    QString apiKey;
+    if (organizer.settings().getNexusApiKey(apiKey)) {
+      NexusInterface::instance(&pluginContainer)->getAccessManager()->apiCheck(apiKey);
+    }
 
     qDebug("initializing tutorials");
     TutorialManager::init(
