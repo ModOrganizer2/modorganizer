@@ -344,7 +344,7 @@ private:
 
   static CrashDumpsType m_globalCrashDumpsType;
 
-  bool enable_archive_parsing_{ true };
+  bool enable_archive_parsing_{ m_Settings.enable_archive_parsing() };
 };
 
 #endif // ORGANIZERCORE_H

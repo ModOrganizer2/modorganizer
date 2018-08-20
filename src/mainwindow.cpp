@@ -1151,7 +1151,7 @@ void MainWindow::updateTo(QTreeWidgetItem* subTree, const std::wstring& director
 			auto isArchive = false;
 			const auto originID = current->getOrigin(isArchive);
 
-			if (!isArchive & show_data_archives)
+			if (!(isArchive & !show_data_archives))
 			{
 				auto fileName = ToQString(current->getName());
 				QStringList columns(fileName);
@@ -3936,7 +3936,6 @@ void MainWindow::on_actionSettings_triggered()
   const auto oldCacheDirectory(settings.getCacheDirectory());
   const auto oldProfilesDirectory(settings.getProfileDirectory());
   const auto oldDisplayForeign(settings.displayForeign());
-  const auto old_enable_archive_conflicts(settings.enable_archive_parsing());
   const auto proxy = settings.useProxy();
 
   settings.query(&m_PluginContainer, this);
@@ -3969,10 +3968,9 @@ void MainWindow::on_actionSettings_triggered()
       || (settings.displayForeign() != oldDisplayForeign)) {
     m_OrganizerCore.profileRefresh();
   }
-
-  if (settings.enable_archive_parsing() != old_enable_archive_conflicts)
+  const auto state = settings.enable_archive_parsing();
+  if (state != m_OrganizerCore.get_archive_conflicts())
   {
-	  const auto state = settings.enable_archive_parsing();
 	  m_OrganizerCore.set_archive_conflicts(state);
 	  if (!state)
 	  {

@@ -413,7 +413,8 @@ bool Settings::displayForeign() const
 
 bool Settings::enable_archive_parsing() const
 {
-	return m_Settings.value("Settings/archive_parsing", true).toBool();
+	bool test = m_Settings.value("Settings/archive_conflicts", true).toBool();
+	return test;
 }
 
 void Settings::setMotDHash(uint hash)
