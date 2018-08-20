@@ -113,12 +113,14 @@ public:
    * @param profileName name of the current profile
    * @param baseDirectory the root directory structure representing the virtual data directory
    * @param lockedOrderFile list of plugins that shouldn't change load order
+   * @param force
+   * @param refresh
    * @todo the profile is not used? If it was, we should pass the Profile-object instead
    **/
   void refresh(const QString &profileName
                , const MOShared::DirectoryEntry &baseDirectory
                , const QString &lockedOrderFile
-               , bool refresh);
+               , bool force);
 
   /**
    * @brief enable a plugin based on its name
