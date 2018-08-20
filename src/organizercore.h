@@ -337,7 +337,7 @@ private:
   bool m_AskForNexusPW;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
-  bool enableArchiveParsing_{ m_Settings.enableArchiveParsing() };
+  bool m_ArchiveParsing{ m_Settings.archiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;

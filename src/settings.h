@@ -261,7 +261,7 @@ public:
   /**
   * @return true if the user wants to have archives being parsed to show conflicts and contents
   */
-  bool enableArchiveParsing() const;
+  bool archiveParsing() const;
 
   /**
    * @return hash of the last displayed message of the day
@@ -484,7 +484,7 @@ private:
     QCheckBox *m_hideUncheckedBox;
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
-	QCheckBox *m_enableArchiveParsing_;
+	QCheckBox *m_enableArchiveParsingBox;
   };
 
 private slots:

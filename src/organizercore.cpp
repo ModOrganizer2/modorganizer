@@ -788,12 +788,12 @@ std::wstring OrganizerCore::crashDumpsPath() {
 
 bool OrganizerCore::getArchiveParsing() const
 {
-	return enableArchiveParsing_;
+	return m_ArchiveParsing;
 }
 
 void OrganizerCore::setArchiveParsing(const bool archiveParsing)
 {
-	enableArchiveParsing_ = archiveParsing;
+	m_ArchiveParsing = archiveParsing;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -1903,7 +1903,7 @@ IPluginGame const *OrganizerCore::managedGame() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  if (enableArchiveParsing_) {
+  if (m_ArchiveParsing) {
 	  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
 	  if (archiveFile.open(QIODevice::ReadOnly)) {
 		  while (!archiveFile.atEnd()) {

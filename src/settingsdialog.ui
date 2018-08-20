@@ -972,7 +972,7 @@ If you disable this feature, MO will only display official DLCs this way. Please
         </widget>
        </item>
         <item>
-          <widget class="QCheckBox" name="enableArchiveParsing">
+          <widget class="QCheckBox" name="enableArchiveParsingBox">
             <property name="toolTip">
               <string>Enable parsing of Archives Archives, has effects on perfromance.</string>
             </property>

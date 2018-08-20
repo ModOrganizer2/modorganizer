@@ -367,7 +367,7 @@ private:
 
   bool m_closing{ false };
 
-  bool showArchiveData{ true };
+  bool m_showArchiveData{ true };
 
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
@@ -579,7 +579,7 @@ private slots: // ui slots
   void on_btnRefreshData_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
-  void on_showArchiveData_toggled(bool checked);
+  void on_showArchiveDataCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);

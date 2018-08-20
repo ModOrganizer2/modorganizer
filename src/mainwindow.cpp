@@ -441,15 +441,15 @@ MainWindow::MainWindow(QSettings &initSettings
 
   if (m_OrganizerCore.getArchiveParsing())
   {
-	  ui->showArchiveData->setCheckState(Qt::Checked);
-	  ui->showArchiveData->setEnabled(true);
-	  showArchiveData = true;
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+	  ui->showArchiveDataCheckBox->setEnabled(true);
+	  m_showArchiveData = true;
   }
   else
   {
-	  ui->showArchiveData->setCheckState(Qt::Unchecked);
-	  ui->showArchiveData->setEnabled(false);
-	  showArchiveData = false;
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+	  ui->showArchiveDataCheckBox->setEnabled(false);
+	  m_showArchiveData = false;
   }
 
   refreshExecutablesList();
@@ -1148,14 +1148,8 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-
-//if (!(isArchive & !showArchiveData))
-//{
-//
-//	if (conflictsOnly || !showArchiveData)
-//				{
-
-void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
+void MainWindow::updateTo(QTreeWidgetItem* subTree, const std::wstring& directorySoFar,
+	const DirectoryEntry& directoryEntry, const bool conflictsOnly)
 {
 	{
 		for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
@@ -1164,7 +1158,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
 			}
 			bool isArchive = false;
 			int originID = current->getOrigin(isArchive);
-			if (!(isArchive & !showArchiveData))
+			if (!(isArchive & !m_showArchiveData))
 			{
 				QString fileName = ToQString(current->getName());
 				QStringList columns(fileName);
@@ -1233,7 +1227,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
 			columns.append("");
 			if (!(*current)->isEmpty()) {
 				QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-				if (conflictsOnly || !showArchiveData) {
+				if (conflictsOnly || !m_showArchiveData) {
 					updateTo(directoryChild, temp.str(), **current, conflictsOnly);
 					if (directoryChild->childCount() != 0) {
 						subTree->addChild(directoryChild);
@@ -3963,21 +3957,21 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.profileRefresh();
   }
 
-  const auto state = settings.enableArchiveParsing();
+  const auto state = settings.archiveParsing();
   if (state != m_OrganizerCore.getArchiveParsing())
   {
 	  m_OrganizerCore.setArchiveParsing(state);
 	  if (!state)
 	  {
-		  ui->showArchiveData->setCheckState(Qt::Unchecked);
-		  ui->showArchiveData->setEnabled(false);
-		  showArchiveData = false;
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+		  ui->showArchiveDataCheckBox->setEnabled(false);
+		  m_showArchiveData = false;
 	  }
 	  else
 	  {
-		  ui->showArchiveData->setCheckState(Qt::Checked);
-		  ui->showArchiveData->setEnabled(true);
-		  showArchiveData = true;
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+		  ui->showArchiveDataCheckBox->setEnabled(true);
+		  m_showArchiveData = true;
 	  }
 	  m_OrganizerCore.refreshModList();
 	  m_OrganizerCore.refreshDirectoryStructure();
@@ -5482,15 +5476,15 @@ void MainWindow::on_clearFiltersButton_clicked()
 	deselectFilters();
 }
 
-void MainWindow::on_showArchiveData_toggled(const bool checked)
+void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
 {
 	if (m_OrganizerCore.getArchiveParsing() && checked)
 	{
-		showArchiveData = checked;
+		m_showArchiveData = checked;
 	}
 	else
 	{
-		showArchiveData = false;
+		m_showArchiveData = false;
 	}
 	refreshDataTree();
 }

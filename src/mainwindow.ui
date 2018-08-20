@@ -1157,7 +1157,7 @@ p, li { white-space: pre-wrap; }
                        </widget>
                      </item>
                      <item>
-                       <widget class="QCheckBox" name="showArchiveData">
+                       <widget class="QCheckBox" name="showArchiveDataCheckBox">
                          <property name="toolTip">
                            <string>Filters the above list so that files from archives are not shown</string>
                          </property>

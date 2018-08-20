@@ -414,7 +414,7 @@ uint Settings::getMotDHash() const
   return m_Settings.value("motd_hash", 0).toUInt();
 }
 
-bool Settings::enableArchiveParsing() const
+bool Settings::archiveParsing() const
 {
 	return m_Settings.value("Settings/archive_parsing", true).toBool();
 }
@@ -963,7 +963,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
-  , m_enableArchiveParsing_(m_dialog.findChild<QCheckBox *>("enableArchiveParsing"))
+  , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -997,7 +997,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
-  m_enableArchiveParsing_->setChecked(m_parent->enableArchiveParsing());
+  m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
 
 }
 
@@ -1013,5 +1013,5 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
-  m_Settings.setValue("Settings/archive_parsing", m_enableArchiveParsing_->isChecked());
+  m_Settings.setValue("Settings/archive_parsing", m_enableArchiveParsingBox->isChecked());
 }
