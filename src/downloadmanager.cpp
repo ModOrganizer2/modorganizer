@@ -703,7 +703,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       DownloadState minState;
       if (index == -3) {
         minState = STATE_UNINSTALLED;
-      } 
+      }
       else
 			  minState = index == -1 ? STATE_READY : STATE_INSTALLED;
 
@@ -804,8 +804,10 @@ void DownloadManager::resumeDownloadInt(int index)
   if (info->isPausedState() || info->m_State == STATE_PAUSING) {
     if (info->m_State == STATE_PAUSING) {
       if (info->m_Output.isOpen()) {
-        info->m_Output.write(info->m_Reply->readAll());
-        setState(info, STATE_PAUSED);
+        writeData(info);
+        if (info->m_State == STATE_PAUSING) {
+          setState(info, STATE_PAUSED);
+        }
       }
     }
     if ((info->m_Urls.size() == 0)
@@ -927,10 +929,27 @@ void DownloadManager::visitOnNexus(int index)
   }
 }
 
+void DownloadManager::openFile(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("OpenFile: invalid download index %1").arg(index));
+    return;
+  }
+  QDir path = QDir(m_OutputDirectory);
+  if (path.exists(getFileName(index))) {
+
+    ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(getFilePath(index))).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    return;
+  }
+
+  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  return;
+}
+
 void DownloadManager::openInDownloadsFolder(int index)
 {
   if ((index < 0) || (index >= m_ActiveDownloads.size())) {
-    reportError(tr("VisitNexus: invalid download index %1").arg(index));
+    reportError(tr("OpenFileInDownloadsFolder: invalid download index %1").arg(index));
     return;
   }
   QString params = "/select,\"";
@@ -1345,10 +1364,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 void DownloadManager::downloadReadyRead()
 {
   try {
-    DownloadInfo *info = findDownload(this->sender());
-    if (info != nullptr) {
-      info->m_Output.write(info->m_Reply->readAll());
-    }
+    writeData(findDownload(this->sender()));
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in processing downloaded data)."));
   }
@@ -1428,18 +1444,6 @@ QDateTime DownloadManager::matchDate(const QString &timeString)
 }
 
 
-static EFileCategory convertFileCategory(int id)
-{
-  // TODO: need to handle file categories in the mod page plugin
-  switch (id) {
-    case 0: return TYPE_MAIN;
-    case 1: return TYPE_UPDATE;
-    case 2: return TYPE_OPTION;
-    default: return TYPE_MAIN;
-  }
-}
-
-
 void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
@@ -1476,7 +1480,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
-      info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+      info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
       info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
       info->m_FileInfo->fileID = fileInfo["id"].toInt();
       info->m_FileInfo->fileName = fileInfo["uri"].toString();
@@ -1501,7 +1505,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
         QVariantMap fileInfo = selection.getChoiceData().toMap();
         info->m_FileInfo->name = fileInfo["name"].toString();
         info->m_FileInfo->version.parse(fileInfo["version"].toString());
-        info->m_FileInfo->fileCategory = convertFileCategory(fileInfo["category_id"].toInt());
+        info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
         info->m_FileInfo->fileID = fileInfo["id"].toInt();
       } else {
         emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
@@ -1832,6 +1836,20 @@ void DownloadManager::checkDownloadTimeout()
       pauseDownload(i);
       downloadFinished(i);
       resumeDownload(i);
+    }
+  }
+}
+
+void DownloadManager::writeData(DownloadInfo *info)
+{
+  if (info != nullptr) {
+    qint64 ret = info->m_Output.write(info->m_Reply->readAll());
+    if (ret < info->m_Reply->size()) {
+      setState(info, DownloadState::STATE_CANCELED);
+      qCritical(QString("Unable to write download \"%2\" to drive (return %1)").arg(ret).arg(info->m_FileName).toLocal8Bit());
+      reportError(tr("Unable to write download to drive (return %1).\n"
+                     "Check the drive's available storage.\n\n"
+                     "Canceling download \"%2\"...").arg(ret).arg(info->m_FileName));
     }
   }
 }

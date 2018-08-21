@@ -289,6 +289,47 @@ void PluginList::enableESP(const QString &name, bool enable)
   }
 }
 
+void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
+{
+  if (selectionModel->hasSelection()){
+    bool dirty = false;
+    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
+      int rowPriority = row.data().toInt();
+      for (int i = 0; i < m_ESPs.size(); i++) {
+        if (m_ESPs[i].m_Priority == rowPriority) {
+          if (!m_ESPs[i].m_Enabled) {
+            m_ESPs[i].m_Enabled = true;
+            dirty = true;
+          }
+          
+          break;
+        }
+      }
+    }
+    if (dirty) emit writePluginsList();
+  }
+}
+
+void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
+{
+  if (selectionModel->hasSelection()){
+    bool dirty = false;
+    for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
+      int rowPriority = row.data().toInt();
+      for (int i = 0; i < m_ESPs.size(); i++) {
+        if (m_ESPs[i].m_Priority == rowPriority) {
+          if (!m_ESPs[i].m_ForceEnabled && m_ESPs[i].m_Enabled) {
+            m_ESPs[i].m_Enabled = false;
+            dirty = true;
+          }
+          break;
+        }
+      }
+    }
+    if (dirty) emit writePluginsList();
+  }
+}
+
 
 void PluginList::enableAll()
 {

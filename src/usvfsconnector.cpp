@@ -166,6 +166,10 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   ClearVirtualMappings();
 
   for (auto map : mapping) {
+    if (progress.wasCanceled()) {
+      ClearVirtualMappings();
+      throw UsvfsConnectorException("VFS mapping canceled by user");
+    }
     progress.setValue(value++);
     if (value % 10 == 0) {
       QCoreApplication::processEvents();

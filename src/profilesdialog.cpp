@@ -53,6 +53,7 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
   , ui(new Ui::ProfilesDialog)
   , m_FailState(false)
   , m_Game(game)
+  , m_ActiveProfileName("")
 {
   ui->setupUi(this);
 
@@ -66,6 +67,7 @@ ProfilesDialog::ProfilesDialog(const QString &profileName, MOBase::IPluginGame c
     QListWidgetItem *item = addItem(profileIter.filePath());
     if (profileName == profileIter.fileName()) {
       ui->profilesList->setCurrentItem(item);
+      m_ActiveProfileName = profileName;
     }
   }
 
@@ -182,13 +184,19 @@ void ProfilesDialog::on_copyProfileButton_clicked()
 
 void ProfilesDialog::on_removeProfileButton_clicked()
 {
+  Profile::Ptr profileToDelete = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
+  if (profileToDelete->name() == m_ActiveProfileName) {
+    QMessageBox::warning(this, tr("Deleting active profile"),
+                         tr("Unable to delete active profile.  Please change to a different profile first."));
+    return;
+  }
+
   QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile (including local savegames if any)?"),
-                         QMessageBox::Yes | QMessageBox::No);
+                         QMessageBox::Yes | QMessageBox::No, this);
 
   if (confirmBox.exec() == QMessageBox::Yes) {
-    Profile::Ptr currentProfile = ui->profilesList->currentItem()->data(Qt::UserRole).value<Profile::Ptr>();
     QString profilePath;
-    if (currentProfile.get() == nullptr) {
+    if (profileToDelete.get() == nullptr) {
       profilePath = Settings::instance().getProfileDirectory()
                   + "/" + ui->profilesList->currentItem()->text();
       if (QMessageBox::question(this, tr("Profile broken"),
@@ -199,7 +207,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     } else {
       // on destruction, the profile object would write the profile.ini file again, so
       // we have to get rid of the it before deleting the directory
-      profilePath = currentProfile->absolutePath();
+      profilePath = profileToDelete->absolutePath();
     }
     QListWidgetItem* item = ui->profilesList->takeItem(ui->profilesList->currentRow());
     if (item != nullptr) {

@@ -1,4 +1,4 @@
-/* v3.0 Paper Light by 6788-00 */
+/* v3.0.1 Paper Light by 6788-00 */
 /* https://6788-00.tumblr.com/ */
 
 /* Main Window */
@@ -54,7 +54,6 @@ QToolBar::separator {
 }
 
 QToolButton {
-	background: #FFFFFF;
 	padding: 4px 6px;
 	border-radius: 6px;
 	margin: 4px 4px 0px 4px;
@@ -413,6 +412,8 @@ QProgressBar {
 
 QProgressBar::chunk {
     background: #008F8F;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
 }
 
 /* Right Pane and Tab Bars */
@@ -448,7 +449,8 @@ QTabBar::tab:disabled {
 }
 
 QTabBar::tab:selected {
-	color: #008484;
+	background: #008484;
+	color: #FFFFFF;
 
 }
 
@@ -504,4 +506,36 @@ QSlider::handle:horizontal:hover {
 QTableView {
 	gridline-color: #EFEFEF;
 	border: 0px;
+}
+
+/* downloads tab */
+
+QWidget#downloadTab QAbstractScrollArea {
+	/* background of the entire downloads tab */
+	background: #EFEFEF;
+}
+
+DownloadListWidget QFrame, 
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #FFFFFF;
+}
+
+DownloadListWidget QFrame#frame {
+	/* outer box of an entry on the Downloads tab */
+	border: 2px solid #FFFFFF;
+}
+
+DownloadListWidget QLabel#installLabel {
+	color: none;
+}
+
+/* compact downloads view */
+
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #FFFFFF;
+	padding: 4px;
 }
