@@ -804,8 +804,10 @@ void DownloadManager::resumeDownloadInt(int index)
   if (info->isPausedState() || info->m_State == STATE_PAUSING) {
     if (info->m_State == STATE_PAUSING) {
       if (info->m_Output.isOpen()) {
-        info->m_Output.write(info->m_Reply->readAll());
-        setState(info, STATE_PAUSED);
+        writeData(info);
+        if (info->m_State == STATE_PAUSING) {
+          setState(info, STATE_PAUSED);
+        }
       }
     }
     if ((info->m_Urls.size() == 0)
@@ -1362,10 +1364,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 void DownloadManager::downloadReadyRead()
 {
   try {
-    DownloadInfo *info = findDownload(this->sender());
-    if (info != nullptr) {
-      info->m_Output.write(info->m_Reply->readAll());
-    }
+    writeData(findDownload(this->sender()));
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in processing downloaded data)."));
   }
@@ -1837,6 +1836,20 @@ void DownloadManager::checkDownloadTimeout()
       pauseDownload(i);
       downloadFinished(i);
       resumeDownload(i);
+    }
+  }
+}
+
+void DownloadManager::writeData(DownloadInfo *info)
+{
+  if (info != nullptr) {
+    qint64 ret = info->m_Output.write(info->m_Reply->readAll());
+    if (ret < info->m_Reply->size()) {
+      setState(info, DownloadState::STATE_CANCELED);
+      qCritical(QString("Unable to write download \"%2\" to drive (return %1)").arg(ret).arg(info->m_FileName).toLocal8Bit());
+      reportError(tr("Unable to write download to drive (return %1).\n"
+                     "Check the drive's available storage.\n\n"
+                     "Canceling download \"%2\"...").arg(ret).arg(info->m_FileName));
     }
   }
 }
