@@ -971,6 +971,27 @@ If you disable this feature, MO will only display official DLCs this way. Please
          </property>
         </widget>
        </item>
+        <item>
+          <widget class="QCheckBox" name="enableArchiveParsingBox">
+            <property name="toolTip">
+              <string>Enable parsing of Archives Archives, has effects on perfromance.</string>
+            </property>
+            <property name="whatsThis">
+              <string>
+                By default Mod Organizer will parse Archive files to calculate conflicts between themselves and loose files, this process has a noticeable cost in performance.
+                This feature should not be confused from the one offered by ModOrganizer 1, ModOrganizer 2 will only show conflicts with archives NOT load them into the game or program.
+
+                If you disable this feature, MO will only display conflicts with Loose files.
+              </string>
+            </property>
+            <property name="text">
+              <string>Enable parsing of Archives</string>
+            </property>
+            <property name="checked">
+              <bool>true</bool>
+            </property>
+          </widget>
+        </item>
        <item>
         <widget class="QPushButton" name="bsaDateBtn">
          <property name="toolTip">

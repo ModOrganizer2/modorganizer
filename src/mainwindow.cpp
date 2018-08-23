@@ -439,6 +439,19 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
 
+  if (m_OrganizerCore.getArchiveParsing())
+  {
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+	  ui->showArchiveDataCheckBox->setEnabled(true);
+	  m_showArchiveData = true;
+  }
+  else
+  {
+	  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+	  ui->showArchiveDataCheckBox->setEnabled(false);
+	  m_showArchiveData = false;
+  }
+
   refreshExecutablesList();
   updateToolBar();
 
@@ -1135,100 +1148,107 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
+void MainWindow::updateTo(QTreeWidgetItem* subTree, const std::wstring& directorySoFar,
+	const DirectoryEntry& directoryEntry, const bool conflictsOnly)
 {
-  {
-    for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
-      if (conflictsOnly && (current->getAlternatives().size() == 0)) {
-        continue;
-      }
+	{
+		for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
+			if (conflictsOnly && (current->getAlternatives().size() == 0)) {
+				continue;
+			}
+			bool isArchive = false;
+			int originID = current->getOrigin(isArchive);
+			if (!(isArchive & !m_showArchiveData))
+			{
+				QString fileName = ToQString(current->getName());
+				QStringList columns(fileName);
+				FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
+				QString source("data");
+				unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
+				if (modIndex != UINT_MAX) {
+					ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+					source = modInfo->name();
+				}
 
-      QString fileName = ToQString(current->getName());
-      QStringList columns(fileName);
-      bool isArchive = false;
-      int originID = current->getOrigin(isArchive);
-      FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
-      QString source("data");
-      unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
-      if (modIndex != UINT_MAX) {
-        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-        source = modInfo->name();
-      }
+				std::pair<std::wstring, int> archive = current->getArchive();
+				if (archive.first.length() != 0) {
+					source.append(" (").append(ToQString(archive.first)).append(")");
+				}
+				columns.append(source);
+				QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
+				if (isArchive) {
+					QFont font = fileChild->font(0);
+					font.setItalic(true);
+					fileChild->setFont(0, font);
+					fileChild->setFont(1, font);
+				}
+				else if (fileName.endsWith(ModInfo::s_HiddenExt)) {
+					QFont font = fileChild->font(0);
+					font.setStrikeOut(true);
+					fileChild->setFont(0, font);
+					fileChild->setFont(1, font);
+				}
+				fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
+				fileChild->setData(0, Qt::UserRole + 1, isArchive);
+				fileChild->setData(1, Qt::UserRole, source);
+				fileChild->setData(1, Qt::UserRole + 1, originID);
 
-      std::pair<std::wstring, int> archive = current->getArchive();
-      if (archive.first.length() != 0) {
-        source.append(" (").append(ToQString(archive.first)).append(")");
-      }
-      columns.append(source);
-      QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
-      if (isArchive) {
-        QFont font = fileChild->font(0);
-        font.setItalic(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      } else if (fileName.endsWith(ModInfo::s_HiddenExt)) {
-        QFont font = fileChild->font(0);
-        font.setStrikeOut(true);
-        fileChild->setFont(0, font);
-        fileChild->setFont(1, font);
-      }
-      fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
-      fileChild->setData(0, Qt::UserRole + 1, isArchive);
-      fileChild->setData(1, Qt::UserRole, source);
-      fileChild->setData(1, Qt::UserRole + 1, originID);
+				std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
 
-      std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
+				if (!alternatives.empty()) {
+					std::wostringstream altString;
+					altString << ToWString(tr("Also in: <br>"));
+					for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
+						altIter != alternatives.end(); ++altIter) {
+						if (altIter != alternatives.begin()) {
+							altString << " , ";
+						}
+						altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
+					}
+					fileChild->setToolTip(1, QString("%1").arg(ToQString(altString.str())));
+					fileChild->setForeground(1, QBrush(Qt::red));
+				}
+				else {
+					fileChild->setToolTip(1, tr("No conflict"));
+				}
+				subTree->addChild(fileChild);
+			}
+		}
+	}
 
-      if (!alternatives.empty()) {
-        std::wostringstream altString;
-        altString << ToWString(tr("Also in: <br>"));
-        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-             altIter != alternatives.end(); ++altIter) {
-          if (altIter != alternatives.begin()) {
-            altString << " , ";
-          }
-          altString << "<span style=\"white-space: nowrap;\"><i>" << m_OrganizerCore.directoryStructure()->getOriginByID(altIter->first).getName() << "</font></span>";
-        }
-        fileChild->setToolTip(1, QString("%1").arg(ToQString(altString.str())));
-        fileChild->setForeground(1, QBrush(Qt::red));
-      } else {
-        fileChild->setToolTip(1, tr("No conflict"));
-      }
-      subTree->addChild(fileChild);
-    }
-  }
+	std::wostringstream temp;
+	temp << directorySoFar << "\\" << directoryEntry.getName();
+	{
+		std::vector<DirectoryEntry*>::const_iterator current, end;
+		directoryEntry.getSubDirectories(current, end);
+		for (; current != end; ++current) {
+			QString pathName = ToQString((*current)->getName());
+			QStringList columns(pathName);
+			columns.append("");
+			if (!(*current)->isEmpty()) {
+				QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+				if (conflictsOnly || !m_showArchiveData) {
+					updateTo(directoryChild, temp.str(), **current, conflictsOnly);
+					if (directoryChild->childCount() != 0) {
+						subTree->addChild(directoryChild);
+					}
+					else {
+						delete directoryChild;
+					}
+				}
+				else {
+					QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
+					onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
+					onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
+					onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
+					directoryChild->addChild(onDemandLoad);
+					subTree->addChild(directoryChild);
+				}
+			}
+		}
+	}
 
-  std::wostringstream temp;
-  temp << directorySoFar << "\\" << directoryEntry.getName();
-  {
-    std::vector<DirectoryEntry*>::const_iterator current, end;
-    directoryEntry.getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      QString pathName = ToQString((*current)->getName());
-      QStringList columns(pathName);
-      columns.append("");
-      if (!(*current)->isEmpty()) {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        if (conflictsOnly) {
-          updateTo(directoryChild, temp.str(), **current, conflictsOnly);
-          if (directoryChild->childCount() != 0) {
-            subTree->addChild(directoryChild);
-          } else {
-            delete directoryChild;
-          }
-        } else {
-          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
-          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
-          onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
-          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
-          directoryChild->addChild(onDemandLoad);
-          subTree->addChild(directoryChild);
-        }
-      }
-    }
-  }
-
-  subTree->sortChildren(0, Qt::AscendingOrder);
+	subTree->sortChildren(0, Qt::AscendingOrder);
 }
 
 void MainWindow::delayedRemove()
@@ -3937,6 +3957,27 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.profileRefresh();
   }
 
+  const auto state = settings.archiveParsing();
+  if (state != m_OrganizerCore.getArchiveParsing())
+  {
+	  m_OrganizerCore.setArchiveParsing(state);
+	  if (!state)
+	  {
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+		  ui->showArchiveDataCheckBox->setEnabled(false);
+		  m_showArchiveData = false;
+	  }
+	  else
+	  {
+		  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+		  ui->showArchiveDataCheckBox->setEnabled(true);
+		  m_showArchiveData = true;
+	  }
+	  m_OrganizerCore.refreshModList();
+	  m_OrganizerCore.refreshDirectoryStructure();
+	  m_OrganizerCore.refreshLists();
+  }
+
   if (settings.getCacheDirectory() != oldCacheDirectory) {
     NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
@@ -5433,4 +5474,17 @@ void MainWindow::on_clickBlankButton_clicked()
 void MainWindow::on_clearFiltersButton_clicked()
 {
 	deselectFilters();
+}
+
+void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
+{
+	if (m_OrganizerCore.getArchiveParsing() && checked)
+	{
+		m_showArchiveData = checked;
+	}
+	else
+	{
+		m_showArchiveData = false;
+	}
+	refreshDataTree();
 }

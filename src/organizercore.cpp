@@ -786,6 +786,16 @@ std::wstring OrganizerCore::crashDumpsPath() {
     ).toStdWString();
 }
 
+bool OrganizerCore::getArchiveParsing() const
+{
+	return m_ArchiveParsing;
+}
+
+void OrganizerCore::setArchiveParsing(const bool archiveParsing)
+{
+	m_ArchiveParsing = archiveParsing;
+}
+
 void OrganizerCore::setCurrentProfile(const QString &profileName)
 {
   if ((m_CurrentProfile != nullptr)
@@ -1893,12 +1903,14 @@ IPluginGame const *OrganizerCore::managedGame() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
-    }
-    archiveFile.close();
+  if (m_ArchiveParsing) {
+	  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+	  if (archiveFile.open(QIODevice::ReadOnly)) {
+		  while (!archiveFile.atEnd()) {
+			  result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+		  }
+		  archiveFile.close();
+	  }
   }
   return result;
 }
