@@ -471,6 +471,10 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       m_CachedContent.push_back(CONTENT_INI);
     }
 
+    if (dir.entryList(QStringList() << "*.modgroups").size() > 0) {
+      m_CachedContent.push_back(CONTENT_MODGROUP);
+    }
+
     ScriptExtender *extender = qApp->property("managed_game")
                                    .value<IPluginGame *>()
                                    ->feature<ScriptExtender>();
