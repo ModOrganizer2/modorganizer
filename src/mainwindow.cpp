@@ -1764,6 +1764,11 @@ void MainWindow::on_btnRefreshData_clicked()
   m_OrganizerCore.refreshDirectoryStructure();
 }
 
+void MainWindow::on_btnRefreshDownloads_clicked()
+{
+  m_OrganizerCore.downloadManager()->refreshList();
+}
+
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
   if (index == 0) {
