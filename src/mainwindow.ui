@@ -1238,6 +1238,20 @@ p, li { white-space: pre-wrap; }
                  <number>2</number>
                 </property>
                 <item>
+				 <widget class="QPushButton" name="btnRefreshDownloads">
+                  <property name="toolTip">
+                   <string>Refresh downloads view</string>
+                  </property>
+                  <property name="text">
+                   <string>Refresh</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+                <item>													
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
                    <widget class="QTreeView" name="downloadView">

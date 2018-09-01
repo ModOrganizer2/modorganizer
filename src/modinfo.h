@@ -90,10 +90,12 @@ public:
     CONTENT_SKSE,
     CONTENT_SKYPROC,
     CONTENT_MCM,
-    CONTENT_INI
+    CONTENT_INI,
+    CONTENT_MODGROUP
+
   };
 
-  static const int NUM_CONTENT_TYPES = CONTENT_INI + 1;
+  static const int NUM_CONTENT_TYPES = CONTENT_MODGROUP + 1;
 
   enum EHighlight {
     HIGHLIGHT_NONE = 0,

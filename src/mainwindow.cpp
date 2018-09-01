@@ -84,6 +84,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <taskprogressmanager.h>
 #include <scopeguard.h>
 #include <usvfs.h>
+#include "localsavegames.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -1145,6 +1146,11 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     } else {
       activateSelectedProfile();
     }
+
+    LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
+    if (saveGames != nullptr && saveGames->updateSaveGames(m_OrganizerCore.currentProfile())) {
+      refreshSaveList();
+    }
   }
 }
 
@@ -1778,6 +1784,11 @@ void MainWindow::on_btnRefreshData_clicked()
   m_OrganizerCore.refreshDirectoryStructure();
 }
 
+void MainWindow::on_btnRefreshDownloads_clicked()
+{
+  m_OrganizerCore.downloadManager()->refreshList();
+}
+
 void MainWindow::on_tabWidget_currentChanged(int index)
 {
   if (index == 0) {
@@ -1993,6 +2004,12 @@ void MainWindow::on_actionAdd_Profile_triggered()
       break;
     }
   }
+
+  LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
+  if (saveGames != nullptr && saveGames->updateSaveGames(m_OrganizerCore.currentProfile())) {
+    refreshSaveList();
+  }
+
 //  addProfile();
 }
 

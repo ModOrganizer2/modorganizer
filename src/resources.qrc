@@ -96,7 +96,8 @@
         <file alias="string">resources/contents/conversation.png</file>
         <file alias="bsa">resources/contents/locked-chest.png</file>
         <file alias="menu">resources/contents/config.png</file>
-        <file alias="inifile">resources/contents/feather-and-scroll.png</file>
+		<file alias="inifile">resources/contents/feather-and-scroll.png</file>
+		<file alias="modgroup">resources/contents/xedit.png</file>
     </qresource>
     <qresource prefix="/qt/etc">
         <file>qt.conf</file>

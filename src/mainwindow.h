@@ -577,6 +577,7 @@ private slots: // ui slots
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
+  void on_btnRefreshDownloads_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
   void on_showArchiveDataCheckBox_toggled(bool checked);
