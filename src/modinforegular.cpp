@@ -482,6 +482,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
     if (extender != nullptr) {
       QString sePluginPath = extender->PluginPath();
       if (dir.exists(sePluginPath)) {
+        m_CachedContent.push_back(CONTENT_SKSEFILES);
         QDir sePluginDir(absolutePath() + "/" + sePluginPath);
         if (sePluginDir.entryList(QStringList() << "*.dll").size() > 0) {
           m_CachedContent.push_back(CONTENT_SKSE);
