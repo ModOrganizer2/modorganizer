@@ -407,6 +407,7 @@ private slots:
   void restoreBackup_clicked();
   void renameMod_clicked();
   void removeMod_clicked();
+  void backupMod_clicked();
   void reinstallMod_clicked();
   void endorse_clicked();
   void dontendorse_clicked();

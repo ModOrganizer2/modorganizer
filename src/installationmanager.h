@@ -147,6 +147,8 @@ public:
    */
   virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr) const;
 
+  QString generateBackupName(const QString &directoryName) const;
+
 private:
 
   void queryPassword(QString *password);
@@ -171,7 +173,7 @@ private:
   bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
-  QString generateBackupName(const QString &directoryName) const;
+  //QString generateBackupName(const QString &directoryName) const;
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 

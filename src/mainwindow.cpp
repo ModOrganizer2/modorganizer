@@ -2409,6 +2409,16 @@ void MainWindow::reinstallMod_clicked()
   }
 }
 
+void MainWindow::backupMod_clicked()
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+  QString backupDirectory = m_OrganizerCore.installationManager()->generateBackupName(modInfo->absolutePath());
+  if (!copyDir(modInfo->absolutePath(), backupDirectory, false)) {
+    QMessageBox::information(this, tr("Failed"),
+      tr("Failed to create backup."));
+  }
+  m_OrganizerCore.refreshModList();
+}
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
@@ -3626,6 +3636,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
 		    menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
+        menu->addAction(tr("Create Backup"), this, SLOT(backupMod_clicked()));
+
 
 		    menu->addSeparator();
 
