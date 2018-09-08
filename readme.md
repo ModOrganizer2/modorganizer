@@ -20,7 +20,7 @@ Through the work of a few people of the community MO2 has come quite far, now it
 ## Reporting Issues:
 Issues should be reported to the GitHub page or on the open discord server: [ModOrganizerDevs](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
-Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the development.
+Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3 and many others for the development.
 
 ## Download Location
 
