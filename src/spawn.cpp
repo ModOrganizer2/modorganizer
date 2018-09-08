@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <QApplication>
 #include <QMessageBox>
+#include <QtDebug>
+
 
 #include <Shellapi.h>
 
@@ -91,6 +93,7 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
   if (hooked) {
+    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, length) <<">";
     success = ::CreateProcessHooked(nullptr,
                                     commandLine,
                                     nullptr, nullptr,       // no special process or thread attributes
