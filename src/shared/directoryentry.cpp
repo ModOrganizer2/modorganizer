@@ -282,12 +282,32 @@ bool FileEntry::removeOrigin(int origin)
       // find alternative with the highest priority
       std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator currentIter = m_Alternatives.begin();
       for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator iter = m_Alternatives.begin(); iter != m_Alternatives.end(); ++iter) {
-        if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority()) &&
-            (iter->first != origin)) {
-          currentIter = iter;
+        if (iter->first != origin) {
+
+          //Both files are not from archives.
+          if (!iter->second.first.size() && !currentIter->second.first.size()) {
+            if ((m_Parent->getOriginByID(iter->first).getPriority() > m_Parent->getOriginByID(currentIter->first).getPriority())) {
+              currentIter = iter;
+            }
+          }
+          else {
+            //Both files are from archives
+            if (iter->second.first.size() && currentIter->second.first.size()) {
+              if (iter->second.second > currentIter->second.second) {
+                currentIter = iter;
+              }
+            }
+            else {
+              //Only one of the two is an archive, so we change currentIter only if he is the archive one.
+              if (currentIter->second.first.size()) {
+                currentIter = iter;
+              }
+            }
+          }
         }
       }
       int currentID = currentIter->first;
+      m_Archive = currentIter->second;
       m_Alternatives.erase(currentIter);
 
       m_Origin = currentID;
@@ -299,15 +319,16 @@ bool FileEntry::removeOrigin(int origin)
       if (!::GetFileTime(file, nullptr, nullptr, &m_FileTime)) {
         // maybe this file is in a bsa, but there is no easy way to find out which. User should refresh
         // the view to find out
-        m_Archive = std::pair<std::wstring, int>(L"bsa?", -1);
+        //m_Archive = std::pair<std::wstring, int>(L"bsa?", -1);
       } else {
-        m_Archive = std::pair<std::wstring, int>(L"", -1);
+        //m_Archive = std::pair<std::wstring, int>(L"", -1);
       }
 
       ::CloseHandle(file);
 
     } else {
       m_Origin = -1;
+      m_Archive = std::pair<std::wstring, int>(L"", -1);
       return true;
     }
   } else {
