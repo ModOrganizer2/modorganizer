@@ -1906,10 +1906,16 @@ bool MainWindow::modifyExecutablesDialog()
     EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
                                  *m_OrganizerCore.modList(),
                                  m_OrganizerCore.currentProfile());
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(dialog.objectName());
+    if (settings.contains(key)) {
+      dialog.restoreGeometry(settings.value(key).toByteArray());
+    }
     if (dialog.exec() == QDialog::Accepted) {
       m_OrganizerCore.setExecutablesList(dialog.getExecutablesList());
       result = true;
     }
+    settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();
   } catch (const std::exception &e) {
     reportError(e.what());
@@ -1975,10 +1981,16 @@ void MainWindow::on_actionAdd_Profile_triggered()
     ProfilesDialog profilesDialog(m_OrganizerCore.currentProfile()->name(),
                                   m_OrganizerCore.managedGame(),
                                   this);
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(profilesDialog.objectName());
+    if (settings.contains(key)) {
+      profilesDialog.restoreGeometry(settings.value(key).toByteArray());
+    }
     // workaround: need to disable monitoring of the saves directory, otherwise the active
     // profile directory is locked
     stopMonitorSaves();
     profilesDialog.exec();
+    settings.setValue(key, profilesDialog.saveGeometry());
     refreshSaveList(); // since the save list may now be outdated we have to refresh it completely
     if (refreshProfiles() && !profilesDialog.failed()) {
       break;
@@ -2496,6 +2508,9 @@ void MainWindow::overwriteClosed(int)
   OverwriteInfoDialog *dialog = this->findChild<OverwriteInfoDialog*>("__overwriteDialog");
   if (dialog != nullptr) {
     m_OrganizerCore.modList()->modInfoChanged(dialog->modInfo());
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(dialog->objectName());
+    settings.setValue(key, dialog->saveGeometry());
     dialog->deleteLater();
   }
   m_OrganizerCore.refreshDirectoryStructure();
@@ -2517,6 +2532,11 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
         dialog->setObjectName("__overwriteDialog");
       } else {
         qobject_cast<OverwriteInfoDialog*>(dialog)->setModInfo(modInfo);
+      }
+      QSettings &settings = m_OrganizerCore.settings().directInterface();
+      QString key = QString("geometry/%1").arg(dialog->objectName());
+      if (settings.contains(key)) {
+        dialog->restoreGeometry(settings.value(key).toByteArray());
       }
       dialog->show();
       dialog->raise();
@@ -2541,7 +2561,12 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 		dialog.openTab(tab);
 	}
 
-    dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+  dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(dialog.objectName());
+  if (settings.contains(key)) {
+    dialog.restoreGeometry(settings.value(key).toByteArray());
+  }
 
 	//If no tab was specified use the first tab from the left based on the user order.
 	if (tab == -1) {
@@ -2555,6 +2580,8 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
     dialog.exec();
     m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
+    settings.setValue(key, dialog.saveGeometry());
+
 
     modInfo->saveMeta();
     emit modInfoDisplayed();
@@ -4285,7 +4312,13 @@ void MainWindow::previewDataFile()
     addFunc(alt.first);
   }
   if (preview.numVariants() > 0) {
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(preview.objectName());
+    if (settings.contains(key)) {
+      preview.restoreGeometry(settings.value(key).toByteArray());
+    }
     preview.exec();
+    settings.setValue(key, preview.saveGeometry());
   } else {
     QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
   }
@@ -4746,9 +4779,16 @@ void MainWindow::on_displayCategoriesBtn_toggled(bool checked)
 void MainWindow::editCategories()
 {
   CategoriesDialog dialog(this);
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(dialog.objectName());
+  if (settings.contains(key)) {
+    dialog.restoreGeometry(settings.value(key).toByteArray());
+  }
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
   }
+  settings.setValue(key, dialog.saveGeometry());
+
 }
 
 void MainWindow::deselectFilters()

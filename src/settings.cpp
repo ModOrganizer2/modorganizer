@@ -604,6 +604,12 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
+  
+  QString key = QString("geometry/%1").arg(dialog.objectName());
+  if (m_Settings.contains(key)) {
+    dialog.restoreGeometry(m_Settings.value(key).toByteArray());
+  }
+
   if (dialog.exec() == QDialog::Accepted) {
     // remember settings before change
     QMap<QString, QString> before;
@@ -631,6 +637,8 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
       }
     m_Settings.endGroup();
   }
+  m_Settings.setValue(key, dialog.saveGeometry());
+
 }
 
 Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
