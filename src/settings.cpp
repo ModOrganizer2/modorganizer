@@ -604,7 +604,7 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
 
-  
+
   QString key = QString("geometry/%1").arg(dialog.objectName());
   if (m_Settings.contains(key)) {
     dialog.restoreGeometry(m_Settings.value(key).toByteArray());
@@ -838,9 +838,10 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   m_Settings.beginGroup("Servers");
   for (const QString &key : m_Settings.childKeys()) {
     QVariantMap val = m_Settings.value(key).toMap();
-    QString type = val["premium"].toBool() ? "(premium)" : "(free)";
-
-    QString descriptor = key + " " + type;
+    QString descriptor = key;
+    if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
+      descriptor += QStringLiteral(" (automatic)");
+    }
     if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
       int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
       descriptor += QString(" (%1 kbps)").arg(bps / 1024);

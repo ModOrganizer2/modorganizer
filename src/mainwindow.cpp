@@ -4580,7 +4580,7 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
     info.name = serverInfo["Name"].toString();
     info.premium = serverInfo["IsPremium"].toBool();
     info.lastSeen = QDate::currentDate();
-    info.preferred = 0;
+    info.preferred = !info.name.compare("CDN", Qt::CaseInsensitive);
     // other keys: ConnectedUsers, Country, URI
     servers.append(info);
   }
