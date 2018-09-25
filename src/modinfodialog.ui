@@ -682,7 +682,7 @@ p, li { white-space: pre-wrap; }
             </size>
            </property>
            <property name="maxLength">
-            <number>10</number>
+            <number>12</number>
            </property>
           </widget>
          </item>
