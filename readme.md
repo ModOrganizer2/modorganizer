@@ -49,6 +49,7 @@ Here is a complete list:
 * https://github.com/Modorganizer2/modorganizer-check_fnis
 * https://github.com/Modorganizer2/modorganizer-diagnose_basic
 * https://github.com/Modorganizer2/modorganizer-esptk
+* https://github.com/ModOrganizer2/modorganizer-fnistool
 * https://github.com/Modorganizer2/modorganizer-helper
 * https://github.com/Modorganizer2/modorganizer-game_fallout3
 * https://github.com/Modorganizer2/modorganizer-game_fallout4
