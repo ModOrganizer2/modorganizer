@@ -1,0 +1,16 @@
+root = true
+
+[*.cpp]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+
+[*.h]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+
+[*.ui]
+indent_style = space
+indent_size = 2
+insert_final_newline = true
