@@ -768,6 +768,8 @@ IModList::ModStates ModList::state(unsigned int modIndex) const
       QSharedPointer<ModInfoRegular> modInfoRegular = modInfo.staticCast<ModInfoRegular>();
       if (modInfoRegular->isAlternate() && !modInfoRegular->isConverted())
         result |= IModList::STATE_ALTERNATE;
+      if (!modInfo->isValid() && modInfoRegular->isValidated())
+        result |= IModList::STATE_VALID;
     }
     if (modInfo->canBeEnabled()) {
       if (m_Profile->modEnabled(modIndex)) {

@@ -28,6 +28,7 @@ public:
 
   bool isAlternate() { return m_IsAlternate; }
   bool isConverted() { return m_Converted; }
+  bool isValidated() { return m_Validated; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -187,6 +188,11 @@ public:
   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
   */
   virtual void markConverted(bool converted) override;
+
+  /**
+  * @brief updates the mod to flag it as valid in order to ignore the invalid game data flag
+  */
+  virtual void markValidated(bool validated) override;
 
   /**
    * @brief getter for the mod name
@@ -358,6 +364,7 @@ private:
   bool m_MetaInfoChanged;
   bool m_IsAlternate;
   bool m_Converted;
+  bool m_Validated;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

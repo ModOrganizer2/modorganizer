@@ -578,6 +578,11 @@ public:
   virtual void markConverted(bool converted) {}
 
   /**
+  * @brief updates the mod to flag it as valid in order to ignore the invalid game data flag
+  */
+  virtual void markValidated(bool validated) {}
+
+  /**
    * @brief reads meta information from disk
    */
   virtual void readMeta() {}

@@ -31,6 +31,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)
+  , m_Validated(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
@@ -86,6 +87,7 @@ void ModInfoRegular::readMeta()
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
+  m_Validated        = metaFile.value("validated", false).toBool();
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   if (metaFile.contains("endorsed")) {
@@ -150,6 +152,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("url", m_URL);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
+      metaFile.setValue("validated", m_Validated);
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
@@ -415,6 +418,13 @@ void ModInfoRegular::markConverted(bool converted)
   emit modDetailsUpdated(true);
 }
 
+void ModInfoRegular::markValidated(bool validated)
+{
+  m_Validated = validated;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
 
 QString ModInfoRegular::absolutePath() const
 {
@@ -438,7 +448,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
-  if (!isValid()) {
+  if (!isValid() && !m_Validated) {
     result.push_back(ModInfo::FLAG_INVALID);
   }
   if (m_Notes.length() != 0) {
@@ -514,7 +524,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 
 int ModInfoRegular::getHighlight() const
 {
-  if (!isValid())
+  if (!isValid() && !m_Validated)
     return HIGHLIGHT_INVALID;
   auto flags = getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) != flags.end())
@@ -525,7 +535,7 @@ int ModInfoRegular::getHighlight() const
 
 QString ModInfoRegular::getDescription() const
 {
-  if (!isValid()) {
+  if (!isValid()  && !m_Validated) {
     return tr("%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory").arg(name());
   } else {
     const std::set<int> &categories = getCategories();

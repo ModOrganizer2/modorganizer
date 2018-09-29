@@ -2684,16 +2684,18 @@ void MainWindow::ignoreMissingData_clicked()
     for (QModelIndex idx : selection->selectedRows()) {
       int row_idx = idx.data(Qt::UserRole + 1).toInt();
       ModInfo::Ptr info = ModInfo::getByIndex(row_idx);
-      QDir(info->absolutePath()).mkdir("textures");
+      //QDir(info->absolutePath()).mkdir("textures");
       info->testValid();
+      info->markValidated(true);
       connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 
       emit modListDataChanged(m_OrganizerCore.modList()->index(row_idx, 0), m_OrganizerCore.modList()->index(row_idx, m_OrganizerCore.modList()->columnCount() - 1));
     }
   } else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-    QDir(info->absolutePath()).mkdir("textures");
+    //QDir(info->absolutePath()).mkdir("textures");
     info->testValid();
+    info->markValidated(true);
     connect(this, SIGNAL(modListDataChanged(QModelIndex, QModelIndex)), m_OrganizerCore.modList(), SIGNAL(dataChanged(QModelIndex, QModelIndex)));
 
     emit modListDataChanged(m_OrganizerCore.modList()->index(m_ContextRow, 0), m_OrganizerCore.modList()->index(m_ContextRow, m_OrganizerCore.modList()->columnCount() - 1));
