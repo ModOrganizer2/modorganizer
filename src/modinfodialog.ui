@@ -238,8 +238,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>28</height>
+            <width>746</width>
+            <height>126</height>
            </rect>
           </property>
           <property name="toolTip">
@@ -723,8 +723,20 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QWebEngineView" name="descriptionView">
-         <property name="url">
+        <widget class="QWebEngineView" name="descriptionView" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="url" stdset="0">
           <url>
            <string>about:blank</string>
           </url>
