@@ -60,6 +60,7 @@ Here is a complete list:
 * https://github.com/Modorganizer2/modorganizer-game_oblivion
 * https://github.com/Modorganizer2/modorganizer-game_skyrim
 * https://github.com/Modorganizer2/modorganizer-game_skyrimSE
+* https://github.com/ModOrganizer2/modorganizer-game_skyrimVR
 * https://github.com/Modorganizer2/modorganizer-game_ttw
 * https://github.com/Modorganizer2/modorganizer-installer_bain
 * https://github.com/Modorganizer2/modorganizer-installer_bundle
