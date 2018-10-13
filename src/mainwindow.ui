@@ -825,9 +825,6 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
-                    <property name="visible">
-                     <bool>false</bool>
-                    </property>
                     <property name="text">
                      <string>Sort</string>
                     </property>
