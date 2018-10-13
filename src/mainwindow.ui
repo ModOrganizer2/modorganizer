@@ -826,7 +826,7 @@ p, li { white-space: pre-wrap; }
                   <item>
                    <widget class="QPushButton" name="bossButton">
                     <property name="visible">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </property>
                     <property name="text">
                      <string>Sort</string>
@@ -1042,7 +1042,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="MOBase::SortableTreeWidget" name="bsaList">
+                 <widget class="QTreeWidget" name="bsaList">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1058,21 +1058,26 @@ p, li { white-space: pre-wrap; }
                   <property name="showDropIndicator" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragEnabled" stdset="0">
+                  <property name="dragEnabled">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropOverwriteMode" stdset="0">
+                  <property name="dragDropOverwriteMode">
                    <bool>false</bool>
                   </property>
-                  <property name="indentation" stdset="0">
+                  <property name="indentation">
                    <number>20</number>
                   </property>
-                  <property name="itemsExpandable" stdset="0">
+                  <property name="itemsExpandable">
                    <bool>true</bool>
                   </property>
-                  <property name="columnCount" stdset="0">
+                  <property name="columnCount">
                    <number>1</number>
                   </property>
+                  <column>
+                   <property name="text">
+                    <string notr="true">Archives</string>
+                   </property>
+                  </column>
                  </widget>
                 </item>
                </layout>
@@ -1218,7 +1223,7 @@ p, li { white-space: pre-wrap; }
                  <number>2</number>
                 </property>
                 <item>
-				 <widget class="QPushButton" name="btnRefreshDownloads">
+                 <widget class="QPushButton" name="btnRefreshDownloads">
                   <property name="toolTip">
                    <string>Refresh downloads view</string>
                   </property>
@@ -1231,7 +1236,7 @@ p, li { white-space: pre-wrap; }
                   </property>
                  </widget>
                 </item>
-                <item>													
+                <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
                    <widget class="QTreeView" name="downloadView">
@@ -1257,7 +1262,7 @@ p, li { white-space: pre-wrap; }
                      <enum>Qt::ScrollBarAlwaysOn</enum>
                     </property>
                     <property name="horizontalScrollBarPolicy">
-                      <enum>Qt::ScrollBarAsNeeded</enum>
+                     <enum>Qt::ScrollBarAsNeeded</enum>
                     </property>
                     <property name="dragEnabled">
                      <bool>true</bool>
@@ -1292,7 +1297,7 @@ p, li { white-space: pre-wrap; }
                     <attribute name="headerDefaultSectionSize">
                      <number>50</number>
                     </attribute>
-					<attribute name="headerMinimumSectionSize">
+                    <attribute name="headerMinimumSectionSize">
                      <number>15</number>
                     </attribute>
                     <attribute name="headerStretchLastSection">

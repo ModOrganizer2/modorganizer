@@ -307,7 +307,7 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
-  ui->bsaList->setLocalMoveOnly(true);
+  //ui->bsaList->setLocalMoveOnly(true);
 
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
