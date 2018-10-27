@@ -84,6 +84,9 @@
                <property name="indentation">
                 <number>0</number>
                </property>
+               <property name="uniformRowHeights">
+                <bool>true</bool>
+               </property>
                <attribute name="headerVisible">
                 <bool>false</bool>
                </attribute>
@@ -431,6 +434,9 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="indentation">
                <number>20</number>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>true</bool>
               </property>
               <property name="itemsExpandable">
                <bool>true</bool>
@@ -1123,6 +1129,9 @@ p, li { white-space: pre-wrap; }
                     <property name="whatsThis">
                      <string>This is an overview of your data directory as visible to the game (and tools). </string>
                     </property>
+                    <property name="uniformRowHeights">
+                     <bool>true</bool>
+                    </property>
                     <property name="animated">
                      <bool>true</bool>
                     </property>
@@ -1351,6 +1360,9 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::NoSelection</enum>
+       </property>
+       <property name="uniformRowHeights">
+        <bool>true</bool>
        </property>
        <property name="itemsExpandable">
         <bool>false</bool>
