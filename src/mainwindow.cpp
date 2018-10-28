@@ -2367,7 +2367,7 @@ void MainWindow::removeMod_clicked()
           continue;
         }
         mods += "<li>" + name + "</li>";
-        modNames.append(name);
+        modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
       }
       if (QMessageBox::question(this, tr("Confirm"),
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
