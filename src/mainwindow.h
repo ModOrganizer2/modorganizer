@@ -409,6 +409,7 @@ private slots:
   void renameMod_clicked();
   void removeMod_clicked();
   void setColor_clicked();
+  void resetColor_clicked();
   void backupMod_clicked();
   void reinstallMod_clicked();
   void endorse_clicked();

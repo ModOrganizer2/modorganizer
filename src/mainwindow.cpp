@@ -2873,7 +2873,29 @@ void MainWindow::createSeparator_clicked()
 void MainWindow::setColor_clicked()
 {
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-  QColor color = QColorDialog::getColor(modInfo->getColor(),this);
+  QColor color = QColorDialog::getColor(modInfo->getColor(), this);
+  if (!color.isValid())
+    return;
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      auto flags = info->getFlags();
+      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
+      {
+        info->setColor(color);
+      }
+    }
+  }
+  else {
+    modInfo->setColor(color);
+  }
+}
+
+void MainWindow::resetColor_clicked()
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+  QColor color = QColor();
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
@@ -3682,6 +3704,8 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
         menu->addSeparator();
         menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+        if(info->getColor().isValid())
+          menu->addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
         menu->addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
