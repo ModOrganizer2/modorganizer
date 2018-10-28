@@ -62,6 +62,7 @@ public:
   enum EFlag {
     FLAG_INVALID,
     FLAG_BACKUP,
+    FLAG_SEPARATOR,
     FLAG_OVERWRITE,
     FLAG_FOREIGN,
     FLAG_NOTENDORSED,
@@ -560,7 +561,7 @@ public:
   /**
    * @return true if this mod is considered "valid", that is: it contains data used by the game
    **/
-  bool isValid() const { return m_Valid; }
+  virtual bool isValid() const { return m_Valid; }
 
   /**
    * @return true if the file has been endorsed on nexus

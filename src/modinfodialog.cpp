@@ -134,7 +134,22 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   refreshLists();
 
-  if (unmanaged) {
+  if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
+  {
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
+    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, false);
+    //ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
+    addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
+    refreshPrimaryCategoriesBox();
+    ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
+    //ui->tabWidget->setTabEnabled(TAB_NOTES, false);
+    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
+  }
+  else if (unmanaged)
+  {
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);

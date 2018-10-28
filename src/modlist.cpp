@@ -45,6 +45,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QAbstractItemView>
 #include <QSortFilterProxyModel>
 #include <QApplication>
+#include <QFontDatabase>
 
 #include <sstream>
 #include <stdexcept>
@@ -145,6 +146,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
 {
   switch (flag) {
     case ModInfo::FLAG_BACKUP: return tr("Backup");
+    case ModInfo::FLAG_SEPARATOR: return tr("Separator");
     case ModInfo::FLAG_INVALID: return tr("No valid game data");
     case ModInfo::FLAG_NOTENDORSED: return tr("Not endorsed yet");
     case ModInfo::FLAG_NOTES: return QString("<i>%1</i>").arg(modInfo->notes().replace("\n", "<br>"));
@@ -203,7 +205,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         || (column == COL_CONTENT)) {
       return QVariant();
     } else if (column == COL_NAME) {
-      return modInfo->name();
+      auto flags = modInfo->getFlags();
+      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
+      {
+        return modInfo->name().replace("_separator", "");
+      }
+      else
+        return modInfo->name();
     } else if (column == COL_VERSION) {
       VersionInfo verInfo = modInfo->getVersion();
       QString version = verInfo.displayString();
@@ -277,6 +285,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       return QVariant();
     }
   } else if (role == Qt::TextAlignmentRole) {
+    auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
       if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_CENTER) {
         return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
@@ -327,8 +336,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return modInfo->getGameName();
   } else if (role == Qt::FontRole) {
     QFont result;
+    auto flags = modInfo->getFlags();
     if (column == COL_NAME) {
-      if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_INVALID) {
+      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
+      {
+        //result.setCapitalization(QFont::AllUppercase);
+        result.setItalic(true);
+        //result.setUnderline(true);
+        result.setBold(true);
+      } else if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_INVALID) {
         result.setItalic(true);
       }
     } else if ((column == COL_CATEGORY) && (modInfo->hasFlag(ModInfo::FLAG_FOREIGN))) {
@@ -476,6 +492,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   ModInfo::Ptr info = ModInfo::getByIndex(modID);
   IModList::ModStates oldState = state(modID);
 
+
   bool result = false;
 
   emit aboutToChangeData();
@@ -493,7 +510,13 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   } else if (role == Qt::EditRole) {
     switch (index.column()) {
       case COL_NAME: {
-        result = renameMod(modID, value.toString());
+        auto flags = info->getFlags();
+        if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
+        {
+          result = renameMod(modID, value.toString() + "_separator");
+        }
+        else
+          result = renameMod(modID, value.toString());
       } break;
       case COL_PRIORITY: {
         bool ok = false;

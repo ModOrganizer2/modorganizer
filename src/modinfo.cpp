@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinforegular.h"
 #include "modinfoforeign.h"
 #include "modinfooverwrite.h"
+#include "modinfoseparator.h"
 
 #include "installationtester.h"
 #include "categories.h"
@@ -64,11 +65,14 @@ bool ModInfo::ByName(const ModInfo::Ptr &LHS, const ModInfo::Ptr &RHS)
 ModInfo::Ptr ModInfo::createFrom(PluginContainer *pluginContainer, const MOBase::IPluginGame *game, const QDir &dir, DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
-//  int id = s_NextID++;
+  //  int id = s_NextID++;
   static QRegExp backupExp(".*backup[0-9]*");
+  static QRegExp separatorExp(".*_separator");
   ModInfo::Ptr result;
   if (backupExp.exactMatch(dir.dirName())) {
     result = ModInfo::Ptr(new ModInfoBackup(pluginContainer, game, dir, directoryStructure));
+  } else if(separatorExp.exactMatch(dir.dirName())){
+    result = Ptr(new ModInfoSeparator(pluginContainer, game, dir, directoryStructure));
   } else {
     result = ModInfo::Ptr(new ModInfoRegular(pluginContainer, game, dir, directoryStructure));
   }

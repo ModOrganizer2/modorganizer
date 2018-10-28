@@ -2629,8 +2629,9 @@ void MainWindow::modOpenNext(int tab)
   ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
   std::vector<ModInfo::EFlag> flags = mod->getFlags();
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
-    // skip overwrite and backups
+      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
+      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
+    // skip overwrite and backups and separators
     modOpenNext(tab);
   } else {
     displayModInformation(m_ContextRow,tab);
@@ -2649,8 +2650,9 @@ void MainWindow::modOpenPrev(int tab)
   ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
   std::vector<ModInfo::EFlag> flags = mod->getFlags();
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end())) {
-    // skip overwrite and backups
+      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) || 
+      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
+    // skip overwrite and backups and separators
     modOpenPrev(tab);
   } else {
     displayModInformation(m_ContextRow,tab);
@@ -2836,6 +2838,33 @@ void MainWindow::createEmptyMod_clicked()
     return;
   }
 
+  m_OrganizerCore.refreshModList();
+}
+
+void MainWindow::createSeparator_clicked()
+{
+  GuessedValue<QString> name;
+  name.setFilter(&fixDirectoryName);
+  while (name->isEmpty())
+  {
+    bool ok;
+    name.update(QInputDialog::getText(this, tr("Create Separator..."),
+      tr("This will create a new separator.\n"
+        "Please enter a name:"), QLineEdit::Normal, "", &ok),
+      GUESS_USER);
+    if (!ok) { return; }
+  }
+  if (m_OrganizerCore.getMod(name) != nullptr)
+  {
+    reportError(tr("A separator with this name already exists"));
+    return;
+  }
+  name->append("_separator");
+  if (m_OrganizerCore.getMod(name) != nullptr)
+  {
+    return;
+  }
+  if (m_OrganizerCore.createMod(name) == nullptr) { return; }
   m_OrganizerCore.refreshModList();
 }
 
@@ -3579,6 +3608,8 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
 
+  menu->addAction(tr("Create separator"), this, SLOT(createSeparator_clicked()));
+
   menu->addSeparator();
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
@@ -3623,6 +3654,9 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
+      } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
+        menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
+        menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
       } else {
