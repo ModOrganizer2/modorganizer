@@ -90,6 +90,7 @@ void ModInfoRegular::readMeta()
   m_Validated        = metaFile.value("validated", false).toBool();
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  m_Color            = metaFile.value("color",QColor()).value<QColor>();
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       switch (metaFile.value("endorsed").toInt()) {
@@ -153,6 +154,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
+      metaFile.setValue("color", m_Color);
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
@@ -396,6 +398,17 @@ void ModInfoRegular::setNeverEndorse()
   m_MetaInfoChanged = true;
 }
 
+
+void ModInfoRegular::setColor(QColor color)
+{
+  m_Color = color;
+  m_MetaInfoChanged = true;
+}
+
+QColor ModInfoRegular::getColor() 
+{
+  return m_Color;
+}
 
 bool ModInfoRegular::remove()
 {

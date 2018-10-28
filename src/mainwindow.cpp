@@ -154,6 +154,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QWidgetAction>
 #include <QWebEngineProfile>
 #include <QShortcut>
+#include <QColorDialog>
+#include <QColor>
 
 #include <QDebug>
 #include <QtGlobal>
@@ -2868,6 +2870,26 @@ void MainWindow::createSeparator_clicked()
   m_OrganizerCore.refreshModList();
 }
 
+void MainWindow::setColor_clicked()
+{
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
+  QColor color = QColorDialog::getColor(modInfo->getColor(),this);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      auto flags = info->getFlags();
+      if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
+      {
+        info->setColor(color);
+      }
+    }
+  }
+  else {
+    modInfo->setColor(color);
+  }
+}
+
 void MainWindow::createModFromOverwrite()
 {
   GuessedValue<QString> name;
@@ -3608,7 +3630,7 @@ QMenu *MainWindow::modListContextMenu()
 
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
 
-  menu->addAction(tr("Create separator"), this, SLOT(createSeparator_clicked()));
+  menu->addAction(tr("Create Separator"), this, SLOT(createSeparator_clicked()));
 
   menu->addSeparator();
 
@@ -3655,8 +3677,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
+        menu->addSeparator();
         menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
+        menu->addSeparator();
+        menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+        menu->addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         // nop, nothing to do with this mod
       } else {

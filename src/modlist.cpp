@@ -383,12 +383,16 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    auto flags = modInfo->getFlags();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return QColor(0, 0, 255, 64);
     } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
       return QColor(0, 255, 0, 64);
-    } else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
+    }
+    else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
       return QColor(255, 0, 0, 64);
+    } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end() && modInfo->getColor().isValid()) {
+        return modInfo->getColor();
     } else {
       return QVariant();
     }

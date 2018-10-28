@@ -311,6 +311,10 @@ public:
 
   virtual QStringList archives() const;
 
+  virtual void setColor(QColor color);
+
+  virtual QColor getColor();
+
   virtual void addInstalledFile(int modId, int fileId);
 
   /**
@@ -355,8 +359,11 @@ private:
   QString m_URL;
   QString m_GameName;
 
+
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
+
+  QColor m_Color;
 
   int m_NexusID;
   std::set<std::pair<int, int>> m_InstalledFileIDs;

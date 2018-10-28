@@ -31,6 +31,7 @@ class QDir;
 #include <QSharedPointer>
 #include <QString>
 #include <QStringList>
+#include <QColor>
 
 #include <boost/function.hpp>
 
@@ -523,6 +524,16 @@ public:
    * @return a list of archives belonging to this mod (as absolute file paths)
    */
   virtual QStringList archives() const = 0;
+
+  /*
+   *@return the color choosen by the user for the mod/separator 
+   */
+  virtual QColor getColor() { return QColor(); }
+
+  /*
+   *@return true if the color has been set successfully.
+   */
+  virtual void setColor(QColor color) { }
 
   /**
    * @brief adds the information that a file has been installed into this mod
