@@ -212,6 +212,7 @@ private:
 
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
+  QString m_ErrorMessage;
 
   QProgressDialog *m_InstallationProgress { nullptr };
   int m_Progress;

@@ -451,7 +451,7 @@ void InstallationManager::updateProgressFile(QString const &fileName)
 
 void InstallationManager::report7ZipError(QString const &errorMessage)
 {
-  reportError(errorMessage);
+  m_ErrorMessage = errorMessage;
   m_ArchiveHandler->cancel();
 }
 
@@ -608,7 +608,11 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   } while (!future.isFinished());
   if (!future.result()) {
     if (m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED) {
+      if (!m_ErrorMessage.isEmpty()) {
+        throw MyException(QString("extracting failed (%1)").arg(m_ErrorMessage));
+      } else {
       return false;
+      }
     } else {
       throw MyException(QString("extracting failed (%1)").arg(m_ArchiveHandler->getLastError()));
     }
