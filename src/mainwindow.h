@@ -439,6 +439,8 @@ private slots:
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
   void disableSelectedPlugins_clicked();
+  void sendSelectedPluginsToTop_clicked();
+  void sendSelectedPluginsToBottom_clicked();
 
   void linkToolbar();
   void linkDesktop();

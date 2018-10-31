@@ -4341,6 +4341,16 @@ void MainWindow::disableSelectedPlugins_clicked()
   m_OrganizerCore.pluginList()->disableSelected(ui->espList->selectionModel());
 }
 
+void MainWindow::sendSelectedPluginsToTop_clicked()
+{
+  m_OrganizerCore.pluginList()->sendToTop(ui->espList->selectionModel());
+}
+
+void MainWindow::sendSelectedPluginsToBottom_clicked()
+{
+  m_OrganizerCore.pluginList()->sendToBottom(ui->espList->selectionModel());
+}
+
 
 void MainWindow::enableSelectedMods_clicked()
 {
@@ -4965,6 +4975,11 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
   menu.addAction(tr("Enable all"), m_OrganizerCore.pluginList(), SLOT(enableAll()));
   menu.addAction(tr("Disable all"), m_OrganizerCore.pluginList(), SLOT(disableAll()));
+
+  menu.addSeparator();
+
+  menu.addAction(tr("Send to top"), this, SLOT(sendSelectedPluginsToTop_clicked()));
+  menu.addAction(tr("Send to bottom"), this, SLOT(sendSelectedPluginsToBottom_clicked()));
 
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   bool hasLocked = false;

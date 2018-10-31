@@ -289,21 +289,26 @@ void PluginList::enableESP(const QString &name, bool enable)
   }
 }
 
+int PluginList::findPluginByPriority(int priority)
+{
+  for (int i = 0; i < m_ESPs.size(); i++ ) {
+    if (m_ESPs[i].m_Priority == priority) {
+      return i;
+    }
+  }
+  qCritical(QString("No plugin with priority %1").arg(priority).toLocal8Bit());
+  return -1;
+}
+
 void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
 {
-  if (selectionModel->hasSelection()){
+  if (selectionModel->hasSelection()) {
     bool dirty = false;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowPriority = row.data().toInt();
-      for (int i = 0; i < m_ESPs.size(); i++) {
-        if (m_ESPs[i].m_Priority == rowPriority) {
-          if (!m_ESPs[i].m_Enabled) {
-            m_ESPs[i].m_Enabled = true;
-            dirty = true;
-          }
-          
-          break;
-        }
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_Enabled) {
+        m_ESPs[rowIndex].m_Enabled = true;
+        dirty = true;
       }
     }
     if (dirty) emit writePluginsList();
@@ -312,18 +317,13 @@ void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
 
 void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
 {
-  if (selectionModel->hasSelection()){
+  if (selectionModel->hasSelection()) {
     bool dirty = false;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowPriority = row.data().toInt();
-      for (int i = 0; i < m_ESPs.size(); i++) {
-        if (m_ESPs[i].m_Priority == rowPriority) {
-          if (!m_ESPs[i].m_ForceEnabled && m_ESPs[i].m_Enabled) {
-            m_ESPs[i].m_Enabled = false;
-            dirty = true;
-          }
-          break;
-        }
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_ForceEnabled && m_ESPs[rowIndex].m_Enabled) {
+        m_ESPs[rowIndex].m_Enabled = false;
+        dirty = true;
       }
     }
     if (dirty) emit writePluginsList();
@@ -353,6 +353,40 @@ void PluginList::disableAll()
       }
     }
     emit writePluginsList();
+  }
+}
+
+void PluginList::sendToTop(const QItemSelectionModel *selectionModel)
+{
+  if (selectionModel->hasSelection()) {
+    std::vector<int> pluginsToMove;
+    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_ForceEnabled) {
+        pluginsToMove.push_back(rowIndex);
+      }
+    }
+    if (pluginsToMove.size()) {
+      changePluginPriority(pluginsToMove, 0);
+      emit SIGNAL(displayPlugin(0));
+    }
+  }
+}
+
+void PluginList::sendToBottom(const QItemSelectionModel *selectionModel)
+{
+  if (selectionModel->hasSelection()) {
+    std::vector<int> pluginsToMove;
+    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_ForceEnabled) {
+        pluginsToMove.push_back(rowIndex);
+      }
+    }
+    if (pluginsToMove.size()) {
+      changePluginPriority(pluginsToMove, INT_MAX);
+      emit SIGNAL(displayPlugin(INT_MAX));
+    }
   }
 }
 
@@ -1092,6 +1126,12 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 {
   int newPriorityTemp = newPriority;
 
+  // enforce valid range
+  if (newPriorityTemp < 0)
+    newPriorityTemp = 0;
+  else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
+    newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
+
   if (!m_ESPs[row].m_IsMaster && !m_ESPs[row].m_IsLight) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
@@ -1112,12 +1152,6 @@ void PluginList::setPluginPriority(int row, int &newPriority)
       ++newPriorityTemp;
     }
   }
-
-  // enforce valid range
-  if (newPriorityTemp < 0)
-    newPriorityTemp = 0;
-  else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
-    newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
   try {
     int oldPriority = m_ESPs.at(row).m_Priority;
