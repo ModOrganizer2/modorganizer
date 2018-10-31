@@ -37,6 +37,7 @@ SET(organizer_SRCS
     modinfoforeign.cpp
     modinfooverwrite.cpp
     modinforegular.cpp
+    modinfoseparator.cpp
     modinfowithconflictinfo.cpp
     messagedialog.cpp
     mainwindow.cpp
@@ -128,6 +129,7 @@ SET(organizer_HDRS
     modinfoforeign.h
     modinfooverwrite.h
     modinforegular.h
+    modinfoseparator.h
     modinfowithconflictinfo.h
     messagedialog.h
     mainwindow.h
