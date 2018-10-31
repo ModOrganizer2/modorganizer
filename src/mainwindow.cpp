@@ -2652,7 +2652,7 @@ void MainWindow::modOpenPrev(int tab)
   ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
   std::vector<ModInfo::EFlag> flags = mod->getFlags();
   if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) || 
+      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
       (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
     // skip overwrite and backups and separators
     modOpenPrev(tab);
@@ -3686,6 +3686,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       menu = new QMenu(this);
       allMods->setTitle(tr("All Mods"));
       menu->addMenu(allMods);
+      menu->addSeparator();
       ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
@@ -3699,38 +3700,43 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
-        menu->addSeparator();
         menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
+        menu->addSeparator();
+        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
+        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
         menu->addSeparator();
         menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
         if(info->getColor().isValid())
           menu->addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
         menu->addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-        // nop, nothing to do with this mod
+        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
+        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
       } else {
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
 
-		//Removed as it was redundant, just making the categories look more complicated.
-		/*
+    //Removed as it was redundant, just making the categories look more complicated.
+    /*
         QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
         populateMenuCategories(replaceCategoriesMenu, 0);
         connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
         addMenuAsPushButton(menu, replaceCategoriesMenu);
-		*/
+    */
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
         addMenuAsPushButton(menu, primaryCategoryMenu);
 
         menu->addSeparator();
+
         if (info->downgradeAvailable()) {
           menu->addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
+
         if (info->updateAvailable() || info->downgradeAvailable()) {
           if (info->updateIgnored()) {
             menu->addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
@@ -3746,13 +3752,17 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu->addSeparator();
 
+        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
+        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
+
+        menu->addSeparator();
+
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
-		    menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
+        menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
         menu->addAction(tr("Create Backup"), this, SLOT(backupMod_clicked()));
 
-
-		    menu->addSeparator();
+        menu->addSeparator();
 
         if (info->getNexusID() > 0) {
           switch (info->endorsedState()) {
@@ -3774,7 +3784,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           }
         }
 
-		menu->addSeparator();
+        menu->addSeparator();
 
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
@@ -5565,4 +5575,32 @@ void MainWindow::on_clickBlankButton_clicked()
 void MainWindow::on_clearFiltersButton_clicked()
 {
 	deselectFilters();
+}
+
+void MainWindow::sendModToTop_clicked()
+{
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    std::vector<int> modsToMove;
+    for (QModelIndex idx : selection->selectedRows()) {
+      modsToMove.push_back(idx.data(Qt::UserRole + 1).toInt());
+    }
+    m_OrganizerCore.modList()->changeModPriority(modsToMove, 0);
+  } else {
+    m_OrganizerCore.modList()->changeModPriority(m_ContextRow, 0);
+  }
+}
+
+void MainWindow::sendModToBottom_clicked()
+{
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    std::vector<int> modsToMove;
+    for (QModelIndex idx : selection->selectedRows()) {
+      modsToMove.push_back(idx.data(Qt::UserRole + 1).toInt());
+    }
+    m_OrganizerCore.modList()->changeModPriority(modsToMove, INT_MAX);
+  } else {
+    m_OrganizerCore.modList()->changeModPriority(m_ContextRow, INT_MAX);
+  }
 }

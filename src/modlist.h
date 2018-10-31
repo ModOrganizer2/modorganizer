@@ -106,6 +106,7 @@ public:
   static QString getColumnName(int column);
 
   void changeModPriority(int sourceIndex, int newPriority);
+  void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
   void setOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten);
   void setPluginContainer(PluginContainer *pluginContainer);
@@ -265,8 +266,6 @@ protected:
 private:
 
   bool testValid(const QString &modDir);
-
-  void changeModPriority(std::vector<int> sourceIndices, int newPriority);
 
   QVariant getOverwriteData(int column, int role) const;
 
