@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "scopeguard.h"
 #include "modinfo.h"
+#include "modlist.h"
 #include "viewmarkingscrollbar.h"
 #include <utility.h>
 #include <iplugingame.h>
@@ -119,14 +120,16 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
-void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
+void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
 {
   for (auto &esp : m_ESPs) {
     esp.m_ModSelected = false;
   }
-  for (QModelIndex idx : selected.indexes()) {
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-    if (!selectedMod.isNull() && profile.modEnabled(idx.data(Qt::UserRole + 1).toInt())) {
+  for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
+    int modPriority = idx.data().toInt();
+    int modIndex = profile.modIndexByPriority(modPriority);
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
+    if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
       MOShared::FilesOrigin origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());

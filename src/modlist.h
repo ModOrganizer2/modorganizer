@@ -118,7 +118,7 @@ public:
 
   int timeElapsedSinceLastChecked() const;
 
-  void highlightMods(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry);
+  void highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry);
 
 public:
 

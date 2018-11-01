@@ -2341,13 +2341,13 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
 
 void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
 {
-  m_OrganizerCore.pluginList()->highlightPlugins(selected, *m_OrganizerCore.directoryStructure(), *m_OrganizerCore.currentProfile());
+  m_OrganizerCore.pluginList()->highlightPlugins(ui->modList->selectionModel(), *m_OrganizerCore.directoryStructure(), *m_OrganizerCore.currentProfile());
   ui->espList->verticalScrollBar()->repaint();
 }
 
 void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
 {
-  m_OrganizerCore.modList()->highlightMods(selected, *m_OrganizerCore.directoryStructure());
+  m_OrganizerCore.modList()->highlightMods(ui->espList->selectionModel(), *m_OrganizerCore.directoryStructure());
   ui->modList->verticalScrollBar()->repaint();
 }
 

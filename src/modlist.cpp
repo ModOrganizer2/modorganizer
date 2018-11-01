@@ -24,6 +24,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "qtgroupingproxy.h"
 #include "viewmarkingscrollbar.h"
 #include "modlistsortproxy.h"
+#include "pluginlist.h"
 #include "settings.h"
 #include "modinforegular.h"
 #include <appconfig.h>
@@ -768,12 +769,12 @@ int ModList::timeElapsedSinceLastChecked() const
   return m_LastCheck.elapsed();
 }
 
-void ModList::highlightMods(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry)
+void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry)
 {
   for (unsigned int i = 0; i < ModInfo::getNumMods(); ++i) {
       ModInfo::getByIndex(i)->setPluginSelected(false);
   }
-  for (QModelIndex idx : selected.indexes()) {
+  for (QModelIndex idx : selection->selectedRows(PluginList::COL_NAME)) {
     QString modName = idx.data().toString();
 
     const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
