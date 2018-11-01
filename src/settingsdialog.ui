@@ -92,28 +92,65 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
          <property name="title">
           <string>User interface</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_11">
-          <item>
-           <widget class="QCheckBox" name="compactBox">
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="2" column="0" colspan="2">
+           <widget class="QGroupBox" name="ModlistGroupBox">
+            <property name="title">
+             <string>Colors</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_5">
+             <item row="2" column="0" colspan="2">
+              <widget class="QPushButton" name="containsBtn">
+               <property name="text">
+                <string>Mod Contains selected Plugin</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="containedBtn">
+               <property name="text">
+                <string>Plugin is Contained in selected Mod</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="resetColorsBtn">
+               <property name="text">
+                <string>Reset Colors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="overwrittenBtn">
+               <property name="text">
+                <string>Is overwritten (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="overwritingBtn">
+               <property name="text">
+                <string>Is overwriting (loose files)</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="2">
+           <widget class="QPushButton" name="categoriesBtn">
             <property name="toolTip">
-             <string>If checked, the download interface will be more compact.</string>
+             <string>Modify the categories available to arrange your mods.</string>
+            </property>
+            <property name="whatsThis">
+             <string>Modify the categories available to arrange your mods.</string>
             </property>
             <property name="text">
-             <string>Compact Download Interface</string>
+             <string>Configure Mod Categories</string>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QCheckBox" name="showMetaBox">
-            <property name="toolTip">
-             <string>If checked, the download list will display meta information instead of file names.</string>
-            </property>
-            <property name="text">
-             <string>Download Meta Information</string>
-            </property>
-           </widget>
-          </item>
-          <item>
+          <item row="5" column="0" colspan="2">
            <widget class="QPushButton" name="resetDialogsButton">
             <property name="maximumSize">
              <size>
@@ -132,7 +169,17 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
             </property>
            </widget>
           </item>
-          <item>
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="compactBox">
+            <property name="toolTip">
+             <string>If checked, the download interface will be more compact.</string>
+            </property>
+            <property name="text">
+             <string>Compact Download Interface</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="2">
            <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -145,16 +192,13 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
             </property>
            </spacer>
           </item>
-          <item>
-           <widget class="QPushButton" name="categoriesBtn">
+          <item row="0" column="1">
+           <widget class="QCheckBox" name="showMetaBox">
             <property name="toolTip">
-             <string>Modify the categories available to arrange your mods.</string>
-            </property>
-            <property name="whatsThis">
-             <string>Modify the categories available to arrange your mods.</string>
+             <string>If checked, the download list will display meta information instead of file names.</string>
             </property>
             <property name="text">
-             <string>Configure Mod Categories</string>
+             <string>Download Meta Information</string>
             </property>
            </widget>
           </item>
@@ -1217,8 +1261,6 @@ For the other games this is not a sufficient replacement for AI!</string>
   <tabstop>logLevelBox</tabstop>
   <tabstop>usePrereleaseBox</tabstop>
   <tabstop>compactBox</tabstop>
-  <tabstop>showMetaBox</tabstop>
-  <tabstop>resetDialogsButton</tabstop>
   <tabstop>categoriesBtn</tabstop>
   <tabstop>baseDirEdit</tabstop>
   <tabstop>browseBaseDirBtn</tabstop>

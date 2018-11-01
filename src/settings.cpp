@@ -50,6 +50,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QVariantMap>
 #include <QLabel>
+#include <QPushButton>
+#include <QPalette>
 
 #include <Qt> // for Qt::UserRole, etc
 #include <QtDebug> // for qDebug, qWarning
@@ -61,6 +63,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept> // for runtime_error
 #include <string>
 #include <utility> // for pair, make_pair
+
 
 using namespace MOBase;
 
@@ -188,6 +191,14 @@ QString Settings::deObfuscate(const QString &password)
   }
   return QString::fromUtf8(buffer.constData());
 }
+
+QColor Settings::getIdealTextColor(const QColor&  rBackgroundColor)
+{
+  const int THRESHOLD = 105;
+  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
+  return QColor((255 - BackgroundDelta < THRESHOLD) ? Qt::black : Qt::white);
+}
+
 
 bool Settings::hideUncheckedPlugins() const
 {
@@ -353,6 +364,26 @@ int Settings::crashDumpsType() const
 int Settings::crashDumpsMax() const
 {
   return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
+}
+
+QColor Settings::modlistOverwrittenLooseColor() const
+{
+  return m_Settings.value("Settings/overwrittenLooseFilesColor", QColor(0, 255, 0, 64)).value<QColor>();
+}
+
+QColor Settings::modlistOverwritingLooseColor() const
+{
+  return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
+}
+
+QColor Settings::modlistContainsPluginColor() const
+{
+  return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
+}
+
+QColor Settings::pluginListContainedColor() const
+{
+  return m_Settings.value("Settings/containedColor", QColor(0, 0, 255, 64)).value<QColor>();
 }
 
 void Settings::setNexusLogin(QString username, QString password)
@@ -587,12 +618,13 @@ void Settings::resetDialogs()
   QuestionBoxMemory::resetDialogs();
 }
 
-
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
   SettingsDialog dialog(pluginContainer, parent);
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
+
+  connect(&dialog, SIGNAL(resetColorSettings()), this, SLOT(resetColorSettings()));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
@@ -658,6 +690,10 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_compactBox(m_dialog.findChild<QCheckBox *>("compactBox"))
   , m_showMetaBox(m_dialog.findChild<QCheckBox *>("showMetaBox"))
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
+  , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
+  , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
+  , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
+  , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
 {
   // FIXME I think 'addLanguages' lives in here not in parent
   m_parent->addLanguages(m_languageBox);
@@ -685,6 +721,50 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
       m_styleBox->setCurrentIndex(currentID);
     }
   }
+  /* verision using palette only works with fusion theme for some stupid reason...
+  m_overwritingBtn->setAutoFillBackground(true);
+  m_overwrittenBtn->setAutoFillBackground(true);
+  m_containsBtn->setAutoFillBackground(true);
+  m_containedBtn->setAutoFillBackground(true);
+  m_overwritingBtn->setPalette(QPalette(m_parent->modlistOverwritingLooseColor()));
+  m_overwrittenBtn->setPalette(QPalette(m_parent->modlistOverwrittenLooseColor()));
+  m_containsBtn->setPalette(QPalette(m_parent->modlistContainsPluginColor()));
+  m_containedBtn->setPalette(QPalette(m_parent->pluginListContainedColor()));
+  QPalette palette1 = m_overwritingBtn->palette();
+  QPalette palette2 = m_overwrittenBtn->palette();
+  QPalette palette3 = m_containsBtn->palette();
+  QPalette palette4 = m_containedBtn->palette();
+  palette1.setColor(QPalette::Background, m_parent->modlistOverwritingLooseColor());
+  palette2.setColor(QPalette::Background, m_parent->modlistOverwrittenLooseColor());
+  palette3.setColor(QPalette::Background, m_parent->modlistContainsPluginColor());
+  palette4.setColor(QPalette::Background, m_parent->pluginListContainedColor());
+  m_overwritingBtn->setPalette(palette1);
+  m_overwrittenBtn->setPalette(palette2);
+  m_containsBtn->setPalette(palette3);
+  m_containedBtn->setPalette(palette4);
+  */
+  
+  //version with stylesheet 
+  QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+
+
+  m_overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+    m_parent->modlistOverwritingLooseColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwritingLooseColor()).name()));
+  m_overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+    m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwrittenLooseColor()).name()));
+  m_containsBtn->setStyleSheet(COLOR_STYLE.arg(
+    m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
+      m_parent->modlistContainsPluginColor()).name()));
+  m_containedBtn->setStyleSheet(COLOR_STYLE.arg(
+    m_parent->pluginListContainedColor().name()).arg(getIdealTextColor(
+      m_parent->pluginListContainedColor()).name()));
+  
+  m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
+  m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
+  m_dialog.setContainedColor(m_parent->pluginListContainedColor());
 
   m_compactBox->setChecked(m_parent->compactDownloads());
   m_showMetaBox->setChecked(m_parent->metaDownloads());
@@ -707,6 +787,10 @@ void Settings::GeneralTab::update()
     emit m_parent->styleChanged(newStyle);
   }
 
+  m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
+  m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
+  m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
+  m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
   m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
   m_Settings.setValue("Settings/use_prereleases", m_usePrereleaseBox->isChecked());

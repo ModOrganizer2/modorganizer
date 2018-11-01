@@ -56,6 +56,18 @@ private:
 
   void storeSettings(QListWidgetItem *pluginItem);
 
+public:
+
+  QColor getOverwritingColor() { return m_OverwritingColor; }
+  QColor getOverwrittenColor() { return m_OverwrittenColor; }
+  QColor getContainsColor() { return m_ContainsColor; }
+  QColor getContainedColor() { return m_ContainedColor; }
+
+  void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
+  void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
+  void setContainsColor(QColor col) { m_ContainsColor = col; }
+  void setContainedColor(QColor col) { m_ContainedColor = col; }
+
 private slots:
   void on_loginCheckBox_toggled(bool checked);
 
@@ -85,9 +97,24 @@ private slots:
 
   void on_browseProfilesDirBtn_clicked();
 
+  void on_overwritingBtn_clicked();
+
+  void on_overwrittenBtn_clicked();
+
+  void on_containsBtn_clicked();
+
+  void on_containedBtn_clicked();
+
+  void on_resetColorsBtn_clicked();
+
 private:
     Ui::SettingsDialog *ui;
     PluginContainer *m_PluginContainer;
+
+    QColor m_OverwritingColor;
+    QColor m_OverwrittenColor;
+    QColor m_ContainsColor;
+    QColor m_ContainedColor;
 };
 
 

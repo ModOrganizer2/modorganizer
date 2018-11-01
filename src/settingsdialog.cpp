@@ -33,6 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QColorDialog>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -175,6 +176,109 @@ void SettingsDialog::on_browseOverwriteDirBtn_clicked()
   if (!temp.isEmpty()) {
     ui->overwriteDirEdit->setText(temp);
   }
+}
+
+void SettingsDialog::on_containsBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_ContainsColor, this);
+  if (result.isValid()) {
+    m_ContainsColor = result;
+
+    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+    ui->containsBtn->setStyleSheet(COLOR_STYLE.arg(
+     result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->containsBtn->setAutoFillBackground(true);
+    ui->containsBtn->setPalette(QPalette(result));
+    QPalette palette = ui->containsBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->containsBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_containedBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_ContainedColor, this);
+  if (result.isValid()) {
+    m_ContainedColor = result;
+
+    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+    ui->containedBtn->setStyleSheet(COLOR_STYLE.arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->containedBtn->setAutoFillBackground(true);
+    ui->containedBtn->setPalette(QPalette(result));
+    QPalette palette = ui->containedBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->containedBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_overwrittenBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this);
+  if (result.isValid()) {
+    m_OverwrittenColor = result;
+
+    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+    ui->overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->overwrittenBtn->setAutoFillBackground(true);
+    ui->overwrittenBtn->setPalette(QPalette(result));
+    QPalette palette = ui->overwrittenBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->overwrittenBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_overwritingBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this);
+  if (result.isValid()) {
+    m_OverwritingColor = result;
+
+    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+    ui->overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->overwritingBtn->setAutoFillBackground(true);
+    ui->overwritingBtn->setPalette(QPalette(result));
+    QPalette palette = ui->overwritingBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->overwritingBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_resetColorsBtn_clicked()
+{
+  m_OverwritingColor = QColor(255, 0, 0, 64);
+  m_OverwrittenColor = QColor(0, 255, 0, 64);
+  m_ContainsColor = QColor(0, 0, 255, 64);
+  m_ContainedColor = QColor(0, 0, 255, 64);
+
+  QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
+
+  ui->overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+    QColor(255, 0, 0, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(255, 0, 0, 64)).name()));
+
+  ui->overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+    QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 255, 0, 64)).name()));
+
+  ui->containsBtn->setStyleSheet(COLOR_STYLE.arg(
+    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 0, 255, 64)).name()));
+
+  ui->containedBtn->setStyleSheet(COLOR_STYLE.arg(
+    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 0, 255, 64)).name()));
+
 }
 
 void SettingsDialog::on_resetDialogsButton_clicked()

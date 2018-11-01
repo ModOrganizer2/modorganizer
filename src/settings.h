@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QSettings>
 #include <QString>
 #include <QVariant>
+#include <QColor>
 
 #include <QtGlobal> //for uint
 
@@ -42,6 +43,7 @@ class QSpinBox;
 class QListWidget;
 class QWidget;
 class QLabel;
+class QPushButton;
 
 struct ServerInfo;
 
@@ -217,6 +219,15 @@ public:
   */
   int crashDumpsMax() const;
 
+  QColor modlistOverwrittenLooseColor() const;
+
+  QColor modlistOverwritingLooseColor() const;
+
+  QColor modlistContainsPluginColor() const;
+
+  QColor pluginListContainedColor() const;
+
+
   /**
    * @brief set the nexus login information
    *
@@ -346,7 +357,8 @@ public:
 public slots:
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
-
+public:
+  static QColor getIdealTextColor(const QColor&  rBackgroundColor);
 private:
 
   static QString obfuscate(const QString &password);
@@ -387,6 +399,10 @@ private:
     QCheckBox *m_compactBox;
     QCheckBox *m_showMetaBox;
     QCheckBox *m_usePrereleaseBox;
+    QPushButton *m_overwritingBtn;
+    QPushButton *m_overwrittenBtn;
+    QPushButton *m_containsBtn;
+    QPushButton *m_containedBtn;
   };
 
   class PathsTab : public SettingsTab
