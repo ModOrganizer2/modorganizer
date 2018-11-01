@@ -590,6 +590,7 @@ private slots: // ui slots
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
+  void on_listOptionsBtn_pressed();
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_savegameList_customContextMenuRequested(const QPoint &pos);

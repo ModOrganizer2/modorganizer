@@ -204,6 +204,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_CategoryFactory(CategoryFactory::instance())
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
+  , m_ContextRow(-1)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -328,6 +329,7 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->linkButton->setMenu(linkMenu);
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
+  connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 
@@ -2866,8 +2868,15 @@ void MainWindow::createSeparator_clicked()
   {
     return;
   }
+  int newPriority;
+  if (m_ContextRow >= 0) {
+    newPriority = m_OrganizerCore.currentProfile()->getModPriority(m_ContextRow);
+  }
   if (m_OrganizerCore.createMod(name) == nullptr) { return; }
   m_OrganizerCore.refreshModList();
+  if (m_ContextRow >= 0) {
+    m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
+  }
 }
 
 void MainWindow::setColor_clicked()
@@ -3021,6 +3030,11 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
       reportError(e.what());
     }
   }
+}
+
+void MainWindow::on_listOptionsBtn_pressed()
+{
+  m_ContextRow = -1;
 }
 
 void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
