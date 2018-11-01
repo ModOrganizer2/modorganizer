@@ -1183,17 +1183,35 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
   ChangeBracket<PluginList> layoutChange(this);
-  // sort rows to insert by their old priority (ascending) and insert them move them in that order
   const std::vector<ESPInfo> &esp = m_ESPs;
-  std::sort(rows.begin(), rows.end(),
-            [&esp](const int &LHS, const int &RHS) {
-              return esp[LHS].m_Priority < esp[RHS].m_Priority;
-            });
 
-  // odd stuff: if any of the dragged sources has priority lower than the destination then the
-  // target idx is that of the row BELOW the dropped location, otherwise it's the one above. why?
+  int minPriority = INT_MAX;
+  int maxPriority = INT_MIN;
+
+  // don't try to move plugins before force-enabled plugins
+  for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin();
+       iter != m_ESPs.end(); ++iter) {
+    if (iter->m_ForceEnabled) {
+      newPriority = std::max(newPriority, iter->m_Priority+1);
+    }
+    maxPriority = std::max(maxPriority, iter->m_Priority+1);
+    minPriority = std::min(minPriority, iter->m_Priority);
+  }
+
+  // limit the new priority to existing priorities
+  newPriority = std::min(newPriority, maxPriority);
+  newPriority = std::max(newPriority, minPriority);
+
+  // sort the moving plugins by ascending priorities
+  std::sort(rows.begin(), rows.end(),
+    [&esp](const int &LHS, const int &RHS) {
+    return esp[LHS].m_Priority < esp[RHS].m_Priority;
+  });
+
+  // if at least on plugin is increasing in priority, the target index is
+  // that of the row BELOW the dropped location, otherwise it's the one above
   for (std::vector<int>::const_iterator iter = rows.begin();
-       iter != rows.end(); ++iter) {
+    iter != rows.end(); ++iter) {
     if (m_ESPs[*iter].m_Priority < newPriority) {
       --newPriority;
       break;

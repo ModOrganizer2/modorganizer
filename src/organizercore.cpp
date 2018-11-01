@@ -1183,7 +1183,9 @@ ModList *OrganizerCore::modList()
 QStringList OrganizerCore::modsSortedByProfilePriority() const
 {
   QStringList res;
-  for (unsigned int i = 0; i < currentProfile()->numRegularMods(); ++i) {
+  for (int i = currentProfile()->getPriorityMinimum(); 
+           i < currentProfile()->getPriorityMinimum() + currentProfile()->numRegularMods(); 
+           ++i) {
     int modIndex = currentProfile()->modIndexByPriority(i);
     res.push_back(ModInfo::getByIndex(modIndex)->name());
   }

@@ -184,9 +184,10 @@ void Profile::doWriteModlist()
       return;
     }
 
-    for (int i = static_cast<int>(m_ModStatus.size()) - 1; i >= 0; --i) {
+    for (std::map<int, unsigned int>::const_reverse_iterator iter = m_ModIndexByPriority.crbegin(); iter != m_ModIndexByPriority.crend(); iter++ ) {
+      //qDebug(QString("write mod %1 to priority %2").arg(iter->first).arg(iter->second).toLocal8Bit());
       // the priority order was inverted on load so it has to be inverted again
-      unsigned int index = m_ModIndexByPriority[i];
+      unsigned int index = iter->second;
       if (index != UINT_MAX) {
         ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
@@ -223,9 +224,9 @@ void Profile::createTweakedIniFile()
     return;
   }
 
-  for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
+  for (int i = getPriorityMinimum(); i < getPriorityMinimum() + (int)numRegularMods(); ++i) {
     unsigned int idx = modIndexByPriority(i);
-    if ((idx != UINT_MAX) && m_ModStatus[idx].m_Enabled) {
+    if (m_ModStatus[idx].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(idx);
       mergeTweaks(modInfo, tweakedIni);
     }
@@ -454,18 +455,14 @@ void Profile::updateIndices()
 {
   m_NumRegularMods = 0;
   m_ModIndexByPriority.clear();
-  m_ModIndexByPriority.resize(m_ModStatus.size(), UINT_MAX);
   for (unsigned int i = 0; i < m_ModStatus.size(); ++i) {
     int priority = m_ModStatus[i].m_Priority;
-    if (priority < 0) {
+    if (priority == INT_MIN) {
       // don't assign this to mapping at all, it's probably the overwrite mod
-      continue;
-    } else if (priority >= static_cast<int>(m_ModIndexByPriority.size())) {
-      qCritical("invalid priority %d for mod", priority);
       continue;
     } else {
       ++m_NumRegularMods;
-      m_ModIndexByPriority.at(priority) = i;
+      m_ModIndexByPriority[priority] = i;
     }
   }
 }
@@ -474,11 +471,10 @@ void Profile::updateIndices()
 std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
 {
   std::vector<std::tuple<QString, QString, int> > result;
-  for (std::vector<unsigned int>::const_iterator iter = m_ModIndexByPriority.begin();
-       iter != m_ModIndexByPriority.end(); ++iter) {
-    if ((*iter != UINT_MAX) && m_ModStatus[*iter].m_Enabled) {
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(*iter);
-      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[*iter].m_Priority));
+  for (std::map<int, unsigned int>::const_iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++ ) {
+    if ((iter->second != UINT_MAX) && m_ModStatus[iter->second].m_Enabled) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
+      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
     }
   }
 
@@ -496,13 +492,13 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
 }
 
 
-unsigned int Profile::modIndexByPriority(unsigned int priority) const
+unsigned int Profile::modIndexByPriority(int priority) const
 {
-  if (priority >= m_ModStatus.size()) {
+  try {
+    return m_ModIndexByPriority.at(priority);
+  } catch (std::out_of_range) {
     throw MyException(tr("invalid priority %1").arg(priority));
   }
-
-  return m_ModIndexByPriority[priority];
 }
 
 
@@ -552,30 +548,26 @@ void Profile::setModPriority(unsigned int index, int &newPriority)
     return;
   }
 
-  int newPriorityTemp =
-      (std::max)(0, (std::min<int>)(static_cast<int>(m_ModStatus.size()) - 1,
-                                    newPriority));
-
-  // don't try to place below overwrite
-  while ((m_ModIndexByPriority.at(newPriorityTemp) >= m_ModStatus.size()) ||
-         m_ModStatus.at(m_ModIndexByPriority.at(newPriorityTemp)).m_Overwrite) {
-    --newPriorityTemp;
-  }
-
   int oldPriority = m_ModStatus.at(index).m_Priority;
-  if (newPriorityTemp > oldPriority) {
-    // priority is higher than the old, so the gap we left is in lower priorities
-    for (int i = oldPriority + 1; i <= newPriorityTemp; ++i) {
-      --m_ModStatus.at(m_ModIndexByPriority.at(i)).m_Priority;
-    }
-  } else {
-    for (int i = newPriorityTemp; i < oldPriority; ++i) {
-      ++m_ModStatus.at(m_ModIndexByPriority.at(i)).m_Priority;
-    }
-    ++newPriority;
+  int lastPriority = INT_MIN;
+
+  if (newPriority == oldPriority) {
+    // nothing to do
+    return;
   }
 
-  m_ModStatus.at(index).m_Priority = newPriorityTemp;
+  for (std::map<int, unsigned int>::iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++) {
+    if (newPriority < oldPriority && iter->first >= newPriority && iter->first < oldPriority) {
+      m_ModStatus.at(iter->second).m_Priority += 1;
+    }
+    else if (newPriority > oldPriority && iter->first <= newPriority && iter->first > oldPriority) {
+      m_ModStatus.at(iter->second).m_Priority -= 1;
+    }
+    lastPriority = std::max(lastPriority, iter->first);
+  }
+
+  newPriority = std::min(newPriority, lastPriority);
+  m_ModStatus.at(index).m_Priority = std::min(newPriority, lastPriority);
 
   updateIndices();
   m_ModListWriter.write();
@@ -839,4 +831,9 @@ void Profile::storeSetting(const QString &section, const QString &name,
 void Profile::removeSetting(const QString &section, const QString &name)
 {
 	m_Settings->remove(section + "/" + name);
+}
+
+int Profile::getPriorityMinimum() const
+{
+  return m_ModIndexByPriority.begin()->first;
 }

@@ -654,26 +654,48 @@ void ModList::changeModPriority(std::vector<int> sourceIndices, int newPriority)
 
   emit layoutAboutToBeChanged();
   Profile *profile = m_Profile;
-  // sort rows to insert by their old priority (ascending) and insert them move them in that order
-  std::sort(sourceIndices.begin(), sourceIndices.end(),
-            [profile](const int &LHS, const int &RHS) {
-              return profile->getModPriority(LHS) < profile->getModPriority(RHS);
-            });
 
-  // odd stuff: if any of the dragged sources has priority lower than the destination then the
-  // target idx is that of the row BELOW the dropped location, otherwise it's the one above. why?
+  // sort the moving mods by ascending priorities
+  std::sort(sourceIndices.begin(), sourceIndices.end(),
+    [profile](const int &LHS, const int &RHS) {
+    return profile->getModPriority(LHS) > profile->getModPriority(RHS);
+  });
+
+  // move mods that are decreasing in priority
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
        iter != sourceIndices.end(); ++iter) {
-    if (profile->getModPriority(*iter) < newPriority) {
+    int oldPriority = profile->getModPriority(*iter);
+    if (oldPriority > newPriority) {
+      profile->setModPriority(*iter, newPriority);
+      m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+    }
+  }
+
+  // sort the moving mods by descending priorities
+  std::sort(sourceIndices.begin(), sourceIndices.end(),
+    [profile](const int &LHS, const int &RHS) {
+    return profile->getModPriority(LHS) < profile->getModPriority(RHS);
+  });
+
+  // if at least one mod is increasing in priority, the target index is
+  // that of the row BELOW the dropped location, otherwise it's the one above
+  for (std::vector<int>::const_iterator iter = sourceIndices.begin();
+    iter != sourceIndices.end(); ++iter) {
+    int oldPriority = profile->getModPriority(*iter);
+    if (oldPriority < newPriority) {
       --newPriority;
       break;
     }
   }
+
+  // move mods that are increasing in priority
   for (std::vector<int>::const_iterator iter = sourceIndices.begin();
-       iter != sourceIndices.end(); ++iter) {
-    int oldPriority = m_Profile->getModPriority(*iter);
-    m_Profile->setModPriority(*iter, newPriority);
-    m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+    iter != sourceIndices.end(); ++iter) {
+    int oldPriority = profile->getModPriority(*iter);
+    if (oldPriority < newPriority) {
+      profile->setModPriority(*iter, newPriority);
+      m_ModMoved(ModInfo::getByIndex(*iter)->name(), oldPriority, newPriority);
+    }
   }
 
   emit layoutChanged();
