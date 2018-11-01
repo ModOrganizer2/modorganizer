@@ -624,8 +624,6 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
 
-  connect(&dialog, SIGNAL(resetColorSettings()), this, SLOT(resetColorSettings()));
-
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
   tabs.push_back(std::unique_ptr<SettingsTab>(new GeneralTab(this, dialog)));
