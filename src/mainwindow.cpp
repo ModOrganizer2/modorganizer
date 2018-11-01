@@ -3700,6 +3700,15 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
+        menu->addSeparator();
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
+        populateMenuCategories(addRemoveCategoriesMenu, 0);
+        connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
+        addMenuAsPushButton(menu, addRemoveCategoriesMenu);
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
+        connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
+        addMenuAsPushButton(menu, primaryCategoryMenu);
+        menu->addSeparator();
         menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
         menu->addSeparator();
@@ -3718,14 +3727,6 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
-
-    //Removed as it was redundant, just making the categories look more complicated.
-    /*
-        QMenu *replaceCategoriesMenu = new QMenu(tr("Replace Categories"));
-        populateMenuCategories(replaceCategoriesMenu, 0);
-        connect(replaceCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(replaceCategories_MenuHandler()));
-        addMenuAsPushButton(menu, replaceCategoriesMenu);
-    */
 
         QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
