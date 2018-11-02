@@ -2,7 +2,7 @@
   Skyrim
 ****************************************
   Author: chintsu_kun
-  Version: 2.0.0
+  Version: 2.0.1
   Licence: GNU General Public License v3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html)
   Url: https://github.com/nikolay-borzov/modorganizer-themes
 ****************************************
@@ -12,10 +12,9 @@ QWidget {
   color: #F1F1F1; }
 
 /* Common */
-/* fix: fo some reason applying background-color or border fixes paddings properties */
-QListView::item,
-QTreeView#espList::item,
-QTreeWidget#categoriesList::item {
+/* FIX: For some reason applying background-color or border fixes paddings 
+   properties */
+QListWidget::item {
   border-width: 0; }
 
 * {
@@ -167,7 +166,7 @@ QLineEdit {
   QLineEdit#downloadFilterEdit {
     margin: 0 4px 4px 0; }
 
-/* Dropdowns #QComboBox*/
+/* Drop-downs #QComboBox*/
 QComboBox {
   min-height: 20px;
   padding-left: 5px;

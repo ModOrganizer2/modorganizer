@@ -2,12 +2,11 @@
   VS15 Dark
 ****************************************
   Author: chintsu_kun
-  Version: 1.3.1
+  Version: 2.0.1
   Licence: GNU General Public License v3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html)
   Url: https://github.com/nikolay-borzov/modorganizer-themes
 ****************************************
 */
-/* or #434346*/
 /* Main Window */
 QWidget {
   background-color: #2D2D30;
@@ -16,10 +15,9 @@ QWidget {
     color: #656565; }
 
 /* Common */
-/* FIX: For some reason applying background-color or border fixes paddings properties */
-QListView::item,
-QTreeView#espList::item,
-QTreeWidget#categoriesList::item {
+/* FIX: For some reason applying background-color or border fixes paddings 
+  properties. Otherwise padding is only applied when item is hovered */
+QListWidget::item {
   border-width: 0; }
 
 /* remove outline */
@@ -32,7 +30,10 @@ QListView::item:disabled,
   color: #656565; }
 
 /* line heights */
-/* QTreeView#fileTree::item - currently have problem with size column vertical text align  */
+/* QTreeView#fileTree::item - currently have problem with size column vertical
+   text align  */
+#bsaList::item,
+#dataTree::item,
 QTreeView#modList::item,
 QTreeWidget#categoriesTree::item,
 #tabConflicts QTreeWidget::item {
@@ -146,7 +147,7 @@ QLineEdit#espFilterEdit QToolButton {
   margin-top: -2px;
   margin-bottom: 1px; }
 
-/* Dropdowns #QComboBox*/
+/* Drop-downs #QComboBox*/
 QComboBox {
   min-height: 20px;
   padding-left: 5px;
@@ -162,7 +163,7 @@ QComboBox {
     subcontrol-origin: padding;
     subcontrol-position: top right;
     border: none;
-    /* If you need to set style for drop down button
+    /* If you need to set style for drop-down button
     &:on,
     &:editable:hover {
       background-color: red;
@@ -295,8 +296,8 @@ QDialog QPushButton {
   padding-left: .5em;
   padding-right: .5em; }
 
-/* Checkboxes and Radio buttons common #QCheckBox, #QRadioButton */
-/*common*/
+/* Check boxes and Radio buttons common #QCheckBox, #QRadioButton */
+/* common */
 QGroupBox::indicator,
 QTreeView::indicator,
 QCheckBox::indicator,
@@ -324,7 +325,7 @@ QTreeView::indicator:checked:disabled,
 QCheckBox::indicator:checked:disabled {
   image: url(./vs15/checkbox-check-disabled.png); }
 
-/* Checkboxes special */
+/* Check boxes special */
 QTreeView#modList::indicator {
   width: 15px;
   height: 15px; }
@@ -537,7 +538,7 @@ QHeaderView::down-arrow {
   image: url(./vs15/sort-desc.png);
   margin-bottom: 0; }
 
-/* Context menus, toolbar dropdowns #QMenu  */
+/* Context menus, toolbar drop-downs #QMenu  */
 QMenu {
   background-color: #1A1A1C;
   border-color: #333337;
@@ -734,7 +735,7 @@ QLineEdit#modFilterEdit {
 QWidget#bsaTab QTreeWidget::indicator:unchecked {
   background-color: #009933; }
 
-/* increase version textfield */
+/* increase version text field */
 QLineEdit#versionEdit {
   max-width: 100px; }
 
