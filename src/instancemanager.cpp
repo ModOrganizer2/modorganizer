@@ -66,6 +66,7 @@ void InstanceManager::clearCurrentInstance()
 {
   setCurrentInstance("");
   m_Reset = true;
+  m_overrideInstance = false;
 }
 
 void InstanceManager::setCurrentInstance(const QString &name)

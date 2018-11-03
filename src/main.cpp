@@ -715,5 +715,6 @@ int main(int argc, char *argv[])
       return result;
     }
     argc = 1;
+    moshortcut = MOShortcut("");
   } while (true);
 }
