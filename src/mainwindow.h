@@ -278,8 +278,8 @@ private:
   QString queryRestore(const QString &filePath);
 
   QMenu *modListContextMenu();
-  QMenu *modSendToContextMenu();
-  QMenu *pluginSendToContextMenu();
+  void addModSendToContextMenu(QMenu *menu);
+  void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
 

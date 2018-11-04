@@ -3683,24 +3683,34 @@ QMenu *MainWindow::modListContextMenu()
   return menu;
 }
 
-QMenu *MainWindow::modSendToContextMenu()
+void MainWindow::addModSendToContextMenu(QMenu *menu)
 {
-  QMenu *menu = new QMenu(this);
-  menu->setTitle(tr("Send to"));
-  menu->addAction(tr("Top"), this, SLOT(sendSelectedModsToTop_clicked()));
-  menu->addAction(tr("Bottom"), this, SLOT(sendSelectedModsToBottom_clicked()));
-  menu->addAction(tr("Priority..."), this, SLOT(sendSelectedModsToPriority_clicked()));
-  return menu;
+  if (m_ModListSortProxy->sortColumn() != ModList::COL_PRIORITY)
+    return;
+
+  QMenu *sub_menu = new QMenu(this);
+  sub_menu->setTitle(tr("Send to"));
+  sub_menu->addAction(tr("Top"), this, SLOT(sendSelectedModsToTop_clicked()));
+  sub_menu->addAction(tr("Bottom"), this, SLOT(sendSelectedModsToBottom_clicked()));
+  sub_menu->addAction(tr("Priority..."), this, SLOT(sendSelectedModsToPriority_clicked()));
+
+  menu->addMenu(sub_menu);
+  menu->addSeparator();
 }
 
-QMenu *MainWindow::pluginSendToContextMenu()
+void MainWindow::addPluginSendToContextMenu(QMenu *menu)
 {
-  QMenu *menu = new QMenu(this);
-  menu->setTitle(tr("Send to"));
-  menu->addAction(tr("Top"), this, SLOT(sendSelectedPluginsToTop_clicked()));
-  menu->addAction(tr("Bottom"), this, SLOT(sendSelectedPluginsToBottom_clicked()));
-  menu->addAction(tr("Priority..."), this, SLOT(sendSelectedPluginsToPriority_clicked()));
-  return menu;
+  if (m_PluginListSortProxy->sortColumn() != PluginList::COL_PRIORITY)
+    return;
+
+  QMenu *sub_menu = new QMenu(this);
+  sub_menu->setTitle(tr("Send to"));
+  sub_menu->addAction(tr("Top"), this, SLOT(sendSelectedPluginsToTop_clicked()));
+  sub_menu->addAction(tr("Bottom"), this, SLOT(sendSelectedPluginsToBottom_clicked()));
+  sub_menu->addAction(tr("Priority..."), this, SLOT(sendSelectedPluginsToPriority_clicked()));
+
+  menu->addMenu(sub_menu);
+  menu->addSeparator();
 }
 
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
@@ -3746,14 +3756,13 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
         menu->addSeparator();
-        menu->addMenu(modSendToContextMenu());
-        menu->addSeparator();
+        addModSendToContextMenu(menu);
         menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
         if(info->getColor().isValid())
           menu->addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
         menu->addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-        menu->addMenu(modSendToContextMenu());
+        addModSendToContextMenu(menu);
       } else {
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
@@ -3785,9 +3794,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu->addSeparator();
 
-        menu->addMenu(modSendToContextMenu());
-
-        menu->addSeparator();
+        addModSendToContextMenu(menu);
 
         menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
@@ -5021,7 +5028,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
   menu.addSeparator();
 
-  menu.addMenu(pluginSendToContextMenu());
+  addPluginSendToContextMenu(&menu);
 
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   bool hasLocked = false;
@@ -5036,8 +5043,6 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
       }
     }
   }
-
-  menu.addSeparator();
 
   if (hasLocked) {
     menu.addAction(tr("Unlock load order"), this, SLOT(unlockESPIndex()));
