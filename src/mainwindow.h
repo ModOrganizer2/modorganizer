@@ -278,6 +278,8 @@ private:
   QString queryRestore(const QString &filePath);
 
   QMenu *modListContextMenu();
+  QMenu *modSendToContextMenu();
+  QMenu *pluginSendToContextMenu();
 
   QMenu *openFolderMenu();
 
@@ -293,6 +295,9 @@ private:
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
   bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
+
+  void sendSelectedModsToPriority(int newPriority);
+  void sendSelectedPluginsToPriority(int newPriority);
 
 private:
 
@@ -423,8 +428,9 @@ private slots:
   void information_clicked();
   void enableSelectedMods_clicked();
   void disableSelectedMods_clicked();
-  void sendModToTop_clicked();
-  void sendModToBottom_clicked();
+  void sendSelectedModsToTop_clicked();
+  void sendSelectedModsToBottom_clicked();
+  void sendSelectedModsToPriority_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
   void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
@@ -441,6 +447,7 @@ private slots:
   void disableSelectedPlugins_clicked();
   void sendSelectedPluginsToTop_clicked();
   void sendSelectedPluginsToBottom_clicked();
+  void sendSelectedPluginsToPriority_clicked();
 
   void linkToolbar();
   void linkDesktop();

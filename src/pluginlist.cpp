@@ -359,7 +359,7 @@ void PluginList::disableAll()
   }
 }
 
-void PluginList::sendToTop(const QItemSelectionModel *selectionModel)
+void PluginList::sendToPriority(const QItemSelectionModel *selectionModel, int newPriority)
 {
   if (selectionModel->hasSelection()) {
     std::vector<int> pluginsToMove;
@@ -370,29 +370,10 @@ void PluginList::sendToTop(const QItemSelectionModel *selectionModel)
       }
     }
     if (pluginsToMove.size()) {
-      changePluginPriority(pluginsToMove, 0);
-      emit SIGNAL(displayPlugin(0));
+      changePluginPriority(pluginsToMove, newPriority);
     }
   }
 }
-
-void PluginList::sendToBottom(const QItemSelectionModel *selectionModel)
-{
-  if (selectionModel->hasSelection()) {
-    std::vector<int> pluginsToMove;
-    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowIndex = findPluginByPriority(row.data().toInt());
-      if (!m_ESPs[rowIndex].m_ForceEnabled) {
-        pluginsToMove.push_back(rowIndex);
-      }
-    }
-    if (pluginsToMove.size()) {
-      changePluginPriority(pluginsToMove, INT_MAX);
-      emit SIGNAL(displayPlugin(INT_MAX));
-    }
-  }
-}
-
 
 bool PluginList::isEnabled(const QString &name)
 {

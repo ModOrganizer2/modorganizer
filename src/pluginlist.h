@@ -265,14 +265,9 @@ public slots:
   void disableAll();
 
   /**
-  *  @brief moves selected plugins to the top (lowest priority)
+  *  @brief moves selected plugins to specified priority
   **/
-  void sendToTop(const QItemSelectionModel *selectionModel);
-
-  /**
-  *  @brief moves selected plugins to the bottom (highest priority)
-  **/
-  void sendToBottom(const QItemSelectionModel *selectionModel);
+  void sendToPriority(const QItemSelectionModel *selectionModel, int priority);
 
   /**
    * @brief The currently managed game has changed

@@ -3683,6 +3683,26 @@ QMenu *MainWindow::modListContextMenu()
   return menu;
 }
 
+QMenu *MainWindow::modSendToContextMenu()
+{
+  QMenu *menu = new QMenu(this);
+  menu->setTitle(tr("Send to"));
+  menu->addAction(tr("Top"), this, SLOT(sendSelectedModsToTop_clicked()));
+  menu->addAction(tr("Bottom"), this, SLOT(sendSelectedModsToBottom_clicked()));
+  menu->addAction(tr("Priority..."), this, SLOT(sendSelectedModsToPriority_clicked()));
+  return menu;
+}
+
+QMenu *MainWindow::pluginSendToContextMenu()
+{
+  QMenu *menu = new QMenu(this);
+  menu->setTitle(tr("Send to"));
+  menu->addAction(tr("Top"), this, SLOT(sendSelectedPluginsToTop_clicked()));
+  menu->addAction(tr("Bottom"), this, SLOT(sendSelectedPluginsToBottom_clicked()));
+  menu->addAction(tr("Priority..."), this, SLOT(sendSelectedPluginsToPriority_clicked()));
+  return menu;
+}
+
 void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 {
   try {
@@ -3726,16 +3746,14 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
         menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
         menu->addSeparator();
-        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
-        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
+        menu->addMenu(modSendToContextMenu());
         menu->addSeparator();
         menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
         if(info->getColor().isValid())
           menu->addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
         menu->addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
-        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
+        menu->addMenu(modSendToContextMenu());
       } else {
         QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
         populateMenuCategories(addRemoveCategoriesMenu, 0);
@@ -3767,8 +3785,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu->addSeparator();
 
-        menu->addAction(tr("Send to Top"), this, SLOT(sendModToTop_clicked()));
-        menu->addAction(tr("Send to Bottom"), this, SLOT(sendModToBottom_clicked()));
+        menu->addMenu(modSendToContextMenu());
 
         menu->addSeparator();
 
@@ -4358,12 +4375,23 @@ void MainWindow::disableSelectedPlugins_clicked()
 
 void MainWindow::sendSelectedPluginsToTop_clicked()
 {
-  m_OrganizerCore.pluginList()->sendToTop(ui->espList->selectionModel());
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), 0);
 }
 
 void MainWindow::sendSelectedPluginsToBottom_clicked()
 {
-  m_OrganizerCore.pluginList()->sendToBottom(ui->espList->selectionModel());
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), INT_MAX);
+}
+
+void MainWindow::sendSelectedPluginsToPriority_clicked()
+{
+  bool ok;
+  int newPriority = QInputDialog::getInt(this, 
+    tr("Set Priority"), tr("Set the priority of the selected mods"), 
+    0, 0, INT_MAX, 1, &ok);
+  if (!ok) return;
+
+  m_OrganizerCore.pluginList()->sendToPriority(ui->espList->selectionModel(), newPriority);
 }
 
 
@@ -4993,8 +5021,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
 
   menu.addSeparator();
 
-  menu.addAction(tr("Send to top"), this, SLOT(sendSelectedPluginsToTop_clicked()));
-  menu.addAction(tr("Send to bottom"), this, SLOT(sendSelectedPluginsToBottom_clicked()));
+  menu.addMenu(pluginSendToContextMenu());
 
   QItemSelection currentSelection = ui->espList->selectionModel()->selection();
   bool hasLocked = false;
@@ -5607,30 +5634,37 @@ void MainWindow::on_clearFiltersButton_clicked()
 	deselectFilters();
 }
 
-void MainWindow::sendModToTop_clicked()
+void MainWindow::sendSelectedModsToPriority(int newPriority)
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     std::vector<int> modsToMove;
     for (QModelIndex idx : selection->selectedRows()) {
-      modsToMove.push_back(idx.data(Qt::UserRole + 1).toInt());
+      modsToMove.push_back(idx.data().toInt());
     }
-    m_OrganizerCore.modList()->changeModPriority(modsToMove, 0);
+    m_OrganizerCore.modList()->changeModPriority(modsToMove, newPriority);
   } else {
-    m_OrganizerCore.modList()->changeModPriority(m_ContextRow, 0);
+    m_OrganizerCore.modList()->changeModPriority(m_ContextRow, newPriority);
   }
 }
 
-void MainWindow::sendModToBottom_clicked()
+void MainWindow::sendSelectedModsToTop_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    std::vector<int> modsToMove;
-    for (QModelIndex idx : selection->selectedRows()) {
-      modsToMove.push_back(idx.data(Qt::UserRole + 1).toInt());
-    }
-    m_OrganizerCore.modList()->changeModPriority(modsToMove, INT_MAX);
-  } else {
-    m_OrganizerCore.modList()->changeModPriority(m_ContextRow, INT_MAX);
-  }
+  sendSelectedModsToPriority(0);
+}
+
+void MainWindow::sendSelectedModsToBottom_clicked()
+{
+  sendSelectedModsToPriority(INT_MAX);
+}
+
+void MainWindow::sendSelectedModsToPriority_clicked()
+{
+  bool ok;
+  int newPriority = QInputDialog::getInt(this, 
+    tr("Set Priority"), tr("Set the priority of the selected mods"), 
+    0, 0, INT_MAX, 1, &ok);
+  if (!ok) return;
+
+ sendSelectedModsToPriority(newPriority);
 }
