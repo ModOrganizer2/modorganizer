@@ -2868,13 +2868,18 @@ void MainWindow::createSeparator_clicked()
   {
     return;
   }
-  int newPriority;
-  if (m_ContextRow >= 0) {
+
+  int newPriority = -1;
+  if (m_ContextRow >= 0 && m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY) 
+  {
     newPriority = m_OrganizerCore.currentProfile()->getModPriority(m_ContextRow);
   }
+
   if (m_OrganizerCore.createMod(name) == nullptr) { return; }
   m_OrganizerCore.refreshModList();
-  if (m_ContextRow >= 0 && newPriority >= 0) {
+
+  if (newPriority >= 0) 
+  {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
 }
