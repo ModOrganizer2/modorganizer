@@ -4399,7 +4399,7 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
 {
   bool ok;
   int newPriority = QInputDialog::getInt(this, 
-    tr("Set Priority"), tr("Set the priority of the selected mods"), 
+    tr("Set Priority"), tr("Set the priority of the selected plugins"), 
     0, 0, INT_MAX, 1, &ok);
   if (!ok) return;
 
