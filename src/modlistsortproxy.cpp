@@ -253,7 +253,7 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     switch (*iter) {
       case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (!enabled && !info->alwaysEnabled()) return false;
+        if (!enabled && !info->alwaysEnabled() && !info->hasFlag(ModInfo::FLAG_SEPARATOR)) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
         if (enabled || info->alwaysEnabled()) return false;
