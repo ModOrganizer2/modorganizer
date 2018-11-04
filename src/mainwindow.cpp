@@ -2874,7 +2874,7 @@ void MainWindow::createSeparator_clicked()
   }
   if (m_OrganizerCore.createMod(name) == nullptr) { return; }
   m_OrganizerCore.refreshModList();
-  if (m_ContextRow >= 0) {
+  if (m_ContextRow >= 0 && newPriority >= 0) {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
 }
