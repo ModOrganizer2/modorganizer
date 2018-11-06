@@ -1811,14 +1811,21 @@ void MainWindow::installMod(QString fileName)
 }
 
 void MainWindow::on_startButton_clicked() {
-  const Executable &selectedExecutable(getSelectedExecutable());
-  QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
-  m_OrganizerCore.spawnBinary(
-      selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
-      selectedExecutable.m_WorkingDirectory.length() != 0
-          ? selectedExecutable.m_WorkingDirectory
-          : selectedExecutable.m_BinaryInfo.absolutePath(),
-      selectedExecutable.m_SteamAppID, customOverwrite);
+  ui->startButton->setEnabled(false);
+  try {
+    const Executable &selectedExecutable(getSelectedExecutable());
+    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    m_OrganizerCore.spawnBinary(
+        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
+        selectedExecutable.m_WorkingDirectory.length() != 0
+            ? selectedExecutable.m_WorkingDirectory
+            : selectedExecutable.m_BinaryInfo.absolutePath(),
+        selectedExecutable.m_SteamAppID, customOverwrite);
+  } catch (...) {
+    ui->startButton->setEnabled(true);
+    throw;
+  }
+  ui->startButton->setEnabled(true);
 }
 
 static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
