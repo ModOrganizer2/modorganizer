@@ -12,7 +12,7 @@ QWidget {
   color: #F1F1F1; }
 
 /* Common */
-/* FIX: For some reason applying background-color or border fixes paddings 
+/* FIX: For some reason applying background-color or border fixes paddings
    properties */
 QListWidget::item {
   border-width: 0; }
@@ -567,7 +567,9 @@ QTabWidget::pane {
   top: 0;
   border-width: 5px;
   border-color: transparent;
-  border-image: url(./skyrim/border-image2.png) 5 repeat repeat; }
+  /*AL12: Changed the "5 repeat repeat" to "4 repeat repeat" as 5 seems to kill
+   performance for some reason.*/
+  border-image: url(./skyrim/border-image2.png) 4 repeat repeat; }
 
 QTabBar {
   text-transform: uppercase;
