@@ -44,6 +44,12 @@ public:
   explicit SettingsDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
   ~SettingsDialog();
 
+  /**
+  * @brief get stylesheet of settings buttons with colored background
+  * @return string of stylesheet
+  */
+  QString getColoredButtonStyleSheet() const;
+
 public slots:
 
   virtual void accept();

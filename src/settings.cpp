@@ -741,24 +741,21 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   m_containsBtn->setPalette(palette3);
   m_containedBtn->setPalette(palette4);
   */
-  
-  //version with stylesheet 
-  QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
 
-
-  m_overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+  //version with stylesheet
+  m_overwritingBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->modlistOverwritingLooseColor().name()).arg(getIdealTextColor(
       m_parent->modlistOverwritingLooseColor()).name()));
-  m_overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+  m_overwrittenBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
       m_parent->modlistOverwrittenLooseColor()).name()));
-  m_containsBtn->setStyleSheet(COLOR_STYLE.arg(
+  m_containsBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
       m_parent->modlistContainsPluginColor()).name()));
-  m_containedBtn->setStyleSheet(COLOR_STYLE.arg(
+  m_containedBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->pluginListContainedColor().name()).arg(getIdealTextColor(
       m_parent->pluginListContainedColor()).name()));
-  
+
   m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
   m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
   m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());

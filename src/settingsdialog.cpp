@@ -59,6 +59,16 @@ SettingsDialog::~SettingsDialog()
   delete ui;
 }
 
+QString SettingsDialog::getColoredButtonStyleSheet() const
+{
+  return QString("QPushButton {"
+    "background-color: %1;"
+    "color: %2;"
+    "border: 1px solid;"
+    "padding: 3px;"
+    "}");
+}
+
 void SettingsDialog::accept()
 {
   QString newModPath = ui->modDirEdit->text();
@@ -184,8 +194,7 @@ void SettingsDialog::on_containsBtn_clicked()
   if (result.isValid()) {
     m_ContainsColor = result;
 
-    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
-    ui->containsBtn->setStyleSheet(COLOR_STYLE.arg(
+    ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
      result.name()).arg(Settings::getIdealTextColor(
         result).name()));
 
@@ -203,8 +212,7 @@ void SettingsDialog::on_containedBtn_clicked()
   if (result.isValid()) {
     m_ContainedColor = result;
 
-    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
-    ui->containedBtn->setStyleSheet(COLOR_STYLE.arg(
+    ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
 
@@ -222,8 +230,7 @@ void SettingsDialog::on_overwrittenBtn_clicked()
   if (result.isValid()) {
     m_OverwrittenColor = result;
 
-    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
-    ui->overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+    ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
 
@@ -241,8 +248,7 @@ void SettingsDialog::on_overwritingBtn_clicked()
   if (result.isValid()) {
     m_OverwritingColor = result;
 
-    QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
-    ui->overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+    ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
 
@@ -261,21 +267,19 @@ void SettingsDialog::on_resetColorsBtn_clicked()
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
-  QString COLOR_STYLE("QPushButton { background-color : %1; color : %2; }");
-
-  ui->overwritingBtn->setStyleSheet(COLOR_STYLE.arg(
+  ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(255, 0, 0, 64).name()).arg(Settings::getIdealTextColor(
       QColor(255, 0, 0, 64)).name()));
 
-  ui->overwrittenBtn->setStyleSheet(COLOR_STYLE.arg(
+  ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
       QColor(0, 255, 0, 64)).name()));
 
-  ui->containsBtn->setStyleSheet(COLOR_STYLE.arg(
+  ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
       QColor(0, 0, 255, 64)).name()));
 
-  ui->containedBtn->setStyleSheet(COLOR_STYLE.arg(
+  ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
       QColor(0, 0, 255, 64)).name()));
 
