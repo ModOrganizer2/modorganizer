@@ -358,3 +358,44 @@ void SettingsDialog::on_clearCacheButton_clicked()
   NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 
+void SettingsDialog::normalizePath(QLineEdit *lineEdit)
+{
+  QString text = lineEdit->text();
+  QString new_text = text;
+  if (text.contains("%BASE_DIR%")) {
+    QString baseDir = ui->baseDirEdit->text();
+    new_text = new_text.replace("%BASE_DIR%", baseDir);
+    new_text = QDir(new_text).absolutePath();
+    new_text = new_text.replace(baseDir, "%BASE_DIR%");
+  } else {
+    new_text = QDir(new_text).absolutePath();
+  }
+  if (new_text.compare(text, Qt::CaseInsensitive)) {
+    lineEdit->setText(new_text);
+  }
+}
+
+void SettingsDialog::on_downloadDirEdit_editingFinished()
+{
+  normalizePath(ui->downloadDirEdit);
+}
+
+void SettingsDialog::on_modDirEdit_editingFinished()
+{
+  normalizePath(ui->modDirEdit);
+}
+
+void SettingsDialog::on_cacheDirEdit_editingFinished()
+{
+  normalizePath(ui->cacheDirEdit);
+}
+
+void SettingsDialog::on_profilesDirEdit_editingFinished()
+{
+  normalizePath(ui->profilesDirEdit);
+}
+
+void SettingsDialog::on_overwriteDirEdit_editingFinished()
+{
+  normalizePath(ui->overwriteDirEdit);
+}

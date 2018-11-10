@@ -61,6 +61,7 @@ signals:
 private:
 
   void storeSettings(QListWidgetItem *pluginItem);
+  void normalizePath(QLineEdit *lineEdit);
 
 public:
 
@@ -112,6 +113,16 @@ private slots:
   void on_containedBtn_clicked();
 
   void on_resetColorsBtn_clicked();
+
+  void on_downloadDirEdit_editingFinished();
+
+  void on_modDirEdit_editingFinished();
+
+  void on_cacheDirEdit_editingFinished();
+
+  void on_profilesDirEdit_editingFinished();
+
+  void on_overwriteDirEdit_editingFinished();
 
 private:
     Ui::SettingsDialog *ui;
