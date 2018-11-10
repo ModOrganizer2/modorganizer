@@ -194,9 +194,9 @@ QString Settings::deObfuscate(const QString &password)
 
 QColor Settings::getIdealTextColor(const QColor&  rBackgroundColor)
 {
-  const int THRESHOLD = 105;
+  const int THRESHOLD = 106;
   int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
-  return QColor((255 - BackgroundDelta < THRESHOLD) ? Qt::black : Qt::white);
+  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
 }
 
 
