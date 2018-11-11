@@ -114,6 +114,8 @@ private slots:
 
   void on_resetColorsBtn_clicked();
 
+  void on_baseDirEdit_editingFinished();
+
   void on_downloadDirEdit_editingFinished();
 
   void on_modDirEdit_editingFinished();

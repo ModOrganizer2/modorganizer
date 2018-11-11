@@ -361,18 +361,15 @@ void SettingsDialog::on_clearCacheButton_clicked()
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)
 {
   QString text = lineEdit->text();
-  QString new_text = text;
-  if (text.contains("%BASE_DIR%")) {
-    QString baseDir = ui->baseDirEdit->text();
-    new_text = new_text.replace("%BASE_DIR%", baseDir);
-    new_text = QDir(new_text).absolutePath();
-    new_text = new_text.replace(baseDir, "%BASE_DIR%");
-  } else {
-    new_text = QDir(new_text).absolutePath();
+  while (text.endsWith('/') || text.endsWith('\\')) {
+    text.chop(1);
   }
-  if (new_text.compare(text, Qt::CaseInsensitive)) {
-    lineEdit->setText(new_text);
-  }
+  lineEdit->setText(text);
+}
+
+void SettingsDialog::on_baseDirEdit_editingFinished()
+{
+  normalizePath(ui->baseDirEdit);
 }
 
 void SettingsDialog::on_downloadDirEdit_editingFinished()
