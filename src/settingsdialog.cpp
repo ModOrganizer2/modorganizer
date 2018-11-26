@@ -48,6 +48,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   , m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
+  ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
   QShortcut *delShortcut
       = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
@@ -340,6 +341,9 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
     newItem->setFlags(newItem->flags() | Qt::ItemIsEditable);
     ui->pluginSettingsList->addTopLevelItem(newItem);
   }
+
+  ui->pluginSettingsList->resizeColumnToContents(0);
+  ui->pluginSettingsList->resizeColumnToContents(1);
 }
 
 void SettingsDialog::deleteBlacklistItem()
