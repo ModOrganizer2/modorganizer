@@ -1183,8 +1183,8 @@ ModList *OrganizerCore::modList()
 QStringList OrganizerCore::modsSortedByProfilePriority() const
 {
   QStringList res;
-  for (int i = currentProfile()->getPriorityMinimum(); 
-           i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods(); 
+  for (int i = currentProfile()->getPriorityMinimum();
+           i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods();
            ++i) {
     int modIndex = currentProfile()->modIndexByPriority(i);
     res.push_back(ModInfo::getByIndex(modIndex)->name());
@@ -1289,12 +1289,16 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
               .exists())
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
-      if (QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
-            tr("Start Steam?"),
-            tr("Steam is required to be running already to correctly start the game. "
-               "Should MO try to start steam now?"),
-            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
+      QDialogButtonBox::StandardButton result;
+      result = QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
+                  tr("Start Steam?"),
+                  tr("Steam is required to be running already to correctly start the game. "
+                    "Should MO try to start steam now?"),
+                  QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+      if (result == QDialogButtonBox::Yes) {
         startSteam(window);
+      } else if(result == QDialogButtonBox::Cancel) {
+        return INVALID_HANDLE_VALUE;
       }
     }
   }
@@ -1334,7 +1338,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
         return INVALID_HANDLE_VALUE;
       }
     }
-      
+
     QString modsPath = settings().getModDirectory();
 
     // Check if this a request with either an executable or a working directory under our mods folder
@@ -1727,7 +1731,7 @@ void OrganizerCore::refreshBSAList()
     if (m_ActiveArchives.isEmpty()) {
       m_ActiveArchives = m_DefaultArchives;
     }
-    
+
     if (m_UserInterface != nullptr) {
       m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
     }

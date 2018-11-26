@@ -2651,6 +2651,18 @@ You can also use online editors and converters instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="3760"/>
+        <location filename="mainwindow.cpp" line="3779"/>
+        <source>Change Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="3764"/>
+        <location filename="mainwindow.cpp" line="3784"/>
+        <source>Primary Category</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.cpp" line="3768"/>
         <source>Rename Separator...</source>
         <translation type="unfinished"></translation>
@@ -2661,11 +2673,6 @@ You can also use online editors and converters instead.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5682"/>
-        <source>Set the priority of the selected mods</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="mainwindow.cpp" line="3772"/>
         <source>Select Color...</source>
         <translation type="unfinished"></translation>
@@ -2673,18 +2680,6 @@ You can also use online editors and converters instead.</source>
     <message>
         <location filename="mainwindow.cpp" line="3774"/>
         <source>Reset Color</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3760"/>
-        <location filename="mainwindow.cpp" line="3779"/>
-        <source>Change Categories</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="3764"/>
-        <location filename="mainwindow.cpp" line="3784"/>
-        <source>Primary Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3149,6 +3144,11 @@ You can also use online editors and converters instead.</source>
     <message>
         <location filename="mainwindow.cpp" line="5574"/>
         <source>Ignore file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="5682"/>
+        <source>Set the priority of the selected mods</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4326,118 +4326,118 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1293"/>
+        <location filename="organizercore.cpp" line="1294"/>
         <source>Start Steam?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1294"/>
+        <location filename="organizercore.cpp" line="1295"/>
         <source>Steam is required to be running already to correctly start the game. Should MO try to start steam now?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1320"/>
+        <location filename="organizercore.cpp" line="1324"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1328"/>
+        <location filename="organizercore.cpp" line="1332"/>
         <source>Windows Event Log Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1329"/>
+        <location filename="organizercore.cpp" line="1333"/>
         <source>The Windows Event Log service is disabled and/or not running.  This prevents USVFS from running properly.  Your mods may not be working in the executable that you are launching.  Note that you may have to restart MO and/or your PC after the service is fixed.
 
 Continue launching %1?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1417"/>
+        <location filename="organizercore.cpp" line="1421"/>
         <source>No profile set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1703"/>
+        <location filename="organizercore.cpp" line="1707"/>
         <source>Failed to refresh list of esps: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1787"/>
+        <location filename="organizercore.cpp" line="1791"/>
         <source>Multiple esps/esls activated, please check that they don&apos;t conflict.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1862"/>
+        <location filename="organizercore.cpp" line="1866"/>
         <source>Download?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1863"/>
+        <location filename="organizercore.cpp" line="1867"/>
         <source>A download has been started but no installed page plugin recognizes it.
 If you download anyway no information (i.e. version) will be associated with the download.
 Continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="1997"/>
+        <location filename="organizercore.cpp" line="2001"/>
         <source>failed to update mod list: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2004"/>
-        <location filename="organizercore.cpp" line="2021"/>
+        <location filename="organizercore.cpp" line="2008"/>
+        <location filename="organizercore.cpp" line="2025"/>
         <source>login successful</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2028"/>
+        <location filename="organizercore.cpp" line="2032"/>
         <source>Login failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2029"/>
+        <location filename="organizercore.cpp" line="2033"/>
         <source>Login failed, try again?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2038"/>
+        <location filename="organizercore.cpp" line="2042"/>
         <source>login failed: %1. Download will not be associated with an account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2046"/>
+        <location filename="organizercore.cpp" line="2050"/>
         <source>login failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2056"/>
+        <location filename="organizercore.cpp" line="2060"/>
         <source>login failed: %1. You need to log-in with Nexus to update MO.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2109"/>
+        <location filename="organizercore.cpp" line="2113"/>
         <source>MO1 &quot;Script Extender&quot; load mechanism has left hook.dll in your game folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2112"/>
-        <location filename="organizercore.cpp" line="2128"/>
+        <location filename="organizercore.cpp" line="2116"/>
+        <location filename="organizercore.cpp" line="2132"/>
         <source>Description missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2121"/>
+        <location filename="organizercore.cpp" line="2125"/>
         <source>&lt;a href=&quot;%1&quot;&gt;hook.dll&lt;/a&gt; has been found in your game folder (right click to copy the full path). This is most likely a leftover of setting the ModOrganizer 1 load mechanism to &quot;Script Extender&quot;, in which case you must remove this file either by changing the load mechanism in ModOrganizer 1 or manually removing the file, otherwise the game is likely to crash and burn.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2155"/>
+        <location filename="organizercore.cpp" line="2159"/>
         <source>failed to save load order: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="organizercore.cpp" line="2227"/>
+        <location filename="organizercore.cpp" line="2231"/>
         <source>The designated write target &quot;%1&quot; is not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5034,7 +5034,8 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../../uibase/src/report.cpp" line="33"/>
+        <location filename="../../uibase/src/report.cpp" line="34"/>
+        <location filename="../../uibase/src/report.cpp" line="37"/>
         <location filename="main.cpp" line="98"/>
         <location filename="organizercore.cpp" line="733"/>
         <source>Error</source>
@@ -5397,7 +5398,7 @@ If the folder was still in use, restart MO and try again.</source>
     </message>
     <message>
         <location filename="main.cpp" line="682"/>
-        <location filename="settings.cpp" line="1059"/>
+        <location filename="settings.cpp" line="1056"/>
         <source>Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5474,12 +5475,12 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1066"/>
+        <location filename="settings.cpp" line="1063"/>
         <source>Script Extender</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1073"/>
+        <location filename="settings.cpp" line="1070"/>
         <source>Proxy DLL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5699,12 +5700,12 @@ Select Show Details option to see the full change-log.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="848"/>
+        <location filename="settings.cpp" line="845"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="849"/>
+        <location filename="settings.cpp" line="846"/>
         <source>Failed to create &quot;%1&quot;, you may not have the necessary permission. path remains unchanged.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5785,6 +5786,11 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="settingsdialog.ui" line="105"/>
+        <source>Mod Contains selected Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="settingsdialog.ui" line="112"/>
         <source>Plugin is Contained in selected Mod</source>
         <translation type="unfinished"></translation>
@@ -5792,6 +5798,42 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
     <message>
         <location filename="settingsdialog.ui" line="119"/>
         <source>Reset Colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="126"/>
+        <source>Is overwritten (loose files)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="133"/>
+        <source>Is overwriting (loose files)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="143"/>
+        <location filename="settingsdialog.ui" line="146"/>
+        <source>Modify the categories available to arrange your mods.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="149"/>
+        <source>Configure Mod Categories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="162"/>
+        <source>Reset stored information from dialogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="165"/>
+        <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="168"/>
+        <source>Reset Dialogs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5812,48 +5854,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
     <message>
         <location filename="settingsdialog.ui" line="201"/>
         <source>Download Meta Information</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="162"/>
-        <source>Reset stored information from dialogs.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="105"/>
-        <source>Mod Contains selected Plugin</source>
-        <oldsource>Is contained in selected Mod</oldsource>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="165"/>
-        <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="168"/>
-        <source>Reset Dialogs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="143"/>
-        <location filename="settingsdialog.ui" line="146"/>
-        <source>Modify the categories available to arrange your mods.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="149"/>
-        <source>Configure Mod Categories</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="133"/>
-        <source>Is overwriting (loose files)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="126"/>
-        <source>Is overwritten (loose files)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6327,52 +6327,52 @@ For the other games this is not a sufficient replacement for AI!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="71"/>
+        <location filename="settingsdialog.cpp" line="81"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="72"/>
+        <location filename="settingsdialog.cpp" line="82"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="120"/>
+        <location filename="settingsdialog.cpp" line="130"/>
         <source>Select base directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="131"/>
+        <location filename="settingsdialog.cpp" line="141"/>
         <source>Select download directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="142"/>
+        <location filename="settingsdialog.cpp" line="152"/>
         <source>Select mod directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="153"/>
+        <location filename="settingsdialog.cpp" line="163"/>
         <source>Select cache directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="164"/>
+        <location filename="settingsdialog.cpp" line="174"/>
         <source>Select profiles directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="175"/>
+        <location filename="settingsdialog.cpp" line="185"/>
         <source>Select overwrite directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="286"/>
+        <location filename="settingsdialog.cpp" line="290"/>
         <source>Confirm?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="287"/>
+        <location filename="settingsdialog.cpp" line="291"/>
         <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
