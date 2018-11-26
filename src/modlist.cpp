@@ -526,6 +526,9 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       case COL_PRIORITY: {
         bool ok = false;
         int newPriority = value.toInt(&ok);
+        if (ok && newPriority < 0) {
+          newPriority = 0;
+        }
         if (ok) {
           m_Profile->setModPriority(modID, newPriority);
 
