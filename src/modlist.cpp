@@ -616,17 +616,20 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
   }
   if (modelIndex.isValid()) {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modelIndex.row());
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
     if (modInfo->getFixedPriority() == INT_MIN) {
       result |= Qt::ItemIsDragEnabled;
       result |= Qt::ItemIsUserCheckable;
-      if ((modelIndex.column() == COL_NAME) ||
-          (modelIndex.column() == COL_PRIORITY) ||
+      if ((modelIndex.column() == COL_PRIORITY) ||
           (modelIndex.column() == COL_VERSION) ||
           (modelIndex.column() == COL_MODID)) {
         result |= Qt::ItemIsEditable;
       }
+      if ((modelIndex.column() == COL_NAME)
+          && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end())) {
+        result |= Qt::ItemIsEditable;
+      }
     }
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
     if (m_DropOnItems
         && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end())) {
       result |= Qt::ItemIsDropEnabled;
