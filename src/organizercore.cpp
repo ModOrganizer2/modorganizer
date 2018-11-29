@@ -1340,7 +1340,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     }
 
     for (auto exec : settings().executablesBlacklist().split(";")) {
-      if (exec.compare(binary.fileName(), Qt::CaseInsensitive)) {
+      if (exec.compare(binary.fileName(), Qt::CaseInsensitive) == 0) {
         if (QuestionBoxMemory::query(window, QString("blacklistedExecutable"), binary.fileName(),
               tr("Blacklisted Executable"),
               tr("The executable you are attempted to launch is blacklisted in the virtual file"
