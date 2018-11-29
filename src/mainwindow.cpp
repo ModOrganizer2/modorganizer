@@ -2877,7 +2877,7 @@ void MainWindow::createSeparator_clicked()
   }
 
   int newPriority = -1;
-  if (m_ContextRow >= 0 && m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY) 
+  if (m_ContextRow >= 0 && m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY)
   {
     newPriority = m_OrganizerCore.currentProfile()->getModPriority(m_ContextRow);
   }
@@ -2885,7 +2885,7 @@ void MainWindow::createSeparator_clicked()
   if (m_OrganizerCore.createMod(name) == nullptr) { return; }
   m_OrganizerCore.refreshModList();
 
-  if (newPriority >= 0) 
+  if (newPriority >= 0)
   {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
@@ -4129,7 +4129,7 @@ void MainWindow::on_actionSettings_triggered()
 
   updateDownloadListDelegate();
 
-  m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType());
+  m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
 }
 
@@ -4405,8 +4405,8 @@ void MainWindow::sendSelectedPluginsToBottom_clicked()
 void MainWindow::sendSelectedPluginsToPriority_clicked()
 {
   bool ok;
-  int newPriority = QInputDialog::getInt(this, 
-    tr("Set Priority"), tr("Set the priority of the selected plugins"), 
+  int newPriority = QInputDialog::getInt(this,
+    tr("Set Priority"), tr("Set the priority of the selected plugins"),
     0, 0, INT_MAX, 1, &ok);
   if (!ok) return;
 
@@ -5678,8 +5678,8 @@ void MainWindow::sendSelectedModsToBottom_clicked()
 void MainWindow::sendSelectedModsToPriority_clicked()
 {
   bool ok;
-  int newPriority = QInputDialog::getInt(this, 
-    tr("Set Priority"), tr("Set the priority of the selected mods"), 
+  int newPriority = QInputDialog::getInt(this,
+    tr("Set Priority"), tr("Set the priority of the selected mods"),
     0, 0, INT_MAX, 1, &ok);
   if (!ok) return;
 

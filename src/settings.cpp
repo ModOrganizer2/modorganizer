@@ -386,6 +386,20 @@ QColor Settings::pluginListContainedColor() const
   return m_Settings.value("Settings/containedColor", QColor(0, 0, 255, 64)).value<QColor>();
 }
 
+QString Settings::executablesBlacklist() const
+{
+  return m_Settings.value("Settings/executable_blacklist", (
+    QStringList()
+        << "Chrome.exe"
+        << "Firefox.exe"
+        << "TSVNCache.exe"
+        << "TGitCache.exe"
+        << "Steam.exe"
+        << "GameOverlayUI.exe"
+    ).join(";")
+  ).toString();
+}
+
 void Settings::setNexusLogin(QString username, QString password)
 {
   m_Settings.setValue("Settings/nexus_login", true);
@@ -1080,6 +1094,8 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
 
+  m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
+
 }
 
 void Settings::WorkaroundsTab::update()
@@ -1094,4 +1110,6 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
+
+  m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
 }

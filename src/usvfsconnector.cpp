@@ -132,7 +132,11 @@ UsvfsConnector::UsvfsConnector()
 
   CreateVFS(&params);
 
-  BlacklistExecutable(L"TSVNCache.exe");
+  ClearExecutableBlacklist();
+  for (auto exec : Settings::instance().executablesBlacklist().split(";")) {
+    std::wstring buf = exec.toStdWString();
+    BlacklistExecutable(buf.data());
+  }
 
   m_LogWorker.moveToThread(&m_WorkerThread);
 
@@ -199,6 +203,11 @@ void UsvfsConnector::updateMapping(const MappingType &mapping)
   */
 }
 
-void UsvfsConnector::updateParams(int logLevel, int crashDumpsType) {
+void UsvfsConnector::updateParams(int logLevel, int crashDumpsType, QString executableBlacklist) {
   USVFSUpdateParams(::logLevel(logLevel), ::crashDumpsType(crashDumpsType));
+  ClearExecutableBlacklist();
+  for (auto exec : executableBlacklist.split(";")) {
+    std::wstring buf = exec.toStdWString();
+    BlacklistExecutable(buf.data());
+  }
 }

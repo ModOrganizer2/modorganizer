@@ -34,6 +34,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QShortcut>
 #include <QColorDialog>
+#include <QInputDialog>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -112,6 +113,32 @@ void SettingsDialog::on_categoriesBtn_clicked()
   CategoriesDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
+  }
+}
+
+void SettingsDialog::on_execBlacklistBtn_clicked()
+{
+  bool ok = false;
+  QString result = QInputDialog::getMultiLineText(
+    this,
+    tr("Executables Blacklist"),
+    tr("Enter one executable per line to be blacklisted from the virtual file system.\n"
+       "Mods and other virtualized files will not be visible to these executables and\n"
+       "any executables launched by them.\n\n"
+       "Example:\n"
+       "    Chrome.exe\n"
+       "    Firefox.exe"),
+    m_ExecutableBlacklist.split(";").join("\n"),
+    &ok
+    );
+  if (ok) {
+    QStringList blacklist;
+    for (auto exec : result.split("\n")) {
+      if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
+        blacklist << exec.trimmed();
+      }
+    }
+    m_ExecutableBlacklist = blacklist.join(";");
   }
 }
 

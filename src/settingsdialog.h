@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef WORKAROUNDDIALOG_H
-#define WORKAROUNDDIALOG_H
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
 #include <iplugin.h>
@@ -69,16 +69,21 @@ public:
   QColor getOverwrittenColor() { return m_OverwrittenColor; }
   QColor getContainsColor() { return m_ContainsColor; }
   QColor getContainedColor() { return m_ContainedColor; }
+  QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
 
   void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
   void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
   void setContainsColor(QColor col) { m_ContainsColor = col; }
   void setContainedColor(QColor col) { m_ContainedColor = col; }
+  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
+
 
 private slots:
   void on_loginCheckBox_toggled(bool checked);
 
   void on_categoriesBtn_clicked();
+
+  void on_execBlacklistBtn_clicked();
 
   void on_bsaDateBtn_clicked();
 
@@ -134,8 +139,10 @@ private:
     QColor m_OverwrittenColor;
     QColor m_ContainsColor;
     QColor m_ContainedColor;
+
+    QString m_ExecutableBlacklist;
 };
 
 
 
-#endif // WORKAROUNDDIALOG_H
+#endif // SETTINGSDIALOG_H

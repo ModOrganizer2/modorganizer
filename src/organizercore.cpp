@@ -762,9 +762,9 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType) {
+void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist) {
   setGlobalCrashDumpsType(crashDumpsType);
-  m_USVFS.updateParams(logLevel, crashDumpsType);
+  m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
 }
 
 bool OrganizerCore::cycleDiagnostics() {
@@ -1339,10 +1339,24 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       }
     }
 
+    for (auto exec : settings().executablesBlacklist().split(";")) {
+      if (exec.compare(binary.fileName(), Qt::CaseInsensitive)) {
+        if (QuestionBoxMemory::query(window, QString("blacklistedExecutable"), binary.fileName(),
+              tr("Blacklisted Executable"),
+              tr("The executable you are attempted to launch is blacklisted in the virtual file"
+                 " system.  This will likely prevent the executable, and any executables that are"
+                 " launched by this one, from seeing any mods.  This could extend to INI files, save"
+                 " games and any other virtualized files.\n\nContinue launching %1?").arg(binary.fileName()),
+              QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
+          return INVALID_HANDLE_VALUE;
+        }
+      }
+    }
+
     QString modsPath = settings().getModDirectory();
 
     // Check if this a request with either an executable or a working directory under our mods folder
-    // then will start the processs in a virtualized "environment" with the appropriate paths fixed:
+    // then will start the process in a virtualized "environment" with the appropriate paths fixed:
     // (i.e. mods\FNIS\path\exe => game\data\path\exe)
     QString cwdPath = currentDirectory.absolutePath();
     bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);

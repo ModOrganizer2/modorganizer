@@ -82,7 +82,7 @@ public:
   ~UsvfsConnector();
 
   void updateMapping(const MappingType &mapping);
-  void updateParams(int logLevel, int crashDumpsType);
+  void updateParams(int logLevel, int crashDumpsType, QString executableBlacklist);
 
 private:
 

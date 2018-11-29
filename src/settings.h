@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef WORKAROUNDS_H
-#define WORKAROUNDS_H
+#ifndef SETTINGS_H
+#define SETTINGS_H
 
 #include "loadmechanism.h"
 
@@ -227,6 +227,7 @@ public:
 
   QColor pluginListContainedColor() const;
 
+  QString executablesBlacklist() const;
 
   /**
    * @brief set the nexus login information
@@ -525,4 +526,4 @@ private:
 
 };
 
-#endif // WORKAROUNDS_H
+#endif // SETTINGS_H

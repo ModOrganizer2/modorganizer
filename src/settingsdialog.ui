@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>4</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="generalTab">
       <attribute name="title">
@@ -1034,6 +1034,26 @@ For the other games this is not a sufficient replacement for AI!</string>
          <property name="icon">
           <iconset>
            <normaloff>:/MO/gui/resources/emblem-readonly.png</normaloff>:/MO/gui/resources/emblem-readonly.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="execBlacklistBtn">
+         <property name="toolTip">
+          <string>Add executables to the blacklist to prevent them from
+accessing the virtual file system. This is useful to prevent
+unintended programs from being hooked. Hooking unintended
+programs may affect the execution of these programs or the
+programs you are intentionally running.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Add executables to the blacklist to prevent them from accessing the virtual file system.  This is useful to prevent unintended programs from being hooked.  Hooking unintended programs may affect the execution of these programs or the programs you are intentionally running.</string>
+         </property>
+         <property name="text">
+          <string>Configure Executables Blacklist</string>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
          </property>
         </widget>
        </item>
