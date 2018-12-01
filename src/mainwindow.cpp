@@ -106,6 +106,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDropEvent>
 #include <QEvent>
 #include <QFileDialog>
+#include <QFIleIconProvider>
 #include <QFont>
 #include <QFuture>
 #include <QHash>
@@ -1147,7 +1148,9 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
+  QFileIconProvider *iconProvider = new QFileIconProvider();
   {
+    
     for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
@@ -1183,6 +1186,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         fileChild->setFont(1, font);
       }
       fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
+      fileChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::File));
       fileChild->setData(0, Qt::UserRole + 1, isArchive);
       fileChild->setData(1, Qt::UserRole, source);
       fileChild->setData(1, Qt::UserRole + 1, originID);
@@ -1219,6 +1223,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       columns.append("");
       if (!(*current)->isEmpty()) {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+        directoryChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::Folder));
         if (conflictsOnly) {
           updateTo(directoryChild, temp.str(), **current, conflictsOnly);
           if (directoryChild->childCount() != 0) {
@@ -1234,6 +1239,11 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
           directoryChild->addChild(onDemandLoad);
           subTree->addChild(directoryChild);
         }
+      }
+      else {
+        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+        directoryChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::Folder));
+        subTree->addChild(directoryChild);
       }
     }
   }
@@ -1339,6 +1349,7 @@ void MainWindow::refreshDataTree()
   QStringList columns("data");
   columns.append("");
   QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
+  subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
   updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
   tree->insertTopLevelItem(0, subTree);
   subTree->setExpanded(true);
@@ -1363,6 +1374,7 @@ void MainWindow::refreshDataTreeKeepExpandedNodes()
 	QStringList columns("data");
 	columns.append("");
 	QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
+  subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
 	updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
 	tree->insertTopLevelItem(0, subTree);
 	subTree->setExpanded(true);
