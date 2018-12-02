@@ -1148,9 +1148,8 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
-  QFileIconProvider *iconProvider = new QFileIconProvider();
-  {
-    
+  bool isDirectory = false;
+  {   
     for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
@@ -1186,7 +1185,8 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         fileChild->setFont(1, font);
       }
       fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
-      fileChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::File));
+      fileChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::File));
+      fileChild->setData(0, Qt::UserRole + 3, isDirectory);
       fileChild->setData(0, Qt::UserRole + 1, isArchive);
       fileChild->setData(1, Qt::UserRole, source);
       fileChild->setData(1, Qt::UserRole + 1, originID);
@@ -1215,6 +1215,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
   std::wostringstream temp;
   temp << directorySoFar << "\\" << directoryEntry.getName();
   {
+    isDirectory = true;
     std::vector<DirectoryEntry*>::const_iterator current, end;
     directoryEntry.getSubDirectories(current, end);
     for (; current != end; ++current) {
@@ -1223,7 +1224,9 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       columns.append("");
       if (!(*current)->isEmpty()) {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
+
         if (conflictsOnly) {
           updateTo(directoryChild, temp.str(), **current, conflictsOnly);
           if (directoryChild->childCount() != 0) {
@@ -1242,7 +1245,8 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       }
       else {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, iconProvider->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
         subTree->addChild(directoryChild);
       }
     }
@@ -4570,7 +4574,8 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   m_ContextItem = dataTree->itemAt(pos.x(), pos.y());
 
   QMenu menu;
-  if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0)) {
+  if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0) 
+      && (m_ContextItem->data(0, Qt::UserRole + 3).toBool() != true)) {
     menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
     menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
 
