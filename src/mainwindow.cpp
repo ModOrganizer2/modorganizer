@@ -85,6 +85,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <scopeguard.h>
 #include <usvfs.h>
 #include "localsavegames.h"
+#include "listdialog.h"
 
 #include <QAbstractItemDelegate>
 #include <QAbstractProxyModel>
@@ -1149,7 +1150,7 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
   bool isDirectory = false;
-  {   
+  {
     for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
@@ -3721,6 +3722,7 @@ void MainWindow::addModSendToContextMenu(QMenu *menu)
   sub_menu->addAction(tr("Top"), this, SLOT(sendSelectedModsToTop_clicked()));
   sub_menu->addAction(tr("Bottom"), this, SLOT(sendSelectedModsToBottom_clicked()));
   sub_menu->addAction(tr("Priority..."), this, SLOT(sendSelectedModsToPriority_clicked()));
+  sub_menu->addAction(tr("Separator..."), this, SLOT(sendSelectedModsToSeparator_clicked()));
 
   menu->addMenu(sub_menu);
   menu->addSeparator();
@@ -4574,7 +4576,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   m_ContextItem = dataTree->itemAt(pos.x(), pos.y());
 
   QMenu menu;
-  if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0) 
+  if ((m_ContextItem != nullptr) && (m_ContextItem->childCount() == 0)
       && (m_ContextItem->data(0, Qt::UserRole + 3).toBool() != true)) {
     menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
     menu.addAction(tr("Add as Executable"), this, SLOT(addAsExecutable()));
@@ -5673,8 +5675,8 @@ void MainWindow::sendSelectedModsToPriority(int newPriority)
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     std::vector<int> modsToMove;
-    for (QModelIndex idx : selection->selectedRows()) {
-      modsToMove.push_back(idx.data().toInt());
+    for (auto idx : selection->selectedRows(ModList::COL_PRIORITY)) {
+      modsToMove.push_back(m_OrganizerCore.currentProfile()->modIndexByPriority(idx.data().toInt()));
     }
     m_OrganizerCore.modList()->changeModPriority(modsToMove, newPriority);
   } else {
@@ -5701,4 +5703,51 @@ void MainWindow::sendSelectedModsToPriority_clicked()
   if (!ok) return;
 
  sendSelectedModsToPriority(newPriority);
+}
+
+void MainWindow::sendSelectedModsToSeparator_clicked()
+{
+  QStringList separators;
+  for (auto mod : m_OrganizerCore.modList()->allMods()) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
+    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      separators << mod.chopped(10);
+    }
+  }
+
+  ListDialog dialog(this);
+  dialog.setChoices(separators);
+  if (dialog.exec() == QDialog::Accepted) {
+    QString result = dialog.getChoice();
+    if (!result.isEmpty()) {
+      result += "_separator";
+
+      int newPriority = INT_MAX;
+      bool foundSection = false;
+      for (auto mod : m_OrganizerCore.modsSortedByProfilePriority()) {
+        unsigned int modIndex = ModInfo::getIndex(mod);
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+        if (!foundSection && result.compare(mod) == 0) {
+          foundSection = true;
+        } else if (foundSection && modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+          newPriority = m_OrganizerCore.currentProfile()->getModPriority(modIndex);
+          break;
+        }
+      }
+
+      QItemSelectionModel *selection = ui->modList->selectionModel();
+      if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+        std::vector<int> modsToMove;
+        for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
+          modsToMove.push_back(m_OrganizerCore.currentProfile()->modIndexByPriority(idx.data().toInt()));
+        }
+        m_OrganizerCore.modList()->changeModPriority(modsToMove, newPriority);
+      } else {
+        int oldPriority = m_OrganizerCore.currentProfile()->getModPriority(m_ContextRow);
+        if (oldPriority < newPriority)
+          --newPriority;
+        m_OrganizerCore.modList()->changeModPriority(m_ContextRow, newPriority);
+      }
+    }
+  }
 }

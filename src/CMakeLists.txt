@@ -91,6 +91,7 @@ SET(organizer_SRCS
     usvfsconnector.cpp
     eventfilter.cpp
     moshortcut.cpp
+    listdialog.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -185,6 +186,7 @@ SET(organizer_HDRS
     eventfilter.h
     descriptionpage.h
     moshortcut.h
+    listdialog.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -225,6 +227,7 @@ SET(organizer_UIS
     previewdialog.ui
     browserdialog.ui
     aboutdialog.ui
+    listdialog.ui
   )
 
 SET(organizer_QRCS

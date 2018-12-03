@@ -431,6 +431,7 @@ private slots:
   void sendSelectedModsToTop_clicked();
   void sendSelectedModsToBottom_clicked();
   void sendSelectedModsToPriority_clicked();
+  void sendSelectedModsToSeparator_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
   void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
