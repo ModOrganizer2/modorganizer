@@ -5716,7 +5716,12 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
   }
 
   ListDialog dialog(this);
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(dialog.objectName());
+
+  dialog.setWindowTitle("Select a separator...");
   dialog.setChoices(separators);
+  dialog.restoreGeometry(settings.value(key).toByteArray());
   if (dialog.exec() == QDialog::Accepted) {
     QString result = dialog.getChoice();
     if (!result.isEmpty()) {
@@ -5750,4 +5755,5 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
       }
     }
   }
+  settings.setValue(key, dialog.saveGeometry());
 }
