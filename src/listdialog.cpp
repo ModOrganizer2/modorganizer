@@ -18,29 +18,57 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "listdialog.h"
 #include "ui_listdialog.h"
 
-ListDialog::ListDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::ListDialog)
+ListDialog::ListDialog(QWidget *parent)
+  : QDialog(parent)
+  , ui(new Ui::ListDialog)
+  , m_Choices()
 {
-    ui->setupUi(this);
+  ui->setupUi(this);
+  ui->filterEdit->setFocus();
 }
 
 ListDialog::~ListDialog()
 {
-    delete ui;
+  delete ui;
 }
 
 void ListDialog::setChoices(QStringList choices)
 {
-  ui->listWidget->clear();
-  ui->listWidget->addItems(choices);
+  m_Choices = choices;
+  ui->choiceList->clear();
+  ui->choiceList->addItems(m_Choices);
 }
 
 QString ListDialog::getChoice() const
 {
-  if (ui->listWidget->selectedItems().length()) {
-    return ui->listWidget->currentItem()->text();
+  if (ui->choiceList->selectedItems().length()) {
+    return ui->choiceList->currentItem()->text();
   } else {
     return "";
   }
 }
+
+void ListDialog::on_filterEdit_textChanged(QString filter)
+{
+  QStringList newChoices;
+  for (auto choice : m_Choices) {
+    if (choice.contains(filter, Qt::CaseInsensitive)){
+      newChoices << choice;
+    }
+  }
+  ui->choiceList->clear();
+  ui->choiceList->addItems(newChoices);
+
+  if (newChoices.length() == 1) {
+    QListWidgetItem *item = ui->choiceList->item(0);
+    ui->choiceList->setItemSelected(item, true);
+    ui->choiceList->setCurrentItem(item);
+  }
+
+  if (!filter.isEmpty()) {
+    ui->choiceList->setStyleSheet("QListWidget { border: 2px ridge #f00; }");
+  } else {
+    ui->choiceList->setStyleSheet("");
+  }
+}
+
