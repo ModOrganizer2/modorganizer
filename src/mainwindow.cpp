@@ -2861,12 +2861,21 @@ void MainWindow::createEmptyMod_clicked()
     return;
   }
 
+  int newPriority = -1;
+  if (m_ContextRow >= 0 && m_ModListSortProxy->sortColumn() == ModList::COL_PRIORITY) {
+    newPriority = m_OrganizerCore.currentProfile()->getModPriority(m_ContextRow);
+  }
+
   IModInterface *newMod = m_OrganizerCore.createMod(name);
   if (newMod == nullptr) {
     return;
   }
 
   m_OrganizerCore.refreshModList();
+
+  if (newPriority >= 0) {
+    m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
+  }
 }
 
 void MainWindow::createSeparator_clicked()
