@@ -73,9 +73,6 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
 {
   QString profilesDir = Settings::instance().getProfileDirectory();
   QDir profileBase(profilesDir);
-
-  m_Settings = new QSettings(profileBase.absoluteFilePath("settings.ini"));
-
   QString fixedName = name;
   if (!fixDirectoryName(fixedName)) {
     throw MyException(tr("invalid profile name %1").arg(name));
@@ -86,6 +83,9 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   }
   QString fullPath = profilesDir + "/" + fixedName;
   m_Directory = QDir(fullPath);
+  m_Settings = new QSettings(m_Directory.absoluteFilePath("settings.ini"),
+    QSettings::IniFormat);
+  findProfileSettings();
 
   try {
     // create files. Needs to happen after m_Directory was set!
@@ -119,6 +119,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
 
   m_Settings = new QSettings(directory.absoluteFilePath("settings.ini"),
                              QSettings::IniFormat);
+  findProfileSettings();
 
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
     qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
@@ -141,6 +142,7 @@ Profile::Profile(const Profile &reference)
 {
   m_Settings = new QSettings(m_Directory.absoluteFilePath("settings.ini"),
                              QSettings::IniFormat);
+  findProfileSettings();
   refreshModStatus();
 }
 
@@ -149,6 +151,50 @@ Profile::~Profile()
 {
   delete m_Settings;
   m_ModListWriter.writeImmediately(true);
+}
+
+void Profile::findProfileSettings()
+{
+  if (setting("LocalSaves") == QVariant()) {
+    if (m_Directory.exists("saves")) {
+      storeSetting("LocalSaves", true);
+    } else {
+      if (m_Directory.exists("_saves")) {
+        m_Directory.rename("_saves", "saves");
+      }
+      storeSetting("LocalSaves", false);
+    }
+  }
+
+  if (setting("LocalSettings") == QVariant()) {
+    QString backupFile = getIniFileName() + "_";
+    if (m_Directory.exists(backupFile)) {
+      storeSetting("LocalSettings", false);
+      m_Directory.rename(backupFile, getIniFileName());
+    } else if (m_Directory.exists(getIniFileName())) {
+      storeSetting("LocalSettings", true);
+    } else {
+      storeSetting("LocalSettings", false);
+    }
+  }
+
+  if (setting("AutomaticArchiveInvalidation") == QVariant()) {
+    BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
+    DataArchives *dataArchives = m_GamePlugin->feature<DataArchives>();
+    bool found = false;
+    if ((invalidation != nullptr) && (dataArchives != nullptr)) {
+      for (const QString &archive : dataArchives->archives(this)) {
+        if (invalidation->isInvalidationBSA(archive)) {
+          storeSetting("AutomaticArchiveInvalidation", true);
+          found = true;
+          break;
+        }
+      }
+    }
+    if (!found) {
+      storeSetting("AutomaticArchiveInvalidation", false);
+    }
+  }
 }
 
 bool Profile::exists() const
@@ -658,23 +704,11 @@ bool Profile::invalidationActive(bool *supported) const
   BSAInvalidation *invalidation = m_GamePlugin->feature<BSAInvalidation>();
   DataArchives *dataArchives = m_GamePlugin->feature<DataArchives>();
 
-  if ((invalidation != nullptr) && (dataArchives != nullptr)) {
-    if (supported != nullptr) {
-      *supported = true;
-    }
-
-    for (const QString &archive : dataArchives->archives(this)) {
-      if (invalidation->isInvalidationBSA(archive)) {
-        return true;
-      }
-    }
-    return false;
-  } else {
-    if (supported != nullptr) {
-      *supported = false;
-    }
+  if (supported != nullptr) {
+    *supported = ((invalidation != nullptr) && (dataArchives != nullptr));
   }
-  return false;
+
+  return setting("AutomaticArchiveInvalidation", false).toBool();
 }
 
 
@@ -685,6 +719,8 @@ void Profile::deactivateInvalidation()
   if (invalidation != nullptr) {
     invalidation->deactivate(this);
   }
+
+  storeSetting("AutomaticArchiveInvalidation", false);
 }
 
 
@@ -695,66 +731,51 @@ void Profile::activateInvalidation()
   if (invalidation != nullptr) {
     invalidation->activate(this);
   }
+
+  storeSetting("AutomaticArchiveInvalidation", true);
 }
 
 
 bool Profile::localSavesEnabled() const
 {
-  return m_Directory.exists("saves");
+  return setting("LocalSaves", false).toBool();
 }
 
 
 bool Profile::enableLocalSaves(bool enable)
 {
   if (enable) {
-    if (m_Directory.exists("_saves")) {
-      m_Directory.rename("_saves", "saves");
-    } else {
+    if (!m_Directory.exists("saves")) {
       m_Directory.mkdir("saves");
     }
-  } else {
+  } else  {
     QMessageBox::StandardButton res = QMessageBox::question(
-        QApplication::activeModalWidget(), tr("Delete savegames?"),
-        tr("Do you want to delete local savegames? (If you select \"No\", the "
-           "save games will show up again if you re-enable local savegames)"),
-        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-        QMessageBox::Cancel);
+      QApplication::activeModalWidget(), tr("Delete savegames?"),
+      tr("Do you want to delete local savegames? (If you select \"No\", the "
+        "save games will show up again if you re-enable local savegames)"),
+      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+      QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
       shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
     } else if (res == QMessageBox::No) {
-      m_Directory.rename("saves", "_saves");
+      // No action
     } else {
       return false;
     }
   }
-
-  // default: assume success
+  storeSetting("LocalSaves", enable);
   return true;
+
 }
 
 bool Profile::localSettingsEnabled() const
 {
-  return m_Directory.exists(getIniFileName());
+  return setting("LocalSettings", false).toBool();
 }
 
 bool Profile::enableLocalSettings(bool enable)
 {
-  // TODO: this currently assumes game settings are stored in an ini file.
-  // This shall become very interesting when a game stores its settings in the
-  // registry
-  QString backupFile = getIniFileName() + "_";
-  if (enable) {
-    if (m_Directory.exists(backupFile)) {
-
-      shellRename(backupFile, getIniFileName());
-    } else {
-      IPluginGame *game = qApp->property("managed_game").value<IPluginGame *>();
-      game->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
-    }
-  } else {
-    shellRename(getIniFileName(), backupFile);
-  }
-
+  storeSetting("LocalSettings", enable);
   return true;
 }
 
@@ -817,10 +838,11 @@ void Profile::rename(const QString &newName)
 }
 
 QVariant Profile::setting(const QString &section, const QString &name,
-                          const QVariant &fallback)
+                          const QVariant &fallback) const
 {
   return m_Settings->value(section + "/" + name, fallback);
 }
+
 
 void Profile::storeSetting(const QString &section, const QString &name,
                            const QVariant &value)
@@ -828,9 +850,19 @@ void Profile::storeSetting(const QString &section, const QString &name,
   m_Settings->setValue(section + "/" + name, value);
 }
 
+void Profile::storeSetting(const QString &name, const QVariant &value)
+{
+  storeSetting("", name, value);
+}
+
 void Profile::removeSetting(const QString &section, const QString &name)
 {
 	m_Settings->remove(section + "/" + name);
+}
+
+void Profile::removeSetting(const QString &name)
+{
+  removeSetting("", name);
 }
 
 int Profile::getPriorityMinimum() const
