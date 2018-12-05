@@ -35,20 +35,26 @@ p, li { white-space: pre-wrap; }
      <item>
       <widget class="QCheckBox" name="localSavesBox">
        <property name="toolTip">
-        <string>If checked, savegames are local to this profile and will not appear when starting with a different profile.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, savegames are stored locally to this profile and will not appear when starting with a different profile.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="whatsThis">
         <string>If checked, savegames are local to this profile and will not appear when starting with a different profile.</string>
        </property>
        <property name="text">
-        <string>Local Savegames</string>
+        <string>Use profile-specific Savagemes</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QCheckBox" name="localIniFilesBox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, MO2 will use a local set of game INI files (configuration and settings files), different from the default ones found in MyGames. This way changes to the INI settings will only affect this profile and the Global INI files can remain vanilla. MO2 will then show the profile INI files to the game instead of the Global ones.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="whatsThis">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked MO2 will use his own profile-specific game INI files, so that the &amp;quot;Global&amp;quot; ones in MyGames can be left vanilla. This different set of INI files is then offered to the game instead of the default one.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
-        <string>Local Game Settings</string>
+        <string>Use profile-specific Game INI Files</string>
        </property>
        <property name="checked">
         <bool>false</bool>
