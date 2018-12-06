@@ -41,7 +41,7 @@ p, li { white-space: pre-wrap; }
         <string>If checked, savegames are local to this profile and will not appear when starting with a different profile.</string>
        </property>
        <property name="text">
-        <string>Use profile-specific Savagemes</string>
+        <string>Use profile-specific Savegames</string>
        </property>
       </widget>
      </item>
