@@ -1141,8 +1141,15 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
     }
 
     LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
-    if (saveGames != nullptr && saveGames->updateSaveGames(m_OrganizerCore.currentProfile())) {
-      refreshSaveList();
+    if (saveGames != nullptr) {
+      if (saveGames->prepareProfile(m_OrganizerCore.currentProfile()))
+        refreshSaveList();
+    }
+
+    BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+    if (invalidation != nullptr) {
+      if (invalidation->prepareProfile(m_OrganizerCore.currentProfile()))
+        QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
     }
   }
 }
@@ -1407,12 +1414,17 @@ QDir MainWindow::currentSavesDir() const
   if (m_OrganizerCore.currentProfile()->localSavesEnabled()) {
     savesDir.setPath(m_OrganizerCore.currentProfile()->savePath());
   } else {
+    QString iniPath = m_OrganizerCore.currentProfile()->localSettingsEnabled()
+                    ? m_OrganizerCore.currentProfile()->absolutePath()
+                    : m_OrganizerCore.managedGame()->documentsDirectory().absolutePath();
+    iniPath += "/" + m_OrganizerCore.managedGame()->iniFiles()[0];
+
     wchar_t path[MAX_PATH];
     ::GetPrivateProfileStringW(
           L"General", L"SLocalSavePath", L"Saves",
           path, MAX_PATH,
-          ToWString(m_OrganizerCore.currentProfile()->absolutePath() + "/" +
-                      m_OrganizerCore.managedGame()->iniFiles()[0]).c_str());
+          iniPath.toStdWString().c_str()
+          );
     savesDir.setPath(m_OrganizerCore.managedGame()->documentsDirectory().absoluteFilePath(QString::fromWCharArray(path)));
   }
 
@@ -2026,11 +2038,16 @@ void MainWindow::on_actionAdd_Profile_triggered()
   }
 
   LocalSavegames *saveGames = m_OrganizerCore.managedGame()->feature<LocalSavegames>();
-  if (saveGames != nullptr && saveGames->updateSaveGames(m_OrganizerCore.currentProfile())) {
-    refreshSaveList();
+  if (saveGames != nullptr) {
+    if (saveGames->prepareProfile(m_OrganizerCore.currentProfile()))
+      refreshSaveList();
   }
 
-//  addProfile();
+  BSAInvalidation *invalidation = m_OrganizerCore.managedGame()->feature<BSAInvalidation>();
+  if (invalidation != nullptr) {
+    if (invalidation->prepareProfile(m_OrganizerCore.currentProfile()))
+      QTimer::singleShot(5, &m_OrganizerCore, SLOT(profileRefresh()));
+  }
 }
 
 void MainWindow::on_actionModify_Executables_triggered()
