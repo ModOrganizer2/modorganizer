@@ -94,6 +94,10 @@ void SettingsDialog::accept()
   TutorableDialog::accept();
 }
 
+bool SettingsDialog::getResetGeometries()
+{
+  return ui->resetGeometryBtn->isChecked();
+}
 
 void SettingsDialog::on_loginCheckBox_toggled(bool checked)
 {

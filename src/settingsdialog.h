@@ -70,6 +70,7 @@ public:
   QColor getContainsColor() { return m_ContainsColor; }
   QColor getContainedColor() { return m_ContainedColor; }
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
+  bool getResetGeometries();
 
   void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
   void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }

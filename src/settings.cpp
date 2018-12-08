@@ -1112,4 +1112,15 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
+
+  if (m_dialog.getResetGeometries()) {
+    m_Settings.setValue("reset_geometry", true);
+    if (QMessageBox::question(nullptr,
+          tr("Restart Mod Organizer?"),
+          tr("In order to reset the window geometries, MO must be restarted.\n"
+             "Restart it now?"),
+          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      qApp->exit(INT_MAX);
+    }
+  }
 }

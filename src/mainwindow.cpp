@@ -1738,21 +1738,31 @@ void MainWindow::processUpdates() {
 
 void MainWindow::storeSettings(QSettings &settings) {
   settings.setValue("group_state", ui->groupCombo->currentIndex());
-
-  settings.setValue("window_geometry", saveGeometry());
-  settings.setValue("window_split", ui->splitter->saveState());
-  settings.setValue("log_split", ui->topLevelSplitter->saveState());
-
-  settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
-
-  settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
-
   settings.setValue("selected_executable",
                     ui->executablesListBox->currentIndex());
 
-  for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
-    QString key = QString("geometry/") + kv.first;
-    settings.setValue(key, kv.second->saveState());
+  if (settings.value("reset_geometry", false).toBool()) {
+    settings.remove("window_geometry");
+    settings.remove("window_split");
+    settings.remove("log_split");
+    settings.remove("filters_visible");
+    settings.remove("browser_geometry");
+    settings.beginGroup("geometry");
+    for (auto key : settings.childKeys()) {
+      settings.remove(key);
+    }
+    settings.endGroup();
+    settings.remove("reset_geometry");
+  } else {
+    settings.setValue("window_geometry", saveGeometry());
+    settings.setValue("window_split", ui->splitter->saveState());
+    settings.setValue("log_split", ui->topLevelSplitter->saveState());
+    settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
+    settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
+    for (const std::pair<QString, QHeaderView*> kv : m_PersistedGeometry) {
+      QString key = QString("geometry/") + kv.first;
+      settings.setValue(key, kv.second->saveState());
+    }
   }
 }
 

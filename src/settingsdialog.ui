@@ -1058,6 +1058,22 @@ programs you are intentionally running.</string>
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="resetGeometryBtn">
+         <property name="toolTip">
+          <string>Resets the window geometries for all windows.  This can be useful if a window becomes too small or too large, if a column becomes too thin or too wide, and in similar situations.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Resets the window geometries for all windows.  This can be useful if a window becomes too small or too large, if a column becomes too thin or too wide, and in similar situations.</string>
+         </property>
+         <property name="text">
+          <string>Reset Window Geometries</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
