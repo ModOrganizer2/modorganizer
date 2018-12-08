@@ -412,6 +412,8 @@ MainWindow::MainWindow(QSettings &initSettings
 
   new QShortcut(QKeySequence::Refresh, this, SLOT(refreshProfile_activated()));
 
+  new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, SLOT(search_activated()));
+  new QShortcut(QKeySequence(Qt::Key_Escape), this, SLOT(searchClear_activated()));
 
   m_UpdateProblemsTimer.setSingleShot(true);
   connect(&m_UpdateProblemsTimer, SIGNAL(timeout()), this, SLOT(updateProblemsButton()));
@@ -2860,6 +2862,32 @@ void MainWindow::openExplorer_activated()
 void MainWindow::refreshProfile_activated()
 {
 	m_OrganizerCore.profileRefresh();
+}
+
+void MainWindow::search_activated()
+{
+  if (ui->modList->hasFocus() || ui->modFilterEdit->hasFocus()) {
+    ui->modFilterEdit->setFocus();
+    ui->modFilterEdit->setSelection(0, INT_MAX);
+  }
+
+  if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
+    ui->espFilterEdit->setFocus();
+    ui->espFilterEdit->setSelection(0, INT_MAX);
+  }
+}
+
+void MainWindow::searchClear_activated()
+{
+  if (ui->modFilterEdit->hasFocus()) {
+    ui->modFilterEdit->clear();
+    ui->modList->setFocus();
+  }
+
+  if (ui->espFilterEdit->hasFocus()) {
+    ui->espFilterEdit->clear();
+    ui->espList->setFocus();
+  }
 }
 
 void MainWindow::information_clicked()

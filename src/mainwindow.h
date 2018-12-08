@@ -577,6 +577,9 @@ private slots:
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
 
+  void search_activated();
+  void searchClear_activated();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
