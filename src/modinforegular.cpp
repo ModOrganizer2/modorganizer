@@ -76,6 +76,7 @@ bool ModInfoRegular::isEmpty() const
 void ModInfoRegular::readMeta()
 {
   QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
+  m_Comments         = metaFile.value("comments", "").toString();
   m_Notes            = metaFile.value("notes", "").toString();
   QString tempGameName = metaFile.value("gameName", m_GameName).toString();
   if (tempGameName.size()) m_GameName = tempGameName;
@@ -148,6 +149,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("repository", m_Repository);
       metaFile.setValue("gameName", m_GameName);
       metaFile.setValue("modid", m_NexusID);
+      metaFile.setValue("comments", m_Comments);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
@@ -324,6 +326,12 @@ bool ModInfoRegular::setName(const QString &name)
   return true;
 }
 
+void ModInfoRegular::setComments(const QString &comments)
+{
+  m_Comments = comments;
+  m_MetaInfoChanged = true;
+}
+
 void ModInfoRegular::setNotes(const QString &notes)
 {
   m_Notes = notes;
@@ -405,7 +413,7 @@ void ModInfoRegular::setColor(QColor color)
   m_MetaInfoChanged = true;
 }
 
-QColor ModInfoRegular::getColor() 
+QColor ModInfoRegular::getColor()
 {
   return m_Color;
 }
@@ -510,7 +518,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
         if (sePluginDir.entryList(QStringList() << "*.dll").size() > 0) {
           m_CachedContent.push_back(CONTENT_SKSE);
         }
-      }  
+      }
     }
     if (dir.exists("textures") || dir.exists("icons") || dir.exists("bookart"))
       m_CachedContent.push_back(CONTENT_TEXTURE);
@@ -565,6 +573,11 @@ QString ModInfoRegular::getDescription() const
 
     return ToQString(categoryString.str());
   }
+}
+
+QString ModInfoRegular::comments() const
+{
+  return m_Comments;
 }
 
 QString ModInfoRegular::notes() const

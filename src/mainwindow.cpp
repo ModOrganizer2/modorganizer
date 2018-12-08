@@ -299,6 +299,7 @@ MainWindow::MainWindow(QSettings &initSettings
     ui->modList->header()->setSectionHidden(ModList::COL_MODID, true);
     ui->modList->header()->setSectionHidden(ModList::COL_GAME, true);
     ui->modList->header()->setSectionHidden(ModList::COL_INSTALLTIME, true);
+    ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
   }
 
   ui->modList->header()->setSectionHidden(ModList::COL_NAME, false); // prevent the name-column from being hidden
@@ -1725,6 +1726,9 @@ void MainWindow::processUpdates() {
         ui->modList->header()->setSectionHidden(i, lastHidden);
         lastHidden = hidden;
       }
+    }
+    if (lastVersion < QVersionNumber(2,1,6)) {
+      ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
     }
   }
 

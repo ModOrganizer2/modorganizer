@@ -91,6 +91,12 @@ public:
   bool setName(const QString &name);
 
   /**
+  * @brief changes the comments (manually set information displayed in the mod list) for this mod
+  * @param comments new comments
+  */
+  void setComments(const QString &comments);
+
+  /**
    * @brief change the notes (manually set information) for this mod
    * @param notes new notes
    */
@@ -280,6 +286,11 @@ public:
   virtual QString getDescription() const;
 
   /**
+  * @return comments for this mod
+  */
+  virtual QString comments() const;
+
+  /**
    * @return manually set notes for this mod
    */
   virtual QString notes() const;
@@ -353,6 +364,7 @@ private:
   QString m_Name;
   QString m_Path;
   QString m_InstallationFile;
+  QString m_Comments;
   QString m_Notes;
   QString m_NexusDescription;
   QString m_Repository;

@@ -782,7 +782,30 @@ p, li { white-space: pre-wrap; }
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QTextEdit" name="notesEdit"/>
+        <widget class="QLineEdit" name="commentsEdit">
+         <property name="toolTip">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+         <property name="placeholderText">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="notesEdit">
+         <property name="toolTip">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+         <property name="placeholderText">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>

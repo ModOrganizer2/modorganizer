@@ -44,7 +44,7 @@ namespace MOShared { class DirectoryEntry; }
 
 /**
  * @brief Represents meta information about a single mod.
- * 
+ *
  * Represents meta information about a single mod. The class interface is used
  * to manage the mod collection
  *
@@ -85,7 +85,7 @@ public:
     CONTENT_SOUND,
     CONTENT_SCRIPT,
     CONTENT_SKSE,
-	CONTENT_SKSEFILES,
+	  CONTENT_SKSEFILES,
     CONTENT_SKYPROC,
     CONTENT_MCM,
     CONTENT_INI,
@@ -267,6 +267,12 @@ public:
    * @note this function does not test whether categoryID actually identifies a valid category
    **/
   virtual void setCategory(int categoryID, bool active) = 0;
+
+  /**
+   * @brief changes the comments (manually set information displayed in the mod list) for this mod
+   * @param comments new comments
+   */
+  virtual void setComments(const QString &comments) = 0;
 
   /**
    * @brief change the notes (manually set information) for this mod
@@ -496,6 +502,11 @@ public:
   virtual QString getDescription() const = 0;
 
   /**
+   * @return comments for this mod
+   */
+  virtual QString comments() const = 0;
+
+  /**
    * @return notes for this mod
    */
   virtual QString notes() const = 0;
@@ -526,7 +537,7 @@ public:
   virtual QStringList archives() const = 0;
 
   /*
-   *@return the color choosen by the user for the mod/separator 
+   *@return the color choosen by the user for the mod/separator
    */
   virtual QColor getColor() { return QColor(); }
 

@@ -112,6 +112,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   }
   ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(gameName));
 
+  ui->commentsEdit->setText(modInfo->comments());
   ui->notesEdit->setText(modInfo->notes());
 
   ui->descriptionView->setPage(new DescriptionPage);
@@ -189,6 +190,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
 ModInfoDialog::~ModInfoDialog()
 {
+  m_ModInfo->setComments(ui->commentsEdit->text());
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo

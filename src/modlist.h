@@ -65,8 +65,9 @@ public:
     COL_VERSION,
     COL_INSTALLTIME,
     COL_PRIORITY,
+    COL_NOTES,
 
-    COL_LASTCOLUMN = COL_PRIORITY
+    COL_LASTCOLUMN = COL_NOTES
   };
 
   typedef boost::signals2::signal<void (const QString &, ModStates)> SignalModStateChanged;

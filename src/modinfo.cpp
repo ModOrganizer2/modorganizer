@@ -104,7 +104,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_SOUND:     return tr("Sound Effects");
     case CONTENT_SCRIPT:    return tr("Scripts");
     case CONTENT_SKSE:      return tr("Script Extender");
-	case CONTENT_SKSEFILES: return tr("Script Extender Files");
+    case CONTENT_SKSEFILES: return tr("Script Extender Files");
     case CONTENT_SKYPROC:   return tr("SkyProc Tools");
     case CONTENT_MCM:       return tr("MCM Data");
     case CONTENT_INI:       return tr("INI files");

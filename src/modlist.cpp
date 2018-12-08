@@ -150,7 +150,14 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_SEPARATOR: return tr("Separator");
     case ModInfo::FLAG_INVALID: return tr("No valid game data");
     case ModInfo::FLAG_NOTENDORSED: return tr("Not endorsed yet");
-    case ModInfo::FLAG_NOTES: return QString("<i>%1</i>").arg(modInfo->notes().replace("\n", "<br>"));
+    case ModInfo::FLAG_NOTES: {
+      QStringList output;
+      if (!modInfo->comments().isEmpty())
+        output << QString("<i>%1</i>").arg(modInfo->comments());
+      if (!modInfo->notes().isEmpty())
+        output << QString("<i>%1</i>").arg(modInfo->notes()).replace("\n", "<br>");
+      return output.join("<br>");
+    }
     case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites files");
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
@@ -276,6 +283,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       } else {
         return QVariant();
       }
+    } else if (column == COL_NOTES) {
+      return modInfo->comments();
     } else {
       return tr("invalid");
     }
@@ -295,6 +304,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     } else if (column == COL_VERSION) {
       return QVariant(Qt::AlignRight | Qt::AlignVCenter);
+    } else if (column == COL_NOTES) {
+      return QVariant(Qt::AlignLeft | Qt::AlignVCenter);
     } else {
       return QVariant(Qt::AlignCenter | Qt::AlignVCenter);
     }
@@ -443,6 +454,8 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
 
       return ToQString(categoryString.str());
+    } else if (column == COL_NOTES) {
+      return getFlagText(ModInfo::FLAG_NOTES, modInfo);
     } else {
       return QVariant();
     }
@@ -559,6 +572,10 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
           result = false;
         }
       } break;
+      case COL_NOTES: {
+        info->setComments(value.toString());
+        result = true;
+      } break;
       default: {
         qWarning("edit on column \"%s\" not supported",
                  getColumnName(index.column()).toUtf8().constData());
@@ -625,7 +642,8 @@ Qt::ItemFlags ModList::flags(const QModelIndex &modelIndex) const
           (modelIndex.column() == COL_MODID)) {
         result |= Qt::ItemIsEditable;
       }
-      if ((modelIndex.column() == COL_NAME)
+      if (((modelIndex.column() == COL_NAME) ||
+           (modelIndex.column() == COL_NOTES))
           && (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end())) {
         result |= Qt::ItemIsEditable;
       }
@@ -1147,6 +1165,7 @@ QString ModList::getColumnName(int column)
     case COL_GAME:     return tr("Source Game");
     case COL_MODID:    return tr("Nexus ID");
     case COL_INSTALLTIME: return tr("Installation");
+    case COL_NOTES:    return tr("Notes");
     default: return tr("unknown");
   }
 }
@@ -1182,6 +1201,7 @@ QString ModList::getColumnToolTip(int column)
 
                                  "</table>");
     case COL_INSTALLTIME: return tr("Time this mod was installed");
+    case COL_NOTES:       return tr("User notes about the mod");
     default: return tr("unknown");
   }
 }
