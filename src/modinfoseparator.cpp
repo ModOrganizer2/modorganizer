@@ -9,7 +9,7 @@ std::vector<ModInfo::EFlag> ModInfoSeparator::getFlags() const
 {
   {
     auto result = ModInfoRegular::getFlags();
-    result.insert(result.begin(), FLAG_SEPARATOR);
+    result.push_back(FLAG_SEPARATOR);
     return result;
   }
 }
