@@ -1223,7 +1223,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
                                         LPDWORD exitCode)
 {
   HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
-  if (processHandle != INVALID_HANDLE_VALUE) {
+  if (Settings::instance().lockGUI() && processHandle != INVALID_HANDLE_VALUE) {
     std::unique_ptr<LockedDialog> dlg;
     ILockedWaitingForProcess* uilock = nullptr;
 
@@ -1485,6 +1485,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
+  if (!Settings::instance().lockGUI())
+    return true;
+
   ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
     uilock = m_UserInterface->lock();

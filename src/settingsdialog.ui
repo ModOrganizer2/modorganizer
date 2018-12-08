@@ -966,57 +966,77 @@ tl;dr-version: If Nexus-features don't work, insert the current version number o
         </layout>
        </item>
        <item>
-        <widget class="QCheckBox" name="hideUncheckedBox">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
-         </property>
-         <property name="whatsThis">
-          <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
-I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
-         </property>
-         <property name="text">
-          <string>Hide inactive ESPs/ESMs</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="forceEnableBox">
-         <property name="toolTip">
-          <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
-         </property>
-         <property name="whatsThis">
-          <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
+        <layout class="QGridLayout" name="gridLayout_6">
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="forceEnableBox">
+           <property name="toolTip">
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
+           </property>
+           <property name="whatsThis">
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
 Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</string>
-         </property>
-         <property name="text">
-          <string>Force-enable game files</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="displayForeignBox">
-         <property name="toolTip">
-          <string>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</string>
-         </property>
-         <property name="whatsThis">
-          <string>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
+           </property>
+           <property name="text">
+            <string>Force-enable game files</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QCheckBox" name="displayForeignBox">
+           <property name="toolTip">
+            <string>Disable this to no longer display mods installed outside MO in the mod list (left pane). Assets from those mods will then be treated as having lowest mod priority together with the original game content.</string>
+           </property>
+           <property name="whatsThis">
+            <string>By default Mod Organizer will display esp+bsa bundles installed with foreign tools as mods (left pane). This allows you to control their priority in relation to other mods. This is particularly useful if you also use Steam Workshop to install mods.
 However, if you installed loose file mods outside MO which conflict with BSAs also installed outside MO those conflicts can't be resolved correctly.
 
 If you disable this feature, MO will only display official DLCs this way. Please note that plugins (esps, esms, and esls) displayed in the right pane are completely unaffected by this feature.</string>
-         </property>
-         <property name="text">
-          <string>Display mods installed outside MO</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
+           </property>
+           <property name="text">
+            <string>Display mods installed outside MO</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="hideUncheckedBox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="toolTip">
+            <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
+           </property>
+           <property name="whatsThis">
+            <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
+I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
+           </property>
+           <property name="text">
+            <string>Hide inactive ESPs/ESMs</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QCheckBox" name="lockGUIBox">
+           <property name="toolTip">
+            <string>Disable this to prevent the GUI from being locked when running an executable.  This may result in abnormal behavior.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Disable this to prevent the GUI from being locked when running an executable.  This may result in abnormal behavior.</string>
+           </property>
+           <property name="text">
+            <string>Lock GUI when running executable</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <widget class="QPushButton" name="bsaDateBtn">
@@ -1330,9 +1350,6 @@ programs you are intentionally running.</string>
   <tabstop>appIDEdit</tabstop>
   <tabstop>mechanismBox</tabstop>
   <tabstop>nmmVersionEdit</tabstop>
-  <tabstop>hideUncheckedBox</tabstop>
-  <tabstop>forceEnableBox</tabstop>
-  <tabstop>displayForeignBox</tabstop>
   <tabstop>bsaDateBtn</tabstop>
   <tabstop>tabWidget</tabstop>
  </tabstops>

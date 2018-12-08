@@ -210,6 +210,11 @@ bool Settings::forceEnableCoreFiles() const
   return m_Settings.value("Settings/force_enable_core_files", true).toBool();
 }
 
+bool Settings::lockGUI() const
+{
+  return m_Settings.value("Settings/lock_gui", true).toBool();
+}
+
 bool Settings::automaticLoginEnabled() const
 {
   return m_Settings.value("Settings/nexus_login", false).toBool();
@@ -1060,6 +1065,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
+  , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -1093,6 +1099,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
+  m_lockGUIBox->setChecked(m_parent->lockGUI());
 
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
@@ -1110,6 +1117,7 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
+  m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
 

@@ -110,6 +110,11 @@ public:
   bool forceEnableCoreFiles() const;
 
   /**
+   * @return true if the GUI should be locked when running executables
+   */
+  bool lockGUI() const;
+
+  /**
    * @brief register download speed
    * @param url complete download url
    * @param bytesPerSecond download size in bytes per second
@@ -496,6 +501,7 @@ private:
     QCheckBox *m_hideUncheckedBox;
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
+    QCheckBox *m_lockGUIBox;
   };
 
 private slots:
