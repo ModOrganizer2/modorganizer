@@ -137,12 +137,13 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     QInputDialog dialog;
 
 	  dialog.setWindowTitle(QObject::tr("Enter a Name for the new Instance"));
-    dialog.setLabelText(QObject::tr("Enter a new name or select one from the suggested list:"));
+    dialog.setLabelText(QObject::tr("Enter a new name or select one from the suggested list: \n"
+                                    "(This is just the name of the Instance, not the game selection)"));
     // would be neat if we could take the names from the game plugins but
     // the required initialization order requires the ini file to be
     // available *before* we load plugins
-    dialog.setComboBoxItems({ "NewName", "Fallout 4", "SkyrimSE", "Skyrim", "Fallout 3",
-                              "Fallout NV", "FO4VR", "Oblivion" });
+    dialog.setComboBoxItems({ "NewName", "Fallout 4", "SkyrimSE", "Skyrim", "SkyrimVR", "Fallout 3",
+                              "Fallout NV", "TTW", "FO4VR", "Oblivion", "Morrowind" });
     dialog.setComboBoxEditable(true);
 
     if (dialog.exec() == QDialog::Rejected) {
