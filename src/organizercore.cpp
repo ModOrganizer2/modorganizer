@@ -1772,7 +1772,16 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   QDir dir(modInfo->absolutePath());
   for (const QString &esm :
        dir.entryList(QStringList() << "*.esm", QDir::Files)) {
-    m_PluginList.enableESP(esm, active);
+    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
+    if (file.get() == nullptr) {
+      qWarning("failed to activate %s", qPrintable(esm));
+      continue;
+    }
+
+    if (active != m_PluginList.isEnabled(esm)
+      && file->getAlternatives().empty()) {
+      m_PluginList.enableESP(esm, active);
+    }
   }
   int enabled      = 0;
   for (const QString &esl :
