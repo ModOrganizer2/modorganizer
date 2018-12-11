@@ -436,7 +436,14 @@ MainWindow::MainWindow(QSettings &initSettings
   for (const QString &fileName : m_PluginContainer.pluginFileNames()) {
     installTranslator(QFileInfo(fileName).baseName());
   }
-  for (IPluginTool *toolPlugin : m_PluginContainer.plugins<IPluginTool>()) {
+
+  std::vector<IPluginTool *> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
+  std::sort(toolPlugins.begin(), toolPlugins.end(),
+    [](IPluginTool *left, IPluginTool *right){
+      return left->displayName().toLower() < right->displayName().toLower();
+    }
+  );
+  for (IPluginTool *toolPlugin : toolPlugins) {
     registerPluginTool(toolPlugin);
   }
 
