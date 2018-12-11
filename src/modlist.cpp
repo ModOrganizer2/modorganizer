@@ -378,6 +378,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     }
     return QVariant();
+  } else if (role == Qt::TextColorRole) {
+    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR) && modInfo->getColor().isValid()) {
+      return Settings::getIdealTextColor(modInfo->getColor());
+    }
+    return QVariant();
   } else if (role == Qt::ForegroundRole) {
     if (column == COL_NAME) {
       int highlight = modInfo->getHighlight();
