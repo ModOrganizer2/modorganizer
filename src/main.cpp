@@ -322,7 +322,7 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
 
   //The following code would try to determine the right game to mange but it would usually find the wrong one
   //so it was commented out.
-  /* 
+  /*
   //OK, we are in a new setup or existing info is useless.
   //See if MO has been installed inside a game directory
   for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
@@ -383,7 +383,7 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
         }
       }
       reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
-                              "the game binary and its launcher.").arg(gamePath));
+                              "the game binary.").arg(gamePath));
     }
   }
 
