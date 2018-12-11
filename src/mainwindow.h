@@ -425,6 +425,8 @@ private slots:
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
+  void openOriginExplorer_clicked();
+  void openOriginInformation_clicked();
   void information_clicked();
   void enableSelectedMods_clicked();
   void disableSelectedMods_clicked();

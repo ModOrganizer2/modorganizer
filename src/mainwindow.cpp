@@ -2837,6 +2837,29 @@ void MainWindow::openExplorer_clicked()
   }
 }
 
+void MainWindow::openOriginExplorer_clicked()
+{
+  QItemSelectionModel *selection = ui->espList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 0) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      QString fileName = idx.data().toString();
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+      
+      ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    }
+  }
+  else {
+    QModelIndex idx = selection->currentIndex();
+    QString fileName = idx.data().toString();
+
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
+}
+
 void MainWindow::openExplorer_activated()
 {
 	if (ui->modList->hasFocus()) {
@@ -3148,6 +3171,38 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
 void MainWindow::on_listOptionsBtn_pressed()
 {
   m_ContextRow = -1;
+}
+
+void MainWindow::openOriginInformation_clicked()
+{
+  try {
+    QItemSelectionModel *selection = ui->espList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 0) {
+      for (QModelIndex idx : selection->selectedRows()) {
+        QString fileName = idx.data().toString();
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+        if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+          displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+        }
+      }
+    }
+    else {
+      QModelIndex idx = selection->currentIndex();
+      QString fileName = idx.data().toString();
+
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+      if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      }
+    }
+  }
+  catch (const std::exception &e) {
+    reportError(e.what());
+  }
 }
 
 void MainWindow::on_espList_doubleClicked(const QModelIndex &index)
@@ -5173,6 +5228,19 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   }
   if (hasUnlocked) {
     menu.addAction(tr("Lock load order"), this, SLOT(lockESPIndex()));
+  }
+
+  menu.addSeparator();
+  menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openOriginExplorer_clicked()));
+
+  QModelIndex idx = ui->espList->selectionModel()->currentIndex();
+  ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString())));
+  std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+
+  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
+    menu.addSeparator();
+    QAction *infoAction = menu.addAction(tr("Open Origin Info..."), this, SLOT(openOriginInformation_clicked()));
+    menu.setDefaultAction(infoAction);
   }
 
   try {
