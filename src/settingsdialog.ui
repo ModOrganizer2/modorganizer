@@ -99,20 +99,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
              <string>Colors</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_5">
-             <item row="2" column="0" colspan="2">
-              <widget class="QPushButton" name="containsBtn">
-               <property name="text">
-                <string>Mod Contains selected Plugin</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="containedBtn">
-               <property name="text">
-                <string>Plugin is Contained in selected Mod</string>
-               </property>
-              </widget>
-             </item>
              <item row="4" column="0" colspan="2">
               <widget class="QPushButton" name="resetColorsBtn">
                <property name="text">
@@ -127,10 +113,40 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
                </property>
               </widget>
              </item>
+             <item row="2" column="0" colspan="2">
+              <widget class="QPushButton" name="containsBtn">
+               <property name="text">
+                <string>Mod Contains selected Plugin</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="containedBtn">
+               <property name="text">
+                <string>Plugin is Contained in selected Mod</string>
+               </property>
+              </widget>
+             </item>
              <item row="1" column="1">
               <widget class="QPushButton" name="overwritingBtn">
                <property name="text">
                 <string>Is overwriting (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QCheckBox" name="colorSeparatorsBox">
+               <property name="toolTip">
+                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+               </property>
+               <property name="whatsThis">
+                <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
+               </property>
+               <property name="text">
+                <string>Show mod list separator colors on the scrollbar</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
                </property>
               </widget>
              </item>

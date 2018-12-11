@@ -365,6 +365,12 @@ public:
    */
   void registerAsNXMHandler(bool force);
 
+  /**
+   * @brief color the scrollbar of the mod list for custom separator colors?
+   * @return the state of the setting
+   */
+  bool colorSeparatorScrollbar() const;
+
 public slots:
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
@@ -414,6 +420,7 @@ private:
     QPushButton *m_overwrittenBtn;
     QPushButton *m_containsBtn;
     QPushButton *m_containedBtn;
+    QCheckBox *m_colorSeparatorsBox;
   };
 
   class PathsTab : public SettingsTab

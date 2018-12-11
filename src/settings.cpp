@@ -148,6 +148,11 @@ void Settings::registerAsNXMHandler(bool force)
   }
 }
 
+bool Settings::colorSeparatorScrollbar() const
+{
+  return m_Settings.value("Settings/colorSeparatorScrollbars", true).toBool();
+}
+
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
@@ -716,6 +721,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
   , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
   , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
+  , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
 {
   // FIXME I think 'addLanguages' lives in here not in parent
   m_parent->addLanguages(m_languageBox);
@@ -788,6 +794,7 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   m_compactBox->setChecked(m_parent->compactDownloads());
   m_showMetaBox->setChecked(m_parent->metaDownloads());
   m_usePrereleaseBox->setChecked(m_parent->usePrereleases());
+  m_colorSeparatorsBox->setChecked(m_parent->colorSeparatorScrollbar());
 }
 
 void Settings::GeneralTab::update()
@@ -813,6 +820,7 @@ void Settings::GeneralTab::update()
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
   m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
   m_Settings.setValue("Settings/use_prereleases", m_usePrereleaseBox->isChecked());
+  m_Settings.setValue("Settings/colorSeparatorScrollbars", m_colorSeparatorsBox->isChecked());
 }
 
 Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)

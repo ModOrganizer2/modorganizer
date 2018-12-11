@@ -395,7 +395,6 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
-    auto flags = modInfo->getFlags();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().modlistContainsPluginColor();
     } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
@@ -403,8 +402,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     }
     else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
       return Settings::instance().modlistOverwritingLooseColor();
-    } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end() && modInfo->getColor().isValid()) {
-        return modInfo->getColor();
+    } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
+               && modInfo->getColor().isValid()
+               && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
+                    || Settings::instance().colorSeparatorScrollbar())) {
+      return modInfo->getColor();
     } else {
       return QVariant();
     }
