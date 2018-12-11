@@ -132,7 +132,8 @@ public:
 
   void saveArchiveList();
 
-  void registerPluginTool(MOBase::IPluginTool *tool);
+  void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr);
+  void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins);
   void registerModPage(MOBase::IPluginModPage *modPage);
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);

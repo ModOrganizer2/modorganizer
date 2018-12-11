@@ -8,6 +8,8 @@
 #include <ipluginmodpage.h>
 #include <delayedfilewriter.h>
 
+#include <QMenu>
+
 class QSettings;
 
 class IUserInterface
@@ -16,7 +18,8 @@ public:
 
   virtual void storeSettings(QSettings &settings) = 0;
 
-  virtual void registerPluginTool(MOBase::IPluginTool *tool) = 0;
+  virtual void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr) = 0;
+  virtual void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins) = 0;
   virtual void registerModPage(MOBase::IPluginModPage *modPage) = 0;
 
   virtual void installTranslator(const QString &name) = 0;

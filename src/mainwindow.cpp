@@ -267,7 +267,7 @@ MainWindow::MainWindow(QSettings &initSettings
       // insert spacers
       ui->toolBar->insertWidget(action, spacer);
       m_Sep = action;
-      // m_Sep would only use the last seperator anyway, and we only have the one anyway?
+      // m_Sep would only use the last separator anyway, and we only have the one anyway?
       break;
     }
   }
@@ -437,15 +437,7 @@ MainWindow::MainWindow(QSettings &initSettings
     installTranslator(QFileInfo(fileName).baseName());
   }
 
-  std::vector<IPluginTool *> toolPlugins = m_PluginContainer.plugins<IPluginTool>();
-  std::sort(toolPlugins.begin(), toolPlugins.end(),
-    [](IPluginTool *left, IPluginTool *right){
-      return left->displayName().toLower() < right->displayName().toLower();
-    }
-  );
-  for (IPluginTool *toolPlugin : toolPlugins) {
-    registerPluginTool(toolPlugin);
-  }
+  registerPluginTools(m_PluginContainer.plugins<IPluginTool>());
 
   for (IPluginModPage *modPagePlugin : m_PluginContainer.plugins<IPluginModPage>()) {
     registerModPage(modPagePlugin);
@@ -1046,15 +1038,57 @@ void MainWindow::modPagePluginInvoke()
   }
 }
 
-void MainWindow::registerPluginTool(IPluginTool *tool)
+void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
-  QAction *action = new QAction(tool->icon(), tool->displayName(), ui->toolBar);
+  if (name.isEmpty())
+    name = tool->displayName();
+
+  QAction *action = new QAction(tool->icon(), name, ui->toolBar);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
   action->setData(qVariantFromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-  toolBtn->menu()->addAction(action);
+
+  if (menu == nullptr) {
+    QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
+    toolBtn->menu()->addAction(action);
+  } else {
+    menu->addAction(action);
+  }
+}
+
+void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
+{
+  // Sort the plugins by display name
+  std::sort(toolPlugins.begin(), toolPlugins.end(),
+    [](IPluginTool *left, IPluginTool *right) {
+      return left->displayName().toLower() < right->displayName().toLower();
+    }
+  );
+
+  // Group the plugins into submenus
+  QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;
+  for (auto toolPlugin : toolPlugins) {
+    QStringList toolName = toolPlugin->displayName().split("/");
+    QString submenu = toolName[0];
+    toolName.pop_front();
+    submenuMap[submenu].append(QPair<QString, IPluginTool *>(toolName.join("/"), toolPlugin));
+  }
+
+  // Start registering plugins
+  for (auto submenuKey : submenuMap.keys()) {
+    if (submenuMap[submenuKey].length() > 1) {
+      QMenu *submenu = new QMenu(submenuKey, this);
+      for (auto info : submenuMap[submenuKey]) {
+        registerPluginTool(info.second, info.first, submenu);
+      }
+      QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
+      toolBtn->menu()->addMenu(submenu);
+    }
+    else {
+      registerPluginTool(submenuMap[submenuKey].front().second);
+    }
+  }
 }
 
 void MainWindow::registerModPage(IPluginModPage *modPage)
@@ -1171,7 +1205,6 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
   std::wostringstream temp;
   temp << directorySoFar << "\\" << directoryEntry.getName();
   {
-    
     std::vector<DirectoryEntry*>::const_iterator current, end;
     directoryEntry.getSubDirectories(current, end);
     for (; current != end; ++current) {
@@ -1275,7 +1308,6 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
     }
   }
 
-  
 
   //subTree->sortChildren(0, Qt::AscendingOrder);
 }
@@ -2845,7 +2877,7 @@ void MainWindow::openOriginExplorer_clicked()
       QString fileName = idx.data().toString();
       ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
       std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-      
+
       ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     }
   }
