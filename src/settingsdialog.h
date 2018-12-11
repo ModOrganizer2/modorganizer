@@ -110,6 +110,8 @@ private slots:
 
   void on_browseProfilesDirBtn_clicked();
 
+  void on_browseGameDirBtn_clicked();
+
   void on_overwritingBtn_clicked();
 
   void on_overwrittenBtn_clicked();

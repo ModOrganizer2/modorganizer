@@ -4178,10 +4178,21 @@ void MainWindow::on_actionSettings_triggered()
   QString oldModDirectory(settings.getModDirectory());
   QString oldCacheDirectory(settings.getCacheDirectory());
   QString oldProfilesDirectory(settings.getProfileDirectory());
+  QString oldManagedGameDirectory(settings.getManagedGameDirectory());
   bool oldDisplayForeign(settings.displayForeign());
   bool proxy = settings.useProxy();
+  DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
   settings.query(&m_PluginContainer, this);
+
+  if (oldManagedGameDirectory != settings.getManagedGameDirectory()) {
+    QMessageBox::about(this, tr("Restarting MO"),
+      tr("Changing the managed game directory requires restarting MO.\n"
+         "Any pending downloads will be paused.\n\n"
+         "Click OK to restart MO now."));
+    dlManager->pauseAll();
+    qApp->exit(INT_MAX);
+  }
 
   InstallationManager *instManager = m_OrganizerCore.installationManager();
   instManager->setModsDirectory(settings.getModDirectory());
@@ -4193,8 +4204,6 @@ void MainWindow::on_actionSettings_triggered()
   if (settings.getProfileDirectory() != oldProfilesDirectory) {
     refreshProfiles();
   }
-
-  DownloadManager *dlManager = m_OrganizerCore.downloadManager();
 
   if (dlManager->getOutputDirectory() != settings.getDownloadDirectory()) {
     if (dlManager->downloadsInProgress()) {

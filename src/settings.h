@@ -161,6 +161,11 @@ public:
   QString getCacheDirectory(bool resolve = true) const;
 
   /**
+   * retrieve the directory where the managed game is stored (with native separators)
+   **/
+  QString getManagedGameDirectory() const;
+
+  /**
    * retrieve the directory where profiles stored (with native separators)
    **/
   QString getProfileDirectory(bool resolve = true) const;

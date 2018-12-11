@@ -298,6 +298,11 @@ QString Settings::getModDirectory(bool resolve) const
   return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()), resolve);
 }
 
+QString Settings::getManagedGameDirectory() const
+{
+  return m_Settings.value("gamePath", "").toString();
+}
+
 QString Settings::getProfileDirectory(bool resolve) const
 {
   return getConfigurablePath("profiles_directory", ToQString(AppConfig::profilesPath()), resolve);
@@ -881,6 +886,12 @@ void Settings::PathsTab::update()
     m_Settings.setValue("Settings/base_directory", m_baseDirEdit->text());
   } else {
     m_Settings.remove("Settings/base_directory");
+  }
+
+  QFileInfo oldGameExe(m_parent->m_GamePlugin->gameDirectory().absoluteFilePath(m_parent->m_GamePlugin->binaryName()));
+  QFileInfo newGameExe(m_managedGameDirEdit->text());
+  if (oldGameExe != newGameExe) {
+    m_Settings.setValue("gamePath", newGameExe.absolutePath());
   }
 }
 

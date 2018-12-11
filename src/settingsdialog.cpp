@@ -220,6 +220,16 @@ void SettingsDialog::on_browseOverwriteDirBtn_clicked()
   }
 }
 
+void SettingsDialog::on_browseGameDirBtn_clicked()
+{
+  QFileInfo oldGameExe(ui->managedGameDirEdit->text());
+
+  QString temp = QFileDialog::getOpenFileName(this, tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
+  if (!temp.isEmpty()) {
+    ui->managedGameDirEdit->setText(temp);
+  }
+}
+
 void SettingsDialog::on_containsBtn_clicked()
 {
   QColor result = QColorDialog::getColor(m_ContainsColor, this);
