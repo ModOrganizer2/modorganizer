@@ -1166,7 +1166,52 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
 
 void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
 {
-  bool isDirectory = false;
+  bool isDirectory = true;
+
+  std::wostringstream temp;
+  temp << directorySoFar << "\\" << directoryEntry.getName();
+  {
+    
+    std::vector<DirectoryEntry*>::const_iterator current, end;
+    directoryEntry.getSubDirectories(current, end);
+    for (; current != end; ++current) {
+      QString pathName = ToQString((*current)->getName());
+      QStringList columns(pathName);
+      columns.append("");
+      if (!(*current)->isEmpty()) {
+        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
+
+        if (conflictsOnly) {
+          updateTo(directoryChild, temp.str(), **current, conflictsOnly);
+          if (directoryChild->childCount() != 0) {
+            subTree->addChild(directoryChild);
+          }
+          else {
+            delete directoryChild;
+          }
+        }
+        else {
+          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
+          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
+          onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
+          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
+          directoryChild->addChild(onDemandLoad);
+          subTree->addChild(directoryChild);
+        }
+      }
+      else {
+        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
+        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
+        subTree->addChild(directoryChild);
+      }
+    }
+  }
+
+
+  isDirectory = false;
   {
     for (const FileEntry::Ptr current : directoryEntry.getFiles()) {
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
@@ -1230,47 +1275,9 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
     }
   }
 
-  std::wostringstream temp;
-  temp << directorySoFar << "\\" << directoryEntry.getName();
-  {
-    isDirectory = true;
-    std::vector<DirectoryEntry*>::const_iterator current, end;
-    directoryEntry.getSubDirectories(current, end);
-    for (; current != end; ++current) {
-      QString pathName = ToQString((*current)->getName());
-      QStringList columns(pathName);
-      columns.append("");
-      if (!(*current)->isEmpty()) {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
+  
 
-        if (conflictsOnly) {
-          updateTo(directoryChild, temp.str(), **current, conflictsOnly);
-          if (directoryChild->childCount() != 0) {
-            subTree->addChild(directoryChild);
-          } else {
-            delete directoryChild;
-          }
-        } else {
-          QTreeWidgetItem *onDemandLoad = new QTreeWidgetItem(QStringList());
-          onDemandLoad->setData(0, Qt::UserRole + 0, "__loaded_on_demand__");
-          onDemandLoad->setData(0, Qt::UserRole + 1, ToQString(temp.str()));
-          onDemandLoad->setData(0, Qt::UserRole + 2, conflictsOnly);
-          directoryChild->addChild(onDemandLoad);
-          subTree->addChild(directoryChild);
-        }
-      }
-      else {
-        QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-        directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
-        subTree->addChild(directoryChild);
-      }
-    }
-  }
-
-  subTree->sortChildren(0, Qt::AscendingOrder);
+  //subTree->sortChildren(0, Qt::AscendingOrder);
 }
 
 void MainWindow::delayedRemove()
@@ -1832,7 +1839,7 @@ void MainWindow::on_tabWidget_currentChanged(int index)
   } else if (index == 1) {
     m_OrganizerCore.refreshBSAList();
   } else if (index == 2) {
-    refreshDataTree();
+    refreshDataTreeKeepExpandedNodes();
   } else if (index == 3) {
     refreshSaveList();
   }
@@ -2126,7 +2133,7 @@ void MainWindow::directory_refreshed()
 {
   // some problem-reports may rely on the virtual directory tree so they need to be updated
   // now
-  refreshDataTree();
+  refreshDataTreeKeepExpandedNodes();
   updateProblemsButton();
   statusBar()->hide();
 }
@@ -4691,7 +4698,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
 
 void MainWindow::on_conflictsCheckBox_toggled(bool)
 {
-  refreshDataTree();
+  refreshDataTreeKeepExpandedNodes();
 }
 
 
