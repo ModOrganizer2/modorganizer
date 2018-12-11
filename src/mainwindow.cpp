@@ -5238,7 +5238,6 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
-    menu.addSeparator();
     QAction *infoAction = menu.addAction(tr("Open Origin Info..."), this, SLOT(openOriginInformation_clicked()));
     menu.setDefaultAction(infoAction);
   }
