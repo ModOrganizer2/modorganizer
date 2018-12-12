@@ -3104,6 +3104,7 @@ void MainWindow::resetColor_clicked()
   else {
     modInfo->setColor(color);
   }
+  Settings::instance().directInterface().remove("previousSeparatorColor");
 }
 
 void MainWindow::createModFromOverwrite()
