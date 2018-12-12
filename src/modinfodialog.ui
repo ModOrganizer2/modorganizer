@@ -20,7 +20,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>8</number>
+      <number>0</number>
      </property>
      <property name="movable">
       <bool>true</bool>
@@ -677,12 +677,12 @@ p, li { white-space: pre-wrap; }
           <widget class="QLineEdit" name="versionEdit">
            <property name="maximumSize">
             <size>
-             <width>50</width>
+             <width>150</width>
              <height>16777215</height>
             </size>
            </property>
            <property name="maxLength">
-            <number>12</number>
+            <number>32</number>
            </property>
           </widget>
          </item>
