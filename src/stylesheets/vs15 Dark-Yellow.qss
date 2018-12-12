@@ -1,13 +1,26 @@
+/*base*/
 /*!*************************************
   VS15 Dark
 ****************************************
   Author: chintsu_kun
-  Version: 2.0.1
+  Version: 2.0.2
   Licence: GNU General Public License v3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html)
   Url: https://github.com/nikolay-borzov/modorganizer-themes
 ****************************************
 */
-/*base*/
+/* For some reason applying background-color or border fixes paddings properties */
+QListWidget::item {
+  border-width: 0; }
+
+/* Don't override install label on download widget.
+   MO2 assigns color depending on download state */
+#installLabel {
+  color: none; }
+
+/* Make `background-color` work for :hover, :focus and :pressed states */
+QToolButton {
+  border: none; }
+
 /* Main Window */
 QWidget {
   background-color: #2D2D30;
@@ -16,11 +29,6 @@ QWidget {
     color: #656565; }
 
 /* Common */
-/* FIX: For some reason applying background-color or border fixes paddings 
-  properties. Otherwise padding is only applied when item is hovered */
-QListWidget::item {
-  border-width: 0; }
-
 /* remove outline */
 * {
   outline: 0; }
@@ -98,7 +106,6 @@ QListView::item {
   color: #F1F1F1; }
 
 /* Text areas and text fields #QTextEdit, #QLineEdit, #QWebView */
-/* Common */
 QTextEdit,
 QWebView,
 QLineEdit,
@@ -198,13 +205,9 @@ QToolButton {
   margin: 0 4px 0 4px;
   padding: 5px; }
   QToolButton:hover, QToolButton:focus {
-    background-color: #3E3E40;
-    /* need this to make background-color works*/
-    border: none; }
+    background-color: #3E3E40; }
   QToolButton:pressed {
-    background-color: #9A9A00;
-    /* need this to make background-color works*/
-    border: none; }
+    background-color: #9A9A00; }
 
 /* Group Boxes #QGroupBox */
 QGroupBox {
@@ -260,8 +263,7 @@ QPushButton::menu-indicator {
   subcontrol-position: center right;
   padding-right: 5%; }
 
-/* dialog buttons */
-/* Common */
+/* Dialog buttons */
 QDialog QPushButton,
 QSlider::handle:horizontal,
 QSlider::handle:vertical {
@@ -298,7 +300,6 @@ QDialog QPushButton {
   padding-right: .5em; }
 
 /* Check boxes and Radio buttons common #QCheckBox, #QRadioButton */
-/* common */
 QGroupBox::indicator,
 QTreeView::indicator,
 QCheckBox::indicator,
@@ -581,7 +582,7 @@ QMenu QRadioButton {
   background-color: transparent;
   padding: 5px 2px; }
 
-/* Tooltips #QToolTip, #SaveGameInfoWidget */
+/* Tool tips #QToolTip, #SaveGameInfoWidget */
 QToolTip,
 SaveGameInfoWidget {
   background-color: #424245;
@@ -635,7 +636,7 @@ QTabBar::tab:disabled {
 QTabBar::tab:selected:disabled {
   background-color: #3F3F46; }
 
-/* scrollers */
+/* Scrollers */
 QTabBar QToolButton {
   background-color: #333337;
   border-color: #3F3F46;
