@@ -2,54 +2,77 @@
   Skyrim
 ****************************************
   Author: chintsu_kun
-  Version: 2.0.1
+  Version: 2.1.0
   Licence: GNU General Public License v3.0 (https://www.gnu.org/licenses/gpl-3.0.en.html)
   Url: https://github.com/nikolay-borzov/modorganizer-themes
 ****************************************
 */
+/* For some reason applying background-color or border fixes paddings properties */
+QListWidget::item {
+  border-width: 0; }
+
+/* Don't override install label on download widget.
+   MO2 assigns color depending on download state */
+#installLabel {
+  color: none; }
+
+/* Make `background-color` work for :hover, :focus and :pressed states */
+QToolButton {
+  border: none; }
+
 QWidget {
   background-color: #000;
   color: #F1F1F1; }
 
-/* Common */
-/* FIX: For some reason applying background-color or border fixes paddings
-   properties */
-QListWidget::item {
-  border-width: 0; }
-
 * {
-  /* remove outline */
+  /* Remove outline */
   outline: 0;
-  /* text highlight  */
+  /* Text highlight  */
   selection-background-color: #000;
   selection-color: white; }
 
-/* disabled text */
+/* Disabled text */
 *:disabled,
 QListView::item:disabled,
 *::item:selected:disabled {
   color: #656565; }
 
-/* line heights */
+/* Line heights */
 QListView::item,
 QTreeWidget::item,
 QTreeView::item {
-  padding: .3em 0; }
+  padding: 0.3em 0; }
 
-/*
-QTreeView#modList::item,
-QTreeWidget#categoriesTree::item,
-#tabConflicts QTreeWidget::item,
-QListView::item,
-QTreeView#espList::item,
-QTreeView#treeContent::item {
-  padding: .3em 0;
-}*/
+/* Increase row height to fit inputs */
+#modList::item,
+#settingsTree::item,
+#pluginSettingsList::item,
+#espList::item {
+  min-height: 34px;
+  padding: 0; }
+  #modList::item QComboBox,
+  #modList::item QLineEdit,
+  #modList::item QComboBox:editable,
+  #modList::item QAbstractSpinBox,
+  #settingsTree::item QComboBox,
+  #settingsTree::item QLineEdit,
+  #settingsTree::item QComboBox:editable,
+  #settingsTree::item QAbstractSpinBox,
+  #pluginSettingsList::item QComboBox,
+  #pluginSettingsList::item QLineEdit,
+  #pluginSettingsList::item QComboBox:editable,
+  #pluginSettingsList::item QAbstractSpinBox,
+  #espList::item QComboBox,
+  #espList::item QLineEdit,
+  #espList::item QComboBox:editable,
+  #espList::item QAbstractSpinBox {
+    margin: 2px; }
+
 QAbstractItemView {
   color: #C0C0C0;
   background-color: #000;
   alternate-background-color: #000;
-  border-color: #A6A8AB; }
+  border-color: #999; }
 
 QAbstractItemView,
 QListView,
@@ -62,12 +85,6 @@ QTreeView::branch:hover,
 QTreeWidget::item:hover {
   color: #fff;
   background-color: #121212; }
-
-QAbstractItemView::item:disabled:hover,
-QListView::item:disabled:hover,
-QTreeView::branch:disabled:hover,
-QTreeWidget::item:disabled:hover {
-  background-color: red; }
 
 QAbstractItemView::item:selected:disabled,
 QListView::item:selected:disabled,
@@ -89,17 +106,12 @@ QTreeView::branch:closed:has-children {
 QTreeView::branch:open:has-children {
   image: url(./skyrim/branch-opened.png); }
 
-/*QListView::item:hover { }
-QListView::item:selected { }*/
 QListView::item {
   color: #C0C0C0; }
 
 /* Text areas and text fields #QTextEdit, #QLineEdit, #QWebView */
-/* Common */
 QLabel {
   background-color: transparent; }
-  QLabel#installLabel {
-    font-weight: bold; }
 
 /* Font size */
 QLabel,
@@ -114,14 +126,17 @@ QCheckBox,
 QRadioButton {
   font-size: 14px; }
 
+/* Inputs */
 QTextEdit,
 QLineEdit,
 QWebView,
 QComboBox,
 QComboBox:editable,
 QAbstractSpinBox {
+  min-height: 24px;
   border: none;
-  background-color: #141414; }
+  background-color: #141414;
+  padding: 3px 5px; }
   QTextEdit:hover, QTextEdit:focus,
   QLineEdit:hover,
   QLineEdit:focus,
@@ -135,17 +150,11 @@ QAbstractSpinBox {
   QAbstractSpinBox:focus {
     background-color: #212121; }
 
-QLineEdit,
-QAbstractSpinBox {
-  min-height: 24px;
-  padding: 2px;
-  border: none; }
-
 QLineEdit {
   margin-top: 0;
-  /* clear button */
-  /* increase version textfield width */
-  /* fix margins on tabs pane */ }
+  /* Clear button */
+  /* Increase version text field width */
+  /* Fix margins on tabs pane */ }
   QLineEdit QToolButton,
   QLineEdit QToolButton:hover {
     background: none;
@@ -168,14 +177,8 @@ QLineEdit {
 
 /* Drop-downs #QComboBox*/
 QComboBox {
-  min-height: 20px;
   padding-left: 5px;
-  margin: 3px 0 1px 0;
-  border-style: solid; }
-  QComboBox, QComboBox:editable {
-    border-width: 5px;
-    border-color: transparent;
-    border-image: url(./skyrim/border-image1.png) 6 repeat repeat; }
+  margin: 3px 0 1px 0; }
   QComboBox:on {
     background-color: #212121; }
   QComboBox:editable {
@@ -200,9 +203,7 @@ QToolBar {
 QToolButton {
   margin: 0 4px 0 4px;
   padding: 5px;
-  /* need this to make background-color works*/
-  border: none;
-  /* scrollers */ }
+  /* Scrollers */ }
   QToolButton:hover, QToolButton:focus {
     background-color: #121212; }
   QToolButton:pressed {
@@ -225,9 +226,7 @@ QToolButton {
 QGroupBox {
   padding: 1em .3em .3em .3em;
   margin-top: .65em;
-  border-width: 5px;
-  border-color: transparent;
-  border-image: url(./skyrim/border-image2.png) 5 repeat repeat; }
+  border: 1px solid #999; }
   QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
@@ -236,7 +235,7 @@ QGroupBox {
 
 /* LCD Count */
 QLCDNumber {
-  border-color: #A6A8AB;
+  border-color: #999;
   border-style: solid;
   border-width: 1px; }
 
@@ -248,15 +247,12 @@ QPushButton {
   background-color: transparent;
   border-width: 0 15px 0 15px;
   border-color: transparent;
-  /*&:focus { }*/
-  /* dialog buttons */
-  /* show categories */
-  /* run */
-  /* unlock */
-  /* mod info dialog images tab */
-  /* add some space between buttons */ }
+  /* Dialog buttons */
+  /* Show categories */
+  /* Run */
+  /* Mod info dialog images tab */ }
   QPushButton:hover, QPushButton:checked:hover {
-    border-image: url(./skyrim/button-border.png) 0 15 repeat; }
+    border-image: url(./skyrim/button-border.png) 0 15 no-repeat; }
   QPushButton:checked {
     border-image: url(./skyrim/button-checked-border.png) 0 15 repeat; }
   QPushButton:disabled {
@@ -282,26 +278,17 @@ QPushButton {
     margin: 10px 20px; }
   QPushButton + QPushButton {
     margin: 10px 0 0 0; }
-  QWidget#tabImages QPushButton {
+  #tabImages QPushButton {
     background-color: transparent;
     border: none;
     margin: 0 .3em;
     padding: 0; }
-    QWidget#tabImages QPushButton:hover {
+    #tabImages QPushButton:hover {
       background-color: #121212; }
-  QDialog#QueryOverwriteDialog QPushButton {
-    margin-left: 0.5em; }
-  #ProfilesDialog QPushButton {
-    margin-bottom: 0.5em; }
-  #ProfilesDialog QPushButton#closeButton {
-    margin-bottom: 0; }
-  #EditExecutablesDialog QPushButton#addButton,
-  #EditExecutablesDialog QPushButton#removeButton {
-    margin-bottom: 0.5em;
-    margin-top: 1em; }
+  #settingsTree::item QPushButton {
+    border-image: none; }
 
-/* Checkboxes and Radio buttons common #QCheckBox, #QRadioButton */
-/*common*/
+/* Check boxes and Radio buttons common #QCheckBox, #QRadioButton */
 QGroupBox::indicator,
 QTreeView::indicator,
 QCheckBox::indicator {
@@ -340,7 +327,7 @@ QCheckBox::indicator {
     QCheckBox::indicator:unchecked:disabled {
       image: url(./skyrim/checkbox-disabled.png); }
 
-/* Checkboxes special */
+/* Check boxes special */
 QTreeWidget#bsaList::indicator {
   width: 10px;
   height: 15px; }
@@ -381,13 +368,14 @@ QAbstractSpinBox {
     image: url(./skyrim/arrow-down.png); }
 
 /* Scroll Bars #QAbstractScrollArea, #QScrollBar*/
-/* assigning background still leaves not filled area*/
+/* Assigning background still leaves not filled area */
 QAbstractScrollArea::corner {
   background-color: transparent; }
 
 QScrollBar {
   background-color: transparent;
-  border: none; }
+  border: none;
+  /* Since QTextEdit:hover doesn't work set focus input background */ }
   QScrollBar:horizontal {
     height: 12px;
     border: none;
@@ -433,6 +421,11 @@ QScrollBar {
     image: url(./skyrim/scrollbar-right.png); }
   QScrollBar::left-arrow:horizontal {
     image: url(./skyrim/scrollbar-left.png); }
+  QTextEdit QScrollBar::up-arrow:vertical,
+  QTextEdit QScrollBar::down-arrow:vertical,
+  QTextEdit QScrollBar::right-arrow:horizontal,
+  QTextEdit QScrollBar::left-arrow:horizontal {
+    background-color: #212121; }
 
 /* Scroll Area #QScrollArea*/
 QScrollArea {
@@ -464,7 +457,7 @@ QTableView {
   selection-color: #C0C0C0; }
   QTableView QTableCornerButton::section {
     background-color: transparent;
-    border-color: #A6A8AB;
+    border-color: #999;
     border-style: solid;
     border-width: 0 1px 1px 0; }
 
@@ -472,7 +465,7 @@ QHeaderView {
   border: none; }
   QHeaderView::section {
     background-color: transparent;
-    border-color: #A6A8AB;
+    border-color: #999;
     /* 17px to have some place for sort indicator */
     padding: 3px 17px 3px 5px;
     border-style: solid; }
@@ -494,13 +487,9 @@ QHeaderView {
   QHeaderView::down-arrow {
     image: url(./skyrim/arrow-down.png); }
 
-/* Context menus, toolbar dropdowns #QMenu  */
+/* Context menus, toolbar drop-downs #QMenu  */
 QMenu {
-  background-color: transparent;
-  border-width: 17px;
-  border-style: solid;
-  border-color: transparent;
-  border-image: url(./skyrim/border-image.png) 27 repeat repeat; }
+  background-color: transparent; }
   QMenu::item,
   QMenu QPushButton {
     padding: 6px 20px; }
@@ -520,7 +509,7 @@ QMenu {
     subcontrol-position: center right;
     padding-right: .5em; }
   QMenu QPushButton {
-    /* cancel styles */
+    /* Cancel styles */
     border: none;
     text-align: left; }
     QMenu QPushButton:hover {
@@ -530,15 +519,11 @@ QMenu {
     background-color: transparent;
     padding: 5px 2px; }
 
-/* Tooltips #QToolTip, #SaveGameInfoWidget */
+/* Tool tips #QToolTip, #SaveGameInfoWidget */
 QToolTip {
   background-color: transparent;
   color: #C0C0C0;
-  padding: 0;
-  border-width: 17px;
-  border-style: solid;
-  border-color: transparent;
-  border-image: url(./skyrim/border-image.png) 27 repeat repeat; }
+  padding: 0; }
 
 SaveGameInfoWidget {
   background-color: #121212;
@@ -554,22 +539,13 @@ QProgressBar {
   border-style: solid;
   border-color: transparent;
   border-image: url(./skyrim/progress-bar-border.png) 4 21 repeat repeat; }
-
-QProgressBar::chunk {
-  /*
-  background: url(./skyrim/progress-bar-chunk.png) center center repear-x qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #95BED9, stop:0.124153 #6EB9CE, stop:0.78781 #474E86);
-  */
-  background: url(./skyrim/progress-bar-chunk.png) center center repear-x qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #95BED9, stop:0.78781 #6EB9CE); }
+  QProgressBar::chunk {
+    background: url(./skyrim/progress-bar-chunk.png) center center repeat-x qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #95BED9, stop:0.78781 #6EB9CE); }
 
 /* Right Pane and Tab Bars #QTabWidget, #QTabBar */
 QTabWidget::pane {
-  border-color: #A6A8AB;
-  top: 0;
-  border-width: 5px;
-  border-color: transparent;
-  /*AL12: Changed the "5 repeat repeat" to "4 repeat repeat" as 5 seems to kill
-   performance for some reason.*/
-  border-image: url(./skyrim/border-image2.png) 4 repeat repeat; }
+  border: none;
+  top: 0; }
 
 QTabBar {
   text-transform: uppercase;
@@ -601,12 +577,17 @@ QListView,
 QTableView,
 QDialog#LockedDialog {
   border-width: 20px;
-  border-style: solid;
+  border-color: transparent;
+  border-image: url(./skyrim/border-image.png) 27 repeat repeat; }
+
+QMenu,
+QToolTip {
+  border-width: 17px;
   border-color: transparent;
   border-image: url(./skyrim/border-image.png) 27 repeat repeat; }
 
 /* Special styles */
-/* increase categories tab width */
+/* Increase categories tab width */
 QTreeWidget#categoriesList {
   min-width: 200px; }
   QTreeWidget#categoriesList::item {
@@ -618,8 +599,25 @@ QTreeWidget#categoriesList {
       QTreeWidget#categoriesList::item:has-children:open {
         background-image: url(./skyrim/branch-opened.png); }
 
-/* Dialogs width changes */
-/* increase width to prevent buttons cutting */
+/* Add some space around buttons */
+#QueryOverwriteDialog QPushButton {
+  margin-left: 0.5em; }
+
+#SimpleInstallDialog QPushButton {
+  margin-top: 0.5em; }
+
+#ProfilesDialog QPushButton {
+  margin-bottom: 0.5em; }
+
+#ProfilesDialog QPushButton#closeButton {
+  margin-bottom: 0; }
+
+#EditExecutablesDialog QPushButton#addButton,
+#EditExecutablesDialog QPushButton#removeButton {
+  margin-bottom: 0.5em;
+  margin-top: 1em; }
+
+/* Increase dialogs width to prevent buttons cutting */
 QDialog#QueryOverwriteDialog {
   min-width: 565px; }
 
@@ -634,3 +632,9 @@ QDialog#EditExecutablesDialog {
 
 QDialog#SettingsDialog {
   min-width: 670px; }
+
+QDialog#CredentialsDialog {
+  min-width: 400px; }
+
+#pluginsList {
+  min-width: 260px; }
