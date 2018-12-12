@@ -3049,10 +3049,21 @@ void MainWindow::createSeparator_clicked()
 
 void MainWindow::setColor_clicked()
 {
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-  QColor color = QColorDialog::getColor(modInfo->getColor(), this);
-  if (!color.isValid())
+  QColorDialog dialog(this);
+  QColor currentColor = modInfo->getColor();
+  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
+  if (currentColor.isValid())
+    dialog.setCurrentColor(currentColor);
+  else
+    dialog.setCurrentColor(previousColor);
+  if (!dialog.exec())
     return;
+  currentColor = dialog.currentColor();
+  if (!currentColor.isValid())
+    return;
+  settings.setValue("previousSeparatorColor", currentColor);
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
@@ -3060,12 +3071,12 @@ void MainWindow::setColor_clicked()
       auto flags = info->getFlags();
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())
       {
-        info->setColor(color);
+        info->setColor(currentColor);
       }
     }
   }
   else {
-    modInfo->setColor(color);
+    modInfo->setColor(currentColor);
   }
 }
 
