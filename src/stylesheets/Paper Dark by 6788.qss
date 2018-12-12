@@ -1,0 +1,970 @@
+/* v4.3 Paper Dark by 6788-00       */
+/* https://6788-00.tumblr.com/      */
+
+/* Color Palette                    */
+/* Background - Main      | #242424 */
+/* Background - Content   | #141414 */
+/* Background - Alternate | #1C1C1C */
+/* Hover                  | #3D3D3D */
+/* Selected               | #006868 */
+
+/* All */
+
+* {
+	color: #D3D3D3;
+	font-size: 12px;
+}
+
+/* Main Window */
+
+QWidget {
+	/* most of the window */
+	background: #242424;
+	color: #D3D3D3;
+}
+
+QWidget:disabled {
+	/* disabled parts of the window like the update button when there are no updates */ 
+	background: #242424;
+	color: #808080;
+}
+
+QAbstractItemView {
+	/* left and right pane container */
+	background: #141414;
+	alternate-background-color: #1C1C1C;
+	show-decoration-selected: 1;
+	selection-background-color: #006868;
+	selection-color: #FFFFFF;
+}
+
+QAbstractItemView::item {
+	padding: 1px;
+}
+
+QAbstractItemView::item:hover {
+	/* rows on left and right pane when moused-over */
+	background: #3D3D3D;
+	color: #FFFFFF;
+}
+
+QAbstractItemView::item:selected {
+	/* rows on left and right pane when clicked */
+	background: #006868;
+	color: #FFFFFF;
+}
+
+QAbstractScrollArea::corner {
+	/* corner between where a vertical scrollbar and a horizontal scrollbar meet */
+	background: #141414;
+	border: 2px solid #242424;
+	border-bottom-right-radius: 6px;
+	margin: 0px -2px -2px 0px;
+}
+
+QSplitter {
+	width: 8px;
+}
+
+/* Toolbar */
+
+QToolBar {
+	/* top toolbar; */
+	background: #242424;
+	border: 1px solid #242424;
+}
+
+QToolBar::separator {
+	/* uncertain, assumed: vertical seperator on toolbar left of the warnings button*/
+	background: #242424;
+	margin: 6px 8px;
+}
+
+QToolButton {
+	/* toolbar buttons */
+	padding: 6px;
+	border-radius: 10px;
+	margin: 4px 4px 0px 4px;
+}
+
+QToolButton:hover {
+	/* toolbar buttons when moused-over; */
+	background: #006868;
+}
+
+QToolButton:pressed {
+	/* toolbar buttons when clicked; */
+	background: #006868;
+}
+
+QToolButton:menu-indicator {
+	/* expandable indicator on toolbar buttons */
+	image: url(./Paper/Dark/Arrows/down.svg);
+	margin: 4px;
+}
+
+/* Toolbar Button Icons */
+
+#actionChange_Game {
+	qproperty-icon: url(./Paper/Dark/Toolbar/instances.svg);
+}
+
+#actionInstallMod {
+	qproperty-icon: url(./Paper/Dark/Toolbar/archives.svg);
+}
+
+#actionNexus {
+	qproperty-icon: url(./Paper/Dark/Toolbar/nexus.svg);
+}
+
+#actionAdd_Profile {
+	qproperty-icon: url(./Paper/Dark/Toolbar/profiles.svg);
+}
+
+#actionModify_Executables {
+	qproperty-icon: url(./Paper/Dark/Toolbar/executables.svg);
+}
+
+#actionTool {
+	qproperty-icon: url(./Paper/Dark/Toolbar/tools.svg);
+}
+
+#actionSettings {
+	qproperty-icon: url(./Paper/Dark/Toolbar/settings.svg);
+}
+
+#actionProblems {
+	qproperty-icon: url(./Paper/Dark/Toolbar/problems.svg);
+}
+
+#actionUpdate {
+	qproperty-icon: url(./Paper/Dark/Toolbar/update.svg);
+}
+
+#actionHelp {
+	qproperty-icon: url(./Paper/Dark/Toolbar/help.svg);
+}
+
+/* Left Pane & File Trees */
+
+ModListView, PluginListView {
+	/* Mods List and Plugins List specifically */
+	margin: 2px 0px;
+}
+
+QTreeView {
+	/* left pane and right pane under QAbstractItemView*/
+	border-radius: 6px;
+}
+
+QTreeView::branch:hover {
+	/* rows on the left pane when moused-over (below QAbstractItemView, i.e. to the left of the checkbox) */
+	background: #3A3A3A;
+	color: #FFFFFF;
+}
+
+QTreeView::branch:selected {
+	/* rows on the left pane when clicked (below QAbstractItemView, i.e. to the left of the checkbox) */
+	background: #006868;
+	color: #FFFFFF;
+}
+
+QTreeView::branch:closed:has-children:has-siblings,
+QTreeView::branch:closed:has-children:!has-siblings {
+	/* a branch that is closed */
+	image: url(./Paper/Dark/Arrows/right.svg);
+}
+
+QTreeView::branch:open:has-children:has-siblings,
+QTreeView::branch:open:has-children:!has-siblings  {
+	/* a branch that is open */
+	image: url(./Paper/Dark/Arrows/down.svg);
+}
+
+QListView {
+	/* saves window */
+	border-radius: 6px;
+}
+
+QListView::item:hover {
+	/* a row on the saves tab when moused-over */
+	background: #3D3D3D;
+	color: #FFFFFF;
+	padding: 2px 0px;
+}
+
+QListView::item:selected {
+	/* a row on the saves tab when clicked */
+	background: #006868;
+	color: #FFFFFF;
+	padding: 2px 0px;
+}
+
+QTextEdit {
+	/* large text fields */
+	background: #141414;
+	border-radius: 6px;
+}
+
+QWebView {
+	/* Nexus Info window */
+	background: #141414;
+	border-radius: 6px;
+}
+
+/* Group Boxes */
+
+QGroupBox {
+	/* boxes that group multiple elements together (e.g. on Settings) */
+	padding: 24px 4px;
+	border: 2px solid #141414;
+	border-radius: 10px;
+}
+
+QGroupBox::title {
+	/* title of group boxes */
+	background: transparent;
+	subcontrol-origin: padding;
+	subcontrol-position: top left;
+	padding: 8px;
+}
+
+/* Text Fields */
+
+QLineEdit {
+	/* text fields like NameFilter and directory fields */
+    background: #141414;
+	min-height: 14px;
+	padding: 2px;
+    border: 2px solid #141414;
+    border-radius: 6px;
+}
+
+QLineEdit:hover {
+	/* text fields when moused-over */
+	border: 2px solid #006868;
+}
+
+/* Most Dropdown Menus */
+
+QComboBox {
+	/* dropdown menus */
+    background: #141414;
+    min-height: 20px;
+	padding-left: 5px;
+    border: 2px solid #141414;
+    border-radius: 6px;
+    margin: 4px 0px;
+}
+
+QComboBox:hover {
+	/* dropdown menus when moused-over */
+	border: 2px solid #006868;
+}
+
+QComboBox:on {
+	/* dropdown menus when expanded */
+	background: #006868;
+	color: #FFFFFF;
+	border: 2px solid #006868;
+}
+
+QComboBox::drop-down {
+	/* area for expandable indicator */
+	width: 20px;
+	subcontrol-origin: padding;
+	subcontrol-position: top right;
+	border: none;
+}
+
+QComboBox QAbstractItemView {
+	/* actual menu that expands */
+	background: #141414;
+	border: 2px solid #242424;
+	border-radius: 6px;
+}
+
+QComboBox::down-arrow {
+	/* expandable indicator */
+	image: url(./Paper/Dark/Arrows/down.svg);
+}
+
+/* Most Buttons */
+
+QPushButton {
+	/* most buttons */
+    background: #141414;
+    color: #D3D3D3;
+    min-height: 20px;
+    padding: 2px 12px;
+	border-radius: 6px;
+	margin: 2px 0px;
+}
+
+QPushButton:disabled {
+	/* most buttons when disabled */
+	border: 2px solid #141414;
+}
+
+QPushButton:hover {
+	/* most buttons when hovered */
+	background: #006868;
+	color: #FFFFFF;
+}
+
+QPushButton:pressed {
+	/* most buttons when clicked */
+	background: #006868;
+	color: #FFFFFF;
+}
+
+QPushButton::menu-indicator {
+	/* expandable indicator for most buttons */
+	subcontrol-position: right center;
+	image: url(./Paper/Dark/Arrows/down.svg);
+	padding: 2px;
+	margin: 4px 4px;
+}
+
+/* Icons */
+
+#listOptionsBtn {
+	/* Options button */
+	qproperty-icon: url(./Paper/Dark/dots.svg);
+	qproperty-iconSize: 16px;
+	padding-left: 2px;
+}
+
+#openFolderMenu {
+	/* Open Folder button */
+	qproperty-icon: url(./Paper/Dark/folder.svg);
+	qproperty-iconSize: 14px;
+	padding-left: 4px;
+}
+
+#restoreModsButton,
+#restoreButton {
+	/* Restore Backup buttons */
+	qproperty-icon: url(./Paper/Dark/restore.svg);
+	qproperty-iconSize: 14px;
+}
+
+#saveModsButton,
+#saveButton {
+	/* Backup buttons */
+	qproperty-icon: url(./Paper/Dark/backup.svg);
+	qproperty-iconSize: 14px;
+}
+
+#bossButton {
+	/* Sort button */
+	qproperty-icon: url(./Paper/Dark/sort.svg);
+	qproperty-iconSize: 14px;
+}
+
+#linkButton {
+	/* Shortcuts button */
+	qproperty-icon: url(./Paper/Dark/shortcut.svg);
+	qproperty-iconSize: 14px;
+}
+
+#refreshButton,
+#btnRefreshData,
+#btnRefreshDownloads {
+	/* Refresh buttons */
+	qproperty-icon: url(./Paper/Dark/refresh.svg);
+	qproperty-iconSize: 14px;
+}
+
+#endorseBtn {
+	/* Endorse button on the Nexus Info tab of the Information window */
+	qproperty-icon: url(./Paper/Dark/heart.svg);
+	qproperty-iconSize: 14px;
+}
+
+#clearCacheButton {
+	/* Clear Cache button on the Nexus tab of the Settings window */
+	qproperty-icon: url(./Paper/Dark/cross.svg);
+	qproperty-iconSize: 14px;
+}
+
+#deactivateESP,
+#activateESP {
+	/* activate and deactivate ESP buttons */
+	background: #141414;
+}
+
+#deactivateESP:hover,
+#activateESP:hover {
+	/* activate and deactivate ESP buttons when moused-over */
+	background: #006868;
+}
+
+#deactivateESP {
+	/* icon for the deactivate ESP button */
+	qproperty-icon: url(./Paper/Dark/backup.svg);
+}
+
+#activateESP {
+	/* icon for the activate ESP button */
+	qproperty-icon: url(./Paper/Dark/restore-alt.svg);
+}
+
+/* Run button */
+
+#startButton {
+	/* Run button */
+	background: #006868;
+	color: #FFFFFF;
+	qproperty-icon: url(./Paper/Dark/run.svg);
+	qproperty-iconSize: 30px;
+	padding: 6px;
+}
+
+#startButton:hover {
+	/* Run button when moused-over*/
+	background: #3D3D3D;
+}
+
+/* Scroll Bars */
+
+/* Horizontal */
+
+QScrollBar:horizontal {
+	/* horizontal scroll bar */
+    background: #141414;
+    height: 20px;
+	border: 2px solid #242424;
+    margin: 0px 23px -2px 23px;
+}
+
+QScrollBar::handle:horizontal {
+	/* handle for horizontal scroll bars */
+    background: #3D3D3D;
+    min-width: 32px;
+    border-radius: 6px;
+	margin: 2px;
+}
+
+QScrollBar::add-line:horizontal {
+	/* scroll right button */
+    background: #141414;
+    image: url(./Paper/Dark/Arrows/right.svg);
+    width: 23px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+	border: 2px solid #242424;
+	margin: 0px -2px -2px 0px;
+}
+
+QScrollBar::sub-line:horizontal {
+	/* scroll left button */
+	background: #141414;
+	image: url(./Paper/Dark/Arrows/left.svg);
+	width: 23px;
+	subcontrol-position: left;
+	subcontrol-origin: margin;
+	border: 2px solid #242424;
+	border-bottom-left-radius: 6px;
+	margin: 0px 0px -2px -2px;
+}
+
+/* Vertical */
+
+QScrollBar:vertical {
+	/* vertical scroll bar */
+    background: #141414;
+    width: 20px;
+	border: 2px solid #242424;
+    margin: 23px -2px 23px 0px;
+}
+
+QScrollBar::handle:vertical {
+	/* handle for vertical scroll bars */
+    background: #3D3D3D;
+    min-height: 32px;
+    border-radius: 6px;
+	margin: 2px;
+}
+
+QScrollBar::add-line:vertical {
+	/* scroll down button */
+    background: #141414;
+    image: url(./Paper/Dark/Arrows/down.svg);
+    height: 23px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+	border: 2px solid #242424;
+	border-bottom-right-radius: 6px;
+	margin: 0px -2px -2px 0px;
+}
+
+QScrollBar::sub-line:vertical {
+	/* scroll up button */ 
+    background: #141414;
+    image: url(./Paper/Dark/Arrows/up.svg);
+    height: 23px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+	border: 2px solid #242424;
+	border-top-right-radius: 6px;
+	margin: -2px -2px 0px 0px;
+}
+
+/* Combined */
+
+QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:vertical:hover,
+QScrollBar::add-line:horizontal:hover, 
+QScrollBar::sub-line:horizontal:hover, 
+QScrollBar::add-line:vertical:hover, 
+QScrollBar::sub-line:vertical:hover {
+	/* buttons and handles when moused-over */
+	background: #006868;
+}
+
+QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:vertical:pressed,
+QScrollBar::add-line:horizontal:pressed, 
+QScrollBar::sub-line:horizontal:pressed, 
+QScrollBar::add-line:vertical:pressed, 
+QScrollBar::sub-line:vertical:pressed {
+	/* buttons and handles when clicked */
+	background: #006868;
+}
+
+QScrollBar::add-page:horizontal, 
+QScrollBar::sub-page:horizontal, 
+QScrollBar::add-page:vertical, 
+QScrollBar::sub-page:vertical {
+	/* area on scroll bars where clicking it scrolls to where you clicked */
+    background: transparent;
+}
+
+/* Header Rows */
+
+QHeaderView {
+	/* header row (i.e. Mod Name, Flags, Category, etc.) */
+	background: #242424;
+}
+
+QHeaderView::section {
+	/* each section on the header row (i.e. Mod name is one section and Flags another) */
+    background: #141414;
+    color: #D3D3D3;
+    height: 22px;
+    padding: 0px 5px;
+    border: 0px;
+	border-bottom: 2px solid #242424;
+	border-right: 2px solid #242424;
+}
+
+QHeaderView::section:first {
+	/* first section on a header row */
+	border-top-left-radius: 6px;
+}
+
+QHeaderView::section:last {
+	/* last section on a header row */
+	border-right: 0px;
+	border-top-right-radius: 6px;
+}
+
+QHeaderView::section:hover {
+	/* a section on a header row when hovered */
+	background: #3D3D3D;
+	color: #FFFFFF;
+}
+
+QHeaderView::up-arrow {
+	/* ascending sort indicator */
+	image: url(./Paper/Dark/Arrows/up.svg);
+	padding-right: 4px;
+	height: 10px;
+	width: 10px;
+}
+
+QHeaderView::down-arrow {
+	/* descending sort indicator */
+	image: url(./Paper/Dark/Arrows/down.svg);
+	padding-right: 4px;
+	height: 10px;
+	width: 10px;
+}
+
+/* Right Click Menus, Toolbar Dropdown Menus, & Tooltips */
+
+QMenu {
+	/* right click menu */
+	background: #141414;
+	border: 2px solid #242424;
+	border-radius: 6px;
+}
+
+QMenu::item {
+	/* rows on right click menus */
+	background: #141414;
+	padding: 5px 20px 5px 24px;
+}
+
+QMenu::item:selected {
+	/* rows on right click menus when moused-over (i dunno) */
+	background: #006868;
+	color: #FFFFFF;
+	border: 0px;
+	border-radius: 4px;
+}
+
+QMenu::item:disabled {
+	/* unavailable rows on right click menus */
+	background: #242424;
+	color: #808080;
+}
+
+QMenu::separator {
+	/* seperators on right click menus */
+	height: 2px;
+	background: #242424;
+}
+
+QMenu::icon {
+	/* area for icons on right click menus */
+	padding: 4px;
+}
+
+QMenu::right-arrow {
+	/* submenu indicator */
+	image: url(./Paper/Dark/Arrows/right.svg);
+	padding-right: 5px;
+}
+
+QMenu QPushButton {
+	/* Change Categories and Primary Categories buttons */
+	background: #141414;
+	color: #D3D3D3;
+	padding: 2px 24px;
+	text-align: left;
+	border-radius: 0px;
+}
+
+QMenu QPushButton:hover {
+	/* Change Categories and Primary Categories buttons when moused-over */
+	border-radius: 6px;
+}
+
+QMenu QCheckBox {
+	/* checkboxes on right click menus (change categories)*/
+	background: #141414;
+	padding: 2px 6px;
+}
+
+QMenu QCheckBox:hover {
+	/* checkboxes on right click menus when moused-over (change categories) */
+	background: #3D3D3D;
+	color: #FFFFFF;
+}
+
+QMenu QRadioButton {
+	/* radio buttons on right click menus (primary categories) */
+	background: #141414;
+	padding: 2px 6px;
+}
+
+QToolTip {
+	/* all tooltips */
+	background: #141414;
+	border: 2px solid #242424;
+	border-radius: 6px;
+}
+
+/* Progress Bars (Downloads) */
+
+QProgressBar {
+	/* progress bars when downloading */
+	background: #141414;
+    text-align: center;
+    border: 2px solid #242424;
+    border-radius: 6px;
+	margin: 0px 10px;
+}
+
+QProgressBar::chunk {
+	/* the loading part that moves on progress bars */
+    background: #006868;
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+/* Right Pane and Tab Bars */
+
+QTabWidget::pane {
+	/* right pane */
+	top: 1px;
+	padding: 2px 2px 10px 2px;
+	border: 2px solid #141414;
+	border-radius: 10px;
+}
+
+QTabWidget QAbstractScrollArea::item {
+	padding: 2px;
+}
+
+QTabWidget::tab-bar {
+	/* tabs */
+	alignment: center;
+}
+
+QTabBar::tab {
+	/* a tab */
+	background: #141414;
+    color: #141414;
+    padding: 4px 1em;
+    border: 2px solid #141414;
+    margin: 3px 1px;
+}
+
+QTabBar::tab:!selected {
+	/* a tab that is not clicked */
+	background: #141414;
+    color: #D3D3D3;
+    border: 2px solid #141414;
+}
+
+QTabBar::tab:disabled {
+	/* a tab that is disabled */
+	background: #242424;
+	color: #808080;
+	border: 2px solid transparent;
+}
+
+QTabBar::tab:selected {
+	/* a tab that is clicked */
+	color: #FFFFFF;
+	background: #006868;
+	border: 2px solid #006868;
+}
+
+QTabBar::tab:hover {
+	/* a tab when moused-over */
+	color: #FFFFFF;
+	background: #3D3D3D;
+	border: 2px solid #3D3D3D;
+}
+
+QTabBar::tab:first {
+	/* that first tab */
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+}
+
+QTabBar::tab:last {
+	/* the last tab */
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+}
+
+QTabBar QToolButton {
+	/* buttons to scroll between more tabs on a tab bar */
+	background: #3D3D3D;
+	padding: 1px;
+	border-radius: 6px;
+	margin: 1px;
+}
+
+QTabBar QToolButton:disabled {
+	/* buttons to scroll on a tab bar when it's unavailable */
+	background: transparent;
+}
+
+QLCDNumber {
+	/* LCD number on the Conflicts tab */
+	background: #141414;
+	color: #006868;
+	border-radius: 6px;
+}
+
+/* Tables (Configure Mod Categories) */
+
+QTableView {
+	/* a table */
+	gridline-color: #242424;
+	border: 0px;
+}
+
+/* Checkboxes */
+
+QTreeView::indicator:unchecked,
+QCheckBox::indicator:unchecked,
+QGroupBox::indicator:unchecked,
+QRadioButton::indicator:unchecked {
+	/* a checkbox that is unchecked */
+	image: url(./Paper/Dark/unchecked.svg);
+	width: 14px;
+	height: 14px;
+}
+
+QCheckBox::indicator:unchecked:hover,
+QRadioButton::indicator:unchecked:hover {
+	/* a checkbox that is unchecked when moused-over and clicked */
+	image: url(./Paper/Dark/unchecked-alt.svg);
+}
+
+QTreeView::indicator:checked,
+QCheckBox::indicator:checked,
+QGroupBox::indicator:checked,
+QRadioButton::indicator:checked {
+	/* a checkbox that is checked */
+	image: url(./Paper/Dark/check.svg);
+	width: 14px;
+	height: 14px;
+}
+
+QTreeView::indicator:checked:selected,
+QCheckBox::indicator:checked:hover,
+QRadioButton::indicator:checked:hover {
+	/* a checkbox that is checked when moused-over and clicked */
+	image: url(./Paper/Dark/check-alt.svg);
+}
+
+QCheckBox::indicator:disabled {
+	/* a checkbox that is disabled */
+	image: url(./Paper/Dark/unchecked-disabled.svg);
+}
+
+/* Spinboxes */
+
+QSpinBox,
+QDoubleSpinBox {
+	/* usually boxes for selecting numbers */
+	min-height: 24px;
+	min-width: 60px;
+	background: #141414;
+	padding: 0px 2px;
+	border: 2px solid #242424;
+	border-radius: 6px;
+	margin: 0px -4px;
+}
+
+QSpinBox::up-button,
+QDoubleSpinBox::up-button {
+	/* up button on spinboxes */
+	min-height: 28px;
+	min-width: 20px;
+	subcontrol-position: center right;
+	border: 2px solid #242424;
+	border-top-right-radius: 6px;
+	border-bottom-right-radius: 6px;
+}
+
+QSpinBox::up-arrow,
+QDoubleSpinBox::up-arrow {
+	/* arrow for the up button */
+	image: url(./Paper/Dark/Arrows/up.svg);
+}
+
+QSpinBox::up-button:hover,
+QDoubleSpinBox::up-button:hover {
+	/* up button on spinboxes when moused-over */
+	background: #3D3D3D;
+}
+
+QSpinBox::down-button,
+QDoubleSpinBox::down-button {
+	/* down button on spinboxes */
+	min-height: 28px;
+	min-width: 20px;
+	subcontrol-position: center left;
+	border: 2px solid #242424;
+	border-top-left-radius: 6px;
+	border-bottom-left-radius: 6px;
+}
+
+QSpinBox::down-arrow,
+QDoubleSpinBox::down-arrow {
+	/* arrow for the up button */
+	image: url(./Paper/Dark/Arrows/down.svg);
+}
+
+QSpinBox::down-button:hover,
+QDoubleSpinBox::down-button:hover {
+	/* down button on spinboxes when moused-over */
+	background: #3D3D3D;
+}
+
+/* Sliders */
+
+QSlider::groove {
+	/* sliders */
+	height: 0px;
+	border: 1px solid #3D3D3D;
+}
+
+QSlider::handle {
+	/* slider handles */
+	background: #141414;
+	border: 2px solid #3D3D3D;
+	border-radius: 6px;
+	margin: -10px;
+}
+
+QSlider::handle:hover {
+	/* Slider handles when moused-over */
+	background: #3D3D3D;
+}
+
+/* Downloads Tab */
+
+#downloadTab QAbstractScrollArea {
+	/* background of the entire downloads tab */
+	background: #242424;
+}
+
+DownloadListWidget QFrame, 
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #141414;
+}
+
+DownloadListWidget#frame {
+	/* outer box of an entry on the Downloads tab */
+	border: none;
+}
+
+#installLabel {
+	/* installed/done label */
+	color: none;
+}
+
+/* Compact Downloads View */
+
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #141414;
+}
+
+/* Categories Filter */
+
+#displayCategoriesBtn {
+	/* Filter button */
+	min-width: 12px;
+}
+
+#categoriesList {
+	/* Categories panel */
+	min-width: 200px;
+	margin-bottom: 4px;
+}
+
+#categoriesGroup {
+	/* Categories group box */
+	padding-bottom: 0px;
+}
+
+/* Fixes */
+
+#executablesListBox::item {
+	/* fixes the black text problem on the Modify Executables window */
+	color: #D3D3D3;
+}
