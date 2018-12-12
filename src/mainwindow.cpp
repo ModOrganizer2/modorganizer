@@ -3045,6 +3045,12 @@ void MainWindow::createSeparator_clicked()
   {
     m_OrganizerCore.modList()->changeModPriority(ModInfo::getIndex(name), newPriority);
   }
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
+  if (previousColor.isValid()) {
+    ModInfo::getByIndex(ModInfo::getIndex(name))->setColor(previousColor);
+  }
+
 }
 
 void MainWindow::setColor_clicked()
