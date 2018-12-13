@@ -831,6 +831,9 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
+                    <property name="visible">
+                     <bool>true</bool>
+                    </property>
                     <property name="text">
                      <string>Sort</string>
                     </property>
@@ -1045,7 +1048,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="QTreeWidget" name="bsaList">
+                 <widget class="MOBase::SortableTreeWidget" name="bsaList">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1061,19 +1064,19 @@ p, li { white-space: pre-wrap; }
                   <property name="showDropIndicator" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragEnabled">
+                  <property name="dragEnabled" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropOverwriteMode">
+                  <property name="dragDropOverwriteMode" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="indentation">
+                  <property name="indentation" stdset="0">
                    <number>20</number>
                   </property>
-                  <property name="itemsExpandable">
+                  <property name="itemsExpandable" stdset="0">
                    <bool>true</bool>
                   </property>
-                  <property name="columnCount">
+                  <property name="columnCount" stdset="0">
                    <number>1</number>
                   </property>
                   <column>

@@ -640,16 +640,6 @@ public:
   virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
 
   /**
-   * @return retrieve list of mods (as mod index) with archives that are overwritten by this one. Updates may be delayed
-  */
-  virtual std::set<unsigned int> getModArchiveOverwrite() { return std::set<unsigned int>(); }
-
-  /**
-  * @return list of mods (as mod index) with archives that overwrite this one. Updates may be delayed
-  */
-  virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
-
-  /**
   * @return retrieve list of mods (as mod index) with archives that are overwritten by thos mod's loose files. Updates may be delayed
   */
   virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return std::set<unsigned int>(); }

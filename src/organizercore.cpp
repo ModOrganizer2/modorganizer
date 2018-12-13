@@ -788,12 +788,12 @@ std::wstring OrganizerCore::crashDumpsPath() {
 
 bool OrganizerCore::getArchiveParsing() const
 {
-	return m_ArchiveParsing;
+  return m_ArchiveParsing;
 }
 
 void OrganizerCore::setArchiveParsing(const bool archiveParsing)
 {
-	m_ArchiveParsing = archiveParsing;
+  m_ArchiveParsing = archiveParsing;
 }
 
 void OrganizerCore::setCurrentProfile(const QString &profileName)
@@ -1936,13 +1936,13 @@ std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
   if (m_ArchiveParsing) {
-	  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-	  if (archiveFile.open(QIODevice::ReadOnly)) {
-		  while (!archiveFile.atEnd()) {
-			  result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
-		  }
-		  archiveFile.close();
-	  }
+    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+    if (archiveFile.open(QIODevice::ReadOnly)) {
+      while (!archiveFile.atEnd()) {
+        result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+      }
+      archiveFile.close();
+    }
   }
   return result;
 }

@@ -476,7 +476,7 @@ uint Settings::getMotDHash() const
 
 bool Settings::archiveParsing() const
 {
-	return m_Settings.value("Settings/archive_parsing", true).toBool();
+  return m_Settings.value("Settings/archive_parsing", true).toBool();
 }
 
 QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) const
@@ -1126,7 +1126,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_displayForeignBox->setChecked(m_parent->displayForeign());
   m_lockGUIBox->setChecked(m_parent->lockGUI());
   m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
-  
+
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
 }

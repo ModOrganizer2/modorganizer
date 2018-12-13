@@ -159,7 +159,6 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
       return output.join("<br>");
     }
     case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
-    case ModInfo::FLAG_CONFLICT_LOOSE_OVERWRITE_ARCHIVE: return tr("Loose files overwrite another archive");
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
@@ -420,13 +419,13 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       (archiveLooseOverwrite && (overwritten || archiveOverwritten)) ||
       (archiveLooseOverwritten && (overwrite || archiveLooseOverwrite))
       ) {
-        return QColor(255, 0, 255, 32); //TODO: Make configurable
-    } else if (overwrite || archiveOverwrite || archiveLooseOverwrite) {
       return Settings::instance().modlistOverwrittenLooseColor();
     }
-    } else if (overwritten || archiveOverwritten || archiveLooseOverwritten) {
+    else if (overwrite || archiveOverwrite || archiveLooseOverwrite) {
       return Settings::instance().modlistOverwritingLooseColor();
-    } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
+    } else if (overwritten || archiveOverwritten || archiveLooseOverwritten) {
+      return QColor(255, 0, 0, 64); //TODO: Make configurable
+    }  else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
                     || Settings::instance().colorSeparatorScrollbar())) {
@@ -789,14 +788,7 @@ void ModList::setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &over
 
 void ModList::setPluginContainer(PluginContainer *pluginContianer)
 {
-    m_PluginContainer = pluginContianer;
-}
-
-void ModList::setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
-{
-    m_ArchiveOverwrite = overwrite;
-    m_ArchiveOverwritten = overwritten;
-    notifyChange(0, rowCount() - 1);
+  m_PluginContainer = pluginContianer;
 }
 
 bool ModList::modInfoAboutToChange(ModInfo::Ptr info)

@@ -85,7 +85,6 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
                                               int priority, const QString &directory, const QStringList &archives)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
-  //QStringList loadOrder = QStringList();
   IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
 
   GamePlugins *gamePlugins = game->feature<GamePlugins>();
@@ -95,7 +94,7 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
   for (const QString &archive : archives) {
     QFileInfo fileInfo(archive);
     if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
-     
+
       int order = -1;
 
       for (auto plugin : loadOrder)

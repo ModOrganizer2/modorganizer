@@ -313,8 +313,7 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
-  //bsaList converted to normal QTreeWidget since we can't sort BSAs anymore.
-  //ui->bsaList->setLocalMoveOnly(true);
+  ui->bsaList->setLocalMoveOnly(true);
 
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
@@ -451,15 +450,15 @@ MainWindow::MainWindow(QSettings &initSettings
 
   if (m_OrganizerCore.getArchiveParsing())
   {
-	  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
-	  ui->showArchiveDataCheckBox->setEnabled(true);
-	  m_showArchiveData = true;
+    ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+    ui->showArchiveDataCheckBox->setEnabled(true);
+    m_showArchiveData = true;
   }
   else
   {
-	  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
-	  ui->showArchiveDataCheckBox->setEnabled(false);
-	  m_showArchiveData = false;
+    ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+    ui->showArchiveDataCheckBox->setEnabled(false);
+    m_showArchiveData = false;
   }
 
   refreshExecutablesList();
@@ -1230,7 +1229,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
         directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
 
-        if (conflictsOnly) {
+        if (conflictsOnly || !m_showArchiveData) {
           updateTo(directoryChild, temp.str(), **current, conflictsOnly);
           if (directoryChild->childCount() != 0) {
             subTree->addChild(directoryChild);
@@ -1264,9 +1263,9 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       if (conflictsOnly && (current->getAlternatives().size() == 0)) {
         continue;
       }
-      
+
       bool isArchive = false;
-			int originID = current->getOrigin(isArchive);
+      int originID = current->getOrigin(isArchive);
       if (!m_showArchiveData && isArchive) {
         continue;
       }
@@ -2304,10 +2303,10 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 
         QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
         WIN32_FIND_DATAW findData;
-		HANDLE hFind;
-		hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
+        HANDLE hFind;
+        hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
         filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"", -1);
-		FindClose(hFind);
+        FindClose(hFind);
       }
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldOriginName))) {
         FilesOrigin &oldOrigin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(oldOriginName));
@@ -4372,22 +4371,22 @@ void MainWindow::on_actionSettings_triggered()
   const auto state = settings.archiveParsing();
   if (state != m_OrganizerCore.getArchiveParsing())
   {
-	  m_OrganizerCore.setArchiveParsing(state);
-	  if (!state)
-	  {
-		  ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
-		  ui->showArchiveDataCheckBox->setEnabled(false);
-		  m_showArchiveData = false;
-	  }
-	  else
-	  {
-		  ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
-		  ui->showArchiveDataCheckBox->setEnabled(true);
-		  m_showArchiveData = true;
-	  }
-	  m_OrganizerCore.refreshModList();
-	  m_OrganizerCore.refreshDirectoryStructure();
-	  m_OrganizerCore.refreshLists();
+    m_OrganizerCore.setArchiveParsing(state);
+    if (!state)
+    {
+      ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+      ui->showArchiveDataCheckBox->setEnabled(false);
+      m_showArchiveData = false;
+    }
+    else
+    {
+      ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+      ui->showArchiveDataCheckBox->setEnabled(true);
+      m_showArchiveData = true;
+    }
+    m_OrganizerCore.refreshModList();
+    m_OrganizerCore.refreshDirectoryStructure();
+    m_OrganizerCore.refreshLists();
   }
 
   if (settings.getCacheDirectory() != oldCacheDirectory) {
@@ -6027,14 +6026,14 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
 
 void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
 {
-	if (m_OrganizerCore.getArchiveParsing() && checked)
-	{
-		m_showArchiveData = checked;
-	}
-	else
-	{
-		m_showArchiveData = false;
-	}
-	refreshDataTree();
+  if (m_OrganizerCore.getArchiveParsing() && checked)
+  {
+    m_showArchiveData = checked;
+  }
+  else
+  {
+    m_showArchiveData = false;
+  }
+  refreshDataTree();
 }
 
