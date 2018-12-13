@@ -677,7 +677,14 @@ void InstallationManager::postInstallCleanup()
   // TODO: this doesn't yet remove directories. Also, the files may be left there if this point isn't reached
   for (const QString &tempFile : m_TempFilesToDelete) {
     QFileInfo fileInfo(QDir::tempPath() + "/" + tempFile);
-    QFile::remove(fileInfo.absoluteFilePath());
+    if (fileInfo.exists()) {
+      if (!fileInfo.isReadable() || !fileInfo.isWritable()) {
+        QFile::setPermissions(fileInfo.absoluteFilePath(), QFile::ReadOther | QFile::WriteOther);
+      }
+      if (!QFile::remove(fileInfo.absoluteFilePath())) {
+        qWarning() << "Unable to delete " << fileInfo.absoluteFilePath();
+      }
+    }
     directoriesToRemove.insert(fileInfo.absolutePath());
   }
 
