@@ -3227,7 +3227,9 @@ void MainWindow::openOriginInformation_clicked()
 {
   try {
     QItemSelectionModel *selection = ui->espList->selectionModel();
-    if (selection->hasSelection() && selection->selectedRows().count() > 0) {
+    //we don't want to open multiple modinfodialogs.
+    /*if (selection->hasSelection() && selection->selectedRows().count() > 0) {
+
       for (QModelIndex idx : selection->selectedRows()) {
         QString fileName = idx.data().toString();
         ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
@@ -3238,16 +3240,15 @@ void MainWindow::openOriginInformation_clicked()
         }
       }
     }
-    else {
-      QModelIndex idx = selection->currentIndex();
-      QString fileName = idx.data().toString();
+    else {}*/
+    QModelIndex idx = selection->currentIndex();
+    QString fileName = idx.data().toString();
 
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
-      if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-        displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-      }
+    if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+      displayModInformation(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
     }
   }
   catch (const std::exception &e) {
