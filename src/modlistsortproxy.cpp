@@ -39,10 +39,6 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
 {
-  m_EnabledColumns.set(ModList::COL_FLAGS);
-  m_EnabledColumns.set(ModList::COL_NAME);
-  m_EnabledColumns.set(ModList::COL_VERSION);
-  m_EnabledColumns.set(ModList::COL_PRIORITY);
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
 }
@@ -340,8 +336,53 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
-  if (!m_CurrentFilter.isEmpty() &&
-      !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+  bool display = true;
+  if (!m_CurrentFilter.isEmpty()) {
+    display = false;
+
+    // Search by name
+    if (!display &&
+        m_EnabledColumns[ModList::COL_NAME] &&
+        info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+      display = true;
+    }
+
+    // Search by notes
+    if (!display &&
+        m_EnabledColumns[ModList::COL_NOTES] &&
+        info->comments().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+      display = true;
+    }
+
+    // Search by Nexus ID
+    if (!display &&
+        m_EnabledColumns[ModList::COL_MODID]) {
+      bool ok;
+      int filterID = m_CurrentFilter.toInt(&ok);
+      if (ok) {
+        int modID = info->getNexusID();
+        while (modID > 0) {
+          if (modID == filterID) {
+            display = true;
+            break;
+          }
+          modID = (int)(modID / 10);
+        }
+      }
+    }
+
+    // Search by categories
+    if (!display &&
+        m_EnabledColumns[ModList::COL_CATEGORY]) {
+      for (auto category : info->categories()) {
+        if (category.contains(m_CurrentFilter, Qt::CaseInsensitive)) {
+          display = true;
+          break;
+        }
+      }
+    }
+  }
+  if (!display) {
     return false;
   }
 
@@ -350,6 +391,11 @@ bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
   } else {
     return filterMatchesModOr(info, enabled);
   }
+}
+
+void ModListSortProxy::setColumnVisible(int column, bool visible)
+{
+  m_EnabledColumns[column] = visible;
 }
 
 void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)

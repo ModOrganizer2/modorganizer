@@ -285,14 +285,17 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
+  connect(ui->modList->header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(modListSectionResized(int, int, int)));
 
   bool modListAdjusted = registerWidgetState(ui->modList->objectName(), ui->modList->header(), "mod_list_state");
 
   if (modListAdjusted) {
     // hack: force the resize-signal to be triggered because restoreState doesn't seem to do that
-    int sectionSize = ui->modList->header()->sectionSize(ModList::COL_CONTENT);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize + 1);
-    ui->modList->header()->resizeSection(ModList::COL_CONTENT, sectionSize);
+    for (int column = 0; column <= ModList::COL_LASTCOLUMN; ++column) {
+      int sectionSize = ui->modList->header()->sectionSize(column);
+      ui->modList->header()->resizeSection(column, sectionSize + 1);
+      ui->modList->header()->resizeSection(column, sectionSize);
+    }
   } else {
     // hide these columns by default
     ui->modList->header()->setSectionHidden(ModList::COL_CONTENT, true);
@@ -2472,6 +2475,12 @@ void MainWindow::esplistSelectionsChanged(const QItemSelection &selected)
 void MainWindow::modListSortIndicatorChanged(int, Qt::SortOrder)
 {
   ui->modList->verticalScrollBar()->repaint();
+}
+
+void MainWindow::modListSectionResized(int logicalIndex, int oldSize, int newSize)
+{
+  bool enabled = (newSize != 0);
+  qobject_cast<ModListSortProxy *>(ui->modList->model())->setColumnVisible(logicalIndex, enabled);
 }
 
 void MainWindow::removeMod_clicked()

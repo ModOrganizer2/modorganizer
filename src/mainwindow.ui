@@ -448,7 +448,7 @@ p, li { white-space: pre-wrap; }
                <bool>false</bool>
               </property>
               <attribute name="headerDefaultSectionSize">
-               <number>20</number>
+               <number>35</number>
               </attribute>
               <attribute name="headerShowSortIndicator" stdset="0">
                <bool>true</bool>
@@ -612,7 +612,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="placeholderText">
-                 <string>Namefilter</string>
+                 <string>Filter</string>
                 </property>
                </widget>
               </item>
@@ -999,7 +999,7 @@ p, li { white-space: pre-wrap; }
                      <string/>
                     </property>
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>
@@ -1338,7 +1338,7 @@ p, li { white-space: pre-wrap; }
                   <item>
                    <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>

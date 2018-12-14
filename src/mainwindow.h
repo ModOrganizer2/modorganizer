@@ -577,6 +577,7 @@ private slots:
 
   void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
+  void modListSectionResized(int logicalIndex, int oldSize, int newSize);
 
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
