@@ -2964,22 +2964,32 @@ void MainWindow::search_activated()
     ui->modFilterEdit->setSelection(0, INT_MAX);
   }
 
-  if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
+  else if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
     ui->espFilterEdit->setFocus();
     ui->espFilterEdit->setSelection(0, INT_MAX);
+  }
+
+  else if (ui->downloadView->hasFocus() || ui->downloadFilterEdit->hasFocus()) {
+    ui->downloadFilterEdit->setFocus();
+    ui->downloadFilterEdit->setSelection(0, INT_MAX);
   }
 }
 
 void MainWindow::searchClear_activated()
 {
-  if (ui->modFilterEdit->hasFocus()) {
+  if (ui->modList->hasFocus() || ui->modFilterEdit->hasFocus()) {
     ui->modFilterEdit->clear();
     ui->modList->setFocus();
   }
 
-  if (ui->espFilterEdit->hasFocus()) {
+  else if (ui->espList->hasFocus() || ui->espFilterEdit->hasFocus()) {
     ui->espFilterEdit->clear();
     ui->espList->setFocus();
+  }
+
+  else if (ui->downloadView->hasFocus() || ui->downloadFilterEdit->hasFocus()) {
+    ui->downloadFilterEdit->clear();
+    ui->downloadView->setFocus();
   }
 }
 
