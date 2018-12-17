@@ -211,7 +211,7 @@ private:
 
   void startSteam();
 
-  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
+  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod(QString fileName = "");

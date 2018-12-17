@@ -1198,9 +1198,11 @@ void MainWindow::on_profileBox_currentIndexChanged(int index)
   }
 }
 
-void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly)
+void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon)
 {
   bool isDirectory = true;
+  //QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
+  //QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
 
   std::wostringstream temp;
   temp << directorySoFar << "\\" << directoryEntry.getName();
@@ -1213,11 +1215,11 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       columns.append("");
       if (!(*current)->isEmpty()) {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
         directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
 
         if (conflictsOnly) {
-          updateTo(directoryChild, temp.str(), **current, conflictsOnly);
+          updateTo(directoryChild, temp.str(), **current, conflictsOnly, fileIcon, folderIcon);
           if (directoryChild->childCount() != 0) {
             subTree->addChild(directoryChild);
           }
@@ -1236,7 +1238,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       }
       else {
         QTreeWidgetItem *directoryChild = new QTreeWidgetItem(columns);
-        directoryChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
+        directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
         directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
         subTree->addChild(directoryChild);
       }
@@ -1281,7 +1283,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         fileChild->setFont(1, font);
       }
       fileChild->setData(0, Qt::UserRole, ToQString(current->getFullPath()));
-      fileChild->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::File));
+      fileChild->setData(0, Qt::DecorationRole, *fileIcon);
       fileChild->setData(0, Qt::UserRole + 3, isDirectory);
       fileChild->setData(0, Qt::UserRole + 1, isArchive);
       fileChild->setData(1, Qt::UserRole, source);
@@ -1322,6 +1324,7 @@ void MainWindow::delayedRemove()
 
 void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
 {
+  
   if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
     // read the data we need from the sub-item, then dispose of it
     QTreeWidgetItem *onDemandDataItem = item->child(0);
@@ -1331,7 +1334,9 @@ void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
     std::wstring virtualPath = (path + L"\\").substr(6) + ToWString(item->text(0));
     DirectoryEntry *dir = m_OrganizerCore.directoryStructure()->findSubDirectoryRecursive(virtualPath);
     if (dir != nullptr) {
-      updateTo(item, path, *dir, conflictsOnly);
+      QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
+      QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
+      updateTo(item, path, *dir, conflictsOnly, &fileIcon, &folderIcon);
     } else {
       qWarning("failed to update view of %ls", path.c_str());
     }
@@ -1406,12 +1411,14 @@ void MainWindow::refreshDataTree()
 {
   QCheckBox *conflictsBox = findChild<QCheckBox*>("conflictsCheckBox");
   QTreeWidget *tree = findChild<QTreeWidget*>("dataTree");
+  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
+  QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
   tree->clear();
   QStringList columns("data");
   columns.append("");
   QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
   subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-  updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
+  updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked(), &fileIcon, &folderIcon);
   tree->insertTopLevelItem(0, subTree);
   subTree->setExpanded(true);
 }
@@ -1420,7 +1427,8 @@ void MainWindow::refreshDataTreeKeepExpandedNodes()
 {
 	QCheckBox *conflictsBox = findChild<QCheckBox*>("conflictsCheckBox");
 	QTreeWidget *tree = findChild<QTreeWidget*>("dataTree");
-
+  QIcon folderIcon = (new QFileIconProvider())->icon(QFileIconProvider::Folder);
+  QIcon fileIcon = (new QFileIconProvider())->icon(QFileIconProvider::File);
 	QStringList expandedNodes;
 	QTreeWidgetItemIterator it1(tree, QTreeWidgetItemIterator::NotHidden | QTreeWidgetItemIterator::HasChildren);
 	while (*it1) {
@@ -1436,7 +1444,7 @@ void MainWindow::refreshDataTreeKeepExpandedNodes()
 	columns.append("");
 	QTreeWidgetItem *subTree = new QTreeWidgetItem(columns);
   subTree->setData(0, Qt::DecorationRole, (new QFileIconProvider())->icon(QFileIconProvider::Folder));
-	updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked());
+	updateTo(subTree, L"", *m_OrganizerCore.directoryStructure(), conflictsBox->isChecked(), &fileIcon, &folderIcon);
 	tree->insertTopLevelItem(0, subTree);
 	subTree->setExpanded(true);
 	QTreeWidgetItemIterator it2(tree, QTreeWidgetItemIterator::HasChildren);
