@@ -171,10 +171,8 @@ void Profile::findProfileSettings()
     if (m_Directory.exists(backupFile)) {
       storeSetting("LocalSettings", false);
       m_Directory.rename(backupFile, getIniFileName());
-    } else if (m_Directory.exists(getIniFileName())) {
-      storeSetting("LocalSettings", true);
     } else {
-      storeSetting("LocalSettings", false);
+      storeSetting("LocalSettings", true);
     }
   }
 
