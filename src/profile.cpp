@@ -773,6 +773,27 @@ bool Profile::localSettingsEnabled() const
 
 bool Profile::enableLocalSettings(bool enable)
 {
+  if (enable) {
+    m_GamePlugin->initializeProfile(m_Directory.absolutePath(), IPluginGame::CONFIGURATION);
+  } else {
+    QMessageBox::StandardButton res = QMessageBox::question(
+      QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
+      tr("Do you want to delete profile-specific game INI files? (If you select \"No\", the "
+        "save games will be used again if you re-enable profile-specific game INI files.)"),
+      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+      QMessageBox::Cancel);
+    if (res == QMessageBox::Yes) {
+      QStringList filesToDelete;
+      for (QString file : m_GamePlugin->iniFiles()) {
+        filesToDelete << m_Directory.absoluteFilePath(file);
+      }
+      shellDelete(filesToDelete, true);
+    } else if (res == QMessageBox::No) {
+      // No action
+    } else {
+      return false;
+    }
+  }
   storeSetting("LocalSettings", enable);
   return true;
 }
