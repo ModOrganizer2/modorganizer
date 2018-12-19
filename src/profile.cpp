@@ -748,9 +748,9 @@ bool Profile::enableLocalSaves(bool enable)
     }
   } else  {
     QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete savegames?"),
-      tr("Do you want to delete local savegames? (If you select \"No\", the "
-        "save games will show up again if you re-enable local savegames)"),
+      QApplication::activeModalWidget(), tr("Delete profile-specific save games?"),
+      tr("Do you want to delete the profile-specific save games? (If you select \"No\", the "
+        "save games will show up again if you re-enable profile-specific save games)"),
       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
       QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
@@ -796,7 +796,7 @@ bool Profile::enableLocalSettings(bool enable)
   } else {
     QMessageBox::StandardButton res = QMessageBox::question(
       QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
-      tr("Do you want to delete profile-specific game INI files? (If you select \"No\", the "
+      tr("Do you want to delete the profile-specific game INI files? (If you select \"No\", the "
         "save games will be used again if you re-enable profile-specific game INI files.)"),
       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
       QMessageBox::Cancel);

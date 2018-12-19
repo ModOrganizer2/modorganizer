@@ -35,13 +35,13 @@ p, li { white-space: pre-wrap; }
      <item>
       <widget class="QCheckBox" name="localSavesBox">
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, savegames are stored locally to this profile and will not appear when starting with a different profile.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, save games are stored locally to this profile and will not appear when starting with a different profile.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="whatsThis">
-        <string>If checked, savegames are local to this profile and will not appear when starting with a different profile.</string>
+        <string>If checked, save games are local to this profile and will not appear when starting with a different profile.</string>
        </property>
        <property name="text">
-        <string>Use profile-specific Savegames</string>
+        <string>Use profile-specific Save Games</string>
        </property>
       </widget>
      </item>
