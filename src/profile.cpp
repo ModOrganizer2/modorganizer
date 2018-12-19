@@ -797,7 +797,7 @@ bool Profile::enableLocalSettings(bool enable)
     QMessageBox::StandardButton res = QMessageBox::question(
       QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
       tr("Do you want to delete the profile-specific game INI files? (If you select \"No\", the "
-        "save games will be used again if you re-enable profile-specific game INI files.)"),
+        "INI files will be used again if you re-enable profile-specific game INI files.)"),
       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
       QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
