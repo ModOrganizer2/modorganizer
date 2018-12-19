@@ -768,7 +768,25 @@ bool Profile::enableLocalSaves(bool enable)
 
 bool Profile::localSettingsEnabled() const
 {
-  return setting("LocalSettings", false).toBool();
+  bool enabled = setting("LocalSettings", false).toBool();
+  if (enabled) {
+    bool reinitConfig = false;
+    for (QString file : m_GamePlugin->iniFiles()) {
+      if (!QFile::exists(m_Directory.filePath(file))) {
+        qWarning("missing %s in %s", qPrintable(file), qPrintable(m_Directory.path()));
+        reinitConfig = true;
+      }
+    }
+    if (reinitConfig) {
+      QMessageBox::StandardButton res = QMessageBox::warning(
+        QApplication::activeModalWidget(), tr("Missing profile-specific game INI files!"),
+        tr("Some of your profile-specific game INI files were missing.  They will now be copied "
+           "from the vanilla game folder.  You might want double-check your settings.")
+      );
+      m_GamePlugin->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
+    }
+  }
+  return enabled;
 }
 
 bool Profile::enableLocalSettings(bool enable)
