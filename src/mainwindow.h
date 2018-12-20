@@ -529,6 +529,7 @@ private slots:
   void openDownloadsFolder();
   void openModsFolder();
   void openProfileFolder();
+  void openIniFolder();
   void openGameFolder();
   void openMyGamesFolder();
   void startExeAction();

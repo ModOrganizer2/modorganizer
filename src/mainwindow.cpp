@@ -3639,7 +3639,11 @@ void MainWindow::disableVisibleMods()
 
 void MainWindow::openInstanceFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  QString dataPath = qApp->property("dataPath").toString();
+  ::ShellExecuteW(nullptr, L"explore", ToWString(dataPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+
+  //opens BaseDirectory instead
+	//::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 void MainWindow::openLogsFolder()
@@ -3663,6 +3667,17 @@ void MainWindow::openPluginsFolder()
 void MainWindow::openProfileFolder()
 {
 	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
+void MainWindow::openIniFolder()
+{
+  if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
+  {
+    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
+  else {
+    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  }
 }
 
 void MainWindow::openDownloadsFolder()
@@ -3863,6 +3878,8 @@ QMenu *MainWindow::openFolderMenu()
 	FolderMenu->addAction(tr("Open Game folder"), this, SLOT(openGameFolder()));
 
 	FolderMenu->addAction(tr("Open MyGames folder"), this, SLOT(openMyGamesFolder()));
+
+  FolderMenu->addAction(tr("Open INIs folder"), this, SLOT(openIniFolder()));
 
 	FolderMenu->addSeparator();
 
