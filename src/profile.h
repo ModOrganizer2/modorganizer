@@ -79,6 +79,13 @@ public:
   ~Profile();
 
   /**
+   * Determines the default settings for the profile based on the current state of the profile's
+   * files.  This function should remain backwards compatible as much as possible.
+   **/
+
+  void findProfileSettings(void);
+
+  /**
    * @return true if this profile (still) exists on disc
    */
   bool exists() const;
@@ -230,7 +237,7 @@ public:
    * retrieve the number of mods for which this object has status information.
    * This is usually the same as ModInfo::getNumMods() except between
    * calls to ModInfo::updateFromDisc() and the Profile::refreshModStatus()
-   * 
+   *
    * @return number of mods for which the profile has status information
    **/
   size_t numMods() const { return m_ModStatus.size(); }
@@ -247,7 +254,7 @@ public:
    * @return the index of the mod
    * @throw std::exception an exception is thrown if there is no mod with the specified priority
    **/
-  unsigned int modIndexByPriority(unsigned int priority) const;
+  unsigned int modIndexByPriority(int priority) const;
 
   /**
    * @brief enable or disable a mod
@@ -287,12 +294,16 @@ public:
 
   void dumpModStatus() const;
 
-  QVariant setting(const QString &section, const QString &name,
-                   const QVariant &fallback = QVariant());
+  QVariant setting(const QString &section, const QString &name = QString(),
+                   const QVariant &fallback = QVariant()) const;
 
   void storeSetting(const QString &section, const QString &name,
                     const QVariant &value);
-  void removeSetting(const QString &section, const QString &name);
+  void storeSetting(const QString &name, const QVariant &value);
+  void removeSetting(const QString &section, const QString &name = QString());
+  void removeSetting(const QString &name);
+
+  int getPriorityMinimum() const;
 
 signals:
 
@@ -347,7 +358,7 @@ private:
 
   mutable QByteArray m_LastModlistHash;
   std::vector<ModStatus> m_ModStatus;
-  std::vector<unsigned int> m_ModIndexByPriority;
+  std::map<int, unsigned int> m_ModIndexByPriority;
   unsigned int m_NumRegularMods;
 
   MOBase::DelayedFileWriter m_ModListWriter;

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "scopeguard.h"
 #include "modinfo.h"
+#include "modlist.h"
 #include "viewmarkingscrollbar.h"
 #include <utility.h>
 #include <iplugingame.h>
@@ -119,14 +120,19 @@ QString PluginList::getColumnToolTip(int column)
   }
 }
 
-void PluginList::highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
+void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile)
 {
   for (auto &esp : m_ESPs) {
     esp.m_ModSelected = false;
   }
-  for (QModelIndex idx : selected.indexes()) {
-    ModInfo::Ptr selectedMod = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-    if (!selectedMod.isNull() && profile.modEnabled(idx.data(Qt::UserRole + 1).toInt())) {
+  for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
+    int modPriority = idx.data(Qt::UserRole).toInt();
+    if (modPriority < 0 || modPriority == INT_MAX)
+      continue;
+
+    int modIndex = profile.modIndexByPriority(modPriority);
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
+    if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
       QStringList plugins = dir.entryList(QStringList() << "*.esp" << "*.esm" << "*.esl");
       MOShared::FilesOrigin origin = directoryEntry.getOriginByName(selectedMod->internalName().toStdWString());
@@ -289,21 +295,26 @@ void PluginList::enableESP(const QString &name, bool enable)
   }
 }
 
+int PluginList::findPluginByPriority(int priority)
+{
+  for (int i = 0; i < m_ESPs.size(); i++ ) {
+    if (m_ESPs[i].m_Priority == priority) {
+      return i;
+    }
+  }
+  qCritical(QString("No plugin with priority %1").arg(priority).toLocal8Bit());
+  return -1;
+}
+
 void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
 {
-  if (selectionModel->hasSelection()){
+  if (selectionModel->hasSelection()) {
     bool dirty = false;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowPriority = row.data().toInt();
-      for (int i = 0; i < m_ESPs.size(); i++) {
-        if (m_ESPs[i].m_Priority == rowPriority) {
-          if (!m_ESPs[i].m_Enabled) {
-            m_ESPs[i].m_Enabled = true;
-            dirty = true;
-          }
-          
-          break;
-        }
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_Enabled) {
+        m_ESPs[rowIndex].m_Enabled = true;
+        dirty = true;
       }
     }
     if (dirty) emit writePluginsList();
@@ -312,18 +323,13 @@ void PluginList::enableSelected(const QItemSelectionModel *selectionModel)
 
 void PluginList::disableSelected(const QItemSelectionModel *selectionModel)
 {
-  if (selectionModel->hasSelection()){
+  if (selectionModel->hasSelection()) {
     bool dirty = false;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
-      int rowPriority = row.data().toInt();
-      for (int i = 0; i < m_ESPs.size(); i++) {
-        if (m_ESPs[i].m_Priority == rowPriority) {
-          if (!m_ESPs[i].m_ForceEnabled && m_ESPs[i].m_Enabled) {
-            m_ESPs[i].m_Enabled = false;
-            dirty = true;
-          }
-          break;
-        }
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_ForceEnabled && m_ESPs[rowIndex].m_Enabled) {
+        m_ESPs[rowIndex].m_Enabled = false;
+        dirty = true;
       }
     }
     if (dirty) emit writePluginsList();
@@ -356,6 +362,21 @@ void PluginList::disableAll()
   }
 }
 
+void PluginList::sendToPriority(const QItemSelectionModel *selectionModel, int newPriority)
+{
+  if (selectionModel->hasSelection()) {
+    std::vector<int> pluginsToMove;
+    for (auto row: selectionModel->selectedRows(COL_PRIORITY)) {
+      int rowIndex = findPluginByPriority(row.data().toInt());
+      if (!m_ESPs[rowIndex].m_ForceEnabled) {
+        pluginsToMove.push_back(rowIndex);
+      }
+    }
+    if (pluginsToMove.size()) {
+      changePluginPriority(pluginsToMove, newPriority);
+    }
+  }
+}
 
 bool PluginList::isEnabled(const QString &name)
 {
@@ -902,7 +923,7 @@ QVariant PluginList::data(const QModelIndex &modelIndex, int role) const
   } else if (role == Qt::BackgroundRole
     || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
     if (m_ESPs[index].m_ModSelected) {
-      return QColor(0, 0, 255, 64);
+      return Settings::instance().pluginListContainedColor();
     } else {
       return QVariant();
     }
@@ -1092,6 +1113,12 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 {
   int newPriorityTemp = newPriority;
 
+  // enforce valid range
+  if (newPriorityTemp < 0)
+    newPriorityTemp = 0;
+  else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
+    newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
+
   if (!m_ESPs[row].m_IsMaster && !m_ESPs[row].m_IsLight) {
     // don't allow esps to be moved above esms
     while ((newPriorityTemp < static_cast<int>(m_ESPsByPriority.size() - 1)) &&
@@ -1112,12 +1139,6 @@ void PluginList::setPluginPriority(int row, int &newPriority)
       ++newPriorityTemp;
     }
   }
-
-  // enforce valid range
-  if (newPriorityTemp < 0)
-    newPriorityTemp = 0;
-  else if (newPriorityTemp >= static_cast<int>(m_ESPsByPriority.size()))
-    newPriorityTemp = static_cast<int>(m_ESPsByPriority.size()) - 1;
 
   try {
     int oldPriority = m_ESPs.at(row).m_Priority;
@@ -1149,17 +1170,35 @@ void PluginList::setPluginPriority(int row, int &newPriority)
 void PluginList::changePluginPriority(std::vector<int> rows, int newPriority)
 {
   ChangeBracket<PluginList> layoutChange(this);
-  // sort rows to insert by their old priority (ascending) and insert them move them in that order
   const std::vector<ESPInfo> &esp = m_ESPs;
-  std::sort(rows.begin(), rows.end(),
-            [&esp](const int &LHS, const int &RHS) {
-              return esp[LHS].m_Priority < esp[RHS].m_Priority;
-            });
 
-  // odd stuff: if any of the dragged sources has priority lower than the destination then the
-  // target idx is that of the row BELOW the dropped location, otherwise it's the one above. why?
+  int minPriority = INT_MAX;
+  int maxPriority = INT_MIN;
+
+  // don't try to move plugins before force-enabled plugins
+  for (std::vector<ESPInfo>::const_iterator iter = m_ESPs.begin();
+       iter != m_ESPs.end(); ++iter) {
+    if (iter->m_ForceEnabled) {
+      newPriority = std::max(newPriority, iter->m_Priority+1);
+    }
+    maxPriority = std::max(maxPriority, iter->m_Priority+1);
+    minPriority = std::min(minPriority, iter->m_Priority);
+  }
+
+  // limit the new priority to existing priorities
+  newPriority = std::min(newPriority, maxPriority);
+  newPriority = std::max(newPriority, minPriority);
+
+  // sort the moving plugins by ascending priorities
+  std::sort(rows.begin(), rows.end(),
+    [&esp](const int &LHS, const int &RHS) {
+    return esp[LHS].m_Priority < esp[RHS].m_Priority;
+  });
+
+  // if at least on plugin is increasing in priority, the target index is
+  // that of the row BELOW the dropped location, otherwise it's the one above
   for (std::vector<int>::const_iterator iter = rows.begin();
-       iter != rows.end(); ++iter) {
+    iter != rows.end(); ++iter) {
     if (m_ESPs[*iter].m_Priority < newPriority) {
       --newPriority;
       break;

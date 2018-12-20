@@ -112,6 +112,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   }
   ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(gameName));
 
+  ui->commentsEdit->setText(modInfo->comments());
   ui->notesEdit->setText(modInfo->notes());
 
   ui->descriptionView->setPage(new DescriptionPage);
@@ -134,7 +135,22 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   refreshLists();
 
-  if (unmanaged) {
+  if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
+  {
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
+    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, false);
+    //ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
+    addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
+    refreshPrimaryCategoriesBox();
+    ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
+    //ui->tabWidget->setTabEnabled(TAB_NOTES, false);
+    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
+  }
+  else if (unmanaged)
+  {
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
@@ -174,6 +190,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
 ModInfoDialog::~ModInfoDialog()
 {
+  m_ModInfo->setComments(ui->commentsEdit->text());
   m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
@@ -1080,7 +1097,7 @@ void ModInfoDialog::openFile(const QModelIndex &index)
   QString fileName = m_FileSystemModel->filePath(index);
 
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
-  if ((int)res <= 32) {
+  if ((unsigned long long)res <= 32) {
     qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
   }
 }

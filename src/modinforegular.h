@@ -28,6 +28,7 @@ public:
 
   bool isAlternate() { return m_IsAlternate; }
   bool isConverted() { return m_Converted; }
+  bool isValidated() { return m_Validated; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -88,6 +89,12 @@ public:
    *         directory name wouldn't be valid)
    **/
   bool setName(const QString &name);
+
+  /**
+  * @brief changes the comments (manually set information displayed in the mod list) for this mod
+  * @param comments new comments
+  */
+  void setComments(const QString &comments);
 
   /**
    * @brief change the notes (manually set information) for this mod
@@ -189,6 +196,11 @@ public:
   virtual void markConverted(bool converted) override;
 
   /**
+  * @brief updates the mod to flag it as valid in order to ignore the invalid game data flag
+  */
+  virtual void markValidated(bool validated) override;
+
+  /**
    * @brief getter for the mod name
    *
    * @return the mod name
@@ -274,6 +286,11 @@ public:
   virtual QString getDescription() const;
 
   /**
+  * @return comments for this mod
+  */
+  virtual QString comments() const;
+
+  /**
    * @return manually set notes for this mod
    */
   virtual QString notes() const;
@@ -304,6 +321,10 @@ public:
   virtual QDateTime getLastNexusQuery() const;
 
   virtual QStringList archives() const;
+
+  virtual void setColor(QColor color);
+
+  virtual QColor getColor();
 
   virtual void addInstalledFile(int modId, int fileId);
 
@@ -343,14 +364,18 @@ private:
   QString m_Name;
   QString m_Path;
   QString m_InstallationFile;
+  QString m_Comments;
   QString m_Notes;
   QString m_NexusDescription;
   QString m_Repository;
   QString m_URL;
   QString m_GameName;
 
+
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
+
+  QColor m_Color;
 
   int m_NexusID;
   std::set<std::pair<int, int>> m_InstalledFileIDs;
@@ -358,6 +383,7 @@ private:
   bool m_MetaInfoChanged;
   bool m_IsAlternate;
   bool m_Converted;
+  bool m_Validated;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

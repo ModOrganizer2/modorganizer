@@ -132,7 +132,8 @@ public:
 
   void saveArchiveList();
 
-  void registerPluginTool(MOBase::IPluginTool *tool);
+  void registerPluginTool(MOBase::IPluginTool *tool, QString name = QString(), QMenu *menu = nullptr);
+  void registerPluginTools(std::vector<MOBase::IPluginTool *> toolPlugins);
   void registerModPage(MOBase::IPluginModPage *modPage);
 
   void addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu, ModInfo::Ptr info);
@@ -210,7 +211,7 @@ private:
 
   void startSteam();
 
-  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
+  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod(QString fileName = "");
@@ -278,6 +279,8 @@ private:
   QString queryRestore(const QString &filePath);
 
   QMenu *modListContextMenu();
+  void addModSendToContextMenu(QMenu *menu);
+  void addPluginSendToContextMenu(QMenu *menu);
 
   QMenu *openFolderMenu();
 
@@ -293,6 +296,9 @@ private:
   void dropLocalFile(const QUrl &url, const QString &outputDir, bool move);
 
   bool registerWidgetState(const QString &name, QHeaderView *view, const char *oldSettingName = nullptr);
+
+  void sendSelectedModsToPriority(int newPriority);
+  void sendSelectedPluginsToPriority(int newPriority);
 
 private:
 
@@ -404,9 +410,13 @@ private slots:
   // modlist context menu
   void installMod_clicked();
   void createEmptyMod_clicked();
+  void createSeparator_clicked();
   void restoreBackup_clicked();
   void renameMod_clicked();
   void removeMod_clicked();
+  void setColor_clicked();
+  void resetColor_clicked();
+  void backupMod_clicked();
   void reinstallMod_clicked();
   void endorse_clicked();
   void dontendorse_clicked();
@@ -416,9 +426,15 @@ private slots:
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
+  void openOriginExplorer_clicked();
+  void openOriginInformation_clicked();
   void information_clicked();
   void enableSelectedMods_clicked();
   void disableSelectedMods_clicked();
+  void sendSelectedModsToTop_clicked();
+  void sendSelectedModsToBottom_clicked();
+  void sendSelectedModsToPriority_clicked();
+  void sendSelectedModsToSeparator_clicked();
   // savegame context menu
   void deleteSavegame_clicked();
   void fixMods_clicked(SaveGameInfo::MissingAssets const &missingAssets);
@@ -433,6 +449,9 @@ private slots:
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
   void disableSelectedPlugins_clicked();
+  void sendSelectedPluginsToTop_clicked();
+  void sendSelectedPluginsToBottom_clicked();
+  void sendSelectedPluginsToPriority_clicked();
 
   void linkToolbar();
   void linkDesktop();
@@ -510,6 +529,7 @@ private slots:
   void openDownloadsFolder();
   void openModsFolder();
   void openProfileFolder();
+  void openIniFolder();
   void openGameFolder();
   void openMyGamesFolder();
   void startExeAction();
@@ -561,6 +581,9 @@ private slots:
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
 
+  void search_activated();
+  void searchClear_activated();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
@@ -575,12 +598,14 @@ private slots: // ui slots
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();
+  void on_btnRefreshDownloads_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);
   void on_modList_doubleClicked(const QModelIndex &index);
+  void on_listOptionsBtn_pressed();
   void on_espList_doubleClicked(const QModelIndex &index);
   void on_profileBox_currentIndexChanged(int index);
   void on_savegameList_customContextMenuRequested(const QPoint &pos);

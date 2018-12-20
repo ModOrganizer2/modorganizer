@@ -20,7 +20,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>8</number>
+      <number>0</number>
      </property>
      <property name="movable">
       <bool>true</bool>
@@ -238,8 +238,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>28</height>
+            <width>746</width>
+            <height>126</height>
            </rect>
           </property>
           <property name="toolTip">
@@ -677,12 +677,12 @@ p, li { white-space: pre-wrap; }
           <widget class="QLineEdit" name="versionEdit">
            <property name="maximumSize">
             <size>
-             <width>50</width>
+             <width>150</width>
              <height>16777215</height>
             </size>
            </property>
            <property name="maxLength">
-            <number>10</number>
+            <number>32</number>
            </property>
           </widget>
          </item>
@@ -723,8 +723,20 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <widget class="QWebEngineView" name="descriptionView">
-         <property name="url">
+        <widget class="QWebEngineView" name="descriptionView" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="url" stdset="0">
           <url>
            <string>about:blank</string>
           </url>
@@ -770,7 +782,30 @@ p, li { white-space: pre-wrap; }
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QTextEdit" name="notesEdit"/>
+        <widget class="QLineEdit" name="commentsEdit">
+         <property name="toolTip">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+         <property name="placeholderText">
+          <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QTextEdit" name="notesEdit">
+         <property name="toolTip">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+         <property name="placeholderText">
+          <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -795,7 +830,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_4">
+          <spacer name="horizontalSpacer_5">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>

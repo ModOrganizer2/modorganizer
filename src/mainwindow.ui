@@ -65,13 +65,13 @@
               <widget class="QTreeWidget" name="categoriesList">
                <property name="minimumSize">
                 <size>
-                 <width>100</width>
+                 <width>120</width>
                  <height>0</height>
                 </size>
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>161</width>
+                 <width>214</width>
                  <height>16777215</height>
                 </size>
                </property>
@@ -83,6 +83,9 @@
                </property>
                <property name="indentation">
                 <number>0</number>
+               </property>
+               <property name="uniformRowHeights">
+                <bool>true</bool>
                </property>
                <attribute name="headerVisible">
                 <bool>false</bool>
@@ -431,6 +434,9 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="indentation">
                <number>20</number>
+              </property>
+              <property name="uniformRowHeights">
+               <bool>true</bool>
               </property>
               <property name="itemsExpandable">
                <bool>true</bool>
@@ -825,9 +831,6 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
-                    <property name="visible">
-                     <bool>true</bool>
-                    </property>
                     <property name="text">
                      <string>Sort</string>
                     </property>
@@ -1042,7 +1045,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="MOBase::SortableTreeWidget" name="bsaList">
+                 <widget class="QTreeWidget" name="bsaList">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1058,21 +1061,26 @@ p, li { white-space: pre-wrap; }
                   <property name="showDropIndicator" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragEnabled" stdset="0">
+                  <property name="dragEnabled">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropOverwriteMode" stdset="0">
+                  <property name="dragDropOverwriteMode">
                    <bool>false</bool>
                   </property>
-                  <property name="indentation" stdset="0">
+                  <property name="indentation">
                    <number>20</number>
                   </property>
-                  <property name="itemsExpandable" stdset="0">
+                  <property name="itemsExpandable">
                    <bool>true</bool>
                   </property>
-                  <property name="columnCount" stdset="0">
+                  <property name="columnCount">
                    <number>1</number>
                   </property>
+                  <column>
+                   <property name="text">
+                    <string notr="true">Archives</string>
+                   </property>
+                  </column>
                  </widget>
                 </item>
                </layout>
@@ -1120,6 +1128,9 @@ p, li { white-space: pre-wrap; }
                     </property>
                     <property name="whatsThis">
                      <string>This is an overview of your data directory as visible to the game (and tools). </string>
+                    </property>
+                    <property name="uniformRowHeights">
+                     <bool>true</bool>
                     </property>
                     <property name="animated">
                      <bool>true</bool>
@@ -1186,7 +1197,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a list of all savegames for this game. Hover over a list entry to get detailed information about the save including a list of esps/esms that were used at the time this save was created but aren't active now.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a list of all save games for this game. Hover over a list entry to get detailed information about the save including a list of esps/esms that were used at the time this save was created but aren't active now.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;If you click &amp;quot;Fix Mods...&amp;quot; in the context menu, MO will try to activate all mods and esps to fix those missing esps. It will not disable anything!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
@@ -1218,6 +1229,20 @@ p, li { white-space: pre-wrap; }
                  <number>2</number>
                 </property>
                 <item>
+                 <widget class="QPushButton" name="btnRefreshDownloads">
+                  <property name="toolTip">
+                   <string>Refresh downloads view</string>
+                  </property>
+                  <property name="text">
+                   <string>Refresh</string>
+                  </property>
+                  <property name="icon">
+                   <iconset resource="resources.qrc">
+                    <normaloff>:/MO/gui/resources/view-refresh.png</normaloff>:/MO/gui/resources/view-refresh.png</iconset>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
                    <widget class="QTreeView" name="downloadView">
@@ -1243,7 +1268,7 @@ p, li { white-space: pre-wrap; }
                      <enum>Qt::ScrollBarAlwaysOn</enum>
                     </property>
                     <property name="horizontalScrollBarPolicy">
-                      <enum>Qt::ScrollBarAsNeeded</enum>
+                     <enum>Qt::ScrollBarAsNeeded</enum>
                     </property>
                     <property name="dragEnabled">
                      <bool>true</bool>
@@ -1278,7 +1303,7 @@ p, li { white-space: pre-wrap; }
                     <attribute name="headerDefaultSectionSize">
                      <number>50</number>
                     </attribute>
-					<attribute name="headerMinimumSectionSize">
+                    <attribute name="headerMinimumSectionSize">
                      <number>15</number>
                     </attribute>
                     <attribute name="headerStretchLastSection">
@@ -1335,6 +1360,9 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="selectionMode">
         <enum>QAbstractItemView::NoSelection</enum>
+       </property>
+       <property name="uniformRowHeights">
+        <bool>true</bool>
        </property>
        <property name="itemsExpandable">
         <bool>false</bool>

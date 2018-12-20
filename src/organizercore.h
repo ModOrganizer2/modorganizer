@@ -167,7 +167,7 @@ public:
 
   void prepareVFS();
 
-  void updateVFSParams(int logLevel, int crashDumpsType);
+  void updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist);
 
   bool cycleDiagnostics();
 

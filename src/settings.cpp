@@ -50,6 +50,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QStringList>
 #include <QVariantMap>
 #include <QLabel>
+#include <QPushButton>
+#include <QPalette>
 
 #include <Qt> // for Qt::UserRole, etc
 #include <QtDebug> // for qDebug, qWarning
@@ -61,6 +63,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdexcept> // for runtime_error
 #include <string>
 #include <utility> // for pair, make_pair
+
 
 using namespace MOBase;
 
@@ -145,6 +148,11 @@ void Settings::registerAsNXMHandler(bool force)
   }
 }
 
+bool Settings::colorSeparatorScrollbar() const
+{
+  return m_Settings.value("Settings/colorSeparatorScrollbars", true).toBool();
+}
+
 void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 {
   m_GamePlugin = gamePlugin;
@@ -189,6 +197,14 @@ QString Settings::deObfuscate(const QString &password)
   return QString::fromUtf8(buffer.constData());
 }
 
+QColor Settings::getIdealTextColor(const QColor&  rBackgroundColor)
+{
+  const int THRESHOLD = 106;
+  int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
+  return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
+}
+
+
 bool Settings::hideUncheckedPlugins() const
 {
   return m_Settings.value("Settings/hide_unchecked_plugins", false).toBool();
@@ -197,6 +213,11 @@ bool Settings::hideUncheckedPlugins() const
 bool Settings::forceEnableCoreFiles() const
 {
   return m_Settings.value("Settings/force_enable_core_files", true).toBool();
+}
+
+bool Settings::lockGUI() const
+{
+  return m_Settings.value("Settings/lock_gui", true).toBool();
 }
 
 bool Settings::automaticLoginEnabled() const
@@ -282,6 +303,11 @@ QString Settings::getModDirectory(bool resolve) const
   return getConfigurablePath("mod_directory", ToQString(AppConfig::modsPath()), resolve);
 }
 
+QString Settings::getManagedGameDirectory() const
+{
+  return m_Settings.value("gamePath", "").toString();
+}
+
 QString Settings::getProfileDirectory(bool resolve) const
 {
   return getConfigurablePath("profiles_directory", ToQString(AppConfig::profilesPath()), resolve);
@@ -353,6 +379,40 @@ int Settings::crashDumpsType() const
 int Settings::crashDumpsMax() const
 {
   return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
+}
+
+QColor Settings::modlistOverwrittenLooseColor() const
+{
+  return m_Settings.value("Settings/overwrittenLooseFilesColor", QColor(0, 255, 0, 64)).value<QColor>();
+}
+
+QColor Settings::modlistOverwritingLooseColor() const
+{
+  return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
+}
+
+QColor Settings::modlistContainsPluginColor() const
+{
+  return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
+}
+
+QColor Settings::pluginListContainedColor() const
+{
+  return m_Settings.value("Settings/containedColor", QColor(0, 0, 255, 64)).value<QColor>();
+}
+
+QString Settings::executablesBlacklist() const
+{
+  return m_Settings.value("Settings/executable_blacklist", (
+    QStringList()
+        << "Chrome.exe"
+        << "Firefox.exe"
+        << "TSVNCache.exe"
+        << "TGitCache.exe"
+        << "Steam.exe"
+        << "GameOverlayUI.exe"
+    ).join(";")
+  ).toString();
 }
 
 void Settings::setNexusLogin(QString username, QString password)
@@ -587,7 +647,6 @@ void Settings::resetDialogs()
   QuestionBoxMemory::resetDialogs();
 }
 
-
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
   SettingsDialog dialog(pluginContainer, parent);
@@ -603,6 +662,12 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   tabs.push_back(std::unique_ptr<SettingsTab>(new SteamTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new PluginsTab(this, dialog)));
   tabs.push_back(std::unique_ptr<SettingsTab>(new WorkaroundsTab(this, dialog)));
+
+
+  QString key = QString("geometry/%1").arg(dialog.objectName());
+  if (m_Settings.contains(key)) {
+    dialog.restoreGeometry(m_Settings.value(key).toByteArray());
+  }
 
   if (dialog.exec() == QDialog::Accepted) {
     // remember settings before change
@@ -631,6 +696,8 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
       }
     m_Settings.endGroup();
   }
+  m_Settings.setValue(key, dialog.saveGeometry());
+
 }
 
 Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
@@ -650,6 +717,11 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_compactBox(m_dialog.findChild<QCheckBox *>("compactBox"))
   , m_showMetaBox(m_dialog.findChild<QCheckBox *>("showMetaBox"))
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
+  , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
+  , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
+  , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
+  , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
+  , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
 {
   // FIXME I think 'addLanguages' lives in here not in parent
   m_parent->addLanguages(m_languageBox);
@@ -677,10 +749,52 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
       m_styleBox->setCurrentIndex(currentID);
     }
   }
+  /* verision using palette only works with fusion theme for some stupid reason...
+  m_overwritingBtn->setAutoFillBackground(true);
+  m_overwrittenBtn->setAutoFillBackground(true);
+  m_containsBtn->setAutoFillBackground(true);
+  m_containedBtn->setAutoFillBackground(true);
+  m_overwritingBtn->setPalette(QPalette(m_parent->modlistOverwritingLooseColor()));
+  m_overwrittenBtn->setPalette(QPalette(m_parent->modlistOverwrittenLooseColor()));
+  m_containsBtn->setPalette(QPalette(m_parent->modlistContainsPluginColor()));
+  m_containedBtn->setPalette(QPalette(m_parent->pluginListContainedColor()));
+  QPalette palette1 = m_overwritingBtn->palette();
+  QPalette palette2 = m_overwrittenBtn->palette();
+  QPalette palette3 = m_containsBtn->palette();
+  QPalette palette4 = m_containedBtn->palette();
+  palette1.setColor(QPalette::Background, m_parent->modlistOverwritingLooseColor());
+  palette2.setColor(QPalette::Background, m_parent->modlistOverwrittenLooseColor());
+  palette3.setColor(QPalette::Background, m_parent->modlistContainsPluginColor());
+  palette4.setColor(QPalette::Background, m_parent->pluginListContainedColor());
+  m_overwritingBtn->setPalette(palette1);
+  m_overwrittenBtn->setPalette(palette2);
+  m_containsBtn->setPalette(palette3);
+  m_containedBtn->setPalette(palette4);
+  */
+
+  //version with stylesheet
+  m_overwritingBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->modlistOverwritingLooseColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwritingLooseColor()).name()));
+  m_overwrittenBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwrittenLooseColor()).name()));
+  m_containsBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
+      m_parent->modlistContainsPluginColor()).name()));
+  m_containedBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->pluginListContainedColor().name()).arg(getIdealTextColor(
+      m_parent->pluginListContainedColor()).name()));
+
+  m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
+  m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
+  m_dialog.setContainedColor(m_parent->pluginListContainedColor());
 
   m_compactBox->setChecked(m_parent->compactDownloads());
   m_showMetaBox->setChecked(m_parent->metaDownloads());
   m_usePrereleaseBox->setChecked(m_parent->usePrereleases());
+  m_colorSeparatorsBox->setChecked(m_parent->colorSeparatorScrollbar());
 }
 
 void Settings::GeneralTab::update()
@@ -699,9 +813,14 @@ void Settings::GeneralTab::update()
     emit m_parent->styleChanged(newStyle);
   }
 
+  m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
+  m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
+  m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
+  m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
   m_Settings.setValue("Settings/meta_downloads", m_showMetaBox->isChecked());
   m_Settings.setValue("Settings/use_prereleases", m_usePrereleaseBox->isChecked());
+  m_Settings.setValue("Settings/colorSeparatorScrollbars", m_colorSeparatorsBox->isChecked());
 }
 
 Settings::PathsTab::PathsTab(Settings *parent, SettingsDialog &dialog)
@@ -776,6 +895,12 @@ void Settings::PathsTab::update()
   } else {
     m_Settings.remove("Settings/base_directory");
   }
+
+  QFileInfo oldGameExe(m_parent->m_GamePlugin->gameDirectory().absoluteFilePath(m_parent->m_GamePlugin->binaryName()));
+  QFileInfo newGameExe(m_managedGameDirEdit->text());
+  if (oldGameExe != newGameExe) {
+    m_Settings.setValue("gamePath", newGameExe.absolutePath());
+  }
 }
 
 Settings::DiagnosticsTab::DiagnosticsTab(Settings *m_parent, SettingsDialog &m_dialog)
@@ -830,9 +955,10 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   m_Settings.beginGroup("Servers");
   for (const QString &key : m_Settings.childKeys()) {
     QVariantMap val = m_Settings.value(key).toMap();
-    QString type = val["premium"].toBool() ? "(premium)" : "(free)";
-
-    QString descriptor = key + " " + type;
+    QString descriptor = key;
+    if (!descriptor.compare("CDN", Qt::CaseInsensitive)) {
+      descriptor += QStringLiteral(" (automatic)");
+    }
     if (val.contains("downloadSpeed") && val.contains("downloadCount") && (val["downloadCount"].toInt() > 0)) {
       int bps = static_cast<int>(val["downloadSpeed"].toDouble() / val["downloadCount"].toInt());
       descriptor += QString(" (%1 kbps)").arg(bps / 1024);
@@ -958,6 +1084,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
+  , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -991,6 +1118,9 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
+  m_lockGUIBox->setChecked(m_parent->lockGUI());
+
+  m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
 }
 
@@ -1006,4 +1136,18 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
+  m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
+
+  m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
+
+  if (m_dialog.getResetGeometries()) {
+    m_Settings.setValue("reset_geometry", true);
+    if (QMessageBox::question(nullptr,
+          tr("Restart Mod Organizer?"),
+          tr("In order to reset the window geometries, MO must be restarted.\n"
+             "Restart it now?"),
+          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      qApp->exit(INT_MAX);
+    }
+  }
 }

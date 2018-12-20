@@ -31,6 +31,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_GameName(game->gameShortName())
   , m_IsAlternate(false)
   , m_Converted(false)
+  , m_Validated(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
@@ -75,6 +76,7 @@ bool ModInfoRegular::isEmpty() const
 void ModInfoRegular::readMeta()
 {
   QSettings metaFile(m_Path + "/meta.ini", QSettings::IniFormat);
+  m_Comments         = metaFile.value("comments", "").toString();
   m_Notes            = metaFile.value("notes", "").toString();
   QString tempGameName = metaFile.value("gameName", m_GameName).toString();
   if (tempGameName.size()) m_GameName = tempGameName;
@@ -86,8 +88,10 @@ void ModInfoRegular::readMeta()
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
+  m_Validated        = metaFile.value("validated", false).toBool();
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  m_Color            = metaFile.value("color",QColor()).value<QColor>();
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       switch (metaFile.value("endorsed").toInt()) {
@@ -145,11 +149,14 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("repository", m_Repository);
       metaFile.setValue("gameName", m_GameName);
       metaFile.setValue("modid", m_NexusID);
+      metaFile.setValue("comments", m_Comments);
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
+      metaFile.setValue("validated", m_Validated);
+      metaFile.setValue("color", m_Color);
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
@@ -319,6 +326,12 @@ bool ModInfoRegular::setName(const QString &name)
   return true;
 }
 
+void ModInfoRegular::setComments(const QString &comments)
+{
+  m_Comments = comments;
+  m_MetaInfoChanged = true;
+}
+
 void ModInfoRegular::setNotes(const QString &notes)
 {
   m_Notes = notes;
@@ -394,6 +407,17 @@ void ModInfoRegular::setNeverEndorse()
 }
 
 
+void ModInfoRegular::setColor(QColor color)
+{
+  m_Color = color;
+  m_MetaInfoChanged = true;
+}
+
+QColor ModInfoRegular::getColor()
+{
+  return m_Color;
+}
+
 bool ModInfoRegular::remove()
 {
   m_MetaInfoChanged = false;
@@ -415,6 +439,13 @@ void ModInfoRegular::markConverted(bool converted)
   emit modDetailsUpdated(true);
 }
 
+void ModInfoRegular::markValidated(bool validated)
+{
+  m_Validated = validated;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
 
 QString ModInfoRegular::absolutePath() const
 {
@@ -438,7 +469,7 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
   if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
-  if (!isValid()) {
+  if (!isValid() && !m_Validated) {
     result.push_back(ModInfo::FLAG_INVALID);
   }
   if (m_Notes.length() != 0) {
@@ -471,14 +502,23 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
       m_CachedContent.push_back(CONTENT_INI);
     }
 
+    if (dir.entryList(QStringList() << "*.modgroups").size() > 0) {
+      m_CachedContent.push_back(CONTENT_MODGROUP);
+    }
+
     ScriptExtender *extender = qApp->property("managed_game")
                                    .value<IPluginGame *>()
                                    ->feature<ScriptExtender>();
 
     if (extender != nullptr) {
       QString sePluginPath = extender->PluginPath();
-      if (dir.exists(sePluginPath))
-        m_CachedContent.push_back(CONTENT_SKSE);
+      if (dir.exists(sePluginPath)) {
+        m_CachedContent.push_back(CONTENT_SKSEFILES);
+        QDir sePluginDir(absolutePath() + "/" + sePluginPath);
+        if (sePluginDir.entryList(QStringList() << "*.dll").size() > 0) {
+          m_CachedContent.push_back(CONTENT_SKSE);
+        }
+      }
     }
     if (dir.exists("textures") || dir.exists("icons") || dir.exists("bookart"))
       m_CachedContent.push_back(CONTENT_TEXTURE);
@@ -505,7 +545,7 @@ std::vector<ModInfo::EContent> ModInfoRegular::getContents() const
 
 int ModInfoRegular::getHighlight() const
 {
-  if (!isValid())
+  if (!isValid() && !m_Validated)
     return HIGHLIGHT_INVALID;
   auto flags = getFlags();
   if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_PLUGIN_SELECTED) != flags.end())
@@ -516,7 +556,7 @@ int ModInfoRegular::getHighlight() const
 
 QString ModInfoRegular::getDescription() const
 {
-  if (!isValid()) {
+  if (!isValid()  && !m_Validated) {
     return tr("%1 contains no esp/esm/esl and no asset (textures, meshes, interface, ...) directory").arg(name());
   } else {
     const std::set<int> &categories = getCategories();
@@ -533,6 +573,11 @@ QString ModInfoRegular::getDescription() const
 
     return ToQString(categoryString.str());
   }
+}
+
+QString ModInfoRegular::comments() const
+{
+  return m_Comments;
 }
 
 QString ModInfoRegular::notes() const

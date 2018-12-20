@@ -206,7 +206,7 @@ public:
   static QString getColumnName(int column);
   static QString getColumnToolTip(int column);
 
-  void highlightPlugins(const QItemSelection &selected, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
+  void highlightPlugins(const QItemSelectionModel *selection, const MOShared::DirectoryEntry &directoryEntry, const Profile &profile);
 
   void refreshLoadOrder();
 
@@ -263,6 +263,11 @@ public slots:
    * @brief disables ALL plugins
    **/
   void disableAll();
+
+  /**
+  *  @brief moves selected plugins to specified priority
+  **/
+  void sendToPriority(const QItemSelectionModel *selectionModel, int priority);
 
   /**
    * @brief The currently managed game has changed
@@ -339,6 +344,8 @@ private:
   void testMasters();
 
   void fixPriorities();
+
+  int findPluginByPriority(int priority);
 
 private:
 

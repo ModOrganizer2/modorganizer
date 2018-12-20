@@ -191,7 +191,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
     return;
   }
 
-  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile (including local savegames if any)?"),
+  QMessageBox confirmBox(QMessageBox::Question, tr("Confirm"), tr("Are you sure you want to remove this profile (including profile-specific save games, if any)?"),
                          QMessageBox::Yes | QMessageBox::No, this);
 
   if (confirmBox.exec() == QMessageBox::Yes) {

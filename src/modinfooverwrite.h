@@ -20,6 +20,7 @@ public:
   virtual bool updateNXMInfo() { return false; }
   virtual void setCategory(int, bool) {}
   virtual bool setName(const QString&) { return false; }
+  virtual void setComments(const QString&) {}
   virtual void setNotes(const QString&) {}
   virtual void setGameName(QString) {}
   virtual void setNexusID(int) {}
@@ -35,6 +36,7 @@ public:
   virtual bool alwaysEnabled() const { return true; }
   virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }
+  virtual QString comments() const { return ""; }
   virtual QString notes() const { return ""; }
   virtual QDateTime creationTime() const { return QDateTime(); }
   virtual QString absolutePath() const;

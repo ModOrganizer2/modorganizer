@@ -91,7 +91,8 @@ SOURCES += \
     modinforegular.cpp \
     modinfobackup.cpp \
     modinfooverwrite.cpp \
-    modinfoforeign.cpp
+    modinfoforeign.cpp \
+    listdialog.cpp
 
 
 HEADERS  += \
@@ -167,7 +168,8 @@ HEADERS  += \
     modinforegular.h \
     modinfobackup.h \
     modinfooverwrite.h \
-    modinfoforeign.h
+    modinfoforeign.h \
+    listdialog.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -196,7 +198,8 @@ FORMS    += \
     problemsdialog.ui \
     previewdialog.ui \
     browserdialog.ui \
-    aboutdialog.ui
+    aboutdialog.ui \
+    listdialog.ui
 
 RESOURCES += \
     resources.qrc \

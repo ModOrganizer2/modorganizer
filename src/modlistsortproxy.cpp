@@ -253,7 +253,7 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
   for (auto iter = m_CategoryFilter.begin(); iter != m_CategoryFilter.end(); ++iter) {
     switch (*iter) {
       case CategoryFactory::CATEGORY_SPECIAL_CHECKED: {
-        if (!enabled && !info->alwaysEnabled()) return false;
+        if (!enabled && !info->alwaysEnabled() && !info->hasFlag(ModInfo::FLAG_SEPARATOR)) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_UNCHECKED: {
         if (enabled || info->alwaysEnabled()) return false;
@@ -270,6 +270,9 @@ bool ModListSortProxy::filterMatchesModAnd(ModInfo::Ptr info, bool enabled) cons
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
         if (state != ModInfo::ENDORSED_FALSE) return false;
+      } break;
+	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
+        if (!info->hasFlag(ModInfo::FLAG_BACKUP)) return false;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
         if (info->hasFlag(ModInfo::FLAG_FOREIGN)) return false;
@@ -312,6 +315,9 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
       case CategoryFactory::CATEGORY_SPECIAL_NOTENDORSED: {
         ModInfo::EEndorsedState state = info->endorsedState();
         if ((state == ModInfo::ENDORSED_FALSE) || (state == ModInfo::ENDORSED_NEVER)) return true;
+      } break;
+	  case CategoryFactory::CATEGORY_SPECIAL_BACKUP: {
+        if (info->hasFlag(ModInfo::FLAG_BACKUP)) return true;
       } break;
       case CategoryFactory::CATEGORY_SPECIAL_MANAGED: {
         if (!info->hasFlag(ModInfo::FLAG_FOREIGN)) return true;

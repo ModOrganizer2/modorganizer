@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef WORKAROUNDDIALOG_H
-#define WORKAROUNDDIALOG_H
+#ifndef SETTINGSDIALOG_H
+#define SETTINGSDIALOG_H
 
 #include "tutorabledialog.h"
 #include <iplugin.h>
@@ -44,6 +44,12 @@ public:
   explicit SettingsDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
   ~SettingsDialog();
 
+  /**
+  * @brief get stylesheet of settings buttons with colored background
+  * @return string of stylesheet
+  */
+  QString getColoredButtonStyleSheet() const;
+
 public slots:
 
   virtual void accept();
@@ -55,11 +61,30 @@ signals:
 private:
 
   void storeSettings(QListWidgetItem *pluginItem);
+  void normalizePath(QLineEdit *lineEdit);
+
+public:
+
+  QColor getOverwritingColor() { return m_OverwritingColor; }
+  QColor getOverwrittenColor() { return m_OverwrittenColor; }
+  QColor getContainsColor() { return m_ContainsColor; }
+  QColor getContainedColor() { return m_ContainedColor; }
+  QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
+  bool getResetGeometries();
+
+  void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
+  void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
+  void setContainsColor(QColor col) { m_ContainsColor = col; }
+  void setContainedColor(QColor col) { m_ContainedColor = col; }
+  void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
+
 
 private slots:
   void on_loginCheckBox_toggled(bool checked);
 
   void on_categoriesBtn_clicked();
+
+  void on_execBlacklistBtn_clicked();
 
   void on_bsaDateBtn_clicked();
 
@@ -85,11 +110,42 @@ private slots:
 
   void on_browseProfilesDirBtn_clicked();
 
+  void on_browseGameDirBtn_clicked();
+
+  void on_overwritingBtn_clicked();
+
+  void on_overwrittenBtn_clicked();
+
+  void on_containsBtn_clicked();
+
+  void on_containedBtn_clicked();
+
+  void on_resetColorsBtn_clicked();
+
+  void on_baseDirEdit_editingFinished();
+
+  void on_downloadDirEdit_editingFinished();
+
+  void on_modDirEdit_editingFinished();
+
+  void on_cacheDirEdit_editingFinished();
+
+  void on_profilesDirEdit_editingFinished();
+
+  void on_overwriteDirEdit_editingFinished();
+
 private:
     Ui::SettingsDialog *ui;
     PluginContainer *m_PluginContainer;
+
+    QColor m_OverwritingColor;
+    QColor m_OverwrittenColor;
+    QColor m_ContainsColor;
+    QColor m_ContainedColor;
+
+    QString m_ExecutableBlacklist;
 };
 
 
 
-#endif // WORKAROUNDDIALOG_H
+#endif // SETTINGSDIALOG_H

@@ -20,7 +20,7 @@ Through the work of a few people of the community MO2 has come quite far, now it
 ## Reporting Issues:
 Issues should be reported to the GitHub page or on the open discord server: [ModOrganizerDevs](https://discord.gg/vD2ZbfX). Here is also where dev builds are tested, bugs are reported and investigated, suggestions are discussed and a lot more.
 
-Credits to Tannin, LePresidente, Silarn, erasmux, AL12 and many others for the development.
+Credits to Tannin, LePresidente, Silarn, erasmux, AL12, LostDragonist, AnyOldName3 and many others for the development.
 
 ## Download Location
 
@@ -49,6 +49,7 @@ Here is a complete list:
 * https://github.com/Modorganizer2/modorganizer-check_fnis
 * https://github.com/Modorganizer2/modorganizer-diagnose_basic
 * https://github.com/Modorganizer2/modorganizer-esptk
+* https://github.com/ModOrganizer2/modorganizer-fnistool
 * https://github.com/Modorganizer2/modorganizer-helper
 * https://github.com/Modorganizer2/modorganizer-game_fallout3
 * https://github.com/Modorganizer2/modorganizer-game_fallout4
@@ -60,6 +61,7 @@ Here is a complete list:
 * https://github.com/Modorganizer2/modorganizer-game_oblivion
 * https://github.com/Modorganizer2/modorganizer-game_skyrim
 * https://github.com/Modorganizer2/modorganizer-game_skyrimSE
+* https://github.com/ModOrganizer2/modorganizer-game_skyrimVR
 * https://github.com/Modorganizer2/modorganizer-game_ttw
 * https://github.com/Modorganizer2/modorganizer-installer_bain
 * https://github.com/Modorganizer2/modorganizer-installer_bundle

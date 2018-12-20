@@ -27,13 +27,13 @@
    <item>
     <widget class="QCheckBox" name="defaultSettingsBox">
      <property name="toolTip">
-      <string>If checked, the new profile will use the default game settings.</string>
+      <string>If checked, the new profile will use the default game INI settings.</string>
      </property>
      <property name="whatsThis">
-      <string>If checked, the new profile will use the default game settings instead of the &quot;global&quot; settings. Global settings are the settings you configure when running the game launcher directly, without MO.</string>
+      <string>If checked, the new profile will use the default game INI settings instead of the &quot;global&quot; settings. Global settings are the settings you configure when running the game launcher directly, without MO.</string>
      </property>
      <property name="text">
-      <string>Default Game Settings</string>
+      <string>Default Game INI Settings</string>
      </property>
     </widget>
    </item>

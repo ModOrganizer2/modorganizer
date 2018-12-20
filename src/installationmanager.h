@@ -82,7 +82,7 @@ public:
    * @return true if the archive was installed, false if installation failed or was refused
    * @exception std::exception an exception may be thrown if the archive can't be opened (maybe the format is invalid or the file is damaged)
    **/
-  bool install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks);
+  bool install(const QString &fileName, MOBase::GuessedValue<QString> &modName, bool &hasIniTweaks, int modID = 0);
 
   /**
    * @return true if the installation was canceled
@@ -137,7 +137,7 @@ public:
    * @param archiveFile path to the archive to install
    * @return the installation result
    */
-  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName);
+  virtual MOBase::IPluginInstaller::EInstallResult installArchive(MOBase::GuessedValue<QString> &modName, const QString &archiveName, const int &modId = 0);
 
   /**
    * @brief test if the specified mod name is free. If not, query the user how to proceed
@@ -146,6 +146,8 @@ public:
    * @return true if we can proceed with the installation, false if the user canceled or in case of an unrecoverable error
    */
   virtual bool testOverwrite(MOBase::GuessedValue<QString> &modName, bool *merge = nullptr) const;
+
+  QString generateBackupName(const QString &directoryName) const;
 
 private:
 
@@ -171,7 +173,7 @@ private:
   bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
                  int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
 
-  QString generateBackupName(const QString &directoryName) const;
+  //QString generateBackupName(const QString &directoryName) const;
 
   bool ensureValidModName(MOBase::GuessedValue<QString> &name) const;
 
@@ -210,6 +212,7 @@ private:
 
   Archive *m_ArchiveHandler;
   QString m_CurrentFile;
+  QString m_ErrorMessage;
 
   QProgressDialog *m_InstallationProgress { nullptr };
   int m_Progress;

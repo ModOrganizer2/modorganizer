@@ -762,9 +762,9 @@ void OrganizerCore::prepareVFS()
   m_USVFS.updateMapping(fileMapping(m_CurrentProfile->name(), QString()));
 }
 
-void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType) {
+void OrganizerCore::updateVFSParams(int logLevel, int crashDumpsType, QString executableBlacklist) {
   setGlobalCrashDumpsType(crashDumpsType);
-  m_USVFS.updateParams(logLevel, crashDumpsType);
+  m_USVFS.updateParams(logLevel, crashDumpsType, executableBlacklist);
 }
 
 bool OrganizerCore::cycleDiagnostics() {
@@ -1183,7 +1183,9 @@ ModList *OrganizerCore::modList()
 QStringList OrganizerCore::modsSortedByProfilePriority() const
 {
   QStringList res;
-  for (unsigned int i = 0; i < currentProfile()->numRegularMods(); ++i) {
+  for (int i = currentProfile()->getPriorityMinimum();
+           i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods();
+           ++i) {
     int modIndex = currentProfile()->modIndexByPriority(i);
     res.push_back(ModInfo::getByIndex(modIndex)->name());
   }
@@ -1221,7 +1223,7 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
                                         LPDWORD exitCode)
 {
   HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
-  if (processHandle != INVALID_HANDLE_VALUE) {
+  if (Settings::instance().lockGUI() && processHandle != INVALID_HANDLE_VALUE) {
     std::unique_ptr<LockedDialog> dlg;
     ILockedWaitingForProcess* uilock = nullptr;
 
@@ -1287,12 +1289,16 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
               .exists())
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
     if (!testForSteam()) {
-      if (QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
-            tr("Start Steam?"),
-            tr("Steam is required to be running already to correctly start the game. "
-               "Should MO try to start steam now?"),
-            QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::Yes) {
+      QDialogButtonBox::StandardButton result;
+      result = QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
+                  tr("Start Steam?"),
+                  tr("Steam is required to be running already to correctly start the game. "
+                    "Should MO try to start steam now?"),
+                  QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+      if (result == QDialogButtonBox::Yes) {
         startSteam(window);
+      } else if(result == QDialogButtonBox::Cancel) {
+        return INVALID_HANDLE_VALUE;
       }
     }
   }
@@ -1332,11 +1338,25 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
         return INVALID_HANDLE_VALUE;
       }
     }
-      
+
+    for (auto exec : settings().executablesBlacklist().split(";")) {
+      if (exec.compare(binary.fileName(), Qt::CaseInsensitive) == 0) {
+        if (QuestionBoxMemory::query(window, QString("blacklistedExecutable"), binary.fileName(),
+              tr("Blacklisted Executable"),
+              tr("The executable you are attempted to launch is blacklisted in the virtual file"
+                 " system.  This will likely prevent the executable, and any executables that are"
+                 " launched by this one, from seeing any mods.  This could extend to INI files, save"
+                 " games and any other virtualized files.\n\nContinue launching %1?").arg(binary.fileName()),
+              QDialogButtonBox::Yes | QDialogButtonBox::No) == QDialogButtonBox::No) {
+          return INVALID_HANDLE_VALUE;
+        }
+      }
+    }
+
     QString modsPath = settings().getModDirectory();
 
     // Check if this a request with either an executable or a working directory under our mods folder
-    // then will start the processs in a virtualized "environment" with the appropriate paths fixed:
+    // then will start the process in a virtualized "environment" with the appropriate paths fixed:
     // (i.e. mods\FNIS\path\exe => game\data\path\exe)
     QString cwdPath = currentDirectory.absolutePath();
     bool virtualizedCwd = cwdPath.startsWith(modsPath, Qt::CaseInsensitive);
@@ -1465,6 +1485,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
 {
+  if (!Settings::instance().lockGUI())
+    return true;
+
   ILockedWaitingForProcess* uilock = nullptr;
   if (m_UserInterface != nullptr) {
     uilock = m_UserInterface->lock();
@@ -1725,7 +1748,7 @@ void OrganizerCore::refreshBSAList()
     if (m_ActiveArchives.isEmpty()) {
       m_ActiveArchives = m_DefaultArchives;
     }
-    
+
     if (m_UserInterface != nullptr) {
       m_UserInterface->updateBSAList(m_DefaultArchives, m_ActiveArchives);
     }
@@ -1749,7 +1772,16 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   QDir dir(modInfo->absolutePath());
   for (const QString &esm :
        dir.entryList(QStringList() << "*.esm", QDir::Files)) {
-    m_PluginList.enableESP(esm, active);
+    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
+    if (file.get() == nullptr) {
+      qWarning("failed to activate %s", qPrintable(esm));
+      continue;
+    }
+
+    if (active != m_PluginList.isEnabled(esm)
+      && file->getAlternatives().empty()) {
+      m_PluginList.enableESP(esm, active);
+    }
   }
   int enabled      = 0;
   for (const QString &esl :

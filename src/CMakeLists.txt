@@ -37,6 +37,7 @@ SET(organizer_SRCS
     modinfoforeign.cpp
     modinfooverwrite.cpp
     modinforegular.cpp
+    modinfoseparator.cpp
     modinfowithconflictinfo.cpp
     messagedialog.cpp
     mainwindow.cpp
@@ -90,6 +91,7 @@ SET(organizer_SRCS
     usvfsconnector.cpp
     eventfilter.cpp
     moshortcut.cpp
+    listdialog.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -128,6 +130,7 @@ SET(organizer_HDRS
     modinfoforeign.h
     modinfooverwrite.h
     modinforegular.h
+    modinfoseparator.h
     modinfowithconflictinfo.h
     messagedialog.h
     mainwindow.h
@@ -183,6 +186,7 @@ SET(organizer_HDRS
     eventfilter.h
     descriptionpage.h
     moshortcut.h
+    listdialog.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -223,6 +227,7 @@ SET(organizer_UIS
     previewdialog.ui
     browserdialog.ui
     aboutdialog.ui
+    listdialog.ui
   )
 
 SET(organizer_QRCS
@@ -288,7 +293,8 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
                     ${project_path}/../usvfs/include
-                    ${project_path}/game_gamebryo/src
+                    ${project_path}/game_gamebryo/src/gamebryo
+                    ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
                     ${LZ4_ROOT}/include)

@@ -33,6 +33,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QShortcut>
+#include <QColorDialog>
+#include <QInputDialog>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -47,6 +49,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   , m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
+  ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
 
   QShortcut *delShortcut
       = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
@@ -56,6 +59,16 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
 SettingsDialog::~SettingsDialog()
 {
   delete ui;
+}
+
+QString SettingsDialog::getColoredButtonStyleSheet() const
+{
+  return QString("QPushButton {"
+    "background-color: %1;"
+    "color: %2;"
+    "border: 1px solid;"
+    "padding: 3px;"
+    "}");
 }
 
 void SettingsDialog::accept()
@@ -81,6 +94,10 @@ void SettingsDialog::accept()
   TutorableDialog::accept();
 }
 
+bool SettingsDialog::getResetGeometries()
+{
+  return ui->resetGeometryBtn->isChecked();
+}
 
 void SettingsDialog::on_loginCheckBox_toggled(bool checked)
 {
@@ -100,6 +117,32 @@ void SettingsDialog::on_categoriesBtn_clicked()
   CategoriesDialog dialog(this);
   if (dialog.exec() == QDialog::Accepted) {
     dialog.commitChanges();
+  }
+}
+
+void SettingsDialog::on_execBlacklistBtn_clicked()
+{
+  bool ok = false;
+  QString result = QInputDialog::getMultiLineText(
+    this,
+    tr("Executables Blacklist"),
+    tr("Enter one executable per line to be blacklisted from the virtual file system.\n"
+       "Mods and other virtualized files will not be visible to these executables and\n"
+       "any executables launched by them.\n\n"
+       "Example:\n"
+       "    Chrome.exe\n"
+       "    Firefox.exe"),
+    m_ExecutableBlacklist.split(";").join("\n"),
+    &ok
+    );
+  if (ok) {
+    QStringList blacklist;
+    for (auto exec : result.split("\n")) {
+      if (exec.trimmed().endsWith(".exe", Qt::CaseInsensitive)) {
+        blacklist << exec.trimmed();
+      }
+    }
+    m_ExecutableBlacklist = blacklist.join(";");
   }
 }
 
@@ -177,6 +220,113 @@ void SettingsDialog::on_browseOverwriteDirBtn_clicked()
   }
 }
 
+void SettingsDialog::on_browseGameDirBtn_clicked()
+{
+  QFileInfo oldGameExe(ui->managedGameDirEdit->text());
+
+  QString temp = QFileDialog::getOpenFileName(this, tr("Select game executable"), oldGameExe.absolutePath(), oldGameExe.fileName());
+  if (!temp.isEmpty()) {
+    ui->managedGameDirEdit->setText(temp);
+  }
+}
+
+void SettingsDialog::on_containsBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_ContainsColor, this);
+  if (result.isValid()) {
+    m_ContainsColor = result;
+
+    ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+     result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->containsBtn->setAutoFillBackground(true);
+    ui->containsBtn->setPalette(QPalette(result));
+    QPalette palette = ui->containsBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->containsBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_containedBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_ContainedColor, this);
+  if (result.isValid()) {
+    m_ContainedColor = result;
+
+    ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->containedBtn->setAutoFillBackground(true);
+    ui->containedBtn->setPalette(QPalette(result));
+    QPalette palette = ui->containedBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->containedBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_overwrittenBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this);
+  if (result.isValid()) {
+    m_OverwrittenColor = result;
+
+    ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->overwrittenBtn->setAutoFillBackground(true);
+    ui->overwrittenBtn->setPalette(QPalette(result));
+    QPalette palette = ui->overwrittenBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->overwrittenBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_overwritingBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this);
+  if (result.isValid()) {
+    m_OverwritingColor = result;
+
+    ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+
+    /*ui->overwritingBtn->setAutoFillBackground(true);
+    ui->overwritingBtn->setPalette(QPalette(result));
+    QPalette palette = ui->overwritingBtn->palette();
+    palette.setColor(QPalette::Background, result);
+    ui->overwritingBtn->setPalette(palette);*/
+  }
+}
+
+void SettingsDialog::on_resetColorsBtn_clicked()
+{
+  m_OverwritingColor = QColor(255, 0, 0, 64);
+  m_OverwrittenColor = QColor(0, 255, 0, 64);
+  m_ContainsColor = QColor(0, 0, 255, 64);
+  m_ContainedColor = QColor(0, 0, 255, 64);
+
+  ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(255, 0, 0, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(255, 0, 0, 64)).name()));
+
+  ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 255, 0, 64)).name()));
+
+  ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 0, 255, 64)).name()));
+
+  ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 0, 255, 64)).name()));
+
+}
+
 void SettingsDialog::on_resetDialogsButton_clicked()
 {
   if (QMessageBox::question(this, tr("Confirm?"),
@@ -232,6 +382,9 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
     newItem->setFlags(newItem->flags() | Qt::ItemIsEditable);
     ui->pluginSettingsList->addTopLevelItem(newItem);
   }
+
+  ui->pluginSettingsList->resizeColumnToContents(0);
+  ui->pluginSettingsList->resizeColumnToContents(1);
 }
 
 void SettingsDialog::deleteBlacklistItem()
@@ -250,3 +403,41 @@ void SettingsDialog::on_clearCacheButton_clicked()
   NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 
+void SettingsDialog::normalizePath(QLineEdit *lineEdit)
+{
+  QString text = lineEdit->text();
+  while (text.endsWith('/') || text.endsWith('\\')) {
+    text.chop(1);
+  }
+  lineEdit->setText(text);
+}
+
+void SettingsDialog::on_baseDirEdit_editingFinished()
+{
+  normalizePath(ui->baseDirEdit);
+}
+
+void SettingsDialog::on_downloadDirEdit_editingFinished()
+{
+  normalizePath(ui->downloadDirEdit);
+}
+
+void SettingsDialog::on_modDirEdit_editingFinished()
+{
+  normalizePath(ui->modDirEdit);
+}
+
+void SettingsDialog::on_cacheDirEdit_editingFinished()
+{
+  normalizePath(ui->cacheDirEdit);
+}
+
+void SettingsDialog::on_profilesDirEdit_editingFinished()
+{
+  normalizePath(ui->profilesDirEdit);
+}
+
+void SettingsDialog::on_overwriteDirEdit_editingFinished()
+{
+  normalizePath(ui->overwriteDirEdit);
+}
