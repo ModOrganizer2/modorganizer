@@ -460,12 +460,18 @@ MainWindow::MainWindow(QSettings &initSettings
 
 MainWindow::~MainWindow()
 {
-  cleanup();
+  try {
+    cleanup();
 
-  m_PluginContainer.setUserInterface(nullptr, nullptr);
-  m_OrganizerCore.setUserInterface(nullptr, nullptr);
-  m_IntegratedBrowser.close();
-  delete ui;
+    m_PluginContainer.setUserInterface(nullptr, nullptr);
+    m_OrganizerCore.setUserInterface(nullptr, nullptr);
+    m_IntegratedBrowser.close();
+    delete ui;
+  } catch (std::exception &e) {
+    QMessageBox::critical(nullptr, tr("Crash on exit"),
+      tr("MO crashed while exiting.  Some settings may not be saved.\n\nError: %1").arg(e.what()),
+      QMessageBox::Ok);
+  }
 }
 
 
@@ -1324,7 +1330,6 @@ void MainWindow::delayedRemove()
 
 void MainWindow::expandDataTreeItem(QTreeWidgetItem *item)
 {
-  
   if ((item->childCount() == 1) && (item->child(0)->data(0, Qt::UserRole).toString() == "__loaded_on_demand__")) {
     // read the data we need from the sub-item, then dispose of it
     QTreeWidgetItem *onDemandDataItem = item->child(0);
