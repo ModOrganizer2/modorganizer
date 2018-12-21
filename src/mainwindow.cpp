@@ -3215,7 +3215,17 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
   else {
     try {
       m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-      displayModInformation(sourceIdx.row());
+      sourceIdx.column();
+      int tab = -1;
+      switch (sourceIdx.column()) {
+        case ModList::COL_NOTES: tab = ModInfoDialog::TAB_NOTES; break;
+        case ModList::COL_VERSION: tab = ModInfoDialog::TAB_NEXUS; break;
+        case ModList::COL_MODID: tab = ModInfoDialog::TAB_NEXUS; break;
+        case ModList::COL_GAME: tab = ModInfoDialog::TAB_NEXUS; break;
+        case ModList::COL_CATEGORY: tab = ModInfoDialog::TAB_CATEGORIES; break;
+        default: tab = -1;
+      }
+      displayModInformation(sourceIdx.row(), tab);
       // workaround to cancel the editor that might have opened because of
       // selection-click
       ui->modList->closePersistentEditor(index);
