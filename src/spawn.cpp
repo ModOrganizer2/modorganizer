@@ -159,8 +159,9 @@ HANDLE startBinary(const QFileInfo &binary,
                                     "(you will be asked if you want to allow ModOrganizer.exe to make changes to the system)").arg(
                                         QDir::toNativeSeparators(binary.absoluteFilePath())),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+        std::wstring parameters = ToWString("\"" + QDir::toNativeSeparators(binary.absoluteFilePath()) + "\" " + QString(arguments).replace("\"", "\\\""));
         ::ShellExecuteW(nullptr, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
-                        (std::wstring(L"\"") + binaryName + L"\" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
+                        parameters.c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
         return INVALID_HANDLE_VALUE;
       } else {
         return INVALID_HANDLE_VALUE;
