@@ -4058,14 +4058,14 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu->addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
 
-        if (info->updateAvailable() || info->downgradeAvailable()) {
-          if (info->updateIgnored()) {
-            menu->addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
-          } else {
-            menu->addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
+        if (info->updateIgnored()) {
+          menu->addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
+        }
+        else {
+          if (info->updateAvailable() || info->downgradeAvailable()) {
+              menu->addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
           }
         }
-
         menu->addSeparator();
 
         menu->addAction(tr("Enable selected"), this, SLOT(enableSelectedMods_clicked()));
