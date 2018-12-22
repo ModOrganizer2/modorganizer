@@ -162,7 +162,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
-    case ModInfo::FLAG_ALTERNATE_GAME: return tr("Alternate game source");
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("This mod is targetting a different game");
     default: return "";
   }
 }
