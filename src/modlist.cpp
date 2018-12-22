@@ -949,7 +949,6 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   if (row == -1) {
     row = parent.row();
   }
-
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
   QDir modDirectory(modInfo->absolutePath());
   QDir gameDirectory(Settings::instance().getOverwriteDirectory());
@@ -961,12 +960,14 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
   for (const QUrl &url : mimeData->urls()) {
+    qDebug("URL drop requested: %s", qPrintable(url.toLocalFile()));
     if (!url.isLocalFile()) {
+      qDebug("URL drop ignored: Not a local file.");
       continue;
     }
     QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
     if (relativePath.startsWith("..")) {
-      qDebug("%s drop ignored", qPrintable(url.toLocalFile()));
+      qDebug("URL drop ignored: relative path starts with ..");
       continue;
     }
     source.append(url.toLocalFile());
@@ -975,7 +976,10 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   }
 
   if (source.count() != 0) {
-    shellMove(source, target);
+    if (!shellMove(source, target)) {
+      qDebug("Move failed %lu",::GetLastError());
+      return false;
+    }
   }
 
   return true;
