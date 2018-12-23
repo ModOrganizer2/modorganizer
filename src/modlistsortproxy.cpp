@@ -214,8 +214,24 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
           lt = comp < 0;
        }
     } break;
+    case ModList::COL_NOTES: {
+      QString leftComments = leftMod->comments();
+      QString rightComments = rightMod->comments();
+      if (leftComments != rightComments) {
+        if (leftComments.isEmpty()) {
+          lt = sortOrder() == Qt::DescendingOrder;
+        } else if (rightComments.isEmpty()) {
+          lt = sortOrder() == Qt::AscendingOrder;
+        } else {
+          lt = leftComments < rightComments;
+        }
+      }
+    } break;
     case ModList::COL_PRIORITY: {
       // nop, already compared by priority
+    } break;
+    default: {
+      qWarning() << "Sorting is not defined for column " << left.column();
     } break;
   }
   return lt;
