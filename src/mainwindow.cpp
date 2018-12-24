@@ -460,9 +460,8 @@ MainWindow::MainWindow(QSettings &initSettings
   }
   ui->activePluginsCounter->display(m_OrganizerCore.pluginList()->enabledCount());
   ui->activeModsCounter->display((int)m_OrganizerCore.currentProfile()->getActiveMods().size());
-  qDebug("Plugin enabledCount: %d", m_OrganizerCore.pluginList()->enabledCount());
-  qDebug("Mods enabledCount: %d", (int)m_OrganizerCore.currentProfile()->getActiveMods().size());
-
+ 
+  
 
 }
 

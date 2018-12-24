@@ -225,16 +225,6 @@ p, li { white-space: pre-wrap; }
                </spacer>
               </item>
               <item>
-               <widget class="QLabel" name="activeModslabel">
-                <property name="text">
-                 <string>Active:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLCDNumber" name="activeModsCounter"/>
-              </item>
-              <item>
                <widget class="QPushButton" name="listOptionsBtn">
                 <property name="maximumSize">
                  <size>
@@ -302,6 +292,26 @@ p, li { white-space: pre-wrap; }
                 <property name="icon">
                  <iconset resource="resources.qrc">
                   <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="activeModslabel">
+                <property name="text">
+                 <string>Active:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLCDNumber" name="activeModsCounter">
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+                <property name="digitCount">
+                 <number>5</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::Flat</enum>
                 </property>
                </widget>
               </item>
@@ -864,16 +874,6 @@ p, li { white-space: pre-wrap; }
                    </spacer>
                   </item>
                   <item>
-                   <widget class="QLabel" name="activePluginsLabel">
-                    <property name="text">
-                     <string>Active:</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLCDNumber" name="activePluginsCounter"/>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="restoreButton">
                     <property name="toolTip">
                      <string>Restore Backup...</string>
@@ -904,6 +904,26 @@ p, li { white-space: pre-wrap; }
                     <property name="icon">
                      <iconset resource="resources.qrc">
                       <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLabel" name="activePluginsLabel">
+                    <property name="text">
+                     <string>Active:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QLCDNumber" name="activePluginsCounter">
+                    <property name="frameShadow">
+                     <enum>QFrame::Sunken</enum>
+                    </property>
+                    <property name="digitCount">
+                     <number>3</number>
+                    </property>
+                    <property name="segmentStyle">
+                     <enum>QLCDNumber::Outline</enum>
                     </property>
                    </widget>
                   </item>
