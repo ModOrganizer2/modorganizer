@@ -85,7 +85,6 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   m_Directory = QDir(fullPath);
   m_Settings = new QSettings(m_Directory.absoluteFilePath("settings.ini"),
     QSettings::IniFormat);
-  findProfileSettings();
 
   try {
     // create files. Needs to happen after m_Directory was set!
@@ -101,6 +100,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
     }
 
     gamePlugin->initializeProfile(fullPath, settings);
+    findProfileSettings();
   } catch (...) {
     // clean up in case of an error
     shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)));
