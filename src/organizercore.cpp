@@ -560,6 +560,10 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
             SLOT(fileMoved(QString, QString, QString)));
     connect(&m_ModList, SIGNAL(modorder_changed()), widget,
             SLOT(modorder_changed()));
+    connect(&m_PluginList, SIGNAL(writePluginsList()), widget,
+      SLOT(esplist_changed()));
+    connect(&m_PluginList, SIGNAL(esplist_changed()), widget,
+      SLOT(esplist_changed()));
     connect(&m_DownloadManager, SIGNAL(showMessage(QString)), widget,
             SLOT(showMessage(QString)));
   }

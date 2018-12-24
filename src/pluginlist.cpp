@@ -846,6 +846,7 @@ void PluginList::generatePluginIndexes()
       m_ESPs[i].m_Index = QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
     }
   }
+  emit esplist_changed();
 }
 
 

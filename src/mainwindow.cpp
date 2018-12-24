@@ -458,6 +458,12 @@ MainWindow::MainWindow(QSettings &initSettings
     // set the name of the widget to the name of the action to allow styling
     ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
   }
+  ui->activePluginsCounter->display(m_OrganizerCore.pluginList()->enabledCount());
+  ui->activeModsCounter->display((int)m_OrganizerCore.currentProfile()->getActiveMods().size());
+  qDebug("Plugin enabledCount: %d", m_OrganizerCore.pluginList()->enabledCount());
+  qDebug("Mods enabledCount: %d", (int)m_OrganizerCore.currentProfile()->getActiveMods().size());
+
+
 }
 
 
@@ -2186,6 +2192,11 @@ void MainWindow::directory_refreshed()
   statusBar()->hide();
 }
 
+void MainWindow::esplist_changed()
+{
+  ui->activePluginsCounter->display(m_OrganizerCore.pluginList()->enabledCount());
+}
+
 void MainWindow::modorder_changed()
 {
   for (unsigned int i = 0; i < m_OrganizerCore.currentProfile()->numMods(); ++i) {
@@ -2443,6 +2454,7 @@ void MainWindow::restoreBackup_clicked()
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
+  ui->activeModsCounter->display((int)m_OrganizerCore.currentProfile()->getActiveMods().size());
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)

@@ -162,6 +162,7 @@ public slots:
   void displayColumnSelection(const QPoint &pos);
 
   void modorder_changed();
+  void esplist_changed();
   void refresher_progress(int percent);
   void directory_refreshed();
 
