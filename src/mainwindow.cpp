@@ -2865,12 +2865,33 @@ void MainWindow::markConverted_clicked()
 
 void MainWindow::visitOnNexus_clicked()
 {
-  int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
-  QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
-  if (modID > 0)  {
-    linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
-  } else {
-    MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    int count = selection->selectedRows().count();
+    if (count > 10) {
+      if (QMessageBox::question(this, tr("Opening Nexus Links"),
+            tr("You are trying to open %1 links to Nexus Mods.  Are you sure you want to do this?").arg(count),
+            QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole).toInt();
+      QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole + 4).toString();
+      if (modID > 0)  {
+        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+    }
+  }
+  else {
+    int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole).toInt();
+    QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(m_ContextRow, 0), Qt::UserRole + 4).toString();
+    if (modID > 0)  {
+      linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+    } else {
+      MessageDialog::showMessage(tr("Nexus ID for this Mod is unknown"), this);
+    }
   }
 }
 
