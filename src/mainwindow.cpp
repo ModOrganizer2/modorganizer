@@ -245,8 +245,6 @@ MainWindow::MainWindow(QSettings &initSettings
   statusBar()->clearMessage();
   statusBar()->hide();
 
-  ui->actionEndorseMO->setVisible(false);
-
   updateProblemsButton();
 
   // Setup toolbar
@@ -261,6 +259,10 @@ MainWindow::MainWindow(QSettings &initSettings
 
   actionToToolButton(ui->actionHelp);
   createHelpWidget();
+
+  actionToToolButton(ui->actionEndorseMO);
+  createEndorseWidget();
+  ui->actionEndorseMO->setVisible(false);
 
   for (QAction *action : ui->toolBar->actions()) {
     if (action->isSeparator()) {
@@ -704,6 +706,25 @@ void MainWindow::about()
   AboutDialog dialog(m_OrganizerCore.getVersion().displayString(), this);
   connect(&dialog, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
   dialog.exec();
+}
+
+
+void MainWindow::createEndorseWidget()
+{
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
+  QMenu *buttonMenu = toolBtn->menu();
+  if (buttonMenu == nullptr) {
+    return;
+  }
+  buttonMenu->clear();
+
+  QAction *endorseAction = new QAction(tr("Endorse"), buttonMenu);
+  connect(endorseAction, SIGNAL(triggered()), this, SLOT(on_actionEndorseMO_triggered()));
+  buttonMenu->addAction(endorseAction);
+
+  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
+  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(on_actionWontEndorseMO_triggered()));
+  buttonMenu->addAction(wontEndorseAction);
 }
 
 
@@ -5012,7 +5033,9 @@ void MainWindow::motdReceived(const QString &motd)
 
 void MainWindow::notEndorsedYet()
 {
-  ui->actionEndorseMO->setVisible(true);
+  if (!Settings::instance().directInterface().value("wont_endorse_MO", false).toBool()) {
+    ui->actionEndorseMO->setVisible(true);
+  }
 }
 
 
@@ -5074,6 +5097,13 @@ void MainWindow::on_actionEndorseMO_triggered()
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
       game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
+}
+
+
+void MainWindow::on_actionWontEndorseMO_triggered()
+{
+  Settings::instance().directInterface().setValue("wont_endorse_MO", true);
+  ui->actionEndorseMO->setVisible(false);
 }
 
 
@@ -5143,7 +5173,9 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
     if (game
           && result["id"].toInt() == game->nexusModOrganizerID()
           && result["game_id"].toInt() == game->nexusGameID()) {
-      if (!result["voted_by_user"].toBool() && Settings::instance().endorsementIntegration()) {
+      if (!result["voted_by_user"].toBool() &&
+          Settings::instance().endorsementIntegration() &&
+          !Settings::instance().directInterface().value("wont_endorse_MO", false).toBool()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {

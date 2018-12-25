@@ -251,6 +251,7 @@ private:
   // remove invalid category-references from mods
   void fixCategories();
 
+  void createEndorseWidget();
   void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
@@ -600,6 +601,7 @@ private slots: // ui slots
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
+  void on_actionWontEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
