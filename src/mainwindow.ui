@@ -304,6 +304,9 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLCDNumber" name="activeModsCounter">
+                <property name="whatsThis">
+                 <string>This provides statistics about the mod list.  The total number of active mod is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                </property>
                 <property name="frameShadow">
                  <enum>QFrame::Sunken</enum>
                 </property>
@@ -916,14 +919,17 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item>
                    <widget class="QLCDNumber" name="activePluginsCounter">
+                    <property name="whatsThis">
+                     <string>This provides statistics about the plugin list.  The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                    </property>
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
                     <property name="digitCount">
-                     <number>3</number>
+                     <number>4</number>
                     </property>
                     <property name="segmentStyle">
-                     <enum>QLCDNumber::Outline</enum>
+                     <enum>QLCDNumber::Flat</enum>
                     </property>
                    </widget>
                   </item>

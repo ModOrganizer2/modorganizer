@@ -458,11 +458,8 @@ MainWindow::MainWindow(QSettings &initSettings
     // set the name of the widget to the name of the action to allow styling
     ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
   }
-  ui->activePluginsCounter->display(m_OrganizerCore.pluginList()->enabledCount());
-  ui->activeModsCounter->display((int)m_OrganizerCore.currentProfile()->getActiveMods().size());
- 
-  
-
+  emit updatePluginCount();
+  emit updateModCount();
 }
 
 
@@ -2193,7 +2190,7 @@ void MainWindow::directory_refreshed()
 
 void MainWindow::esplist_changed()
 {
-  ui->activePluginsCounter->display(m_OrganizerCore.pluginList()->enabledCount());
+  emit updatePluginCount();
 }
 
 void MainWindow::modorder_changed()
@@ -2453,7 +2450,7 @@ void MainWindow::restoreBackup_clicked()
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
-  ui->activeModsCounter->display((int)m_OrganizerCore.currentProfile()->getActiveMods().size());
+  emit updateModCount();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
@@ -3002,6 +2999,101 @@ void MainWindow::searchClear_activated()
     ui->downloadFilterEdit->clear();
     ui->downloadView->setFocus();
   }
+}
+
+void MainWindow::updateModCount()
+{
+  int activeCount = 0;
+  int backupCount = 0;
+  int foreignCount = 0;
+  int separatorCount = 0;
+  int regularCount = 0;
+
+  QStringList allMods = m_OrganizerCore.modList()->allMods();
+
+  auto hasFlag = [](std::vector<ModInfo::EFlag> flags, ModInfo::EFlag filter) {
+    return std::find(flags.begin(), flags.end(), filter) != flags.end();
+  };
+
+  for (QString mod : allMods) {
+    int modIndex = ModInfo::getIndex(mod);
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
+    std::vector<ModInfo::EFlag> modFlags = modInfo->getFlags();
+    for (auto flag : modFlags) {
+      switch (flag) {
+        case ModInfo::FLAG_BACKUP: backupCount++; break;
+        case ModInfo::FLAG_FOREIGN: foreignCount++; break;
+        case ModInfo::FLAG_SEPARATOR: separatorCount++; break;
+      }
+    }
+
+    if (!hasFlag(modFlags, ModInfo::FLAG_BACKUP) &&
+        !hasFlag(modFlags, ModInfo::FLAG_FOREIGN) &&
+        !hasFlag(modFlags, ModInfo::FLAG_SEPARATOR) &&
+        !hasFlag(modFlags, ModInfo::FLAG_OVERWRITE)) {
+      if (m_OrganizerCore.currentProfile()->modEnabled(modIndex))
+        activeCount++;
+      regularCount++;
+    }
+  }
+
+  ui->activeModsCounter->display(activeCount);
+  ui->activeModsCounter->setToolTip(tr("<table>"
+    "<tr><td>Active mods:&emsp;</td><td>%1 of %2</td></tr>"
+    "<tr><td>Unmanaged mods/DLC:&emsp;</td><td>%3</td></tr>"
+    "<tr><td>Mod backups:&emsp;</td><td>%4</td></tr>"
+    "<tr><td>Separators:&emsp;</td><td>%5</td></tr>"
+    "</table>")
+    .arg(activeCount)
+    .arg(regularCount)
+    .arg(foreignCount)
+    .arg(backupCount)
+    .arg(separatorCount)
+  );
+}
+
+void MainWindow::updatePluginCount()
+{
+  int activeMasterCount = 0;
+  int activeLightMasterCount = 0;
+  int activeRegularCount = 0;
+  int masterCount = 0;
+  int lightMasterCount = 0;
+  int regularCount = 0;
+
+  PluginList *list = m_OrganizerCore.pluginList();
+
+  for (QString plugin : list->pluginNames()) {
+    bool active = list->isEnabled(plugin);
+    if (list->isMaster(plugin)) {
+      masterCount++;
+      activeMasterCount += active;
+    } else if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
+      lightMasterCount++;
+      activeLightMasterCount += active;
+    } else {
+      regularCount++;
+      activeRegularCount += active;
+    }
+  }
+
+  int activeCount = activeMasterCount + activeLightMasterCount + activeRegularCount;
+  int totalCount = masterCount + lightMasterCount + regularCount;
+
+  ui->activePluginsCounter->display(activeCount);
+  ui->activePluginsCounter->setToolTip(tr("<table>"
+    "<tr><td>Active plugins:&emsp;</td><td>%1 of %2</td></tr>"
+    "<tr><td>Active ESMs:&emsp;</td><td>%3 of %4</td></tr>"
+    "<tr><td>Active ESLs:&emsp;</td><td>%5 of %6</td></tr>"
+    "<tr><td>Active ESPs:&emsp;</td><td>%7 of %8</td></tr>"
+    "<tr><td>Active ESMs+ESPs:&emsp;</td><td>%9 of %10</td></tr>"
+    "</table>")
+    .arg(activeCount).arg(totalCount)
+    .arg(activeMasterCount).arg(masterCount)
+    .arg(activeLightMasterCount).arg(lightMasterCount)
+    .arg(activeRegularCount).arg(regularCount)
+    .arg(activeMasterCount+activeRegularCount).arg(masterCount+regularCount)
+  );
 }
 
 void MainWindow::information_clicked()

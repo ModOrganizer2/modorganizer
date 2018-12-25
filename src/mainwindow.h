@@ -586,6 +586,9 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
+  void updateModCount();
+  void updatePluginCount();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
