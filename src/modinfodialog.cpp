@@ -171,8 +171,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
-  
 
+  ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
   ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
                              (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 

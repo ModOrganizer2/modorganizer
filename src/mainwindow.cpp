@@ -4270,7 +4270,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
 
         menu->addSeparator();
 
-        if (info->getNexusID() > 0) {
+        if (info->getNexusID() > 0 && Settings::instance().endorsementIntegration()) {
           switch (info->endorsedState()) {
             case ModInfo::ENDORSED_TRUE: {
               menu->addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
@@ -5143,7 +5143,7 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
     if (game
           && result["id"].toInt() == game->nexusModOrganizerID()
           && result["game_id"].toInt() == game->nexusGameID()) {
-      if (!result["voted_by_user"].toBool()) {
+      if (!result["voted_by_user"].toBool() && Settings::instance().endorsementIntegration()) {
         ui->actionEndorseMO->setVisible(true);
       }
     } else {
@@ -5167,7 +5167,8 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         (*iter)->setNewestVersion(result["version"].toString());
         (*iter)->setNexusDescription(result["description"].toString());
         if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn() &&
-            result.contains("voted_by_user")) {
+            result.contains("voted_by_user") &&
+            Settings::instance().endorsementIntegration()) {
           // don't use endorsement info if we're not logged in or if the response doesn't contain it
           (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
         }
