@@ -2607,16 +2607,49 @@ void MainWindow::endorseMod(ModInfo::Ptr mod)
 
 void MainWindow::endorse_clicked()
 {
-  endorseMod(ModInfo::getByIndex(m_ContextRow));
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+      MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
+      for (QModelIndex idx : selection->selectedRows()) {
+        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
+      }
+    }
+    else {
+      QString username, password;
+      if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+        MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
+        for (QModelIndex idx : selection->selectedRows()) {
+          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+          m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, modInfo));
+        }
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      } else {
+        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
+        return;
+      }
+    }
+  }
+  else {
+    endorseMod(ModInfo::getByIndex(m_ContextRow));
+  }
 }
 
 void MainWindow::dontendorse_clicked()
 {
-  ModInfo::getByIndex(m_ContextRow)->setNeverEndorse();
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->setNeverEndorse();
+    }
+  }
+  else {
+    ModInfo::getByIndex(m_ContextRow)->setNeverEndorse();
+  }
 }
 
 
-void MainWindow::unendorse_clicked()
+void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
   QString username, password;
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
@@ -2628,6 +2661,37 @@ void MainWindow::unendorse_clicked()
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
     }
+  }
+}
+
+
+void MainWindow::unendorse_clicked()
+{
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+      MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
+      for (QModelIndex idx : selection->selectedRows()) {
+        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
+      }
+    }
+    else {
+      QString username, password;
+      if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+        MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
+        for (QModelIndex idx : selection->selectedRows()) {
+          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+          m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::unendorseMod, this, modInfo));
+        }
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+      } else {
+        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
+        return;
+      }
+    }
+  }
+  else {
+    unendorseMod(ModInfo::getByIndex(m_ContextRow));
   }
 }
 

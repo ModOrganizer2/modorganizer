@@ -515,6 +515,7 @@ private slots:
 
   void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
+  void unendorseMod(ModInfo::Ptr mod);
   void cancelModListEditor();
 
   void lockESPIndex();
