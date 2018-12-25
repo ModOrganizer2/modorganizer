@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Windows.h>
 
 #include <QDir>
+#include <QApplication>
 
 using MOBase::reportError;
 
@@ -33,7 +34,7 @@ using MOBase::reportError;
 namespace Helper {
 
 
-static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
+static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine, BOOL async)
 {
   wchar_t fileName[MAX_PATH];
   _snwprintf(fileName, MAX_PATH, L"%ls\\helper.exe", moDirectory);
@@ -51,7 +52,16 @@ static bool helperExec(LPCWSTR moDirectory, LPCWSTR commandLine)
 
   ::ShellExecuteExW(&execInfo);
 
-  if ((execInfo.hProcess == 0) || (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0)) {
+  if (execInfo.hProcess == 0) {
+    reportError(QObject::tr("helper failed"));
+    return false;
+  }
+
+  if (async) {
+    return true;
+  }
+
+  if (::WaitForSingleObject(execInfo.hProcess, INFINITE) != WAIT_OBJECT_0) {
     reportError(QObject::tr("helper failed"));
     return false;
   }
@@ -76,7 +86,7 @@ bool init(const std::wstring &moPath, const std::wstring &dataPath)
   _snwprintf(commandLine, 32768, L"init \"%ls\" \"%ls\"",
              dataPath.c_str(), userName);
 
-  bool res = helperExec(moPath.c_str(), commandLine);
+  bool res = helperExec(moPath.c_str(), commandLine, FALSE);
   delete [] commandLine;
 
   return res;
@@ -89,7 +99,23 @@ bool backdateBSAs(const std::wstring &moPath, const std::wstring &dataPath)
   _snwprintf(commandLine, 32768, L"backdateBSA \"%ls\"",
              dataPath.c_str());
 
-  bool res = helperExec(moPath.c_str(), commandLine);
+  bool res = helperExec(moPath.c_str(), commandLine, FALSE);
+  delete [] commandLine;
+
+  return res;
+}
+
+
+bool adminLaunch(const std::wstring &moPath, const std::wstring &moFile, const std::wstring &workingDir)
+{
+  wchar_t *commandLine = new wchar_t[32768];
+  _snwprintf(commandLine, 32768, L"adminLaunch %d \"%ls\" \"%ls\"",
+             ::GetCurrentProcessId(),
+             moFile.c_str(),
+             workingDir.c_str()
+             );
+
+  bool res = helperExec(moPath.c_str(), commandLine, TRUE);
   delete [] commandLine;
 
   return res;
