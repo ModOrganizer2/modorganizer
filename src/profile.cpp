@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <safewritefile.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
+#include "util.h"
+#include "registry.h"
 
 #include <QApplication>
 #include <QFile>                                   // for QFile
@@ -279,7 +281,7 @@ void Profile::createTweakedIniFile()
   mergeTweak(getProfileTweaks(), tweakedIni);
 
   bool error = false;
-  if (!::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", ToWString(tweakedIni).c_str())) {
+  if (!MOBase::WriteRegistryValue(L"Archive", L"bInvalidateOlderFiles", L"1", ToWString(tweakedIni).c_str())) {
     error = true;
   }
 
@@ -681,7 +683,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
        //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                  nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
-      ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),
+      MOBase::WriteRegistryValue(iter->c_str(), keyIter->c_str(),
                                    buffer.data(), tweakedIniW.c_str());
     }
   }
