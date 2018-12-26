@@ -367,6 +367,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(ui->modList->selectionModel(), SIGNAL(currentChanged(QModelIndex,QModelIndex)), this, SLOT(modlistSelectionChanged(QModelIndex,QModelIndex)));
   connect(m_ModListSortProxy, SIGNAL(filterActive(bool)), this, SLOT(modFilterActive(bool)));
+  connect(m_ModListSortProxy, SIGNAL(layoutChanged()), this, SLOT(updateModCount()));
   connect(ui->modFilterEdit, SIGNAL(textChanged(QString)), m_ModListSortProxy, SLOT(updateFilter(QString)));
 
   connect(ui->espFilterEdit, SIGNAL(textChanged(QString)), m_PluginListSortProxy, SLOT(updateFilter(QString)));
@@ -3110,10 +3111,15 @@ void MainWindow::searchClear_activated()
 void MainWindow::updateModCount()
 {
   int activeCount = 0;
+  int visActiveCount = 0;
   int backupCount = 0;
+  int visBackupCount = 0;
   int foreignCount = 0;
+  int visForeignCount = 0;
   int separatorCount = 0;
+  int visSeparatorCount = 0;
   int regularCount = 0;
+  int visRegularCount = 0;
 
   QStringList allMods = m_OrganizerCore.modList()->allMods();
 
@@ -3121,15 +3127,29 @@ void MainWindow::updateModCount()
     return std::find(flags.begin(), flags.end(), filter) != flags.end();
   };
 
+  bool isEnabled;
+  bool isVisible;
   for (QString mod : allMods) {
     int modIndex = ModInfo::getIndex(mod);
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
     std::vector<ModInfo::EFlag> modFlags = modInfo->getFlags();
+    isEnabled = m_OrganizerCore.currentProfile()->modEnabled(modIndex);
+    isVisible = m_ModListSortProxy->filterMatchesMod(modInfo, isEnabled);
+
     for (auto flag : modFlags) {
       switch (flag) {
-        case ModInfo::FLAG_BACKUP: backupCount++; break;
-        case ModInfo::FLAG_FOREIGN: foreignCount++; break;
-        case ModInfo::FLAG_SEPARATOR: separatorCount++; break;
+      case ModInfo::FLAG_BACKUP: backupCount++;
+        if (isVisible)
+          visBackupCount++;
+        break;
+      case ModInfo::FLAG_FOREIGN: foreignCount++;
+        if (isVisible)
+          visForeignCount++;
+        break;
+      case ModInfo::FLAG_SEPARATOR: separatorCount++;
+        if (isVisible)
+          visSeparatorCount++;
+        break;
       }
     }
 
@@ -3137,24 +3157,35 @@ void MainWindow::updateModCount()
         !hasFlag(modFlags, ModInfo::FLAG_FOREIGN) &&
         !hasFlag(modFlags, ModInfo::FLAG_SEPARATOR) &&
         !hasFlag(modFlags, ModInfo::FLAG_OVERWRITE)) {
-      if (m_OrganizerCore.currentProfile()->modEnabled(modIndex))
+      if (isEnabled) {
         activeCount++;
+        if (isVisible)
+          visActiveCount++;
+      }
+      if (isVisible)
+        visRegularCount++;
       regularCount++;
     }
   }
 
   ui->activeModsCounter->display(activeCount);
-  ui->activeModsCounter->setToolTip(tr("<table>"
-    "<tr><td>Active mods:&emsp;</td><td>%1 of %2</td></tr>"
-    "<tr><td>Unmanaged mods/DLC:&emsp;</td><td>%3</td></tr>"
-    "<tr><td>Mod backups:&emsp;</td><td>%4</td></tr>"
-    "<tr><td>Separators:&emsp;</td><td>%5</td></tr>"
+  ui->activeModsCounter->setToolTip(tr("<table cellspacing=\"5\">"
+    "<tr><th>Type</th><th>All</th><th>Visible</th>"
+    "<tr><td>Enabled mods:&emsp;</td><td align=right>%1 / %2</td><td align=right>%3 / %4</td></tr>"
+    "<tr><td>Unmanaged/DLCs:&emsp;</td><td align=right>%5</td><td align=right>%6</td></tr>"
+    "<tr><td>Mod backups:&emsp;</td><td align=right>%7</td><td align=right>%8</td></tr>"
+    "<tr><td>Separators:&emsp;</td><td align=right>%9</td><td align=right>%10</td></tr>"
     "</table>")
     .arg(activeCount)
     .arg(regularCount)
+    .arg(visActiveCount)
+    .arg(visRegularCount)
     .arg(foreignCount)
+    .arg(visForeignCount)
     .arg(backupCount)
+    .arg(visBackupCount)
     .arg(separatorCount)
+    .arg(visSeparatorCount)
   );
 }
 
@@ -3187,12 +3218,13 @@ void MainWindow::updatePluginCount()
   int totalCount = masterCount + lightMasterCount + regularCount;
 
   ui->activePluginsCounter->display(activeCount);
-  ui->activePluginsCounter->setToolTip(tr("<table>"
-    "<tr><td>Active plugins:&emsp;</td><td>%1 of %2</td></tr>"
-    "<tr><td>Active ESMs:&emsp;</td><td>%3 of %4</td></tr>"
-    "<tr><td>Active ESLs:&emsp;</td><td>%5 of %6</td></tr>"
-    "<tr><td>Active ESPs:&emsp;</td><td>%7 of %8</td></tr>"
-    "<tr><td>Active ESMs+ESPs:&emsp;</td><td>%9 of %10</td></tr>"
+  ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"4\">"
+    "<tr><th>Type</th><th>Active</th><th>Total</th></tr>"
+    "<tr><td>Active plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"
+    "<tr><td>Active ESMs:</td><td align=right>%3</td><td align=right>%4</td></tr>"
+    "<tr><td>Active ESPs:</td><td align=right>%7</td><td align=right>%8</td></tr>"
+    "<tr><td>Active ESMs+ESPs:</td><td align=right>%9</td><td align=right>%10</td></tr>"
+    "<tr><td>Active ESLs:</td><td align=right>%5</td><td align=right>%6</td></tr>"
     "</table>")
     .arg(activeCount).arg(totalCount)
     .arg(activeMasterCount).arg(masterCount)
