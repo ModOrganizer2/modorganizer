@@ -304,6 +304,12 @@ p, li { white-space: pre-wrap; }
               </item>
               <item>
                <widget class="QLCDNumber" name="activeModsCounter">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>26</height>
+                 </size>
+                </property>
                 <property name="whatsThis">
                  <string>This provides statistics about the mod list.  The total number of active mod is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
                 </property>
@@ -919,6 +925,12 @@ p, li { white-space: pre-wrap; }
                   </item>
                   <item>
                    <widget class="QLCDNumber" name="activePluginsCounter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>26</height>
+                     </size>
+                    </property>
                     <property name="whatsThis">
                      <string>This provides statistics about the plugin list.  The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
                     </property>
