@@ -303,7 +303,7 @@ p, li { white-space: pre-wrap; }
                </widget>
               </item>
               <item>
-               <widget class="QLCDNumber" name="activeModsCounter">
+               <widget class="LCDNumber" name="activeModsCounter">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -924,7 +924,7 @@ p, li { white-space: pre-wrap; }
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="activePluginsCounter">
+                   <widget class="LCDNumber" name="activePluginsCounter">
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
@@ -1677,6 +1677,11 @@ Right now this has very limited functionality</string>
    <class>PluginListView</class>
    <extends>QTreeView</extends>
    <header>pluginlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LCDNumber</class>
+   <extends>QLCDNumber</extends>
+   <header>lcdnumber.h</header>
   </customwidget>
  </customwidgets>
  <resources>
