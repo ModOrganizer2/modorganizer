@@ -3175,11 +3175,7 @@ void MainWindow::updateModCount()
     }
   }
 
-  if (m_ModListSortProxy->isFilterActive()) {
-    ui->activeModsCounter->display(visActiveCount);
-  } else {
-    ui->activeModsCounter->display(activeCount);
-  }
+  ui->activeModsCounter->display(visActiveCount);
   ui->activeModsCounter->setToolTip(tr("<table cellspacing=\"5\">"
     "<tr><th>Type</th><th>All</th><th>Visible</th>"
     "<tr><td>Enabled mods:&emsp;</td><td align=right>%1 / %2</td><td align=right>%3 / %4</td></tr>"
@@ -3215,7 +3211,7 @@ void MainWindow::updatePluginCount()
 
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
-    bool visible = plugin.contains(filter, Qt::CaseInsensitive);
+    bool visible = m_PluginListSortProxy->filterMatchesPlugin(plugin);
     if (list->isMaster(plugin)) {
       masterCount++;
       activeMasterCount += active;
@@ -3234,11 +3230,7 @@ void MainWindow::updatePluginCount()
   int activeCount = activeMasterCount + activeLightMasterCount + activeRegularCount;
   int totalCount = masterCount + lightMasterCount + regularCount;
 
-  if (!filter.isEmpty()) {
-    ui->activePluginsCounter->display(activeVisibleCount);
-  } else {
-    ui->activePluginsCounter->display(activeCount);
-  }
+  ui->activePluginsCounter->display(activeVisibleCount);
   ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"4\">"
     "<tr><th>Type</th><th>Active</th><th>Total</th></tr>"
     "<tr><td>Active plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"

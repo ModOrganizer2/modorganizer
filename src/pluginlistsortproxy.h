@@ -46,6 +46,8 @@ public:
 
   virtual bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 
+  bool filterMatchesPlugin(const QString &plugin) const;
+
 public slots:
 
   void updateFilter(const QString &filter);
