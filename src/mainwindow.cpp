@@ -795,6 +795,7 @@ void MainWindow::createHelpWidget()
 
 void MainWindow::modFilterActive(bool filterActive)
 {
+  ui->clearFiltersButton->setVisible(filterActive);
   if (filterActive) {
 //    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
@@ -4400,8 +4401,6 @@ void MainWindow::on_categoriesList_itemSelectionChanged()
   m_ModListSortProxy->setCategoryFilter(categories);
   m_ModListSortProxy->setContentFilter(content);
   ui->clickBlankButton->setEnabled(categories.size() > 0 || content.size() >0);
-  //ui->clearFiltersButton->setStyleSheet("border:5px solid #ff0000;");
-  ui->clearFiltersButton->setVisible(categories.size() > 0 || content.size() > 0);
 
   if (indices.count() == 0) {
     ui->currentCategoryLabel->setText(QString("(%1)").arg(tr("<All>")));
@@ -6190,6 +6189,7 @@ void MainWindow::on_clickBlankButton_clicked()
 
 void MainWindow::on_clearFiltersButton_clicked()
 {
+  ui->modFilterEdit->clear();
 	deselectFilters();
 }
 
