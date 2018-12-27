@@ -799,10 +799,13 @@ void MainWindow::modFilterActive(bool filterActive)
   if (filterActive) {
 //    m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
+    ui->activeModsCounter->setStyleSheet("QLCDNumber { border: 2px ridge #f00; }");
   } else if (ui->groupCombo->currentIndex() != 0) {
     ui->modList->setStyleSheet("QTreeView { border: 2px ridge #337733; }");
+    ui->activeModsCounter->setStyleSheet("");
   } else {
     ui->modList->setStyleSheet("");
+    ui->activeModsCounter->setStyleSheet("");
   }
 }
 
@@ -810,9 +813,12 @@ void MainWindow::espFilterChanged(const QString &filter)
 {
   if (!filter.isEmpty()) {
     ui->espList->setStyleSheet("QTreeView { border: 2px ridge #f00; }");
+    ui->activePluginsCounter->setStyleSheet("QLCDNumber { border: 2px ridge #f00; }");
   } else {
     ui->espList->setStyleSheet("");
+    ui->activePluginsCounter->setStyleSheet("");
   }
+  updatePluginCount();
 }
 
 void MainWindow::downloadFilterChanged(const QString &filter)
@@ -3169,7 +3175,11 @@ void MainWindow::updateModCount()
     }
   }
 
-  ui->activeModsCounter->display(activeCount);
+  if (m_ModListSortProxy->isFilterActive()) {
+    ui->activeModsCounter->display(visActiveCount);
+  } else {
+    ui->activeModsCounter->display(activeCount);
+  }
   ui->activeModsCounter->setToolTip(tr("<table cellspacing=\"5\">"
     "<tr><th>Type</th><th>All</th><th>Visible</th>"
     "<tr><td>Enabled mods:&emsp;</td><td align=right>%1 / %2</td><td align=right>%3 / %4</td></tr>"
@@ -3198,27 +3208,37 @@ void MainWindow::updatePluginCount()
   int masterCount = 0;
   int lightMasterCount = 0;
   int regularCount = 0;
+  int activeVisibleCount = 0;
 
   PluginList *list = m_OrganizerCore.pluginList();
+  QString filter = ui->espFilterEdit->text();
 
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
+    bool visible = plugin.contains(filter, Qt::CaseInsensitive);
     if (list->isMaster(plugin)) {
       masterCount++;
       activeMasterCount += active;
+      activeVisibleCount += visible && active;
     } else if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
+      activeVisibleCount += visible && active;
     } else {
       regularCount++;
       activeRegularCount += active;
+      activeVisibleCount += visible && active;
     }
   }
 
   int activeCount = activeMasterCount + activeLightMasterCount + activeRegularCount;
   int totalCount = masterCount + lightMasterCount + regularCount;
 
-  ui->activePluginsCounter->display(activeCount);
+  if (!filter.isEmpty()) {
+    ui->activePluginsCounter->display(activeVisibleCount);
+  } else {
+    ui->activePluginsCounter->display(activeCount);
+  }
   ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"4\">"
     "<tr><th>Type</th><th>Active</th><th>Total</th></tr>"
     "<tr><td>Active plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"
