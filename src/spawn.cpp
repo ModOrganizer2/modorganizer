@@ -155,7 +155,7 @@ HANDLE startBinary(const QFileInfo &binary,
                                     "\"%1\"\n"
                                     "can be installed to work without elevation.\n\n"
                                     "Restart Mod Organizer as an elevated process?\n"
-                                    "You will be asked if you want to allow helper.exe to make changes to the system."
+                                    "You will be asked if you want to allow helper.exe to make changes to the system. "
                                     "You will need to relaunch the process above manually.").arg(
                                         QDir::toNativeSeparators(binary.absoluteFilePath())),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {

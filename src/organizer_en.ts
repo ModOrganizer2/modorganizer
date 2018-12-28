@@ -2089,6 +2089,13 @@ Error: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="mainwindow.cpp" line="722"/>
+        <location filename="mainwindow.cpp" line="4345"/>
+        <location filename="mainwindow.cpp" line="4349"/>
+        <source>Endorse</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="mainwindow.cpp" line="726"/>
         <source>Won&apos;t Endorse</source>
         <translation type="unfinished"></translation>
@@ -2813,13 +2820,6 @@ You can also use online editors and converters instead.</source>
     <message>
         <location filename="mainwindow.cpp" line="4342"/>
         <source>Un-Endorse</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.cpp" line="722"/>
-        <location filename="mainwindow.cpp" line="4345"/>
-        <location filename="mainwindow.cpp" line="4349"/>
-        <source>Endorse</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5703,7 +5703,7 @@ This is a potential security risk so I highly advice you to investigate if
 can be installed to work without elevation.
 
 Restart Mod Organizer as an elevated process?
-You will be asked if you want to allow helper.exe to make changes to the system.You will need to relaunch the process above manually.</source>
+You will be asked if you want to allow helper.exe to make changes to the system. You will need to relaunch the process above manually.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
