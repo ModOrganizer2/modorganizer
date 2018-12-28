@@ -181,15 +181,16 @@ void PluginList::refresh(const QString &profileName
     }
     QString filename = ToQString(current->getName());
 
-    availablePlugins.append(filename.toLower());
-
-    if (m_ESPsByName.find(filename.toLower()) != m_ESPsByName.end()) {
-      continue;
-    }
-
     QString extension = filename.right(3).toLower();
 
     if ((extension == "esp") || (extension == "esm") || (extension == "esl")) {
+
+      availablePlugins.append(filename.toLower());
+
+      if (m_ESPsByName.find(filename.toLower()) != m_ESPsByName.end()) {
+        continue;
+      }
+
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
                             std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
 
@@ -202,10 +203,12 @@ void PluginList::refresh(const QString &profileName
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
 
         std::set<QString> loadedArchives;
-        QString originPath = QString::fromWCharArray(origin.getPath().c_str());
-        QDir dir(QDir::toNativeSeparators(originPath));
-        for (QString filename : dir.entryList(QStringList() << QFileInfo(filename).baseName() + "*.bsa" << QFileInfo(filename).baseName() + "*.ba2")) {
-          loadedArchives.insert(filename);
+        for (FileEntry::Ptr archiveCandidate : files) {
+          QString candidateName = ToQString(archiveCandidate->getName());
+          if (candidateName.contains(QRegExp(QFileInfo(filename).baseName() + "*.bsa", Qt::CaseInsensitive, QRegExp::Wildcard)) ||
+              candidateName.contains(QRegExp(QFileInfo(filename).baseName() + "*.ba2", Qt::CaseInsensitive, QRegExp::Wildcard))) {
+            loadedArchives.insert(candidateName);
+          }
         }
 
         QString originName = ToQString(origin.getName());
