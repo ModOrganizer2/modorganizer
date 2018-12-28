@@ -4679,11 +4679,9 @@ void MainWindow::installTranslator(const QString &name)
   QTranslator *translator = new QTranslator(this);
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
-    if ((m_CurrentLanguage != "en-US")
-        && (m_CurrentLanguage != "en_US")
-        && (m_CurrentLanguage != "en-GB")) {
+    if (m_CurrentLanguage.compare("en", Qt::CaseInsensitive)) {
       qDebug("localization file %s not found", qPrintable(fileName));
-    } // we don't actually expect localization files for english
+    } // we don't actually expect localization files for English
   }
 
   qApp->installTranslator(translator);
