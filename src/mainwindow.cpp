@@ -724,7 +724,7 @@ void MainWindow::createEndorseWidget()
   buttonMenu->addAction(endorseAction);
 
   QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
-  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(on_actionWontEndorseMO_triggered()));
+  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(wontEndorse()));
   buttonMenu->addAction(wontEndorseAction);
 }
 
@@ -5080,6 +5080,13 @@ void MainWindow::notEndorsedYet()
 }
 
 
+void MainWindow::wontEndorse()
+{
+  Settings::instance().directInterface().setValue("wont_endorse_MO", true);
+  ui->actionEndorseMO->setVisible(false);
+}
+
+
 void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
 {
   QTreeWidget *dataTree = findChild<QTreeWidget*>("dataTree");
@@ -5138,13 +5145,6 @@ void MainWindow::on_actionEndorseMO_triggered()
     NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
       game->gameShortName(), game->nexusModOrganizerID(), true, this, QVariant(), QString());
   }
-}
-
-
-void MainWindow::on_actionWontEndorseMO_triggered()
-{
-  Settings::instance().directInterface().setValue("wont_endorse_MO", true);
-  ui->actionEndorseMO->setVisible(false);
 }
 
 
