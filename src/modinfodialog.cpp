@@ -115,7 +115,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->commentsEdit->setText(modInfo->comments());
   ui->notesEdit->setText(modInfo->notes());
 
-  ui->descriptionView->setPage(new DescriptionPage);
+  ui->descriptionView->setPage(new DescriptionPage());
 
   connect(&m_ThumbnailMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(thumbnailClickedSignal(const QString&)));
   connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
@@ -171,10 +171,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
-  if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
-    activateNexusTab();
-  }
 
+  ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
   ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
                              (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 
@@ -184,6 +182,10 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       ui->tabWidget->setCurrentIndex(i);
       break;
     }
+  }
+
+  if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
+    activateNexusTab();
   }
 }
 
@@ -936,7 +938,7 @@ void ModInfoDialog::activateNexusTab()
 
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-  if (m_RealTabPos[index] == TAB_NEXUS) {
+  if (index == TAB_NEXUS || m_RealTabPos[index] == TAB_NEXUS) {
     activateNexusTab();
   }
 }

@@ -271,6 +271,11 @@ public:
   bool useProxy() const;
 
   /**
+   * @return true if endorsement integration is enabled
+   */
+  bool endorsementIntegration() const;
+
+  /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
   bool displayForeign() const;
@@ -475,6 +480,7 @@ private:
     QCheckBox *m_proxyBox;
     QListWidget *m_knownServersList;
     QListWidget *m_preferredServersList;
+    QCheckBox *m_endorsementBox;
   };
 
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */

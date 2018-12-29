@@ -327,10 +327,10 @@ void SelfUpdater::installUpdate()
   const QString mopath
       = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
 
-  const std::wstring params = L"/DIR=" + qApp->applicationDirPath().toStdWString();
+  std::wstring parameters = ToWString("/DIR=\"" + qApp->applicationDirPath() + "\" ");
 
   HINSTANCE res = ::ShellExecuteW(
-      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), params.c_str(),
+      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), parameters.c_str(),
       nullptr, SW_SHOW);
 
   if (res > (HINSTANCE)32) {

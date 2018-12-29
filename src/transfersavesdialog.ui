@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Transfer Savegames</string>
+   <string>Transfer Save Games</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>

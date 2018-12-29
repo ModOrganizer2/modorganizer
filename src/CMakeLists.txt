@@ -92,6 +92,7 @@ SET(organizer_SRCS
     eventfilter.cpp
     moshortcut.cpp
     listdialog.cpp
+    lcdnumber.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -187,6 +188,7 @@ SET(organizer_HDRS
     descriptionpage.h
     moshortcut.h
     listdialog.h
+    lcdnumber.h
 
     shared/windows_error.h
     shared/error_report.h

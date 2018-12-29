@@ -459,6 +459,11 @@ bool Settings::useProxy() const
   return m_Settings.value("Settings/use_proxy", false).toBool();
 }
 
+bool Settings::endorsementIntegration() const
+{
+  return m_Settings.value("Settings/endorsement_integration", true).toBool();
+}
+
 bool Settings::displayForeign() const
 {
   return m_Settings.value("Settings/display_foreign", true).toBool();
@@ -946,6 +951,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
   , m_preferredServersList(
         dialog.findChild<QListWidget *>("preferredServersList"))
+  , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
 {
   if (parent->automaticLoginEnabled()) {
     m_loginCheckBox->setChecked(true);
@@ -955,6 +961,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
 
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
+  m_endorsementBox->setChecked(parent->endorsementIntegration());
 
   // display server preferences
   m_Settings.beginGroup("Servers");
@@ -996,6 +1003,7 @@ void Settings::NexusTab::update()
   }
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
+  m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
 
   // store server preference
   m_Settings.beginGroup("Servers");

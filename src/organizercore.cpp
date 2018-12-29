@@ -560,6 +560,10 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
             SLOT(fileMoved(QString, QString, QString)));
     connect(&m_ModList, SIGNAL(modorder_changed()), widget,
             SLOT(modorder_changed()));
+    connect(&m_PluginList, SIGNAL(writePluginsList()), widget,
+      SLOT(esplist_changed()));
+    connect(&m_PluginList, SIGNAL(esplist_changed()), widget,
+      SLOT(esplist_changed()));
     connect(&m_DownloadManager, SIGNAL(showMessage(QString)), widget,
             SLOT(showMessage(QString)));
   }
@@ -1093,8 +1097,9 @@ QString OrganizerCore::resolvePath(const QString &fileName) const
 QStringList OrganizerCore::listDirectories(const QString &directoryName) const
 {
   QStringList result;
-  DirectoryEntry *dir = m_DirectoryStructure->findSubDirectoryRecursive(
-      ToWString(directoryName));
+  DirectoryEntry *dir = m_DirectoryStructure;
+  if (!directoryName.isEmpty())
+    dir = dir->findSubDirectoryRecursive(ToWString(directoryName));
   if (dir != nullptr) {
     std::vector<DirectoryEntry *>::iterator current, end;
     dir->getSubDirectories(current, end);
@@ -1110,8 +1115,9 @@ QStringList OrganizerCore::findFiles(
     const std::function<bool(const QString &)> &filter) const
 {
   QStringList result;
-  DirectoryEntry *dir
-      = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
+  DirectoryEntry *dir = m_DirectoryStructure;
+  if (!path.isEmpty())
+    dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
     std::vector<FileEntry::Ptr> files = dir->getFiles();
     foreach (FileEntry::Ptr file, files) {
@@ -1150,8 +1156,9 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
     const
 {
   QList<IOrganizer::FileInfo> result;
-  DirectoryEntry *dir
-      = m_DirectoryStructure->findSubDirectoryRecursive(ToWString(path));
+  DirectoryEntry *dir = m_DirectoryStructure;
+  if (!path.isEmpty())
+    dir = dir->findSubDirectoryRecursive(ToWString(path));
   if (dir != nullptr) {
     std::vector<FileEntry::Ptr> files = dir->getFiles();
     foreach (FileEntry::Ptr file, files) {

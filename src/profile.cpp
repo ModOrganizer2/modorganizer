@@ -29,6 +29,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <safewritefile.h>
 #include <bsainvalidation.h>
 #include <dataarchives.h>
+#include "util.h"
+#include "registry.h"
 
 #include <QApplication>
 #include <QFile>                                   // for QFile
@@ -85,7 +87,6 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   m_Directory = QDir(fullPath);
   m_Settings = new QSettings(m_Directory.absoluteFilePath("settings.ini"),
     QSettings::IniFormat);
-  findProfileSettings();
 
   try {
     // create files. Needs to happen after m_Directory was set!
@@ -101,6 +102,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
     }
 
     gamePlugin->initializeProfile(fullPath, settings);
+    findProfileSettings();
   } catch (...) {
     // clean up in case of an error
     shellDelete(QStringList(profileBase.absoluteFilePath(fixedName)));
@@ -171,10 +173,8 @@ void Profile::findProfileSettings()
     if (m_Directory.exists(backupFile)) {
       storeSetting("LocalSettings", false);
       m_Directory.rename(backupFile, getIniFileName());
-    } else if (m_Directory.exists(getIniFileName())) {
-      storeSetting("LocalSettings", true);
     } else {
-      storeSetting("LocalSettings", false);
+      storeSetting("LocalSettings", true);
     }
   }
 
@@ -281,7 +281,7 @@ void Profile::createTweakedIniFile()
   mergeTweak(getProfileTweaks(), tweakedIni);
 
   bool error = false;
-  if (!::WritePrivateProfileStringW(L"Archive", L"bInvalidateOlderFiles", L"1", ToWString(tweakedIni).c_str())) {
+  if (!MOBase::WriteRegistryValue(L"Archive", L"bInvalidateOlderFiles", L"1", ToWString(tweakedIni).c_str())) {
     error = true;
   }
 
@@ -683,7 +683,7 @@ void Profile::mergeTweak(const QString &tweakName, const QString &tweakedIni) co
        //TODO this treats everything as strings but how could I differentiate the type?
       ::GetPrivateProfileStringW(iter->c_str(), keyIter->c_str(),
                                  nullptr, buffer.data(), bufferSize, ToWString(tweakName).c_str());
-      ::WritePrivateProfileStringW(iter->c_str(), keyIter->c_str(),
+      MOBase::WriteRegistryValue(iter->c_str(), keyIter->c_str(),
                                    buffer.data(), tweakedIniW.c_str());
     }
   }
@@ -750,9 +750,9 @@ bool Profile::enableLocalSaves(bool enable)
     }
   } else  {
     QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete savegames?"),
-      tr("Do you want to delete local savegames? (If you select \"No\", the "
-        "save games will show up again if you re-enable local savegames)"),
+      QApplication::activeModalWidget(), tr("Delete profile-specific save games?"),
+      tr("Do you want to delete the profile-specific save games? (If you select \"No\", the "
+        "save games will show up again if you re-enable profile-specific save games)"),
       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
       QMessageBox::Cancel);
     if (res == QMessageBox::Yes) {
@@ -770,11 +770,50 @@ bool Profile::enableLocalSaves(bool enable)
 
 bool Profile::localSettingsEnabled() const
 {
-  return setting("LocalSettings", false).toBool();
+  bool enabled = setting("LocalSettings", false).toBool();
+  if (enabled) {
+    bool reinitConfig = false;
+    for (QString file : m_GamePlugin->iniFiles()) {
+      if (!QFile::exists(m_Directory.filePath(file))) {
+        qWarning("missing %s in %s", qPrintable(file), qPrintable(m_Directory.path()));
+        reinitConfig = true;
+      }
+    }
+    if (reinitConfig) {
+      QMessageBox::StandardButton res = QMessageBox::warning(
+        QApplication::activeModalWidget(), tr("Missing profile-specific game INI files!"),
+        tr("Some of your profile-specific game INI files were missing.  They will now be copied "
+           "from the vanilla game folder.  You might want double-check your settings.")
+      );
+      m_GamePlugin->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
+    }
+  }
+  return enabled;
 }
 
 bool Profile::enableLocalSettings(bool enable)
 {
+  if (enable) {
+    m_GamePlugin->initializeProfile(m_Directory.absolutePath(), IPluginGame::CONFIGURATION);
+  } else {
+    QMessageBox::StandardButton res = QMessageBox::question(
+      QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
+      tr("Do you want to delete the profile-specific game INI files? (If you select \"No\", the "
+        "INI files will be used again if you re-enable profile-specific game INI files.)"),
+      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+      QMessageBox::Cancel);
+    if (res == QMessageBox::Yes) {
+      QStringList filesToDelete;
+      for (QString file : m_GamePlugin->iniFiles()) {
+        filesToDelete << m_Directory.absoluteFilePath(file);
+      }
+      shellDelete(filesToDelete, true);
+    } else if (res == QMessageBox::No) {
+      // No action
+    } else {
+      return false;
+    }
+  }
   storeSetting("LocalSettings", enable);
   return true;
 }

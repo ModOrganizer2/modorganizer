@@ -179,7 +179,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -292,6 +292,35 @@ p, li { white-space: pre-wrap; }
                 <property name="icon">
                  <iconset resource="resources.qrc">
                   <normaloff>:/MO/gui/backup</normaloff>:/MO/gui/backup</iconset>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="activeModslabel">
+                <property name="text">
+                 <string>Active:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="LCDNumber" name="activeModsCounter">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>26</height>
+                 </size>
+                </property>
+                <property name="whatsThis">
+                 <string>This provides statistics about the mod list.  The total number of active mod is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+                <property name="digitCount">
+                 <number>5</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::Flat</enum>
                 </property>
                </widget>
               </item>
@@ -448,7 +477,7 @@ p, li { white-space: pre-wrap; }
                <bool>false</bool>
               </property>
               <attribute name="headerDefaultSectionSize">
-               <number>20</number>
+               <number>35</number>
               </attribute>
               <attribute name="headerShowSortIndicator" stdset="0">
                <bool>true</bool>
@@ -612,7 +641,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="placeholderText">
-                 <string>Namefilter</string>
+                 <string>Filter</string>
                 </property>
                </widget>
               </item>
@@ -890,6 +919,35 @@ p, li { white-space: pre-wrap; }
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QLabel" name="activePluginsLabel">
+                    <property name="text">
+                     <string>Active:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="LCDNumber" name="activePluginsCounter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>26</height>
+                     </size>
+                    </property>
+                    <property name="whatsThis">
+                     <string>This provides statistics about the plugin list.  The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                    </property>
+                    <property name="frameShadow">
+                     <enum>QFrame::Sunken</enum>
+                    </property>
+                    <property name="digitCount">
+                     <number>4</number>
+                    </property>
+                    <property name="segmentStyle">
+                     <enum>QLCDNumber::Flat</enum>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
@@ -1002,7 +1060,7 @@ p, li { white-space: pre-wrap; }
                      <string/>
                     </property>
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>
@@ -1220,7 +1278,7 @@ p, li { white-space: pre-wrap; }
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a list of all savegames for this game. Hover over a list entry to get detailed information about the save including a list of esps/esms that were used at the time this save was created but aren't active now.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;This is a list of all save games for this game. Hover over a list entry to get detailed information about the save including a list of esps/esms that were used at the time this save was created but aren't active now.&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;If you click &amp;quot;Fix Mods...&amp;quot; in the context menu, MO will try to activate all mods and esps to fix those missing esps. It will not disable anything!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
@@ -1361,7 +1419,7 @@ p, li { white-space: pre-wrap; }
                   <item>
                    <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>
@@ -1642,6 +1700,11 @@ Right now this has very limited functionality</string>
    <class>PluginListView</class>
    <extends>QTreeView</extends>
    <header>pluginlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LCDNumber</class>
+   <extends>QLCDNumber</extends>
+   <header>lcdnumber.h</header>
   </customwidget>
  </customwidgets>
  <resources>

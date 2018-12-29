@@ -162,6 +162,7 @@ public slots:
   void displayColumnSelection(const QPoint &pos);
 
   void modorder_changed();
+  void esplist_changed();
   void refresher_progress(int percent);
   void directory_refreshed();
 
@@ -211,7 +212,7 @@ private:
 
   void startSteam();
 
-  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly);
+  void updateTo(QTreeWidgetItem *subTree, const std::wstring &directorySoFar, const MOShared::DirectoryEntry &directoryEntry, bool conflictsOnly, QIcon *fileIcon, QIcon *folderIcon);
   bool refreshProfiles(bool selectProfile = true);
   void refreshExecutablesList();
   void installMod(QString fileName = "");
@@ -250,6 +251,7 @@ private:
   // remove invalid category-references from mods
   void fixCategories();
 
+  void createEndorseWidget();
   void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
@@ -483,6 +485,7 @@ private slots:
 
   void motdReceived(const QString &motd);
   void notEndorsedYet();
+  void wontEndorse();
 
   void originModified(int originID);
 
@@ -516,6 +519,7 @@ private slots:
 
   void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
+  void unendorseMod(ModInfo::Ptr mod);
   void cancelModListEditor();
 
   void lockESPIndex();
@@ -531,6 +535,7 @@ private slots:
   void openDownloadsFolder();
   void openModsFolder();
   void openProfileFolder();
+  void openIniFolder();
   void openGameFolder();
   void openMyGamesFolder();
   void startExeAction();
@@ -578,12 +583,16 @@ private slots:
 
   void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
+  void modListSectionResized(int logicalIndex, int oldSize, int newSize);
 
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
 
   void search_activated();
   void searchClear_activated();
+
+  void updateModCount();
+  void updatePluginCount();
 
 private slots: // ui slots
   // actions
