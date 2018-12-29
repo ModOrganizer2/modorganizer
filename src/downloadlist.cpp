@@ -106,8 +106,7 @@ void DownloadList::update(int row)
   if (row < 0) {
     emit endResetModel();
   } else if (row < this->rowCount()) {
-#pragma message("updating only the one column is a hack")
-    emit dataChanged(this->index(row, 2, QModelIndex()), this->index(row, 2, QModelIndex()));
+	emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
   } else {
     qCritical("invalid row %d in download list, update failed", row);
   }
