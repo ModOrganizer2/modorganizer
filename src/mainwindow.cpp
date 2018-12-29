@@ -1194,6 +1194,8 @@ void MainWindow::activateSelectedProfile()
 
   refreshSaveList();
   m_OrganizerCore.refreshModList();
+  updateModCount();
+  updatePluginCount();
 }
 
 void MainWindow::on_profileBox_currentIndexChanged(int index)
