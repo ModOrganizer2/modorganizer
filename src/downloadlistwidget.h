@@ -31,6 +31,8 @@ namespace Ui {
   class DownloadListWidget;
 }
 
+class DownloadManager;
+
 class DownloadListWidget : public QTreeView
 {
   Q_OBJECT
@@ -39,33 +41,9 @@ public:
   explicit DownloadListWidget(QWidget *parent = 0);
   ~DownloadListWidget();
 
-signals:
-  void resumeDownload(int index);
-
-private slots:
-  void onDoubleClick(const QModelIndex &index);
-};
-
-class DownloadManager;
-
-class DownloadListWidgetDelegate : public QItemDelegate
-{
-
-  Q_OBJECT
-
-public:
-
-  DownloadListWidgetDelegate(DownloadManager *manager, bool metaDisplay, QTreeView *view, QObject *parent = 0);
-  ~DownloadListWidgetDelegate();
-
-  virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-  virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
-
-  void paintPendingDownload(int downloadIndex) const;
-  void paintRegularDownload(int downloadIndex) const;
+  void setManager(DownloadManager *manager);
 
 signals:
-
   void installDownload(int index);
   void queryInfo(int index);
   void removeDownload(int index, bool deleteFile);
@@ -77,19 +55,9 @@ signals:
   void openFile(int index);
   void openInDownloadsFolder(int index);
 
-protected:
-
-	QString sizeFormat(quint64 size) const;
-  bool editorEvent(QEvent *event, QAbstractItemModel *model,
-                   const QStyleOptionViewItem &option, const QModelIndex &index);
-
-private:
-
-
-  void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
-
 private slots:
-
+  void onDoubleClick(const QModelIndex &index);
+  void onCustomContextMenu(const QPoint &point);
   void issueInstall();
   void issueDelete();
   void issueRemoveFromView();
@@ -109,25 +77,9 @@ private slots:
   void issueRemoveFromViewUninstalled();
   void issueQueryInfo();
 
-  void stateChanged(int row, DownloadManager::DownloadState);
-  void resetCache(int);
-
 private:
-
-  DownloadListWidget *m_ItemWidget;
   DownloadManager *m_Manager;
-
-  bool m_MetaDisplay;
-
-  QLabel *m_NameLabel;
-  QLabel *m_SizeLabel;
-  QProgressBar *m_Progress;
-  QLabel *m_InstallLabel;
   int m_ContextRow;
-
-  QTreeView *m_View;
-
-  mutable QMap<int, QPixmap> m_Cache;
 };
 
 #endif // DOWNLOADLISTWIDGET_H

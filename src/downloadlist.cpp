@@ -82,8 +82,10 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       DownloadManager::DownloadState state = m_Manager->getState(index.row());
       switch (state) {
         case DownloadManager::STATE_INSTALLED   : return tr("Installed");
+        case DownloadManager::STATE_UNINSTALLED : return tr("Uninstalled");
         case DownloadManager::STATE_READY       : return tr("Downloaded");
         case DownloadManager::STATE_DOWNLOADING : return m_Manager->getProgress(index.row()).second;
+        case DownloadManager::STATE_PAUSED      : return tr("Paused");
         default                                 : return state;
       }
     } else {
