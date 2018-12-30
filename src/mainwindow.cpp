@@ -5154,8 +5154,11 @@ void MainWindow::initDownloadList()
 
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
-  //ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
-  ui->downloadView->header()->resizeSections(QHeaderView::Stretch);
+  ui->downloadView->setUniformRowHeights(true);
+  ui->downloadView->header()->setStretchLastSection(false);
+  ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
+  ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
 
   connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView, SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));

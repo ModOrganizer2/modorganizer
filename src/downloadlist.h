@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADLIST_H
 
 #include <QAbstractTableModel>
+#include <QFontMetrics>
 
 
 class DownloadManager;
@@ -90,6 +91,7 @@ public slots:
 private:
 
   DownloadManager *m_Manager;
+  QFontMetrics m_FontMetrics;
 
   QString sizeFormat(quint64 size) const;
 };

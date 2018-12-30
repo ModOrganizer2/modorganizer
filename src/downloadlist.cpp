@@ -20,12 +20,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlist.h"
 #include "downloadmanager.h"
 #include <QEvent>
+#include <QColor>
 
 #include <QSortFilterProxyModel>
 
 
 DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
   : QAbstractTableModel(parent), m_Manager(manager)
+  , m_FontMetrics(QFont())
 {
   connect(m_Manager, SIGNAL(update(int)), this, SLOT(update(int)));
   connect(m_Manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
@@ -84,8 +86,6 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
           return tr("Unknown");
         case COL_STATUS:
           return tr("Pending");
-        default:
-          return QVariant();
       }
     } else {
       switch (index.column()) {
@@ -119,12 +119,20 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
               return tr("Installed");
             case DownloadManager::STATE_UNINSTALLED:
               return tr("Uninstalled");
-            default:
-              return QVariant();
           }
-        default:
-          return QVariant();
       }
+    }
+  } else if (role == Qt::ForegroundRole) {
+    if (pendingDownload) {
+      return QColor(Qt::darkBlue);
+    } else if (index.column() == COL_STATUS) {
+      DownloadManager::DownloadState state = m_Manager->getState(index.row());
+      if (state == DownloadManager::STATE_READY)
+        return QColor(Qt::darkGreen);
+      else if (state == DownloadManager::STATE_UNINSTALLED)
+        return QColor(Qt::darkYellow);
+      else if (state == DownloadManager::STATE_PAUSED)
+        return QColor(Qt::darkRed);
     }
   } else if (role == Qt::ToolTipRole) {
     if (pendingDownload) {
@@ -139,9 +147,18 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       }
       return text;
     }
-  } else {
-    return QVariant();
+  } else if (role == Qt::TextAlignmentRole) {
+    if (index.column() == COL_SIZE)
+      return Qt::AlignVCenter | Qt::AlignRight;
+    else
+      return Qt::AlignVCenter | Qt::AlignLeft;
+  } else if (role == Qt::SizeHintRole) {
+    QSize temp = m_FontMetrics.size(Qt::TextSingleLine, data(index, Qt::DisplayRole).toString());
+    temp.rwidth() += 20;
+    temp.rheight() += 12;
+    return temp;
   }
+  return QVariant();
 }
 
 
