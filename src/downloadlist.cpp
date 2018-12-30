@@ -64,7 +64,7 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
       case COL_NAME   : return tr("Name");
       case COL_SIZE   : return tr("Size");
       case COL_STATUS : return tr("Status");
-      default         : return "-";
+      default         : return QVariant();
     }
   } else {
     return QAbstractItemModel::headerData(section, orientation, role);
@@ -73,26 +73,63 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
 
 QVariant DownloadList::data(const QModelIndex &index, int role) const
 {
+  bool pendingDownload = index.row() >= m_Manager->numTotalDownloads();
   if (role == Qt::DisplayRole) {
-    if (index.column() == COL_NAME) {
-      return m_Manager->getFileName(index.row());
-    } else if (index.column() == COL_SIZE) {
-      return sizeFormat(m_Manager->getFileSize(index.row()));
-    } else if (index.column() == COL_STATUS) {
-      DownloadManager::DownloadState state = m_Manager->getState(index.row());
-      switch (state) {
-        case DownloadManager::STATE_INSTALLED   : return tr("Installed");
-        case DownloadManager::STATE_UNINSTALLED : return tr("Uninstalled");
-        case DownloadManager::STATE_READY       : return tr("Downloaded");
-        case DownloadManager::STATE_DOWNLOADING : return m_Manager->getProgress(index.row()).second;
-        case DownloadManager::STATE_PAUSED      : return tr("Paused");
-        default                                 : return state;
+    if (pendingDownload) {
+      std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(index.row() - m_Manager->numTotalDownloads());
+      switch (index.column()) {
+        case COL_NAME:
+          return tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids));
+        case COL_SIZE:
+          return tr("Unknown");
+        case COL_STATUS:
+          return tr("Pending");
+        default:
+          return QVariant();
       }
     } else {
-      return index.row();
+      switch (index.column()) {
+        case COL_NAME:
+          return m_Manager->getFileName(index.row());
+        case COL_SIZE:
+          return sizeFormat(m_Manager->getFileSize(index.row()));
+        case COL_STATUS:
+          switch (m_Manager->getState(index.row())) {
+            case DownloadManager::STATE_STARTED:
+              return tr("Started");
+            case DownloadManager::STATE_DOWNLOADING:
+              return m_Manager->getProgress(index.row()).second;
+            case DownloadManager::STATE_CANCELING:
+              return tr("Canceling");
+            case DownloadManager::STATE_PAUSING:
+              return tr("Pausing");
+            case DownloadManager::STATE_CANCELED:
+              return tr("Canceled");
+            case DownloadManager::STATE_PAUSED:
+              return tr("Paused");
+            case DownloadManager::STATE_ERROR:
+              return tr("Error");
+            case DownloadManager::STATE_FETCHINGMODINFO:
+              return tr("Fetching Info 1");
+            case DownloadManager::STATE_FETCHINGFILEINFO:
+              return tr("Fetching Info 2");
+            case DownloadManager::STATE_READY:
+              return tr("Downloaded");
+            case DownloadManager::STATE_INSTALLED:
+              return tr("Installed");
+            case DownloadManager::STATE_UNINSTALLED:
+              return tr("Uninstalled");
+            default:
+              return QVariant();
+          }
+        default:
+          return QVariant();
+      }
     }
   } else if (role == Qt::ToolTipRole) {
-    if (index.row() < m_Manager->numTotalDownloads()) {
+    if (pendingDownload) {
+      return tr("pending download");
+    } else {
       QString text = m_Manager->getFileName(index.row()) + "\n";
       if (m_Manager->isInfoIncomplete(index.row())) {
         text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
@@ -101,8 +138,6 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         return QString("%1 (ID %2) %3<br><span>%4</span>").arg(info->modName).arg(m_Manager->getModID(index.row())).arg(info->version.canonicalString()).arg(info->description);
       }
       return text;
-    } else {
-      return tr("pending download");
     }
   } else {
     return QVariant();

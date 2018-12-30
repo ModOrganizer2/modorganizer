@@ -124,7 +124,6 @@ void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) 
     name.append("...");
   }
   m_NameLabel->setText(name);
-
   DownloadManager::DownloadState state = m_Manager->getState(downloadIndex);
 
   if (m_SizeLabel != nullptr) {
