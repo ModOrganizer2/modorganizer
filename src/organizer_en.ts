@@ -4127,11 +4127,6 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="162"/>
-        <source>Overwritten loose files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="modlist.cpp" line="163"/>
         <source>Loose files Overwrites &amp; Overwritten</source>
         <translation type="unfinished"></translation>
