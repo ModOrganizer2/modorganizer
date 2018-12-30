@@ -38,7 +38,6 @@ public:
 
   enum EColumn {
     COL_NAME = 0,
-    COL_FILETIME,
     COL_STATUS,
     COL_SIZE
   };
@@ -92,6 +91,7 @@ private:
 
   DownloadManager *m_Manager;
 
+  QString sizeFormat(quint64 size) const;
 };
 
 #endif // DOWNLOADLIST_H

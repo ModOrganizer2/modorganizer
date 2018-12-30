@@ -1303,7 +1303,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
-                   <widget class="QTreeView" name="downloadView">
+                   <widget class="DownloadListWidget" name="downloadView">
                     <property name="minimumSize">
                      <size>
                       <width>320</width>

@@ -27,15 +27,19 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 DownloadListWidget::DownloadListWidget(QWidget *parent)
-  : QWidget(parent), ui(new Ui::DownloadListWidget)
+  : QTreeView(parent)
 {
-  ui->setupUi(this);
+  connect(this, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(onDoubleClick(QModelIndex)));
 }
 
 
 DownloadListWidget::~DownloadListWidget()
 {
-    delete ui;
+}
+
+void DownloadListWidget::onDoubleClick(const QModelIndex &index)
+{
+  emit(resumeDownload(dynamic_cast<QSortFilterProxyModel*>(model())->mapToSource(index).row()));
 }
 
 

@@ -28,20 +28,22 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTreeView>
 
 namespace Ui {
-    class DownloadListWidget;
+  class DownloadListWidget;
 }
 
-class DownloadListWidget : public QWidget
+class DownloadListWidget : public QTreeView
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    explicit DownloadListWidget(QWidget *parent = 0);
-    ~DownloadListWidget();
+  explicit DownloadListWidget(QWidget *parent = 0);
+  ~DownloadListWidget();
 
+signals:
+  void resumeDownload(int index);
 
-private:
-    Ui::DownloadListWidget *ui;
+private slots:
+  void onDoubleClick(const QModelIndex &index);
 };
 
 class DownloadManager;

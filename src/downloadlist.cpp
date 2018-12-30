@@ -40,7 +40,7 @@ int DownloadList::rowCount(const QModelIndex&) const
 
 int DownloadList::columnCount(const QModelIndex&) const
 {
-  return 4;
+  return 3;
 }
 
 
@@ -61,21 +61,34 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
   if ((role == Qt::DisplayRole) &&
       (orientation == Qt::Horizontal)) {
     switch (section) {
-      case COL_NAME: return tr("Name");
-      case COL_FILETIME: return tr("Filetime");
-      case COL_SIZE: return tr("Size");
-      default: return tr("Done");
+      case COL_NAME   : return tr("Name");
+      case COL_SIZE   : return tr("Size");
+      case COL_STATUS : return tr("Status");
+      default         : return "-";
     }
   } else {
     return QAbstractItemModel::headerData(section, orientation, role);
   }
 }
 
-
 QVariant DownloadList::data(const QModelIndex &index, int role) const
 {
   if (role == Qt::DisplayRole) {
-    return index.row();
+    if (index.column() == COL_NAME) {
+      return m_Manager->getFileName(index.row());
+    } else if (index.column() == COL_SIZE) {
+      return sizeFormat(m_Manager->getFileSize(index.row()));
+    } else if (index.column() == COL_STATUS) {
+      DownloadManager::DownloadState state = m_Manager->getState(index.row());
+      switch (state) {
+        case DownloadManager::STATE_INSTALLED   : return tr("Installed");
+        case DownloadManager::STATE_READY       : return tr("Downloaded");
+        case DownloadManager::STATE_DOWNLOADING : return m_Manager->getProgress(index.row()).second;
+        default                                 : return state;
+      }
+    } else {
+      return index.row();
+    }
   } else if (role == Qt::ToolTipRole) {
     if (index.row() < m_Manager->numTotalDownloads()) {
       QString text = m_Manager->getFileName(index.row()) + "\n";
@@ -112,3 +125,21 @@ void DownloadList::update(int row)
   }
 }
 
+QString DownloadList::sizeFormat(quint64 size) const
+{
+  qreal calc = size;
+  QStringList list;
+  list << "MB" << "GB" << "TB";
+
+  QStringListIterator i(list);
+  QString unit("KB");
+
+  calc /= 1024.0;
+  while (calc >= 1024.0 && i.hasNext())
+  {
+    unit = i.next();
+    calc /= 1024.0;
+  }
+
+  return QString().setNum(calc, 'f', 2) + " " + unit;
+}

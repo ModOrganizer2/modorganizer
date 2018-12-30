@@ -5152,6 +5152,7 @@ void MainWindow::on_actionEndorseMO_triggered()
 
 void MainWindow::updateDownloadListDelegate()
 {
+  /*
   if (m_OrganizerCore.settings().compactDownloads()) {
     ui->downloadView->setItemDelegate(
           new DownloadListWidgetCompactDelegate(m_OrganizerCore.downloadManager(),
@@ -5165,6 +5166,7 @@ void MainWindow::updateDownloadListDelegate()
                                          ui->downloadView,
                                          ui->downloadView));
   }
+  */
 
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
   sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
@@ -5175,6 +5177,9 @@ void MainWindow::updateDownloadListDelegate()
   //ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
   ui->downloadView->header()->resizeSections(QHeaderView::Stretch);
 
+  connect(ui->downloadView, SIGNAL(resumeDownload(int)), m_OrganizerCore.downloadManager(), SLOT(resumeDownload(int)));
+
+  /*
   connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
@@ -5185,6 +5190,7 @@ void MainWindow::updateDownloadListDelegate()
   connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), m_OrganizerCore.downloadManager(), SLOT(pauseDownload(int)));
   connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
+  */
 }
 
 
