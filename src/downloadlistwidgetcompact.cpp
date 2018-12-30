@@ -119,8 +119,8 @@ void DownloadListWidgetCompactDelegate::paintPendingDownload(int downloadIndex) 
 void DownloadListWidgetCompactDelegate::paintRegularDownload(int downloadIndex) const
 {
   QString name = m_MetaDisplay ? m_Manager->getDisplayName(downloadIndex) : m_Manager->getFileName(downloadIndex);
-  if (name.length() > 100) {
-    name.truncate(100);
+  if (name.length() > 60) {
+    name.truncate(60);
     name.append("...");
   }
   m_NameLabel->setText(name);
