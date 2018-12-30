@@ -211,7 +211,7 @@ MOBase::VersionInfo createVersionInfo()
 {
   VS_FIXEDFILEINFO version = GetFileVersion(QApplication::applicationFilePath().toStdWString());
 
-  if (version.dwFileFlags | VS_FF_PRERELEASE)
+  if (version.dwFileFlags & VS_FF_PRERELEASE)
   {
     // Pre-release builds need annotating
     QString versionString = QString::fromStdWString(GetFileVersionString(QApplication::applicationFilePath().toStdWString()));

@@ -4,6 +4,7 @@
 #include "messagedialog.h"
 #include "report.h"
 #include "scriptextender.h"
+#include "settings.h"
 
 #include <QApplication>
 #include <QDirIterator>
@@ -466,7 +467,9 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
-  if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
+  if ((m_NexusID > 0) &&
+      (endorsedState() == ENDORSED_FALSE) &&
+      Settings::instance().endorsementIntegration()) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
   }
   if (!isValid() && !m_Validated) {

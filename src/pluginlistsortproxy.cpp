@@ -72,8 +72,7 @@ void PluginListSortProxy::updateFilter(const QString &filter)
 
 bool PluginListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
 {
-  return m_CurrentFilter.isEmpty() ||
-      sourceModel()->data(sourceModel()->index(row, 0)).toString().contains(m_CurrentFilter, Qt::CaseInsensitive);
+  return filterMatchesPlugin(sourceModel()->data(sourceModel()->index(row, 0)).toString());
 }
 
 
@@ -135,5 +134,12 @@ bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction act
     QModelIndex sourceIndex = mapToSource(proxyIndex);
     return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
                                              sourceIndex.parent());
+}
+
+
+bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
+{
+  return m_CurrentFilter.isEmpty() ||
+      plugin.contains(m_CurrentFilter, Qt::CaseInsensitive);
 }
 

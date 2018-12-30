@@ -92,7 +92,8 @@ SOURCES += \
     modinfobackup.cpp \
     modinfooverwrite.cpp \
     modinfoforeign.cpp \
-    listdialog.cpp
+    listdialog.cpp \
+    lcdnumber.cpp
 
 
 HEADERS  += \
@@ -169,7 +170,8 @@ HEADERS  += \
     modinfobackup.h \
     modinfooverwrite.h \
     modinfoforeign.h \
-    listdialog.h
+    listdialog.h \
+    lcdnumber.h
 
 FORMS    += \
     transfersavesdialog.ui \

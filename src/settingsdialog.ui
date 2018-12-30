@@ -537,30 +537,44 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="offlineBox">
-         <property name="statusTip">
-          <string>Disable automatic internet features</string>
-         </property>
-         <property name="whatsThis">
-          <string>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</string>
-         </property>
-         <property name="text">
-          <string>Offline Mode</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="proxyBox">
-         <property name="statusTip">
-          <string>Use a proxy for network connections.</string>
-         </property>
-         <property name="whatsThis">
-          <string>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</string>
-         </property>
-         <property name="text">
-          <string>Use HTTP Proxy (Uses System Settings)</string>
-         </property>
-        </widget>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="offlineBox">
+           <property name="statusTip">
+            <string>Disable automatic internet features</string>
+           </property>
+           <property name="whatsThis">
+            <string>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</string>
+           </property>
+           <property name="text">
+            <string>Offline Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="proxyBox">
+           <property name="statusTip">
+            <string>Use a proxy for network connections.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</string>
+           </property>
+           <property name="text">
+            <string>Use HTTP Proxy (Uses System Settings)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="endorsementBox">
+           <property name="text">
+            <string>Endorsement Integration</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -1368,8 +1382,6 @@ programs you are intentionally running.</string>
   <tabstop>usernameEdit</tabstop>
   <tabstop>passwordEdit</tabstop>
   <tabstop>clearCacheButton</tabstop>
-  <tabstop>offlineBox</tabstop>
-  <tabstop>proxyBox</tabstop>
   <tabstop>associateButton</tabstop>
   <tabstop>knownServersList</tabstop>
   <tabstop>preferredServersList</tabstop>
