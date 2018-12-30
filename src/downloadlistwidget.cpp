@@ -17,13 +17,39 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "downloadlist.h"
 #include "downloadlistwidget.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QMenu>
 #include <QMessageBox>
 #include <QSortFilterProxyModel>
+#include <QApplication>
 
+void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+  QModelIndex sourceIndex = m_SortProxy->mapToSource(index);
+  if (sourceIndex.column() == DownloadList::COL_STATUS && sourceIndex.row() < m_Manager->numTotalDownloads()
+      && m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_DOWNLOADING) {
+    bool pendingDownload = sourceIndex.row() >= m_Manager->numTotalDownloads();
+    QStyleOptionProgressBar progressBarOption;
+    progressBarOption.state = QStyle::State_Enabled;
+    progressBarOption.direction = QApplication::layoutDirection();
+    progressBarOption.rect = option.rect;
+    progressBarOption.fontMetrics = QApplication::fontMetrics();
+    progressBarOption.minimum = 0;
+    progressBarOption.maximum = 100;
+    progressBarOption.textAlignment = Qt::AlignCenter;
+    progressBarOption.textVisible = true;
+    progressBarOption.progress = m_Manager->getProgress(sourceIndex.row()).first;
+    progressBarOption.text = m_Manager->getProgress(sourceIndex.row()).second;
+
+    QApplication::style()->drawControl(QStyle::CE_ProgressBar,
+      &progressBarOption, painter);
+  } else {
+    QStyledItemDelegate::paint(painter, option, index);
+  }
+}
 
 DownloadListWidget::DownloadListWidget(QWidget *parent)
   : QTreeView(parent)

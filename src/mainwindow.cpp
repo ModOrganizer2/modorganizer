@@ -319,6 +319,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   //ui->bsaList->setLocalMoveOnly(true);
 
+  initDownloadView();
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
   registerWidgetState(ui->downloadView->objectName(),
@@ -339,8 +340,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
-
-  initDownloadList();
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
@@ -5145,15 +5144,17 @@ void MainWindow::on_actionEndorseMO_triggered()
 }
 
 
-void MainWindow::initDownloadList()
+void MainWindow::initDownloadView()
 {
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
   sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
+  ui->downloadView->setObjectName("downloadView");
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
+  ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
   ui->downloadView->setUniformRowHeights(true);
   ui->downloadView->header()->setStretchLastSection(false);
   ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);

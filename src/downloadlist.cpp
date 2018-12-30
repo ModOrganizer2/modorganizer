@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadmanager.h"
 #include <QEvent>
 #include <QColor>
+#include <QIcon>
 
 #include <QSortFilterProxyModel>
 
@@ -147,6 +148,10 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       }
       return text;
     }
+  } else if (role == Qt::DecorationRole && index.column() == COL_NAME) {
+    if (!pendingDownload && m_Manager->getState(index.row()) >= DownloadManager::STATE_READY
+        && m_Manager->isInfoIncomplete(index.row()))
+      return QIcon(":/MO/gui/warning_16");
   } else if (role == Qt::TextAlignmentRole) {
     if (index.column() == COL_SIZE)
       return Qt::AlignVCenter | Qt::AlignRight;
