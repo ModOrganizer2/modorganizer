@@ -54,7 +54,6 @@ SET(organizer_SRCS
     executableslist.cpp
     editexecutablesdialog.cpp
     downloadmanager.cpp
-    downloadlistwidgetcompact.cpp
     downloadlistwidget.cpp
     downloadlistsortproxy.cpp
     downloadlist.cpp
@@ -147,7 +146,6 @@ SET(organizer_HDRS
     executableslist.h
     editexecutablesdialog.h
     downloadmanager.h
-    downloadlistwidgetcompact.h
     downloadlistwidget.h
     downloadlistsortproxy.h
     downloadlist.h
@@ -218,8 +216,6 @@ SET(organizer_UIS
     installdialog.ui
     finddialog.ui
     editexecutablesdialog.ui
-    downloadlistwidgetcompact.ui
-    downloadlistwidget.ui
     credentialsdialog.ui
     categoriesdialog.ui
     activatemodsdialog.ui

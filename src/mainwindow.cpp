@@ -55,7 +55,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "activatemodsdialog.h"
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
-#include "downloadlistwidgetcompact.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "lockeddialog.h"

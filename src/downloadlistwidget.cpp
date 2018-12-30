@@ -18,7 +18,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "downloadlistwidget.h"
-#include "ui_downloadlistwidget.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QMenu>
