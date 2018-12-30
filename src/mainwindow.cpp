@@ -341,7 +341,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 
-  updateDownloadListDelegate();
+  initDownloadList();
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
@@ -4657,8 +4657,6 @@ void MainWindow::on_actionSettings_triggered()
 
   NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
-  updateDownloadListDelegate();
-
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
 }
@@ -4713,13 +4711,11 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   createHelpWidget();
 
-  updateDownloadListDelegate();
   updateProblemsButton();
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
 
   ui->openFolderMenu->setMenu(openFolderMenu());
-
 }
 
 void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
@@ -5150,7 +5146,7 @@ void MainWindow::on_actionEndorseMO_triggered()
 }
 
 
-void MainWindow::updateDownloadListDelegate()
+void MainWindow::initDownloadList()
 {
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
   sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
