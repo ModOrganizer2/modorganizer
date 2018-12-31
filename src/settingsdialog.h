@@ -50,6 +50,8 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
+  void setButtonColor(QPushButton *button, QColor &color);
+
 public slots:
 
   virtual void accept();

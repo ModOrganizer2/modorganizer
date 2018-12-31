@@ -42,7 +42,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-
 SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
@@ -70,6 +69,23 @@ QString SettingsDialog::getColoredButtonStyleSheet() const
     "padding: 3px;"
     "}");
 }
+
+void SettingsDialog::setButtonColor(QPushButton *button, QColor &color)
+{
+  button->setStyleSheet(
+    QString("QPushButton {"
+      "background-color: rgba(%1, %2, %3, %4);"
+      "color: %5;"
+      "border: 1px solid;"
+      "padding: 3px;"
+      "}")
+    .arg(color.red())
+    .arg(color.green())
+    .arg(color.blue())
+    .arg(color.alpha())
+    .arg(Settings::getIdealTextColor(color).name())
+    );
+};
 
 void SettingsDialog::accept()
 {
@@ -232,73 +248,37 @@ void SettingsDialog::on_browseGameDirBtn_clicked()
 
 void SettingsDialog::on_containsBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainsColor, this);
+  QColor result = QColorDialog::getColor(m_ContainsColor, this, "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainsColor = result;
-
-    ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-     result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->containsBtn->setAutoFillBackground(true);
-    ui->containsBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containsBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containsBtn->setPalette(palette);*/
+    setButtonColor(ui->containsBtn, result);
   }
 }
 
 void SettingsDialog::on_containedBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainedColor, this);
+  QColor result = QColorDialog::getColor(m_ContainedColor, this, "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainedColor = result;
-
-    ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->containedBtn->setAutoFillBackground(true);
-    ui->containedBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containedBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containedBtn->setPalette(palette);*/
+    setButtonColor(ui->containedBtn, result);
   }
 }
 
 void SettingsDialog::on_overwrittenBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, this);
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenColor = result;
-
-    ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->overwrittenBtn->setAutoFillBackground(true);
-    ui->overwrittenBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwrittenBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwrittenBtn->setPalette(palette);*/
+    setButtonColor(ui->overwrittenBtn, result);
   }
 }
 
 void SettingsDialog::on_overwritingBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingColor, this);
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingColor = result;
-
-    ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->overwritingBtn->setAutoFillBackground(true);
-    ui->overwritingBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwritingBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwritingBtn->setPalette(palette);*/
+    setButtonColor(ui->overwritingBtn, result);
   }
 }
 
@@ -309,22 +289,10 @@ void SettingsDialog::on_resetColorsBtn_clicked()
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
-  ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(255, 0, 0, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(255, 0, 0, 64)).name()));
-
-  ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 255, 0, 64)).name()));
-
-  ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 0, 255, 64)).name()));
-
-  ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 0, 255, 64)).name()));
-
+  setButtonColor(ui->overwritingBtn, m_OverwritingColor);
+  setButtonColor(ui->overwrittenBtn, m_OverwrittenColor);
+  setButtonColor(ui->containsBtn, m_ContainsColor);
+  setButtonColor(ui->containedBtn, m_ContainedColor);
 }
 
 void SettingsDialog::on_resetDialogsButton_clicked()

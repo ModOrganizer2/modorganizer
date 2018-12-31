@@ -3344,6 +3344,7 @@ void MainWindow::setColor_clicked()
   QSettings &settings = m_OrganizerCore.settings().directInterface();
   ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
   QColorDialog dialog(this);
+  dialog.setOption(QColorDialog::ShowAlphaChannel);
   QColor currentColor = modInfo->getColor();
   QColor previousColor = settings.value("previousSeparatorColor", QColor()).value<QColor>();
   if (currentColor.isValid())
