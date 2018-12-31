@@ -893,29 +893,28 @@ DownloadListWidget {
 	background: transparent;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
+DownloadListWidget::item:!selected {
 	background: #DAD4BB;
 }
 
-DownloadListWidget QFrame#frame {
-	/* outer box of an entry on the Downloads tab */
-	border: 2px solid #DAD4BB;
+DownloadListWidget[downloadView=standard]::item {
+	padding: 15px;
+	margin-bottom: 2px;
 }
 
-DownloadListWidget QLabel#installLabel {
-	/* installed/done label */
-	color: none;
+QProgressBar[downloadView=standard] {
+	margin: 4px 0px 6px 0px;
 }
 
 /* Compact Downloads View */
 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
-	background: #DAD4BB;
+DownloadListWidget[downloadView=compact]::item {
+	padding: 4px 4px 6px 4px;
+	margin-bottom: 2px;
+}
+
+QProgressBar[downloadView=compact] {
+	margin: 1px 0px 3px 0px;
 }
 
 /* Categories Filter */

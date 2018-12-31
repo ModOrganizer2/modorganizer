@@ -28,7 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
   : QAbstractTableModel(parent), m_Manager(manager)
-  , m_FontMetrics(QFont())
 {
   connect(m_Manager, SIGNAL(update(int)), this, SLOT(update(int)));
   connect(m_Manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
@@ -81,50 +80,35 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
     if (pendingDownload) {
       std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(index.row() - m_Manager->numTotalDownloads());
       switch (index.column()) {
-        case COL_NAME:
-          return tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids));
-        case COL_SIZE:
-          return tr("Unknown");
-        case COL_STATUS:
-          return tr("Pending");
+        case COL_NAME: return tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids));
+        case COL_SIZE: return tr("Unknown");
+        case COL_STATUS: return tr("Pending");
       }
     } else {
       switch (index.column()) {
-        case COL_NAME:
-          return m_Manager->getFileName(index.row());
-        case COL_SIZE:
-          return sizeFormat(m_Manager->getFileSize(index.row()));
+        case COL_NAME: return m_Manager->getFileName(index.row());
+        case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
         case COL_STATUS:
           switch (m_Manager->getState(index.row())) {
-            case DownloadManager::STATE_STARTED:
-              return tr("Started");
-            case DownloadManager::STATE_CANCELING:
-              return tr("Canceling");
-            case DownloadManager::STATE_PAUSING:
-              return tr("Pausing");
-            case DownloadManager::STATE_CANCELED:
-              return tr("Canceled");
-            case DownloadManager::STATE_PAUSED:
-              return tr("Paused");
-            case DownloadManager::STATE_ERROR:
-              return tr("Error");
-            case DownloadManager::STATE_FETCHINGMODINFO:
-              return tr("Fetching Info 1");
-            case DownloadManager::STATE_FETCHINGFILEINFO:
-              return tr("Fetching Info 2");
-            case DownloadManager::STATE_READY:
-              return tr("Downloaded");
-            case DownloadManager::STATE_INSTALLED:
-              return tr("Installed");
-            case DownloadManager::STATE_UNINSTALLED:
-              return tr("Uninstalled");
+            // STATE_DOWNLOADING handled by DownloadProgressDelegate
+            case DownloadManager::STATE_STARTED: return tr("Started");
+            case DownloadManager::STATE_CANCELING: return tr("Canceling");
+            case DownloadManager::STATE_PAUSING: return tr("Pausing");
+            case DownloadManager::STATE_CANCELED: return tr("Canceled");
+            case DownloadManager::STATE_PAUSED: return tr("Paused");
+            case DownloadManager::STATE_ERROR: return tr("Error");
+            case DownloadManager::STATE_FETCHINGMODINFO: return tr("Fetching Info 1");
+            case DownloadManager::STATE_FETCHINGFILEINFO: return tr("Fetching Info 2");
+            case DownloadManager::STATE_READY: return tr("Downloaded");
+            case DownloadManager::STATE_INSTALLED: return tr("Installed");
+            case DownloadManager::STATE_UNINSTALLED: return tr("Uninstalled");
           }
       }
     }
-  } else if (role == Qt::ForegroundRole) {
+  } else if (role == Qt::ForegroundRole && index.column() == COL_STATUS) {
     if (pendingDownload) {
       return QColor(Qt::darkBlue);
-    } else if (index.column() == COL_STATUS) {
+    } else {
       DownloadManager::DownloadState state = m_Manager->getState(index.row());
       if (state == DownloadManager::STATE_READY)
         return QColor(Qt::darkGreen);
@@ -135,7 +119,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
     }
   } else if (role == Qt::ToolTipRole) {
     if (pendingDownload) {
-      return tr("pending download");
+      return tr("Pending download");
     } else {
       QString text = m_Manager->getFileName(index.row()) + "\n";
       if (m_Manager->isInfoIncomplete(index.row())) {
@@ -168,13 +152,12 @@ void DownloadList::aboutToUpdate()
 
 void DownloadList::update(int row)
 {
-  if (row < 0) {
+  if (row < 0)
     emit endResetModel();
-  } else if (row < this->rowCount()) {
+  else if (row < this->rowCount())
     emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
-  } else {
+  else
     qCritical("invalid row %d in download list, update failed", row);
-  }
 }
 
 QString DownloadList::sizeFormat(quint64 size) const
@@ -187,8 +170,7 @@ QString DownloadList::sizeFormat(quint64 size) const
   QString unit("KB");
 
   calc /= 1024.0;
-  while (calc >= 1024.0 && i.hasNext())
-  {
+  while (calc >= 1024.0 && i.hasNext()) {
     unit = i.next();
     calc /= 1024.0;
   }

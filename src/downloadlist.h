@@ -90,7 +90,6 @@ public slots:
 private:
 
   DownloadManager *m_Manager;
-  QFontMetrics m_FontMetrics;
 
   QString sizeFormat(quint64 size) const;
 };

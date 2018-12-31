@@ -940,11 +940,6 @@ QProgressBar[downloadView=standard] {
 	margin: 4px 0px 6px 0px;
 }
 
-QLabel[downloadProgress] {
-	qproperty-alignment: AlignCenter;
-	padding-bottom: 3px;
-}
-
 /* Compact Downloads View */
 
 DownloadListWidget[downloadView=compact]::item {

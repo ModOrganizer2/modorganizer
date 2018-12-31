@@ -257,7 +257,6 @@ QProgressBar
 QProgressBar::chunk
 {
   background-color: #427683;
-  width: 20px;
 }
 
 QTabBar::tab
@@ -366,4 +365,12 @@ QTreeView::branch:open:has-children:has-siblings
 
 DownloadListWidget QLabel#installLabel {
   color: none;
+}
+
+DownloadListWidget[downloadView=standard]::item {
+	padding: 16px;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	padding: 4px;
 }

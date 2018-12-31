@@ -5184,6 +5184,7 @@ void MainWindow::updateDownloadView()
     ui->downloadView->setProperty("downloadView", "standard");
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
+  m_OrganizerCore.downloadManager()->refreshList();
 }
 
 void MainWindow::modDetailsUpdated(bool)

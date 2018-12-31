@@ -34,8 +34,6 @@ namespace Ui {
   class DownloadListWidget;
 }
 
-class DownloadManager;
-
 class DownloadProgressDelegate : public QStyledItemDelegate
 {
   Q_OBJECT
