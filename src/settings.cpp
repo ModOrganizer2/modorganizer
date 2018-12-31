@@ -386,7 +386,7 @@ int Settings::crashDumpsMax() const
 
 QColor Settings::modlistOverwrittenLooseColor() const
 {
-  return m_Settings.value("Settings/overwrittenLooseFilesColor", QColor(0, 255, 0, 64)).value<QColor>();
+  return m_Settings.value("Settings/overwrittenLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
 }
 
 QColor Settings::modlistOverwritingLooseColor() const
@@ -396,12 +396,12 @@ QColor Settings::modlistOverwritingLooseColor() const
 
 QColor Settings::modlistOverwrittenArchiveColor() const
 {
-  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
+  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
 }
 
 QColor Settings::modlistOverwritingArchiveColor() const
 {
-  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
+  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
 }
 
 QColor Settings::modlistContainsPluginColor() const

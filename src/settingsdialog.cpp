@@ -302,10 +302,10 @@ void SettingsDialog::on_overwritingArchiveBtn_clicked()
 
 void SettingsDialog::on_resetColorsBtn_clicked()
 {
-  m_OverwritingColor = QColor(255, 0, 0, 64);
-  m_OverwrittenColor = QColor(0, 255, 0, 64);
-  m_OverwritingArchiveColor = QColor(255, 0, 255, 64);
-  m_OverwrittenArchiveColor = QColor(0, 255, 255, 64);
+  m_OverwritingColor = QColor(0, 255, 0, 64);
+  m_OverwrittenColor = QColor(255, 0, 0, 64);
+  m_OverwritingArchiveColor = QColor(0, 255, 255, 64);
+  m_OverwrittenArchiveColor = QColor(255, 0, 255, 64);
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
