@@ -98,8 +98,6 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
           switch (m_Manager->getState(index.row())) {
             case DownloadManager::STATE_STARTED:
               return tr("Started");
-            case DownloadManager::STATE_DOWNLOADING:
-              return m_Manager->getProgress(index.row()).second;
             case DownloadManager::STATE_CANCELING:
               return tr("Canceling");
             case DownloadManager::STATE_PAUSING:
@@ -153,15 +151,10 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         && m_Manager->isInfoIncomplete(index.row()))
       return QIcon(":/MO/gui/warning_16");
   } else if (role == Qt::TextAlignmentRole) {
-    if (index.column() == COL_SIZE)
-      return Qt::AlignVCenter | Qt::AlignRight;
-    else
+    if (index.column() == COL_NAME)
       return Qt::AlignVCenter | Qt::AlignLeft;
-  } else if (role == Qt::SizeHintRole) {
-    QSize temp = m_FontMetrics.size(Qt::TextSingleLine, data(index, Qt::DisplayRole).toString());
-    temp.rwidth() += 20;
-    temp.rheight() += 12;
-    return temp;
+    else
+      return Qt::AlignVCenter | Qt::AlignRight;
   }
   return QVariant();
 }

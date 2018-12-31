@@ -4655,6 +4655,8 @@ void MainWindow::on_actionSettings_triggered()
 
   NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
+  updateDownloadView();
+
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
 }
@@ -4709,6 +4711,7 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   createHelpWidget();
 
+  updateDownloadView();
   updateProblemsButton();
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
@@ -5160,6 +5163,7 @@ void MainWindow::initDownloadView()
   ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
   ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
   ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
+  updateDownloadView();
 
   connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
   connect(ui->downloadView, SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
@@ -5173,6 +5177,15 @@ void MainWindow::initDownloadView()
   connect(ui->downloadView, SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
 }
 
+void MainWindow::updateDownloadView()
+{
+  if (m_OrganizerCore.settings().compactDownloads())
+    ui->downloadView->setProperty("compact", true);
+  else
+    ui->downloadView->setProperty("compact", false);
+  ui->downloadView->style()->unpolish(ui->downloadView);
+  ui->downloadView->style()->polish(ui->downloadView);
+}
 
 void MainWindow::modDetailsUpdated(bool)
 {

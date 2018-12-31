@@ -247,6 +247,7 @@ private:
   bool populateMenuCategories(QMenu *menu, int targetID);
 
   void initDownloadView();
+  void updateDownloadView();
 
   // remove invalid category-references from mods
   void fixCategories();

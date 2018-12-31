@@ -32,20 +32,22 @@ void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewIt
   if (sourceIndex.column() == DownloadList::COL_STATUS && sourceIndex.row() < m_Manager->numTotalDownloads()
       && m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_DOWNLOADING) {
     bool pendingDownload = sourceIndex.row() >= m_Manager->numTotalDownloads();
-    QStyleOptionProgressBar progressBarOption;
-    progressBarOption.state = QStyle::State_Enabled;
-    progressBarOption.direction = QApplication::layoutDirection();
-    progressBarOption.rect = option.rect;
-    progressBarOption.fontMetrics = QApplication::fontMetrics();
-    progressBarOption.minimum = 0;
-    progressBarOption.maximum = 100;
-    progressBarOption.textAlignment = Qt::AlignCenter;
-    progressBarOption.textVisible = true;
-    progressBarOption.progress = m_Manager->getProgress(sourceIndex.row()).first;
-    progressBarOption.text = m_Manager->getProgress(sourceIndex.row()).second;
+    QProgressBar progressBarOption;
+    progressBarOption.setProperty("compact", option.widget->property("compact"));
+    progressBarOption.setMinimum(0);
+    progressBarOption.setMaximum(100);
+    progressBarOption.setAlignment(Qt::AlignCenter);
+    progressBarOption.resize(option.rect.width(), option.rect.height());
+    progressBarOption.setValue(m_Manager->getProgress(sourceIndex.row()).first);
+    progressBarOption.setFormat(m_Manager->getProgress(sourceIndex.row()).second);
 
-    QApplication::style()->drawControl(QStyle::CE_ProgressBar,
-      &progressBarOption, painter);
+    // paint the background with default delegate first to preserve table cell styling
+    QStyledItemDelegate::paint(painter, option, index);
+
+    painter->save();
+    painter->translate(option.rect.topLeft());
+    progressBarOption.render(painter);
+    painter->restore();
   } else {
     QStyledItemDelegate::paint(painter, option, index);
   }
