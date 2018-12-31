@@ -648,3 +648,19 @@ DownloadListWidgetCompact QLabel
 	background: #141414;
 	padding: 4px;
 }
+
+DownloadListWidget[downloadView=standard]::item {
+	padding: 16px;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	padding: 4px;
+}
+
+QProgressBar
+{
+	border: 2px solid grey;
+	border-radius: 5px;
+	text-align: center;
+	margin: 0px;
+}
