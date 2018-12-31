@@ -5160,7 +5160,7 @@ void MainWindow::initDownloadView()
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
   ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
-  ui->downloadView->setUniformRowHeights(true);
+  ui->downloadView->setUniformRowHeights(false);
   ui->downloadView->header()->setStretchLastSection(false);
   ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
   ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);

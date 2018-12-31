@@ -47,7 +47,7 @@ int DownloadList::rowCount(const QModelIndex&) const
 
 int DownloadList::columnCount(const QModelIndex&) const
 {
-  return 3;
+  return 4;
 }
 
 
@@ -68,10 +68,11 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
   if ((role == Qt::DisplayRole) &&
       (orientation == Qt::Horizontal)) {
     switch (section) {
-      case COL_NAME   : return tr("Name");
-      case COL_SIZE   : return tr("Size");
-      case COL_STATUS : return tr("Status");
-      default         : return QVariant();
+      case COL_NAME: return tr("Name");
+      case COL_SIZE: return tr("Size");
+      case COL_STATUS: return tr("Status");
+      case COL_FILETIME: return tr("Filetime");
+      default: return QVariant();
     }
   } else {
     return QAbstractItemModel::headerData(section, orientation, role);
@@ -93,6 +94,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       switch (index.column()) {
         case COL_NAME: return m_MetaDisplay ? m_Manager->getDisplayName(index.row()) : m_Manager->getFileName(index.row());
         case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
+        case COL_FILETIME: return m_Manager->getFileTime(index.row());
         case COL_STATUS:
           switch (m_Manager->getState(index.row())) {
             // STATE_DOWNLOADING handled by DownloadProgressDelegate

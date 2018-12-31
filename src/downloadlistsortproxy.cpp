@@ -50,8 +50,10 @@ bool DownloadListSortProxy::lessThan(const QModelIndex &left,
         return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
       else
         return leftState > rightState;
-    } else if(left.column() == DownloadList::COL_SIZE){
+    } else if (left.column() == DownloadList::COL_SIZE) {
       return m_Manager->getFileSize(left.row()) < m_Manager->getFileSize(right.row());
+    } else if (left.column() == DownloadList::COL_FILETIME) {
+      return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
     } else {
       return leftIndex < rightIndex;
     }

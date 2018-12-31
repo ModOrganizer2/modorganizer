@@ -1365,7 +1365,7 @@ p, li { white-space: pre-wrap; }
                      <number>15</number>
                     </attribute>
                     <attribute name="headerStretchLastSection">
-                     <bool>true</bool>
+                     <bool>false</bool>
                     </attribute>
                    </widget>
                   </item>
