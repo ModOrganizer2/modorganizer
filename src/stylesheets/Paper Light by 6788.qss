@@ -680,10 +680,9 @@ QToolTip {
 	border-radius: 6px;
 }
 
-/* Progress Bars (Downloads) */
+/* Progress Bars */
 
 QProgressBar {
-	/* progress bars when downloading */
 	background: #FFFFFF;
     text-align: center;
     border: 0px;
@@ -929,29 +928,35 @@ QSlider::handle:hover {
 	background: #EBEBEB;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
-	background: #FFFFFF;
+DownloadListWidget[downloadView=standard]::item {
+	padding: 15px;
+	border-bottom: 2px solid #BBBBBB;
 }
 
-DownloadListWidget #frame {
-	/* outer box of an entry on the Downloads tab */
-	border: none;
+QProgressBar[downloadView=standard] {
+	background: transparent;
+	border: 2px solid gray;
+	border-radius: 8px;
+	margin: 4px 0px 6px 0px;
 }
 
-#installLabel {
-	/* installed/done label */
-	color: none;
+QLabel[downloadProgress] {
+	qproperty-alignment: AlignCenter;
+	padding-bottom: 3px;
 }
 
 /* Compact Downloads View */
 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
-	background: #FFFFFF;
+DownloadListWidget[downloadView=compact]::item {
+	padding: 3px;
+	border-bottom: 2px solid #BBBBBB;
+}
+
+QProgressBar[downloadView=compact] {
+	background: transparent;
+	border: 2px solid gray;
+	border-radius: 8px;
+	margin: 1px 0px 3px 0px;
 }
 
 /* Categories Filter */

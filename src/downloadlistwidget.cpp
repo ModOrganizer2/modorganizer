@@ -32,21 +32,31 @@ void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewIt
   if (sourceIndex.column() == DownloadList::COL_STATUS && sourceIndex.row() < m_Manager->numTotalDownloads()
       && m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_DOWNLOADING) {
     bool pendingDownload = sourceIndex.row() >= m_Manager->numTotalDownloads();
-    QProgressBar progressBarOption;
-    progressBarOption.setProperty("compact", option.widget->property("compact"));
-    progressBarOption.setMinimum(0);
-    progressBarOption.setMaximum(100);
-    progressBarOption.setAlignment(Qt::AlignCenter);
-    progressBarOption.resize(option.rect.width(), option.rect.height());
-    progressBarOption.setValue(m_Manager->getProgress(sourceIndex.row()).first);
-    progressBarOption.setFormat(m_Manager->getProgress(sourceIndex.row()).second);
+    QProgressBar progressBar;
+    progressBar.setProperty("downloadView", option.widget->property("downloadView"));
+    progressBar.resize(option.rect.width(), option.rect.height());
+    progressBar.setTextVisible(false);
+    progressBar.setMinimum(0);
+    progressBar.setMaximum(100);
+    progressBar.setValue(m_Manager->getProgress(sourceIndex.row()).first);
+    progressBar.setStyle(QApplication::style());
+
+    QLabel progressText;
+    progressText.setProperty("downloadView", option.widget->property("downloadView"));
+    progressText.setProperty("downloadProgress", true);
+    progressText.resize(option.rect.width(), option.rect.height());
+    progressText.setAttribute(Qt::WA_TranslucentBackground);
+    progressText.setAlignment(Qt::AlignCenter);
+    progressText.setText(m_Manager->getProgress(sourceIndex.row()).second);
+    progressText.setStyle(QApplication::style());
 
     // paint the background with default delegate first to preserve table cell styling
     QStyledItemDelegate::paint(painter, option, index);
 
     painter->save();
     painter->translate(option.rect.topLeft());
-    progressBarOption.render(painter);
+    progressBar.render(painter);
+    progressText.render(painter);
     painter->restore();
   } else {
     QStyledItemDelegate::paint(painter, option, index);

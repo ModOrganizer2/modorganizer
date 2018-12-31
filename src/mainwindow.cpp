@@ -5154,8 +5154,7 @@ void MainWindow::initDownloadView()
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
-  ui->downloadView->setObjectName("downloadView");
-  ui->downloadView->setModel(sortProxy);
+    ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
   ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
   ui->downloadView->setUniformRowHeights(true);
@@ -5180,9 +5179,9 @@ void MainWindow::initDownloadView()
 void MainWindow::updateDownloadView()
 {
   if (m_OrganizerCore.settings().compactDownloads())
-    ui->downloadView->setProperty("compact", true);
+    ui->downloadView->setProperty("downloadView", "compact");
   else
-    ui->downloadView->setProperty("compact", false);
+    ui->downloadView->setProperty("downloadView", "standard");
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
 }
