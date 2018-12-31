@@ -143,9 +143,9 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       return QIcon(":/MO/gui/warning_16");
   } else if (role == Qt::TextAlignmentRole) {
     if (index.column() == COL_NAME)
-      return Qt::AlignVCenter | Qt::AlignLeft;
+      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
     else
-      return Qt::AlignVCenter | Qt::AlignRight;
+      return QVariant(Qt::AlignVCenter | Qt::AlignRight);
   }
   return QVariant();
 }

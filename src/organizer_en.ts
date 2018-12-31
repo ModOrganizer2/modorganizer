@@ -307,82 +307,87 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="88"/>
-        <source>&lt; game %1 mod %2 file %3 &gt;</source>
+        <location filename="downloadlist.cpp" line="74"/>
+        <source>Filetime</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="89"/>
-        <source>Unknown</source>
+        <source>&lt; game %1 mod %2 file %3 &gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="downloadlist.cpp" line="90"/>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="downloadlist.cpp" line="91"/>
         <source>Pending</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="99"/>
+        <location filename="downloadlist.cpp" line="101"/>
         <source>Started</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="100"/>
+        <location filename="downloadlist.cpp" line="102"/>
         <source>Canceling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="101"/>
+        <location filename="downloadlist.cpp" line="103"/>
         <source>Pausing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="102"/>
+        <location filename="downloadlist.cpp" line="104"/>
         <source>Canceled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="103"/>
+        <location filename="downloadlist.cpp" line="105"/>
         <source>Paused</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="104"/>
+        <location filename="downloadlist.cpp" line="106"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="105"/>
+        <location filename="downloadlist.cpp" line="107"/>
         <source>Fetching Info 1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="106"/>
+        <location filename="downloadlist.cpp" line="108"/>
         <source>Fetching Info 2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="107"/>
+        <location filename="downloadlist.cpp" line="109"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="108"/>
+        <location filename="downloadlist.cpp" line="110"/>
         <source>Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="109"/>
+        <location filename="downloadlist.cpp" line="111"/>
         <source>Uninstalled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="127"/>
+        <location filename="downloadlist.cpp" line="129"/>
         <source>Pending download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlist.cpp" line="131"/>
+        <location filename="downloadlist.cpp" line="133"/>
         <source>Information missing, please select &quot;Query Info&quot; from the context menu to re-retrieve.</source>
         <translation type="unfinished"></translation>
     </message>
