@@ -197,9 +197,12 @@ QString Settings::deObfuscate(const QString &password)
   return QString::fromUtf8(buffer.constData());
 }
 
-QColor Settings::getIdealTextColor(const QColor&  rBackgroundColor)
+QColor Settings::getIdealTextColor(const QColor& rBackgroundColor)
 {
-  const int THRESHOLD = 106;
+  if (rBackgroundColor.alpha() == 0)
+    return QColor(Qt::black);
+
+  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
   int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
   return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
 }
@@ -778,18 +781,10 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   */
 
   //version with stylesheet
-  m_overwritingBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistOverwritingLooseColor().name()).arg(getIdealTextColor(
-      m_parent->modlistOverwritingLooseColor()).name()));
-  m_overwrittenBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
-      m_parent->modlistOverwrittenLooseColor()).name()));
-  m_containsBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
-      m_parent->modlistContainsPluginColor()).name()));
-  m_containedBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->pluginListContainedColor().name()).arg(getIdealTextColor(
-      m_parent->pluginListContainedColor()).name()));
+  m_dialog.setButtonColor(m_overwritingBtn, m_parent->modlistOverwritingLooseColor());
+  m_dialog.setButtonColor(m_overwrittenBtn, m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setButtonColor(m_containsBtn, m_parent->modlistContainsPluginColor());
+  m_dialog.setButtonColor(m_containedBtn, m_parent->pluginListContainedColor());
 
   m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
   m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
