@@ -232,7 +232,7 @@ void SettingsDialog::on_browseGameDirBtn_clicked()
 
 void SettingsDialog::on_containsBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainsColor, this);
+  QColor result = QColorDialog::getColor(m_ContainsColor, this, "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainsColor = result;
 
@@ -250,7 +250,7 @@ void SettingsDialog::on_containsBtn_clicked()
 
 void SettingsDialog::on_containedBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainedColor, this);
+  QColor result = QColorDialog::getColor(m_ContainedColor, this, "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainedColor = result;
 
@@ -268,7 +268,7 @@ void SettingsDialog::on_containedBtn_clicked()
 
 void SettingsDialog::on_overwrittenBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, this);
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenColor = result;
 
@@ -286,7 +286,7 @@ void SettingsDialog::on_overwrittenBtn_clicked()
 
 void SettingsDialog::on_overwritingBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingColor, this);
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingColor = result;
 
