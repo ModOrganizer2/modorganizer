@@ -77,6 +77,7 @@ signals:
 private slots:
   void onDoubleClick(const QModelIndex &index);
   void onCustomContextMenu(const QPoint &point);
+  void onHeaderCustomContextMenu(const QPoint &point);
   void issueInstall();
   void issueDelete();
   void issueRemoveFromView();

@@ -25,6 +25,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <QSortFilterProxyModel>
 #include <QApplication>
+#include <QHeaderView>
+#include <QCheckBox>
+#include <QWidgetAction>
 
 void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
@@ -73,6 +76,9 @@ DownloadListWidget::DownloadListWidget(QWidget *parent)
 {
   connect(this, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(onDoubleClick(QModelIndex)));
   connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onCustomContextMenu(QPoint)));
+
+  header()->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(header(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onHeaderCustomContextMenu(QPoint)));
 }
 
 DownloadListWidget::~DownloadListWidget()
@@ -103,6 +109,38 @@ void DownloadListWidget::onDoubleClick(const QModelIndex &index)
   else if ((m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED)
           || (m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_PAUSING))
     emit resumeDownload(sourceIndex.row());
+}
+
+void DownloadListWidget::onHeaderCustomContextMenu(const QPoint &point)
+{
+  QMenu menu;
+
+  // display a list of all headers as checkboxes
+  QAbstractItemModel *model = header()->model();
+  for (int i = 1; i < model->columnCount(); ++i) {
+    QString columnName = model->headerData(i, Qt::Horizontal).toString();
+    QCheckBox *checkBox = new QCheckBox(&menu);
+    checkBox->setText(columnName);
+    checkBox->setChecked(!header()->isSectionHidden(i));
+    QWidgetAction *checkableAction = new QWidgetAction(&menu);
+    checkableAction->setDefaultWidget(checkBox);
+    menu.addAction(checkableAction);
+  }
+  
+  menu.exec(header()->viewport()->mapToGlobal(point));
+
+  // view/hide columns depending on check-state
+  int i = 1;
+  for (const QAction *action : menu.actions()) {
+    const QWidgetAction *widgetAction = qobject_cast<const QWidgetAction*>(action);
+    if (widgetAction != nullptr) {
+      const QCheckBox *checkBox = qobject_cast<const QCheckBox*>(widgetAction->defaultWidget());
+      if (checkBox != nullptr) {
+        header()->setSectionHidden(i, !checkBox->isChecked());
+      }
+    }
+    ++i;
+  }
 }
 
 void DownloadListWidget::onCustomContextMenu(const QPoint &point)
