@@ -411,21 +411,26 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
     bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
+
       return Settings::instance().modlistContainsPluginColor();
-    } else if ((overwrite && (archiveOverwritten || archiveLooseOverwritten)) ||
-      (overwritten && (archiveOverwrite || archiveLooseOverwrite)) ||
-      (archiveOverwrite && (overwritten || archiveLooseOverwritten)) ||
-      (archiveOverwritten && (overwrite || archiveLooseOverwrite)) ||
-      (archiveLooseOverwrite && (overwritten || archiveOverwritten)) ||
-      (archiveLooseOverwritten && (overwrite || archiveLooseOverwrite))
-      ) {
+
+    } else if (overwritten || archiveLooseOverwritten) {
+
       return Settings::instance().modlistOverwrittenLooseColor();
-    }
-    else if (overwrite || archiveOverwrite || archiveLooseOverwrite) {
+
+    } else if (overwrite || archiveLooseOverwrite) {
+
       return Settings::instance().modlistOverwritingLooseColor();
-    } else if (overwritten || archiveOverwritten || archiveLooseOverwritten) {
-      return QColor(255, 0, 0, 64); //TODO: Make configurable
-    }  else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
+
+    } else if (archiveOverwritten) {
+
+      return Settings::instance().modlistOverwrittenArchiveColor();
+
+    } else if (archiveOverwrite) {
+
+      return Settings::instance().modlistOverwritingArchiveColor();
+
+    } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
                     || Settings::instance().colorSeparatorScrollbar())) {

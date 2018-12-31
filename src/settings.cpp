@@ -391,6 +391,16 @@ QColor Settings::modlistOverwritingLooseColor() const
   return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
 }
 
+QColor Settings::modlistOverwrittenArchiveColor() const
+{
+  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
+}
+
+QColor Settings::modlistOverwritingArchiveColor() const
+{
+  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
+}
+
 QColor Settings::modlistContainsPluginColor() const
 {
   return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
@@ -729,6 +739,8 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
   , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
   , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
+  , m_overwritingArchiveBtn(m_dialog.findChild<QPushButton *>("overwritingArchiveBtn"))
+  , m_overwrittenArchiveBtn(m_dialog.findChild<QPushButton *>("overwrittenArchiveBtn"))
   , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
   , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
   , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
@@ -789,6 +801,12 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   m_overwrittenBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
       m_parent->modlistOverwrittenLooseColor()).name()));
+  m_overwritingArchiveBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->modlistOverwritingArchiveColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwritingArchiveColor()).name()));
+  m_overwrittenArchiveBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
+    m_parent->modlistOverwrittenArchiveColor().name()).arg(getIdealTextColor(
+      m_parent->modlistOverwrittenArchiveColor()).name()));
   m_containsBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
     m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
       m_parent->modlistContainsPluginColor()).name()));
@@ -798,6 +816,8 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
 
   m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
   m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setOverwritingArchiveColor(m_parent->modlistOverwritingArchiveColor());
+  m_dialog.setOverwrittenArchiveColor(m_parent->modlistOverwrittenArchiveColor());
   m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
   m_dialog.setContainedColor(m_parent->pluginListContainedColor());
 
@@ -825,6 +845,8 @@ void Settings::GeneralTab::update()
 
   m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
   m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
+  m_Settings.setValue("Settings/overwritingArchiveFilesColor", m_dialog.getOverwritingArchiveColor());
+  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", m_dialog.getOverwrittenArchiveColor());
   m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
   m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());

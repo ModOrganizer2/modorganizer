@@ -233,6 +233,10 @@ public:
 
   QColor modlistOverwritingLooseColor() const;
 
+  QColor modlistOverwrittenArchiveColor() const;
+
+  QColor modlistOverwritingArchiveColor() const;
+
   QColor modlistContainsPluginColor() const;
 
   QColor pluginListContainedColor() const;
@@ -428,6 +432,8 @@ private:
     QCheckBox *m_usePrereleaseBox;
     QPushButton *m_overwritingBtn;
     QPushButton *m_overwrittenBtn;
+    QPushButton *m_overwritingArchiveBtn;
+    QPushButton *m_overwrittenArchiveBtn;
     QPushButton *m_containsBtn;
     QPushButton *m_containedBtn;
     QCheckBox *m_colorSeparatorsBox;

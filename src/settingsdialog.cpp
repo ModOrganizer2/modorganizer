@@ -239,12 +239,6 @@ void SettingsDialog::on_containsBtn_clicked()
     ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
      result.name()).arg(Settings::getIdealTextColor(
         result).name()));
-
-    /*ui->containsBtn->setAutoFillBackground(true);
-    ui->containsBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containsBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containsBtn->setPalette(palette);*/
   }
 }
 
@@ -257,12 +251,6 @@ void SettingsDialog::on_containedBtn_clicked()
     ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
-
-    /*ui->containedBtn->setAutoFillBackground(true);
-    ui->containedBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containedBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containedBtn->setPalette(palette);*/
   }
 }
 
@@ -275,12 +263,6 @@ void SettingsDialog::on_overwrittenBtn_clicked()
     ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
-
-    /*ui->overwrittenBtn->setAutoFillBackground(true);
-    ui->overwrittenBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwrittenBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwrittenBtn->setPalette(palette);*/
   }
 }
 
@@ -293,12 +275,30 @@ void SettingsDialog::on_overwritingBtn_clicked()
     ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
       result.name()).arg(Settings::getIdealTextColor(
         result).name()));
+  }
+}
 
-    /*ui->overwritingBtn->setAutoFillBackground(true);
-    ui->overwritingBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwritingBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwritingBtn->setPalette(palette);*/
+void SettingsDialog::on_overwrittenArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, this);
+  if (result.isValid()) {
+    m_OverwrittenArchiveColor = result;
+
+    ui->overwrittenArchiveBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
+  }
+}
+
+void SettingsDialog::on_overwritingArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, this);
+  if (result.isValid()) {
+    m_OverwritingArchiveColor = result;
+
+    ui->overwritingArchiveBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+      result.name()).arg(Settings::getIdealTextColor(
+        result).name()));
   }
 }
 
@@ -306,6 +306,8 @@ void SettingsDialog::on_resetColorsBtn_clicked()
 {
   m_OverwritingColor = QColor(255, 0, 0, 64);
   m_OverwrittenColor = QColor(0, 255, 0, 64);
+  m_OverwritingArchiveColor = QColor(255, 0, 255, 64);
+  m_OverwrittenArchiveColor = QColor(0, 255, 255, 64);
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
@@ -316,6 +318,14 @@ void SettingsDialog::on_resetColorsBtn_clicked()
   ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
       QColor(0, 255, 0, 64)).name()));
+
+  ui->overwritingArchiveBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(255, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(255, 0, 255, 64)).name()));
+
+  ui->overwrittenArchiveBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
+    QColor(0, 255, 255, 64).name()).arg(Settings::getIdealTextColor(
+      QColor(0, 255, 255, 64)).name()));
 
   ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
     QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
