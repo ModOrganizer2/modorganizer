@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADLISTWIDGET_H
 
 #include "downloadmanager.h"
+#include "downloadlist.h"
 #include "downloadlistsortproxy.h"
 #include <QWidget>
 #include <QItemDelegate>
@@ -58,6 +59,8 @@ public:
   ~DownloadListWidget();
 
   void setManager(DownloadManager *manager);
+  void setSourceModel(DownloadList *sourceModel);
+  void setMetaDisplay(bool metaDisplay);
 
 signals:
   void installDownload(int index);
@@ -95,6 +98,7 @@ private slots:
 
 private:
   DownloadManager *m_Manager;
+  DownloadList *m_SourceModel;
   int m_ContextRow;
 };
 

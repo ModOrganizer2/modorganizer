@@ -33,6 +33,11 @@ DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
   connect(m_Manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
 }
 
+void DownloadList::setMetaDisplay(bool metaDisplay)
+{
+  m_MetaDisplay = metaDisplay;
+}
+
 
 int DownloadList::rowCount(const QModelIndex&) const
 {
@@ -86,7 +91,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
       }
     } else {
       switch (index.column()) {
-        case COL_NAME: return m_Manager->getFileName(index.row());
+        case COL_NAME: return m_MetaDisplay ? m_Manager->getDisplayName(index.row()) : m_Manager->getFileName(index.row());
         case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
         case COL_STATUS:
           switch (m_Manager->getState(index.row())) {

@@ -5150,12 +5150,14 @@ void MainWindow::on_actionEndorseMO_triggered()
 
 void MainWindow::initDownloadView()
 {
+  DownloadList *sourceModel = new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView);
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
-  sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
+  sortProxy->setSourceModel(sourceModel);
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
-    ui->downloadView->setModel(sortProxy);
+  ui->downloadView->setSourceModel(sourceModel);
+  ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
   ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
   ui->downloadView->setUniformRowHeights(true);
@@ -5183,6 +5185,7 @@ void MainWindow::updateDownloadView()
     ui->downloadView->setProperty("downloadView", "compact");
   else
     ui->downloadView->setProperty("downloadView", "standard");
+  ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().metaDownloads());
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
   m_OrganizerCore.downloadManager()->refreshList();

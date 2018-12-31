@@ -84,6 +84,16 @@ void DownloadListWidget::setManager(DownloadManager *manager)
   m_Manager = manager;
 }
 
+void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
+{
+  m_SourceModel = sourceModel;
+}
+
+void DownloadListWidget::setMetaDisplay(bool metaDisplay)
+{
+  m_SourceModel->setMetaDisplay(metaDisplay);
+}
+
 void DownloadListWidget::onDoubleClick(const QModelIndex &index)
 {
   QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index);

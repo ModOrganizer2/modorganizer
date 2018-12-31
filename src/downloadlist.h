@@ -52,6 +52,8 @@ public:
    **/
   explicit DownloadList(DownloadManager *manager, QObject *parent = 0);
 
+  void setMetaDisplay(bool metaDisplay);
+
   /**
    * @brief retrieve the number of rows to display. Invoked by Qt
    *
@@ -90,6 +92,7 @@ public slots:
 private:
 
   DownloadManager *m_Manager;
+  bool m_MetaDisplay;
 
   QString sizeFormat(quint64 size) const;
 };
