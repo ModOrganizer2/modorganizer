@@ -98,7 +98,7 @@ private slots:
 
 private:
   DownloadManager *m_Manager;
-  DownloadList *m_SourceModel;
+  DownloadList *m_SourceModel = 0;
   int m_ContextRow;
 };
 

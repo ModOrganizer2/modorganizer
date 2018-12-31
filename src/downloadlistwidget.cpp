@@ -91,7 +91,8 @@ void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
 
 void DownloadListWidget::setMetaDisplay(bool metaDisplay)
 {
-  m_SourceModel->setMetaDisplay(metaDisplay);
+  if (m_SourceModel != nullptr)
+    m_SourceModel->setMetaDisplay(metaDisplay);
 }
 
 void DownloadListWidget::onDoubleClick(const QModelIndex &index)
