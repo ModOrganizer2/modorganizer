@@ -64,7 +64,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
   info->m_PreResumeSize = 0LL;
-  info->m_Progress = std::make_pair<int, QString>(0, "     0.0 Bytes/s ");
+  info->m_Progress = std::make_pair<int, QString>(0, "0.0 B/s ");
   info->m_ResumePos = 0;
   info->m_FileInfo = new ModRepositoryFileInfo(*fileInfo);
   info->m_Urls = URLs;
@@ -499,8 +499,8 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
       setState(newDownload, STATE_PAUSING);
       QCoreApplication::processEvents();
-      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
-          "Do you want to download it again? The new file will receive a different name."),
+      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name \"%1\" has already been downloaded. "
+          "Do you want to download it again? The new file will receive a different name.").arg(newDownload->m_FileName),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         if (reply->isFinished())
           setState(newDownload, STATE_CANCELED);
@@ -700,22 +700,18 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
     emit aboutToUpdate();
 
     if (index < 0) {
-      DownloadState minState;
-      if (index == -3) {
-        minState = STATE_UNINSTALLED;
-      }
-      else
-			  minState = index == -1 ? STATE_READY : STATE_INSTALLED;
+      bool removeAll = (index == -1);
+      DownloadState removeState = (index == -2 ? STATE_INSTALLED : STATE_UNINSTALLED);
 
 			index = 0;
-			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
-				if ((*iter)->m_State >= minState) {
+      for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
+        DownloadState downloadState = (*iter)->m_State;
+				if ((removeAll && (downloadState >= STATE_READY)) ||
+            (removeState == downloadState)) {
 					removeFile(index, deleteFile);
 					delete *iter;
 					iter = m_ActiveDownloads.erase(iter);
-          //QCoreApplication::processEvents();
-				}
-				else {
+				} else {
 					++iter;
 					++index;
 				}
@@ -1338,7 +1334,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
         QString unit;
         if (speed < 1000) {
-          unit = "Bytes/s";
+          unit = "B/s";
         }
         else if (speed < 1000*1024) {
           speed /= 1024;
@@ -1349,7 +1345,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
           unit = "MB/s";
         }
 
-        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 8, 'f', 1,' ').arg(unit, -8, ' ');
+        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(QString::number(speed, 'f', 1)).arg(unit);
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);

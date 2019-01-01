@@ -20,6 +20,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "downloadlist.h"
 #include "downloadmanager.h"
 #include <QEvent>
+#include <QColor>
+#include <QIcon>
 
 #include <QSortFilterProxyModel>
 
@@ -29,6 +31,11 @@ DownloadList::DownloadList(DownloadManager *manager, QObject *parent)
 {
   connect(m_Manager, SIGNAL(update(int)), this, SLOT(update(int)));
   connect(m_Manager, SIGNAL(aboutToUpdate()), this, SLOT(aboutToUpdate()));
+}
+
+void DownloadList::setMetaDisplay(bool metaDisplay)
+{
+  m_MetaDisplay = metaDisplay;
 }
 
 
@@ -62,22 +69,65 @@ QVariant DownloadList::headerData(int section, Qt::Orientation orientation, int 
       (orientation == Qt::Horizontal)) {
     switch (section) {
       case COL_NAME: return tr("Name");
-      case COL_FILETIME: return tr("Filetime");
       case COL_SIZE: return tr("Size");
-      default: return tr("Done");
+      case COL_STATUS: return tr("Status");
+      case COL_FILETIME: return tr("Filetime");
+      default: return QVariant();
     }
   } else {
     return QAbstractItemModel::headerData(section, orientation, role);
   }
 }
 
-
 QVariant DownloadList::data(const QModelIndex &index, int role) const
 {
+  bool pendingDownload = index.row() >= m_Manager->numTotalDownloads();
   if (role == Qt::DisplayRole) {
-    return index.row();
+    if (pendingDownload) {
+      std::tuple<QString, int, int> nexusids = m_Manager->getPendingDownload(index.row() - m_Manager->numTotalDownloads());
+      switch (index.column()) {
+        case COL_NAME: return tr("< game %1 mod %2 file %3 >").arg(std::get<0>(nexusids)).arg(std::get<1>(nexusids)).arg(std::get<2>(nexusids));
+        case COL_SIZE: return tr("Unknown");
+        case COL_STATUS: return tr("Pending");
+      }
+    } else {
+      switch (index.column()) {
+        case COL_NAME: return m_MetaDisplay ? m_Manager->getDisplayName(index.row()) : m_Manager->getFileName(index.row());
+        case COL_SIZE: return sizeFormat(m_Manager->getFileSize(index.row()));
+        case COL_FILETIME: return m_Manager->getFileTime(index.row());
+        case COL_STATUS:
+          switch (m_Manager->getState(index.row())) {
+            // STATE_DOWNLOADING handled by DownloadProgressDelegate
+            case DownloadManager::STATE_STARTED: return tr("Started");
+            case DownloadManager::STATE_CANCELING: return tr("Canceling");
+            case DownloadManager::STATE_PAUSING: return tr("Pausing");
+            case DownloadManager::STATE_CANCELED: return tr("Canceled");
+            case DownloadManager::STATE_PAUSED: return tr("Paused");
+            case DownloadManager::STATE_ERROR: return tr("Error");
+            case DownloadManager::STATE_FETCHINGMODINFO: return tr("Fetching Info 1");
+            case DownloadManager::STATE_FETCHINGFILEINFO: return tr("Fetching Info 2");
+            case DownloadManager::STATE_READY: return tr("Downloaded");
+            case DownloadManager::STATE_INSTALLED: return tr("Installed");
+            case DownloadManager::STATE_UNINSTALLED: return tr("Uninstalled");
+          }
+      }
+    }
+  } else if (role == Qt::ForegroundRole && index.column() == COL_STATUS) {
+    if (pendingDownload) {
+      return QColor(Qt::darkBlue);
+    } else {
+      DownloadManager::DownloadState state = m_Manager->getState(index.row());
+      if (state == DownloadManager::STATE_READY)
+        return QColor(Qt::darkGreen);
+      else if (state == DownloadManager::STATE_UNINSTALLED)
+        return QColor(Qt::darkYellow);
+      else if (state == DownloadManager::STATE_PAUSED)
+        return QColor(Qt::darkRed);
+    }
   } else if (role == Qt::ToolTipRole) {
-    if (index.row() < m_Manager->numTotalDownloads()) {
+    if (pendingDownload) {
+      return tr("Pending download");
+    } else {
       QString text = m_Manager->getFileName(index.row()) + "\n";
       if (m_Manager->isInfoIncomplete(index.row())) {
         text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
@@ -86,12 +136,18 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         return QString("%1 (ID %2) %3<br><span>%4</span>").arg(info->modName).arg(m_Manager->getModID(index.row())).arg(info->version.canonicalString()).arg(info->description);
       }
       return text;
-    } else {
-      return tr("pending download");
     }
-  } else {
-    return QVariant();
+  } else if (role == Qt::DecorationRole && index.column() == COL_NAME) {
+    if (!pendingDownload && m_Manager->getState(index.row()) >= DownloadManager::STATE_READY
+        && m_Manager->isInfoIncomplete(index.row()))
+      return QIcon(":/MO/gui/warning_16");
+  } else if (role == Qt::TextAlignmentRole) {
+    if (index.column() == COL_NAME)
+      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
+    else
+      return QVariant(Qt::AlignVCenter | Qt::AlignRight);
   }
+  return QVariant();
 }
 
 
@@ -103,12 +159,28 @@ void DownloadList::aboutToUpdate()
 
 void DownloadList::update(int row)
 {
-  if (row < 0) {
+  if (row < 0)
     emit endResetModel();
-  } else if (row < this->rowCount()) {
+  else if (row < this->rowCount())
     emit dataChanged(this->index(row, 0, QModelIndex()), this->index(row, this->columnCount(QModelIndex())-1, QModelIndex()));
-  } else {
+  else
     qCritical("invalid row %d in download list, update failed", row);
-  }
 }
 
+QString DownloadList::sizeFormat(quint64 size) const
+{
+  qreal calc = size;
+  QStringList list;
+  list << "MB" << "GB" << "TB";
+
+  QStringListIterator i(list);
+  QString unit("KB");
+
+  calc /= 1024.0;
+  while (calc >= 1024.0 && i.hasNext()) {
+    unit = i.next();
+    calc /= 1024.0;
+  }
+
+  return QString().setNum(calc, 'f', 2) + " " + unit;
+}

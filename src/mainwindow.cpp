@@ -55,7 +55,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "activatemodsdialog.h"
 #include "downloadlist.h"
 #include "downloadlistwidget.h"
-#include "downloadlistwidgetcompact.h"
 #include "messagedialog.h"
 #include "installationmanager.h"
 #include "lockeddialog.h"
@@ -320,6 +319,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   //ui->bsaList->setLocalMoveOnly(true);
 
+  initDownloadView();
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
   registerWidgetState(ui->dataTree->objectName(), ui->dataTree->header());
   registerWidgetState(ui->downloadView->objectName(),
@@ -340,8 +340,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
-
-  updateDownloadListDelegate();
 
   ui->savegameList->installEventFilter(this);
   ui->savegameList->setMouseTracking(true);
@@ -459,8 +457,12 @@ MainWindow::MainWindow(QSettings &initSettings
 
   for (QAction *action : ui->toolBar->actions()) {
     // set the name of the widget to the name of the action to allow styling
-    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
+    QWidget *actionWidget = ui->toolBar->widgetForAction(action);
+    actionWidget->setObjectName(action->objectName());
+    actionWidget->style()->unpolish(actionWidget);
+    actionWidget->style()->polish(actionWidget);
   }
+
   emit updatePluginCount();
   emit updateModCount();
 }
@@ -4658,7 +4660,7 @@ void MainWindow::on_actionSettings_triggered()
 
   NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
-  updateDownloadListDelegate();
+  updateDownloadView();
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
@@ -4714,13 +4716,12 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   createHelpWidget();
 
-  updateDownloadListDelegate();
+  updateDownloadView();
   updateProblemsButton();
 
   ui->listOptionsBtn->setMenu(modListContextMenu());
 
   ui->openFolderMenu->setMenu(openFolderMenu());
-
 }
 
 void MainWindow::writeDataToFile(QFile &file, const QString &directory, const DirectoryEntry &directoryEntry)
@@ -5151,43 +5152,56 @@ void MainWindow::on_actionEndorseMO_triggered()
 }
 
 
-void MainWindow::updateDownloadListDelegate()
+void MainWindow::initDownloadView()
 {
-  if (m_OrganizerCore.settings().compactDownloads()) {
-    ui->downloadView->setItemDelegate(
-          new DownloadListWidgetCompactDelegate(m_OrganizerCore.downloadManager(),
-                                                m_OrganizerCore.settings().metaDownloads(),
-                                                ui->downloadView,
-                                                ui->downloadView));
-  } else {
-    ui->downloadView->setItemDelegate(
-          new DownloadListWidgetDelegate(m_OrganizerCore.downloadManager(),
-                                         m_OrganizerCore.settings().metaDownloads(),
-                                         ui->downloadView,
-                                         ui->downloadView));
-  }
-
+  DownloadList *sourceModel = new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView);
   DownloadListSortProxy *sortProxy = new DownloadListSortProxy(m_OrganizerCore.downloadManager(), ui->downloadView);
-  sortProxy->setSourceModel(new DownloadList(m_OrganizerCore.downloadManager(), ui->downloadView));
+  sortProxy->setSourceModel(sourceModel);
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), sortProxy, SLOT(updateFilter(QString)));
   connect(ui->downloadFilterEdit, SIGNAL(textChanged(QString)), this, SLOT(downloadFilterChanged(QString)));
 
+  ui->downloadView->setSourceModel(sourceModel);
   ui->downloadView->setModel(sortProxy);
-  //ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
-  ui->downloadView->header()->resizeSections(QHeaderView::Stretch);
+  ui->downloadView->setManager(m_OrganizerCore.downloadManager());
+  ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
+  ui->downloadView->setUniformRowHeights(false);
+  ui->downloadView->header()->setStretchLastSection(false);
+  ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
+  ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
+  updateDownloadView();
 
-  connect(ui->downloadView->itemDelegate(), SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(openFile(int)), m_OrganizerCore.downloadManager(), SLOT(openFile(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(pauseDownload(int)), m_OrganizerCore.downloadManager(), SLOT(pauseDownload(int)));
-  connect(ui->downloadView->itemDelegate(), SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
+  connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
+  connect(ui->downloadView, SIGNAL(queryInfo(int)), m_OrganizerCore.downloadManager(), SLOT(queryInfo(int)));
+  connect(ui->downloadView, SIGNAL(visitOnNexus(int)), m_OrganizerCore.downloadManager(), SLOT(visitOnNexus(int)));
+  connect(ui->downloadView, SIGNAL(openFile(int)), m_OrganizerCore.downloadManager(), SLOT(openFile(int)));
+  connect(ui->downloadView, SIGNAL(openInDownloadsFolder(int)), m_OrganizerCore.downloadManager(), SLOT(openInDownloadsFolder(int)));
+  connect(ui->downloadView, SIGNAL(removeDownload(int, bool)), m_OrganizerCore.downloadManager(), SLOT(removeDownload(int, bool)));
+  connect(ui->downloadView, SIGNAL(restoreDownload(int)), m_OrganizerCore.downloadManager(), SLOT(restoreDownload(int)));
+  connect(ui->downloadView, SIGNAL(cancelDownload(int)), m_OrganizerCore.downloadManager(), SLOT(cancelDownload(int)));
+  connect(ui->downloadView, SIGNAL(pauseDownload(int)), m_OrganizerCore.downloadManager(), SLOT(pauseDownload(int)));
+  connect(ui->downloadView, SIGNAL(resumeDownload(int)), this, SLOT(resumeDownload(int)));
 }
 
+void MainWindow::updateDownloadView()
+{
+  // set the view attribute and default row sizes
+  if (m_OrganizerCore.settings().compactDownloads()) {
+    ui->downloadView->setProperty("downloadView", "compact");
+    setStyleSheet("DownloadListWidget::item { padding: 4px; }");
+  } else {
+    ui->downloadView->setProperty("downloadView", "standard");
+    setStyleSheet("DownloadListWidget::item { padding: 16px; }");
+  }
+
+  // reapply global stylesheet on the widget level (!) to override the defaults
+  ui->downloadView->setStyleSheet(styleSheet());
+
+  ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().metaDownloads());
+  ui->downloadView->style()->unpolish(ui->downloadView);
+  ui->downloadView->style()->polish(ui->downloadView);
+  m_OrganizerCore.downloadManager()->refreshList();
+}
 
 void MainWindow::modDetailsUpdated(bool)
 {

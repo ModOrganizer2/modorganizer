@@ -534,13 +534,21 @@ QProgressBar {
   background-color: transparent;
   color: transparent;
   height: 14px;
-  margin: 0 10px;
+  margin: 0 0px;
   border-width: 4px 21px;
   border-style: solid;
   border-color: transparent;
   border-image: url(./skyrim/progress-bar-border.png) 4 21 repeat repeat; }
   QProgressBar::chunk {
     background: url(./skyrim/progress-bar-chunk.png) center center repeat-x qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 #95BED9, stop:0.78781 #6EB9CE); }
+
+DownloadListWidget[downloadView=standard]::item {
+	padding: 15px;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	padding: 4px;
+}
 
 /* Right Pane and Tab Bars #QTabWidget, #QTabBar */
 QTabWidget::pane {

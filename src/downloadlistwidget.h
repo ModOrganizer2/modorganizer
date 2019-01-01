@@ -21,49 +21,48 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #define DOWNLOADLISTWIDGET_H
 
 #include "downloadmanager.h"
+#include "downloadlist.h"
+#include "downloadlistsortproxy.h"
 #include <QWidget>
 #include <QItemDelegate>
 #include <QLabel>
 #include <QProgressBar>
 #include <QTreeView>
+#include <QStyledItemDelegate>
+
 
 namespace Ui {
-    class DownloadListWidget;
+  class DownloadListWidget;
 }
 
-class DownloadListWidget : public QWidget
+class DownloadProgressDelegate : public QStyledItemDelegate
 {
-    Q_OBJECT
-
-public:
-    explicit DownloadListWidget(QWidget *parent = 0);
-    ~DownloadListWidget();
-
-
-private:
-    Ui::DownloadListWidget *ui;
-};
-
-class DownloadManager;
-
-class DownloadListWidgetDelegate : public QItemDelegate
-{
-
   Q_OBJECT
 
 public:
+  DownloadProgressDelegate(DownloadManager *manager, DownloadListSortProxy *sortProxy, QWidget *parent = 0) : QStyledItemDelegate(parent), m_Manager(manager), m_SortProxy(sortProxy) {}
 
-  DownloadListWidgetDelegate(DownloadManager *manager, bool metaDisplay, QTreeView *view, QObject *parent = 0);
-  ~DownloadListWidgetDelegate();
+  void paint(QPainter *painter, const QStyleOptionViewItem &option,
+    const QModelIndex &index) const override;
 
-  virtual void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
-  virtual QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
+private:
+  DownloadManager *m_Manager;
+  DownloadListSortProxy *m_SortProxy;
+};
 
-  void paintPendingDownload(int downloadIndex) const;
-  void paintRegularDownload(int downloadIndex) const;
+class DownloadListWidget : public QTreeView
+{
+  Q_OBJECT
+
+public:
+  explicit DownloadListWidget(QWidget *parent = 0);
+  ~DownloadListWidget();
+
+  void setManager(DownloadManager *manager);
+  void setSourceModel(DownloadList *sourceModel);
+  void setMetaDisplay(bool metaDisplay);
 
 signals:
-
   void installDownload(int index);
   void queryInfo(int index);
   void removeDownload(int index, bool deleteFile);
@@ -75,19 +74,10 @@ signals:
   void openFile(int index);
   void openInDownloadsFolder(int index);
 
-protected:
-
-	QString sizeFormat(quint64 size) const;
-  bool editorEvent(QEvent *event, QAbstractItemModel *model,
-                   const QStyleOptionViewItem &option, const QModelIndex &index);
-
-private:
-
-
-  void drawCache(QPainter *painter, const QStyleOptionViewItem &option, const QPixmap &cache) const;
-
 private slots:
-
+  void onDoubleClick(const QModelIndex &index);
+  void onCustomContextMenu(const QPoint &point);
+  void onHeaderCustomContextMenu(const QPoint &point);
   void issueInstall();
   void issueDelete();
   void issueRemoveFromView();
@@ -107,25 +97,10 @@ private slots:
   void issueRemoveFromViewUninstalled();
   void issueQueryInfo();
 
-  void stateChanged(int row, DownloadManager::DownloadState);
-  void resetCache(int);
-
 private:
-
-  DownloadListWidget *m_ItemWidget;
   DownloadManager *m_Manager;
-
-  bool m_MetaDisplay;
-
-  QLabel *m_NameLabel;
-  QLabel *m_SizeLabel;
-  QProgressBar *m_Progress;
-  QLabel *m_InstallLabel;
+  DownloadList *m_SourceModel = 0;
   int m_ContextRow;
-
-  QTreeView *m_View;
-
-  mutable QMap<int, QPixmap> m_Cache;
 };
 
 #endif // DOWNLOADLISTWIDGET_H
