@@ -1150,6 +1150,8 @@ void ModList::notifyChange(int rowStart, int rowEnd)
     m_Overwritten.clear();
     m_ArchiveOverwrite.clear();
     m_ArchiveOverwritten.clear();
+    m_ArchiveLooseOverwrite.clear();
+    m_ArchiveLooseOverwritten.clear();
     beginResetModel();
     endResetModel();
   } else {
