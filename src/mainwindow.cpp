@@ -457,8 +457,12 @@ MainWindow::MainWindow(QSettings &initSettings
 
   for (QAction *action : ui->toolBar->actions()) {
     // set the name of the widget to the name of the action to allow styling
-    ui->toolBar->widgetForAction(action)->setObjectName(action->objectName());
+    QWidget *actionWidget = ui->toolBar->widgetForAction(action);
+    actionWidget->setObjectName(action->objectName());
+    actionWidget->style()->unpolish(actionWidget);
+    actionWidget->style()->polish(actionWidget);
   }
+
   emit updatePluginCount();
   emit updateModCount();
 }
