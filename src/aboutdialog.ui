@@ -83,7 +83,7 @@
      <item>
       <widget class="QTabWidget" name="tabWidget">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="about">
         <attribute name="title">
@@ -157,7 +157,7 @@
          <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
-            <string>Current Maintainers</string>
+            <string>Lead Developers/ Maintainers</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
@@ -177,11 +177,6 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">Diana</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
                 <string notr="true">erasmux</string>
                </property>
               </item>
@@ -190,7 +185,7 @@
                 <string notr="true">Silarn</string>
                </property>
               </item>
-			  <item>
+              <item>
                <property name="text">
                 <string notr="true">LostDragonist</string>
                </property>
@@ -203,7 +198,7 @@
          <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Major Contributors</string>
+            <string>Mo2 devs and Contributors</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
             <item>
@@ -214,6 +209,16 @@
               <item>
                <property name="text">
                 <string notr="true">AnyOldName3</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Project579</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>przester</string>
                </property>
               </item>
              </widget>
@@ -312,6 +317,11 @@
               </item>
               <item>
                <property name="text">
+                <string>zDas (Portuguese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">tokcdk  (Russian)</string>
                </property>
               </item>
@@ -328,6 +338,11 @@
               <item>
                <property name="text">
                 <string>Jax (Swedish)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>yohru (Japanese)</string>
                </property>
               </item>
               <item>
