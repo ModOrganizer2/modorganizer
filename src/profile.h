@@ -234,6 +234,13 @@ public:
   std::vector<std::tuple<QString, QString, int> > getActiveMods();
 
   /**
+   * @brief retrieve a mod of the indexes ordered by priority
+   *
+   * @return map of indexes by priority
+   **/
+  std::map<int, unsigned int> getAllIndexesByPriority() { return m_ModIndexByPriority; }
+
+  /**
    * retrieve the number of mods for which this object has status information.
    * This is usually the same as ModInfo::getNumMods() except between
    * calls to ModInfo::updateFromDisc() and the Profile::refreshModStatus()

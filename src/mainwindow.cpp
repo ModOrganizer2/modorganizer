@@ -6260,10 +6260,13 @@ void MainWindow::sendSelectedModsToPriority_clicked()
 void MainWindow::sendSelectedModsToSeparator_clicked()
 {
   QStringList separators;
-  for (auto mod : m_OrganizerCore.modList()->allMods()) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
-    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-      separators << mod.chopped(10);
+  auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
+  for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
+    if ((iter->second != UINT_MAX)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
+      if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+        separators << modInfo->name().chopped(10);
+      }
     }
   }
 
