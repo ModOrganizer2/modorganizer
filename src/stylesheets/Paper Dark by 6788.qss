@@ -919,29 +919,30 @@ QSlider::handle:hover {
 	background: #242424;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
-	background: #141414;
+DownloadListWidget[downloadView=standard]::item {
+	padding: 15px;
+	border-bottom: 2px solid #666666;
 }
 
-DownloadListWidget#frame {
-	/* outer box of an entry on the Downloads tab */
-	border: none;
-}
-
-#installLabel {
-	/* installed/done label */
-	color: none;
+QProgressBar[downloadView=standard] {
+	background: transparent;
+	border: 2px solid #666666;
+	border-radius: 8px;
+	margin: 4px 0px 6px 0px;
 }
 
 /* Compact Downloads View */
 
-DownloadListWidgetCompact, 
-DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
-	background: #141414;
+DownloadListWidget[downloadView=compact]::item {
+	padding: 3px;
+	border-bottom: 2px solid #666666;
+}
+
+QProgressBar[downloadView=compact] {
+	background: transparent;
+	border: 2px solid gray;
+	border-radius: 8px;
+	margin: 1px 0px 3px 0px;
 }
 
 /* Categories Filter */

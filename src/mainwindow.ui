@@ -1326,7 +1326,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
-                   <widget class="QTreeView" name="downloadView">
+                   <widget class="DownloadListWidget" name="downloadView" native="true">
                     <property name="minimumSize">
                      <size>
                       <width>320</width>
@@ -1334,7 +1334,7 @@ p, li { white-space: pre-wrap; }
                      </size>
                     </property>
                     <property name="contextMenuPolicy">
-                     <enum>Qt::PreventContextMenu</enum>
+                     <enum>Qt::CustomContextMenu</enum>
                     </property>
                     <property name="acceptDrops">
                      <bool>true</bool>
@@ -1345,51 +1345,21 @@ p, li { white-space: pre-wrap; }
                     <property name="whatsThis">
                      <string>This is a list of mods you downloaded from Nexus. Double click one to install it. You can also drag an archive into here.</string>
                     </property>
-                    <property name="verticalScrollBarPolicy">
-                     <enum>Qt::ScrollBarAlwaysOn</enum>
-                    </property>
-                    <property name="horizontalScrollBarPolicy">
-                     <enum>Qt::ScrollBarAsNeeded</enum>
-                    </property>
-                    <property name="dragEnabled">
+                    <property name="dragEnabled" stdset="0">
                      <bool>true</bool>
                     </property>
-                    <property name="dragDropMode">
-                     <enum>QAbstractItemView::DragDrop</enum>
-                    </property>
-                    <property name="defaultDropAction">
-                     <enum>Qt::MoveAction</enum>
-                    </property>
-                    <property name="alternatingRowColors">
+                    <property name="alternatingRowColors" stdset="0">
                      <bool>true</bool>
                     </property>
-                    <property name="selectionMode">
-                     <enum>QAbstractItemView::SingleSelection</enum>
-                    </property>
-                    <property name="selectionBehavior">
-                     <enum>QAbstractItemView::SelectRows</enum>
-                    </property>
-                    <property name="verticalScrollMode">
-                     <enum>QAbstractItemView::ScrollPerPixel</enum>
-                    </property>
-                    <property name="indentation">
+                    <property name="indentation" stdset="0">
                      <number>0</number>
                     </property>
-                    <property name="itemsExpandable">
+                    <property name="itemsExpandable" stdset="0">
                      <bool>false</bool>
                     </property>
-                    <property name="sortingEnabled">
+                    <property name="sortingEnabled" stdset="0">
                      <bool>true</bool>
                     </property>
-                    <attribute name="headerDefaultSectionSize">
-                     <number>50</number>
-                    </attribute>
-                    <attribute name="headerMinimumSectionSize">
-                     <number>15</number>
-                    </attribute>
-                    <attribute name="headerStretchLastSection">
-                     <bool>true</bool>
-                    </attribute>
                    </widget>
                   </item>
                  </layout>
@@ -1705,6 +1675,11 @@ Right now this has very limited functionality</string>
    <class>LCDNumber</class>
    <extends>QLCDNumber</extends>
    <header>lcdnumber.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DownloadListWidget</class>
+   <extends>QWidget</extends>
+   <header>downloadlistwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

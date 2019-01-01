@@ -37,18 +37,23 @@ void DownloadListSortProxy::updateFilter(const QString &filter)
 bool DownloadListSortProxy::lessThan(const QModelIndex &left,
                                      const QModelIndex &right) const
 {
-  int leftIndex  = left.data().toInt();
-  int rightIndex = right.data().toInt();
+  int leftIndex  = left.row();
+  int rightIndex = right.row();
   if ((leftIndex < m_Manager->numTotalDownloads())
       && (rightIndex < m_Manager->numTotalDownloads())) {
     if (left.column() == DownloadList::COL_NAME) {
-      return m_Manager->getFileName(leftIndex).compare(m_Manager->getFileName(rightIndex), Qt::CaseInsensitive) < 0;
-    } else if (left.column() == DownloadList::COL_FILETIME) {
-      return m_Manager->getFileTime(leftIndex) < m_Manager->getFileTime(rightIndex);
+      return m_Manager->getFileName(left.row()).compare(m_Manager->getFileName(right.row()), Qt::CaseInsensitive) < 0;
     } else if (left.column() == DownloadList::COL_STATUS) {
-      return m_Manager->getState(leftIndex) < m_Manager->getState(rightIndex);
-    } else if(left.column() == DownloadList::COL_SIZE){
-      return m_Manager->getFileSize(leftIndex) < m_Manager->getFileSize(rightIndex);
+      DownloadManager::DownloadState leftState = m_Manager->getState(left.row());
+      DownloadManager::DownloadState rightState = m_Manager->getState(right.row());
+      if (leftState == rightState)
+        return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
+      else
+        return leftState > rightState;
+    } else if (left.column() == DownloadList::COL_SIZE) {
+      return m_Manager->getFileSize(left.row()) < m_Manager->getFileSize(right.row());
+    } else if (left.column() == DownloadList::COL_FILETIME) {
+      return m_Manager->getFileTime(left.row()) < m_Manager->getFileTime(right.row());
     } else {
       return leftIndex < rightIndex;
     }
@@ -63,11 +68,9 @@ bool DownloadListSortProxy::filterAcceptsRow(int sourceRow, const QModelIndex&) 
   if (m_CurrentFilter.length() == 0) {
     return true;
   } else if (sourceRow < m_Manager->numTotalDownloads()) {
-    int downloadIndex = sourceModel()->index(sourceRow, 0).data().toInt();
-
     QString displayedName = Settings::instance().metaDownloads()
-        ? m_Manager->getDisplayName(downloadIndex)
-        : m_Manager->getFileName(downloadIndex);
+        ? m_Manager->getDisplayName(sourceRow)
+        : m_Manager->getFileName(sourceRow);
     return displayedName.contains(m_CurrentFilter, Qt::CaseInsensitive);
   } else {
     return false;
