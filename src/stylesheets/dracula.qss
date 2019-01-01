@@ -397,11 +397,19 @@ SaveGameInfoWidget {
 }
 
 DownloadListWidget[downloadView=standard]::item {
-	padding: 16px;
+    padding: 16px;
 }
 
 DownloadListWidget[downloadView=compact]::item {
-	padding: 4px;
+    padding: 4px;
+}
+
+DownloadListWidget::item:hover {
+    padding: 0px;
+}
+
+DownloadListWidget::item:selected {
+    padding: 0px;
 }
 
 QProgressBar

@@ -657,6 +657,14 @@ DownloadListWidget[downloadView=compact]::item {
 	padding: 4px;
 }
 
+DownloadListWidget::item:hover {
+    padding: 0px;
+}
+
+DownloadListWidget::item:selected {
+    padding: 0px;
+}
+
 QProgressBar
 {
 	border: 2px solid grey;
