@@ -711,7 +711,7 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
 					removeFile(index, deleteFile);
 					delete *iter;
 					iter = m_ActiveDownloads.erase(iter);
-				}	else {
+				} else {
 					++iter;
 					++index;
 				}
