@@ -499,8 +499,8 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
       setState(newDownload, STATE_PAUSING);
       QCoreApplication::processEvents();
-      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
-          "Do you want to download it again? The new file will receive a different name."),
+      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name \"%1\" has already been downloaded. "
+          "Do you want to download it again? The new file will receive a different name.").arg(newDownload->m_FileName),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         if (reply->isFinished())
           setState(newDownload, STATE_CANCELED);
