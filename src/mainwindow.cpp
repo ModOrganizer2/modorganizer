@@ -5193,6 +5193,8 @@ void MainWindow::updateDownloadView()
     ui->downloadView->setProperty("downloadView", "standard");
     setStyleSheet("DownloadListWidget::item { padding: 16px; }");
   }
+  setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
+  setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");
 
   // reapply global stylesheet on the widget level (!) to override the defaults
   ui->downloadView->setStyleSheet(styleSheet());
