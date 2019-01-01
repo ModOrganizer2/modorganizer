@@ -2281,7 +2281,7 @@ Please enter a name:</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3450"/>
-        <location filename="mainwindow.cpp" line="5478"/>
+        <location filename="mainwindow.cpp" line="5480"/>
         <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2608,13 +2608,13 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4330"/>
-        <location filename="mainwindow.cpp" line="5589"/>
+        <location filename="mainwindow.cpp" line="5591"/>
         <source>Enable selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4331"/>
-        <location filename="mainwindow.cpp" line="5590"/>
+        <location filename="mainwindow.cpp" line="5592"/>
         <source>Disable selected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2675,13 +2675,13 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4392"/>
-        <location filename="mainwindow.cpp" line="5637"/>
+        <location filename="mainwindow.cpp" line="5639"/>
         <source>Exception: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4394"/>
-        <location filename="mainwindow.cpp" line="5639"/>
+        <location filename="mainwindow.cpp" line="5641"/>
         <source>Unknown exception</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2819,7 +2819,7 @@ Click OK to restart MO now.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4939"/>
-        <location filename="mainwindow.cpp" line="6251"/>
+        <location filename="mainwindow.cpp" line="6253"/>
         <source>Set Priority</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2884,196 +2884,196 @@ Click OK to restart MO now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5287"/>
+        <location filename="mainwindow.cpp" line="5289"/>
         <source>Thank you!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5287"/>
+        <location filename="mainwindow.cpp" line="5289"/>
         <source>Thank you for your endorsement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5322"/>
+        <location filename="mainwindow.cpp" line="5324"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5337"/>
-        <location filename="mainwindow.cpp" line="5399"/>
+        <location filename="mainwindow.cpp" line="5339"/>
+        <location filename="mainwindow.cpp" line="5401"/>
         <source>failed to read %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5349"/>
-        <location filename="mainwindow.cpp" line="5827"/>
+        <location filename="mainwindow.cpp" line="5351"/>
+        <location filename="mainwindow.cpp" line="5829"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5349"/>
+        <location filename="mainwindow.cpp" line="5351"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5381"/>
+        <location filename="mainwindow.cpp" line="5383"/>
         <source>Extract BSA</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5410"/>
+        <location filename="mainwindow.cpp" line="5412"/>
         <source>This archive contains invalid hashes. Some files may be broken.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5456"/>
+        <location filename="mainwindow.cpp" line="5458"/>
         <source>Extract...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5479"/>
+        <location filename="mainwindow.cpp" line="5481"/>
         <source>This will restart MO, continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5526"/>
+        <location filename="mainwindow.cpp" line="5528"/>
         <source>Edit Categories...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5527"/>
+        <location filename="mainwindow.cpp" line="5529"/>
         <source>Deselect filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5578"/>
+        <location filename="mainwindow.cpp" line="5580"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5594"/>
+        <location filename="mainwindow.cpp" line="5596"/>
         <source>Enable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5595"/>
+        <location filename="mainwindow.cpp" line="5597"/>
         <source>Disable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5616"/>
+        <location filename="mainwindow.cpp" line="5618"/>
         <source>Unlock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5619"/>
+        <location filename="mainwindow.cpp" line="5621"/>
         <source>Lock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5623"/>
+        <location filename="mainwindow.cpp" line="5625"/>
         <source>Open Origin in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5630"/>
+        <location filename="mainwindow.cpp" line="5632"/>
         <source>Open Origin Info...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5773"/>
+        <location filename="mainwindow.cpp" line="5775"/>
         <source>depends on missing &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5777"/>
+        <location filename="mainwindow.cpp" line="5779"/>
         <source>incompatible with &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5803"/>
+        <location filename="mainwindow.cpp" line="5805"/>
         <source>Please wait while LOOT is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5900"/>
+        <location filename="mainwindow.cpp" line="5902"/>
         <source>loot failed. Exit code was: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5922"/>
+        <location filename="mainwindow.cpp" line="5924"/>
         <source>failed to start loot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5925"/>
+        <location filename="mainwindow.cpp" line="5927"/>
         <source>failed to run loot: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5929"/>
+        <location filename="mainwindow.cpp" line="5931"/>
         <source>Errors occured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5976"/>
+        <location filename="mainwindow.cpp" line="5978"/>
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5986"/>
+        <location filename="mainwindow.cpp" line="5988"/>
         <source>Choose backup to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5999"/>
+        <location filename="mainwindow.cpp" line="6001"/>
         <source>No Backups</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5999"/>
+        <location filename="mainwindow.cpp" line="6001"/>
         <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6020"/>
-        <location filename="mainwindow.cpp" line="6042"/>
+        <location filename="mainwindow.cpp" line="6022"/>
+        <location filename="mainwindow.cpp" line="6044"/>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6021"/>
-        <location filename="mainwindow.cpp" line="6043"/>
+        <location filename="mainwindow.cpp" line="6023"/>
+        <location filename="mainwindow.cpp" line="6045"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6032"/>
+        <location filename="mainwindow.cpp" line="6034"/>
         <source>Backup of modlist created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6138"/>
+        <location filename="mainwindow.cpp" line="6140"/>
         <source>A file with the same name has already been downloaded. What would you like to do?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6140"/>
+        <location filename="mainwindow.cpp" line="6142"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6141"/>
+        <location filename="mainwindow.cpp" line="6143"/>
         <source>Rename new file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6142"/>
+        <location filename="mainwindow.cpp" line="6144"/>
         <source>Ignore file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6251"/>
+        <location filename="mainwindow.cpp" line="6253"/>
         <source>Set the priority of the selected mods</source>
         <translation type="unfinished"></translation>
     </message>
