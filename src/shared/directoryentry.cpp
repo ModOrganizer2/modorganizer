@@ -332,7 +332,7 @@ bool FileEntry::removeOrigin(int origin)
       return true;
     }
   } else {
-    std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator newEnd = std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>> &i) -> bool { return i.first == origin; });
+    auto newEnd = std::remove_if(m_Alternatives.begin(), m_Alternatives.end(), [&](auto &i) -> bool { return i.first == origin; });
     if (newEnd != m_Alternatives.end())
       m_Alternatives.erase(newEnd, m_Alternatives.end());
   }
