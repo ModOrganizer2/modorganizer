@@ -395,145 +395,145 @@ p, li { white-space: pre-wrap; }
 <context>
     <name>DownloadListWidget</name>
     <message>
-        <location filename="downloadlistwidget.cpp" line="158"/>
+        <location filename="downloadlistwidget.cpp" line="182"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="160"/>
+        <location filename="downloadlistwidget.cpp" line="184"/>
         <source>Query Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="162"/>
+        <location filename="downloadlistwidget.cpp" line="186"/>
         <source>Visit on Nexus</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="163"/>
+        <location filename="downloadlistwidget.cpp" line="187"/>
         <source>Open File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="164"/>
-        <location filename="downloadlistwidget.cpp" line="176"/>
-        <location filename="downloadlistwidget.cpp" line="181"/>
+        <location filename="downloadlistwidget.cpp" line="188"/>
+        <location filename="downloadlistwidget.cpp" line="200"/>
+        <location filename="downloadlistwidget.cpp" line="205"/>
         <source>Show in Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="168"/>
-        <location filename="downloadlistwidget.cpp" line="179"/>
+        <location filename="downloadlistwidget.cpp" line="192"/>
+        <location filename="downloadlistwidget.cpp" line="203"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="170"/>
+        <location filename="downloadlistwidget.cpp" line="194"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="172"/>
+        <location filename="downloadlistwidget.cpp" line="196"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="174"/>
+        <location filename="downloadlistwidget.cpp" line="198"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="175"/>
+        <location filename="downloadlistwidget.cpp" line="199"/>
         <source>Pause</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="180"/>
+        <location filename="downloadlistwidget.cpp" line="204"/>
         <source>Resume</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="186"/>
+        <location filename="downloadlistwidget.cpp" line="210"/>
         <source>Delete Installed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="187"/>
+        <location filename="downloadlistwidget.cpp" line="211"/>
         <source>Delete Uninstalled...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="188"/>
+        <location filename="downloadlistwidget.cpp" line="212"/>
         <source>Delete All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="192"/>
+        <location filename="downloadlistwidget.cpp" line="216"/>
         <source>Hide Installed...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="193"/>
+        <location filename="downloadlistwidget.cpp" line="217"/>
         <source>Hide Uninstalled...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="194"/>
+        <location filename="downloadlistwidget.cpp" line="218"/>
         <source>Hide All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="196"/>
+        <location filename="downloadlistwidget.cpp" line="220"/>
         <source>Un-Hide All...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="214"/>
-        <location filename="downloadlistwidget.cpp" line="269"/>
-        <location filename="downloadlistwidget.cpp" line="278"/>
-        <location filename="downloadlistwidget.cpp" line="287"/>
+        <location filename="downloadlistwidget.cpp" line="238"/>
+        <location filename="downloadlistwidget.cpp" line="293"/>
+        <location filename="downloadlistwidget.cpp" line="302"/>
+        <location filename="downloadlistwidget.cpp" line="311"/>
         <source>Delete Files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="215"/>
+        <location filename="downloadlistwidget.cpp" line="239"/>
         <source>This will permanently delete the selected download.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="270"/>
+        <location filename="downloadlistwidget.cpp" line="294"/>
         <source>This will remove all finished downloads from this list and from disk.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="279"/>
+        <location filename="downloadlistwidget.cpp" line="303"/>
         <source>This will remove all installed downloads from this list and from disk.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="288"/>
+        <location filename="downloadlistwidget.cpp" line="312"/>
         <source>This will remove all uninstalled downloads from this list and from disk.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="296"/>
-        <location filename="downloadlistwidget.cpp" line="305"/>
-        <location filename="downloadlistwidget.cpp" line="314"/>
+        <location filename="downloadlistwidget.cpp" line="320"/>
+        <location filename="downloadlistwidget.cpp" line="329"/>
+        <location filename="downloadlistwidget.cpp" line="338"/>
         <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="297"/>
+        <location filename="downloadlistwidget.cpp" line="321"/>
         <source>This will remove all finished downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="306"/>
+        <location filename="downloadlistwidget.cpp" line="330"/>
         <source>This will remove all installed downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="downloadlistwidget.cpp" line="315"/>
+        <location filename="downloadlistwidget.cpp" line="339"/>
         <source>This will remove all uninstalled downloads from this list (but NOT from disk).</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2281,7 +2281,7 @@ Please enter a name:</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="3450"/>
-        <location filename="mainwindow.cpp" line="5480"/>
+        <location filename="mainwindow.cpp" line="5482"/>
         <source>Are you sure?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2608,13 +2608,13 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4330"/>
-        <location filename="mainwindow.cpp" line="5591"/>
+        <location filename="mainwindow.cpp" line="5593"/>
         <source>Enable selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4331"/>
-        <location filename="mainwindow.cpp" line="5592"/>
+        <location filename="mainwindow.cpp" line="5594"/>
         <source>Disable selected</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2675,13 +2675,13 @@ You can also use online editors and converters instead.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4392"/>
-        <location filename="mainwindow.cpp" line="5639"/>
+        <location filename="mainwindow.cpp" line="5641"/>
         <source>Exception: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4394"/>
-        <location filename="mainwindow.cpp" line="5641"/>
+        <location filename="mainwindow.cpp" line="5643"/>
         <source>Unknown exception</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2819,7 +2819,7 @@ Click OK to restart MO now.</source>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="4939"/>
-        <location filename="mainwindow.cpp" line="6253"/>
+        <location filename="mainwindow.cpp" line="6255"/>
         <source>Set Priority</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2884,196 +2884,196 @@ Click OK to restart MO now.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5289"/>
+        <location filename="mainwindow.cpp" line="5291"/>
         <source>Thank you!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5289"/>
+        <location filename="mainwindow.cpp" line="5291"/>
         <source>Thank you for your endorsement!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5324"/>
+        <location filename="mainwindow.cpp" line="5326"/>
         <source>Request to Nexus failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5339"/>
-        <location filename="mainwindow.cpp" line="5401"/>
+        <location filename="mainwindow.cpp" line="5341"/>
+        <location filename="mainwindow.cpp" line="5403"/>
         <source>failed to read %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5351"/>
-        <location filename="mainwindow.cpp" line="5829"/>
+        <location filename="mainwindow.cpp" line="5353"/>
+        <location filename="mainwindow.cpp" line="5831"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5351"/>
+        <location filename="mainwindow.cpp" line="5353"/>
         <source>failed to extract %1 (errorcode %2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5383"/>
+        <location filename="mainwindow.cpp" line="5385"/>
         <source>Extract BSA</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5412"/>
+        <location filename="mainwindow.cpp" line="5414"/>
         <source>This archive contains invalid hashes. Some files may be broken.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5458"/>
+        <location filename="mainwindow.cpp" line="5460"/>
         <source>Extract...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5481"/>
+        <location filename="mainwindow.cpp" line="5483"/>
         <source>This will restart MO, continue?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5528"/>
+        <location filename="mainwindow.cpp" line="5530"/>
         <source>Edit Categories...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5529"/>
+        <location filename="mainwindow.cpp" line="5531"/>
         <source>Deselect filter</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5580"/>
+        <location filename="mainwindow.cpp" line="5582"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5596"/>
+        <location filename="mainwindow.cpp" line="5598"/>
         <source>Enable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5597"/>
+        <location filename="mainwindow.cpp" line="5599"/>
         <source>Disable all</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5618"/>
+        <location filename="mainwindow.cpp" line="5620"/>
         <source>Unlock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5621"/>
+        <location filename="mainwindow.cpp" line="5623"/>
         <source>Lock load order</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5625"/>
+        <location filename="mainwindow.cpp" line="5627"/>
         <source>Open Origin in Explorer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5632"/>
+        <location filename="mainwindow.cpp" line="5634"/>
         <source>Open Origin Info...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5775"/>
+        <location filename="mainwindow.cpp" line="5777"/>
         <source>depends on missing &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5779"/>
+        <location filename="mainwindow.cpp" line="5781"/>
         <source>incompatible with &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5805"/>
+        <location filename="mainwindow.cpp" line="5807"/>
         <source>Please wait while LOOT is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5902"/>
+        <location filename="mainwindow.cpp" line="5904"/>
         <source>loot failed. Exit code was: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5924"/>
+        <location filename="mainwindow.cpp" line="5926"/>
         <source>failed to start loot</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5927"/>
+        <location filename="mainwindow.cpp" line="5929"/>
         <source>failed to run loot: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5931"/>
+        <location filename="mainwindow.cpp" line="5933"/>
         <source>Errors occured</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5978"/>
+        <location filename="mainwindow.cpp" line="5980"/>
         <source>Backup of load order created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="5988"/>
+        <location filename="mainwindow.cpp" line="5990"/>
         <source>Choose backup to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6001"/>
+        <location filename="mainwindow.cpp" line="6003"/>
         <source>No Backups</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6001"/>
+        <location filename="mainwindow.cpp" line="6003"/>
         <source>There are no backups to restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6022"/>
-        <location filename="mainwindow.cpp" line="6044"/>
+        <location filename="mainwindow.cpp" line="6024"/>
+        <location filename="mainwindow.cpp" line="6046"/>
         <source>Restore failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6023"/>
-        <location filename="mainwindow.cpp" line="6045"/>
+        <location filename="mainwindow.cpp" line="6025"/>
+        <location filename="mainwindow.cpp" line="6047"/>
         <source>Failed to restore the backup. Errorcode: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6034"/>
+        <location filename="mainwindow.cpp" line="6036"/>
         <source>Backup of modlist created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6140"/>
+        <location filename="mainwindow.cpp" line="6142"/>
         <source>A file with the same name has already been downloaded. What would you like to do?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6142"/>
+        <location filename="mainwindow.cpp" line="6144"/>
         <source>Overwrite</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6143"/>
+        <location filename="mainwindow.cpp" line="6145"/>
         <source>Rename new file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6144"/>
+        <location filename="mainwindow.cpp" line="6146"/>
         <source>Ignore file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="6253"/>
+        <location filename="mainwindow.cpp" line="6255"/>
         <source>Set the priority of the selected mods</source>
         <translation type="unfinished"></translation>
     </message>
