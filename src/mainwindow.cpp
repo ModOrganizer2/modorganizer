@@ -5170,11 +5170,6 @@ void MainWindow::initDownloadView()
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
   ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
-  ui->downloadView->setUniformRowHeights(false);
-  ui->downloadView->header()->setStretchLastSection(false);
-  ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
-  ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
   updateDownloadView();
 
   connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
@@ -5208,6 +5203,7 @@ void MainWindow::updateDownloadView()
   ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().metaDownloads());
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
+  qobject_cast<DownloadListHeader*>(ui->downloadView->header())->customResizeSections();
   m_OrganizerCore.downloadManager()->refreshList();
 }
 

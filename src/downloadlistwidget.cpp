@@ -32,9 +32,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
   QModelIndex sourceIndex = m_SortProxy->mapToSource(index);
-  if (sourceIndex.column() == DownloadList::COL_STATUS && sourceIndex.row() < m_Manager->numTotalDownloads()
+  bool pendingDownload = (sourceIndex.row() >= m_Manager->numTotalDownloads());
+  if (sourceIndex.column() == DownloadList::COL_STATUS && !pendingDownload
       && m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_DOWNLOADING) {
-    bool pendingDownload = sourceIndex.row() >= m_Manager->numTotalDownloads();
     QProgressBar progressBar;
     progressBar.setProperty("downloadView", option.widget->property("downloadView"));
     progressBar.setProperty("downloadProgress", true);
@@ -47,38 +47,73 @@ void DownloadProgressDelegate::paint(QPainter *painter, const QStyleOptionViewIt
     progressBar.setFormat(m_Manager->getProgress(sourceIndex.row()).second);
     progressBar.setStyle(QApplication::style());
 
-    /*
-    QLabel progressText;
-    progressText.setProperty("downloadView", option.widget->property("downloadView"));
-    progressText.setProperty("downloadProgress", true);
-    progressText.resize(option.rect.width(), option.rect.height());
-    progressText.setAttribute(Qt::WA_TranslucentBackground);
-    progressText.setAlignment(Qt::AlignCenter);
-    progressText.setText(m_Manager->getProgress(sourceIndex.row()).second);
-    progressText.setStyle(QApplication::style());
-    */
-
     // paint the background with default delegate first to preserve table cell styling
     QStyledItemDelegate::paint(painter, option, index);
 
     painter->save();
     painter->translate(option.rect.topLeft());
     progressBar.render(painter);
-    //progressText.render(painter);
     painter->restore();
   } else {
     QStyledItemDelegate::paint(painter, option, index);
   }
 }
 
+void DownloadListHeader::customResizeSections()
+{
+  // find the rightmost column that is not hidden
+  int rightVisible = count() - 1;
+  while (isSectionHidden(rightVisible) && rightVisible > 0)
+    rightVisible--;
+
+  // if that column is already squashed, squash others to the right side --
+  // otherwise to the left
+  if (sectionSize(rightVisible) == minimumSectionSize()) {
+    for (int idx = rightVisible; idx >= 0; idx--) {
+      if (!isSectionHidden(idx)) {
+        if (length() != width())
+          resizeSection(idx, std::max(sectionSize(idx) + width() - length(), minimumSectionSize()));
+        else
+          break;
+      }
+    }
+  } else {
+    for (int idx = 0; idx <= rightVisible; idx++) {
+      if (!isSectionHidden(idx)) {
+        if (length() != width())
+          resizeSection(idx, std::max(sectionSize(idx) + width() - length(), minimumSectionSize()));
+        else
+          break;
+      }
+    }
+  }
+}
+
+void DownloadListHeader::mouseReleaseEvent(QMouseEvent *event)
+{
+  QHeaderView::mouseReleaseEvent(event);
+  customResizeSections();
+}
+
 DownloadListWidget::DownloadListWidget(QWidget *parent)
   : QTreeView(parent)
 {
+  setHeader(new DownloadListHeader(Qt::Horizontal, this));
+
+  header()->setSectionsMovable(true);
+  header()->setContextMenuPolicy(Qt::CustomContextMenu);
+  header()->setCascadingSectionResizes(true);
+  header()->setStretchLastSection(false);
+  header()->setSectionResizeMode(QHeaderView::Interactive);
+  header()->setDefaultSectionSize(100);
+
+  setUniformRowHeights(false);
+  setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  sortByColumn(1, Qt::DescendingOrder);
+
+  connect(header(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onHeaderCustomContextMenu(QPoint)));
   connect(this, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(onDoubleClick(QModelIndex)));
   connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onCustomContextMenu(QPoint)));
-
-  header()->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(header(), SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(onHeaderCustomContextMenu(QPoint)));
 }
 
 DownloadListWidget::~DownloadListWidget()
@@ -141,6 +176,14 @@ void DownloadListWidget::onHeaderCustomContextMenu(const QPoint &point)
     }
     ++i;
   }
+
+  qobject_cast<DownloadListHeader*>(header())->customResizeSections();
+}
+
+void DownloadListWidget::resizeEvent(QResizeEvent *event)
+{
+  QTreeView::resizeEvent(event);
+  qobject_cast<DownloadListHeader*>(header())->customResizeSections();
 }
 
 void DownloadListWidget::onCustomContextMenu(const QPoint &point)
