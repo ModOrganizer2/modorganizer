@@ -4041,6 +4041,7 @@ void MainWindow::exportModListCSV()
 	mod_Priority->setChecked(true);
 	QCheckBox *mod_Name = new QCheckBox(tr("Mod_Name"));
 	mod_Name->setChecked(true);
+  QCheckBox *mod_Note = new QCheckBox(tr("Notes_column"));
 	QCheckBox *mod_Status = new QCheckBox(tr("Mod_Status"));
 	QCheckBox *primary_Category = new QCheckBox(tr("Primary_Category"));
 	QCheckBox *nexus_ID = new QCheckBox(tr("Nexus_ID"));
@@ -4053,6 +4054,7 @@ void MainWindow::exportModListCSV()
 	vbox1->addWidget(mod_Priority);
 	vbox1->addWidget(mod_Name);
 	vbox1->addWidget(mod_Status);
+  vbox1->addWidget(mod_Note);
 	vbox1->addWidget(primary_Category);
 	vbox1->addWidget(nexus_ID);
 	vbox1->addWidget(mod_Nexus_URL);
@@ -4092,6 +4094,8 @@ void MainWindow::exportModListCSV()
 				fields.push_back(std::make_pair(QString("#Mod_Name"), CSVBuilder::TYPE_STRING));
 			if (mod_Status->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
+      if (mod_Note->isChecked())
+        fields.push_back(std::make_pair(QString("#Note"), CSVBuilder::TYPE_STRING));
 			if (primary_Category->isChecked())
 				fields.push_back(std::make_pair(QString("#Primary_Category"), CSVBuilder::TYPE_STRING));
 			if (nexus_ID->isChecked())
@@ -4127,6 +4131,8 @@ void MainWindow::exportModListCSV()
 						builder.setRowField("#Mod_Name", info->name());
 					if (mod_Status->isChecked())
 						builder.setRowField("#Mod_Status", (enabled)? "Enabled" : "Disabled");
+          if (mod_Note->isChecked())
+            builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
 						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
 					if (nexus_ID->isChecked())
@@ -6256,10 +6262,13 @@ void MainWindow::sendSelectedModsToPriority_clicked()
 void MainWindow::sendSelectedModsToSeparator_clicked()
 {
   QStringList separators;
-  for (auto mod : m_OrganizerCore.modList()->allMods()) {
-    ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(mod));
-    if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-      separators << mod.chopped(10);
+  auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
+  for (auto iter = indexesByPriority.begin(); iter != indexesByPriority.end(); iter++) {
+    if ((iter->second != UINT_MAX)) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
+      if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+        separators << modInfo->name().chopped(10);
+      }
     }
   }
 
