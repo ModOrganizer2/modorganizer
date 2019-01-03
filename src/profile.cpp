@@ -286,7 +286,7 @@ void Profile::createTweakedIniFile()
   }
 
   if (error) {
-    reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorStringA().c_str()));
+    reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorString().c_str()));
   }
   qDebug("%s saved", qPrintable(QDir::toNativeSeparators(tweakedIni)));
 }
