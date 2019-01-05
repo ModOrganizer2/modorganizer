@@ -378,7 +378,7 @@ void DownloadManager::refreshList()
     }
 
     //if (m_ActiveDownloads.size() != downloadsBefore) {
-      qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+      qDebug("Downloads after refresh: %d", m_ActiveDownloads.size());
     //}
     emit update(-1);
 
