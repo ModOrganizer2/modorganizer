@@ -371,6 +371,11 @@
               </property>
               <item>
                <property name="text">
+                <string>Tannin (Original Creator)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">blacksol</string>
                </property>
               </item>
