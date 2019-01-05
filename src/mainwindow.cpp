@@ -3237,11 +3237,11 @@ void MainWindow::updatePluginCount()
   ui->activePluginsCounter->display(activeVisibleCount);
   ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"4\">"
     "<tr><th>Type</th><th>Active</th><th>Total</th></tr>"
-    "<tr><td>Active plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"
-    "<tr><td>Active ESMs:</td><td align=right>%3</td><td align=right>%4</td></tr>"
-    "<tr><td>Active ESPs:</td><td align=right>%7</td><td align=right>%8</td></tr>"
-    "<tr><td>Active ESMs+ESPs:</td><td align=right>%9</td><td align=right>%10</td></tr>"
-    "<tr><td>Active ESLs:</td><td align=right>%5</td><td align=right>%6</td></tr>"
+    "<tr><td>All plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"
+    "<tr><td>ESMs:</td><td align=right>%3</td><td align=right>%4</td></tr>"
+    "<tr><td>ESPs:</td><td align=right>%7</td><td align=right>%8</td></tr>"
+    "<tr><td>ESMs+ESPs:</td><td align=right>%9</td><td align=right>%10</td></tr>"
+    "<tr><td>ESLs:</td><td align=right>%5</td><td align=right>%6</td></tr>"
     "</table>")
     .arg(activeCount).arg(totalCount)
     .arg(activeMasterCount).arg(masterCount)
