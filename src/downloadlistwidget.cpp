@@ -107,7 +107,7 @@ DownloadListWidget::DownloadListWidget(QWidget *parent)
   header()->setSectionResizeMode(QHeaderView::Interactive);
   header()->setDefaultSectionSize(100);
 
-  setUniformRowHeights(false);
+  setUniformRowHeights(true);
   setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   sortByColumn(1, Qt::DescendingOrder);
 
