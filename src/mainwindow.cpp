@@ -2552,6 +2552,8 @@ void MainWindow::removeMod_clicked()
     } else {
       m_OrganizerCore.modList()->removeRow(m_ContextRow, QModelIndex());
     }
+    updateModCount();
+    updatePluginCount();
   } catch (const std::exception &e) {
     reportError(tr("failed to remove mod: %1").arg(e.what()));
   }
