@@ -41,6 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
+#include <QRegularExpression>
 #include <QString>
 #include <QApplication>
 #include <QKeyEvent>
@@ -174,6 +175,19 @@ void PluginList::refresh(const QString &profileName
 
   QStringList availablePlugins;
 
+  QRegExp bsaReg = QRegExp();
+  QRegExp ba2Reg = QRegExp();
+  bsaReg.setPatternSyntax(QRegExp::Wildcard);
+  bsaReg.setCaseSensitivity(Qt::CaseInsensitive);
+  ba2Reg.setPatternSyntax(QRegExp::Wildcard);
+  ba2Reg.setCaseSensitivity(Qt::CaseInsensitive);
+
+  //TODO: try QRegularExpression when we move to Qt5.12 
+  /*QRegularExpression bsaReg = QRegularExpression();
+  QRegularExpression ba2Reg = QRegularExpression();
+  bsaReg.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
+  ba2Reg.setPatternOptions(QRegularExpression::CaseInsensitiveOption);*/
+
   std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (FileEntry::Ptr current : files) {
     if (current.get() == nullptr) {
@@ -198,15 +212,23 @@ void PluginList::refresh(const QString &profileName
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
+        //name without extension
+        QString baseName = QFileInfo(filename).baseName();
 
-        QString iniPath = QFileInfo(filename).baseName() + ".ini";
+        QString iniPath = baseName + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
 
+        bsaReg.setPattern(baseName + "*.bsa");
+        ba2Reg.setPattern(baseName + "*.ba2");
+
+
+        //bsaReg.setPattern(QRegularExpression::wildcardToRegularExpression(baseName + "*.bsa"));
+        //ba2Reg.setPattern(QRegularExpression::wildcardToRegularExpression(baseName + "*.ba2"));
         std::set<QString> loadedArchives;
+        QString candidateName;
         for (FileEntry::Ptr archiveCandidate : files) {
-          QString candidateName = ToQString(archiveCandidate->getName());
-          if (candidateName.contains(QRegExp(QFileInfo(filename).baseName() + "*.bsa", Qt::CaseInsensitive, QRegExp::Wildcard)) ||
-              candidateName.contains(QRegExp(QFileInfo(filename).baseName() + "*.ba2", Qt::CaseInsensitive, QRegExp::Wildcard))) {
+          candidateName = ToQString(archiveCandidate->getName());
+          if (candidateName.contains(bsaReg) || candidateName.contains(ba2Reg)) {
             loadedArchives.insert(candidateName);
           }
         }

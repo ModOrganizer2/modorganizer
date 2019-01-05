@@ -463,8 +463,8 @@ MainWindow::MainWindow(QSettings &initSettings
     actionWidget->style()->polish(actionWidget);
   }
 
-  emit updatePluginCount();
-  emit updateModCount();
+  updatePluginCount();
+  updateModCount();
 }
 
 
@@ -2223,7 +2223,7 @@ void MainWindow::directory_refreshed()
 
 void MainWindow::esplist_changed()
 {
-  emit updatePluginCount();
+  updatePluginCount();
 }
 
 void MainWindow::modorder_changed()
@@ -2483,7 +2483,7 @@ void MainWindow::restoreBackup_clicked()
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
-  emit updateModCount();
+  updateModCount();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
