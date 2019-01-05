@@ -1787,7 +1787,9 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 
     if (active != m_PluginList.isEnabled(esm)
       && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esm, active);
+      m_PluginList.blockSignals(false);
     }
   }
   int enabled      = 0;
@@ -1801,7 +1803,9 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 
     if (active != m_PluginList.isEnabled(esl)
         && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esl, active);
+      m_PluginList.blockSignals(false);
       ++enabled;
     }
   }
@@ -1815,7 +1819,9 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 
     if (active != m_PluginList.isEnabled(esp)
         && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esp, active);
+      m_PluginList.blockSignals(false);
       ++enabled;
     }
   }
@@ -1842,7 +1848,9 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
   refreshESPList(true);
   // activate all esps of the specified mod so the bsas get activated along with
   // it
+  m_PluginList.blockSignals(true);
   updateModActiveState(index, true);
+  m_PluginList.blockSignals(false);
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are avaiable and active
   refreshBSAList();
@@ -2005,7 +2013,6 @@ void OrganizerCore::modStatusChanged(unsigned int index)
       updateModInDirectoryStructure(index, modInfo);
     } else {
       updateModActiveState(index, false);
-      refreshESPList(true);
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
         FilesOrigin &origin
             = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));

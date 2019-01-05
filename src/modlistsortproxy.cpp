@@ -58,16 +58,20 @@ void ModListSortProxy::updateFilterActive()
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
-  m_CategoryFilter = categories;
-  updateFilterActive();
-  invalidate();
+  if (categories != m_CategoryFilter) {
+    m_CategoryFilter = categories;
+    updateFilterActive();
+    invalidate();
+  }
 }
 
 void ModListSortProxy::setContentFilter(const std::vector<int> &content)
 {
-  m_ContentFilter = content;
-  updateFilterActive();
-  invalidate();
+  if (content != m_ContentFilter) {
+    m_ContentFilter = content;
+    updateFilterActive();
+    invalidate();
+  }
 }
 
 Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
