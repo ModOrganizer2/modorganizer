@@ -3216,13 +3216,13 @@ void MainWindow::updatePluginCount()
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
     bool visible = m_PluginListSortProxy->filterMatchesPlugin(plugin);
-    if (list->isMaster(plugin)) {
-      masterCount++;
-      activeMasterCount += active;
-      activeVisibleCount += visible && active;
-    } else if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
+    if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
+      activeVisibleCount += visible && active;
+    } else if (list->isMaster(plugin)) {
+      masterCount++;
+      activeMasterCount += active;
       activeVisibleCount += visible && active;
     } else {
       regularCount++;
