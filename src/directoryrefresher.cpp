@@ -117,7 +117,7 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
         origin.addFile(file->getIndex());
         file->addOrigin(origin.getID(), file->getFileTime(), L"");
       } else {
-        qWarning("%s not found", qPrintable(fileInfo.fileName()));
+        qWarning("%s not found", qUtf8Printable(fileInfo.fileName()));
       }
     }
   } else {

@@ -324,7 +324,7 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
     if (!customOverwrite.isEmpty()) {
       index = ui->newFilesModBox->findText(customOverwrite);
-      qDebug("find %s -> %d", qPrintable(customOverwrite), index);
+      qDebug("find %s -> %d", qUtf8Printable(customOverwrite), index);
     }
 
     ui->newFilesModCheckBox->setChecked(index != -1);

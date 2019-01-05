@@ -400,7 +400,7 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   }
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
-  qDebug("selected download url: %s", qPrintable(preferredUrl.toString()));
+  qDebug("selected download url: %s", qUtf8Printable(preferredUrl.toString()));
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
@@ -540,9 +540,9 @@ void DownloadManager::addNXMDownload(const QString &url)
   QStringList validGames;
   validGames.append(m_ManagedGame->gameShortName());
   validGames.append(m_ManagedGame->validShortNames());
-  qDebug("add nxm download: %s", qPrintable(url));
+  qDebug("add nxm download: %s", qUtf8Printable(url));
   if (!validGames.contains(nxmInfo.game(), Qt::CaseInsensitive)) {
-    qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(m_ManagedGame->gameShortName()), qPrintable(nxmInfo.game()));
+    qDebug("download requested for wrong game (game: %s, url: %s)", qUtf8Printable(m_ManagedGame->gameShortName()), qUtf8Printable(nxmInfo.game()));
     QMessageBox::information(nullptr, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
     "has been set up for \"%2\".").arg(nxmInfo.game()).arg(m_ManagedGame->gameShortName()), QMessageBox::Ok);
     return;
@@ -550,7 +550,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto tuple : m_PendingDownloads) {
     if (std::get<0>(tuple).compare(nxmInfo.game(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
-      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(QString(nxmInfo.modId())), qPrintable(QString(nxmInfo.fileId())));
+      qDebug("download requested is already started (mod id: %s, file id: %s)", qUtf8Printable(QString(nxmInfo.modId())), qUtf8Printable(QString(nxmInfo.fileId())));
       QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
       return;
     }
@@ -559,8 +559,8 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(QString(download->m_FileInfo->modID)),
-          qPrintable(download->m_FileInfo->fileName));
+        qDebug("download requested is already started (mod: %s, file: %s)", qUtf8Printable(QString(download->m_FileInfo->modID)),
+          qUtf8Printable(download->m_FileInfo->fileName));
 
         QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (mod: %1, file: %2).")
           .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->fileName), QMessageBox::Ok);
@@ -814,7 +814,7 @@ void DownloadManager::resumeDownloadInt(int index)
     if (info->m_State == STATE_ERROR) {
       info->m_CurrentUrl = (info->m_CurrentUrl + 1) % info->m_Urls.count();
     }
-    qDebug("request resume from url %s", qPrintable(info->currentURL()));
+    qDebug("request resume from url %s", qUtf8Printable(info->currentURL()));
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
     request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
     if (info->m_State != STATE_ERROR) {
@@ -1434,7 +1434,7 @@ QDateTime DownloadManager::matchDate(const QString &timeString)
   if (m_DateExpression.exactMatch(timeString)) {
     return QDateTime::fromMSecsSinceEpoch(m_DateExpression.cap(1).toLongLong());
   } else {
-    qWarning("date not matched: %s", qPrintable(timeString));
+    qWarning("date not matched: %s", qUtf8Printable(timeString));
     return QDateTime::currentDateTime();
   }
 }
@@ -1783,7 +1783,7 @@ void DownloadManager::downloadError(QNetworkReply::NetworkError error)
 {
   if (error != QNetworkReply::OperationCanceledError) {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    qWarning("%s (%d)", reply != nullptr ? qPrintable(reply->errorString())
+    qWarning("%s (%d)", reply != nullptr ? qUtf8Printable(reply->errorString())
                                          : "Download error occured",
              error);
   }

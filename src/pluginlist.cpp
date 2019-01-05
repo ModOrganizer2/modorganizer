@@ -182,7 +182,7 @@ void PluginList::refresh(const QString &profileName
   ba2Reg.setPatternSyntax(QRegExp::Wildcard);
   ba2Reg.setCaseSensitivity(Qt::CaseInsensitive);
 
-  //TODO: try QRegularExpression when we move to Qt5.12 
+  //TODO: try QRegularExpression when we move to Qt5.12
   /*QRegularExpression bsaReg = QRegularExpression();
   QRegularExpression ba2Reg = QRegularExpression();
   bsaReg.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
@@ -435,7 +435,7 @@ void PluginList::addInformation(const QString &name, const QString &message)
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
   } else {
-    qWarning("failed to associate message for \"%s\"", qPrintable(name));
+    qWarning("failed to associate message for \"%s\"", qUtf8Printable(name));
   }
 }
 
@@ -499,7 +499,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
-  qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
 }
 
 
@@ -524,7 +524,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
       }
     }
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(deleterFileName)));
+      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(deleterFileName)));
     }
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
@@ -712,7 +712,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("plugin %s not found", qPrintable(name));
+    qWarning("plugin %s not found", qUtf8Printable(name));
   }
 }
 
@@ -1386,7 +1386,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    qCritical("failed to parse plugin file %s: %s", qPrintable(fullPath), e.what());
+    qCritical("failed to parse plugin file %s: %s", qUtf8Printable(fullPath), e.what());
     m_IsMaster = false;
     m_IsLight = false;
     m_IsLightFlagged = false;

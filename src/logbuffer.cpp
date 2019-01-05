@@ -127,7 +127,7 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context,
 {
   // QMutexLocker doesn't support timeout...
   if (!s_Mutex.tryLock(100)) {
-    fprintf(stderr, "failed to log: %s", qPrintable(message));
+    fprintf(stderr, "failed to log: %s", qUtf8Printable(message));
     return;
   }
   ON_BLOCK_EXIT([]() { s_Mutex.unlock(); });
@@ -137,17 +137,17 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context,
   }
 
   if (type == QtDebugMsg) {
-    fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()),
-            msgTypeID(type), qPrintable(message));
+    fprintf(stdout, "%s [%c] %s\n", qUtf8Printable(QTime::currentTime().toString()),
+            msgTypeID(type), qUtf8Printable(message));
   } else {
     if (context.line != 0) {
       fprintf(stdout, "%s [%c] (%s:%u) %s\n",
-              qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-              context.file, context.line, qPrintable(message));
+              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
+              context.file, context.line, qUtf8Printable(message));
     } else {
       fprintf(stdout, "%s [%c] %s\n",
-              qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-              qPrintable(message));
+              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
+              qUtf8Printable(message));
     }
   }
   fflush(stdout);

@@ -106,7 +106,7 @@ void NXMAccessManager::showCookies() const
   for (const QNetworkCookie &cookie : cookieJar()->cookiesForUrl(url)) {
     qDebug("%s - %s (expires: %s)",
            cookie.name().constData(), cookie.value().constData(),
-           qPrintable(cookie.expirationDate().toString()));
+           qUtf8Printable(cookie.expirationDate().toString()));
   }
 }
 
@@ -164,7 +164,7 @@ void NXMAccessManager::retrieveCredentials()
 
   connect(reply, static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
           [=] (QNetworkReply::NetworkError) {
-    qDebug("failed to retrieve account credentials: %s", qPrintable(reply->errorString()));
+    qDebug("failed to retrieve account credentials: %s", qUtf8Printable(reply->errorString()));
     reply->deleteLater();
   });
 }
@@ -235,7 +235,7 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
 
 void NXMAccessManager::pageLogin()
 {
-  qDebug("logging %s in on Nexus", qPrintable(m_Username));
+  qDebug("logging %s in on Nexus", qUtf8Printable(m_Username));
   QString requestString = (Nexus_Management_URL + "/Sessions/?Login&uri=%1")
                             .arg(QString(QUrl::toPercentEncoding(Nexus_Management_URL)));
 

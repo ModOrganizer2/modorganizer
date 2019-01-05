@@ -61,7 +61,7 @@ LogWorker::LogWorker()
 {
   m_LogFile.open(QIODevice::WriteOnly);
   qDebug("usvfs log messages are written to %s",
-         qPrintable(m_LogFile.fileName()));
+         qUtf8Printable(m_LogFile.fileName()));
 }
 
 LogWorker::~LogWorker()

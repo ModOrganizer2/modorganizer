@@ -214,7 +214,7 @@ void ProfilesDialog::on_removeProfileButton_clicked()
       delete item;
     }
     if (!shellDelete(QStringList(profilePath))) {
-      qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qPrintable(profilePath), ::GetLastError());
+      qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qUtf8Printable(profilePath), ::GetLastError());
       if (!removeDir(profilePath)) {
         qWarning("regular delete failed too");
       }

@@ -167,7 +167,7 @@ void Settings::registerPlugin(IPlugin *plugin)
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
       qWarning("failed to interpret \"%s\" as correct type for \"%s\" in plugin \"%s\", using default",
-               qPrintable(temp.toString()), qPrintable(setting.key), qPrintable(plugin->name()));
+               qUtf8Printable(temp.toString()), qUtf8Printable(setting.key), qUtf8Printable(plugin->name()));
       temp = setting.defaultValue;
     }
     m_PluginSettings[plugin->name()][setting.key] = temp;
@@ -574,7 +574,7 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
     QVariantMap val = m_Settings.value(key).toMap();
     QDate lastSeen = val["lastSeen"].toDate();
     if (lastSeen.daysTo(now) > 30) {
-      qDebug("removing server %s since it hasn't been available for downloads in over a month", qPrintable(key));
+      qDebug("removing server %s since it hasn't been available for downloads in over a month", qUtf8Printable(key));
       m_Settings.remove(key);
     }
   }

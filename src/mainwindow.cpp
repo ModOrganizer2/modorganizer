@@ -1558,7 +1558,7 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
-  qDebug("reading save games from %s", qPrintable(savesDir.absolutePath()));
+  qDebug("reading save games from %s", qUtf8Printable(savesDir.absolutePath()));
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
   for (const QFileInfo &file : files) {
@@ -1763,7 +1763,7 @@ void MainWindow::setupNetworkProxy(bool activate)
   query.setProtocolTag("http");
   QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
   if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
-    qDebug("Using proxy: %s", qPrintable(proxies.at(0).hostName()));
+    qDebug("Using proxy: %s", qUtf8Printable(proxies.at(0).hostName()));
     QNetworkProxy::setApplicationProxy(proxies[0]);
   } else {
     qDebug("Not using proxy");
@@ -2418,7 +2418,7 @@ void MainWindow::refreshFilters()
       while (currentID != 0) {
         categoriesUsed.insert(currentID);
         if (!cycleTest.insert(currentID).second) {
-          qWarning("cycle in categories: %s", qPrintable(SetJoin(cycleTest, ", ")));
+          qWarning("cycle in categories: %s", qUtf8Printable(SetJoin(cycleTest, ", ")));
           break;
         }
         currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
@@ -2732,7 +2732,7 @@ void MainWindow::unendorse_clicked()
 
 void MainWindow::loginFailed(const QString &error)
 {
-  qDebug("login failed: %s", qPrintable(error));
+  qDebug("login failed: %s", qUtf8Printable(error));
   statusBar()->hide();
 }
 
@@ -3711,7 +3711,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     int maxRow = -1;
 
     for (const QPersistentModelIndex &idx : selected) {
-      qDebug("change categories on: %s", qPrintable(idx.data().toString()));
+      qDebug("change categories on: %s", qUtf8Printable(idx.data().toString()));
       QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
@@ -3793,7 +3793,7 @@ void MainWindow::saveArchiveList()
       }
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
     }
   } else {
     qWarning("archive list not initialised");
@@ -4693,7 +4693,7 @@ void MainWindow::installTranslator(const QString &name)
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if (m_CurrentLanguage.compare("en", Qt::CaseInsensitive)) {
-      qDebug("localization file %s not found", qPrintable(fileName));
+      qDebug("localization file %s not found", qUtf8Printable(fileName));
     } // we don't actually expect localization files for English
   }
 
@@ -4718,7 +4718,7 @@ void MainWindow::languageChange(const QString &newLanguage)
     installTranslator(QFileInfo(fileName).baseName());
   }
   ui->retranslateUi(this);
-  qDebug("loaded language %s", qPrintable(newLanguage));
+  qDebug("loaded language %s", qUtf8Printable(newLanguage));
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
@@ -6134,7 +6134,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
 {
   QFileInfo file(url.toLocalFile());
   if (!file.exists()) {
-    qWarning("invalid source file %s", qPrintable(file.absoluteFilePath()));
+    qWarning("invalid source file %s", qUtf8Printable(file.absoluteFilePath()));
     return;
   }
   QString target = outputDir + "/" + file.fileName();
@@ -6167,7 +6167,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
     success = shellCopy(file.absoluteFilePath(), target, true, this);
   }
   if (!success) {
-    qCritical("file operation failed: %s", qPrintable(windowsErrorString(::GetLastError())));
+    qCritical("file operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
   }
 }
 

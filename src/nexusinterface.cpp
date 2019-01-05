@@ -226,7 +226,7 @@ void NexusInterface::interpretNexusFileName(const QString &fileName, QString &mo
     } else {
       modID = strtol(candidate.c_str(), nullptr, 10);
     }
-    qDebug("mod id guessed: %s -> %d", qPrintable(fileName), modID);
+    qDebug("mod id guessed: %s -> %d", qUtf8Printable(fileName), modID);
   } else if (std::regex_search(fileNameUTF8.constData(), result, simpleexp)) {
     qDebug("simple expression matched, using name only");
     modName = QString::fromUtf8(result[1].str().c_str());
@@ -542,7 +542,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       if (nexusError.length() == 0) {
         nexusError = tr("empty response");
       }
-      qDebug("nexus error: %s", qPrintable(nexusError));
+      qDebug("nexus error: %s", qUtf8Printable(nexusError));
       emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, nexusError);
     } else {
       bool ok;
@@ -602,8 +602,8 @@ void NexusInterface::requestError(QNetworkReply::NetworkError)
   }
 
   qCritical("request (%s) error: %s (%d)",
-            qPrintable(reply->url().toString()),
-            qPrintable(reply->errorString()),
+            qUtf8Printable(reply->url().toString()),
+            qUtf8Printable(reply->errorString()),
             reply->error());
 }
 

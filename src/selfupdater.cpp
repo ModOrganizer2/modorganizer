@@ -145,15 +145,15 @@ void SelfUpdater::testForUpdate()
       if (newestVer > this->m_MOVersion) {
         m_UpdateCandidate = newest;
         qDebug("update available: %s -> %s",
-               qPrintable(this->m_MOVersion.displayString()),
-               qPrintable(newestVer.displayString()));
+               qUtf8Printable(this->m_MOVersion.displayString()),
+               qUtf8Printable(newestVer.displayString()));
         emit updateAvailable();
       } else if (newestVer < this->m_MOVersion) {
         // this could happen if the user switches from using prereleases to
         // stable builds. Should we downgrade?
         qDebug("this version is newer than the newest installed one: %s -> %s",
-               qPrintable(this->m_MOVersion.displayString()),
-               qPrintable(newestVer.displayString()));
+               qUtf8Printable(this->m_MOVersion.displayString()),
+               qUtf8Printable(newestVer.displayString()));
       }
     }
   });
@@ -224,7 +224,7 @@ void SelfUpdater::closeProgress()
 void SelfUpdater::openOutputFile(const QString &fileName)
 {
   QString outputPath = QDir::fromNativeSeparators(qApp->property("dataPath").toString()) + "/" + fileName;
-  qDebug("downloading to %s", qPrintable(outputPath));
+  qDebug("downloading to %s", qUtf8Printable(outputPath));
   m_UpdateFile.setFileName(outputPath);
   m_UpdateFile.open(QIODevice::WriteOnly);
 }

@@ -137,7 +137,7 @@ void MOApplication::updateStyle(const QString &fileName)
     if (QFile::exists(fileName)) {
       setStyleSheet(QString("file:///%1").arg(fileName));
     } else {
-      qWarning("invalid stylesheet: %s", qPrintable(fileName));
+      qWarning("invalid stylesheet: %s", qUtf8Printable(fileName));
     }
   }
 }
