@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <dataarchives.h>
 #include "util.h"
 #include "registry.h"
+#include <questionboxmemory.h>
 
 #include <QApplication>
 #include <QFile>                                   // for QFile
@@ -749,12 +750,12 @@ bool Profile::enableLocalSaves(bool enable)
       m_Directory.mkdir("saves");
     }
   } else  {
-    QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete profile-specific save games?"),
+    QDialogButtonBox::StandardButton res;
+    res = QuestionBoxMemory::query(QApplication::activeModalWidget(), "deleteSavesQuery",
+      tr("Delete profile-specific save games?"),
       tr("Do you want to delete the profile-specific save games? (If you select \"No\", the "
         "save games will show up again if you re-enable profile-specific save games)"),
-      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-      QMessageBox::Cancel);
+      QDialogButtonBox::No | QDialogButtonBox::Yes | QDialogButtonBox::Cancel, QDialogButtonBox::No);
     if (res == QMessageBox::Yes) {
       shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
     } else if (res == QMessageBox::No) {
@@ -797,12 +798,12 @@ bool Profile::enableLocalSettings(bool enable)
   if (enable) {
     m_GamePlugin->initializeProfile(m_Directory.absolutePath(), IPluginGame::CONFIGURATION);
   } else {
-    QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
+    QDialogButtonBox::StandardButton res;
+    res = QuestionBoxMemory::query(QApplication::activeModalWidget(), "deleteINIQuery",
+      tr("Delete profile-specific game INI files?"),
       tr("Do you want to delete the profile-specific game INI files? (If you select \"No\", the "
         "INI files will be used again if you re-enable profile-specific game INI files.)"),
-      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-      QMessageBox::Cancel);
+      QDialogButtonBox::No | QDialogButtonBox::Yes | QDialogButtonBox::Cancel, QDialogButtonBox::No);
     if (res == QMessageBox::Yes) {
       QStringList filesToDelete;
       for (QString file : m_GamePlugin->iniFiles()) {
