@@ -54,7 +54,7 @@ void IconDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, 
     if (!QPixmapCache::find(fullIconId, &icon)) {
       icon = QIcon(iconId).pixmap(iconWidth, iconWidth);
       if (icon.isNull()) {
-        qWarning("failed to load icon %s", qPrintable(iconId));
+        qWarning("failed to load icon %s", qUtf8Printable(iconId));
       }
       QPixmapCache::insert(fullIconId, icon);
     }

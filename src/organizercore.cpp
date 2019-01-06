@@ -47,7 +47,7 @@
 #include <QWidget>
 
 #include <QtDebug>
-#include <QtGlobal> // for qPrintable, etc
+#include <QtGlobal> // for qUtf8Printable, etc
 
 #include <Psapi.h>
 #include <Shlobj.h>
@@ -89,8 +89,8 @@ static bool isOnline()
         continue;
       }
       qDebug("interface %s seems to be up (address: %s)",
-             qPrintable(iter->humanReadableName()),
-             qPrintable(addresses[0].ip().toString()));
+             qUtf8Printable(iter->humanReadableName()),
+             qUtf8Printable(addresses[0].ip().toString()));
       connected = true;
     }
   }
@@ -640,7 +640,7 @@ bool OrganizerCore::nexusLogin(bool retry)
     if ((!retry && m_Settings.getNexusLogin(username, password))
         || (m_AskForNexusPW && queryLogin(username, password))) {
       // credentials stored or user entered them manually
-      qDebug("attempt login with username %s", qPrintable(username));
+      qDebug("attempt login with username %s", qUtf8Printable(username));
       accessManager->login(username, password);
       return true;
     } else {
@@ -681,7 +681,7 @@ void OrganizerCore::startMOUpdate()
 
 void OrganizerCore::downloadRequestedNXM(const QString &url)
 {
-  qDebug("download requested: %s", qPrintable(url));
+  qDebug("download requested: %s", qUtf8Printable(url));
   if (nexusLogin()) {
     m_PendingDownloads.append(url);
   } else {
@@ -1126,7 +1126,7 @@ QStringList OrganizerCore::findFiles(
       }
     }
   } else {
-    qWarning("directory %s not found", qPrintable(path));
+    qWarning("directory %s not found", qUtf8Printable(path));
   }
   return result;
 }
@@ -1145,7 +1145,7 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
           ToQString(m_DirectoryStructure->getOriginByID(i.first).getName()));
     }
   } else {
-    qDebug("%s not found", qPrintable(fileName));
+    qDebug("%s not found", qUtf8Printable(fileName));
   }
   return result;
 }
@@ -1412,7 +1412,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     }
   } else {
     qDebug("start of \"%s\" canceled by plugin",
-           qPrintable(binary.absoluteFilePath()));
+           qUtf8Printable(binary.absoluteFilePath()));
     return INVALID_HANDLE_VALUE;
   }
 }
@@ -1791,13 +1791,15 @@ void OrganizerCore::updateModActiveState(int index, bool active)
        dir.entryList(QStringList() << "*.esm", QDir::Files)) {
     const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
     if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qPrintable(esm));
+      qWarning("failed to activate %s", qUtf8Printable(esm));
       continue;
     }
 
     if (active != m_PluginList.isEnabled(esm)
       && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esm, active);
+      m_PluginList.blockSignals(false);
     }
   }
   int enabled      = 0;
@@ -1805,13 +1807,15 @@ void OrganizerCore::updateModActiveState(int index, bool active)
        dir.entryList(QStringList() << "*.esl", QDir::Files)) {
     const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
     if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qPrintable(esl));
+      qWarning("failed to activate %s", qUtf8Printable(esl));
       continue;
     }
 
     if (active != m_PluginList.isEnabled(esl)
         && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esl, active);
+      m_PluginList.blockSignals(false);
       ++enabled;
     }
   }
@@ -1819,13 +1823,15 @@ void OrganizerCore::updateModActiveState(int index, bool active)
   for (const QString &esp : esps) {
     const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
     if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qPrintable(esp));
+      qWarning("failed to activate %s", qUtf8Printable(esp));
       continue;
     }
 
     if (active != m_PluginList.isEnabled(esp)
         && file->getAlternatives().empty()) {
+      m_PluginList.blockSignals(true);
       m_PluginList.enableESP(esp, active);
+      m_PluginList.blockSignals(false);
       ++enabled;
     }
   }
@@ -1852,7 +1858,9 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
   refreshESPList(true);
   // activate all esps of the specified mod so the bsas get activated along with
   // it
+  m_PluginList.blockSignals(true);
   updateModActiveState(index, true);
+  m_PluginList.blockSignals(false);
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are avaiable and active
   refreshBSAList();
@@ -2017,7 +2025,6 @@ void OrganizerCore::modStatusChanged(unsigned int index)
       updateModInDirectoryStructure(index, modInfo);
     } else {
       updateModActiveState(index, false);
-      refreshESPList(true);
       if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
         FilesOrigin &origin
             = m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()));
@@ -2145,7 +2152,7 @@ std::vector<unsigned int> OrganizerCore::activeProblems() const
     // of a "log spam". But since this is a sevre error which will most likely make the
     // game crash/freeze/etc. and is very hard to diagnose,  this "log spam" will make it
     // easier for the user to notice the warning.
-    qWarning("hook.dll found in game folder: %s", qPrintable(hookdll));
+    qWarning("hook.dll found in game folder: %s", qUtf8Printable(hookdll));
     problems.push_back(PROBLEM_MO1SCRIPTEXTENDERWORKAROUND);
   }
   return problems;

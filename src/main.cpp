@@ -262,7 +262,7 @@ QString determineProfile(QStringList &arguments, const QSettings &settings)
     qDebug("no configured profile");
     selectedProfileName = "Default";
   } else {
-    qDebug("configured profile: %s", qPrintable(selectedProfileName));
+    qDebug("configured profile: %s", qUtf8Printable(selectedProfileName));
   }
 
   return selectedProfileName;
@@ -401,7 +401,7 @@ void setupPath()
 {
   static const int BUFSIZE = 4096;
 
-  qDebug("MO at: %s", qPrintable(QDir::toNativeSeparators(
+  qDebug("MO at: %s", qUtf8Printable(QDir::toNativeSeparators(
                           QCoreApplication::applicationDirPath())));
 
   QCoreApplication::setLibraryPaths(QStringList(QCoreApplication::applicationDirPath() + "/dlls") + QCoreApplication::libraryPaths());
@@ -429,18 +429,18 @@ static void preloadSsl()
   else {
     QString libeay32 = appPath + "\\libeay32.dll";
     if (!QFile::exists(libeay32))
-      qWarning("libeay32.dll not found: %s", qPrintable(libeay32));
+      qWarning("libeay32.dll not found: %s", qUtf8Printable(libeay32));
     else if (!LoadLibraryW(libeay32.toStdWString().c_str()))
-      qWarning("failed to load: %s, %d", qPrintable(libeay32), GetLastError());
+      qWarning("failed to load: %s, %d", qUtf8Printable(libeay32), GetLastError());
   }
   if (GetModuleHandleA("ssleay32.dll"))
     qWarning("ssleay32.dll already loaded?!");
   else {
     QString ssleay32 = appPath + "\\ssleay32.dll";
     if (!QFile::exists(ssleay32))
-      qWarning("ssleay32.dll not found: %s", qPrintable(ssleay32));
+      qWarning("ssleay32.dll not found: %s", qUtf8Printable(ssleay32));
     else if (!LoadLibraryW(ssleay32.toStdWString().c_str()))
-      qWarning("failed to load: %s, %d", qPrintable(ssleay32), GetLastError());
+      qWarning("failed to load: %s, %d", qUtf8Printable(ssleay32), GetLastError());
   }
 }
 
@@ -453,7 +453,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
                    const QString &splashPath)
 {
 
-  qDebug("Starting Mod Organizer version %s revision %s", qPrintable(getVersionDisplayString()),
+  qDebug("Starting Mod Organizer version %s revision %s", qUtf8Printable(getVersionDisplayString()),
 #if defined(HGID)
     HGID
 #elif defined(GITID)
@@ -471,7 +471,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 #endif
 
   QString dataPath = application.property("dataPath").toString();
-  qDebug("data path: %s", qPrintable(dataPath));
+  qDebug("data path: %s", qUtf8Printable(dataPath));
 
   if (!bootstrap()) {
     reportError("failed to set up data paths");
@@ -483,7 +483,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
   QStringList arguments = application.arguments();
 
   try {
-    qDebug("Working directory: %s", qPrintable(QDir::toNativeSeparators(QDir::currentPath())));
+    qDebug("Working directory: %s", qUtf8Printable(QDir::toNativeSeparators(QDir::currentPath())));
 
     QSettings settings(dataPath + "/"
                            + QString::fromStdWString(AppConfig::iniFileName()),
@@ -552,7 +552,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     }
     game->setGameVariant(settings.value("game_edition").toString());
 
-    qDebug("managing game at %s", qPrintable(QDir::toNativeSeparators(
+    qDebug("managing game at %s", qUtf8Printable(QDir::toNativeSeparators(
                                       game->gameDirectory().absolutePath())));
 
     organizer.updateExecutablesList(settings);
@@ -578,12 +578,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 		}
 		else if (OrganizerCore::isNxmLink(arguments.at(1))) {
 			qDebug("starting download from command line: %s",
-				qPrintable(arguments.at(1)));
+				qUtf8Printable(arguments.at(1)));
 			organizer.externalMessage(arguments.at(1));
 		}
 		else {
 			QString exeName = arguments.at(1);
-			qDebug("starting %s from command line", qPrintable(exeName));
+			qDebug("starting %s from command line", qUtf8Printable(exeName));
 			arguments.removeFirst(); // remove application name (ModOrganizer.exe)
 			arguments.removeFirst(); // remove binary name
 			// pass the remaining parameters to the binary

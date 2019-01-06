@@ -81,7 +81,7 @@ void MessageDialog::resizeEvent(QResizeEvent *event)
 
 void MessageDialog::showMessage(const QString &text, QWidget *reference, bool bringToFront)
 {
-  qDebug("%s", qPrintable(text));
+  qDebug("%s", qUtf8Printable(text));
   if (reference != nullptr) {
     if (bringToFront || (qApp->activeWindow() != nullptr)) {
       MessageDialog *dialog = new MessageDialog(text, reference);

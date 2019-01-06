@@ -476,8 +476,8 @@ MainWindow::MainWindow(QSettings &initSettings
     actionWidget->style()->polish(actionWidget);
   }
 
-  emit updatePluginCount();
-  emit updateModCount();
+  updatePluginCount();
+  updateModCount();
 }
 
 
@@ -1575,7 +1575,7 @@ void MainWindow::refreshSaveList()
 
   QDir savesDir = currentSavesDir();
   savesDir.setNameFilters(filters);
-  qDebug("reading save games from %s", qPrintable(savesDir.absolutePath()));
+  qDebug("reading save games from %s", qUtf8Printable(savesDir.absolutePath()));
 
   QFileInfoList files = savesDir.entryInfoList(QDir::Files, QDir::Time);
   for (const QFileInfo &file : files) {
@@ -1780,7 +1780,7 @@ void MainWindow::setupNetworkProxy(bool activate)
   query.setProtocolTag("http");
   QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(query);
   if ((proxies.size() > 0) && (proxies.at(0).type() != QNetworkProxy::NoProxy)) {
-    qDebug("Using proxy: %s", qPrintable(proxies.at(0).hostName()));
+    qDebug("Using proxy: %s", qUtf8Printable(proxies.at(0).hostName()));
     QNetworkProxy::setApplicationProxy(proxies[0]);
   } else {
     qDebug("Not using proxy");
@@ -2240,7 +2240,7 @@ void MainWindow::directory_refreshed()
 
 void MainWindow::esplist_changed()
 {
-  emit updatePluginCount();
+  updatePluginCount();
 }
 
 void MainWindow::modorder_changed()
@@ -2449,7 +2449,7 @@ void MainWindow::refreshFilters()
       while (currentID != 0) {
         categoriesUsed.insert(currentID);
         if (!cycleTest.insert(currentID).second) {
-          qWarning("cycle in categories: %s", qPrintable(SetJoin(cycleTest, ", ")));
+          qWarning("cycle in categories: %s", qUtf8Printable(SetJoin(cycleTest, ", ")));
           break;
         }
         currentID = m_CategoryFactory.getParentID(m_CategoryFactory.getCategoryIndex(currentID));
@@ -2514,7 +2514,7 @@ void MainWindow::restoreBackup_clicked()
 void MainWindow::modlistChanged(const QModelIndex&, int)
 {
   m_OrganizerCore.currentProfile()->writeModlist();
-  emit updateModCount();
+  updateModCount();
 }
 
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
@@ -2587,6 +2587,8 @@ void MainWindow::removeMod_clicked()
     } else {
       m_OrganizerCore.modList()->removeRow(m_ContextRow, QModelIndex());
     }
+    updateModCount();
+    updatePluginCount();
   } catch (const std::exception &e) {
     reportError(tr("failed to remove mod: %1").arg(e.what()));
   }
@@ -2765,7 +2767,7 @@ void MainWindow::unendorse_clicked()
 
 void MainWindow::loginFailed(const QString &error)
 {
-  qDebug("login failed: %s", qPrintable(error));
+  qDebug("login failed: %s", qUtf8Printable(error));
   statusBar()->hide();
 }
 
@@ -3251,13 +3253,13 @@ void MainWindow::updatePluginCount()
   for (QString plugin : list->pluginNames()) {
     bool active = list->isEnabled(plugin);
     bool visible = m_PluginListSortProxy->filterMatchesPlugin(plugin);
-    if (list->isMaster(plugin)) {
-      masterCount++;
-      activeMasterCount += active;
-      activeVisibleCount += visible && active;
-    } else if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
+    if (list->isLight(plugin) || list->isLightFlagged(plugin)) {
       lightMasterCount++;
       activeLightMasterCount += active;
+      activeVisibleCount += visible && active;
+    } else if (list->isMaster(plugin)) {
+      masterCount++;
+      activeMasterCount += active;
       activeVisibleCount += visible && active;
     } else {
       regularCount++;
@@ -3270,13 +3272,13 @@ void MainWindow::updatePluginCount()
   int totalCount = masterCount + lightMasterCount + regularCount;
 
   ui->activePluginsCounter->display(activeVisibleCount);
-  ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"4\">"
-    "<tr><th>Type</th><th>Active</th><th>Total</th></tr>"
-    "<tr><td>Active plugins:</td><td align=right>%1</td><td align=right>%2</td></tr>"
-    "<tr><td>Active ESMs:</td><td align=right>%3</td><td align=right>%4</td></tr>"
-    "<tr><td>Active ESPs:</td><td align=right>%7</td><td align=right>%8</td></tr>"
-    "<tr><td>Active ESMs+ESPs:</td><td align=right>%9</td><td align=right>%10</td></tr>"
-    "<tr><td>Active ESLs:</td><td align=right>%5</td><td align=right>%6</td></tr>"
+  ui->activePluginsCounter->setToolTip(tr("<table cellspacing=\"6\">"
+    "<tr><th>Type</th><th>Active      </th><th>Total</th></tr>"
+    "<tr><td>All plugins:</td><td align=right>%1    </td><td align=right>%2</td></tr>"
+    "<tr><td>ESMs:</td><td align=right>%3    </td><td align=right>%4</td></tr>"
+    "<tr><td>ESPs:</td><td align=right>%7    </td><td align=right>%8</td></tr>"
+    "<tr><td>ESMs+ESPs:</td><td align=right>%9    </td><td align=right>%10</td></tr>"
+    "<tr><td>ESLs:</td><td align=right>%5    </td><td align=right>%6</td></tr>"
     "</table>")
     .arg(activeCount).arg(totalCount)
     .arg(activeMasterCount).arg(masterCount)
@@ -3744,7 +3746,7 @@ void MainWindow::addRemoveCategories_MenuHandler() {
     int maxRow = -1;
 
     for (const QPersistentModelIndex &idx : selected) {
-      qDebug("change categories on: %s", qPrintable(idx.data().toString()));
+      qDebug("change categories on: %s", qUtf8Printable(idx.data().toString()));
       QModelIndex modIdx = mapToModel(m_OrganizerCore.modList(), idx);
       if (modIdx.row() != m_ContextIdx.row()) {
         addRemoveCategoriesFromMenu(menu, modIdx.row(), m_ContextIdx.row());
@@ -3826,7 +3828,7 @@ void MainWindow::saveArchiveList()
       }
     }
     if (archiveFile.commitIfDifferent(m_ArchiveListHash)) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
+      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(m_OrganizerCore.currentProfile()->getArchivesFileName())));
     }
   } else {
     qWarning("archive list not initialised");
@@ -4076,6 +4078,7 @@ void MainWindow::exportModListCSV()
 	mod_Priority->setChecked(true);
 	QCheckBox *mod_Name = new QCheckBox(tr("Mod_Name"));
 	mod_Name->setChecked(true);
+  QCheckBox *mod_Note = new QCheckBox(tr("Notes_column"));
 	QCheckBox *mod_Status = new QCheckBox(tr("Mod_Status"));
 	QCheckBox *primary_Category = new QCheckBox(tr("Primary_Category"));
 	QCheckBox *nexus_ID = new QCheckBox(tr("Nexus_ID"));
@@ -4088,6 +4091,7 @@ void MainWindow::exportModListCSV()
 	vbox1->addWidget(mod_Priority);
 	vbox1->addWidget(mod_Name);
 	vbox1->addWidget(mod_Status);
+  vbox1->addWidget(mod_Note);
 	vbox1->addWidget(primary_Category);
 	vbox1->addWidget(nexus_ID);
 	vbox1->addWidget(mod_Nexus_URL);
@@ -4127,6 +4131,8 @@ void MainWindow::exportModListCSV()
 				fields.push_back(std::make_pair(QString("#Mod_Name"), CSVBuilder::TYPE_STRING));
 			if (mod_Status->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
+      if (mod_Note->isChecked())
+        fields.push_back(std::make_pair(QString("#Note"), CSVBuilder::TYPE_STRING));
 			if (primary_Category->isChecked())
 				fields.push_back(std::make_pair(QString("#Primary_Category"), CSVBuilder::TYPE_STRING));
 			if (nexus_ID->isChecked())
@@ -4162,6 +4168,8 @@ void MainWindow::exportModListCSV()
 						builder.setRowField("#Mod_Name", info->name());
 					if (mod_Status->isChecked())
 						builder.setRowField("#Mod_Status", (enabled)? "Enabled" : "Disabled");
+          if (mod_Note->isChecked())
+            builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
 						builder.setRowField("#Primary_Category", (m_CategoryFactory.categoryExists(info->getPrimaryCategory())) ? m_CategoryFactory.getCategoryName(info->getPrimaryCategory()) : "");
 					if (nexus_ID->isChecked())
@@ -4741,7 +4749,7 @@ void MainWindow::installTranslator(const QString &name)
   QString fileName = name + "_" + m_CurrentLanguage;
   if (!translator->load(fileName, qApp->applicationDirPath() + "/translations")) {
     if (m_CurrentLanguage.compare("en", Qt::CaseInsensitive)) {
-      qDebug("localization file %s not found", qPrintable(fileName));
+      qDebug("localization file %s not found", qUtf8Printable(fileName));
     } // we don't actually expect localization files for English
   }
 
@@ -4766,7 +4774,7 @@ void MainWindow::languageChange(const QString &newLanguage)
     installTranslator(QFileInfo(fileName).baseName());
   }
   ui->retranslateUi(this);
-  qDebug("loaded language %s", qPrintable(newLanguage));
+  qDebug("loaded language %s", qUtf8Printable(newLanguage));
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
@@ -5220,11 +5228,6 @@ void MainWindow::initDownloadView()
   ui->downloadView->setModel(sortProxy);
   ui->downloadView->setManager(m_OrganizerCore.downloadManager());
   ui->downloadView->setItemDelegate(new DownloadProgressDelegate(m_OrganizerCore.downloadManager(), sortProxy, ui->downloadView));
-  ui->downloadView->setUniformRowHeights(false);
-  ui->downloadView->header()->setStretchLastSection(false);
-  ui->downloadView->header()->setSectionResizeMode(QHeaderView::Interactive);
-  ui->downloadView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-  ui->downloadView->sortByColumn(1, Qt::DescendingOrder);
   updateDownloadView();
 
   connect(ui->downloadView, SIGNAL(installDownload(int)), &m_OrganizerCore, SLOT(installDownload(int)));
@@ -5244,20 +5247,21 @@ void MainWindow::updateDownloadView()
   // set the view attribute and default row sizes
   if (m_OrganizerCore.settings().compactDownloads()) {
     ui->downloadView->setProperty("downloadView", "compact");
-    setStyleSheet("DownloadListWidget::item { padding: 4px; }");
+    setStyleSheet("DownloadListWidget::item { padding: 4px 0; }");
   } else {
     ui->downloadView->setProperty("downloadView", "standard");
-    setStyleSheet("DownloadListWidget::item { padding: 16px; }");
+    setStyleSheet("DownloadListWidget::item { padding: 16px 0; }");
   }
-  setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
-  setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");
+  //setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
+  //setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");
 
   // reapply global stylesheet on the widget level (!) to override the defaults
-  ui->downloadView->setStyleSheet(styleSheet());
+  //ui->downloadView->setStyleSheet(styleSheet());
 
   ui->downloadView->setMetaDisplay(m_OrganizerCore.settings().metaDownloads());
   ui->downloadView->style()->unpolish(ui->downloadView);
   ui->downloadView->style()->polish(ui->downloadView);
+  qobject_cast<DownloadListHeader*>(ui->downloadView->header())->customResizeSections();
   m_OrganizerCore.downloadManager()->refreshList();
 }
 
@@ -6186,7 +6190,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
 {
   QFileInfo file(url.toLocalFile());
   if (!file.exists()) {
-    qWarning("invalid source file %s", qPrintable(file.absoluteFilePath()));
+    qWarning("invalid source file %s", qUtf8Printable(file.absoluteFilePath()));
     return;
   }
   QString target = outputDir + "/" + file.fileName();
@@ -6219,7 +6223,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
     success = shellCopy(file.absoluteFilePath(), target, true, this);
   }
   if (!success) {
-    qCritical("file operation failed: %s", qPrintable(windowsErrorString(::GetLastError())));
+    qCritical("file operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
   }
 }
 

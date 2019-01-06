@@ -86,7 +86,7 @@ bool InstanceManager::deleteLocalInstance(const QString &instanceId) const
 
   if (!MOBase::shellDelete(QStringList(instancePath),true))
   {
-    qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qPrintable(instancePath), ::GetLastError());
+    qWarning("Failed to shell-delete \"%s\" (errorcode %lu), trying regular delete", qUtf8Printable(instancePath), ::GetLastError());
     if (!MOBase::removeDir(instancePath))
     {
       qWarning("regular delete failed too");

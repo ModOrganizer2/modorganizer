@@ -88,7 +88,7 @@ public:
                 return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
               }
             } else {
-              qWarning("don't know how to deal with tag %s", qPrintable(tagName));
+              qWarning("don't know how to deal with tag %s", qUtf8Printable(tagName));
             }
           } else {
             if (tagName == "*") {

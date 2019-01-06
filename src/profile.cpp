@@ -40,7 +40,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QScopedArrayPointer>
 #include <QStringList>                             // for QStringList
 #include <QtDebug>                                 // for qDebug, qWarning, etc
-#include <QtGlobal>                                // for qPrintable
+#include <QtGlobal>                                // for qUtf8Printable
 #include <QBuffer>
 #include <QDirIterator>
 
@@ -124,7 +124,7 @@ Profile::Profile(const QDir &directory, IPluginGame const *gamePlugin)
   findProfileSettings();
 
   if (!QFile::exists(m_Directory.filePath("modlist.txt"))) {
-    qWarning("missing modlist.txt in %s", qPrintable(directory.path()));
+    qWarning("missing modlist.txt in %s", qUtf8Printable(directory.path()));
     touchFile(m_Directory.filePath("modlist.txt"));
   }
 
@@ -252,7 +252,7 @@ void Profile::doWriteModlist()
     }
 
     if (file.commitIfDifferent(m_LastModlistHash)) {
-      qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
     }
   } catch (const std::exception &e) {
     reportError(tr("failed to write mod list: %1").arg(e.what()));
@@ -286,9 +286,9 @@ void Profile::createTweakedIniFile()
   }
 
   if (error) {
-    reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorStringA().c_str()));
+    reportError(tr("failed to create tweaked ini: %1").arg(getCurrentErrorString().c_str()));
   }
-  qDebug("%s saved", qPrintable(QDir::toNativeSeparators(tweakedIni)));
+  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(tweakedIni)));
 }
 
 // static
@@ -303,7 +303,7 @@ void Profile::renameModInAllProfiles(const QString& oldName, const QString& newN
     if (modList.exists())
       renameModInList(modList, oldName, newName);
     else
-      qWarning("Profile has no modlist.txt : %s", qPrintable(profileIter.filePath()));
+      qWarning("Profile has no modlist.txt : %s", qUtf8Printable(profileIter.filePath()));
   }
 }
 
@@ -361,7 +361,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
 
   if (renamed)
     qDebug("Renamed %d \"%s\" mod to \"%s\" in %s",
-      renamed, qPrintable(oldName), qPrintable(newName), qPrintable(modList.fileName()));
+      renamed, qUtf8Printable(oldName), qUtf8Printable(newName), qUtf8Printable(modList.fileName()));
 }
 
 void Profile::refreshModStatus()
@@ -421,13 +421,13 @@ void Profile::refreshModStatus()
           }
         } else {
           qWarning("no mod state for \"%s\" (profile \"%s\")",
-                   qPrintable(modName), m_Directory.path().toUtf8().constData());
+                   qUtf8Printable(modName), m_Directory.path().toUtf8().constData());
           // need to rewrite the modlist to fix this
           modStatusModified = true;
         }
       } else {
         qDebug("mod \"%s\" (profile \"%s\") not found",
-               qPrintable(modName), m_Directory.path().toUtf8().constData());
+               qUtf8Printable(modName), m_Directory.path().toUtf8().constData());
         // need to rewrite the modlist to fix this
         modStatusModified = true;
       }
@@ -772,20 +772,21 @@ bool Profile::localSettingsEnabled() const
 {
   bool enabled = setting("LocalSettings", false).toBool();
   if (enabled) {
-    bool reinitConfig = false;
+    QStringList missingFiles;
     for (QString file : m_GamePlugin->iniFiles()) {
       if (!QFile::exists(m_Directory.filePath(file))) {
-        qWarning("missing %s in %s", qPrintable(file), qPrintable(m_Directory.path()));
-        reinitConfig = true;
+        qWarning("missing %s in %s", qUtf8Printable(file), qUtf8Printable(m_Directory.path()));
+        missingFiles << file;
       }
     }
-    if (reinitConfig) {
+    if (!missingFiles.empty()) {
+      m_GamePlugin->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
       QMessageBox::StandardButton res = QMessageBox::warning(
         QApplication::activeModalWidget(), tr("Missing profile-specific game INI files!"),
         tr("Some of your profile-specific game INI files were missing.  They will now be copied "
-           "from the vanilla game folder.  You might want double-check your settings.")
+           "from the vanilla game folder.  You might want double-check your settings.\n\n"
+           "Missing files:\n") + missingFiles.join("\n")
       );
-      m_GamePlugin->initializeProfile(m_Directory, IPluginGame::CONFIGURATION);
     }
   }
   return enabled;

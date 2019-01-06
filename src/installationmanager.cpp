@@ -758,7 +758,7 @@ bool InstallationManager::install(const QString &fileName,
   if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
-  qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));
+  qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qUtf8Printable(m_CurrentFile));
 
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive
@@ -770,8 +770,8 @@ bool InstallationManager::install(const QString &fileName,
                                             new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
     qDebug("integrated archiver can't open %s: %s (%d)",
-           qPrintable(fileName),
-           qPrintable(getErrorString(m_ArchiveHandler->getLastError())),
+           qUtf8Printable(fileName),
+           qUtf8Printable(getErrorString(m_ArchiveHandler->getLastError())),
            m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
@@ -841,7 +841,7 @@ bool InstallationManager::install(const QString &fileName,
       }
     } catch (const IncompatibilityException &e) {
       qCritical("plugin \"%s\" incompatible: %s",
-                qPrintable(installer->name()), e.what());
+                qUtf8Printable(installer->name()), e.what());
     }
 
     // act upon the installation result. at this point the files have already been

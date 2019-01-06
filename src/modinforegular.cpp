@@ -302,7 +302,7 @@ bool ModInfoRegular::setName(const QString &name)
   } else {
     if (!shellRename(modDir.absoluteFilePath(m_Name), modDir.absoluteFilePath(name))) {
       qCritical("failed to rename mod %s (errorcode %d)",
-                qPrintable(name), ::GetLastError());
+                qUtf8Printable(name), ::GetLastError());
       return false;
     }
   }

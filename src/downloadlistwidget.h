@@ -28,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QLabel>
 #include <QProgressBar>
 #include <QTreeView>
+#include <QHeaderView>
 #include <QStyledItemDelegate>
 
 
@@ -48,6 +49,18 @@ public:
 private:
   DownloadManager *m_Manager;
   DownloadListSortProxy *m_SortProxy;
+};
+
+class DownloadListHeader : public QHeaderView
+{
+  Q_OBJECT
+
+public:
+  explicit DownloadListHeader(Qt::Orientation orientation, QWidget *parent = nullptr) : QHeaderView(orientation, parent) {}
+  void customResizeSections();
+
+private:
+  void mouseReleaseEvent(QMouseEvent *event) override;
 };
 
 class DownloadListWidget : public QTreeView
@@ -101,6 +114,8 @@ private:
   DownloadManager *m_Manager;
   DownloadList *m_SourceModel = 0;
   int m_ContextRow;
+
+  void resizeEvent(QResizeEvent *event);
 };
 
 #endif // DOWNLOADLISTWIDGET_H
