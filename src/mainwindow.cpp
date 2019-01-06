@@ -1834,9 +1834,9 @@ void MainWindow::processUpdates() {
   if (currentVersion > lastVersion)
     settings.setValue("version", currentVersion.toString());
   else if (currentVersion < lastVersion)
-    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previous version (%2).<br>"
-                     "The GUI may not downgrade gracefully, so you may experience oddities.<br>"
-                     "However, there should be no serious issues.").arg(lastVersion.toString()).arg(currentVersion.toString()).toStdWString();
+    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previously used one (%2). "
+                     "The GUI may not downgrade gracefully, so you may experience oddities. "
+                     "However, there should be no serious issues.").arg(currentVersion.toString()).arg(lastVersion.toString()).toStdWString();
 }
 
 void MainWindow::storeSettings(QSettings &settings) {

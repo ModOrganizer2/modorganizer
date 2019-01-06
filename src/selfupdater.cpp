@@ -151,7 +151,7 @@ void SelfUpdater::testForUpdate()
       } else if (newestVer < this->m_MOVersion) {
         // this could happen if the user switches from using prereleases to
         // stable builds. Should we downgrade?
-        qDebug("this version is newer than the newest installed one: %s -> %s",
+        qDebug("This version is newer than the latest released one: %s -> %s",
                qUtf8Printable(this->m_MOVersion.displayString()),
                qUtf8Printable(newestVer.displayString()));
       }
