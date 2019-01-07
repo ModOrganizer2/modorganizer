@@ -960,7 +960,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
   for (const QUrl &url : mimeData->urls()) {
-    qDebug("URL drop requested: %s", qUtf8Printable(url.toLocalFile()));
+    //qDebug("URL drop requested: %s", qUtf8Printable(url.toLocalFile()));
     if (!url.isLocalFile()) {
       qDebug("URL drop ignored: Not a local file.");
       continue;
@@ -980,6 +980,10 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
       qDebug("Move failed %lu",::GetLastError());
       return false;
     }
+  }
+
+  if (!modInfo->isValid()) {
+    modInfo->testValid();
   }
 
   return true;
