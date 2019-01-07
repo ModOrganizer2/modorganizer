@@ -1303,7 +1303,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
-                   <widget class="DownloadListWidget" name="downloadView" native="true">
+                   <widget class="DownloadListWidget" name="downloadView">
                     <property name="minimumSize">
                      <size>
                       <width>320</width>
@@ -1322,19 +1322,25 @@ p, li { white-space: pre-wrap; }
                     <property name="whatsThis">
                      <string>This is a list of mods you downloaded from Nexus. Double click one to install it. You can also drag an archive into here.</string>
                     </property>
-                    <property name="dragEnabled" stdset="0">
+                    <property name="editTriggers">
+                     <set>QAbstractItemView::NoEditTriggers</set>
+                    </property>
+                    <property name="dragDropMode">
+                     <enum>QAbstractItemView::DropOnly</enum>
+                    </property>
+                    <property name="defaultDropAction">
+                     <enum>Qt::MoveAction</enum>
+                    </property>
+                    <property name="alternatingRowColors">
                      <bool>true</bool>
                     </property>
-                    <property name="alternatingRowColors" stdset="0">
-                     <bool>true</bool>
-                    </property>
-                    <property name="indentation" stdset="0">
+                    <property name="indentation">
                      <number>0</number>
                     </property>
-                    <property name="itemsExpandable" stdset="0">
+                    <property name="itemsExpandable">
                      <bool>false</bool>
                     </property>
-                    <property name="sortingEnabled" stdset="0">
+                    <property name="sortingEnabled">
                      <bool>true</bool>
                     </property>
                    </widget>
@@ -1655,7 +1661,7 @@ Right now this has very limited functionality</string>
   </customwidget>
   <customwidget>
    <class>DownloadListWidget</class>
-   <extends>QWidget</extends>
+   <extends>QTreeView</extends>
    <header>downloadlistwidget.h</header>
   </customwidget>
  </customwidgets>
