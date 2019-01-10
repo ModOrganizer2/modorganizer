@@ -193,7 +193,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setComments(ui->commentsEdit->text());
-  m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  //avoid saving html stump if notes filed is empty
+  if (ui->notesEdit->toPlainText().isEmpty())
+    m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  else
+    m_ModInfo->setNotes(ui->notesEdit->toHtml());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui->descriptionView->page();

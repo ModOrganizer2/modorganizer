@@ -802,6 +802,9 @@ p, li { white-space: pre-wrap; }
          <property name="whatsThis">
           <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
          </property>
+         <property name="textInteractionFlags">
+          <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextEditable|Qt::TextEditorInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+         </property>
          <property name="placeholderText">
           <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
          </property>
