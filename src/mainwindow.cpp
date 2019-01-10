@@ -2974,12 +2974,21 @@ void MainWindow::visitOnNexus_clicked()
         return;
       }
     }
-
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+    QString webUrl;
     for (QModelIndex idx : selection->selectedRows()) {
-      int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole).toInt();
-      QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole + 4).toString();
+      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->getNexusID();
+      webUrl = info->getURL();
+      gameName = info->getGameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+      else if (webUrl != "") {
+        linkClicked(webUrl);
       }
     }
   }
@@ -2996,11 +3005,43 @@ void MainWindow::visitOnNexus_clicked()
 
 void MainWindow::visitWebPage_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  if (info->getURL() != "") {
-    linkClicked(info->getURL());
-  } else {
-    MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    int count = selection->selectedRows().count();
+    if (count > 10) {
+      if (QMessageBox::question(this, tr("Opening Web Pages"),
+        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(count),
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+    QString webUrl;
+    for (QModelIndex idx : selection->selectedRows()) {
+      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->getNexusID();
+      webUrl = info->getURL();
+      gameName = info->getGameName();
+      if (modID > 0) {
+        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+      else if (webUrl != "") {
+        linkClicked(webUrl);
+      }
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    if (info->getURL() != "") {
+      linkClicked(info->getURL());
+    }
+    else {
+      MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+    }
   }
 }
 
