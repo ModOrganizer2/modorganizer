@@ -193,7 +193,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setComments(ui->commentsEdit->text());
-  //avoid saving html stump if notes filed is empty
+  //Avoid saving html stump if notes field is empty.
   if (ui->notesEdit->toPlainText().isEmpty())
     m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   else
@@ -924,6 +924,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
   QString currentVersion = m_Settings->value("version", "0.0").toString();
   versionEdit->setText(currentVersion);
+  ui->customUrlLineEdit->setText(m_ModInfo->getURL());
 }
 
 
@@ -967,6 +968,10 @@ void ModInfoDialog::on_versionEdit_editingFinished()
   updateVersionColor();
 }
 
+void ModInfoDialog::on_customUrlLineEdit_editingFinished()
+{
+  m_ModInfo->setURL(ui->customUrlLineEdit->text());
+}
 
 bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 {

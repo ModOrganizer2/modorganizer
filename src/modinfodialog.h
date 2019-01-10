@@ -185,6 +185,7 @@ private slots:
   void on_modIDEdit_editingFinished();
   void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
+  void on_customUrlLineEdit_editingFinished();
   void on_iniFileView_textChanged();
   void on_textFileView_textChanged();
   void on_tabWidget_currentChanged(int index);
