@@ -1,4 +1,4 @@
-/* v4.3 Paper Light by 6788-00      */
+/* v5.0 Paper Light by 6788-00      */
 /* https://6788-00.tumblr.com/      */
 
 /* Color Palette                    */
@@ -36,6 +36,10 @@ QAbstractItemView {
 	show-decoration-selected: 1;
 	selection-background-color: #008484;
 	selection-color: #FFFFFF;
+}
+
+QAbstractItemView::item {
+	min-height: 22px;
 }
 
 QAbstractItemView::item:hover {
@@ -187,32 +191,21 @@ QListView {
 	border-radius: 6px;
 }
 
-QListView::item {
-	/* Increases the line height of the Saves tab */
-	padding: 2px 0px;
-}
-
 QListView::item:hover {
 	/* uncertain, assumed: rows on the saves window when moused-over */
 	background: #C2C2C2;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QListView::item:selected {
 	/*uncertain, assumed: rows on the saves window when clicked */
 	background: #008484;
 	color: #FFFFFF;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QTextEdit {
 	/* large text fields */
-	background: #FFFFFF;
-	border-radius: 6px;
-}
-
-QWebView {
-	/* Nexus Info window */
 	background: #FFFFFF;
 	border-radius: 6px;
 }
@@ -680,9 +673,10 @@ QToolTip {
 	border-radius: 6px;
 }
 
-/* Progress Bars */
+/* Progress Bars (Downloads) */
 
 QProgressBar {
+	/* progress bars when downloading */
 	background: #FFFFFF;
     text-align: center;
     border: 0px;
@@ -705,10 +699,6 @@ QTabWidget::pane {
 	padding: 2px 2px 10px 2px;
 	border: 2px solid #FFFFFF;
 	border-radius: 10px;
-}
-
-QTabWidget QAbstractScrollArea::item {
-	padding: 2px;
 }
 
 QTabWidget::tab-bar {
@@ -921,37 +911,46 @@ QSlider::handle:hover {
 	background: #008484;
 }
 
-/* Downloads Tab */
+/* Pre-v2.1.7 Downloads Tab */
 
 #downloadTab QAbstractScrollArea {
 	/* background of the entire downloads tab */
-	background: #EBEBEB;
+	background: #FFFFFF;
 }
 
+DownloadListWidget QFrame, 
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #FFFFFF;
+}
+
+DownloadListWidget #frame {
+	/* outer box of an entry on the Downloads tab */
+	border: none;
+}
+
+#installLabel {
+	/* installed/done label */
+	color: none;
+}
+
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab in Compacts View*/
+	background: #FFFFFF;
+}
+
+/* New Downloads View */
+
 DownloadListWidget[downloadView=standard]::item {
-	padding: 15px;
-	border-bottom: 2px solid #BBBBBB;
+	/* an entry on the Downloads view */
+	min-height: 44px;
 }
 
 QProgressBar[downloadView=standard] {
-	background: transparent;
-	border: 2px solid gray;
-	border-radius: 8px;
-	margin: 4px 0px 6px 0px;
-}
-
-/* Compact Downloads View */
-
-DownloadListWidget[downloadView=compact]::item {
-	padding: 3px;
-	border-bottom: 2px solid #BBBBBB;
-}
-
-QProgressBar[downloadView=compact] {
-	background: transparent;
-	border: 2px solid gray;
-	border-radius: 8px;
-	margin: 1px 0px 3px 0px;
+	/* a progress bar on the Downloads view */
+	margin: 11px 0;
 }
 
 /* Categories Filter */
@@ -970,4 +969,27 @@ QProgressBar[downloadView=compact] {
 #categoriesGroup {
 	/* Categories group box */
 	padding-bottom: 0px;
+}
+
+/* Fixes */
+
+#executablesListBox {
+	/* Increase right margin of the select executables box */
+	margin-right: 8px;
+}
+
+#stepsStack QWidget {
+	/* Groupboxes on the FOMOD Installer Dialog */
+	border: none;
+}
+
+#stepsStack QGroupBox {
+	/* Fix to reimplement styling for Groupboxes on the FOMOD Installer dialog */
+	border: 2px solid #EBEBEB;
+	border-radius: 10px;
+}
+
+#activeModslabel, #activePluginsLabel {
+	/* Increase the left margin of the counters */
+	padding-left: 6px;
 }

@@ -1,4 +1,4 @@
-/* v4.3 Paper Dark by 6788-00       */
+/* v5.0 Paper Dark by 6788-00       */
 /* https://6788-00.tumblr.com/      */
 
 /* Color Palette                    */
@@ -39,7 +39,7 @@ QAbstractItemView {
 }
 
 QAbstractItemView::item {
-	padding: 1px;
+	min-height: 22px;
 }
 
 QAbstractItemView::item:hover {
@@ -190,24 +190,18 @@ QListView::item:hover {
 	/* a row on the saves tab when moused-over */
 	background: #3D3D3D;
 	color: #FFFFFF;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QListView::item:selected {
 	/* a row on the saves tab when clicked */
 	background: #006868;
 	color: #FFFFFF;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QTextEdit {
 	/* large text fields */
-	background: #141414;
-	border-radius: 6px;
-}
-
-QWebView {
-	/* Nexus Info window */
 	background: #141414;
 	border-radius: 6px;
 }
@@ -682,6 +676,7 @@ QToolTip {
 QProgressBar {
 	/* progress bars when downloading */
 	background: #141414;
+	color: #FFFFFF;
     text-align: center;
     border: 2px solid #242424;
     border-radius: 6px;
@@ -703,10 +698,6 @@ QTabWidget::pane {
 	padding: 2px 2px 10px 2px;
 	border: 2px solid #141414;
 	border-radius: 10px;
-}
-
-QTabWidget QAbstractScrollArea::item {
-	padding: 2px;
 }
 
 QTabWidget::tab-bar {
@@ -781,6 +772,7 @@ QLCDNumber {
 	background: #141414;
 	color: #006868;
 	border-radius: 6px;
+
 }
 
 /* Tables (Configure Mod Categories) */
@@ -912,37 +904,65 @@ QSlider::handle:hover {
 	background: #3D3D3D;
 }
 
-/* Downloads Tab */
+/* Pre-v2.1.7 Downloads Tab */
 
 #downloadTab QAbstractScrollArea {
 	/* background of the entire downloads tab */
-	background: #242424;
+	background: #141414;
 }
 
+DownloadListWidget QFrame, 
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab */
+	background: #141414;
+}
+
+DownloadListWidget#frame {
+	/* outer box of an entry on the Downloads tab */
+	border: none;
+}
+
+#installLabel {
+	/* installed/done label */
+	color: none;
+}
+
+DownloadListWidgetCompact, 
+DownloadListWidgetCompact QLabel {
+	/* an entry on the Downloads tab in Compact View */
+	background: #141414;
+}
+
+/* New Downloads View */
+
 DownloadListWidget[downloadView=standard]::item {
-	padding: 15px;
-	border-bottom: 2px solid #666666;
+	/* Entries on the Standard Downloads View */
+	min-height: 44px;
+	margin: -16px 0;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	/* Entries on the Compact Downloads View */
+	min-height: 22px;
+	margin: -4px 0;
 }
 
 QProgressBar[downloadView=standard] {
+	/* Progress Bars on the Standard Downloads View */
 	background: transparent;
-	border: 2px solid #666666;
-	border-radius: 8px;
-	margin: 4px 0px 6px 0px;
+	margin: 11px 0;
 }
 
-/* Compact Downloads View */
-
-DownloadListWidget[downloadView=compact]::item {
-	padding: 3px;
-	border-bottom: 2px solid #666666;
+QProgressBar[downloadView=standard]::chunk,
+QProgressBar[downloadView=compact]::chunk {
+	/* The Loading Portion of Progress Bars on the Downloads View */
+	border-right: 2px solid #242424;
 }
 
 QProgressBar[downloadView=compact] {
+	/* Progress Bars on the Compact Downloads View */
 	background: transparent;
-	border: 2px solid gray;
-	border-radius: 8px;
-	margin: 1px 0px 3px 0px;
 }
 
 /* Categories Filter */
@@ -965,7 +985,28 @@ QProgressBar[downloadView=compact] {
 
 /* Fixes */
 
+#executablesListBox {
+	/* Increase right margin of the select executables box */
+	margin-right: 8px;
+}
+
 #executablesListBox::item {
 	/* fixes the black text problem on the Modify Executables window */
 	color: #D3D3D3;
+}
+
+#stepsStack QWidget {
+	/* Groupboxes on the FOMOD Installer Dialog */
+	border: none;
+}
+
+#stepsStack QGroupBox {
+	/* Fix to reimplement styling for Groupboxes on the FOMOD Installer dialog */
+	border: 2px solid #141414;
+	border-radius: 10px;
+}
+
+#activeModslabel, #activePluginsLabel {
+	/* Increase the left margin of the counters */
+	padding-left: 6px;
 }
