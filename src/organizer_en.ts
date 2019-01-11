@@ -1169,53 +1169,48 @@ Right now the only case I know of where this needs to be overwritten is for the 
 <context>
     <name>ForcedLoadDialogWidget</name>
     <message>
-        <location filename="forcedloaddialogwidget.ui" line="20"/>
-        <source>Form</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
+        <location filename="forcedloaddialogwidget.ui" line="23"/>
         <location filename="forcedloaddialogwidget.ui" line="26"/>
-        <location filename="forcedloaddialogwidget.ui" line="29"/>
         <source>If checked, the specified library will be force loaded for the specified process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="forcedloaddialogwidget.ui" line="36"/>
         <location filename="forcedloaddialogwidget.ui" line="39"/>
-        <location filename="forcedloaddialogwidget.ui" line="42"/>
         <source>The name of the process that should be forced to load a library.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="forcedloaddialogwidget.ui" line="45"/>
+        <location filename="forcedloaddialogwidget.ui" line="42"/>
         <source>Process name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="forcedloaddialogwidget.ui" line="67"/>
         <location filename="forcedloaddialogwidget.ui" line="70"/>
-        <location filename="forcedloaddialogwidget.ui" line="73"/>
         <source>Browse for a process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="forcedloaddialogwidget.ui" line="76"/>
-        <location filename="forcedloaddialogwidget.ui" line="108"/>
+        <location filename="forcedloaddialogwidget.ui" line="73"/>
+        <location filename="forcedloaddialogwidget.ui" line="105"/>
         <source>...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="forcedloaddialogwidget.ui" line="80"/>
         <location filename="forcedloaddialogwidget.ui" line="83"/>
-        <location filename="forcedloaddialogwidget.ui" line="86"/>
         <source>The path to the library to be loaded.  This may be a path relative to the managed game&apos;s directory or may be an absolute path to somewhere else.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="forcedloaddialogwidget.ui" line="89"/>
+        <location filename="forcedloaddialogwidget.ui" line="86"/>
         <source>Library to load</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="forcedloaddialogwidget.ui" line="99"/>
         <location filename="forcedloaddialogwidget.ui" line="102"/>
-        <location filename="forcedloaddialogwidget.ui" line="105"/>
         <source>Browse for a library.</source>
         <translation type="unfinished"></translation>
     </message>
