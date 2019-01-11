@@ -1911,7 +1911,7 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
     QString gameName = "";
     int modID  = 0;
     int fileID = 0;
-    QRegExp nameExp("www\.nexusmods\.com/(\\a+)/");
+    QRegExp nameExp("www\\.nexusmods\\.com/(\\a+)/");
     if (nameExp.indexIn(url.toString()) != -1) {
       gameName = nameExp.cap(1);
     }
