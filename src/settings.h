@@ -543,8 +543,8 @@ private:
 
   std::vector<MOBase::IPlugin*> m_Plugins;
 
-  QMap<QString, QMap<QString, QVariant>> m_PluginSettings;
-  QMap<QString, QMap<QString, QVariant>> m_PluginDescriptions;
+  QMap<QString, QVariantMap> m_PluginSettings;
+  QMap<QString, QVariantMap> m_PluginDescriptions;
 
   QSet<QString> m_PluginBlacklist;
 

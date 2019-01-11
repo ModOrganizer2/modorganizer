@@ -20,6 +20,7 @@
 #include <versioninfo.h>
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
+#include "executableinfo.h"
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -141,20 +142,23 @@ public:
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
                    const QDir &currentDirectory = QDir(),
                    const QString &steamAppID = "",
-                   const QString &customOverwrite = "");
+                   const QString &customOverwrite = "",
+                   const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
   HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
                            const QString &profileName,
                            const QDir &currentDirectory,
                            const QString &steamAppID,
                            const QString &customOverwrite,
+                           const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
                            LPDWORD exitCode = nullptr);
 
   HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
                             const QString &profileName,
                             const QDir &currentDirectory,
                             const QString &steamAppID,
-                            const QString &customOverwrite);
+                            const QString &customOverwrite,
+                            const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);

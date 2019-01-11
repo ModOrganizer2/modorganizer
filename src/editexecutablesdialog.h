@@ -92,6 +92,10 @@ private slots:
 
   void on_executablesListBox_clicked(const QModelIndex &index);
 
+  void on_forceLoadButton_clicked();
+
+  void on_forceLoadCheckBox_toggled();
+
 private:
 
   void resetInput();
@@ -108,6 +112,8 @@ private:
   ExecutablesList m_ExecutablesList;
 
   Profile *m_Profile;
+
+  QList<MOBase::ExecutableForcedLoadSetting> m_ForcedLibraries;
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

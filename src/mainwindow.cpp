@@ -1162,15 +1162,20 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    const Executable &selectedExecutable(
-        m_OrganizerCore.executablesList()->find(action->text()));
-	QString customOverwrite= m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
+    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+      forcedLibraries.clear();
+    }
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, customOverwrite);
+        selectedExecutable.m_SteamAppID, 
+        customOverwrite,
+        forcedLibraries);
   } else {
     qCritical("not an action?");
   }
@@ -1957,12 +1962,18 @@ void MainWindow::on_startButton_clicked() {
   try {
     const Executable &selectedExecutable(getSelectedExecutable());
     QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+      forcedLibraries.clear();
+    }
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, customOverwrite);
+        selectedExecutable.m_SteamAppID, 
+        customOverwrite,
+        forcedLibraries);
   } catch (...) {
     ui->startButton->setEnabled(true);
     throw;

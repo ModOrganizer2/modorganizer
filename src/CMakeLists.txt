@@ -92,6 +92,8 @@ SET(organizer_SRCS
     moshortcut.cpp
     listdialog.cpp
     lcdnumber.cpp
+    forcedloaddialog.cpp
+    forcedloaddialogwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -187,6 +189,8 @@ SET(organizer_HDRS
     moshortcut.h
     listdialog.h
     lcdnumber.h
+    forcedloaddialog.h
+    forcedloaddialogwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -226,6 +230,8 @@ SET(organizer_UIS
     browserdialog.ui
     aboutdialog.ui
     listdialog.ui
+    forcedloaddialog.ui
+    forcedloaddialogwidget.ui
   )
 
 SET(organizer_QRCS

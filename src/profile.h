@@ -24,12 +24,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfo.h"
 #include <iprofile.h>
 #include <delayedfilewriter.h>
+#include "executableinfo.h"
 
 #include <QByteArray>
 #include <QDir>
 #include <QObject>
 #include <QString>
 #include <QSettings>
+#include <QList>
 
 #include <boost/shared_ptr.hpp>
 
@@ -310,7 +312,18 @@ public:
   void removeSetting(const QString &section, const QString &name = QString());
   void removeSetting(const QString &name);
 
+  QVariantMap settingsByGroup(const QString &section) const;
+  void storeSettingsByGroup(const QString &section, const QVariantMap &values);
+
+  QList<QVariantMap> settingsByArray(const QString &prefix) const;
+  void storeSettingsByArray(const QString &prefix, const QList<QVariantMap> &values);
+
   int getPriorityMinimum() const;
+
+  bool forcedLibrariesEnabled(const QString &executable);
+  void setForcedLibrariesEnabled(const QString &executable, bool enabled);
+  QList<MOBase::ExecutableForcedLoadSetting> determineForcedLibraries(const QString &executable);
+  void saveForcedLibraries(const QString &executable, const QList<MOBase::ExecutableForcedLoadSetting> &values);
 
 signals:
 
