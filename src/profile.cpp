@@ -1014,7 +1014,7 @@ QList<ExecutableForcedLoadSetting> Profile::determineForcedLibraries(const QStri
   return results;
 }
 
-void Profile::saveForcedLibraries(const QString &executable, const QList<ExecutableForcedLoadSetting> &values)
+void Profile::storeForcedLibraries(const QString &executable, const QList<ExecutableForcedLoadSetting> &values)
 {
   QList<QVariantMap> rawSettings;
   for (auto setting : values) {
@@ -1025,4 +1025,9 @@ void Profile::saveForcedLibraries(const QString &executable, const QList<Executa
     rawSettings.append(rawSetting);
   }
   storeSettingsByArray("forced_libraries/" + executable, rawSettings);
+}
+
+void Profile::removeForcedLibraries(const QString &executable)
+{
+  m_Settings->remove("forced_libraries/" + executable);
 }

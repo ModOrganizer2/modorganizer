@@ -323,7 +323,8 @@ public:
   bool forcedLibrariesEnabled(const QString &executable);
   void setForcedLibrariesEnabled(const QString &executable, bool enabled);
   QList<MOBase::ExecutableForcedLoadSetting> determineForcedLibraries(const QString &executable);
-  void saveForcedLibraries(const QString &executable, const QList<MOBase::ExecutableForcedLoadSetting> &values);
+  void storeForcedLibraries(const QString &executable, const QList<MOBase::ExecutableForcedLoadSetting> &values);
+  void removeForcedLibraries(const QString &executable);
 
 signals:
 

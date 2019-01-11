@@ -124,7 +124,7 @@ void EditExecutablesDialog::saveExecutable()
 	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
   }
 
-  m_Profile->saveForcedLibraries(ui->titleEdit->text(), m_ForcedLibraries);
+  m_Profile->storeForcedLibraries(ui->titleEdit->text(), m_ForcedLibraries);
   m_Profile->setForcedLibrariesEnabled(ui->titleEdit->text(), ui->forceLoadCheckBox->isChecked());
 }
 
@@ -218,6 +218,8 @@ void EditExecutablesDialog::on_removeButton_clicked()
 {
   if (QMessageBox::question(this, tr("Confirm"), tr("Really remove \"%1\" from executables?").arg(ui->titleEdit->text()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+    m_Profile->removeForcedLibraries(ui->titleEdit->text());
     m_ExecutablesList.remove(ui->titleEdit->text());
   }
 
