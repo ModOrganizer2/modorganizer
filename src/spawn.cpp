@@ -94,7 +94,7 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
   if (hooked) {
-    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, length) <<">";
+    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, static_cast<int>(length)) <<">";
     success = ::CreateProcessHooked(nullptr,
                                     commandLine,
                                     nullptr, nullptr,       // no special process or thread attributes

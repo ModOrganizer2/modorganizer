@@ -338,9 +338,8 @@ void SelfUpdater::installUpdate()
   } else {
     reportError(tr("Failed to start %1: %2")
                     .arg(m_UpdateFile.fileName())
-                    .arg((int)res));
+                    .arg((INT_PTR)res));
   }
-
   m_UpdateFile.remove();
 }
 

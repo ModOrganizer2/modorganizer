@@ -153,7 +153,7 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
       }
     }
   }
-  emit dataChanged(this->index(0, 0), this->index(m_ESPs.size() - 1, this->columnCount() - 1));
+  emit dataChanged(this->index(0, 0), this->index(static_cast<int>(m_ESPs.size()) - 1, this->columnCount() - 1));
 }
 
 void PluginList::refresh(const QString &profileName
