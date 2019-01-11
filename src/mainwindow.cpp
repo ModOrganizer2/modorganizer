@@ -1836,12 +1836,14 @@ void MainWindow::processUpdates() {
     }
   }
 
-  if (currentVersion > lastVersion)
-    settings.setValue("version", currentVersion.toString());
-  else if (currentVersion < lastVersion)
+  if (currentVersion > lastVersion) {
+    //NOP
+  } else if (currentVersion < lastVersion)
     qWarning() << tr("Notice: Your current MO version (%1) is lower than the previously used one (%2). "
                      "The GUI may not downgrade gracefully, so you may experience oddities. "
                      "However, there should be no serious issues.").arg(currentVersion.toString()).arg(lastVersion.toString()).toStdWString();
+  //save version in all case
+  settings.setValue("version", currentVersion.toString());
 }
 
 void MainWindow::storeSettings(QSettings &settings) {
