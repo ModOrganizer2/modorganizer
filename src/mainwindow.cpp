@@ -2069,7 +2069,8 @@ bool MainWindow::modifyExecutablesDialog()
   try {
     EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
                                  *m_OrganizerCore.modList(),
-                                 m_OrganizerCore.currentProfile());
+                                 m_OrganizerCore.currentProfile(),
+                                 m_OrganizerCore.managedGame());
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
     if (settings.contains(key)) {

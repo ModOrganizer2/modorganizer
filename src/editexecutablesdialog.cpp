@@ -33,12 +33,13 @@ using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(
     const ExecutablesList &executablesList, const ModList &modList,
-    Profile *profile, QWidget *parent)
+    Profile *profile, const IPluginGame *game, QWidget *parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
   , m_CurrentItem(nullptr)
   , m_ExecutablesList(executablesList)
   , m_Profile(profile)
+  , m_GamePlugin(game)
 {
   ui->setupUi(this);
 
@@ -139,7 +140,7 @@ void EditExecutablesDialog::delayedRefresh()
 
 void EditExecutablesDialog::on_forceLoadButton_clicked()
 {
-  ForcedLoadDialog dialog(this);
+  ForcedLoadDialog dialog(m_GamePlugin, this);
   dialog.setValues(m_ForcedLibraries);
   if (dialog.exec() == QDialog::Accepted) {
     m_ForcedLibraries = dialog.values();

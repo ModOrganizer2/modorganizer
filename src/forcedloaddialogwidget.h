@@ -2,6 +2,7 @@
 #define FORCEDLOADDIALOGWIDGET_H
 
 #include <QWidget>
+#include "iplugingame.h"
 
 namespace Ui {
 class ForcedLoadDialogWidget;
@@ -12,7 +13,7 @@ class ForcedLoadDialogWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ForcedLoadDialogWidget(QWidget *parent = nullptr);
+    explicit ForcedLoadDialogWidget(const MOBase::IPluginGame *game, QWidget *parent = nullptr);
     ~ForcedLoadDialogWidget();
 
     bool getEnabled();
@@ -33,6 +34,8 @@ private slots:
 private:
     Ui::ForcedLoadDialogWidget *ui;
     bool m_Forced;
+    const MOBase::IPluginGame *m_GamePlugin;
+
 };
 
 #endif // FORCEDLOADDIALOGWIDGET_H

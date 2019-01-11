@@ -5,9 +5,12 @@
 
 #include "executableinfo.h"
 
-ForcedLoadDialogWidget::ForcedLoadDialogWidget(QWidget *parent) :
+using namespace MOBase;
+
+ForcedLoadDialogWidget::ForcedLoadDialogWidget(const IPluginGame *game, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::ForcedLoadDialogWidget)
+    ui(new Ui::ForcedLoadDialogWidget),
+    m_GamePlugin(game)
 {
     ui->setupUi(this);
 }
@@ -68,20 +71,38 @@ void ForcedLoadDialogWidget::on_enabledBox_toggled()
 
 void ForcedLoadDialogWidget::on_libraryPathBrowseButton_clicked()
 {
-  QDir gameDir("D:/Games/Steam Library/steamapps/common/Fallout 4");
+  QDir gameDir(m_GamePlugin->gameDirectory()); 
   QString startPath = gameDir.absolutePath();
   QString result = QFileDialog::getOpenFileName(nullptr, "Select a library...", startPath, "Dynamic link library (*.dll)", nullptr, QFileDialog::ReadOnly);
   if (!result.isEmpty()) {
-    ui->libraryPathEdit->setText(result);
+    QFileInfo fileInfo(result);
+    QString relativePath = gameDir.relativeFilePath(fileInfo.filePath());
+    QString filePath = fileInfo.filePath();
+    if (!relativePath.startsWith("..")) {
+      filePath = relativePath;
+    }
+
+    if (fileInfo.exists()) {
+      ui->libraryPathEdit->setText(filePath);
+    } else {
+      qCritical("%ls does not exist", filePath.toStdWString().c_str());
+    }
   }
 }
 
 void ForcedLoadDialogWidget::on_processBrowseButton_clicked()
 {
-  QDir gameDir("D:/Games/Steam Library/steamapps/common/Fallout 4");
+  QDir gameDir(m_GamePlugin->gameDirectory());
   QString startPath = gameDir.absolutePath();
   QString result = QFileDialog::getOpenFileName(nullptr, "Select a process...", startPath, "Executable (*.exe)", nullptr, QFileDialog::ReadOnly);
   if (!result.isEmpty()) {
-    ui->processEdit->setText(QFile(result).fileName());
+    QFileInfo fileInfo(result);
+    QString fileName = fileInfo.fileName();
+
+    if (fileInfo.exists()) {
+      ui->processEdit->setText(fileName);  
+    } else {
+      qCritical("%ls does not exist", fileInfo.filePath().toStdWString().c_str());
+    }
   }
 }

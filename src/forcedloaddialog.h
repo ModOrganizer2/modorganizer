@@ -5,6 +5,7 @@
 #include <QPushButton>
 
 #include "executableinfo.h"
+#include "iplugingame.h"
 
 namespace Ui {
 class ForcedLoadDialog;
@@ -15,7 +16,7 @@ class ForcedLoadDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit ForcedLoadDialog(QWidget *parent = nullptr);
+  explicit ForcedLoadDialog(const MOBase::IPluginGame *game, QWidget *parent = nullptr);
   ~ForcedLoadDialog();
 
   void setValues(QList<MOBase::ExecutableForcedLoadSetting> &values);
@@ -27,6 +28,7 @@ private slots:
 
 private:
   Ui::ForcedLoadDialog *ui;
+  const MOBase::IPluginGame *m_GamePlugin;
 };
 
 #endif // FORCEDLOADDIALOG_H

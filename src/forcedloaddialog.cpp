@@ -8,9 +8,10 @@
 
 using namespace MOBase;
 
-ForcedLoadDialog::ForcedLoadDialog(QWidget *parent) :
+ForcedLoadDialog::ForcedLoadDialog(const IPluginGame *game, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::ForcedLoadDialog)
+    ui(new Ui::ForcedLoadDialog),
+    m_GamePlugin(game)
 {
     ui->setupUi(this);
 }
@@ -25,7 +26,7 @@ void ForcedLoadDialog::setValues(QList<MOBase::ExecutableForcedLoadSetting> &val
   ui->tableWidget->clearContents();
 
   for (int i = 0; i < values.count(); i++) {
-    ForcedLoadDialogWidget *item = new ForcedLoadDialogWidget(this);
+    ForcedLoadDialogWidget *item = new ForcedLoadDialogWidget(m_GamePlugin, this);
     item->setEnabled(values[i].enabled());
     item->setProcess(values[i].process());
     item->setLibraryPath(values[i].library());
@@ -59,7 +60,7 @@ void ForcedLoadDialog::on_addRowButton_clicked()
 {
   int row = ui->tableWidget->rowCount();
   ui->tableWidget->insertRow(row);
-  ForcedLoadDialogWidget *item = new ForcedLoadDialogWidget(this);
+  ForcedLoadDialogWidget *item = new ForcedLoadDialogWidget(m_GamePlugin, this);
   ui->tableWidget->setCellWidget(row, 0, item);
   ui->tableWidget->resizeRowsToContents();
 }

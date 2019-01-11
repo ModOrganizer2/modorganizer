@@ -22,6 +22,12 @@
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0,2,0">
    <item>
     <widget class="QCheckBox" name="enabledBox">
+     <property name="toolTip">
+      <string>If checked, the specified library will be force loaded for the specified process.</string>
+     </property>
+     <property name="whatsThis">
+      <string>If checked, the specified library will be force loaded for the specified process.</string>
+     </property>
      <property name="text">
       <string/>
      </property>
@@ -73,6 +79,12 @@
    </item>
    <item>
     <widget class="QLineEdit" name="libraryPathEdit">
+     <property name="toolTip">
+      <string>The path to the library to be loaded.  This may be a path relative to the managed game's directory or may be an absolute path to somewhere else.</string>
+     </property>
+     <property name="whatsThis">
+      <string>The path to the library to be loaded.  This may be a path relative to the managed game's directory or may be an absolute path to somewhere else.</string>
+     </property>
      <property name="placeholderText">
       <string>Library to load</string>
      </property>
