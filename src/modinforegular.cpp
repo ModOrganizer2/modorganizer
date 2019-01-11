@@ -162,6 +162,7 @@ void ModInfoRegular::saveMeta()
         metaFile.setValue("endorsed", m_EndorsedState);
       }
 
+      metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
       int idx = 0;
       for (auto iter = m_InstalledFileIDs.begin(); iter != m_InstalledFileIDs.end(); ++iter) {

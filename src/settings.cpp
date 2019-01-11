@@ -592,6 +592,7 @@ void Settings::addBlacklistPlugin(const QString &fileName)
 
 void Settings::writePluginBlacklist()
 {
+  m_Settings.remove("pluginBlacklist");
   m_Settings.beginWriteArray("pluginBlacklist");
   int idx = 0;
   for (const QString &plugin : m_PluginBlacklist) {

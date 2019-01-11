@@ -562,6 +562,7 @@ void ModInfoDialog::openIniFile(const QString &fileName)
 
 void ModInfoDialog::saveIniTweaks()
 {
+  m_Settings->remove("INI Tweaks");
   m_Settings->beginWriteArray("INI Tweaks");
 
   int countEnabled = 0;

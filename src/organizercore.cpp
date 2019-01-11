@@ -907,6 +907,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.setValue("category", 0);
     settingsFile.setValue("installationFile", "");
 
+    settingsFile.remove("installedFiles");
     settingsFile.beginWriteArray("installedFiles", 0);
     settingsFile.endArray();
   }

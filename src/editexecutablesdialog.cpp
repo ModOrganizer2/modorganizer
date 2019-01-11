@@ -124,6 +124,7 @@ void EditExecutablesDialog::saveExecutable()
 	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
   }
 
+  m_Profile->removeForcedLibraries(ui->titleEdit->text());
   m_Profile->storeForcedLibraries(ui->titleEdit->text(), m_ForcedLibraries);
   m_Profile->setForcedLibrariesEnabled(ui->titleEdit->text(), ui->forceLoadCheckBox->isChecked());
 }
