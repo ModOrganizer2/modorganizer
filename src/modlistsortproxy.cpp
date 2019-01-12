@@ -58,11 +58,18 @@ void ModListSortProxy::updateFilterActive()
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
+  m_CategoryFilter = categories;
+  updateFilterActive();
+  invalidate();
+  
+  //For better performance we could refresh only if the filter is different or 
+  //categories contains CATEGORY_SPECIAL_UPDATEAVAILABLE
+  /*
   if (categories != m_CategoryFilter) {
     m_CategoryFilter = categories;
     updateFilterActive();
     invalidate();
-  }
+  }*/
 }
 
 void ModListSortProxy::setContentFilter(const std::vector<int> &content)
