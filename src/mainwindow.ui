@@ -1322,17 +1322,23 @@ p, li { white-space: pre-wrap; }
                     <property name="whatsThis">
                      <string>This is a list of mods you downloaded from Nexus. Double click one to install it. You can also drag an archive into here.</string>
                     </property>
-                    <property name="editTriggers">
-                     <set>QAbstractItemView::NoEditTriggers</set>
+                    <property name="verticalScrollBarPolicy">
+                     <enum>Qt::ScrollBarAlwaysOn</enum>
+                    </property>
+                    <property name="dragEnabled">
+                     <bool>true</bool>
                     </property>
                     <property name="dragDropMode">
-                     <enum>QAbstractItemView::DropOnly</enum>
+                     <enum>QAbstractItemView::DragDrop</enum>
                     </property>
                     <property name="defaultDropAction">
                      <enum>Qt::MoveAction</enum>
                     </property>
                     <property name="alternatingRowColors">
                      <bool>true</bool>
+                    </property>
+                    <property name="verticalScrollMode">
+                     <enum>QAbstractItemView::ScrollPerPixel</enum>
                     </property>
                     <property name="indentation">
                      <number>0</number>
