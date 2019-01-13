@@ -59,7 +59,7 @@ void ModListSortProxy::updateFilterActive()
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
   //avoid refreshing the filter unless we are checking all mods for update.
-  if (categories != m_CategoryFilter || categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+  if (categories != m_CategoryFilter || (!categories.empty() && categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE)) {
     m_CategoryFilter = categories;
     updateFilterActive();
     invalidate();
