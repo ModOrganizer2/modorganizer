@@ -744,7 +744,7 @@ void MainWindow::createHelpWidget()
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
   buttonMenu->addAction(helpAction);
 
-  QAction *wikiAction = new QAction(tr("Documentation Wiki"), buttonMenu);
+  QAction *wikiAction = new QAction(tr("Documentation"), buttonMenu);
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
   buttonMenu->addAction(wikiAction);
 
@@ -2120,7 +2120,7 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  QDesktopServices::openUrl(QUrl("http://wiki.step-project.com/Guide:Mod_Organizer"));
+  QDesktopServices::openUrl(QUrl("https://modorganizer2.github.io/"));
 }
 
 void MainWindow::discordTriggered()
