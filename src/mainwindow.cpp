@@ -748,6 +748,10 @@ void MainWindow::createHelpWidget()
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
   buttonMenu->addAction(wikiAction);
 
+  QAction *discordAction = new QAction(tr("Chat on Discord"), buttonMenu);
+  connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
+  buttonMenu->addAction(discordAction);
+
   QAction *issueAction = new QAction(tr("Report Issue"), buttonMenu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
   buttonMenu->addAction(issueAction);
@@ -2117,6 +2121,11 @@ void MainWindow::helpTriggered()
 void MainWindow::wikiTriggered()
 {
   QDesktopServices::openUrl(QUrl("http://wiki.step-project.com/Guide:Mod_Organizer"));
+}
+
+void MainWindow::discordTriggered()
+{
+  QDesktopServices::openUrl(QUrl("https://discord.gg/cYwdcxj"));
 }
 
 void MainWindow::issueTriggered()
