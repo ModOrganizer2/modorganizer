@@ -643,6 +643,9 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   settingsFile.setValue("repository", repository);
   settingsFile.setValue("url", m_URL);
 
+  //cleanup of m_URL or this will persist across installs.
+  m_URL = "";
+
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
     // btw.: installedFiles were written with beginWriteArray but we can still clear it with beginGroup. nice

@@ -757,9 +757,13 @@ void MainWindow::createHelpWidget()
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
   buttonMenu->addAction(helpAction);
 
-  QAction *wikiAction = new QAction(tr("Documentation Wiki"), buttonMenu);
+  QAction *wikiAction = new QAction(tr("Documentation"), buttonMenu);
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
   buttonMenu->addAction(wikiAction);
+
+  QAction *discordAction = new QAction(tr("Chat on Discord"), buttonMenu);
+  connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
+  buttonMenu->addAction(discordAction);
 
   QAction *issueAction = new QAction(tr("Report Issue"), buttonMenu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
@@ -1175,15 +1179,20 @@ void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
   if (action != nullptr) {
-    const Executable &selectedExecutable(
-        m_OrganizerCore.executablesList()->find(action->text()));
-	QString customOverwrite= m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
+    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+      forcedLibraries.clear();
+    }
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, customOverwrite);
+        selectedExecutable.m_SteamAppID, 
+        customOverwrite,
+        forcedLibraries);
   } else {
     qCritical("not an action?");
   }
@@ -1848,12 +1857,14 @@ void MainWindow::processUpdates() {
     }
   }
 
-  if (currentVersion > lastVersion)
-    settings.setValue("version", currentVersion.toString());
-  else if (currentVersion < lastVersion)
-    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previous version (%2).<br>"
-                     "The GUI may not downgrade gracefully, so you may experience oddities.<br>"
-                     "However, there should be no serious issues.").arg(lastVersion.toString()).arg(currentVersion.toString()).toStdWString();
+  if (currentVersion > lastVersion) {
+    //NOP
+  } else if (currentVersion < lastVersion)
+    qWarning() << tr("Notice: Your current MO version (%1) is lower than the previously used one (%2). "
+                     "The GUI may not downgrade gracefully, so you may experience oddities. "
+                     "However, there should be no serious issues.").arg(currentVersion.toString()).arg(lastVersion.toString()).toStdWString();
+  //save version in all case
+  settings.setValue("version", currentVersion.toString());
 }
 
 void MainWindow::storeSettings(QSettings &settings) {
@@ -1974,12 +1985,18 @@ void MainWindow::on_startButton_clicked() {
   try {
     const Executable &selectedExecutable(getSelectedExecutable());
     QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+      forcedLibraries.clear();
+    }
     m_OrganizerCore.spawnBinary(
         selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, customOverwrite);
+        selectedExecutable.m_SteamAppID, 
+        customOverwrite,
+        forcedLibraries);
   } catch (...) {
     ui->startButton->setEnabled(true);
     throw;
@@ -2075,7 +2092,8 @@ bool MainWindow::modifyExecutablesDialog()
   try {
     EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
                                  *m_OrganizerCore.modList(),
-                                 m_OrganizerCore.currentProfile());
+                                 m_OrganizerCore.currentProfile(),
+                                 m_OrganizerCore.managedGame());
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
     if (settings.contains(key)) {
@@ -2119,7 +2137,12 @@ void MainWindow::helpTriggered()
 
 void MainWindow::wikiTriggered()
 {
-  QDesktopServices::openUrl(QUrl("http://wiki.step-project.com/Guide:Mod_Organizer"));
+  QDesktopServices::openUrl(QUrl("https://modorganizer2.github.io/"));
+}
+
+void MainWindow::discordTriggered()
+{
+  QDesktopServices::openUrl(QUrl("https://discord.gg/cYwdcxj"));
 }
 
 void MainWindow::issueTriggered()
@@ -3009,12 +3032,21 @@ void MainWindow::visitOnNexus_clicked()
         return;
       }
     }
-
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+    QString webUrl;
     for (QModelIndex idx : selection->selectedRows()) {
-      int modID = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole).toInt();
-      QString gameName = m_OrganizerCore.modList()->data(m_OrganizerCore.modList()->index(idx.data(Qt::UserRole + 1).toInt(), 0), Qt::UserRole + 4).toString();
+      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->getNexusID();
+      webUrl = info->getURL();
+      gameName = info->getGameName();
       if (modID > 0)  {
         linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+      else if (webUrl != "") {
+        linkClicked(webUrl);
       }
     }
   }
@@ -3031,11 +3063,43 @@ void MainWindow::visitOnNexus_clicked()
 
 void MainWindow::visitWebPage_clicked()
 {
-  ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
-  if (info->getURL() != "") {
-    linkClicked(info->getURL());
-  } else {
-    MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    int count = selection->selectedRows().count();
+    if (count > 10) {
+      if (QMessageBox::question(this, tr("Opening Web Pages"),
+        tr("You are trying to open %1 Web Pages.  Are you sure you want to do this?").arg(count),
+        QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
+        return;
+      }
+    }
+    int row_idx;
+    ModInfo::Ptr info;
+    QString gameName;
+    QString webUrl;
+    for (QModelIndex idx : selection->selectedRows()) {
+      row_idx = idx.data(Qt::UserRole + 1).toInt();
+      info = ModInfo::getByIndex(row_idx);
+      int modID = info->getNexusID();
+      webUrl = info->getURL();
+      gameName = info->getGameName();
+      if (modID > 0) {
+        linkClicked(NexusInterface::instance(&m_PluginContainer)->getModURL(modID, gameName));
+      }
+      else if (webUrl != "") {
+        linkClicked(webUrl);
+      }
+    }
+  }
+  else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    if (info->getURL() != "") {
+      linkClicked(info->getURL());
+    }
+    else {
+      MessageDialog::showMessage(tr("Web page for this mod is unknown"), this);
+    }
   }
 }
 

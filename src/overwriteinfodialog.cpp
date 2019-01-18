@@ -220,7 +220,7 @@ void OverwriteInfoDialog::openFile(const QModelIndex &index)
   QString fileName = m_FileSystemModel->filePath(index);
 
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
-  if ((int)res <= 32) {
+  if ((INT_PTR)res <= 32) {
     qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
   }
 }

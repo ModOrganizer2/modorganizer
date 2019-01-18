@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ForcedLoadDialogWidget</class>
+ <widget class="QWidget" name="ForcedLoadDialogWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>41</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0,2,0">
+   <item>
+    <widget class="QCheckBox" name="enabledBox">
+     <property name="toolTip">
+      <string>If checked, the specified library will be force loaded for the specified process.</string>
+     </property>
+     <property name="whatsThis">
+      <string>If checked, the specified library will be force loaded for the specified process.</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="processEdit">
+     <property name="toolTip">
+      <string>The name of the process that should be forced to load a library.</string>
+     </property>
+     <property name="whatsThis">
+      <string>The name of the process that should be forced to load a library.</string>
+     </property>
+     <property name="placeholderText">
+      <string>Process name</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="processBrowseButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>32</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>32</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Browse for a process.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Browse for a process.</string>
+     </property>
+     <property name="text">
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="libraryPathEdit">
+     <property name="toolTip">
+      <string>The path to the library to be loaded.  This may be a path relative to the managed game's directory or may be an absolute path to somewhere else.</string>
+     </property>
+     <property name="whatsThis">
+      <string>The path to the library to be loaded.  This may be a path relative to the managed game's directory or may be an absolute path to somewhere else.</string>
+     </property>
+     <property name="placeholderText">
+      <string>Library to load</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="libraryPathBrowseButton">
+     <property name="maximumSize">
+      <size>
+       <width>32</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>Browse for a library.</string>
+     </property>
+     <property name="whatsThis">
+      <string>Browse for a library.</string>
+     </property>
+     <property name="text">
+      <string>...</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

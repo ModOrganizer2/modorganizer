@@ -25,25 +25,29 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QMessageBox>
 #include <Shellapi.h>
 #include <utility.h>
-
+#include "forcedloaddialog.h"
+#include <algorithm>
 
 using namespace MOBase;
 using namespace MOShared;
 
 EditExecutablesDialog::EditExecutablesDialog(
     const ExecutablesList &executablesList, const ModList &modList,
-    Profile *profile, QWidget *parent)
+    Profile *profile, const IPluginGame *game, QWidget *parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
   , m_CurrentItem(nullptr)
   , m_ExecutablesList(executablesList)
   , m_Profile(profile)
+  , m_GamePlugin(game)
 {
   ui->setupUi(this);
 
   refreshExecutablesWidget();
 
   ui->newFilesModBox->addItems(modList.allMods());
+
+  m_ForcedLibraries = m_Profile->determineForcedLibraries(ui->titleEdit->text());
 }
 
 EditExecutablesDialog::~EditExecutablesDialog()
@@ -93,6 +97,7 @@ void EditExecutablesDialog::resetInput()
   ui->overwriteAppIDBox->setChecked(false);
   ui->useAppIconCheckBox->setChecked(false);
   ui->newFilesModCheckBox->setChecked(false);
+  ui->forceLoadCheckBox->setChecked(false);
   m_CurrentItem = nullptr;
 }
 
@@ -118,6 +123,10 @@ void EditExecutablesDialog::saveExecutable()
   else {
 	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
   }
+
+  m_Profile->removeForcedLibraries(ui->titleEdit->text());
+  m_Profile->storeForcedLibraries(ui->titleEdit->text(), m_ForcedLibraries);
+  m_Profile->setForcedLibrariesEnabled(ui->titleEdit->text(), ui->forceLoadCheckBox->isChecked());
 }
 
 
@@ -127,6 +136,21 @@ void EditExecutablesDialog::delayedRefresh()
   resetInput();
   refreshExecutablesWidget();
   on_executablesListBox_clicked(index);
+}
+
+
+void EditExecutablesDialog::on_forceLoadButton_clicked()
+{
+  ForcedLoadDialog dialog(m_GamePlugin, this);
+  dialog.setValues(m_ForcedLibraries);
+  if (dialog.exec() == QDialog::Accepted) {
+    m_ForcedLibraries = dialog.values();
+  }
+}
+
+void EditExecutablesDialog::on_forceLoadCheckBox_toggled()
+{
+  ui->forceLoadButton->setEnabled(ui->forceLoadCheckBox->isChecked());
 }
 
 
@@ -195,6 +219,8 @@ void EditExecutablesDialog::on_removeButton_clicked()
 {
   if (QMessageBox::question(this, tr("Confirm"), tr("Really remove \"%1\" from executables?").arg(ui->titleEdit->text()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+    m_Profile->removeForcedLibraries(ui->titleEdit->text());
     m_ExecutablesList.remove(ui->titleEdit->text());
   }
 
@@ -231,6 +257,20 @@ bool EditExecutablesDialog::executableChanged()
 
     QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
 
+    bool forcedLibrariesDirty = false;
+    auto forcedLibaries = m_Profile->determineForcedLibraries(selectedExecutable.m_Title);
+    forcedLibrariesDirty |= !std::equal(forcedLibaries.begin(), forcedLibaries.end(),
+                                        m_ForcedLibraries.begin(), m_ForcedLibraries.end(),
+                                        [](const ExecutableForcedLoadSetting &lhs, const ExecutableForcedLoadSetting &rhs)
+                                        {
+                                          return lhs.enabled() == rhs.enabled() &&
+                                                 lhs.forced() == rhs.forced() &&
+                                                 lhs.library() == rhs.library() &&
+                                                 lhs.process() == rhs.process();
+                                        });
+    forcedLibrariesDirty |= m_Profile->setting("forced_libraries", ui->titleEdit->text() + "/enabled", false).toBool() !=
+                            ui->forceLoadCheckBox->isChecked();
+
     return selectedExecutable.m_Title != ui->titleEdit->text()
         || selectedExecutable.m_Arguments != ui->argumentsEdit->text()
         || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
@@ -238,7 +278,9 @@ bool EditExecutablesDialog::executableChanged()
         || !storedCustomOverwrite.isEmpty() && (storedCustomOverwrite != ui->newFilesModBox->currentText())
         || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
         || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
-        || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked();
+        || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked()
+        || forcedLibrariesDirty
+      ;
   } else {
     QFileInfo fileInfo(ui->binaryEdit->text());
     return !ui->binaryEdit->text().isEmpty()
@@ -331,6 +373,11 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     if (index != -1) {
       ui->newFilesModBox->setCurrentIndex(index);
     }
+
+    m_ForcedLibraries = m_Profile->determineForcedLibraries(ui->titleEdit->text());
+    bool forcedLibraries = m_Profile->forcedLibrariesEnabled(ui->titleEdit->text());
+    ui->forceLoadButton->setEnabled(forcedLibraries);
+    ui->forceLoadCheckBox->setChecked(forcedLibraries);
   }
 }
 

@@ -139,7 +139,38 @@ bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction act
 
 bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
 {
-  return m_CurrentFilter.isEmpty() ||
-      plugin.contains(m_CurrentFilter, Qt::CaseInsensitive);
+  if (!m_CurrentFilter.isEmpty()) {
+
+    bool display = false;
+    QString filterCopy = QString(m_CurrentFilter);
+    filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
+    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
+
+    bool segmentGood = true;
+
+    //split in ORSegments that internally use AND logic
+    for (auto& ORSegment : ORList) {
+      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      segmentGood = true;
+
+      //check each word in the segment for match, each word needs to be matched but it doesn't matter where.
+      for (auto& currentKeyword : ANDKeywords) {
+        if (!plugin.contains(currentKeyword, Qt::CaseInsensitive)) {
+          segmentGood = false;
+          break;
+        }
+      }
+
+      if (segmentGood) {
+        //the last AND loop didn't break so the ORSegments is true so mod matches filter
+        return true;
+      }
+
+    }//for ORList loop
+
+    return false;
+  }
+  else
+    return true;
 }
 

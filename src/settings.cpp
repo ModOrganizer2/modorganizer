@@ -142,7 +142,7 @@ void Settings::registerAsNXMHandler(bool force)
   }
   parameters += L" \"" + executable + L"\"";
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
-  if ((int)res <= 32) {
+  if ((INT_PTR)res <= 32) {
     QMessageBox::critical(nullptr, tr("Failed"),
                           tr("Sorry, failed to start the helper application"));
   }
@@ -161,8 +161,8 @@ void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);
-  m_PluginSettings.insert(plugin->name(), QMap<QString, QVariant>());
-  m_PluginDescriptions.insert(plugin->name(), QMap<QString, QVariant>());
+  m_PluginSettings.insert(plugin->name(), QVariantMap());
+  m_PluginDescriptions.insert(plugin->name(), QVariantMap());
   for (const PluginSetting &setting : plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
@@ -607,6 +607,7 @@ void Settings::addBlacklistPlugin(const QString &fileName)
 
 void Settings::writePluginBlacklist()
 {
+  m_Settings.remove("pluginBlacklist");
   m_Settings.beginWriteArray("pluginBlacklist");
   int idx = 0;
   for (const QString &plugin : m_PluginBlacklist) {

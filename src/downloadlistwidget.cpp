@@ -141,7 +141,7 @@ void DownloadListWidget::onDoubleClick(const QModelIndex &index)
   QModelIndex sourceIndex = qobject_cast<QSortFilterProxyModel*>(model())->mapToSource(index);
   if (m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_READY)
     emit installDownload(sourceIndex.row());
-  else if ((m_Manager->getState(sourceIndex.row()) >= DownloadManager::STATE_PAUSED)
+  else if ((m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_PAUSED)
           || (m_Manager->getState(sourceIndex.row()) == DownloadManager::STATE_PAUSING))
     emit resumeDownload(sourceIndex.row());
 }
@@ -161,7 +161,7 @@ void DownloadListWidget::onHeaderCustomContextMenu(const QPoint &point)
     checkableAction->setDefaultWidget(checkBox);
     menu.addAction(checkableAction);
   }
-  
+
   menu.exec(header()->viewport()->mapToGlobal(point));
 
   // view/hide columns depending on check-state

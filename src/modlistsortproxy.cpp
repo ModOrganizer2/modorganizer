@@ -58,7 +58,8 @@ void ModListSortProxy::updateFilterActive()
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
-  if (categories != m_CategoryFilter) {
+  //avoid refreshing the filter unless we are checking all mods for update.
+  if (categories != m_CategoryFilter || (!categories.empty() && categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE)) {
     m_CategoryFilter = categories;
     updateFilterActive();
     invalidate();
@@ -361,59 +362,90 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
-  bool display = true;
   if (!m_CurrentFilter.isEmpty()) {
-    display = false;
+    bool display = false;
+    QString filterCopy = QString(m_CurrentFilter);
+    filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
+    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
 
-    // Search by name
-    if (!display &&
-        m_EnabledColumns[ModList::COL_NAME] &&
-        info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
-      display = true;
-    }
+    bool segmentGood = true;
 
-    // Search by notes
-    if (!display &&
-        m_EnabledColumns[ModList::COL_NOTES] &&
-        info->comments().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
-      display = true;
-    }
+    //split in ORSegments that internally use AND logic
+    for (auto& ORSegment : ORList) {
+      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      segmentGood = true;
+      bool foundKeyword = false;
 
-    // Search by Nexus ID
-    if (!display &&
-        m_EnabledColumns[ModList::COL_MODID]) {
-      bool ok;
-      int filterID = m_CurrentFilter.toInt(&ok);
-      if (ok) {
-        int modID = info->getNexusID();
-        while (modID > 0) {
-          if (modID == filterID) {
-            display = true;
-            break;
-          }
-          modID = (int)(modID / 10);
+      //check each word in the segment for match, each word needs to be matched but it doesn't matter where.
+      for (auto& currentKeyword : ANDKeywords) {
+        foundKeyword = false;
+
+        //search keyword in name
+        if (m_EnabledColumns[ModList::COL_NAME] &&
+          info->name().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
         }
-      }
-    }
 
-    // Search by categories
-    if (!display &&
-        m_EnabledColumns[ModList::COL_CATEGORY]) {
-      for (auto category : info->categories()) {
-        if (category.contains(m_CurrentFilter, Qt::CaseInsensitive)) {
-          display = true;
+        // Search by notes
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_NOTES] &&
+          info->comments().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
+        }
+
+        // Search by categories
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_CATEGORY]) {
+          for (auto category : info->categories()) {
+            if (category.contains(currentKeyword, Qt::CaseInsensitive)) {
+              foundKeyword = true;
+              break;
+            }
+          }
+        }
+
+        // Search by Nexus ID
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_MODID]) {
+          bool ok;
+          int filterID = currentKeyword.toInt(&ok);
+          if (ok) {
+            int modID = info->getNexusID();
+            while (modID > 0) {
+              if (modID == filterID) {
+                foundKeyword = true;
+                break;
+              }
+              modID = (int)(modID / 10);
+            }
+          }
+        }
+
+        if (!foundKeyword) {
+          //currentKeword is missing from everything, AND fails and we need to check next ORsegment
+          segmentGood = false;
           break;
         }
+
+      }//for ANDKeywords loop
+
+      if (segmentGood) {
+        //the last AND loop didn't break so the ORSegments is true so mod matches filter
+        display = true;
+        break;
       }
+
+    }//for ORList loop
+
+    if (!display) {
+      return false;
     }
-  }
-  if (!display) {
-    return false;
-  }
+  }//if (!m_CurrentFilter.isEmpty())
 
   if (m_FilterMode == FILTER_AND) {
     return filterMatchesModAnd(info, enabled);
-  } else {
+  }
+  else {
     return filterMatchesModOr(info, enabled);
   }
 }

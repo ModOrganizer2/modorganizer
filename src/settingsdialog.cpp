@@ -329,7 +329,7 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)
 {
   if (pluginItem != nullptr) {
-    QMap<QString, QVariant> settings = pluginItem->data(Qt::UserRole + 1).toMap();
+    QVariantMap settings = pluginItem->data(Qt::UserRole + 1).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {
       const QTreeWidgetItem *item = ui->pluginSettingsList->topLevelItem(i);
@@ -350,8 +350,8 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
 
-  QMap<QString, QVariant> settings = current->data(Qt::UserRole + 1).toMap();
-  QMap<QString, QVariant> descriptions = current->data(Qt::UserRole + 2).toMap();
+  QVariantMap settings = current->data(Qt::UserRole + 1).toMap();
+  QVariantMap descriptions = current->data(Qt::UserRole + 2).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));

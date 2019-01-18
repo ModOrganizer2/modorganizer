@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <dataarchives.h>
 #include "util.h"
 #include "registry.h"
+#include <questionboxmemory.h>
 
 #include <QApplication>
 #include <QFile>                                   // for QFile
@@ -749,12 +750,12 @@ bool Profile::enableLocalSaves(bool enable)
       m_Directory.mkdir("saves");
     }
   } else  {
-    QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete profile-specific save games?"),
+    QDialogButtonBox::StandardButton res;
+    res = QuestionBoxMemory::query(QApplication::activeModalWidget(), "deleteSavesQuery",
+      tr("Delete profile-specific save games?"),
       tr("Do you want to delete the profile-specific save games? (If you select \"No\", the "
         "save games will show up again if you re-enable profile-specific save games)"),
-      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-      QMessageBox::Cancel);
+      QDialogButtonBox::No | QDialogButtonBox::Yes | QDialogButtonBox::Cancel, QDialogButtonBox::No);
     if (res == QMessageBox::Yes) {
       shellDelete(QStringList(m_Directory.absoluteFilePath("saves")));
     } else if (res == QMessageBox::No) {
@@ -797,12 +798,12 @@ bool Profile::enableLocalSettings(bool enable)
   if (enable) {
     m_GamePlugin->initializeProfile(m_Directory.absolutePath(), IPluginGame::CONFIGURATION);
   } else {
-    QMessageBox::StandardButton res = QMessageBox::question(
-      QApplication::activeModalWidget(), tr("Delete profile-specific game INI files?"),
+    QDialogButtonBox::StandardButton res;
+    res = QuestionBoxMemory::query(QApplication::activeModalWidget(), "deleteINIQuery",
+      tr("Delete profile-specific game INI files?"),
       tr("Do you want to delete the profile-specific game INI files? (If you select \"No\", the "
         "INI files will be used again if you re-enable profile-specific game INI files.)"),
-      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
-      QMessageBox::Cancel);
+      QDialogButtonBox::No | QDialogButtonBox::Yes | QDialogButtonBox::Cancel, QDialogButtonBox::No);
     if (res == QMessageBox::Yes) {
       QStringList filesToDelete;
       for (QString file : m_GamePlugin->iniFiles()) {
@@ -883,7 +884,6 @@ QVariant Profile::setting(const QString &section, const QString &name,
   return m_Settings->value(section + "/" + name, fallback);
 }
 
-
 void Profile::storeSetting(const QString &section, const QString &name,
                            const QVariant &value)
 {
@@ -905,7 +905,129 @@ void Profile::removeSetting(const QString &name)
   removeSetting("", name);
 }
 
+QVariantMap Profile::settingsByGroup(const QString &section) const
+{
+  QVariantMap results;
+  m_Settings->beginGroup(section);
+  for (auto key : m_Settings->childKeys()) {
+    results[key] = m_Settings->value(key);
+  }
+  m_Settings->endGroup();
+  return results;
+}
+
+void Profile::storeSettingsByGroup(const QString &section, const QVariantMap &values)
+{
+  m_Settings->beginGroup(section);
+  for (auto key : values.keys()) {
+    m_Settings->setValue(key, values[key]);
+  }
+  m_Settings->endGroup();
+}
+
+QList<QVariantMap> Profile::settingsByArray(const QString &prefix) const
+{
+  QList<QVariantMap> results;
+  int size = m_Settings->beginReadArray(prefix);
+  for (int i = 0; i < size; i++) {
+    m_Settings->setArrayIndex(i);
+    QVariantMap item;
+    for (auto key : m_Settings->childKeys()) {
+      item[key] = m_Settings->value(key);
+    }
+    results.append(item);
+  }
+  m_Settings->endArray();
+  return results;
+}
+
+void Profile::storeSettingsByArray(const QString &prefix, const QList<QVariantMap> &values)
+{
+  m_Settings->beginWriteArray(prefix);
+  for (int i = 0; i < values.length(); i++) {
+    m_Settings->setArrayIndex(i);
+    for (auto key : values.at(i).keys()) {
+      m_Settings->setValue(key, values.at(i)[key]);
+    }
+  }
+  m_Settings->endArray();
+}
+
 int Profile::getPriorityMinimum() const
 {
   return m_ModIndexByPriority.begin()->first;
+}
+
+bool Profile::forcedLibrariesEnabled(const QString &executable)
+{
+  return setting("forced_libraries", executable + "/enabled", false).toBool();
+}
+
+void Profile::setForcedLibrariesEnabled(const QString &executable, bool enabled)
+{
+  storeSetting("forced_libraries", executable + "/enabled", enabled);
+}
+
+QList<ExecutableForcedLoadSetting> Profile::determineForcedLibraries(const QString &executable)
+{
+  QList<ExecutableForcedLoadSetting> results;
+
+  auto rawSettings = settingsByArray("forced_libraries/" + executable);
+  auto forcedLoads = m_GamePlugin->executableForcedLoads();
+
+  // look for enabled status on forced loads and add those
+  for (auto forcedLoad : forcedLoads) {
+    bool found = false;
+    for (auto rawSetting : rawSettings) {
+      if ((rawSetting.value("process").toString().compare(forcedLoad.process(), Qt::CaseInsensitive) == 0)
+        && (rawSetting.value("library").toString().compare(forcedLoad.library(), Qt::CaseInsensitive) == 0))
+      {
+        results.append(forcedLoad.withEnabled(rawSetting.value("enabled", false).toBool()));
+        found = true;
+      }
+    }
+    if (!found) {
+      results.append(forcedLoad);
+    }
+  }
+
+  // add everything else
+  for (auto rawSetting : rawSettings) {
+    bool add = true;
+    for (auto forcedLoad : forcedLoads) {
+      if ((rawSetting.value("process").toString().compare(forcedLoad.process(), Qt::CaseInsensitive) == 0)
+        && (rawSetting.value("library").toString().compare(forcedLoad.library(), Qt::CaseInsensitive) == 0))
+      {
+        add = false;
+      }
+    }
+    if (add) {
+      results.append(
+        ExecutableForcedLoadSetting(
+          rawSetting.value("process").toString(),
+          rawSetting.value("library").toString()
+        ).withEnabled(rawSetting.value("enabled", false).toBool())
+      );
+    }
+  }
+
+  return results;
+}
+
+void Profile::storeForcedLibraries(const QString &executable, const QList<ExecutableForcedLoadSetting> &values)
+{
+  QList<QVariantMap> rawSettings;
+  for (auto setting : values) {
+    QVariantMap rawSetting;
+    rawSetting["enabled"] = setting.enabled();
+    rawSetting["process"] = setting.process();
+    rawSetting["library"] = setting.library();
+    rawSettings.append(rawSetting);
+  }
+  storeSettingsByArray("forced_libraries/" + executable, rawSettings);
+}
+
+void Profile::removeForcedLibraries(const QString &executable)
+{
+  m_Settings->remove("forced_libraries/" + executable);
 }

@@ -202,7 +202,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
             <item>
-             <widget class="QListWidget" name="listWidget_2">
+             <widget class="QListWidget" name="listWidget_3">
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
@@ -231,9 +231,9 @@
            <property name="title">
             <string>Translators</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <layout class="QVBoxLayout" name="verticalLayout_61">
             <item>
-             <widget class="QListWidget" name="listWidget_2">
+             <widget class="QListWidget" name="listWidget_4">
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
@@ -363,7 +363,7 @@
            <property name="title">
             <string>Other Supporters &amp;&amp; Contributors</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
+           <layout class="QVBoxLayout" name="verticalLayout_71">
             <item>
              <widget class="QListWidget" name="listWidget">
               <property name="selectionMode">

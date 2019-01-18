@@ -193,7 +193,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setComments(ui->commentsEdit->text());
-  m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  //Avoid saving html stump if notes field is empty.
+  if (ui->notesEdit->toPlainText().isEmpty())
+    m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  else
+    m_ModInfo->setNotes(ui->notesEdit->toHtml());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui->descriptionView->page();
@@ -571,6 +575,7 @@ void ModInfoDialog::openIniFile(const QString &fileName)
 
 void ModInfoDialog::saveIniTweaks()
 {
+  m_Settings->remove("INI Tweaks");
   m_Settings->beginWriteArray("INI Tweaks");
 
   int countEnabled = 0;
@@ -933,6 +938,7 @@ void ModInfoDialog::activateNexusTab()
   QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
   QString currentVersion = m_Settings->value("version", "0.0").toString();
   versionEdit->setText(currentVersion);
+  ui->customUrlLineEdit->setText(m_ModInfo->getURL());
 }
 
 
@@ -976,6 +982,10 @@ void ModInfoDialog::on_versionEdit_editingFinished()
   updateVersionColor();
 }
 
+void ModInfoDialog::on_customUrlLineEdit_editingFinished()
+{
+  m_ModInfo->setURL(ui->customUrlLineEdit->text());
+}
 
 bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 {

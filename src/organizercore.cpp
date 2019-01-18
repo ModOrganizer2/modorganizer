@@ -917,6 +917,7 @@ MOBase::IModInterface *OrganizerCore::createMod(GuessedValue<QString> &name)
     settingsFile.setValue("category", 0);
     settingsFile.setValue("installationFile", "");
 
+    settingsFile.remove("installedFiles");
     settingsFile.beginWriteArray("installedFiles", 0);
     settingsFile.endArray();
   }
@@ -1209,10 +1210,15 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
-void OrganizerCore::spawnBinary(const QFileInfo &binary, const QString &arguments, const QDir &currentDirectory, const QString &steamAppID, const QString &customOverwrite)
+void OrganizerCore::spawnBinary(const QFileInfo &binary, 
+                                const QString &arguments, 
+                                const QDir &currentDirectory, 
+                                const QString &steamAppID, 
+                                const QString &customOverwrite,
+                                const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
   DWORD processExitCode = 0;
-  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite, &processExitCode);
+  HANDLE processHandle = spawnBinaryDirect(binary, arguments, m_CurrentProfile->name(), currentDirectory, steamAppID, customOverwrite, forcedLibraries, &processExitCode);
   if (processHandle != INVALID_HANDLE_VALUE) {
     refreshDirectoryStructure();
     // need to remove our stored load order because it may be outdated if a foreign tool changed the
@@ -1237,9 +1243,10 @@ HANDLE OrganizerCore::spawnBinaryDirect(const QFileInfo &binary,
                                         const QDir &currentDirectory,
                                         const QString &steamAppID,
                                         const QString &customOverwrite,
+                                        const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries,
                                         LPDWORD exitCode)
 {
-  HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
+  HANDLE processHandle = spawnBinaryProcess(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite, forcedLibraries);
   if (Settings::instance().lockGUI() && processHandle != INVALID_HANDLE_VALUE) {
     std::unique_ptr<LockedDialog> dlg;
     ILockedWaitingForProcess* uilock = nullptr;
@@ -1274,7 +1281,8 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                                          const QString &profileName,
                                          const QDir &currentDirectory,
                                          const QString &steamAppID,
-                                         const QString &customOverwrite)
+                                         const QString &customOverwrite,
+                                         const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
   prepareStart();
 
@@ -1334,6 +1342,8 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
   if (m_AboutToRun(binary.absoluteFilePath())) {
     try {
       m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
+      m_USVFS.updateForcedLibraries(forcedLibraries);
+      
     } catch (const UsvfsConnectorException &e) {
       qDebug(e.what());
       return INVALID_HANDLE_VALUE;
@@ -1426,6 +1436,10 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
       .toLocal8Bit().constData());
 
   Executable& exe = m_ExecutablesList.find(shortcut.executable());
+  auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
+  if (!m_CurrentProfile->forcedLibrariesEnabled(exe.m_BinaryInfo.fileName())) {
+    forcedLibaries.clear();
+  }
 
   return spawnBinaryDirect(
     exe.m_BinaryInfo, exe.m_Arguments,
@@ -1433,7 +1447,9 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
     exe.m_WorkingDirectory.length() != 0
     ? exe.m_WorkingDirectory
     : exe.m_BinaryInfo.absolutePath(),
-    exe.m_SteamAppID, "");
+    exe.m_SteamAppID, 
+    "",
+    forcedLibaries);
 }
 
 HANDLE OrganizerCore::startApplication(const QString &executable,
@@ -1454,6 +1470,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   }
   QString steamAppID;
   QString customOverwrite;
+  QList<ExecutableForcedLoadSetting> forcedLibraries;
   if (executable.contains('\\') || executable.contains('/')) {
     // file path
 
@@ -1472,6 +1489,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       customOverwrite
           = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
                 .toString();
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      }
     } catch (const std::runtime_error &) {
       // nop
     }
@@ -1483,6 +1503,9 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       customOverwrite
           = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
                 .toString();
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      }
       if (arguments == "") {
         arguments = exe.m_Arguments;
       }
@@ -1497,7 +1520,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
 
-  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite);
+  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite, forcedLibraries);
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
@@ -1899,7 +1922,7 @@ void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
     QString gameName = "";
     int modID  = 0;
     int fileID = 0;
-    QRegExp nameExp("www\.nexusmods\.com/(\\a+)/");
+    QRegExp nameExp("www\\.nexusmods\\.com/(\\a+)/");
     if (nameExp.indexIn(url.toString()) != -1) {
       gameName = nameExp.cap(1);
     }

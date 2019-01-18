@@ -192,6 +192,43 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_8">
+     <item>
+      <widget class="QCheckBox" name="forceLoadCheckBox">
+       <property name="toolTip">
+        <string>If this is enabled, the configured libraries will be automatically loaded when this executable is launched.</string>
+       </property>
+       <property name="text">
+        <string>Force Load Libraries (*)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="forceLoadButton">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Configure Libraries</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QCheckBox" name="useAppIconCheckBox">
      <property name="text">
       <string>Use Application's Icon for shortcuts</string>

@@ -405,6 +405,7 @@ private slots:
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
+  void discordTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
 

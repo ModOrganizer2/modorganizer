@@ -92,7 +92,9 @@ SOURCES += \
     modinfooverwrite.cpp \
     modinfoforeign.cpp \
     listdialog.cpp \
-    lcdnumber.cpp
+    lcdnumber.cpp \
+    forcedloaddialog.cpp \
+    forcedloaddialogwidget.cpp
 
 
 HEADERS  += \
@@ -169,7 +171,9 @@ HEADERS  += \
     modinfooverwrite.h \
     modinfoforeign.h \
     listdialog.h \
-    lcdnumber.h
+    lcdnumber.h \
+    forcedloaddialog.h \
+    forcedloaddialogwidget.h
 
 FORMS    += \
     transfersavesdialog.ui \
@@ -197,7 +201,9 @@ FORMS    += \
     previewdialog.ui \
     browserdialog.ui \
     aboutdialog.ui \
-    listdialog.ui
+    listdialog.ui \
+    forcedloaddialog.ui \
+    forcedloaddialogwidget.ui
 
 RESOURCES += \
     resources.qrc \
