@@ -579,6 +579,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
 
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
+    m_InstallationProgress->cancel();
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
