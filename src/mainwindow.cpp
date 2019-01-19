@@ -5256,10 +5256,10 @@ void MainWindow::updateDownloadView()
   // set the view attribute and default row sizes
   if (m_OrganizerCore.settings().compactDownloads()) {
     ui->downloadView->setProperty("downloadView", "compact");
-    setStyleSheet("DownloadListWidget::item { padding: 4px 0; }");
+    setStyleSheet("DownloadListWidget::item { padding: 4px 2px; }");
   } else {
     ui->downloadView->setProperty("downloadView", "standard");
-    setStyleSheet("DownloadListWidget::item { padding: 16px 0; }");
+    setStyleSheet("DownloadListWidget::item { padding: 16px 4px; }");
   }
   //setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
   //setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");
