@@ -1427,7 +1427,7 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
 
   Executable& exe = m_ExecutablesList.find(shortcut.executable());
   auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
-  if (!m_CurrentProfile->forcedLibrariesEnabled(exe.m_BinaryInfo.fileName())) {
+  if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
     forcedLibaries.clear();
   }
 
