@@ -175,19 +175,6 @@ void PluginList::refresh(const QString &profileName
 
   QStringList availablePlugins;
 
-  QRegExp bsaReg = QRegExp();
-  QRegExp ba2Reg = QRegExp();
-  bsaReg.setPatternSyntax(QRegExp::Wildcard);
-  bsaReg.setCaseSensitivity(Qt::CaseInsensitive);
-  ba2Reg.setPatternSyntax(QRegExp::Wildcard);
-  ba2Reg.setCaseSensitivity(Qt::CaseInsensitive);
-
-  //TODO: try QRegularExpression when we move to Qt5.12
-  /*QRegularExpression bsaReg = QRegularExpression();
-  QRegularExpression ba2Reg = QRegularExpression();
-  bsaReg.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
-  ba2Reg.setPatternOptions(QRegularExpression::CaseInsensitiveOption);*/
-
   std::vector<FileEntry::Ptr> files = baseDirectory.getFiles();
   for (FileEntry::Ptr current : files) {
     if (current.get() == nullptr) {
@@ -217,18 +204,13 @@ void PluginList::refresh(const QString &profileName
 
         QString iniPath = baseName + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
-
-        bsaReg.setPattern(baseName + "*.bsa");
-        ba2Reg.setPattern(baseName + "*.ba2");
-
-
-        //bsaReg.setPattern(QRegularExpression::wildcardToRegularExpression(baseName + "*.bsa"));
-        //ba2Reg.setPattern(QRegularExpression::wildcardToRegularExpression(baseName + "*.ba2"));
         std::set<QString> loadedArchives;
         QString candidateName;
         for (FileEntry::Ptr archiveCandidate : files) {
           candidateName = ToQString(archiveCandidate->getName());
-          if (candidateName.contains(bsaReg) || candidateName.contains(ba2Reg)) {
+          if (candidateName.startsWith(baseName, Qt::CaseInsensitive) &&
+             (candidateName.endsWith(".bsa", Qt::CaseInsensitive) ||
+              candidateName.endsWith(".ba2", Qt::CaseInsensitive))) {
             loadedArchives.insert(candidateName);
           }
         }
