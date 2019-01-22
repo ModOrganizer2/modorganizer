@@ -49,7 +49,7 @@ public:
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual QString getNexusDescription() const { return QString(); }
   virtual int getFixedPriority() const { return INT_MIN; }
-  virtual QStringList archives() const { return m_Archives; }
+  virtual QStringList archives(bool checkOnDisk = false)  { return m_Archives; }
   virtual QStringList stealFiles() const { return m_Archives + QStringList(m_ReferenceFile); }
   virtual bool alwaysEnabled() const { return true; }
   virtual void addInstalledFile(int, int) {}

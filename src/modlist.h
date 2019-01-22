@@ -236,9 +236,18 @@ signals:
    * @param role role of the field that changed
    * @note this signal must only be emitted if the row really did change.
    *       Slots handling this signal therefore do not have to verify that a change has happened
-   * @note this signal is currently only used in tutorials
    **/
-  void modlist_changed(const QModelIndex &index, int role);
+  void modlistChanged(const QModelIndex &index, int role);
+
+  /**
+  * @brief emitted whenever multiple row sin the list has changed
+  *
+  * @param indicies the list of indicies of the changed field
+  * @param role role of the field that changed
+  * @note this signal must only be emitted if the row really did change.
+  *       Slots handling this signal therefore do not have to verify that a change has happened
+  **/
+  void modlistChanged(const QModelIndexList &indicies, int role);
 
   /**
    * @brief emitted to have all selected mods deleted

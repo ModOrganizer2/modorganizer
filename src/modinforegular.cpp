@@ -45,6 +45,10 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
     if (!game->primarySources().contains(m_GameName, Qt::CaseInsensitive))
       m_IsAlternate = true;
 
+  //populate m_Archives
+  m_Archives = QStringList();
+  archives(true);
+
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
@@ -627,14 +631,18 @@ QString ModInfoRegular::getURL() const
 
 
 
-QStringList ModInfoRegular::archives() const
+QStringList ModInfoRegular::archives(bool checkOnDisk) 
 {
-  QStringList result;
-  QDir dir(this->absolutePath());
-  for (const QString &archive : dir.entryList(QStringList({ "*.bsa", "*.ba2" }))) {
-    result.append(this->absolutePath() + "/" + archive);
+  if (checkOnDisk) {
+    QStringList result;
+    QDir dir(this->absolutePath());
+    QStringList bsaList = dir.entryList(QStringList({ "*.bsa", "*.ba2" }));
+    for (const QString &archive : bsaList) {
+      result.append(this->absolutePath() + "/" + archive);
+    }
+    m_Archives = result;
   }
-  return result;
+  return m_Archives;
 }
 
 void ModInfoRegular::addInstalledFile(int modId, int fileId)

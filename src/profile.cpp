@@ -568,6 +568,37 @@ void Profile::setModEnabled(unsigned int index, bool enabled)
   }
 }
 
+void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable)
+{
+  QList<unsigned int> dirtyMods;
+  for (auto idx : modsToEnable) {
+    if (idx >= m_ModStatus.size()) {
+      qCritical() << tr("invalid index %1").arg(idx);
+      continue;
+    }
+    if (!m_ModStatus[idx].m_Enabled) {
+      m_ModStatus[idx].m_Enabled = true;
+      dirtyMods.append(idx);
+    }
+  }
+  for (auto idx : modsToDisable) {
+    if (idx >= m_ModStatus.size()) {
+      qCritical() << tr("invalid index %1").arg(idx);
+      continue;
+    }
+    if (ModInfo::getByIndex(idx)->alwaysEnabled()) {
+      continue;
+    }
+    if (m_ModStatus[idx].m_Enabled) {
+      m_ModStatus[idx].m_Enabled = false;
+      dirtyMods.append(idx);
+    }
+  }
+  if (!dirtyMods.isEmpty()) {
+    emit modStatusChanged(dirtyMods);
+  }
+}
+
 bool Profile::modEnabled(unsigned int index) const
 {
   if (index >= m_ModStatus.size()) {

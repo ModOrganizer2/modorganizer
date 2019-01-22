@@ -538,7 +538,7 @@ public:
   /**
    * @return a list of archives belonging to this mod (as absolute file paths)
    */
-  virtual QStringList archives() const = 0;
+  virtual QStringList archives(bool checkOnDisk = false) = 0;
 
   /*
    *@return the color choosen by the user for the mod/separator

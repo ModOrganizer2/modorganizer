@@ -2540,6 +2540,12 @@ void MainWindow::modlistChanged(const QModelIndex&, int)
   updateModCount();
 }
 
+void MainWindow::modlistChanged(const QModelIndexList&, int)
+{
+  m_OrganizerCore.currentProfile()->writeModlist();
+  updateModCount();
+}
+
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
 {
   if (current.isValid()) {
@@ -3607,6 +3613,7 @@ void MainWindow::on_modList_doubleClicked(const QModelIndex &index)
         case ModList::COL_MODID: tab = ModInfoDialog::TAB_NEXUS; break;
         case ModList::COL_GAME: tab = ModInfoDialog::TAB_NEXUS; break;
         case ModList::COL_CATEGORY: tab = ModInfoDialog::TAB_CATEGORIES; break;
+        case ModList::COL_FLAGS: tab = ModInfoDialog::TAB_CONFLICTS; break;
         default: tab = -1;
       }
       displayModInformation(sourceIdx.row(), tab);
@@ -5075,12 +5082,18 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
 void MainWindow::enableSelectedMods_clicked()
 {
   m_OrganizerCore.modList()->enableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 
 void MainWindow::disableSelectedMods_clicked()
 {
   m_OrganizerCore.modList()->disableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 
@@ -5311,10 +5324,10 @@ void MainWindow::updateDownloadView()
   // set the view attribute and default row sizes
   if (m_OrganizerCore.settings().compactDownloads()) {
     ui->downloadView->setProperty("downloadView", "compact");
-    setStyleSheet("DownloadListWidget::item { padding: 4px 0; }");
+    setStyleSheet("DownloadListWidget::item { padding: 4px 2px; }");
   } else {
     ui->downloadView->setProperty("downloadView", "standard");
-    setStyleSheet("DownloadListWidget::item { padding: 16px 0; }");
+    setStyleSheet("DownloadListWidget::item { padding: 16px 4px; }");
   }
   //setStyleSheet("DownloadListWidget::item:hover { padding: 0px; }");
   //setStyleSheet("DownloadListWidget::item:selected { padding: 0px; }");

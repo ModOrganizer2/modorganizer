@@ -136,6 +136,7 @@ public:
 
   void refreshDirectoryStructure();
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
+  void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
@@ -240,6 +241,7 @@ public slots:
   void installDownload(int downloadIndex);
 
   void modStatusChanged(unsigned int index);
+  void modStatusChanged(QList<unsigned int> index);
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
 
@@ -268,6 +270,7 @@ private:
   bool queryLogin(QString &username, QString &password);
 
   void updateModActiveState(int index, bool active);
+  void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
 
   bool testForSteam();
 
