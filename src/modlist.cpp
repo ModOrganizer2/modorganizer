@@ -1327,7 +1327,7 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   return QAbstractItemModel::eventFilter(obj, event);
 }
 
-
+//note: caller needs to make sure sort proxy is updated
 void ModList::enableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
@@ -1336,13 +1336,12 @@ void ModList::enableSelected(const QItemSelectionModel *selectionModel)
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
       if (!m_Profile->modEnabled(modID)) {
         m_Profile->setModEnabled(modID, true);
-        emit modlist_changed(row, 0);
       }
     }
   }
 }
 
-
+//note: caller needs to make sure sort proxy is updated
 void ModList::disableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
@@ -1351,8 +1350,9 @@ void ModList::disableSelected(const QItemSelectionModel *selectionModel)
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
       if (m_Profile->modEnabled(modID)) {
         m_Profile->setModEnabled(modID, false);
-        emit modlist_changed(row, 0);
       }
     }
+
+    
   }
 }

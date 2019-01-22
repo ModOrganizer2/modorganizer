@@ -5020,12 +5020,18 @@ void MainWindow::sendSelectedPluginsToPriority_clicked()
 void MainWindow::enableSelectedMods_clicked()
 {
   m_OrganizerCore.modList()->enableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 
 void MainWindow::disableSelectedMods_clicked()
 {
   m_OrganizerCore.modList()->disableSelected(ui->modList->selectionModel());
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 
