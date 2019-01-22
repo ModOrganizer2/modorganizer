@@ -51,7 +51,7 @@ public:
   virtual QString getDescription() const;
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual QString getNexusDescription() const { return QString(); }
-  virtual QStringList archives() const;
+  virtual QStringList archives(bool checkOnDisk = false);
   virtual void addInstalledFile(int, int) {}
 
 private:

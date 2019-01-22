@@ -320,7 +320,7 @@ public:
    */
   virtual QDateTime getLastNexusQuery() const;
 
-  virtual QStringList archives() const;
+  virtual QStringList archives(bool checkOnDisk = false);
 
   virtual void setColor(QColor color);
 
@@ -370,6 +370,8 @@ private:
   QString m_Repository;
   QString m_URL;
   QString m_GameName;
+
+  mutable QStringList m_Archives;
 
 
   QDateTime m_CreationTime;
