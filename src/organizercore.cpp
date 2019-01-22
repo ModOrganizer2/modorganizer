@@ -1893,9 +1893,7 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
   // activate all esps of the specified mod so the bsas get activated along with
   // it
   m_PluginList.blockSignals(true);
-  for (auto idx : modInfo.keys()) {
-    updateModActiveState(idx, true);
-  }
+  updateModsActiveState(modInfo.keys(), true);
   m_PluginList.blockSignals(false);
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are avaiable and active
