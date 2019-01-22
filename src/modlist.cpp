@@ -527,7 +527,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
       m_LastCheck.restart();
-      emit modlist_changed(index, role);
+      emit modlistChanged(index, role);
     }
     result = true;
     emit dataChanged(index, index);
@@ -562,7 +562,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         int newID = value.toInt(&ok);
         if (ok) {
           info->setNexusID(newID);
-          emit modlist_changed(index, role);
+          emit modlistChanged(index, role);
           result = true;
         } else {
           result = false;
@@ -1283,11 +1283,23 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
 
   QItemSelectionModel *selectionModel = itemView->selectionModel();
 
+  QList<unsigned int> modsToEnable;
+  QList<unsigned int> modsToDisable;
+  QModelIndexList dirtyMods;
   for (QModelIndex idx : selectionModel->selectedRows()) {
     int modId = idx.data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modId, !m_Profile->modEnabled(modId));
-    emit modlist_changed(idx, 0);
+    if (m_Profile->modEnabled(modId)) {
+      modsToDisable.append(modId);
+      dirtyMods.append(idx);
+    } else {
+      modsToEnable.append(modId);
+      dirtyMods.append(idx);
+    }
   }
+
+  m_Profile->setModsEnabled(modsToEnable, modsToDisable);
+
+  emit modlistChanged(dirtyMods, 0);
 
   m_Modified = true;
   m_LastCheck.restart();
@@ -1331,13 +1343,12 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
 void ModList::enableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QList<unsigned int> modsToEnable;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      if (!m_Profile->modEnabled(modID)) {
-        m_Profile->setModEnabled(modID, true);
-      }
+      modsToEnable.append(modID);
     }
+    m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
   }
 }
 
@@ -1345,14 +1356,11 @@ void ModList::enableSelected(const QItemSelectionModel *selectionModel)
 void ModList::disableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QList<unsigned int> modsToDisable;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      if (m_Profile->modEnabled(modID)) {
-        m_Profile->setModEnabled(modID, false);
-      }
+      modsToDisable.append(modID);
     }
-
-    
+    m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
   }
 }

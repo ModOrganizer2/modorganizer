@@ -542,8 +542,10 @@ void OrganizerCore::setUserInterface(IUserInterface *userInterface,
   m_UserInterface = userInterface;
 
   if (widget != nullptr) {
-    connect(&m_ModList, SIGNAL(modlist_changed(QModelIndex, int)), widget,
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndex, int)), widget,
             SLOT(modlistChanged(QModelIndex, int)));
+    connect(&m_ModList, SIGNAL(modlistChanged(QModelIndexList, int)), widget,
+            SLOT(modlistChanged(QModelIndexList, int)));
     connect(&m_ModList, SIGNAL(showMessage(QString)), widget,
             SLOT(showMessage(QString)));
     connect(&m_ModList, SIGNAL(modRenamed(QString, QString)), widget,
@@ -821,8 +823,8 @@ void OrganizerCore::setCurrentProfile(const QString &profileName)
     m_CurrentProfile->deactivateInvalidation();
   }
 
-  connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this,
-          SLOT(modStatusChanged(uint)));
+  connect(m_CurrentProfile, SIGNAL(modStatusChanged(uint)), this, SLOT(modStatusChanged(uint)));
+  connect(m_CurrentProfile, SIGNAL(modStatusChanged(QList<uint>)), this, SLOT(modStatusChanged(QList<uint>)));
   refreshDirectoryStructure();
 }
 
@@ -1798,60 +1800,70 @@ void OrganizerCore::refreshLists()
 
 void OrganizerCore::updateModActiveState(int index, bool active)
 {
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
-  QDir dir(modInfo->absolutePath());
-  for (const QString &esm :
-       dir.entryList(QStringList() << "*.esm", QDir::Files)) {
-    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
-    if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qUtf8Printable(esm));
-      continue;
-    }
+  QList<unsigned int> modsToUpdate;
+  modsToUpdate.append(index);
+  updateModsActiveState(modsToUpdate, active);
+}
 
-    if (active != m_PluginList.isEnabled(esm)
-      && file->getAlternatives().empty()) {
-      m_PluginList.blockSignals(true);
-      m_PluginList.enableESP(esm, active);
-      m_PluginList.blockSignals(false);
-    }
-  }
-  int enabled      = 0;
-  for (const QString &esl :
-       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
-    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
-    if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qUtf8Printable(esl));
-      continue;
-    }
+void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices, bool active)
+{
+  int enabled = 0;
+  for (auto index : modIndices) {
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
+    QDir dir(modInfo->absolutePath());
+    for (const QString &esm :
+      dir.entryList(QStringList() << "*.esm", QDir::Files)) {
+      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esm));
+      if (file.get() == nullptr) {
+        qWarning("failed to activate %s", qUtf8Printable(esm));
+        continue;
+      }
 
-    if (active != m_PluginList.isEnabled(esl)
+      if (active != m_PluginList.isEnabled(esm)
         && file->getAlternatives().empty()) {
-      m_PluginList.blockSignals(true);
-      m_PluginList.enableESP(esl, active);
-      m_PluginList.blockSignals(false);
-      ++enabled;
+        m_PluginList.blockSignals(true);
+        m_PluginList.enableESP(esm, active);
+        m_PluginList.blockSignals(false);
+      }
     }
-  }
-  QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
-  for (const QString &esp : esps) {
-    const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
-    if (file.get() == nullptr) {
-      qWarning("failed to activate %s", qUtf8Printable(esp));
-      continue;
-    }
+    
+    for (const QString &esl :
+      dir.entryList(QStringList() << "*.esl", QDir::Files)) {
+      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));
+      if (file.get() == nullptr) {
+        qWarning("failed to activate %s", qUtf8Printable(esl));
+        continue;
+      }
 
-    if (active != m_PluginList.isEnabled(esp)
+      if (active != m_PluginList.isEnabled(esl)
         && file->getAlternatives().empty()) {
-      m_PluginList.blockSignals(true);
-      m_PluginList.enableESP(esp, active);
-      m_PluginList.blockSignals(false);
-      ++enabled;
+        m_PluginList.blockSignals(true);
+        m_PluginList.enableESP(esl, active);
+        m_PluginList.blockSignals(false);
+        ++enabled;
+      }
+    }
+    QStringList esps = dir.entryList(QStringList() << "*.esp", QDir::Files);
+    for (const QString &esp : esps) {
+      const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esp));
+      if (file.get() == nullptr) {
+        qWarning("failed to activate %s", qUtf8Printable(esp));
+        continue;
+      }
+
+      if (active != m_PluginList.isEnabled(esp)
+        && file->getAlternatives().empty()) {
+        m_PluginList.blockSignals(true);
+        m_PluginList.enableESP(esp, active);
+        m_PluginList.blockSignals(false);
+        ++enabled;
+      }
     }
   }
   if (active && (enabled > 1)) {
     MessageDialog::showMessage(
-        tr("Multiple esps/esls activated, please check that they don't conflict."),
-        qApp->activeWindow());
+      tr("Multiple esps/esls activated, please check that they don't conflict."),
+      qApp->activeWindow());
   }
   m_PluginList.refreshLoadOrder();
   // immediately save affected lists
@@ -1861,18 +1873,29 @@ void OrganizerCore::updateModActiveState(int index, bool active)
 void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
                                                   ModInfo::Ptr modInfo)
 {
-  // add files of the bsa to the directory structure
-  m_DirectoryRefresher.addModFilesToStructure(
-      m_DirectoryStructure, modInfo->name(),
-      m_CurrentProfile->getModPriority(index), modInfo->absolutePath(),
-      modInfo->stealFiles());
+  QMap<unsigned int, ModInfo::Ptr> allModInfo;
+  allModInfo[index] = modInfo;
+  updateModsInDirectoryStructure(allModInfo);
+}
+
+void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfo)
+{
+  for (auto idx : modInfo.keys()) {
+    // add files of the bsa to the directory structure
+    m_DirectoryRefresher.addModFilesToStructure(
+      m_DirectoryStructure, modInfo[idx]->name(),
+      m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
+      modInfo[idx]->stealFiles());
+  }
   DirectoryRefresher::cleanStructure(m_DirectoryStructure);
   // need to refresh plugin list now so we can activate esps
   refreshESPList(true);
   // activate all esps of the specified mod so the bsas get activated along with
   // it
   m_PluginList.blockSignals(true);
-  updateModActiveState(index, true);
+  for (auto idx : modInfo.keys()) {
+    updateModActiveState(idx, true);
+  }
   m_PluginList.blockSignals(false);
   // now we need to refresh the bsa list and save it so there is no confusion
   // about what archives are avaiable and active
@@ -1883,14 +1906,16 @@ void OrganizerCore::updateModInDirectoryStructure(unsigned int index,
 
   std::vector<QString> archives = enabledArchives();
   m_DirectoryRefresher.setMods(
-      m_CurrentProfile->getActiveMods(),
-      std::set<QString>(archives.begin(), archives.end()));
+    m_CurrentProfile->getActiveMods(),
+    std::set<QString>(archives.begin(), archives.end()));
 
   // finally also add files from bsas to the directory structure
-  m_DirectoryRefresher.addModBSAToStructure(
-      m_DirectoryStructure, modInfo->name(),
-      m_CurrentProfile->getModPriority(index), modInfo->absolutePath(),
-      modInfo->archives());
+  for (auto idx : modInfo.keys()) {
+    m_DirectoryRefresher.addModBSAToStructure(
+      m_DirectoryStructure, modInfo[idx]->name(),
+      m_CurrentProfile->getModPriority(idx), modInfo[idx]->absolutePath(),
+      modInfo[idx]->archives());
+  }
 }
 
 void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
@@ -2055,6 +2080,55 @@ void OrganizerCore::modStatusChanged(unsigned int index)
         // 0
         m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()))
             .setPriority(priority + 1);
+      }
+    }
+    m_DirectoryStructure->getFileRegister()->sortOrigins();
+
+    refreshLists();
+  } catch (const std::exception &e) {
+    reportError(tr("failed to update mod list: %1").arg(e.what()));
+  }
+}
+
+void OrganizerCore::modStatusChanged(QList<unsigned int> index) {
+  try {
+    QMap<unsigned int, ModInfo::Ptr> modsToEnable;
+    QMap<unsigned int, ModInfo::Ptr> modsToDisable;
+    for (auto idx : index) {
+      if (m_CurrentProfile->modEnabled(idx)) {
+        modsToEnable[idx] = ModInfo::getByIndex(idx);
+      } else {
+        modsToDisable[idx] = ModInfo::getByIndex(idx);
+      }
+    }
+    if (!modsToEnable.isEmpty()) {
+      updateModsInDirectoryStructure(modsToEnable);
+      for (auto modInfo : modsToEnable.values()) {
+        modInfo->clearCaches();
+      }
+    }
+    if (!modsToDisable.isEmpty()) {
+      updateModsActiveState(modsToDisable.keys(), false);
+      for (auto idx : modsToDisable.keys()) {
+        if (m_DirectoryStructure->originExists(ToWString(modsToDisable[idx]->name()))) {
+          FilesOrigin &origin
+            = m_DirectoryStructure->getOriginByName(ToWString(modsToDisable[idx]->name()));
+          origin.enable(false);
+        }
+      }
+      if (m_UserInterface != nullptr) {
+        m_UserInterface->archivesWriter().write();
+      }
+    }
+
+    for (unsigned int i = 0; i < m_CurrentProfile->numMods(); ++i) {
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(i);
+      int priority = m_CurrentProfile->getModPriority(i);
+      if (m_DirectoryStructure->originExists(ToWString(modInfo->name()))) {
+        // priorities in the directory structure are one higher because data is
+        // 0
+        m_DirectoryStructure->getOriginByName(ToWString(modInfo->name()))
+          .setPriority(priority + 1);
       }
     }
     m_DirectoryStructure->getFileRegister()->sortOrigins();

@@ -2509,6 +2509,12 @@ void MainWindow::modlistChanged(const QModelIndex&, int)
   updateModCount();
 }
 
+void MainWindow::modlistChanged(const QModelIndexList&, int)
+{
+  m_OrganizerCore.currentProfile()->writeModlist();
+  updateModCount();
+}
+
 void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QModelIndex&)
 {
   if (current.isValid()) {

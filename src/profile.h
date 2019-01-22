@@ -274,6 +274,16 @@ public:
   void setModEnabled(unsigned int index, bool enabled);
 
   /**
+   * @brief enable or disable multiple mods at once
+   * This is an abbreviated process and should be immediately followed by a full refresh
+   * to maintain data consistency.
+   *
+   * @param modsToEnable list of mod indicies to enable
+   * @param modsToDisable list of mod indicies to disable
+   **/
+  void setModsEnabled(const QList<unsigned int> &modsToEnable, const QList<unsigned int> &modsToDisable);
+
+  /**
    * change the priority of a mod. Of course this also changes the priority of other mods.
    * The priority of the mods in the range ]old, new priority] are shifted so that no gaps
    * are possible.
@@ -334,6 +344,13 @@ signals:
    * @param index index of the mod that changed
    **/
   void modStatusChanged(unsigned int index);
+
+  /**
+   * @brief emitted whenever the status (enabled/disabled) of multiple mods change
+   *
+   * @param index list of indices of the mods that changed
+   **/
+  void modStatusChanged(QList<unsigned int> index);
 
 public slots:
 

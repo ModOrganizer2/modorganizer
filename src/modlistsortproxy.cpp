@@ -86,10 +86,12 @@ void ModListSortProxy::enableAllVisible()
 {
   if (m_Profile == nullptr) return;
 
+  QList<unsigned int> modsToEnable;
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modID, true);
+    modsToEnable.append(modID);
   }
+  m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
   invalidate();
 }
 
@@ -97,10 +99,12 @@ void ModListSortProxy::disableAllVisible()
 {
   if (m_Profile == nullptr) return;
 
+  QList<unsigned int> modsToDisable;
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modID, false);
+    modsToDisable.append(modID);
   }
+  m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
   invalidate();
 }
 
