@@ -155,14 +155,15 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
       if (!modInfo->comments().isEmpty())
         output << QString("<i>%1</i>").arg(modInfo->comments());
       if (!modInfo->notes().isEmpty())
-        output << QString("<i>%1</i>").arg(modInfo->notes()).replace("\n", "<br>");
-      return output.join("<br>");
+        output << QString("<i>%1</i>").arg(modInfo->notes());
+      return output.join("");
     }
     case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites files");
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
     case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
-    case ModInfo::FLAG_ALTERNATE_GAME: return tr("This mod targets a different game");
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
+      "make sure it's compatible or it could cause crashes.");
     default: return "";
   }
 }
