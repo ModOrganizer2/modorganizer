@@ -469,6 +469,14 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void createModFromOverwrite();
+  /**
+   * @brief sends the content of the overwrite folder to an already existing mod
+   */
+  void moveOverwriteContentToExistingMod();
+  /**
+   * @brief actually sends the content of the overwrite folder to specified mod
+   */
+  void doMoveOverwriteContentToMod(const QString &modAbsolutePath);
   void clearOverwrite();
 
   void procError(QProcess::ProcessError error);
