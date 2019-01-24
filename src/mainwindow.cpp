@@ -3550,8 +3550,15 @@ void MainWindow::doMoveOverwriteContentToMod(const QString &modAbsolutePath)
     return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
 
   ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(overwriteIndex);
-  shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
-    (QDir::toNativeSeparators(modAbsolutePath)), true, this);
+  bool successful = shellMove((QDir::toNativeSeparators(overwriteInfo->absolutePath()) + "\\*"),
+    (QDir::toNativeSeparators(modAbsolutePath)), false, this);
+
+  if (successful) {
+    MessageDialog::showMessage(tr("Move successful."), this);
+  }
+  else {
+    qCritical("Move operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+  }
 
   m_OrganizerCore.refreshModList();
 }
