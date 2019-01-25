@@ -266,7 +266,7 @@ void SettingsDialog::on_containedBtn_clicked()
 
 void SettingsDialog::on_overwrittenBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenColor = result;
     setButtonColor(ui->overwrittenBtn, result);
@@ -275,10 +275,28 @@ void SettingsDialog::on_overwrittenBtn_clicked()
 
 void SettingsDialog::on_overwritingBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting", QColorDialog::ShowAlphaChannel);
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingColor = result;
     setButtonColor(ui->overwritingBtn, result);
+  }
+}
+
+void SettingsDialog::on_overwrittenArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, this, "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
+  if (result.isValid()) {
+    m_OverwrittenArchiveColor = result;
+    setButtonColor(ui->overwrittenArchiveBtn, result);
+  }
+}
+
+void SettingsDialog::on_overwritingArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, this, "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
+  if (result.isValid()) {
+    m_OverwritingArchiveColor = result;
+    setButtonColor(ui->overwritingArchiveBtn, result);
   }
 }
 
@@ -286,11 +304,15 @@ void SettingsDialog::on_resetColorsBtn_clicked()
 {
   m_OverwritingColor = QColor(255, 0, 0, 64);
   m_OverwrittenColor = QColor(0, 255, 0, 64);
+  m_OverwritingArchiveColor = QColor(255, 0, 255, 64);
+  m_OverwrittenArchiveColor = QColor(0, 255, 255, 64);
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
   setButtonColor(ui->overwritingBtn, m_OverwritingColor);
   setButtonColor(ui->overwrittenBtn, m_OverwrittenColor);
+  setButtonColor(ui->overwritingArchiveBtn, m_OverwritingArchiveColor);
+  setButtonColor(ui->overwrittenArchiveBtn, m_OverwrittenArchiveColor);
   setButtonColor(ui->containsBtn, m_ContainsColor);
   setButtonColor(ui->containedBtn, m_ContainedColor);
 }

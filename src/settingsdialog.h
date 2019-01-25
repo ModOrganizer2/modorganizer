@@ -69,6 +69,8 @@ public:
 
   QColor getOverwritingColor() { return m_OverwritingColor; }
   QColor getOverwrittenColor() { return m_OverwrittenColor; }
+  QColor getOverwritingArchiveColor() { return m_OverwritingArchiveColor; }
+  QColor getOverwrittenArchiveColor() { return m_OverwrittenArchiveColor; }
   QColor getContainsColor() { return m_ContainsColor; }
   QColor getContainedColor() { return m_ContainedColor; }
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
@@ -76,6 +78,8 @@ public:
 
   void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
   void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
+  void setOverwritingArchiveColor(QColor col) { m_OverwritingArchiveColor = col; }
+  void setOverwrittenArchiveColor(QColor col) { m_OverwrittenArchiveColor = col; }
   void setContainsColor(QColor col) { m_ContainsColor = col; }
   void setContainedColor(QColor col) { m_ContainedColor = col; }
   void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
@@ -118,6 +122,10 @@ private slots:
 
   void on_overwrittenBtn_clicked();
 
+  void on_overwritingArchiveBtn_clicked();
+
+  void on_overwrittenArchiveBtn_clicked();
+
   void on_containsBtn_clicked();
 
   void on_containedBtn_clicked();
@@ -142,6 +150,8 @@ private:
 
     QColor m_OverwritingColor;
     QColor m_OverwrittenColor;
+    QColor m_OverwritingArchiveColor;
+    QColor m_OverwrittenArchiveColor;
     QColor m_ContainsColor;
     QColor m_ContainedColor;
 

@@ -158,10 +158,15 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
         output << QString("<i>%1</i>").arg(modInfo->notes());
       return output.join("");
     }
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites files");
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
-    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
+    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
+    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
+    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
       "make sure it's compatible or it could cause crashes.");
     default: return "";
@@ -400,13 +405,22 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    bool overwrite = m_Overwrite.find(modIndex) != m_Overwrite.end();
+    bool archiveOverwrite = m_ArchiveOverwrite.find(modIndex) != m_ArchiveOverwrite.end();
+    bool archiveLooseOverwrite = m_ArchiveLooseOverwrite.find(modIndex) != m_ArchiveLooseOverwrite.end();
+    bool overwritten = m_Overwritten.find(modIndex) != m_Overwritten.end();
+    bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
+    bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().modlistContainsPluginColor();
-    } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
-      return Settings::instance().modlistOverwrittenLooseColor();
-    }
-    else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
+    } else if (overwritten || archiveLooseOverwritten) {
       return Settings::instance().modlistOverwritingLooseColor();
+    } else if (overwrite || archiveLooseOverwrite) {
+      return Settings::instance().modlistOverwrittenLooseColor();
+    } else if (archiveOverwritten) {
+      return Settings::instance().modlistOverwritingArchiveColor();
+    } else if (archiveOverwrite) {
+      return Settings::instance().modlistOverwrittenArchiveColor();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
@@ -516,7 +530,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
 
   ModInfo::Ptr info = ModInfo::getByIndex(modID);
   IModList::ModStates oldState = state(modID);
-
 
   bool result = false;
 
@@ -755,6 +768,20 @@ void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const
   notifyChange(0, rowCount() - 1);
 }
 
+void ModList::setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_ArchiveOverwrite = overwrite;
+  m_ArchiveOverwritten = overwritten;
+  notifyChange(0, rowCount() - 1);
+}
+
+void ModList::setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_ArchiveLooseOverwrite = overwrite;
+  m_ArchiveLooseOverwritten = overwritten;
+  notifyChange(0, rowCount() - 1);
+}
+
 void ModList::setPluginContainer(PluginContainer *pluginContianer)
 {
   m_PluginContainer = pluginContianer;
@@ -811,10 +838,10 @@ void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared
     const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
     if (fileEntry.get() != nullptr) {
       bool archive = false;
-      std::vector<std::pair<int, std::wstring>> origins;
+      std::vector<std::pair<int, std::pair<std::wstring, int>>> origins;
       {
-        std::vector<std::pair<int, std::wstring>> alternatives = fileEntry->getAlternatives();
-        origins.insert(origins.end(), std::pair<int, std::wstring>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
+        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = fileEntry->getAlternatives();
+        origins.insert(origins.end(), std::pair<int, std::pair<std::wstring, int>>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
       }
       for (auto originInfo : origins) {
         MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originInfo.first);
@@ -1126,6 +1153,10 @@ void ModList::notifyChange(int rowStart, int rowEnd)
   if (rowStart < 0) {
     m_Overwrite.clear();
     m_Overwritten.clear();
+    m_ArchiveOverwrite.clear();
+    m_ArchiveOverwritten.clear();
+    m_ArchiveLooseOverwrite.clear();
+    m_ArchiveLooseOverwritten.clear();
     beginResetModel();
     endResetModel();
   } else {

@@ -233,6 +233,10 @@ public:
 
   QColor modlistOverwritingLooseColor() const;
 
+  QColor modlistOverwrittenArchiveColor() const;
+
+  QColor modlistOverwritingArchiveColor() const;
+
   QColor modlistContainsPluginColor() const;
 
   QColor pluginListContainedColor() const;
@@ -284,6 +288,11 @@ public:
    * @brief sets the new motd hash
    **/
   void setMotDHash(uint hash);
+
+  /**
+  * @return true if the user wants to have archives being parsed to show conflicts and contents
+  */
+  bool archiveParsing() const;
 
   /**
    * @return hash of the last displayed message of the day
@@ -423,6 +432,8 @@ private:
     QCheckBox *m_usePrereleaseBox;
     QPushButton *m_overwritingBtn;
     QPushButton *m_overwrittenBtn;
+    QPushButton *m_overwritingArchiveBtn;
+    QPushButton *m_overwrittenArchiveBtn;
     QPushButton *m_containsBtn;
     QPushButton *m_containedBtn;
     QCheckBox *m_colorSeparatorsBox;
@@ -520,6 +531,7 @@ private:
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
     QCheckBox *m_lockGUIBox;
+    QCheckBox *m_enableArchiveParsingBox;
   };
 
 private slots:

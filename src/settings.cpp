@@ -394,6 +394,16 @@ QColor Settings::modlistOverwritingLooseColor() const
   return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
 }
 
+QColor Settings::modlistOverwrittenArchiveColor() const
+{
+  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
+}
+
+QColor Settings::modlistOverwritingArchiveColor() const
+{
+  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
+}
+
 QColor Settings::modlistContainsPluginColor() const
 {
   return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
@@ -480,6 +490,11 @@ void Settings::setMotDHash(uint hash)
 uint Settings::getMotDHash() const
 {
   return m_Settings.value("motd_hash", 0).toUInt();
+}
+
+bool Settings::archiveParsing() const
+{
+  return m_Settings.value("Settings/archive_parsing", true).toBool();
 }
 
 QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) const
@@ -728,6 +743,8 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
   , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
   , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
+  , m_overwritingArchiveBtn(m_dialog.findChild<QPushButton *>("overwritingArchiveBtn"))
+  , m_overwrittenArchiveBtn(m_dialog.findChild<QPushButton *>("overwrittenArchiveBtn"))
   , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
   , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
   , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
@@ -784,11 +801,15 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   //version with stylesheet
   m_dialog.setButtonColor(m_overwritingBtn, m_parent->modlistOverwritingLooseColor());
   m_dialog.setButtonColor(m_overwrittenBtn, m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setButtonColor(m_overwritingArchiveBtn, m_parent->modlistOverwritingArchiveColor());
+  m_dialog.setButtonColor(m_overwrittenArchiveBtn, m_parent->modlistOverwrittenArchiveColor());
   m_dialog.setButtonColor(m_containsBtn, m_parent->modlistContainsPluginColor());
   m_dialog.setButtonColor(m_containedBtn, m_parent->pluginListContainedColor());
 
   m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
   m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setOverwritingArchiveColor(m_parent->modlistOverwritingArchiveColor());
+  m_dialog.setOverwrittenArchiveColor(m_parent->modlistOverwrittenArchiveColor());
   m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
   m_dialog.setContainedColor(m_parent->pluginListContainedColor());
 
@@ -816,6 +837,8 @@ void Settings::GeneralTab::update()
 
   m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
   m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
+  m_Settings.setValue("Settings/overwritingArchiveFilesColor", m_dialog.getOverwritingArchiveColor());
+  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", m_dialog.getOverwrittenArchiveColor());
   m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
   m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
@@ -1089,6 +1112,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
   , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
+  , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -1123,6 +1147,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
   m_lockGUIBox->setChecked(m_parent->lockGUI());
+  m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
 
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
@@ -1141,6 +1166,7 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
   m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
+  m_Settings.setValue("Settings/archive_parsing", m_enableArchiveParsingBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
 

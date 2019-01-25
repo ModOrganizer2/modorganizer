@@ -1,4 +1,4 @@
-    #include "modflagicondelegate.h"
+#include "modflagicondelegate.h"
 #include <QList>
 
 
@@ -6,6 +6,13 @@ ModInfo::EFlag ModFlagIconDelegate::m_ConflictFlags[4] = { ModInfo::FLAG_CONFLIC
                                                          , ModInfo::FLAG_CONFLICT_OVERWRITE
                                                          , ModInfo::FLAG_CONFLICT_OVERWRITTEN
                                                          , ModInfo::FLAG_CONFLICT_REDUNDANT };
+
+ModInfo::EFlag ModFlagIconDelegate::m_ArchiveLooseConflictFlags[2] = { ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE
+                                                                     , ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN };
+
+ModInfo::EFlag ModFlagIconDelegate::m_ArchiveConflictFlags[3] = { ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED
+                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE
+                                                                , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN };
 
 ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent)
   : IconDelegate(parent)
@@ -19,9 +26,45 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
     std::vector<ModInfo::EFlag> flags = info->getFlags();
 
-    { // insert conflict icon first to provide nicer alignment
+    // insert conflict icons to provide nicer alignment
+    { // insert loose file conflicts first
       auto iter = std::find_first_of(flags.begin(), flags.end(),
                                      m_ConflictFlags, m_ConflictFlags + 4);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      } else {
+        result.append(QString());
+      }
+    }
+
+    { // insert loose vs archive overwrite second
+      auto iter = std::find(flags.begin(), flags.end(),
+        ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      }
+      else {
+        result.append(QString());
+      }
+    }
+
+    { // insert loose vs archive overwritten third
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+        m_ArchiveLooseConflictFlags + 1, m_ArchiveLooseConflictFlags + 2);
+      if (iter != flags.end()) {
+        result.append(getFlagIcon(*iter));
+        flags.erase(iter);
+      }
+      else {
+        result.append(QString());
+      }
+    }
+
+    { // insert archive conflicts last
+      auto iter = std::find_first_of(flags.begin(), flags.end(),
+        m_ArchiveConflictFlags, m_ArchiveConflictFlags + 3);
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
@@ -44,10 +87,15 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
     case ModInfo::FLAG_INVALID: return ":/MO/gui/problem";
     case ModInfo::FLAG_NOTENDORSED: return ":/MO/gui/emblem_notendorsed";
     case ModInfo::FLAG_NOTES: return ":/MO/gui/emblem_notes";
+    case ModInfo::FLAG_CONFLICT_MIXED: return ":/MO/gui/emblem_conflict_mixed";
     case ModInfo::FLAG_CONFLICT_OVERWRITE: return ":/MO/gui/emblem_conflict_overwrite";
     case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return ":/MO/gui/emblem_conflict_overwritten";
-    case ModInfo::FLAG_CONFLICT_MIXED: return ":/MO/gui/emblem_conflict_mixed";
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return ":MO/gui/emblem_conflict_redundant";
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_loose_conflict_overwrite";
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_loose_conflict_overwritten";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return ":/MO/gui/archive_conflict_mixed";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_conflict_winner";
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_conflict_loser";
     case ModInfo::FLAG_ALTERNATE_GAME: return ":MO/gui/alternate_game";
     default: return QString();
   }

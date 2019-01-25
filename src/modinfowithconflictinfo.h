@@ -23,6 +23,14 @@ public:
 
   virtual std::set<unsigned int> getModOverwritten() { return m_OverwrittenList; }
 
+  virtual std::set<unsigned int> getModArchiveOverwrite() { return m_ArchiveOverwriteList; }
+
+  virtual std::set<unsigned int> getModArchiveOverwritten() { return m_ArchiveOverwrittenList; }
+
+  virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return m_ArchiveLooseOverwriteList; }
+
+  virtual std::set<unsigned int> getModArchiveLooseOverwritten() { return m_ArchiveLooseOverwrittenList; }
+
   virtual void doConflictCheck() const;
 
 private:
@@ -32,7 +40,8 @@ private:
     CONFLICT_OVERWRITE,
     CONFLICT_OVERWRITTEN,
     CONFLICT_MIXED,
-    CONFLICT_REDUNDANT
+    CONFLICT_REDUNDANT,
+    CONFLICT_CROSS
   };
 
 private:
@@ -41,6 +50,16 @@ private:
    * @return true if there is a conflict for files in this mod
    */
   EConflictType isConflicted() const;
+
+  /**
+   * @return true if there are archive conflicts for files in this mod
+   */
+  EConflictType isArchiveConflicted() const;
+
+  /**
+   * @return true if there are archive conflicts with loose files in this mod
+   */
+  EConflictType isLooseArchiveConflicted() const;
 
   /**
    * @return true if this mod is completely replaced by others
@@ -52,10 +71,17 @@ private:
   MOShared::DirectoryEntry **m_DirectoryStructure;
 
   mutable EConflictType m_CurrentConflictState;
+  mutable EConflictType m_ArchiveConflictState;
+  mutable EConflictType m_ArchiveConflictLooseState;
+  mutable bool m_HasLooseOverwrite;
   mutable QTime m_LastConflictCheck;
 
   mutable std::set<unsigned int> m_OverwriteList;   // indices of mods overritten by this mod
   mutable std::set<unsigned int> m_OverwrittenList; // indices of mods overwriting this mod
+  mutable std::set<unsigned int> m_ArchiveOverwriteList;   // indices of mods with archive files overritten by this mod
+  mutable std::set<unsigned int> m_ArchiveOverwrittenList; // indices of mods with archive files overwriting this mod
+  mutable std::set<unsigned int> m_ArchiveLooseOverwriteList; // indices of mods with archives being overwritten by this mod's loose files
+  mutable std::set<unsigned int> m_ArchiveLooseOverwrittenList; // indices of mods with loose files overwriting this mod's archive files
 
 };
 

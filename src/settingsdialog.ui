@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>586</width>
-    <height>462</height>
+    <height>486</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,42 +99,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
              <string>Colors</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_5">
-             <item row="4" column="0" colspan="2">
-              <widget class="QPushButton" name="resetColorsBtn">
-               <property name="text">
-                <string>Reset Colors</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="overwrittenBtn">
-               <property name="text">
-                <string>Is overwritten (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QPushButton" name="containsBtn">
-               <property name="text">
-                <string>Mod Contains selected Plugin</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="containedBtn">
-               <property name="text">
-                <string>Plugin is Contained in selected Mod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="overwritingBtn">
-               <property name="text">
-                <string>Is overwriting (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
+             <item row="6" column="0">
               <widget class="QCheckBox" name="colorSeparatorsBox">
                <property name="toolTip">
                 <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
@@ -147,6 +112,55 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
                </property>
                <property name="checked">
                 <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="containedBtn">
+               <property name="text">
+                <string>Plugin is Contained in selected Mod</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="overwrittenBtn">
+               <property name="text">
+                <string>Is overwritten (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="overwritingBtn">
+               <property name="text">
+                <string>Is overwriting (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0" colspan="2">
+              <widget class="QPushButton" name="resetColorsBtn">
+               <property name="text">
+                <string>Reset Colors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="containsBtn">
+               <property name="text">
+                <string>Mod Contains selected Plugin</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="overwrittenArchiveBtn">
+               <property name="text">
+                <string>Is overwritten (archive files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="overwritingArchiveBtn">
+               <property name="text">
+                <string>Is overwriting (archive files)</string>
                </property>
               </widget>
              </item>
@@ -1004,20 +1018,20 @@ tl;dr-version: If Nexus-features don't work, insert the current version number o
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout_6">
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="forceEnableBox">
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="hideUncheckedBox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="toolTip">
-            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
+            <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
            </property>
            <property name="whatsThis">
-            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
-Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</string>
+            <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
+I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
            </property>
            <property name="text">
-            <string>Force-enable game files</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Hide inactive ESPs/ESMs</string>
            </property>
           </widget>
          </item>
@@ -1040,20 +1054,20 @@ If you disable this feature, MO will only display official DLCs this way. Please
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="hideUncheckedBox">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="forceEnableBox">
            <property name="toolTip">
-            <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
            </property>
            <property name="whatsThis">
-            <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
-I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
+Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</string>
            </property>
            <property name="text">
-            <string>Hide inactive ESPs/ESMs</string>
+            <string>Force-enable game files</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -1067,6 +1081,22 @@ I don't yet know what the circumstances are, but user reports imply it is in som
            </property>
            <property name="text">
             <string>Lock GUI when running executable</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QCheckBox" name="enableArchiveParsingBox">
+           <property name="toolTip">
+            <string>Enable parsing of Archives.  Has negative effects on performance.</string>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, MO will parse archive files (BSA, BA2) to calculate conflicts between the contents of the archive files and other loose files. This process has a noticeable cost in performance.&lt;/p&gt;&lt;p&gt;This feature should not be confused with the archive management feature offered by MO1. MO2 will only show conflicts with archives and will NOT load them into the game or program.&lt;/p&gt;&lt;p&gt;If you disable this feature, MO will only display conflicts between loose files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Enable parsing of Archives</string>
            </property>
            <property name="checked">
             <bool>true</bool>

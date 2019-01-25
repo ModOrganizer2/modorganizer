@@ -792,6 +792,16 @@ std::wstring OrganizerCore::crashDumpsPath() {
     ).toStdWString();
 }
 
+bool OrganizerCore::getArchiveParsing() const
+{
+  return m_ArchiveParsing;
+}
+
+void OrganizerCore::setArchiveParsing(const bool archiveParsing)
+{
+  m_ArchiveParsing = archiveParsing;
+}
+
 void OrganizerCore::setCurrentProfile(const QString &profileName)
 {
   if ((m_CurrentProfile != nullptr)
@@ -1161,7 +1171,7 @@ QList<MOBase::IOrganizer::FileInfo> OrganizerCore::findFileInfos(
       info.origins.append(ToQString(
           m_DirectoryStructure->getOriginByID(file->getOrigin(fromArchive))
               .getName()));
-      info.archive = fromArchive ? ToQString(file->getArchive()) : "";
+      info.archive = fromArchive ? ToQString(file->getArchive().first) : "";
       foreach (auto idx, file->getAlternatives()) {
         info.origins.append(
             ToQString(m_DirectoryStructure->getOriginByID(idx.first).getName()));
@@ -1986,12 +1996,14 @@ IPluginGame const *OrganizerCore::managedGame() const
 std::vector<QString> OrganizerCore::enabledArchives()
 {
   std::vector<QString> result;
-  QFile archiveFile(m_CurrentProfile->getArchivesFileName());
-  if (archiveFile.open(QIODevice::ReadOnly)) {
-    while (!archiveFile.atEnd()) {
-      result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+  if (m_ArchiveParsing) {
+    QFile archiveFile(m_CurrentProfile->getArchivesFileName());
+    if (archiveFile.open(QIODevice::ReadOnly)) {
+      while (!archiveFile.atEnd()) {
+        result.push_back(QString::fromUtf8(archiveFile.readLine()).trimmed());
+      }
+      archiveFile.close();
     }
-    archiveFile.close();
   }
   return result;
 }

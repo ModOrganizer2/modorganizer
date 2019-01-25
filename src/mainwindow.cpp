@@ -317,7 +317,7 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->espList->setItemDelegateForColumn(PluginList::COL_FLAGS, new GenericIconDelegate(ui->espList));
   ui->espList->installEventFilter(m_OrganizerCore.pluginList());
 
-  //ui->bsaList->setLocalMoveOnly(true);
+  ui->bsaList->setLocalMoveOnly(true);
 
   initDownloadView();
   bool pluginListAdjusted = registerWidgetState(ui->espList->objectName(), ui->espList->header(), "plugin_list_state");
@@ -451,6 +451,19 @@ MainWindow::MainWindow(QSettings &initSettings
   refreshProfiles(false);
 
   ui->profileBox->setCurrentText(m_OrganizerCore.currentProfile()->name());
+
+  if (m_OrganizerCore.getArchiveParsing())
+  {
+    ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+    ui->showArchiveDataCheckBox->setEnabled(true);
+    m_showArchiveData = true;
+  }
+  else
+  {
+    ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+    ui->showArchiveDataCheckBox->setEnabled(false);
+    m_showArchiveData = false;
+  }
 
   refreshExecutablesList();
   updateToolBar();
@@ -1271,7 +1284,7 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         directoryChild->setData(0, Qt::DecorationRole, *folderIcon);
         directoryChild->setData(0, Qt::UserRole + 3, isDirectory);
 
-        if (conflictsOnly) {
+        if (conflictsOnly || !m_showArchiveData) {
           updateTo(directoryChild, temp.str(), **current, conflictsOnly, fileIcon, folderIcon);
           if (directoryChild->childCount() != 0) {
             subTree->addChild(directoryChild);
@@ -1306,10 +1319,14 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         continue;
       }
 
-      QString fileName = ToQString(current->getName());
-      QStringList columns(fileName);
       bool isArchive = false;
       int originID = current->getOrigin(isArchive);
+      if (!m_showArchiveData && isArchive) {
+        continue;
+      }
+
+      QString fileName = ToQString(current->getName());
+      QStringList columns(fileName);
       FilesOrigin origin = m_OrganizerCore.directoryStructure()->getOriginByID(originID);
       QString source("data");
       unsigned int modIndex = ModInfo::getIndex(ToQString(origin.getName()));
@@ -1318,9 +1335,9 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
         source = modInfo->name();
       }
 
-      std::wstring archive = current->getArchive();
-      if (archive.length() != 0) {
-        source.append(" (").append(ToQString(archive)).append(")");
+      std::pair<std::wstring, int> archive = current->getArchive();
+      if (archive.first.length() != 0) {
+        source.append(" (").append(ToQString(archive.first)).append(")");
       }
       columns.append(source);
       QTreeWidgetItem *fileChild = new QTreeWidgetItem(columns);
@@ -1342,12 +1359,12 @@ void MainWindow::updateTo(QTreeWidgetItem *subTree, const std::wstring &director
       fileChild->setData(1, Qt::UserRole, source);
       fileChild->setData(1, Qt::UserRole + 1, originID);
 
-      std::vector<std::pair<int, std::wstring>> alternatives = current->getAlternatives();
+      std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = current->getAlternatives();
 
       if (!alternatives.empty()) {
         std::wostringstream altString;
         altString << ToWString(tr("Also in: <br>"));
-        for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
+        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
              altIter != alternatives.end(); ++altIter) {
           if (altIter != alternatives.begin()) {
             altString << " , ";
@@ -2275,9 +2292,23 @@ void MainWindow::modorder_changed()
       for (int i :  modInfo->getModOverwritten()) {
         ModInfo::getByIndex(i)->clearCaches();
       }
+      for (int i : modInfo->getModArchiveOverwrite()) {
+          ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveOverwritten()) {
+          ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveLooseOverwrite()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
+      for (int i : modInfo->getModArchiveLooseOverwritten()) {
+        ModInfo::getByIndex(i)->clearCaches();
+      }
       // update conflict check on the moved mod
       modInfo->doConflictCheck();
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
+      m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
+      m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
       if (m_ModListSortProxy != nullptr) {
         m_ModListSortProxy->invalidate();
       }
@@ -2351,10 +2382,10 @@ void MainWindow::fileMoved(const QString &filePath, const QString &oldOriginName
 
         QString fullNewPath = ToQString(newOrigin.getPath()) + "\\" + filePath;
         WIN32_FIND_DATAW findData;
-		HANDLE hFind;
-		hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
-        filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"");
-		FindClose(hFind);
+        HANDLE hFind;
+        hFind = ::FindFirstFileW(ToWString(fullNewPath).c_str(), &findData);
+        filePtr->addOrigin(newOrigin.getID(), findData.ftCreationTime, L"", -1);
+        FindClose(hFind);
       }
       if (m_OrganizerCore.directoryStructure()->originExists(ToWString(oldOriginName))) {
         FilesOrigin &oldOrigin = m_OrganizerCore.directoryStructure()->getOriginByName(ToWString(oldOriginName));
@@ -2520,8 +2551,12 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
   if (current.isValid()) {
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(current.data(Qt::UserRole + 1).toInt());
     m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
+    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
   } else {
     m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
+    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
 /*  if ((m_ModListSortProxy != nullptr)
       && !m_ModListSortProxy->beingInvalidated()) {
@@ -2814,7 +2849,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer,this);
+    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
     connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
@@ -2849,7 +2884,6 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
     settings.setValue(key, dialog.saveGeometry());
 
-
     modInfo->saveMeta();
     emit modInfoDisplayed();
     m_OrganizerCore.modList()->modInfoChanged(modInfo);
@@ -2871,6 +2905,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
                                              , modInfo->stealFiles()
                                              , modInfo->archives());
       DirectoryRefresher::cleanStructure(m_OrganizerCore.directoryStructure());
+      m_OrganizerCore.directoryStructure()->getFileRegister()->sortOrigins();
       m_OrganizerCore.refreshLists();
     }
   }
@@ -4791,6 +4826,27 @@ void MainWindow::on_actionSettings_triggered()
     m_OrganizerCore.profileRefresh();
   }
 
+  const auto state = settings.archiveParsing();
+  if (state != m_OrganizerCore.getArchiveParsing())
+  {
+    m_OrganizerCore.setArchiveParsing(state);
+    if (!state)
+    {
+      ui->showArchiveDataCheckBox->setCheckState(Qt::Unchecked);
+      ui->showArchiveDataCheckBox->setEnabled(false);
+      m_showArchiveData = false;
+    }
+    else
+    {
+      ui->showArchiveDataCheckBox->setCheckState(Qt::Checked);
+      ui->showArchiveDataCheckBox->setEnabled(true);
+      m_showArchiveData = true;
+    }
+    m_OrganizerCore.refreshModList();
+    m_OrganizerCore.refreshDirectoryStructure();
+    m_OrganizerCore.refreshLists();
+  }
+
   if (settings.getCacheDirectory() != oldCacheDirectory) {
     NexusInterface::instance(&m_PluginContainer)->setCacheDirectory(settings.getCacheDirectory());
   }
@@ -6455,3 +6511,17 @@ void MainWindow::sendSelectedModsToSeparator_clicked()
   }
   settings.setValue(key, dialog.saveGeometry());
 }
+
+void MainWindow::on_showArchiveDataCheckBox_toggled(const bool checked)
+{
+  if (m_OrganizerCore.getArchiveParsing() && checked)
+  {
+    m_showArchiveData = checked;
+  }
+  else
+  {
+    m_showArchiveData = false;
+  }
+  refreshDataTree();
+}
+

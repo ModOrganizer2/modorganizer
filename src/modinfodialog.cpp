@@ -318,10 +318,10 @@ void ModInfoDialog::refreshLists()
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
       bool archive;
       if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::wstring>> alternatives = (*iter)->getAlternatives();
+        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
         if (!alternatives.empty()) {
           std::wostringstream altString;
-          for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
+          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
                altIter != alternatives.end(); ++altIter) {
             if (altIter != alternatives.begin()) {
               altString << ", ";
@@ -330,11 +330,18 @@ void ModInfoDialog::refreshLists()
           }
           QStringList fields(relativeName.prepend("..."));
           fields.append(ToQString(altString.str()));
-          QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+
+          QTreeWidgetItem *item = new QTreeWidgetItem(fields);        
           item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.begin()->first).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives.begin()->first);
+          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
+          item->setData(1, Qt::UserRole + 1, alternatives.back().first);
           item->setData(1, Qt::UserRole + 2, archive);
+          if (archive) {
+            QFont font = item->font(0);
+            font.setItalic(true);
+            item->setFont(0, font);
+            item->setFont(1, font);
+          }
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
         } else {// otherwise don't display the file
@@ -348,6 +355,12 @@ void ModInfoDialog::refreshLists()
         item->setData(0, Qt::UserRole, fileName);
         item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
         item->setData(1, Qt::UserRole + 2, archive);
+        if (archive) {
+          QFont font = item->font(0);
+          font.setItalic(true);
+          item->setFont(0, font);
+          item->setFont(1, font);
+        }
         ui->overwrittenTree->addTopLevelItem(item);
         ++numOverwritten;
       }
