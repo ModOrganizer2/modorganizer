@@ -215,7 +215,7 @@ void NXMAccessManager::validateTimeout()
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
 
-  emit validateFailed(tr("timeout"));
+  emit validateFailed(tr("There was a timeout during the request"));
 }
 
 

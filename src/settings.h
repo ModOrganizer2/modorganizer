@@ -536,6 +536,7 @@ private slots:
 
   void resetDialogs();
   void processApiKey(const QString &);
+  void clearApiKey(QPushButton *nexusButton);
   void checkApiKey(QPushButton *nexusButton);
 
 signals:

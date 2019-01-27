@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QDialog>
 #include <QWebSocket>
 #include <QListWidgetItem>
+#include <QTimer>
 
 class PluginContainer;
 
@@ -63,6 +64,7 @@ signals:
   void resetDialogs();
   void processApiKey(const QString &);
   void closeApiConnection(QPushButton *);
+  void revokeApiKey(QPushButton *);
 
 private:
 
@@ -90,7 +92,7 @@ public:
 
 
 private slots:
-  void on_loginCheckBox_toggled(bool checked);
+  //void on_loginCheckBox_toggled(bool checked);
 
   void on_categoriesBtn_clicked();
 
@@ -113,6 +115,8 @@ private slots:
   void on_associateButton_clicked();
 
   void on_clearCacheButton_clicked();
+
+  void on_revokeNexusAuthButton_clicked();
 
   void on_browseBaseDirBtn_clicked();
 
@@ -152,6 +156,8 @@ private slots:
 
   void dispatchLogin();
 
+  void loginPing();
+
   void receiveApiKey(const QString &apiKey);
 
   void completeApiConnection();
@@ -170,6 +176,8 @@ private:
     QString m_ExecutableBlacklist;
 
     QWebSocket *m_nexusLogin;
+    QTimer m_loginTimer;
+    int m_totalPings = 0;
 };
 
 

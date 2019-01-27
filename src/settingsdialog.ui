@@ -482,9 +482,36 @@ p, li { white-space: pre-wrap; }
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_11">
             <item>
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="revokeNexusAuthButton">
+              <property name="toolTip">
+               <string>Clear the stored Nexus API key and force reauthorization.</string>
+              </property>
+              <property name="text">
+               <string>Revoke Nexus Authorization</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="clearCacheButton">
               <property name="toolTip">
-               <string>Remove cache and cookies. Forces a new login.</string>
+               <string>Remove cache and cookies.</string>
               </property>
               <property name="text">
                <string>Clear Cache</string>

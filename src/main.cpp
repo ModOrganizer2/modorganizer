@@ -512,7 +512,7 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     qDebug("Loaded settings:");
     settings.beginGroup("Settings");
     for (auto k : settings.allKeys())
-      if (!k.contains("username") && !k.contains("password"))
+      if (!k.contains("username") && !k.contains("password") && !k.contains("nexus_api_key"))
         qDebug("  %s=%s", k.toUtf8().data(), settings.value(k).toString().toUtf8().data());
     settings.endGroup();
 

@@ -392,8 +392,8 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestNXMDownload(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusLogin()));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
 
@@ -2695,7 +2695,7 @@ void MainWindow::endorseMod(ModInfo::Ptr mod)
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, mod));
+      m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(mod); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
@@ -2708,21 +2708,21 @@ void MainWindow::endorse_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
       MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
       for (QModelIndex idx : selection->selectedRows()) {
         ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
       }
     }
     else {
-      QString username, password;
-      if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+      QString apiKey;
+      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
         MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
         for (QModelIndex idx : selection->selectedRows()) {
           ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::endorseMod, this, modInfo));
+          m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(modInfo); });
         }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
       } else {
         MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
         return;
@@ -2750,12 +2750,12 @@ void MainWindow::dontendorse_clicked()
 
 void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
-  QString apiKey;
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     ModInfo::getByIndex(m_ContextRow)->endorse(false);
   } else {
+    QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this] () { this->unendorse_clicked(); });
+      m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(mod); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
@@ -2768,21 +2768,20 @@ void MainWindow::unendorse_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->loggedIn()) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
       MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
       for (QModelIndex idx : selection->selectedRows()) {
         ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
       }
-    }
-    else {
-      QString username, password;
-      if (m_OrganizerCore.settings().getNexusLogin(username, password)) {
+    } else {
+      QString apiKey;
+      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
         MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
         for (QModelIndex idx : selection->selectedRows()) {
           ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin(boost::bind(&MainWindow::unendorseMod, this, modInfo));
+          m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(modInfo); });
         }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->login(username, password);
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
       } else {
         MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
         return;
@@ -2794,9 +2793,9 @@ void MainWindow::unendorse_clicked()
   }
 }
 
-void MainWindow::loginFailed(const QString &error)
+void MainWindow::validationFailed(const QString &error)
 {
-  qDebug("login failed: %s", qUtf8Printable(error));
+  qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
   statusBar()->hide();
 }
 

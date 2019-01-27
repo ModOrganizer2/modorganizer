@@ -62,6 +62,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   connect(m_nexusLogin, SIGNAL(connected()), this, SLOT(dispatchLogin()));
   connect(m_nexusLogin, SIGNAL(textMessageReceived(const QString &)), this, SLOT(receiveApiKey(const QString &)));
   connect(m_nexusLogin, SIGNAL(disconnected()), this, SLOT(completeApiConnection()));
+  m_loginTimer.callOnTimeout(this, &SettingsDialog::loginPing);
 }
 
 SettingsDialog::~SettingsDialog()
@@ -124,18 +125,18 @@ bool SettingsDialog::getResetGeometries()
   return ui->resetGeometryBtn->isChecked();
 }
 
-void SettingsDialog::on_loginCheckBox_toggled(bool checked)
-{
-  QLineEdit *usernameEdit = findChild<QLineEdit*>("usernameEdit");
-  QLineEdit *passwordEdit = findChild<QLineEdit*>("passwordEdit");
-  if (checked) {
-    passwordEdit->setEnabled(true);
-    usernameEdit->setEnabled(true);
-  } else {
-    passwordEdit->setEnabled(false);
-    usernameEdit->setEnabled(false);
-  }
-}
+//void SettingsDialog::on_loginCheckBox_toggled(bool checked)
+//{
+//  QLineEdit *usernameEdit = findChild<QLineEdit*>("usernameEdit");
+//  QLineEdit *passwordEdit = findChild<QLineEdit*>("passwordEdit");
+//  if (checked) {
+//    passwordEdit->setEnabled(true);
+//    usernameEdit->setEnabled(true);
+//  } else {
+//    passwordEdit->setEnabled(false);
+//    usernameEdit->setEnabled(false);
+//  }
+//}
 
 void SettingsDialog::on_categoriesBtn_clicked()
 {
@@ -337,7 +338,7 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::on_nexusConnect_clicked()
 {
-  ui->nexusConnect->setText("Connecting the API...");
+  ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 5 minutes.");
   ui->nexusConnect->setDisabled(true);
   QUrl url = QUrl("wss://sso.nexusmods.com:8443");
   m_nexusLogin->open(url);
@@ -354,6 +355,20 @@ void SettingsDialog::dispatchLogin()
   QString finalMessage(loginDoc.toJson());
   m_nexusLogin->sendTextMessage(finalMessage);
   QDesktopServices::openUrl(QUrl(QString("https://www.nexusmods.com/sso?id=") + QString(boost::uuids::to_string(sessionId).c_str())));
+  m_loginTimer.start(30000);
+}
+
+void SettingsDialog::loginPing()
+{
+  if (m_nexusLogin->isValid()) {
+    m_nexusLogin->ping();
+    m_totalPings++;
+  }
+  if (m_totalPings >= 10) {
+    m_loginTimer.stop();
+    m_totalPings = 0;
+    m_nexusLogin->close(QWebSocketProtocol::CloseCodeGoingAway, "Timeout: No response received after five minutes. Cancelling request.");
+  }
 }
 
 void SettingsDialog::receiveApiKey(const QString &apiKey)
@@ -361,6 +376,8 @@ void SettingsDialog::receiveApiKey(const QString &apiKey)
   emit processApiKey(apiKey);
   m_nexusLogin->close();
   ui->nexusConnect->setText("Nexus API Key Stored");
+  m_loginTimer.stop();
+  m_totalPings = 0;
 }
 
 void SettingsDialog::completeApiConnection()
@@ -433,6 +450,11 @@ void SettingsDialog::on_clearCacheButton_clicked()
 {
   QDir(Settings::instance().getCacheDirectory()).removeRecursively();
   NexusInterface::instance(m_PluginContainer)->clearCache();
+}
+
+void SettingsDialog::on_revokeNexusAuthButton_clicked()
+{
+  emit revokeApiKey(ui->nexusConnect);
 }
 
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)

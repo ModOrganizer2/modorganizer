@@ -307,9 +307,9 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
           SLOT(removeOrigin(QString)));
 
   connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
-          SIGNAL(loginSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
+          SIGNAL(validateSuccessful(bool)), this, SLOT(loginSuccessful(bool)));
   connect(NexusInterface::instance(m_PluginContainer)->getAccessManager(),
-          SIGNAL(loginFailed(QString)), this, SLOT(loginFailed(QString)));
+          SIGNAL(validateFailed(QString)), this, SLOT(loginFailed(QString)));
 
   // This seems awfully imperative
   connect(this, SIGNAL(managedGameChanged(MOBase::IPluginGame const *)),
