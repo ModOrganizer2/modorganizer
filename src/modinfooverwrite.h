@@ -33,6 +33,7 @@ public:
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual void parseNexusInfo() {}
   virtual bool alwaysEnabled() const { return true; }
   virtual bool isEmpty() const;
   virtual QString name() const { return "Overwrite"; }

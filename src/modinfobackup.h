@@ -17,6 +17,7 @@ public:
   virtual void setGameName(QString) {}
   virtual void setNexusID(int) {}
   virtual void endorse(bool) {}
+  virtual void parseNexusInfo() {}
   virtual int getFixedPriority() const { return -1; }
   virtual void ignoreUpdate(bool) {}
   virtual bool canBeUpdated() const { return false; }

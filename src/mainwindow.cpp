@@ -5433,51 +5433,77 @@ void MainWindow::modDetailsUpdated(bool)
   }
 }
 
-void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int)
+void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
-  m_ModsToUpdate -= static_cast<int>(modIDs.size());
-  QVariantList resultList = resultData.toList();
-  for (auto iter = resultList.begin(); iter != resultList.end(); ++iter) {
-    QVariantMap result = iter->toMap();
-    // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
-    IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
-    if (game
-          && result["id"].toInt() == game->nexusModOrganizerID()
-          && result["game_id"].toInt() == game->nexusGameID()) {
-      if (!result["voted_by_user"].toBool() &&
-          Settings::instance().endorsementIntegration() &&
-          !Settings::instance().directInterface().value("wont_endorse_MO", false).toBool()) {
-        ui->actionEndorseMO->setVisible(true);
-      }
-    } else {
-      QString gameName = m_OrganizerCore.managedGame()->gameShortName();
-      bool sameNexus = false;
-      for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
-        if (game->nexusGameID() == result["game_id"].toInt()) {
-          gameName = game->gameShortName();
-          if (game->nexusGameID() == m_OrganizerCore.managedGame()->nexusGameID())
-            sameNexus = true;
-          break;
-        }
-      }
-      std::vector<ModInfo::Ptr> info = ModInfo::getByModID(gameName, result["id"].toInt());
-      if (sameNexus) {
-        std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), result["id"].toInt());
-        info.reserve(info.size() + mainInfo.size());
-        info.insert(info.end(), mainInfo.begin(), mainInfo.end());
-      }
-      for (auto iter = info.begin(); iter != info.end(); ++iter) {
-        (*iter)->setNewestVersion(result["version"].toString());
-        (*iter)->setNexusDescription(result["description"].toString());
-        if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated() &&
-            result.contains("voted_by_user") &&
-            Settings::instance().endorsementIntegration()) {
-          // don't use endorsement info if we're not logged in or if the response doesn't contain it
-          (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
-        }
-      }
+  QVariantMap resultInfo = resultData.toMap();
+  QList files = resultInfo["files"].toList();
+  QList fileUpdates = resultInfo["file_updates"].toList();
+  bool foundUpdate = false;
+  m_ModsToUpdate--;
+  bool sameNexus = false;
+  for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+    if (game->gameShortName() == gameName) {
+      if (game->nexusGameID() == m_OrganizerCore.managedGame()->nexusGameID())
+        sameNexus = true;
+      break;
     }
   }
+  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+  // Not clear to me what this is accomplishing?
+  //if (sameNexus) {
+  //  std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), modID);
+  //  info.reserve(info.size() + mainInfo.size());
+  //  info.insert(info.end(), mainInfo.begin(), mainInfo.end());
+  //}
+  for (auto mod : modsList) {
+    QString installedFile = mod->getInstallationFile();
+    for (auto update : fileUpdates) {
+      QVariantMap updateData = update.toMap();
+      if (installedFile == updateData["old_file_name"].toString()) {
+        int currentUpdate = updateData["new_file_id"].toInt();
+        bool finalUpdate = false;
+        while (!finalUpdate) {
+          finalUpdate = true;
+          for (auto updateScan : fileUpdates) {
+            QVariantMap updateScanData = updateScan.toMap();
+            if (currentUpdate == updateScanData["old_file_id"].toInt()) {
+              currentUpdate = updateScanData["new_file_id"].toInt();
+              finalUpdate = false;
+              break;
+            }
+          }
+        }
+        for (auto file : files) {
+          QVariantMap fileData = file.toMap();
+          if (fileData["file_id"].toInt() == currentUpdate) {
+            mod->setNewestVersion(fileData["version"].toString());
+            foundUpdate = true;
+          }
+        }
+
+        break;
+      }
+    }
+
+    if (foundUpdate) {
+      mod->updateNXMInfo();
+    }
+    else {
+      NexusInterface::instance(&m_PluginContainer)->requestDescription(gameName, modID, this, QVariant(), QString());
+    }
+  }
+
+  // Old endorsement and mod info updater
+  //for
+  //  if (updateData["old_file_id"].toInt() == mod->readMeta())
+  //    (*iter)->setNewestVersion(result["version"].toString());
+  //(*iter)->setNexusDescription(result["description"].toString());
+  //if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated() &&
+  //  result.contains("voted_by_user") &&
+  //  Settings::instance().endorsementIntegration()) {
+  //  // don't use endorsement info if we're not logged in or if the response doesn't contain it
+  //  (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
+  //}
 
   if (m_ModsToUpdate <= 0) {
     statusBar()->hide();
@@ -5488,18 +5514,41 @@ void MainWindow::nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant us
         break;
       }
     }
-  } else {
+  }
+  else {
     m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
   }
+}
+
+void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
+{
+  QVariantMap result = resultData.toMap();
+  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+  for (auto mod : modsList) {
+    mod->setNexusDescription(result["description"].toString());
+
+    if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
+      QVariantMap endorsement = result["endorsement"].toMap();
+      QString endorsementStatus = endorsement["endorse_status"].toString();
+      if (endorsementStatus.compare("Endorsed") == 00)
+        mod->setIsEndorsed(true);
+      else if (endorsementStatus.compare("Abstained") == 00)
+        mod->setNeverEndorse();
+      else
+        mod->setIsEndorsed(false);
+    }
+  }
+  disconnect(sender(), SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)),
+    this, SLOT(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)));
 }
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
   QMap results = resultData.toMap();
-  if (results["code"].toInt() == 200) {
+  if (results["code"].toInt() == 200 || results["code"].toInt() == 201) {
     if (results["status"].toString().compare("Endorsed") == 0) {
       QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-    } else {
+    } else if (results["status"].toString().compare("Abstained") == 0) {
       QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
     }
     ui->actionEndorseMO->setVisible(false);
@@ -5529,14 +5578,22 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
 }
 
 
-void MainWindow::nxmRequestFailed(QString, int modID, int, QVariant, int, const QString &errorString)
+void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
   if (modID == -1) {
     // must be the update-check that failed
     m_ModsToUpdate = 0;
     statusBar()->hide();
   }
-  MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
+  if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
+    std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+    for (auto mod : modsList) {
+      mod->setNexusID(-1);
+    }
+    MessageDialog::showMessage(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID), this);
+  } else {
+    MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
+  }
 }
 
 

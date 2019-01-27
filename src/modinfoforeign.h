@@ -31,6 +31,7 @@ public:
   virtual void setNeverEndorse() {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual void parseNexusInfo() {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;
   virtual QString internalName() const { return name(); }

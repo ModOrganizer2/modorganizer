@@ -56,7 +56,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
           , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QString))
-          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QString)));
+          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant, QNetworkReply::NetworkError,QString)));
 }
 
 
@@ -213,13 +213,17 @@ bool ModInfoRegular::downgradeAvailable() const
 void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant resultData)
 {
   QVariantMap result = resultData.toMap();
-  setNewestVersion(VersionInfo(result["version"].toString()));
   setNexusDescription(result["description"].toString());
 
   if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("endorsement"))) {
     QVariantMap endorsement = result["endorsement"].toMap();
     QString endorsementStatus = endorsement["endorse_status"].toString();
-    setEndorsedState(endorsementStatus.compare("Endorsed") == 0 ? ENDORSED_TRUE : ENDORSED_FALSE);
+    if (endorsementStatus.compare("Endorsed") == 00)
+      setEndorsedState(ENDORSED_TRUE);
+    else if (endorsementStatus.compare("Abstained") == 00)
+      setEndorsedState(ENDORSED_NEVER);
+    else
+      setEndorsedState(ENDORSED_FALSE);
   }
   m_LastNexusQuery = QDateTime::currentDateTime();
   //m_MetaInfoChanged = true;
@@ -234,6 +238,8 @@ void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resu
   if (results["code"].toInt() == 200 || results["code"].toInt() == 201) {
     if (results["status"].toString().compare("Endorsed") == 0) {
       m_EndorsedState = ENDORSED_TRUE;
+    } else if (results["status"].toString().compare("Abstained") == 0) {
+      m_EndorsedState = ENDORSED_NEVER;
     } else {
       m_EndorsedState = ENDORSED_FALSE;
     }
@@ -244,7 +250,7 @@ void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resu
 }
 
 
-void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, const QString &errorMessage)
+void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {

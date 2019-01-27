@@ -353,7 +353,7 @@ private slots:
 
   void nxmDescriptionAvailable(QString, int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(QString, int, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, const QString &errorMessage);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 protected:
 

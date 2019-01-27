@@ -201,8 +201,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
-    m_DateExpression("/Date\\((\\d+)\\)/")
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
 {
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
   m_TimeoutTimer.setSingleShot(false);
@@ -1429,18 +1428,6 @@ void DownloadManager::nxmDescriptionAvailable(QString, int, QVariant userData, Q
   }
 }
 
-
-QDateTime DownloadManager::matchDate(const QString &timeString)
-{
-  if (m_DateExpression.exactMatch(timeString)) {
-    return QDateTime::fromMSecsSinceEpoch(m_DateExpression.cap(1).toLongLong());
-  } else {
-    qWarning("date not matched: %s", qUtf8Printable(timeString));
-    return QDateTime::currentDateTime();
-  }
-}
-
-
 void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
@@ -1453,7 +1440,9 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == nullptr) return;
 
-  QVariantList result = resultData.toList();
+  QVariantMap result = resultData.toMap();
+  QVariantList files = result["files"].toList();
+
 
   // MO sometimes prepends <digit>_ to the filename in case of duplicate downloads.
   // this may muck up the file name comparison
@@ -1466,9 +1455,9 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
 
   bool found = false;
 
-  for (QVariant file : result) {
+  for (QVariant file : files) {
     QVariantMap fileInfo = file.toMap();
-    QString fileName = fileInfo["uri"].toString();
+    QString fileName = fileInfo["file_name"].toString();
     QString fileNameVariant = fileName.mid(0).replace(' ', '_');
     if ((fileName == info->m_FileName) || (fileName == alternativeLocalName) ||
         (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
@@ -1478,10 +1467,10 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
       info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
-      info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
-      info->m_FileInfo->fileID = fileInfo["id"].toInt();
-      info->m_FileInfo->fileName = fileInfo["uri"].toString();
-      info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["description"].toString());
+      info->m_FileInfo->fileTime = QDateTime::fromMSecsSinceEpoch(fileInfo["uploaded_timestamp"].toLongLong());
+      info->m_FileInfo->fileID = fileInfo["file_id"].toInt();
+      info->m_FileInfo->fileName = fileInfo["file_name"].toString();
+      info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["changelog_html"].toString());
       found = true;
       break;
     }
@@ -1496,14 +1485,14 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
       for (QVariant file : result) {
         QVariantMap fileInfo = file.toMap();
-        selection.addChoice(fileInfo["uri"].toString(), "", file);
+        selection.addChoice(fileInfo["file_name"].toString(), "", file);
       }
       if (selection.exec() == QDialog::Accepted) {
         QVariantMap fileInfo = selection.getChoiceData().toMap();
         info->m_FileInfo->name = fileInfo["name"].toString();
         info->m_FileInfo->version.parse(fileInfo["version"].toString());
         info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
-        info->m_FileInfo->fileID = fileInfo["id"].toInt();
+        info->m_FileInfo->fileID = fileInfo["file_id"].toInt();
       } else {
         emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
       }
@@ -1538,7 +1527,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   }
   info->fileName = result["file_name"].toString();
   info->fileCategory = result["category_id"].toInt();
-  info->fileTime = matchDate(result["uploaded_timestamp"].toString());
+  info->fileTime = QDateTime::fromMSecsSinceEpoch(result["uploaded_timestamp"].toLongLong());
   info->description = BBCode::convertToHTML(result["changelog_html"].toString());
 
   info->repository = "Nexus";
@@ -1628,7 +1617,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
 }
 
 
-void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString)
+void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {

@@ -457,7 +457,7 @@ public slots:
 
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
   void managedGameChanged(MOBase::IPluginGame const *gamePlugin);
 
@@ -518,8 +518,6 @@ private:
 
   DownloadInfo *downloadInfoByID(unsigned int id);
 
-  QDateTime matchDate(const QString &timeString);
-
   void removePending(QString gameName, int modID, int fileID);
 
   static QString getFileTypeString(int fileType);
@@ -555,8 +553,6 @@ private:
   std::map<QString, int> m_DownloadFails;
 
   bool m_ShowHidden;
-
-  QRegExp m_DateExpression;
 
   MOBase::IPluginGame const *m_ManagedGame;
 

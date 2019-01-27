@@ -105,7 +105,7 @@ public slots:
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorMessage);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 private:
 
@@ -181,7 +181,7 @@ public:
    * @param game the game with which the mods are associated
    * @return int an id to identify the request
    */
-  int requestUpdates(const std::vector<int> &modIDs, QObject *receiver, QVariant userData, QString gameName, const QString &subModule);
+  int requestUpdates(const int &modID, QObject *receiver, QVariant userData, QString gameName, const QString &subModule);
 
   /**
    * @brief request a list of the files belonging to a mod
@@ -342,12 +342,12 @@ signals:
   void needLogin();
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
 private slots:
 
@@ -387,7 +387,6 @@ private:
 
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
-    NXMRequestInfo(std::vector<int> modIDList, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   private:

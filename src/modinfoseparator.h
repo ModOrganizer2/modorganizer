@@ -20,21 +20,15 @@ public:
 
   virtual int getNexusID() const { return -1; }
 
-  virtual void setGameName(QString /*gameName*/)
-  {
-  }
+  virtual void setGameName(QString /*gameName*/) {}
 
-  virtual void setNexusID(int /*modID*/)
-  {
-  }
+  virtual void setNexusID(int /*modID*/) {}
 
-  virtual void endorse(bool /*doEndorse*/)
-  {
-  }
+  virtual void endorse(bool /*doEndorse*/) {}
 
-  virtual void ignoreUpdate(bool /*ignore*/)
-  {
-  }
+  virtual void parseNexusInfo() {}
+
+  virtual void ignoreUpdate(bool /*ignore*/) {}
 
   virtual bool canBeUpdated() const { return false; }
   virtual bool canBeEnabled() const { return false; }

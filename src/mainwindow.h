@@ -508,10 +508,11 @@ private slots:
 
   void modInstalled(const QString &modName);
 
-  void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
   void editCategories();
   void deselectFilters();

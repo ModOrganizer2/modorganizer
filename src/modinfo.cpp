@@ -285,30 +285,15 @@ ModInfo::ModInfo(PluginContainer *pluginContainer)
 }
 
 
-void ModInfo::checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName)
-{
-  if (modIDs.size() != 0) {
-    NexusInterface::instance(pluginContainer)->requestUpdates(modIDs, receiver, QVariant(), gameName, QString());
-  }
-}
-
-
 int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
 {
-  // technically this should be 255 but those requests can take nexus fairly long, produce
-  // large output and may have been the cause of issue #1166
-  static const int chunkSize = 64;
-
   int result = 0;
-  std::vector<int> modIDs;
 
-  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
-  IPluginGame const *game = pluginContainer->managedGame("Skyrim Special Edition");
-  if (game && game->nexusModOrganizerID()) {
-    modIDs.push_back(game->nexusModOrganizerID());
-    checkChunkForUpdate(pluginContainer, modIDs, receiver, game->gameShortName());
-    modIDs.clear();
-  }
+  // MO2 endorsement status is no longer available via this method - an alternative must be found
+  //IPluginGame const *game = pluginContainer->managedGame("Skyrim Special Edition");
+  //if (game && game->nexusModOrganizerID()) {
+  //  NexusInterface::instance(pluginContainer)->requestUpdates(game->nexusModOrganizerID(), receiver, QVariant(), game->gameShortName(), QString());
+  //}
 
   std::multimap<QString, QSharedPointer<ModInfo>> organizedGames;
   for (auto mod : s_Collection) {
@@ -317,23 +302,9 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
     }
   }
 
-  QString currentGame = "";
   for (auto game : organizedGames) {
-    if (currentGame != game.first) {
-      if (currentGame != "") {
-        checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
-        modIDs.clear();
-      }
-      currentGame = game.first;
-    }
-    modIDs.push_back(game.second->getNexusID());
-    if (modIDs.size() >= chunkSize) {
-      checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
-      modIDs.clear();
-    }
+    NexusInterface::instance(pluginContainer)->requestUpdates(game.second->getNexusID(), receiver, QVariant(), game.first, QString());
   }
-
-  checkChunkForUpdate(pluginContainer, modIDs, receiver, currentGame);
 
   return result;
 }
