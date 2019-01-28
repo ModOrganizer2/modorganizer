@@ -155,6 +155,10 @@ NexusInterface::NexusInterface(PluginContainer *pluginContainer)
   m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString(3));
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
+
+  m_RetryTimer.setSingleShot(true);
+  m_RetryTimer.setInterval(1000);
+  m_RetryTimer.callOnTimeout(this, &NexusInterface::nextRequest);
 }
 
 NXMAccessManager *NexusInterface::getAccessManager()
@@ -471,6 +475,7 @@ void NexusInterface::nextRequest()
 
   if (m_RemainingRequests <= 0) {
     qWarning() << tr("You've exceeded the Nexus API rate limit and requests are now being throttled.");
+    m_RetryTimer.start();
     return;
   }
 
@@ -551,12 +556,15 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   QNetworkReply *reply = iter->m_Reply;
 
   if (reply->error() != QNetworkReply::NoError) {
-    qWarning("request failed: %s", reply->errorString().toUtf8().constData());
-    emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 429) {
       m_RemainingRequests = 0;
-      qWarning() << tr("Requests have hit the rate limit threshold and are now being throttled.");
+      qWarning("Requests have hit the rate limit threshold and are now being throttled. This request will be retried.");
+      qWarning("Error: %s", reply->errorString().toUtf8().constData());
+      m_RequestQueue.enqueue(*iter);
+    } else {
+      qWarning("request failed: %s", reply->errorString().toUtf8().constData());
+      emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
     }
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
