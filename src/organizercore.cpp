@@ -1207,7 +1207,11 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
            i < currentProfile()->getPriorityMinimum() + (int)currentProfile()->numRegularMods();
            ++i) {
     int modIndex = currentProfile()->modIndexByPriority(i);
-    res.push_back(ModInfo::getByIndex(modIndex)->name());
+    auto modInfo = ModInfo::getByIndex(modIndex);
+    if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) && 
+        !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
+      res.push_back(ModInfo::getByIndex(modIndex)->name());
+    } 
   }
   return res;
 }
