@@ -139,7 +139,7 @@ void NexusBridge::nxmRequestFailed(QString gameName, int modID, int fileID, QVar
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
-    emit requestFailed(gameName, modID, fileID, userData, errorMessage);
+    emit requestFailed(gameName, modID, fileID, userData, error, errorMessage);
   }
 }
 

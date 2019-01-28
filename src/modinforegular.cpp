@@ -55,8 +55,8 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
           , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QString))
-          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant, QNetworkReply::NetworkError,QString)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString))
+          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString)));
 }
 
 
