@@ -396,6 +396,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
+    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -429,6 +431,11 @@ MainWindow::MainWindow(QSettings &initSettings
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
+
+  m_NexusLimitTimer.setTimerType(Qt::TimerType::PreciseTimer);
+  m_NexusLimitTimer.setSingleShot(false);
+  connect(&m_NexusLimitTimer, SIGNAL(timeout()), NexusInterface::instance(&m_PluginContainer), SLOT(calculateRequests()));
+  m_NexusLimitTimer.start(1000);
 
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -5526,6 +5533,7 @@ void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant u
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
   for (auto mod : modsList) {
     mod->setNexusDescription(result["description"].toString());
+    mod->setNewestVersion(result["version"].toString());
 
     if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
       QVariantMap endorsement = result["endorsement"].toMap();

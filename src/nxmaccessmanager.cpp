@@ -252,8 +252,7 @@ void NXMAccessManager::validateFinished()
     QString test = jdoc.toJson();
     QString name = credentialsData.value("name").toString();
     bool premium = credentialsData.value("is_premium?").toBool();
-    emit credentialsReceived(credentialsData.value("name").toString(),
-      credentialsData.value("is_premium?").toBool());
+    emit credentialsReceived(name, premium);
 
     m_ValidateReply->deleteLater();
     m_ValidateReply = nullptr;

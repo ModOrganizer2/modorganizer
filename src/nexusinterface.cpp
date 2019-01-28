@@ -148,7 +148,7 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
-  : m_NMMVersion(), m_PluginContainer(pluginContainer)
+  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingRequests(300), m_MaxRequests(300)
 {
   m_MOVersion = createVersionInfo();
 
@@ -190,6 +190,16 @@ void NexusInterface::loginCompleted()
   nextRequest();
 }
 
+void NexusInterface::setRateMax(const QString &userName, bool isPremium)
+{
+  if (isPremium) {
+    m_MaxRequests = 600;
+    m_RemainingRequests = 600;
+  } else {
+    m_MaxRequests = 300;
+    m_RemainingRequests = 300;
+  }
+}
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
 {
@@ -459,6 +469,11 @@ void NexusInterface::nextRequest()
     return;
   }
 
+  if (m_RemainingRequests <= 0) {
+    qWarning() << tr("You've exceeded the Nexus API rate limit and requests are now being throttled.");
+    return;
+  }
+
   if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->validated()) {
     if (!getAccessManager()->validateAttempted()) {
       emit needLogin();
@@ -467,6 +482,8 @@ void NexusInterface::nextRequest()
       return;
     }
   }
+
+  m_RemainingRequests--;
 
   NXMRequestInfo info = m_RequestQueue.dequeue();
   info.m_Timeout = new QTimer(this);
@@ -634,6 +651,12 @@ void NexusInterface::requestTimeout()
   }
 }
 
+void NexusInterface::calculateRequests()
+{
+  if (m_RemainingRequests < m_MaxRequests)
+    m_RemainingRequests++;
+}
+
 namespace {
   QString get_management_url(MOBase::IPluginGame const *game)
   {
@@ -661,7 +684,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
-{}
+{
+}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , QString modVersion

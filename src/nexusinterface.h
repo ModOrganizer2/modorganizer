@@ -349,6 +349,11 @@ signals:
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
+public slots:
+
+  void setRateMax(const QString &userName, bool isPremium);
+  void calculateRequests();
+
 private slots:
 
   void requestFinished();
@@ -417,6 +422,9 @@ private:
   QString m_NMMVersion;
 
   PluginContainer *m_PluginContainer;
+
+  int m_RemainingRequests;
+  int m_MaxRequests;
 
 };
 

@@ -348,6 +348,7 @@ private:
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
+  QTimer m_NexusLimitTimer;
 
   QFuture<void> m_MetaSave;
 
