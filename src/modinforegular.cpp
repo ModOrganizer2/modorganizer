@@ -235,18 +235,16 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
 void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData)
 {
   QMap results = resultData.toMap();
-  if (results["code"].toInt() == 200 || results["code"].toInt() == 201) {
-    if (results["status"].toString().compare("Endorsed") == 0) {
-      m_EndorsedState = ENDORSED_TRUE;
-    } else if (results["status"].toString().compare("Abstained") == 0) {
-      m_EndorsedState = ENDORSED_NEVER;
-    } else {
-      m_EndorsedState = ENDORSED_FALSE;
-    }
-    m_MetaInfoChanged = true;
-    saveMeta();
-    emit modDetailsUpdated(true);
+  if (results["status"].toString().compare("Endorsed") == 0) {
+    m_EndorsedState = ENDORSED_TRUE;
+  } else if (results["status"].toString().compare("Abstained") == 0) {
+    m_EndorsedState = ENDORSED_NEVER;
+  } else {
+    m_EndorsedState = ENDORSED_FALSE;
   }
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
 }
 
 

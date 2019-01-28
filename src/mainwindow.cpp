@@ -5569,17 +5569,15 @@ void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant u
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
 {
   QMap results = resultData.toMap();
-  if (results["code"].toInt() == 200 || results["code"].toInt() == 201) {
-    if (results["status"].toString().compare("Endorsed") == 0) {
-      QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
-    } else if (results["status"].toString().compare("Abstained") == 0) {
-      QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
-    }
-    ui->actionEndorseMO->setVisible(false);
-    if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
-      this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
-      qCritical("failed to disconnect endorsement slot");
-    }
+  if (results["status"].toString().compare("Endorsed") == 0) {
+    QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+  } else if (results["status"].toString().compare("Abstained") == 0) {
+    QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
+  }
+  ui->actionEndorseMO->setVisible(false);
+  if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+    this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
+    qCritical("failed to disconnect endorsement slot");
   }
 }
 
