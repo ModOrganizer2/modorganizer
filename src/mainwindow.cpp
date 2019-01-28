@@ -5466,9 +5466,11 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     QString installedFile = mod->getInstallationFile();
     for (auto update : fileUpdates) {
       QVariantMap updateData = update.toMap();
+      // Locate the current install file as an update
       if (installedFile == updateData["old_file_name"].toString()) {
         int currentUpdate = updateData["new_file_id"].toInt();
         bool finalUpdate = false;
+        // Crawl the updates to make sure we have the latest file version
         while (!finalUpdate) {
           finalUpdate = true;
           for (auto updateScan : fileUpdates) {
@@ -5480,6 +5482,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
             }
           }
         }
+        // Apply the version data from the latest file
         for (auto file : files) {
           QVariantMap fileData = file.toMap();
           if (fileData["file_id"].toInt() == currentUpdate) {
@@ -5489,13 +5492,26 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
         }
 
         break;
+      } else if (installedFile == updateData["new_file_name"]) {
+        // This is a safety mechanism if this is the latest update file so we don't use the mod version
+        if (!foundUpdate) {
+          for (auto file : files) {
+            QVariantMap fileData = file.toMap();
+            if (fileData["file_id"].toInt() == updateData["new_file_id"]) {
+              mod->setVersion(fileData["version"].toString());
+              mod->setNewestVersion(fileData["version"].toString());
+              foundUpdate = true;
+            }
+          }
+        }
       }
     }
 
     if (foundUpdate) {
+      // Just get the standard data updates for endorsements and descriptions
       mod->updateNXMInfo();
-    }
-    else {
+    } else {
+      // Scrape mod data here so we can use the mod version if no file update was located
       NexusInterface::instance(&m_PluginContainer)->requestDescription(gameName, modID, this, QVariant(), QString());
     }
   }
