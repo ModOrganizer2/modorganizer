@@ -553,6 +553,11 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   if (reply->error() != QNetworkReply::NoError) {
     qWarning("request failed: %s", reply->errorString().toUtf8().constData());
     emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
+    int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 429) {
+      m_RemainingRequests = 0;
+      qWarning() << tr("Requests have hit the rate limit threshold and are now being throttled.");
+    }
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 301) {
