@@ -564,8 +564,8 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       m_RequestQueue.enqueue(*iter);
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
-      emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
     }
+    emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), reply->errorString());
   } else {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 301) {
