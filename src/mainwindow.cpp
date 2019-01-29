@@ -5455,14 +5455,14 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   bool foundUpdate = false;
   m_ModsToUpdate--;
   bool sameNexus = false;
+  QString gameNameReal;
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
-    if (game->gameShortName() == gameName) {
-      if (game->nexusGameID() == m_OrganizerCore.managedGame()->nexusGameID())
-        sameNexus = true;
+    if (game->gameNexusName() == gameName) {
+      gameNameReal = game->gameShortName();
       break;
     }
   }
-  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
   // Not clear to me what this is accomplishing?
   //if (sameNexus) {
   //  std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), modID);
@@ -5553,7 +5553,14 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   QVariantMap result = resultData.toMap();
-  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+  QString gameNameReal;
+  for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+    if (game->gameNexusName() == gameName) {
+      gameNameReal = game->gameShortName();
+      break;
+    }
+  }
+  std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
   for (auto mod : modsList) {
     mod->setNexusDescription(result["description"].toString());
     mod->setNewestVersion(result["version"].toString());
@@ -5615,7 +5622,14 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     statusBar()->hide();
   }
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
-    std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameName, modID);
+    QString gameNameReal;
+    for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+      if (game->gameNexusName() == gameName) {
+        gameNameReal = game->gameShortName();
+        break;
+      }
+    }
+    std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
     for (auto mod : modsList) {
       mod->setNexusID(-1);
     }

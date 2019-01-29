@@ -157,7 +157,7 @@ NexusInterface::NexusInterface(PluginContainer *pluginContainer)
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
 
   m_RetryTimer.setSingleShot(true);
-  m_RetryTimer.setInterval(1000);
+  m_RetryTimer.setInterval(2000);
   m_RetryTimer.callOnTimeout(this, &NexusInterface::nextRequest);
 }
 
@@ -476,7 +476,8 @@ void NexusInterface::nextRequest()
 
   if (m_RemainingRequests <= 0) {
     qWarning() << tr("You've exceeded the Nexus API rate limit and requests are now being throttled.");
-    m_RetryTimer.start();
+    if (!m_RetryTimer.isActive())
+      m_RetryTimer.start();
     return;
   }
 
