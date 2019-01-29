@@ -515,6 +515,8 @@ private slots:
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
+  void updateAPICounter(int queueCount, int requestsRemaining);
+
   void editCategories();
   void deselectFilters();
 

@@ -348,6 +348,7 @@ signals:
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
+  void requestsChanged(int queueCount, int requestsRemaining);
 
 public slots:
 

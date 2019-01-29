@@ -363,6 +363,12 @@ MainWindow::MainWindow(QSettings &initSettings
     ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
   }
 
+  ui->apiRequests->setAutoFillBackground(true);
+  QPalette palette = ui->apiRequests->palette();
+  palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
+  palette.setColor(ui->apiRequests->foregroundRole(), Qt::white);
+  ui->apiRequests->setPalette(palette);
+
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
@@ -398,6 +404,7 @@ MainWindow::MainWindow(QSettings &initSettings
           this, SLOT(updateWindowTitle(const QString&, bool)));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
     NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, int)), this, SLOT(updateAPICounter(int, int)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -5615,6 +5622,25 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     MessageDialog::showMessage(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID), this);
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
+  }
+}
+
+
+void MainWindow::updateAPICounter(int queueCount, int requestsRemaining)
+{
+  ui->apiRequests->setText(QString("API: Q: %1 | T: %2").arg(queueCount).arg(requestsRemaining));
+  if (requestsRemaining > 150) {
+    QPalette palette = ui->apiRequests->palette();
+    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
+    ui->apiRequests->setPalette(palette);
+  } else if (requestsRemaining < 50) {
+    QPalette palette = ui->apiRequests->palette();
+    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkRed);
+    ui->apiRequests->setPalette(palette);
+  } else {
+    QPalette palette = ui->apiRequests->palette();
+    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkYellow);
+    ui->apiRequests->setPalette(palette);
   }
 }
 

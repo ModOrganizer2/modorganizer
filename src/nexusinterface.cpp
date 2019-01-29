@@ -203,6 +203,7 @@ void NexusInterface::setRateMax(const QString &userName, bool isPremium)
     m_MaxRequests = 300;
     m_RemainingRequests = 300;
   }
+  emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
 }
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
@@ -543,6 +544,7 @@ void NexusInterface::nextRequest()
   connect(info.m_Timeout, SIGNAL(timeout()), this, SLOT(requestTimeout()));
   info.m_Timeout->start();
   m_ActiveRequest.push_back(info);
+  emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
 }
 
 
@@ -559,6 +561,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 429) {
       m_RemainingRequests = 0;
+      emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
       qWarning("Requests have hit the rate limit threshold and are now being throttled. This request will be retried.");
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
       m_RequestQueue.enqueue(*iter);
@@ -666,8 +669,10 @@ void NexusInterface::requestTimeout()
 
 void NexusInterface::calculateRequests()
 {
-  if (m_RemainingRequests < m_MaxRequests)
+  if (m_RemainingRequests < m_MaxRequests) {
     m_RemainingRequests++;
+    emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
+  }
 }
 
 namespace {
