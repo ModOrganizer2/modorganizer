@@ -252,7 +252,15 @@ void NXMAccessManager::validateFinished()
     QString test = jdoc.toJson();
     QString name = credentialsData.value("name").toString();
     bool premium = credentialsData.value("is_premium?").toBool();
-    emit credentialsReceived(name, premium);
+
+    std::tuple<int, int, int, int> limits(std::make_tuple(
+      m_ValidateReply->rawHeader("x-rl-daily-remaining").toInt(),
+      m_ValidateReply->rawHeader("x-rl-daily-limit").toInt(),
+      m_ValidateReply->rawHeader("x-rl-hourly-remaining").toInt(),
+      m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
+    ));
+
+    emit credentialsReceived(name, premium, limits);
 
     m_ValidateReply->deleteLater();
     m_ValidateReply = nullptr;

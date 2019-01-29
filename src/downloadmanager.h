@@ -40,6 +40,7 @@ namespace MOBase { class IPluginGame; }
 
 class NexusInterface;
 class PluginContainer;
+class OrganizerCore;
 
 /*!
  * \brief manages downloading of files and provides progress information for gui elements
@@ -531,6 +532,8 @@ private:
 private:
 
   NexusInterface *m_NexusInterface;
+
+  OrganizerCore *m_OrganizerCore;
 
   QVector<std::tuple<QString, int, int>> m_PendingDownloads;
 

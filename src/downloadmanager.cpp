@@ -19,11 +19,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadmanager.h"
 
+#include "organizercore.h"
 #include "nxmurl.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "iplugingame.h"
-#include "downloadmanager.h"
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
@@ -203,6 +203,7 @@ QString DownloadManager::DownloadInfo::currentURL()
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
   : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
 {
+  m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
   m_TimeoutTimer.setSingleShot(false);
   //connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
@@ -1532,7 +1533,16 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   info->description = BBCode::convertToHTML(result["changelog_html"].toString());
 
   info->repository = "Nexus";
-  info->gameName = gameName;
+
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      info->gameName = gamePlugin->gameShortName();
+    }
+  }
+
   info->modID = modID;
   info->fileID = fileID;
 
@@ -1597,10 +1607,21 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     m_RequestIDs.erase(idIter);
   }
 
+  QString gameShortName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin->gameNexusName() == gameName) {
+      gameShortName = gamePlugin->gameShortName();
+      break;
+    }
+  }
+
   ModRepositoryFileInfo *info = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
   QVariantList resultList = resultData.toList();
   if (resultList.length() == 0) {
-    removePending(gameName, modID, fileID);
+    removePending(gameShortName, modID, fileID);
     emit showMessage(tr("No download server available. Please try again later."));
     return;
   }
@@ -1614,7 +1635,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
   foreach (const QVariant &server, resultList) {
     URLs.append(server.toMap()["URI"].toString());
   }
-  addDownload(URLs, gameName, modID, fileID, info);
+  addDownload(URLs, gameShortName, modID, fileID, info);
 }
 
 

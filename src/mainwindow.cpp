@@ -402,9 +402,9 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
-    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, int)), this, SLOT(updateAPICounter(int, int)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
+    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool, std::tuple<int, int, int, int>)));
+  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, std::tuple<int, int, int, int>)), this, SLOT(updateAPICounter(int, std::tuple<int, int, int, int>)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -438,11 +438,6 @@ MainWindow::MainWindow(QSettings &initSettings
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
-
-  m_NexusLimitTimer.setTimerType(Qt::TimerType::PreciseTimer);
-  m_NexusLimitTimer.setSingleShot(false);
-  connect(&m_NexusLimitTimer, SIGNAL(timeout()), NexusInterface::instance(&m_PluginContainer), SLOT(calculateRequests()));
-  m_NexusLimitTimer.start(1000);
 
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -5640,14 +5635,15 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
 }
 
 
-void MainWindow::updateAPICounter(int queueCount, int requestsRemaining)
+void MainWindow::updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits)
 {
-  ui->apiRequests->setText(QString("API: Q: %1 | T: %2").arg(queueCount).arg(requestsRemaining));
-  if (requestsRemaining > 150) {
+  ui->apiRequests->setText(QString("API: Q: %1 | D: %2 | H: %3").arg(queueCount).arg(std::get<0>(limits)).arg(std::get<2>(limits)));
+  int requestsRemaining = std::get<0>(limits) + std::get<2>(limits);
+  if (requestsRemaining > 300) {
     QPalette palette = ui->apiRequests->palette();
     palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
     ui->apiRequests->setPalette(palette);
-  } else if (requestsRemaining < 50) {
+  } else if (requestsRemaining < 150) {
     QPalette palette = ui->apiRequests->palette();
     palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkRed);
     ui->apiRequests->setPalette(palette);

@@ -348,7 +348,6 @@ private:
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
-  QTimer m_NexusLimitTimer;
 
   QFuture<void> m_MetaSave;
 
@@ -515,7 +514,7 @@ private slots:
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
-  void updateAPICounter(int queueCount, int requestsRemaining);
+  void updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits);
 
   void editCategories();
   void deselectFilters();

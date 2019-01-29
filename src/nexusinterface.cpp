@@ -148,7 +148,7 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
-  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingRequests(300), m_MaxRequests(300)
+  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingDailyRequests(0), m_RemainingHourlyRequests(0), m_MaxDailyRequests(0), m_MaxHourlyRequests(0)
 {
   m_MOVersion = createVersionInfo();
 
@@ -194,16 +194,13 @@ void NexusInterface::loginCompleted()
   nextRequest();
 }
 
-void NexusInterface::setRateMax(const QString &userName, bool isPremium)
+void NexusInterface::setRateMax(const QString&, bool, std::tuple<int, int, int, int> limits)
 {
-  if (isPremium) {
-    m_MaxRequests = 600;
-    m_RemainingRequests = 600;
-  } else {
-    m_MaxRequests = 300;
-    m_RemainingRequests = 300;
-  }
-  emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
+  m_RemainingDailyRequests = std::get<0>(limits);
+  m_MaxDailyRequests = std::get<1>(limits);
+  m_RemainingHourlyRequests = std::get<2>(limits);
+  m_MaxHourlyRequests = std::get<3>(limits);
+  emit requestsChanged(m_RequestQueue.size(), limits);
 }
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
@@ -474,10 +471,16 @@ void NexusInterface::nextRequest()
     return;
   }
 
-  if (m_RemainingRequests <= 0) {
-    qWarning() << tr("You've exceeded the Nexus API rate limit and requests are now being throttled.");
-    if (!m_RetryTimer.isActive())
-      m_RetryTimer.start();
+  if (m_RemainingDailyRequests + m_RemainingHourlyRequests <= 0) {
+    if (!m_RetryTimer.isActive()) {
+      QTime time = QTime::currentTime();
+      QTime targetTime;
+      targetTime.setHMS((time.hour() + 1) % 23, 0, 5);
+      m_RetryTimer.start(time.msecsTo(targetTime));
+      QString warning("You've exceeded the Nexus API rate limit and requests are now being throttled. "
+        "Your next batch of requests will be available in approximately %1 minutes and %2 seconds.");
+      qWarning() << warning.arg(time.secsTo(targetTime) / 60).arg(time.secsTo(targetTime) % 60);
+    }
     return;
   }
 
@@ -489,8 +492,6 @@ void NexusInterface::nextRequest()
       return;
     }
   }
-
-  m_RemainingRequests--;
 
   NXMRequestInfo info = m_RequestQueue.dequeue();
   info.m_Timeout = new QTimer(this);
@@ -545,7 +546,6 @@ void NexusInterface::nextRequest()
   connect(info.m_Timeout, SIGNAL(timeout()), this, SLOT(requestTimeout()));
   info.m_Timeout->start();
   m_ActiveRequest.push_back(info);
-  emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
 }
 
 
@@ -561,8 +561,6 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   if (reply->error() != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 429) {
-      m_RemainingRequests = 0;
-      emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
       qWarning("Requests have hit the rate limit threshold and are now being throttled. This request will be retried.");
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
       m_RequestQueue.enqueue(*iter);
@@ -617,6 +615,18 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       }
     }
   }
+
+  m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
+  m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
+  m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+  m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
+
+  emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
+    m_RemainingDailyRequests,
+    m_MaxDailyRequests,
+    m_RemainingHourlyRequests,
+    m_MaxHourlyRequests
+  )));
 }
 
 
@@ -665,14 +675,6 @@ void NexusInterface::requestTimeout()
       iter->m_Reply->abort();
       return;
     }
-  }
-}
-
-void NexusInterface::calculateRequests()
-{
-  if (m_RemainingRequests < m_MaxRequests) {
-    m_RemainingRequests++;
-    emit requestsChanged(m_RequestQueue.size(), m_RemainingRequests);
   }
 }
 

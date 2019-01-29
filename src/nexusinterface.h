@@ -348,12 +348,11 @@ signals:
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
-  void requestsChanged(int queueCount, int requestsRemaining);
+  void requestsChanged(int queueCount, std::tuple<int,int,int,int> requestsRemaining);
 
 public slots:
 
-  void setRateMax(const QString &userName, bool isPremium);
-  void calculateRequests();
+  void setRateMax(const QString&, bool, std::tuple<int,int,int,int> limits);
 
 private slots:
 
@@ -426,8 +425,10 @@ private:
 
   QTimer m_RetryTimer;
 
-  int m_RemainingRequests;
-  int m_MaxRequests;
+  int m_RemainingDailyRequests;
+  int m_RemainingHourlyRequests;
+  int m_MaxDailyRequests;
+  int m_MaxHourlyRequests;
 
 };
 
