@@ -550,10 +550,10 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="apiRequests">
                 <property name="toolTip">
-                 <string extracomment="API Queued Requests and Throttle Count">API Queued Requests and Throttle Count</string>
+                 <string>API Queued Requests and Throttle Count</string>
                 </property>
                 <property name="whatsThis">
-                 <string>This tracks the number of queues Nexus API requests on the left and the current requests remaining before being throttled. You have 300 requests as a regular user and 600 as a premium user. These requests renew at the rate of one per second.</string>
+                 <string>This tracks the number of queued Nexus API requests on the left and the current requests remaining before being throttled. You have 300 requests as a regular user and 600 as a premium user. These requests renew at the rate of one per second.</string>
                 </property>
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
