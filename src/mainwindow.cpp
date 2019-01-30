@@ -5558,21 +5558,28 @@ void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant u
   }
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
   for (auto mod : modsList) {
-    mod->setNexusDescription(result["description"].toString());
-    mod->setNewestVersion(result["version"].toString());
-
-    if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
-      QVariantMap endorsement = result["endorsement"].toMap();
-      QString endorsementStatus = endorsement["endorse_status"].toString();
-      if (endorsementStatus.compare("Endorsed") == 00)
-        mod->setIsEndorsed(true);
-      else if (endorsementStatus.compare("Abstained") == 00)
-        mod->setNeverEndorse();
-      else
-        mod->setIsEndorsed(false);
+    QDateTime now = QDateTime::currentDateTimeUtc();
+    QDateTime updateTarget = mod->getLastNexusUpdate().addSecs(3600);
+    QDateTime queryTarget = mod->getLastNexusQuery().addDays(1);
+    if (now >= updateTarget) {
+      mod->setNexusDescription(result["description"].toString());
+      mod->setNewestVersion(result["version"].toString());
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
-    mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-    mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+
+    if (now >= queryTarget) {
+      if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
+        QVariantMap endorsement = result["endorsement"].toMap();
+        QString endorsementStatus = endorsement["endorse_status"].toString();
+        if (endorsementStatus.compare("Endorsed") == 00)
+          mod->setIsEndorsed(true);
+        else if (endorsementStatus.compare("Abstained") == 00)
+          mod->setNeverEndorse();
+        else
+          mod->setIsEndorsed(false);
+      }
+      mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+    }
     mod->saveMeta();
   }
 }
