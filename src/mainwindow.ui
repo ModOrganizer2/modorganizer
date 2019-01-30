@@ -550,10 +550,10 @@ p, li { white-space: pre-wrap; }
               <item>
                <widget class="QLabel" name="apiRequests">
                 <property name="toolTip">
-                 <string>API Queued Requests and Throttle Count</string>
+                 <string>API Queued and Remaining Requests</string>
                 </property>
                 <property name="whatsThis">
-                 <string>This tracks the number of queued Nexus API requests on the left and the current requests remaining before being throttled. You have 300 requests as a regular user and 600 as a premium user. These requests renew at the rate of one per second.</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This tracks the number of queued Nexus API requests on the left (&lt;span style=&quot; font-weight:600;&quot;&gt;Q&lt;/span&gt;) and the remaining daily (&lt;span style=&quot; font-weight:600;&quot;&gt;D&lt;/span&gt;) and hourly (&lt;span style=&quot; font-weight:600;&quot;&gt;H&lt;/span&gt;) requests on the right. The Nexus API limits you to a pool of &lt;span style=&quot; font-weight:600;&quot;&gt;2500&lt;/span&gt; requests per day and &lt;span style=&quot; font-weight:600;&quot;&gt;100&lt;/span&gt; requests per hour. It is dynamically updated every time a request is completed. If you exceed this limit, you will be unable to queue downloads, check updates, parse mod info, or even log in.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
@@ -568,7 +568,7 @@ p, li { white-space: pre-wrap; }
                  <number>1</number>
                 </property>
                 <property name="text">
-                 <string>API: Q: 0 | Ts: 300</string>
+                 <string>API: Q: 0 | D: 0 | H: 0</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignCenter</set>
