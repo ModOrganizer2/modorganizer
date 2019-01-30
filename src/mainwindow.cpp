@@ -5571,6 +5571,8 @@ void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant u
       else
         mod->setIsEndorsed(false);
     }
+    mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+    mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
     mod->saveMeta();
   }
 }
