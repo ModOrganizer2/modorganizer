@@ -929,7 +929,7 @@ void ModInfoDialog::activateNexusTab()
     visitNexusLabel->setToolTip(nexusLink);
 
     if (m_ModInfo->getNexusDescription().isEmpty() ||
-        QDateTime::currentDateTime() > m_ModInfo->getLastNexusQuery().addDays(1)) {
+        QDateTime::currentDateTimeUtc() > m_ModInfo->getLastNexusQuery().addDays(1)) {
       refreshNexusData(modID);
     } else {
       this->modDetailsUpdated(true);

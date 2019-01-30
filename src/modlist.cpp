@@ -371,6 +371,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
       }
+      if (modInfo->canBeUpdated()) {
+        result.setItalic(true);
+      }
     }
     return result;
   } else if (role == Qt::DecorationRole) {
@@ -454,6 +457,15 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
                           "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
                           "Either way you may want to \"upgrade\".");
+      }
+      if (modInfo->getNexusID() > 0) {
+        if (!modInfo->canBeUpdated()) {
+          text += "<br>" + tr("This mod was last checked on %1. It will be available to check after %2.")
+            .arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate))
+            .arg(modInfo->getLastNexusUpdate().toLocalTime().addSecs(3600).time().toString(Qt::DefaultLocaleShortDate));
+        } else {
+          text += "<br>" + tr("This mod is eligible for an update check.");
+        }
       }
       return text;
     } else if (column == COL_CATEGORY) {

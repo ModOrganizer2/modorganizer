@@ -186,11 +186,9 @@ public:
   static unsigned int findMod(const boost::function<bool (ModInfo::Ptr)> &filter);
 
   /**
-   * @brief check a bunch of mods for updates
-   * @param modIDs list of mods (Nexus Mod IDs) to check for updates
-   * @return
+   * @brief run a limited batch of mod update checks for "newest version" information
    */
-  static void checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName);
+  static int autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
@@ -526,9 +524,24 @@ public:
   virtual QString getNexusDescription() const = 0;
 
   /**
+   * @brief get the last time nexus was checked for file updates on this mod
+   */
+  virtual QDateTime getLastNexusUpdate() const = 0;
+
+  /**
+   * @brief set the last time nexus was checked for file updates on this mod
+   */
+  virtual void setLastNexusUpdate(QDateTime time) = 0;
+
+  /**
    * @return last time nexus was queried for infos on this mod
    */
   virtual QDateTime getLastNexusQuery() const = 0;
+
+  /**
+   * @brief set the last time nexus was queried for info on this mod
+   */
+  virtual void setLastNexusQuery(QDateTime time) = 0;
 
   /**
    * @return a list of files that, if they exist in the data directory are treated as files in THIS mod

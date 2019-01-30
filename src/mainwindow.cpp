@@ -400,7 +400,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool)),
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
           this, SLOT(updateWindowTitle(const QString&, bool)));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
     NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool, std::tuple<int, int, int, int>)));
@@ -438,6 +438,10 @@ MainWindow::MainWindow(QSettings &initSettings
   m_SaveMetaTimer.setSingleShot(false);
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
+
+  m_ModUpdateTimer.setSingleShot(false);
+  connect(&m_ModUpdateTimer, SIGNAL(timeout()), this, SLOT(modUpdateCheck()));
+  m_ModUpdateTimer.start(300 * 1000);
 
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -491,6 +495,8 @@ MainWindow::MainWindow(QSettings &initSettings
 
   updatePluginCount();
   updateModCount();
+
+  modUpdateCheck();
 }
 
 
@@ -3996,6 +4002,14 @@ void MainWindow::checkModsForUpdates()
       m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     }
   }
+
+  m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
+  for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
+    if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+      ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
+      break;
+    }
+  }
 }
 
 void MainWindow::changeVersioningScheme() {
@@ -4399,7 +4413,7 @@ void MainWindow::initModListContextMenu(QMenu *menu)
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
   menu->addAction(tr("Disable all visible"), this, SLOT(disableVisibleMods()));
-  menu->addAction(tr("Check all for update"), this, SLOT(checkModsForUpdates()));
+  menu->addAction(tr("Force update check"), this, SLOT(checkModsForUpdates()));
   menu->addAction(tr("Refresh"), &m_OrganizerCore, SLOT(profileRefresh()));
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
 }
@@ -5427,18 +5441,29 @@ void MainWindow::updateDownloadView()
 
 void MainWindow::modDetailsUpdated(bool)
 {
-  if (--m_ModsToUpdate == 0) {
+  if (m_ModsToUpdate <= 0) {
     statusBar()->hide();
-    m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
-    for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
-      if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-        ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
-        break;
-      }
-    }
     m_RefreshProgress->setVisible(false);
   } else {
     m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
+  }
+}
+
+void MainWindow::modUpdateCheck()
+{
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+    m_ModsToUpdate += ModInfo::autoUpdateCheck(&m_PluginContainer, this);
+    m_RefreshProgress->setRange(0, m_ModsToUpdate);
+  } else {
+    QString apiKey;
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+      m_OrganizerCore.doAfterLogin([this]() { this->checkModsForUpdates(); });
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+    } else { // otherwise there will be no endorsement info
+      MessageDialog::showMessage(tr("Not logged in, endorsement information will be wrong"),
+        this, true);
+      m_ModsToUpdate += ModInfo::autoUpdateCheck(&m_PluginContainer, this);
+    }
   }
 }
 
@@ -5458,12 +5483,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     }
   }
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
-  // Not clear to me what this is accomplishing?
-  //if (sameNexus) {
-  //  std::vector<ModInfo::Ptr> mainInfo = ModInfo::getByModID(m_OrganizerCore.managedGame()->gameShortName(), modID);
-  //  info.reserve(info.size() + mainInfo.size());
-  //  info.insert(info.end(), mainInfo.begin(), mainInfo.end());
-  //}
+
   for (auto mod : modsList) {
     QString installedFile = mod->getInstallationFile();
     for (auto update : fileUpdates) {
@@ -5511,6 +5531,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 
     if (foundUpdate) {
       // Just get the standard data updates for endorsements and descriptions
+      mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
       mod->updateNXMInfo();
     } else {
       // Scrape mod data here so we can use the mod version if no file update was located
@@ -5518,29 +5539,9 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     }
   }
 
-  // Old endorsement and mod info updater
-  //for
-  //  if (updateData["old_file_id"].toInt() == mod->readMeta())
-  //    (*iter)->setNewestVersion(result["version"].toString());
-  //(*iter)->setNexusDescription(result["description"].toString());
-  //if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated() &&
-  //  result.contains("voted_by_user") &&
-  //  Settings::instance().endorsementIntegration()) {
-  //  // don't use endorsement info if we're not logged in or if the response doesn't contain it
-  //  (*iter)->setIsEndorsed(result["voted_by_user"].toBool());
-  //}
-
-  if (m_ModsToUpdate <= 0) {
+  if (--m_ModsToUpdate <= 0) {
     statusBar()->hide();
-    m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
-    for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
-      if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-        ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
-        break;
-      }
-    }
-  }
-  else {
+  } else {
     m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
   }
 }
@@ -5570,9 +5571,8 @@ void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant u
       else
         mod->setIsEndorsed(false);
     }
+    mod->saveMeta();
   }
-  disconnect(sender(), SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)),
-    this, SLOT(nxmDescriptionAvailable(QString, int, QVariant, QVariant, int)));
 }
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)

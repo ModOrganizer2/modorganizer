@@ -256,7 +256,7 @@ public:
   /**
    * @return true if the mod can be updated
    */
-  virtual bool canBeUpdated() const { return m_NexusID > 0; }
+  virtual bool canBeUpdated() const;
 
   /**
    * @return true if the mod can be enabled/disabled
@@ -316,9 +316,24 @@ public:
   virtual EEndorsedState endorsedState() const;
 
   /**
+   * @brief get the last time nexus was checked for file updates on this mod
+   */
+  virtual QDateTime getLastNexusUpdate() const;
+
+  /**
+   * @brief set the last time nexus was checked for file updates on this mod
+   */
+  virtual void setLastNexusUpdate(QDateTime time);
+
+  /**
    * @return last time nexus was queried for infos on this mod
    */
   virtual QDateTime getLastNexusQuery() const;
+
+  /**
+   * @brief set the last time nexus was queried for info on this mod
+   */
+  virtual void setLastNexusQuery(QDateTime time);
 
   virtual QStringList archives(bool checkOnDisk = false);
 
@@ -376,6 +391,7 @@ private:
 
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
+  QDateTime m_LastNexusUpdate;
 
   QColor m_Color;
 

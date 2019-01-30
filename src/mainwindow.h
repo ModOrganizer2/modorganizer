@@ -348,6 +348,7 @@ private:
   QTimer m_CheckBSATimer;
   QTimer m_SaveMetaTimer;
   QTimer m_UpdateProblemsTimer;
+  QTimer m_ModUpdateTimer;
 
   QFuture<void> m_MetaSave;
 
@@ -507,6 +508,8 @@ private slots:
   void modDetailsUpdated(bool success);
 
   void modInstalled(const QString &modName);
+
+  void modUpdateCheck();
 
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);

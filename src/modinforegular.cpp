@@ -98,6 +98,7 @@ void ModInfoRegular::readMeta()
   m_Validated        = metaFile.value("validated", false).toBool();
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
   m_Color            = metaFile.value("color",QColor()).value<QColor>();
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
@@ -161,6 +162,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
@@ -225,8 +227,8 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
     else
       setEndorsedState(ENDORSED_FALSE);
   }
-  m_LastNexusQuery = QDateTime::currentDateTime();
-  //m_MetaInfoChanged = true;
+  m_LastNexusQuery = QDateTime::currentDateTimeUtc();
+  m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);
 }
@@ -263,10 +265,14 @@ void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNet
 
 bool ModInfoRegular::updateNXMInfo()
 {
-  if (m_NexusID > 0) {
+  QDateTime time = QDateTime::currentDateTimeUtc();
+  QDateTime target = m_LastNexusQuery.addSecs(3600);
+  if (m_NexusID > 0 && time >= target) {
     m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
+  QString warning("Please wait until %1 to request updated mod info from Nexus!");
+  qWarning() << warning.arg(target.toLocalTime().time().toString(Qt::DefaultLocaleShortDate));
   return false;
 }
 
@@ -483,6 +489,15 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
   m_MetaInfoChanged = true;
 }
 
+bool ModInfoRegular::canBeUpdated() const
+{
+  QDateTime now = QDateTime::currentDateTimeUtc();
+  QDateTime target = m_LastNexusUpdate.addSecs(3600);
+  if (now >= target)
+    return m_NexusID > 0;
+  return false;
+}
+
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
@@ -628,9 +643,30 @@ ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
   return m_EndorsedState;
 }
 
+QDateTime ModInfoRegular::getLastNexusUpdate() const
+{
+  return m_LastNexusUpdate;
+}
+
+void ModInfoRegular::setLastNexusUpdate(QDateTime time)
+{
+  m_LastNexusUpdate = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
 QDateTime ModInfoRegular::getLastNexusQuery() const
 {
   return m_LastNexusQuery;
+}
+
+void ModInfoRegular::setLastNexusQuery(QDateTime time)
+{
+  m_LastNexusQuery = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
 }
 
 void ModInfoRegular::setURL(QString const &url)

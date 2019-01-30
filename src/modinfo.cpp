@@ -295,19 +295,62 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   //  NexusInterface::instance(pluginContainer)->requestUpdates(game->nexusModOrganizerID(), receiver, QVariant(), game->gameShortName(), QString());
   //}
 
-  std::multimap<QString, QSharedPointer<ModInfo>> organizedGames;
+  std::multimap<QString, int> organizedGames;
   for (auto mod : s_Collection) {
     if (mod->canBeUpdated()) {
-      organizedGames.insert(std::pair<QString, QSharedPointer<ModInfo>>(mod->getGameName(), mod));
+      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName(), mod->getNexusID()));
     }
   }
 
+  result = organizedGames.size();
+
   for (auto game : organizedGames) {
-    NexusInterface::instance(pluginContainer)->requestUpdates(game.second->getNexusID(), receiver, QVariant(), game.first, QString());
+    NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
   }
 
   return result;
 }
+
+
+int ModInfo::autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver)
+{
+  qInfo("Initializing periodic update check.");
+  int result = 0;
+
+  std::vector<QSharedPointer<ModInfo>> sortedMods;
+  std::multimap<QString, int> organizedGames;
+  for (auto mod : s_Collection) {
+    if (mod->canBeUpdated()) {
+      sortedMods.push_back(mod);
+    }
+  }
+
+  std::sort(sortedMods.begin(), sortedMods.end(), [](QSharedPointer<ModInfo> a, QSharedPointer<ModInfo> b) -> bool {
+    return a->getLastNexusUpdate() > b->getLastNexusUpdate();
+  });
+
+  if (sortedMods.size() > 10)
+    sortedMods.resize(10);
+
+  result = sortedMods.size();
+
+  if (sortedMods.size()) {
+    qInfo("Checking updates for %d mods...", sortedMods.size());
+
+    for (auto mod : sortedMods) {
+      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName(), mod->getNexusID()));
+    }
+
+    for (auto game : organizedGames) {
+      NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
+    }
+  } else {
+    qInfo("No mods require updates at this time.");
+  }
+
+  return result;
+}
+
 
 void ModInfo::setVersion(const VersionInfo &version)
 {
