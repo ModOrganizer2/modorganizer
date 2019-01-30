@@ -465,6 +465,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
             .arg(modInfo->getLastNexusUpdate().toLocalTime().addSecs(3600).time().toString(Qt::DefaultLocaleShortDate));
         } else {
           text += "<br>" + tr("This mod is eligible for an update check.");
+          text += "<br>" + tr("It was last checked on %1").arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate));
         }
       }
       return text;

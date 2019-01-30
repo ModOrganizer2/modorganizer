@@ -326,7 +326,7 @@ int ModInfo::autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver
   }
 
   std::sort(sortedMods.begin(), sortedMods.end(), [](QSharedPointer<ModInfo> a, QSharedPointer<ModInfo> b) -> bool {
-    return a->getLastNexusUpdate() > b->getLastNexusUpdate();
+    return a->getLastNexusUpdate() < b->getLastNexusUpdate();
   });
 
   if (sortedMods.size() > 10)
