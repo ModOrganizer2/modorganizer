@@ -74,7 +74,9 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
     }
 
     for (auto iter = flags.begin(); iter != flags.end(); ++iter) {
-      result.append(getFlagIcon(*iter));
+      auto iconPath = getFlagIcon(*iter);
+      if (!iconPath.isEmpty())
+        result.append(iconPath);
     }
   }
   return result;
@@ -97,7 +99,13 @@ QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
     case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_conflict_winner";
     case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_conflict_loser";
     case ModInfo::FLAG_ALTERNATE_GAME: return ":MO/gui/alternate_game";
-    default: return QString();
+    case ModInfo::FLAG_FOREIGN: return QString();
+    case ModInfo::FLAG_SEPARATOR: return QString();
+    case ModInfo::FLAG_OVERWRITE: return QString();
+    case ModInfo::FLAG_PLUGIN_SELECTED: return QString();
+    default: 
+      qWarning("ModInfo flag %d has no defined icon", flag); 
+      return QString();
   }
 }
 
