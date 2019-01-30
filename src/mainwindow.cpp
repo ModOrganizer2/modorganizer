@@ -4949,15 +4949,17 @@ void MainWindow::writeDataToFile(QFile &file, const QString &directory, const Di
 void MainWindow::writeDataToFile()
 {
   QString fileName = QFileDialog::getSaveFileName(this);
-  QFile file(fileName);
-  if (!file.open(QIODevice::WriteOnly)) {
-    reportError(tr("failed to write to file %1").arg(fileName));
+  if (!fileName.isEmpty()) {
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly)) {
+      reportError(tr("failed to write to file %1").arg(fileName));
+    }
+
+    writeDataToFile(file, "data", *m_OrganizerCore.directoryStructure());
+    file.close();
+
+    MessageDialog::showMessage(tr("%1 written").arg(QDir::toNativeSeparators(fileName)), this);
   }
-
-  writeDataToFile(file, "data", *m_OrganizerCore.directoryStructure());
-  file.close();
-
-  MessageDialog::showMessage(tr("%1 written").arg(QDir::toNativeSeparators(fileName)), this);
 }
 
 
