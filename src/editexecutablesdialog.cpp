@@ -205,6 +205,10 @@ void EditExecutablesDialog::on_browseButton_clicked()
   } else {
     ui->binaryEdit->setText(QDir::toNativeSeparators(binaryName));
   }
+
+  if (ui->titleEdit->text().isEmpty()) {
+    ui->titleEdit->setText(QFileInfo(binaryName).baseName());
+  }
 }
 
 void EditExecutablesDialog::on_browseDirButton_clicked()
