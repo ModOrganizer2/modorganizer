@@ -441,7 +441,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_ModUpdateTimer.setSingleShot(false);
   connect(&m_ModUpdateTimer, SIGNAL(timeout()), this, SLOT(modUpdateCheck()));
-  //m_ModUpdateTimer.start(300 * 1000);
+  m_ModUpdateTimer.start(300 * 1000);
 
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -496,7 +496,7 @@ MainWindow::MainWindow(QSettings &initSettings
   updatePluginCount();
   updateModCount();
 
-  //modUpdateCheck();
+  modUpdateCheck();
 }
 
 
@@ -5564,26 +5564,22 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
   for (auto mod : modsList) {
     QDateTime now = QDateTime::currentDateTimeUtc();
     QDateTime updateTarget = mod->getLastNexusUpdate().addSecs(3600);
-    QDateTime queryTarget = mod->getLastNexusQuery().addDays(1);
     if (now >= updateTarget) {
-      mod->setNexusDescription(result["description"].toString());
       mod->setNewestVersion(result["version"].toString());
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
     }
-
-    if (now >= queryTarget) {
-      if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
-        QVariantMap endorsement = result["endorsement"].toMap();
-        QString endorsementStatus = endorsement["endorse_status"].toString();
-        if (endorsementStatus.compare("Endorsed") == 00)
-          mod->setIsEndorsed(true);
-        else if (endorsementStatus.compare("Abstained") == 00)
-          mod->setNeverEndorse();
-        else
-          mod->setIsEndorsed(false);
-      }
-      mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
+    mod->setNexusDescription(result["description"].toString());
+    if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
+      QVariantMap endorsement = result["endorsement"].toMap();
+      QString endorsementStatus = endorsement["endorse_status"].toString();
+      if (endorsementStatus.compare("Endorsed") == 00)
+        mod->setIsEndorsed(true);
+      else if (endorsementStatus.compare("Abstained") == 00)
+        mod->setNeverEndorse();
+      else
+        mod->setIsEndorsed(false);
     }
+    mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
     mod->saveMeta();
   }
 }
