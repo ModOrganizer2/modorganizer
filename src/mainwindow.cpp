@@ -5749,7 +5749,9 @@ void MainWindow::updateESPLock(bool locked)
     m_OrganizerCore.pluginList()->lockESPIndex(m_ContextRow, locked);
   } else {
     Q_FOREACH (const QModelIndex &idx, currentSelection.indexes()) {
-      m_OrganizerCore.pluginList()->lockESPIndex(mapToModel(m_OrganizerCore.pluginList(), idx).row(), locked);
+      if (m_OrganizerCore.pluginList()->isEnabled(mapToModel(m_OrganizerCore.pluginList(), idx).row())) {
+        m_OrganizerCore.pluginList()->lockESPIndex(mapToModel(m_OrganizerCore.pluginList(), idx).row(), locked);
+      }
     }
   }
 }
