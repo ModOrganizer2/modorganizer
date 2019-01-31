@@ -181,7 +181,7 @@ QString Settings::obfuscate(const QString &info)
   QString result;
   DATA_BLOB input;
   DATA_BLOB output;
-  BYTE *pbInput = (unsigned char *)malloc(info.size() + 1);
+  BYTE *pbInput = new unsigned char[info.size() + 1];
   memcpy(pbInput, info.constData(), info.size() + 1);
   DWORD cbInput = info.size() + 1;
   input.pbData = pbInput;
@@ -193,8 +193,8 @@ QString Settings::obfuscate(const QString &info)
   } else {
     qCritical() << "Failed to encrypt the data!";
   }
-  LocalFree(input.pbData);
-  LocalFree(output.pbData);
+  delete pbInput;
+  delete output.pbData;
   return result;
 }
 
@@ -204,7 +204,7 @@ QString Settings::deObfuscate(const QString &info)
   QByteArray realInfo = QByteArray::fromBase64(info.toUtf8());
   DATA_BLOB input;
   DATA_BLOB output;
-  BYTE *pbInput = (unsigned char *)malloc(realInfo.size() + 1);
+  BYTE *pbInput = new unsigned char[realInfo.size() + 1];
   memcpy(pbInput, realInfo.constData(), realInfo.size() + 1);
   DWORD cbInput = realInfo.size() + 1;
   input.pbData = pbInput;
@@ -216,8 +216,8 @@ QString Settings::deObfuscate(const QString &info)
   } else {
     qCritical() << "Failed to decrypt data!";
   }
-  LocalFree(input.pbData);
-  LocalFree(output.pbData);
+  delete pbInput;
+  delete output.pbData;
   return result;
 }
 
