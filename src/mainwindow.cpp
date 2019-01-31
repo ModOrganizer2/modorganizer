@@ -441,7 +441,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   m_ModUpdateTimer.setSingleShot(false);
   connect(&m_ModUpdateTimer, SIGNAL(timeout()), this, SLOT(modUpdateCheck()));
-  m_ModUpdateTimer.start(300 * 1000);
+  //m_ModUpdateTimer.start(300 * 1000);
 
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
@@ -496,7 +496,7 @@ MainWindow::MainWindow(QSettings &initSettings
   updatePluginCount();
   updateModCount();
 
-  modUpdateCheck();
+  //modUpdateCheck();
 }
 
 
@@ -5472,9 +5472,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   QVariantMap resultInfo = resultData.toMap();
   QList files = resultInfo["files"].toList();
   QList fileUpdates = resultInfo["file_updates"].toList();
-  bool foundUpdate = false;
   m_ModsToUpdate--;
-  bool sameNexus = false;
   QString gameNameReal;
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
@@ -5485,7 +5483,19 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
 
   for (auto mod : modsList) {
+    bool foundUpdate = false;
+    bool oldFile = false;
     QString installedFile = mod->getInstallationFile();
+    QVariantMap foundFile;
+    for (auto file : files) {
+      QVariantMap fileData = file.toMap();
+      if (fileData["file_name"].toString().compare(installedFile, Qt::CaseInsensitive) == 0) {
+        foundFile = fileData;
+        mod->setNexusFileStatus(foundFile["category_id"].toInt());
+        if (mod->getNexusFileStatus() == 4 || mod->getNexusFileStatus() == 6)
+          oldFile = true;
+      }
+    }
     for (auto update : fileUpdates) {
       QVariantMap updateData = update.toMap();
       // Locate the current install file as an update
@@ -5514,17 +5524,11 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
         }
 
         break;
-      } else if (installedFile == updateData["new_file_name"]) {
+      } else if (installedFile == updateData["new_file_name"].toString()) {
         // This is a safety mechanism if this is the latest update file so we don't use the mod version
-        if (!foundUpdate) {
-          for (auto file : files) {
-            QVariantMap fileData = file.toMap();
-            if (fileData["file_id"].toInt() == updateData["new_file_id"]) {
-              mod->setVersion(fileData["version"].toString());
-              mod->setNewestVersion(fileData["version"].toString());
-              foundUpdate = true;
-            }
-          }
+        if (!foundUpdate && !oldFile) {
+          foundUpdate = true;
+          mod->setNewestVersion(foundFile["version"].toString());
         }
       }
     }
@@ -5535,7 +5539,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
       mod->updateNXMInfo();
     } else {
       // Scrape mod data here so we can use the mod version if no file update was located
-      NexusInterface::instance(&m_PluginContainer)->requestDescription(gameName, modID, this, QVariant(), QString());
+      NexusInterface::instance(&m_PluginContainer)->requestModInfo(gameName, modID, this, QVariant(), QString());
     }
   }
 
@@ -5546,7 +5550,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   }
 }
 
-void MainWindow::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
+void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   QVariantMap result = resultData.toMap();
   QString gameNameReal;

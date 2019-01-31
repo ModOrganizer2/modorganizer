@@ -326,6 +326,22 @@ int NexusInterface::requestDescription(QString gameName, int modID, QObject *rec
   return requestInfo.m_ID;
 }
 
+int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData,
+  const QString &subModule, MOBase::IPluginGame const *game)
+{
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_MODINFO, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
+}
+
 
 int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant userData,
                                    QString gameName, const QString &subModule)
@@ -504,12 +520,11 @@ void NexusInterface::nextRequest()
   if (!info.m_Reroute) {
     bool hasParams = false;
     switch (info.m_Type) {
-      case NXMRequestInfo::TYPE_DESCRIPTION: {
+      case NXMRequestInfo::TYPE_DESCRIPTION:
+      case NXMRequestInfo::TYPE_MODINFO: {
         url = QString("%1/games/%2/mods/%3").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
       } break;
-      case NXMRequestInfo::TYPE_FILES: {
-        url = QString("%1/games/%2/mods/%3/files").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
-      } break;
+      case NXMRequestInfo::TYPE_FILES:
       case NXMRequestInfo::TYPE_GETUPDATES: {
         url = QString("%1/games/%2/mods/%3/files").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
       } break;
@@ -594,17 +609,20 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           case NXMRequestInfo::TYPE_DESCRIPTION: {
             emit nxmDescriptionAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
+          case NXMRequestInfo::TYPE_MODINFO: {
+            emit nxmModInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+          } break;
           case NXMRequestInfo::TYPE_FILES: {
             emit nxmFilesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+          } break;
+          case NXMRequestInfo::TYPE_GETUPDATES: {
+            emit nxmUpdatesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_FILEINFO: {
             emit nxmFileInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_DOWNLOADURL: {
             emit nxmDownloadURLsAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
-          } break;
-          case NXMRequestInfo::TYPE_GETUPDATES: {
-            emit nxmUpdatesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
             emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);

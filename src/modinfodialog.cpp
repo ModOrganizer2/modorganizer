@@ -851,6 +851,7 @@ QString ModInfoDialog::getFileCategory(int categoryID)
     case 2: return tr("Update");
     case 3: return tr("Optional");
     case 4: return tr("Old");
+    case 5: return tr("Miscellaneous");
     case 6: return tr("Deleted");
     default: return tr("Unknown");
   }

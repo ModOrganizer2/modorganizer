@@ -504,6 +504,18 @@ public:
   virtual QString getDescription() const = 0;
 
   /**
+   * @return the nexus file status (aka category ID)
+   */
+  virtual int getNexusFileStatus() const = 0;
+
+
+  /**
+   * @brief sets the file status (category ID) from Nexus
+   * @param status the status id of the installed file
+   */
+  virtual void setNexusFileStatus(int status) = 0;
+
+  /**
    * @return comments for this mod
    */
   virtual QString comments() const = 0;

@@ -512,7 +512,7 @@ private slots:
   void modUpdateCheck();
 
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
-  void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);

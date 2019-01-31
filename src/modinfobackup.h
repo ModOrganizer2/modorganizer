@@ -25,7 +25,12 @@ public:
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
   virtual std::vector<EFlag> getFlags() const;
   virtual QString getDescription() const;
+  virtual int getNexusFileStatus() const { return 0; }
+  virtual void setNexusFileStatus(int) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
+  virtual void setLastNexusQuery(QDateTime) {}
+  virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
+  virtual void setLastNexusUpdate(QDateTime) {}
   virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator&,
                              QList<MOBase::ModRepositoryFileInfo*>::const_iterator&) {}
   virtual QString getNexusDescription() const { return QString(); }

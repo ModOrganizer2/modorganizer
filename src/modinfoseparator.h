@@ -43,10 +43,12 @@ public:
   virtual QString getInstallationFile() const { return ""; }
   virtual QString getURL() const { return ""; }
   virtual QString repository() const { return ""; }
+  virtual int getNexusFileStatus() const { return 0; }
+  virtual void setNexusFileStatus(int) {}
   virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
-  virtual void setLastNexusUpdate(QDateTime time) {}
+  virtual void setLastNexusUpdate(QDateTime) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
-  virtual void setLastNexusQuery(QDateTime time) {}
+  virtual void setLastNexusQuery(QDateTime) {}
   virtual QDateTime creationTime() const { return QDateTime(); }
 
   virtual void getNexusFiles

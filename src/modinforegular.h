@@ -285,6 +285,19 @@ public:
    */
   virtual QString getDescription() const;
 
+
+  /**
+   * @return the nexus file status (aka category ID)
+   */
+  virtual int getNexusFileStatus() const;
+
+
+  /**
+   * @brief sets the file status (category ID) from Nexus
+   * @param status the status id of the installed file
+   */
+  virtual void setNexusFileStatus(int status);
+
   /**
   * @return comments for this mod
   */
@@ -402,6 +415,7 @@ private:
   bool m_IsAlternate;
   bool m_Converted;
   bool m_Validated;
+  bool m_NexusFileStatus;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

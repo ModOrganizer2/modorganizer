@@ -151,6 +151,7 @@ public:
   /**
    * @brief request description for a mod
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in (assumed to be for the current game)
    * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
    * @param userData user data to be returned with the result
@@ -164,6 +165,7 @@ public:
   /**
    * @brief request description for a mod
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
    * @param userData user data to be returned with the result
@@ -174,11 +176,38 @@ public:
                          MOBase::IPluginGame const *game);
 
   /**
+   * @brief request description for a mod
+   *
+   * @param gameName the game short name to support multiple game sources
+   * @param modID id of the mod caller is interested in (assumed to be for the current game)
+   * @param receiver the object to receive the result asynchronously via a signal (nxmModInfoAvailable)
+   * @param userData user data to be returned with the result
+   * @return int an id to identify the request
+   **/
+  int requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestModInfo(gameName, modID, receiver, userData, subModule, getGame(gameName));
+  }
+
+  /**
+   * @brief request mod info
+   *
+   * @param gameName the game short name to support multiple game sources
+   * @param modID id of the mod caller is interested in
+   * @param receiver the object to receive the result asynchronously via a signal (nxmModInfoAvailable)
+   * @param userData user data to be returned with the result
+   * @param game Game with which the mod is associated
+   * @return int an id to identify the request
+   **/
+  int requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData, const QString &subModule,
+    MOBase::IPluginGame const *game);
+
+  /**
    * @brief request nexus descriptions for multiple mods at once
-   * @param modIDs a list of ids of mods the caller is interested in
+   * @param modID id of the mod the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmDescriptionAvailable)
    * @param userData user data to be returned with the result
-   * @param game the game with which the mods are associated
+   * @param gameName the game with which the mods are associated
    * @return int an id to identify the request
    */
   int requestUpdates(const int &modID, QObject *receiver, QVariant userData, QString gameName, const QString &subModule);
@@ -186,6 +215,7 @@ public:
   /**
    * @brief request a list of the files belonging to a mod
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in (assumed to be for the current game)
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
@@ -200,6 +230,7 @@ public:
   /**
    * @brief request a list of the files belonging to a mod
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
    * @param userData user data to be returned with the result
@@ -212,7 +243,7 @@ public:
   /**
    * @brief request info about a single file of a mod
    *
-   * @param game name of the game short name to request the download from
+   * @param gameName name of the game short name to request the download from
    * @param modID id of the mod caller is interested in (assumed to be for the current game)
    * @param fileID id of the file the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
@@ -224,6 +255,7 @@ public:
   /**
    * @brief request the download url of a file
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in (assumed to be for the current game)
    * @param fileID id of the file the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
@@ -238,6 +270,7 @@ public:
   /**
    * @brief request the download url of a file
    *
+   * @param gameName the game short name to support multiple game sources
    * @param modID id of the mod caller is interested in
    * @param fileID id of the file the caller is interested in
    * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
@@ -248,6 +281,7 @@ public:
   int requestDownloadURL(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   /**
+   * @param gameName the game short name to support multiple game sources
    * @brief toggle endorsement state of the mod
    * @param modID id of the mod (assumed to be for the current game)
    * @param endorse true if the mod should be endorsed, false for un-endorse
@@ -261,6 +295,7 @@ public:
   }
 
   /**
+   * @param gameName the game short name to support multiple game sources
    * @brief toggle endorsement state of the mod
    * @param modID id of the mod
    * @param endorse true if the mod should be endorsed, false for un-endorse
@@ -342,6 +377,7 @@ signals:
   void needLogin();
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
@@ -374,6 +410,7 @@ private:
     QNetworkReply *m_Reply;
     enum Type {
       TYPE_DESCRIPTION,
+      TYPE_MODINFO,
       TYPE_FILES,
       TYPE_FILEINFO,
       TYPE_DOWNLOADURL,

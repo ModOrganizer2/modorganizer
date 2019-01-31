@@ -93,6 +93,7 @@ void ModInfoRegular::readMeta()
   m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
+  m_NexusFileStatus  = metaFile.value("nexusFileStatus", "1").toInt();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
   m_Validated        = metaFile.value("validated", false).toBool();
@@ -161,6 +162,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
+      metaFile.setValue("nexusFileStatus", m_NexusFileStatus);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
@@ -198,6 +200,9 @@ bool ModInfoRegular::updateAvailable() const
 {
   if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
     return false;
+  }
+  if (m_NexusFileStatus == 4 || m_NexusFileStatus == 6) {
+    return true;
   }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
 }
@@ -271,8 +276,6 @@ bool ModInfoRegular::updateNXMInfo()
     m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
-  QString warning("Please wait until %1 to request updated mod info from Nexus!");
-  qWarning() << warning.arg(target.toLocalTime().time().toString(Qt::DefaultLocaleShortDate));
   return false;
 }
 
@@ -611,6 +614,19 @@ QString ModInfoRegular::getDescription() const
 
     return ToQString(categoryString.str());
   }
+}
+
+int ModInfoRegular::getNexusFileStatus() const
+{
+  return m_NexusFileStatus;
+}
+
+void ModInfoRegular::setNexusFileStatus(int status)
+{
+  m_NexusFileStatus = status;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
 }
 
 QString ModInfoRegular::comments() const

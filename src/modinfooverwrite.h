@@ -50,10 +50,12 @@ public:
   virtual std::vector<ModInfo::EFlag> getFlags() const;
   virtual int getHighlight() const;
   virtual QString getDescription() const;
+  virtual int getNexusFileStatus() const { return 0; }
+  virtual void setNexusFileStatus(int) {}
   virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
-  virtual void setLastNexusUpdate(QDateTime time) {}
+  virtual void setLastNexusUpdate(QDateTime) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
-  virtual void setLastNexusQuery(QDateTime time) {}
+  virtual void setLastNexusQuery(QDateTime) {}
   virtual QString getNexusDescription() const { return QString(); }
   virtual QStringList archives(bool checkOnDisk = false);
   virtual void addInstalledFile(int, int) {}
