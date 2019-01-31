@@ -449,7 +449,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QString();
       }
     } else if (column == COL_VERSION) {
-      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString()).arg(modInfo->getNewestVersion().displayString());
+      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString(3)).arg(modInfo->getNewestVersion().displayString(3));
       if (modInfo->downgradeAvailable()) {
         text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
                           "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "

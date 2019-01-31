@@ -502,7 +502,7 @@ void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),
-        m_OrganizerCore.getVersion().displayString());
+        m_OrganizerCore.getVersion().displayString(3));
 
   if (!accountName.isEmpty()) {
     title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
@@ -719,7 +719,7 @@ size_t MainWindow::checkForProblems()
 
 void MainWindow::about()
 {
-  AboutDialog dialog(m_OrganizerCore.getVersion().displayString(), this);
+  AboutDialog dialog(m_OrganizerCore.getVersion().displayString(3), this);
   connect(&dialog, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
   dialog.exec();
 }

@@ -446,7 +446,7 @@ static void preloadSsl()
 
 static QString getVersionDisplayString()
 {
-  return createVersionInfo().displayString();
+  return createVersionInfo().displayString(3);
 }
 
 int runApplication(MOApplication &application, SingleInstance &instance,

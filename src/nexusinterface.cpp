@@ -149,7 +149,7 @@ NexusInterface::NexusInterface(PluginContainer *pluginContainer)
 {
   m_MOVersion = createVersionInfo();
 
-  m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString());
+  m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString(3));
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
 }
