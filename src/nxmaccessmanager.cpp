@@ -270,5 +270,7 @@ void NXMAccessManager::validateFinished()
     } else {
       emit validateFailed(tr("Validation failed, please reauthenticate in the Settings -> Nexus tab: %1").arg(credentialsData.value("message").toString()));
     }
+  } else {
+    emit validateFailed(tr("unknown error"));
   }
 }

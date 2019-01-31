@@ -628,23 +628,23 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
             emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
         }
+
+        m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
+        m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
+        m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+        m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
+
+        emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
+          m_RemainingDailyRequests,
+          m_MaxDailyRequests,
+          m_RemainingHourlyRequests,
+          m_MaxHourlyRequests
+        )));
       } else {
         emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), tr("invalid response"));
       }
     }
   }
-
-  m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
-  m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
-  m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
-  m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
-
-  emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
-    m_RemainingDailyRequests,
-    m_MaxDailyRequests,
-    m_RemainingHourlyRequests,
-    m_MaxHourlyRequests
-  )));
 }
 
 

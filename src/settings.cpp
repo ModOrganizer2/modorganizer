@@ -178,11 +178,12 @@ void Settings::registerPlugin(IPlugin *plugin)
 
 QString Settings::obfuscate(const QString &info)
 {
+  QByteArray byteData = info.toUtf8();
   QString result;
   DATA_BLOB input;
   DATA_BLOB output;
-  std::vector<uint8_t> data(info.toUtf8().begin(), info.toUtf8().end());
-  DWORD cbInput = info.size() + 1;
+  std::vector<uint8_t> data(byteData.begin(), byteData.end());
+  DWORD cbInput = data.size() + 1;
   input.pbData = data.data();
   input.cbData = cbInput;
 
@@ -203,7 +204,7 @@ QString Settings::deObfuscate(const QString &info)
   DATA_BLOB input;
   DATA_BLOB output;
   std::vector<uint8_t> data(realInfo.begin(), realInfo.end());
-  DWORD cbInput = realInfo.size() + 1;
+  DWORD cbInput = data.size() + 1;
   input.pbData = data.data();
   input.cbData = cbInput;
 
