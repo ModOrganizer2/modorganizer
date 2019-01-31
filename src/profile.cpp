@@ -78,7 +78,7 @@ Profile::Profile(const QString &name, IPluginGame const *gamePlugin, bool useDef
   QDir profileBase(profilesDir);
   QString fixedName = name;
   if (!fixDirectoryName(fixedName)) {
-    throw MyException(tr("invalid profile name %1").arg(name));
+    throw MyException(tr("invalid profile name: %1").arg(qUtf8Printable(name)));
   }
 
   if (!profileBase.exists() || !profileBase.mkdir(fixedName)) {
@@ -416,19 +416,19 @@ void Profile::refreshModStatus()
           m_ModStatus[modIndex].m_Enabled = enabled;
           if (m_ModStatus[modIndex].m_Priority == -1) {
             if (static_cast<size_t>(index) >= m_ModStatus.size()) {
-              throw MyException(tr("invalid index %1").arg(index));
+              throw MyException(tr("invalid mod index: %1").arg(index));
             }
             m_ModStatus[modIndex].m_Priority = index++;
           }
         } else {
           qWarning("no mod state for \"%s\" (profile \"%s\")",
-                   qUtf8Printable(modName), m_Directory.path().toUtf8().constData());
+                   qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
           // need to rewrite the modlist to fix this
           modStatusModified = true;
         }
       } else {
-        qDebug("mod \"%s\" (profile \"%s\") not found",
-               qUtf8Printable(modName), m_Directory.path().toUtf8().constData());
+        qDebug("mod not found: \"%s\" (profile \"%s\")",
+               qUtf8Printable(modName), qUtf8Printable(m_Directory.path()));
         // need to rewrite the modlist to fix this
         modStatusModified = true;
       }
@@ -455,7 +455,7 @@ void Profile::refreshModStatus()
       m_ModStatus[i].m_Priority = numKnownMods - m_ModStatus[i].m_Priority - 1;
     } else {
       if (static_cast<size_t>(index) >= m_ModStatus.size()) {
-        throw MyException(tr("invalid index %1").arg(index));
+        throw MyException(tr("invalid mod index: %1").arg(index));
       }
       if (modInfo->hasFlag(ModInfo::FLAG_FOREIGN)) {
         m_ModStatus[i].m_Priority = --topInsert;
@@ -552,7 +552,7 @@ unsigned int Profile::modIndexByPriority(int priority) const
 void Profile::setModEnabled(unsigned int index, bool enabled)
 {
   if (index >= m_ModStatus.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("invalid mod index: %1").arg(index));
   }
 
   ModInfo::Ptr modInfo = ModInfo::getByIndex(index);
@@ -573,7 +573,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   QList<unsigned int> dirtyMods;
   for (auto idx : modsToEnable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid index %1").arg(idx);
+      qCritical() << tr("invalid mod index: %1").arg(idx);
       continue;
     }
     if (!m_ModStatus[idx].m_Enabled) {
@@ -583,7 +583,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
   }
   for (auto idx : modsToDisable) {
     if (idx >= m_ModStatus.size()) {
-      qCritical() << tr("invalid index %1").arg(idx);
+      qCritical() << tr("invalid mod index: %1").arg(idx);
       continue;
     }
     if (ModInfo::getByIndex(idx)->alwaysEnabled()) {
@@ -602,7 +602,7 @@ void Profile::setModsEnabled(const QList<unsigned int> &modsToEnable, const QLis
 bool Profile::modEnabled(unsigned int index) const
 {
   if (index >= m_ModStatus.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("invalid mod index: %1").arg(index));
   }
 
   return m_ModStatus[index].m_Enabled;
@@ -612,7 +612,7 @@ bool Profile::modEnabled(unsigned int index) const
 int Profile::getModPriority(unsigned int index) const
 {
   if (index >= m_ModStatus.size()) {
-    throw MyException(tr("invalid index %1").arg(index));
+    throw MyException(tr("invalid mod index: %1").arg(index));
   }
 
   return m_ModStatus[index].m_Priority;

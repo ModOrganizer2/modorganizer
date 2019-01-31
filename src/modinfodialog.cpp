@@ -1431,7 +1431,7 @@ void ModInfoDialog::previewDataFile()
 	const FileEntry::Ptr file = m_OrganizerCore->directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
 	if (file.get() == nullptr) {
-		reportError(tr("file not found: %1").arg(fileName));
+		reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
 		return;
 	}
 

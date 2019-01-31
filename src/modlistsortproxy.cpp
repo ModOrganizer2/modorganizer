@@ -474,13 +474,13 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
   }
 
   if (row >= static_cast<int>(m_Profile->numMods())) {
-    qWarning("invalid row idx %d", row);
+    qWarning("invalid row index: %d", row);
     return false;
   }
 
   QModelIndex idx = sourceModel()->index(row, 0, parent);
   if (!idx.isValid()) {
-    qDebug("invalid index");
+    qDebug("invalid mod index");
     return false;
   }
   if (sourceModel()->hasChildren(idx)) {

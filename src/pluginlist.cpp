@@ -298,7 +298,7 @@ void PluginList::enableESP(const QString &name, bool enable)
 
     emit writePluginsList();
   } else {
-    reportError(tr("esp not found: %1").arg(name));
+    reportError(tr("Plugin not found: %1").arg(qUtf8Printable(name)));
   }
 }
 
@@ -694,7 +694,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("plugin %s not found", qUtf8Printable(name));
+    qWarning("Plugin not found: %1", qUtf8Printable(name));
   }
 }
 
@@ -824,7 +824,7 @@ void PluginList::updateIndices()
       continue;
     }
     if (m_ESPs[i].m_Priority >= static_cast<int>(m_ESPs.size())) {
-      qCritical("invalid priority %d", m_ESPs[i].m_Priority);
+      qCritical("invalid plugin priority: %d", m_ESPs[i].m_Priority);
       continue;
     }
     m_ESPsByName[m_ESPs[i].m_Name.toLower()] = i;

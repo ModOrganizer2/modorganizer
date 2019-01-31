@@ -110,7 +110,7 @@ QString ModInfo::getContentTypeName(int contentType)
     case CONTENT_INI:       return tr("INI files");
     case CONTENT_MODGROUP:  return tr("ModGroup files");
 
-    default: throw MyException(tr("invalid content type %1").arg(contentType));
+    default: throw MyException(tr("invalid content type: %1").arg(contentType));
   }
 }
 
@@ -133,7 +133,7 @@ ModInfo::Ptr ModInfo::getByIndex(unsigned int index)
   QMutexLocker locker(&s_Mutex);
 
   if (index >= s_Collection.size() && index != ULONG_MAX) {
-    throw MyException(tr("invalid mod index %1").arg(index));
+    throw MyException(tr("invalid mod index: %1").arg(index));
   }
   if (index == ULONG_MAX) return s_Collection[ModInfo::getIndex("Overwrite")];
   return s_Collection[index];

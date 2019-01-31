@@ -5186,7 +5186,7 @@ void MainWindow::previewDataFile()
   const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
   if (file.get() == nullptr) {
-    reportError(tr("file not found: %1").arg(fileName));
+    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
     return;
   }
 
@@ -6339,7 +6339,7 @@ void MainWindow::dropLocalFile(const QUrl &url, const QString &outputDir, bool m
 {
   QFileInfo file(url.toLocalFile());
   if (!file.exists()) {
-    qWarning("invalid source file %s", qUtf8Printable(file.absoluteFilePath()));
+    qWarning("invalid source file: %s", qUtf8Printable(file.absoluteFilePath()));
     return;
   }
   QString target = outputDir + "/" + file.fileName();

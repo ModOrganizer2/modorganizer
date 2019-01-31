@@ -762,7 +762,7 @@ bool InstallationManager::install(const QString &fileName,
   if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
-  qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qUtf8Printable(m_CurrentFile));
+  qDebug("using mod name \"%s\" (id %d) -> %s", qUtf8Printable(modName), modID, qUtf8Printable(m_CurrentFile));
 
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive

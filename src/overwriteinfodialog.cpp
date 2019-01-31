@@ -110,7 +110,7 @@ void OverwriteInfoDialog::setModInfo(ModInfo::Ptr modInfo)
   if (QDir(modInfo->absolutePath()).exists()) {
     m_FileSystemModel->setRootPath(modInfo->absolutePath());
   } else {
-    throw MyException(tr("%1 not found").arg(modInfo->absolutePath()));
+    throw MyException(tr("mod not found: %1").arg(qUtf8Printable(modInfo->absolutePath())));
   }
 }
 
