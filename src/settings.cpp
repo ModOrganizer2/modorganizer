@@ -181,9 +181,7 @@ QString Settings::obfuscate(const QString &info)
   QString result;
   DATA_BLOB input;
   DATA_BLOB output;
-  std::vector<uint8_t> data;
-  data.reserve(info.size() + 1);
-  memcpy(data.data(), info.constData(), info.size() + 1);
+  std::vector<uint8_t> data(info.toUtf8().begin(), info.toUtf8().end());
   DWORD cbInput = info.size() + 1;
   input.pbData = data.data();
   input.cbData = cbInput;
@@ -204,9 +202,7 @@ QString Settings::deObfuscate(const QString &info)
   QByteArray realInfo = QByteArray::fromBase64(info.toUtf8());
   DATA_BLOB input;
   DATA_BLOB output;
-  std::vector<uint8_t> data;
-  data.reserve(realInfo.size() + 1);
-  memcpy(data.data(), realInfo.constData(), realInfo.size() + 1);
+  std::vector<uint8_t> data(realInfo.begin(), realInfo.end());
   DWORD cbInput = realInfo.size() + 1;
   input.pbData = data.data();
   input.cbData = cbInput;

@@ -148,7 +148,7 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
-  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingDailyRequests(0), m_RemainingHourlyRequests(0), m_MaxDailyRequests(0), m_MaxHourlyRequests(0)
+  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingDailyRequests(2500), m_RemainingHourlyRequests(100), m_MaxDailyRequests(2500), m_MaxHourlyRequests(100)
 {
   m_MOVersion = createVersionInfo();
 
