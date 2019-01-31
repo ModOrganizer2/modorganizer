@@ -142,7 +142,7 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
         QString warnStr = fileInfo.absolutePath();
         if (warnStr.isEmpty())
           warnStr = filename;
-        qWarning("file not found: %1", qUtf8Printable(warnStr));
+        qWarning("file not found: %s", qUtf8Printable(warnStr));
       }
     }
   } else {

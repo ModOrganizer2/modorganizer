@@ -694,7 +694,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("Plugin not found: %1", qUtf8Printable(name));
+    qWarning("Plugin not found: %s", qUtf8Printable(name));
   }
 }
 
