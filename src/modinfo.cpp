@@ -144,14 +144,22 @@ std::vector<ModInfo::Ptr> ModInfo::getByModID(QString game, int modID)
 {
   QMutexLocker locker(&s_Mutex);
 
-  auto iter = s_ModsByModID.find(std::pair<QString, int>(game, modID));
-  if (iter == s_ModsByModID.end()) {
+  std::vector<unsigned int> match;
+  for (auto iter : s_ModsByModID) {
+    if (iter.first.second == modID) {
+      if (iter.first.first.compare(game, Qt::CaseInsensitive) == 0) {
+        match = iter.second;
+        break;
+      }
+    }
+  }
+  if (match.empty()) {
     return std::vector<ModInfo::Ptr>();
   }
 
   std::vector<ModInfo::Ptr> result;
-  for (auto idxIter = iter->second.begin(); idxIter != iter->second.end(); ++idxIter) {
-    result.push_back(getByIndex(*idxIter));
+  for (auto iter : match) {
+    result.push_back(getByIndex(iter));
   }
 
   return result;

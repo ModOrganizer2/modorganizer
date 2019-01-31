@@ -253,7 +253,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_GAME) {
       if (m_PluginContainer != nullptr) {
         for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
-          if (game->gameShortName() == modInfo->getGameName())
+          if (game->gameShortName().compare(modInfo->getGameName(), Qt::CaseInsensitive) == 0)
             return game->gameName();
         }
       }
