@@ -52,6 +52,7 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   , ui(new Ui::SettingsDialog)
   , m_PluginContainer(pluginContainer)
   , m_nexusLogin(new QWebSocket)
+  , m_KeyReceived(false)
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
@@ -60,13 +61,18 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
       = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
   connect(m_nexusLogin, SIGNAL(connected()), this, SLOT(dispatchLogin()));
+  connect(m_nexusLogin, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(authError(QAbstractSocket::SocketError)));
   connect(m_nexusLogin, SIGNAL(textMessageReceived(const QString &)), this, SLOT(receiveApiKey(const QString &)));
   connect(m_nexusLogin, SIGNAL(disconnected()), this, SLOT(completeApiConnection()));
+  connect(this, SIGNAL(retryApiConnection()), this, SLOT(on_nexusConnect_clicked()));
   m_loginTimer.callOnTimeout(this, &SettingsDialog::loginPing);
 }
 
 SettingsDialog::~SettingsDialog()
 {
+  m_loginTimer.stop();
+  m_nexusLogin->close();
+  disconnect(this);
   delete ui;
 }
 
@@ -338,23 +344,28 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::on_nexusConnect_clicked()
 {
-  ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 5 minutes.");
+  ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
   ui->nexusConnect->setDisabled(true);
-  QUrl url = QUrl("wss://sso.nexusmods.com:8443");
+  QUrl url = QUrl("wss://sso.nexusmods.com");
   m_nexusLogin->open(url);
 }
 
 void SettingsDialog::dispatchLogin()
 {
+  m_KeyReceived = false;
   QJsonObject login;
-  boost::uuids::random_generator generator;
-  boost::uuids::uuid sessionId = generator();
-  login.insert(QString("id"), QJsonValue(QString(boost::uuids::to_string(sessionId).c_str())));
-  login.insert(QString("appid"), QJsonValue(QString("MO2")));
+  if (m_UUID.isEmpty()) {
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid sessionId = generator();
+    m_UUID = boost::uuids::to_string(sessionId).c_str();
+  }
+  login.insert(QString("id"), QJsonValue(m_UUID));
+  login.insert(QString("token"), QJsonValue(m_AuthToken));
+  login.insert(QString("protocol"), 2);
   QJsonDocument loginDoc(login);
   QString finalMessage(loginDoc.toJson());
   m_nexusLogin->sendTextMessage(finalMessage);
-  QDesktopServices::openUrl(QUrl(QString("https://www.nexusmods.com/sso?id=") + QString(boost::uuids::to_string(sessionId).c_str())));
+  QDesktopServices::openUrl(QUrl(QString("https://www.nexusmods.com/sso?id=%1&application=%2").arg(m_UUID).arg("modorganizer2")));
   m_loginTimer.start(30000);
 }
 
@@ -364,25 +375,48 @@ void SettingsDialog::loginPing()
     m_nexusLogin->ping();
     m_totalPings++;
   }
-  if (m_totalPings >= 10) {
+  if (m_totalPings >= 60) {
     m_loginTimer.stop();
     m_totalPings = 0;
-    m_nexusLogin->close(QWebSocketProtocol::CloseCodeGoingAway, "Timeout: No response received after five minutes. Cancelling request.");
+    m_nexusLogin->close(QWebSocketProtocol::CloseCodeGoingAway, "Timeout: No response received after thirty minutes. Cancelling request.");
   }
 }
 
-void SettingsDialog::receiveApiKey(const QString &apiKey)
+void SettingsDialog::authError(QAbstractSocket::SocketError error)
 {
-  emit processApiKey(apiKey);
-  m_nexusLogin->close();
-  ui->nexusConnect->setText("Nexus API Key Stored");
-  m_loginTimer.stop();
-  m_totalPings = 0;
+  auto errorInfo = m_nexusLogin->errorString();
+  qCritical() << "An error occurred: " << errorInfo;
+}
+
+void SettingsDialog::receiveApiKey(const QString &response)
+{
+  QJsonDocument responseDoc = QJsonDocument::fromJson(response.toUtf8());
+  QVariantMap responseData = responseDoc.object().toVariantMap();
+  if (responseData["success"].toBool()) {
+    QVariantMap data = responseData["data"].toMap();
+    if (data.contains("connection_token")) {
+      m_AuthToken = data["connection_token"].toString();
+    } else {
+      m_KeyReceived = true;
+      emit processApiKey(data["api_key"].toString());
+      m_nexusLogin->close();
+      ui->nexusConnect->setText("Nexus API Key Stored");
+      m_loginTimer.stop();
+      m_totalPings = 0;
+    }
+  } else {
+    QString error("There was a problem with SSO initialization: %1");
+    qCritical() << error.arg(responseData["error"].toString());
+    m_nexusLogin->close();
+  }
 }
 
 void SettingsDialog::completeApiConnection()
 {
-  emit closeApiConnection(ui->nexusConnect);
+  if (m_KeyReceived == true || !m_loginTimer.isActive())
+    emit closeApiConnection(ui->nexusConnect);
+  else
+    emit retryApiConnection();
 }
 
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)

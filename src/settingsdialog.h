@@ -65,6 +65,7 @@ signals:
   void processApiKey(const QString &);
   void closeApiConnection(QPushButton *);
   void revokeApiKey(QPushButton *);
+  void retryApiConnection();
 
 private:
 
@@ -158,6 +159,8 @@ private slots:
 
   void loginPing();
 
+  void authError(QAbstractSocket::SocketError error);
+
   void receiveApiKey(const QString &apiKey);
 
   void completeApiConnection();
@@ -172,6 +175,10 @@ private:
     QColor m_OverwrittenArchiveColor;
     QColor m_ContainsColor;
     QColor m_ContainedColor;
+
+    bool m_KeyReceived;
+    QString m_UUID;
+    QString m_AuthToken;
 
     QString m_ExecutableBlacklist;
 
