@@ -1190,7 +1190,7 @@ void MainWindow::startExeAction()
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, 
+        selectedExecutable.m_SteamAppID,
         customOverwrite,
         forcedLibraries);
   } else {
@@ -1990,7 +1990,7 @@ void MainWindow::on_startButton_clicked() {
         selectedExecutable.m_WorkingDirectory.length() != 0
             ? selectedExecutable.m_WorkingDirectory
             : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID, 
+        selectedExecutable.m_SteamAppID,
         customOverwrite,
         forcedLibraries);
   } catch (...) {
@@ -2961,7 +2961,7 @@ void MainWindow::displayModInformation(const QString &modName, int tab)
 {
   unsigned int index = ModInfo::getIndex(modName);
   if (index == UINT_MAX) {
-    qCritical("failed to resolve mod name %s", modName.toUtf8().constData());
+    qCritical("failed to resolve mod name %s", qUtf8Printable(modName));
     return;
   }
 
@@ -5531,7 +5531,7 @@ BSA::EErrorCode MainWindow::extractBSA(BSA::Archive &archive, BSA::Folder::Ptr f
 
   for (unsigned int i = 0; i < folder->getNumFiles(); ++i) {
     BSA::File::Ptr file = folder->getFile(i);
-    BSA::EErrorCode res = archive.extract(file, destination.toUtf8().constData());
+    BSA::EErrorCode res = archive.extract(file, qUtf8Printable(destination));
     if (res != BSA::ERROR_NONE) {
       reportError(tr("failed to read %1: %2").arg(file->getName().c_str()).arg(res));
       result = res;

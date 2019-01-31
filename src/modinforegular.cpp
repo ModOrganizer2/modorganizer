@@ -64,7 +64,7 @@ ModInfoRegular::~ModInfoRegular()
     saveMeta();
   } catch (const std::exception &e) {
     qCritical("failed to save meta information for \"%s\": %s",
-              m_Name.toUtf8().constData(), e.what());
+              qUtf8Printable(m_Name), e.what());
   }
 }
 
@@ -631,7 +631,7 @@ QString ModInfoRegular::getURL() const
 
 
 
-QStringList ModInfoRegular::archives(bool checkOnDisk) 
+QStringList ModInfoRegular::archives(bool checkOnDisk)
 {
   if (checkOnDisk) {
     QStringList result;

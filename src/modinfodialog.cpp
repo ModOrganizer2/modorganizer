@@ -331,7 +331,7 @@ void ModInfoDialog::refreshLists()
           QStringList fields(relativeName.prepend("..."));
           fields.append(ToQString(altString.str()));
 
-          QTreeWidgetItem *item = new QTreeWidgetItem(fields);        
+          QTreeWidgetItem *item = new QTreeWidgetItem(fields);
           item->setData(0, Qt::UserRole, fileName);
           item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
           item->setData(1, Qt::UserRole + 1, alternatives.back().first);
@@ -1123,7 +1123,7 @@ void ModInfoDialog::openFile(const QModelIndex &index)
 
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
   if ((unsigned long long)res <= 32) {
-    qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
+    qCritical("failed to invoke %s: %d", qUtf8Printable(fileName), res);
   }
 }
 

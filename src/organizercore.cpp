@@ -1208,18 +1208,18 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
            ++i) {
     int modIndex = currentProfile()->modIndexByPriority(i);
     auto modInfo = ModInfo::getByIndex(modIndex);
-    if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) && 
+    if (!modInfo->hasFlag(ModInfo::FLAG_OVERWRITE) &&
         !modInfo->hasFlag(ModInfo::FLAG_BACKUP)) {
       res.push_back(ModInfo::getByIndex(modIndex)->name());
-    } 
+    }
   }
   return res;
 }
 
-void OrganizerCore::spawnBinary(const QFileInfo &binary, 
-                                const QString &arguments, 
-                                const QDir &currentDirectory, 
-                                const QString &steamAppID, 
+void OrganizerCore::spawnBinary(const QFileInfo &binary,
+                                const QString &arguments,
+                                const QDir &currentDirectory,
+                                const QString &steamAppID,
                                 const QString &customOverwrite,
                                 const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries)
 {
@@ -1349,7 +1349,7 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     try {
       m_USVFS.updateMapping(fileMapping(profileName, customOverwrite));
       m_USVFS.updateForcedLibraries(forcedLibraries);
-      
+
     } catch (const UsvfsConnectorException &e) {
       qDebug(e.what());
       return INVALID_HANDLE_VALUE;
@@ -1453,7 +1453,7 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
     exe.m_WorkingDirectory.length() != 0
     ? exe.m_WorkingDirectory
     : exe.m_BinaryInfo.absolutePath(),
-    exe.m_SteamAppID, 
+    exe.m_SteamAppID,
     "",
     forcedLibaries);
 }
@@ -1521,7 +1521,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       }
     } catch (const std::runtime_error &) {
       qWarning("\"%s\" not set up as executable",
-               executable.toUtf8().constData());
+               qUtf8Printable(executable));
       binary = QFileInfo(executable);
     }
   }
@@ -1585,7 +1585,7 @@ bool OrganizerCore::waitForProcessCompletion(HANDLE handle, LPDWORD exitCode, IL
         uilock->setProcessName(processName);
       qDebug() << "Waiting for"
         << (originalHandle ? "spawned" : "usvfs")
-        << "process completion :" << processName.toUtf8().constData();
+        << "process completion :" << qUtf8Printable(processName);
       newHandle = false;
     }
 
@@ -1840,7 +1840,7 @@ void OrganizerCore::updateModsActiveState(const QList<unsigned int> &modIndices,
         m_PluginList.blockSignals(false);
       }
     }
-    
+
     for (const QString &esl :
       dir.entryList(QStringList() << "*.esl", QDir::Files)) {
       const FileEntry::Ptr file = m_DirectoryStructure->findFile(ToWString(esl));

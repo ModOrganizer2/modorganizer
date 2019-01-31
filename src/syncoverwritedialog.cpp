@@ -86,7 +86,7 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
       if (subDir != nullptr) {
         readTree(fileInfo.absoluteFilePath(), subDir, newItem);
       } else {
-        qCritical("no directory structure for %s?", file.toUtf8().constData());
+        qCritical("no directory structure for %s?", qUtf8Printable(file));
         delete newItem;
         newItem = nullptr;
       }

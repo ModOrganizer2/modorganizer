@@ -100,7 +100,7 @@ public:
           // expression doesn't match. either the input string is invalid
           // or the expression is
           qWarning("%s doesn't match the expression for %s",
-                   temp.toUtf8().constData(), tagName.toUtf8().constData());
+                   qUtf8Printable(temp), qUtf8Printable(tagName));
           length = 0;
           return QString();
         }

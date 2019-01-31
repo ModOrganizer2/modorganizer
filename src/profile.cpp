@@ -349,7 +349,7 @@ void Profile::renameModInList(QFile &modList, const QString &oldName, const QStr
       modName = newName;
       ++renamed;
     }
-    outBuffer.write(modName.toUtf8().constData());
+    outBuffer.write(qUtf8Printable(modName));
     outBuffer.write("\r\n");
   }
   modList.close();

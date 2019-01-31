@@ -1510,7 +1510,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
   } else {
     if (info->m_FileInfo->fileID == 0) {
       qWarning("could not determine file id for %s (state %d)",
-               info->m_FileName.toUtf8().constData(), info->m_State);
+               qUtf8Printable(info->m_FileName), info->m_State);
     }
   }
 

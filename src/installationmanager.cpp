@@ -526,7 +526,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           settingsFile.write(originalSettings);
           settingsFile.close();
         } else {
-          qCritical("failed to restore original settings: %s", metaFilename.toUtf8().constData());
+          qCritical("failed to restore original settings: %s", qUtf8Printable(metaFilename));
         }
         return true;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
@@ -575,7 +575,7 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
-  qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
+  qDebug("installing to \"%s\"", qUtf8Printable(targetDirectoryNative));
 
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
