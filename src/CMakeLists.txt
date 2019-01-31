@@ -331,7 +331,7 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
-                      Dbghelp advapi32 Version Shlwapi liblz4)
+                      Dbghelp advapi32 Version Shlwapi liblz4 Crypt32)
 
 IF (MSVC)
   SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest")

@@ -415,7 +415,7 @@ private:
   bool m_IsAlternate;
   bool m_Converted;
   bool m_Validated;
-  bool m_NexusFileStatus;
+  int m_NexusFileStatus;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 

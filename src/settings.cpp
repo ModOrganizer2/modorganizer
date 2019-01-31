@@ -57,6 +57,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug> // for qDebug, qWarning
 
 #include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
+#include <wincrypt.h> // For storage
 
 #include <algorithm> // for sort
 #include <memory>
@@ -175,26 +176,49 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-QString Settings::obfuscate(const QString &password)
+QString Settings::obfuscate(const QString &info)
 {
-  QByteArray temp = password.toUtf8();
+  QString result;
+  DATA_BLOB input;
+  DATA_BLOB output;
+  BYTE *pbInput = (unsigned char *)malloc(info.size() + 1);
+  memcpy(pbInput, info.constData(), info.size() + 1);
+  DWORD cbInput = info.size() + 1;
+  input.pbData = pbInput;
+  input.cbData = cbInput;
 
-  QByteArray buffer;
-  for (int i = 0; i < temp.length(); ++i) {
-    buffer.append(temp.at(i) ^ Key2[i % 20]);
+  if (CryptProtectData(&input, NULL, NULL, NULL, NULL, 0, &output)) {
+    QByteArray buffer = QByteArray::fromRawData((const char *)output.pbData, output.cbData);
+    result = buffer.toBase64();
+  } else {
+    qCritical() << "Failed to encrypt the data!";
   }
-  return buffer.toBase64();
+  LocalFree(input.pbData);
+  LocalFree(output.pbData);
+  return result;
 }
 
-QString Settings::deObfuscate(const QString &password)
+QString Settings::deObfuscate(const QString &info)
 {
-  QByteArray temp(QByteArray::fromBase64(password.toUtf8()));
+  QString result;
+  QByteArray realInfo = QByteArray::fromBase64(info.toUtf8());
+  DATA_BLOB input;
+  DATA_BLOB output;
+  BYTE *pbInput = (unsigned char *)malloc(realInfo.size() + 1);
+  memcpy(pbInput, realInfo.constData(), realInfo.size() + 1);
+  DWORD cbInput = realInfo.size() + 1;
+  input.pbData = pbInput;
+  input.cbData = cbInput;
 
-  QByteArray buffer;
-  for (int i = 0; i < temp.length(); ++i) {
-    buffer.append(temp.at(i) ^ Key2[i % 20]);
+  if (CryptUnprotectData(&input, NULL, NULL, NULL, NULL, 0, &output)) {
+    QByteArray buffer = QByteArray::fromRawData((const char *)output.pbData, output.cbData);
+    result = buffer;
+  } else {
+    qCritical() << "Failed to decrypt data!";
   }
-  return QString::fromUtf8(buffer.constData());
+  LocalFree(input.pbData);
+  LocalFree(output.pbData);
+  return result;
 }
 
 QColor Settings::getIdealTextColor(const QColor& rBackgroundColor)

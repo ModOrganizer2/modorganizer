@@ -393,8 +393,8 @@ public:
   static QColor getIdealTextColor(const QColor&  rBackgroundColor);
 private:
 
-  static QString obfuscate(const QString &password);
-  static QString deObfuscate(const QString &password);
+  static QString obfuscate(const QString &info);
+  static QString deObfuscate(const QString &info);
 
   void addLanguages(QComboBox *languageBox);
   void addStyles(QComboBox *styleBox);
