@@ -1878,11 +1878,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("log_split");
     settings.remove("filters_visible");
     settings.remove("browser_geometry");
-    settings.beginGroup("geometry");
-    for (auto key : settings.childKeys()) {
-      settings.remove(key);
-    }
-    settings.endGroup();
+    settings.remove("geometry");
     settings.remove("reset_geometry");
   } else {
     settings.setValue("window_geometry", saveGeometry());
@@ -5671,7 +5667,19 @@ void MainWindow::on_actionNotifications_triggered()
 {
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
   if (problems.hasProblems()) {
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QSize size = settings.value(QString("geometry/%1/size").arg(problems.objectName())).toSize();
+    QPoint pos = settings.value(QString("geometry/%1/pos").arg(problems.objectName())).toPoint();
+    if (size.isValid())
+      problems.resize(size);
+    if (!pos.isNull())
+      problems.move(pos);
+
     problems.exec();
+
+    settings.setValue(QString("geometry/%1/size").arg(problems.objectName()), problems.size());
+    settings.setValue(QString("geometry/%1/pos").arg(problems.objectName()), problems.pos());
+
     updateProblemsButton();
   }
 }
