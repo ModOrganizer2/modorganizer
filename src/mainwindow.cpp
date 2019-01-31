@@ -658,9 +658,9 @@ void MainWindow::updateProblemsButton()
 {
   size_t numProblems = checkForProblems();
   if (numProblems > 0) {
-    ui->actionProblems->setEnabled(true);
-    ui->actionProblems->setIconText(tr("Problems"));
-    ui->actionProblems->setToolTip(tr("There are potential problems with your setup"));
+    ui->actionNotifications->setEnabled(true);
+    ui->actionNotifications->setIconText(tr("Notifications"));
+    ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
     QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
     {
@@ -668,12 +668,12 @@ void MainWindow::updateProblemsButton()
       std::string badgeName = std::string(":/MO/gui/badge_") + (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
       painter.drawPixmap(32, 32, 32, 32, QPixmap(badgeName.c_str()));
     }
-    ui->actionProblems->setIcon(QIcon(mergedIcon));
+    ui->actionNotifications->setIcon(QIcon(mergedIcon));
   } else {
-    ui->actionProblems->setEnabled(false);
-    ui->actionProblems->setIconText(tr("No Problems"));
-    ui->actionProblems->setToolTip(tr("Everything seems to be in order"));
-    ui->actionProblems->setIcon(QIcon(":/MO/gui/warning"));
+    ui->actionNotifications->setEnabled(false);
+    ui->actionNotifications->setIconText(tr("No Notifications"));
+    ui->actionNotifications->setToolTip(tr("There are no notifications"));
+    ui->actionNotifications->setIcon(QIcon(":/MO/gui/warning"));
   }
 }
 
@@ -5667,7 +5667,7 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
   m_CheckBSATimer.start(500);
 }
 
-void MainWindow::on_actionProblems_triggered()
+void MainWindow::on_actionNotifications_triggered()
 {
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
   if (problems.hasProblems()) {

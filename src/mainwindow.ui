@@ -1106,7 +1106,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="MOBase::SortableTreeWidget" name="bsaList">
+                 <widget class="MOBase::SortableTreeWidget" name="bsaList" native="true">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1478,7 +1478,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionSettings"/>
    <addaction name="separator"/>
    <addaction name="actionEndorseMO"/>
-   <addaction name="actionProblems"/>
+   <addaction name="actionNotifications"/>
    <addaction name="actionUpdate"/>
    <addaction name="actionHelp"/>
   </widget>
@@ -1603,7 +1603,7 @@ p, li { white-space: pre-wrap; }
     <string>Mod Organizer is up-to-date</string>
    </property>
   </action>
-  <action name="actionProblems">
+  <action name="actionNotifications">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1612,13 +1612,10 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/warning</normaloff>:/MO/gui/warning</iconset>
    </property>
    <property name="text">
-    <string>No Problems</string>
+    <string>No Notifications</string>
    </property>
    <property name="whatsThis">
-    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.
-
-!Work in progress!
-Right now this has very limited functionality</string>
+    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
    </property>
   </action>
   <action name="actionHelp">
@@ -1692,6 +1689,11 @@ Right now this has very limited functionality</string>
    <class>DownloadListWidget</class>
    <extends>QTreeView</extends>
    <header>downloadlistwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MOBase::SortableTreeWidget</class>
+   <extends>QWidget</extends>
+   <header>sortabletreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>
