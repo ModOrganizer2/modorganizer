@@ -188,7 +188,7 @@ public:
   /**
    * @brief run a limited batch of mod update checks for "newest version" information
    */
-  static int autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver);
+  static int manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information

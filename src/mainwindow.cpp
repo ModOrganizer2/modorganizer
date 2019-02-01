@@ -439,10 +439,6 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&m_SaveMetaTimer, SIGNAL(timeout()), this, SLOT(saveModMetas()));
   m_SaveMetaTimer.start(5000);
 
-  m_ModUpdateTimer.setSingleShot(false);
-  connect(&m_ModUpdateTimer, SIGNAL(timeout()), this, SLOT(modUpdateCheck()));
-  m_ModUpdateTimer.start(300 * 1000);
-
   setCategoryListVisible(initSettings.value("categorylist_visible", true).toBool());
   FileDialogMemory::restore(initSettings);
 
@@ -495,8 +491,6 @@ MainWindow::MainWindow(QSettings &initSettings
 
   updatePluginCount();
   updateModCount();
-
-  modUpdateCheck();
 }
 
 
@@ -4056,6 +4050,22 @@ void MainWindow::ignoreUpdate() {
   }
 }
 
+void MainWindow::checkModUpdates_clicked()
+{
+  std::multimap<QString, int> IDs;
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+      IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+    }
+  } else {
+    ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
+    IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+  }
+  modUpdateCheck(IDs);
+}
+
 void MainWindow::unignoreUpdate()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
@@ -4411,7 +4421,7 @@ void MainWindow::initModListContextMenu(QMenu *menu)
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
   menu->addAction(tr("Disable all visible"), this, SLOT(disableVisibleMods()));
-  menu->addAction(tr("Force update check"), this, SLOT(checkModsForUpdates()));
+  menu->addAction(tr("Check for updates"), this, SLOT(checkModsForUpdates()));
   menu->addAction(tr("Refresh"), &m_OrganizerCore, SLOT(profileRefresh()));
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
 }
@@ -4518,10 +4528,11 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
           menu.addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
 
+        if (info->getNexusID() > 0)
+          menu->addAction(tr("Force-check updates"), this, SLOT(checkModUpdates_clicked()));
         if (info->updateIgnored()) {
           menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
-        }
-        else {
+        } else {
           if (info->updateAvailable() || info->downgradeAvailable()) {
               menu.addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
           }
@@ -5447,15 +5458,15 @@ void MainWindow::modDetailsUpdated(bool)
   }
 }
 
-void MainWindow::modUpdateCheck()
+void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 {
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    m_ModsToUpdate += ModInfo::autoUpdateCheck(&m_PluginContainer, this);
+    m_ModsToUpdate += ModInfo::manualUpdateCheck(&m_PluginContainer, this, IDs);
     m_RefreshProgress->setRange(0, m_ModsToUpdate);
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this]() { this->modUpdateCheck(); });
+      m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
@@ -5506,19 +5517,20 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
             if (currentUpdate == updateScanData["old_file_id"].toInt()) {
               currentUpdate = updateScanData["new_file_id"].toInt();
               finalUpdate = false;
+              // Apply the version data from the latest file
+              for (auto file : files) {
+                QVariantMap fileData = file.toMap();
+                if (fileData["file_id"].toInt() == currentUpdate) {
+                  if (fileData["category_id"].toInt() != 6) {
+                    mod->setNewestVersion(fileData["version"].toString());
+                    foundUpdate = true;
+                  }
+                }
+              }
               break;
             }
           }
         }
-        // Apply the version data from the latest file
-        for (auto file : files) {
-          QVariantMap fileData = file.toMap();
-          if (fileData["file_id"].toInt() == currentUpdate) {
-            mod->setNewestVersion(fileData["version"].toString());
-            foundUpdate = true;
-          }
-        }
-
         break;
       } else if (installedFile == updateData["new_file_name"].toString()) {
         // This is a safety mechanism if this is the latest update file so we don't use the mod version

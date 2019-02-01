@@ -268,9 +268,13 @@ void NXMAccessManager::validateFinished()
       m_ValidateState = VALIDATE_VALID;
       emit validateSuccessful(true);
     } else {
+      m_ApiKey.clear();
+      m_ValidateState = VALIDATE_NOT_VALID;
       emit validateFailed(tr("Validation failed, please reauthenticate in the Settings -> Nexus tab: %1").arg(credentialsData.value("message").toString()));
     }
   } else {
+    m_ApiKey.clear();
+    m_ValidateState = VALIDATE_NOT_CHECKED;
     emit validateFailed(tr("unknown error"));
   }
 }

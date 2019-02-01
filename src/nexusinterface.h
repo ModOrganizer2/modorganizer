@@ -460,8 +460,6 @@ private:
 
   PluginContainer *m_PluginContainer;
 
-  QTimer m_RetryTimer;
-
   int m_RemainingDailyRequests;
   int m_RemainingHourlyRequests;
   int m_MaxDailyRequests;

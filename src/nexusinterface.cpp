@@ -155,10 +155,6 @@ NexusInterface::NexusInterface(PluginContainer *pluginContainer)
   m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString(3));
   m_DiskCache = new QNetworkDiskCache(this);
   connect(m_AccessManager, SIGNAL(requestNXMDownload(QString)), this, SLOT(downloadRequestedNXM(QString)));
-
-  m_RetryTimer.setSingleShot(true);
-  m_RetryTimer.setInterval(2000);
-  m_RetryTimer.callOnTimeout(this, &NexusInterface::nextRequest);
 }
 
 NXMAccessManager *NexusInterface::getAccessManager()
@@ -468,8 +464,6 @@ IPluginGame* NexusInterface::getGame(QString gameName) const
 
 void NexusInterface::cleanup()
 {
-//  delete m_AccessManager;
-//  delete m_DiskCache;
   m_AccessManager = nullptr;
   m_DiskCache = nullptr;
 }
@@ -487,19 +481,6 @@ void NexusInterface::nextRequest()
     return;
   }
 
-  if (m_RemainingDailyRequests + m_RemainingHourlyRequests <= 0) {
-    if (!m_RetryTimer.isActive()) {
-      QTime time = QTime::currentTime();
-      QTime targetTime;
-      targetTime.setHMS((time.hour() + 1) % 23, 0, 5);
-      m_RetryTimer.start(time.msecsTo(targetTime));
-      QString warning("You've exceeded the Nexus API rate limit and requests are now being throttled. "
-        "Your next batch of requests will be available in approximately %1 minutes and %2 seconds.");
-      qWarning() << warning.arg(time.secsTo(targetTime) / 60).arg(time.secsTo(targetTime) % 60);
-    }
-    return;
-  }
-
   if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->validated()) {
     if (!getAccessManager()->validateAttempted()) {
       emit needLogin();
@@ -507,6 +488,17 @@ void NexusInterface::nextRequest()
     } else if (getAccessManager()->validateWaiting()) {
       return;
     }
+  }
+
+  if (m_RemainingDailyRequests + m_RemainingHourlyRequests <= 0) {
+    m_RequestQueue.clear();
+    QTime time = QTime::currentTime();
+    QTime targetTime;
+    targetTime.setHMS((time.hour() + 1) % 23, 5, 0);
+    QString warning("You've exceeded the Nexus API rate limit and requests are now being throttled. "
+      "Your next batch of requests will be available in approximately %1 minutes and %2 seconds.");
+    qWarning() << warning.arg(time.secsTo(targetTime) / 60).arg(time.secsTo(targetTime) % 60);
+    return;
   }
 
   NXMRequestInfo info = m_RequestQueue.dequeue();

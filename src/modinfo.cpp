@@ -148,8 +148,7 @@ std::vector<ModInfo::Ptr> ModInfo::getByModID(QString game, int modID)
   for (auto iter : s_ModsByModID) {
     if (iter.first.second == modID) {
       if (iter.first.first.compare(game, Qt::CaseInsensitive) == 0) {
-        match = iter.second;
-        break;
+        match.insert(match.end(), iter.second.begin(), iter.second.end());
       }
     }
   }
@@ -303,6 +302,9 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   }
 
   result = organizedGames.size();
+  
+  if (organizedGames.empty())
+    qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
 
   for (auto game : organizedGames) {
     NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
@@ -312,32 +314,28 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
 }
 
 
-int ModInfo::autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver)
+int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
 {
-  qInfo("Initializing periodic update check.");
-  int result = 0;
-
-  std::vector<QSharedPointer<ModInfo>> sortedMods;
+  std::vector<QSharedPointer<ModInfo>> mods;
   std::multimap<QString, int> organizedGames;
-  for (auto mod : s_Collection) {
-    if (mod->canBeUpdated()) {
-      sortedMods.push_back(mod);
-    }
-  }
 
-  std::sort(sortedMods.begin(), sortedMods.end(), [](QSharedPointer<ModInfo> a, QSharedPointer<ModInfo> b) -> bool {
+  for (auto ID : IDs) {
+    auto matchedMods = getByModID(ID.first, ID.second);
+    mods.insert(mods.end(), matchedMods.begin(), matchedMods.end());
+  }
+  mods.erase(
+    std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return !mod->canBeUpdated(); }),
+    mods.end()
+  );
+
+  std::sort(mods.begin(), mods.end(), [](QSharedPointer<ModInfo> a, QSharedPointer<ModInfo> b) -> bool {
     return a->getLastNexusUpdate() < b->getLastNexusUpdate();
   });
 
-  if (sortedMods.size() > 10)
-    sortedMods.resize(10);
+  if (mods.size()) {
+    qInfo("Checking updates for %d mods...", mods.size());
 
-  result = sortedMods.size();
-
-  if (sortedMods.size()) {
-    qInfo("Checking updates for %d mods...", sortedMods.size());
-
-    for (auto mod : sortedMods) {
+    for (auto mod : mods) {
       organizedGames.insert(std::make_pair<QString, int>(mod->getGameName(), mod->getNexusID()));
     }
 
@@ -345,10 +343,10 @@ int ModInfo::autoUpdateCheck(PluginContainer *pluginContainer, QObject *receiver
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
     }
   } else {
-    qInfo("No mods require updates at this time.");
+    qInfo("None of the selected mods can be updated.");
   }
 
-  return result;
+  return organizedGames.size();
 }
 
 
