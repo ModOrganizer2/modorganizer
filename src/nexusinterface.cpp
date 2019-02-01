@@ -532,7 +532,12 @@ void NexusInterface::nextRequest()
         url = QString("%1/games/%2/mods/%3/files/%4").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
       } break;
       case NXMRequestInfo::TYPE_DOWNLOADURL: {
-        url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
+        ModRepositoryFileInfo *fileInfo = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(info.m_UserData));
+        if (!fileInfo->nexusKey.isEmpty() && fileInfo->nexusExpires)
+          url = QString("%1/games/%2/mods/%3/files/%4/download_link?key=%5&expires=%6")
+          .arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID).arg(fileInfo->nexusKey).arg(fileInfo->nexusExpires);
+        else
+          url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
       } break;
       case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
         QString endorse = info.m_Endorse ? "endorse" : "abstain";

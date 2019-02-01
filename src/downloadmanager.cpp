@@ -575,7 +575,13 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   emit update(-1);
   emit downloadAdded();
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, nxmInfo.fileId(), ""));
+  ModRepositoryFileInfo *info = new ModRepositoryFileInfo();
+
+  info->nexusKey = nxmInfo.key();
+  info->nexusExpires = nxmInfo.expires();
+
+  QObject *test = info;
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));
 }
 
 
@@ -1520,7 +1526,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
     m_RequestIDs.erase(idIter);
   }
 
-  ModRepositoryFileInfo *info = new ModRepositoryFileInfo();
+  ModRepositoryFileInfo *info = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
 
   QVariantMap result = resultData.toMap();
   info->name = result["name"].toString();
