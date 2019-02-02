@@ -505,7 +505,7 @@ void NexusInterface::nextRequest()
     }
   }
 
-  if (m_RemainingDailyRequests + m_RemainingHourlyRequests <= 0) {
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) <= 0) {
     m_RequestQueue.clear();
     QTime time = QTime::currentTime();
     QTime targetTime;
