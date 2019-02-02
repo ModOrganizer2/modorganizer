@@ -573,9 +573,8 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   if (reply->error() != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 429) {
-      qWarning("Requests have hit the rate limit threshold and are now being throttled. This request will be retried.");
+      qWarning("All API requests have been consumed and are now being denied.");
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
-      m_RequestQueue.enqueue(*iter);
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
     }

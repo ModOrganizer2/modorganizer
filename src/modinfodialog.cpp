@@ -798,52 +798,6 @@ void ModInfoDialog::refreshNexusData(int modID)
 }
 
 
-/*void ModInfoDialog::nxmDescriptionAvailable(int, QVariant, QVariant resultData, int requestID)
-{
-  std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
-  if (idIter == m_RequestIDs.end()) {
-    return;
-  } else {
-    m_RequestIDs.erase(idIter);
-  }
-
-  QVariantMap result = resultData.toMap();
-
-  if (!result["description"].isNull()) {
-    QString descriptionAsHTML =
-        QString("<html>"
-                  "<head><style>body {background: #707070; } a { color: #5EA2E5; }</style></head>"
-                  "<body>%1</body>"
-                "</html>").arg(BBCode::convertToHTML(result["description"].toString()));
-
-//    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-    ui->descriptionView->setHtml(descriptionAsHTML);
-  } else {
-    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-  }
-
-  QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
-  QString version = result["version"].toString();
-
-  if (!version.isEmpty()) {
-    m_ModInfo->setNewestVersion(version);
-
-    VersionInfo currentVersion(versionEdit->text());
-    VersionInfo newestVersion(version);
-
-    QPalette versionColor;
-    if (currentVersion < newestVersion) {
-      versionColor.setColor(QPalette::Text, Qt::red);
-      versionEdit->setToolTip(tr("Current Version: %1").arg(version));
-    } else {
-      versionColor.setColor(QPalette::Text, Qt::green);
-      versionEdit->setToolTip(tr("No update available"));
-    }
-    versionEdit->setPalette(versionColor);
-  }
-}*/
-
-
 QString ModInfoDialog::getFileCategory(int categoryID)
 {
   switch (categoryID) {
@@ -876,46 +830,21 @@ void ModInfoDialog::updateVersionColor()
 
 void ModInfoDialog::modDetailsUpdated(bool success)
 {
-  if (success) {
-    QString nexusDescription = m_ModInfo->getNexusDescription();
-    if (!nexusDescription.isEmpty()) {
-  /*    QString input =
-         "[size=20]sizetest[/size]\r\n"
-          "[COLOR=yellow]colortest[/COLOR]\r\n"
-          "[center]centertest[/center]\r\n"
-          "[quote]quotetest 1[/quote]\r\n"
-          "[quote=bla]quotetest 2[/quote]\r\n"
-          "[url]www.skyrimnexus.com[/url]\r\n"
-          "[url=www.skyrimnexus.com]urltest 2[/url]\r\n"
-          "[ol]\r\n"
-          "[li]item 2[/li]"
-          "[*]item 1\r\n"
-          "[/ol]\r\n"
-          "[img]http://www.bbcode.org/images/bbcode_logo.png[/img]\r\n"
-          "[table][tr][th]headertest1[/th]"
-          "[th]headertest2[/th][/tr]"
-          "[tr][td]rowtest11[/td][td]rowtest12[/td][/tr]"
-          "[tr][td]rowtest21[/td][td]rowtest22[/td][/tr][/table]"
-          "[email=\"sherb@gmx.net\"]mail me[/email]";
-      ui->descriptionView->setHtml(BBCode::convertToHTML(input));*/
+  QString nexusDescription = m_ModInfo->getNexusDescription();
+  QString descriptionAsHTML = "<html>"
+    "<head><style class=\"nexus-description\">body {font-style: sans-serif; background: #707070; } a { color: #5EA2E5; }</style></head>"
+    "<body>%1</body>"
+    "</html>";
 
-      QString descriptionAsHTML =
-          QString("<html>"
-                    "<head><style>body {background: #707070; } a { color: #5EA2E5; }</style></head>"
-                    "<body>%1</body>"
-                  "</html>").arg(BBCode::convertToHTML(nexusDescription));
-
-      ui->descriptionView->page()->setHtml(descriptionAsHTML);
-
-  //    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-  //    ui->descriptionView->setHtml(descriptionAsHTML);
-    } else {
-  //    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-      ui->descriptionView->page()->setHtml(tr("(description incomplete, please visit nexus)"));
-    }
-
-    updateVersionColor();
+  if (!nexusDescription.isEmpty()) {
+    descriptionAsHTML = descriptionAsHTML.arg(BBCode::convertToHTML(nexusDescription));
+  } else {
+    descriptionAsHTML = descriptionAsHTML.arg(tr("<div style=\"text-align: center;\"><h1>Uh oh!</h1><p>Sorry, there is no description available for this mod. :(</p></div>"));
   }
+
+  ui->descriptionView->page()->setHtml(descriptionAsHTML);
+
+  updateVersionColor();
 }
 
 
@@ -923,21 +852,21 @@ void ModInfoDialog::activateNexusTab()
 {
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
-  if (modID != 0) {
+  if (modID > 0) {
     QString nexusLink = NexusInterface::instance(m_PluginContainer)->getModURL(modID, m_ModInfo->getGameName());
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);
 
-    if (m_ModInfo->getNexusDescription().isEmpty() ||
-        QDateTime::currentDateTimeUtc() > m_ModInfo->getLastNexusQuery().addDays(1)) {
+    if (m_ModInfo->getNexusDescription().isEmpty() || QDateTime::currentDateTimeUtc() >= m_ModInfo->getLastNexusQuery().addDays(1)) {
       refreshNexusData(modID);
     } else {
-      this->modDetailsUpdated(true);
+      modDetailsUpdated(true);
     }
-  }
+  } else
+    modDetailsUpdated(true);
   QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
-  QString currentVersion = m_Settings->value("version", "0.0").toString();
+  QString currentVersion = m_Settings->value("version", "???").toString();
   versionEdit->setText(currentVersion);
   ui->customUrlLineEdit->setText(m_ModInfo->getURL());
 }
@@ -1521,9 +1450,12 @@ void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, 
 
 void ModInfoDialog::on_refreshButton_clicked()
 {
-  m_ModInfo->updateNXMInfo();
-
-  MessageDialog::showMessage(tr("Info requested, please wait"), this);
+  if (m_ModInfo->getNexusID() > 0) {
+    QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
+    int modID = modIDEdit->text().toInt();
+    refreshNexusData(modID);
+  } else
+    qInfo("Mod has no valid Nexus ID, info can't be updated.");
 }
 
 void ModInfoDialog::on_endorseBtn_clicked()
