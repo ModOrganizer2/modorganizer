@@ -21,6 +21,7 @@
   <file name="Qt5Svg.dll"/>
   <file name="Qt5WebEngineCore.dll"/>
   <file name="Qt5WebEngineWidgets.dll"/>
+  <file name="Qt5WebSockets.dll"/>
   <file name="Qt5Widgets.dll"/>
   <file name="Qt5WinExtras.dll"/>
 </assembly>
