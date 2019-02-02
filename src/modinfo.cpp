@@ -297,7 +297,7 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   std::multimap<QString, int> organizedGames;
   for (auto mod : s_Collection) {
     if (mod->canBeUpdated()) {
-      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName(), mod->getNexusID()));
+      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
     }
   }
 
@@ -324,7 +324,7 @@ int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiv
     mods.insert(mods.end(), matchedMods.begin(), matchedMods.end());
   }
   mods.erase(
-    std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return !mod->canBeUpdated(); }),
+    std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return mod->getNexusID() <= 0; }),
     mods.end()
   );
 
@@ -336,7 +336,7 @@ int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiv
     qInfo("Checking updates for %d mods...", mods.size());
 
     for (auto mod : mods) {
-      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName(), mod->getNexusID()));
+      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
     }
 
     for (auto game : organizedGames) {

@@ -325,35 +325,45 @@ int NexusInterface::requestDescription(QString gameName, int modID, QObject *rec
 int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData,
   const QString &subModule, MOBase::IPluginGame const *game)
 {
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_MODINFO, userData, subModule, game);
-  m_RequestQueue.enqueue(requestInfo);
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
+    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_MODINFO, userData, subModule, game);
+    m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
-    receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
+      receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
 
-  nextRequest();
-  return requestInfo.m_ID;
+    nextRequest();
+    return requestInfo.m_ID;
+  }
+  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
+    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
+  return -1;
 }
 
 
 int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant userData,
                                    QString gameName, const QString &subModule)
 {
-  IPluginGame *game = getGame(gameName);
-  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
-  m_RequestQueue.enqueue(requestInfo);
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
+    IPluginGame *game = getGame(gameName);
+    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
+    m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)),
-    receiver, SLOT(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)),
+      receiver, SLOT(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
 
-  nextRequest();
-  return requestInfo.m_ID;
+    nextRequest();
+    return requestInfo.m_ID;
+  }
+  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
+    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
+  return -1;
 }
 
 
@@ -429,18 +439,23 @@ int NexusInterface::requestDownloadURL(QString gameName, int modID, int fileID, 
 int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
 {
-  NXMRequestInfo requestInfo(modID, modVersion, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
-  requestInfo.m_Endorse = endorse;
-  m_RequestQueue.enqueue(requestInfo);
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
+    NXMRequestInfo requestInfo(modID, modVersion, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
+    requestInfo.m_Endorse = endorse;
+    m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
-    receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+      receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
 
-  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
 
-  nextRequest();
-  return requestInfo.m_ID;
+    nextRequest();
+    return requestInfo.m_ID;
+  }
+  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
+    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
+  return -1;
 }
 
 bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
