@@ -435,7 +435,7 @@ private:
     static QAtomicInt s_NextID;
   };
 
-  static const int MAX_ACTIVE_DOWNLOADS = 2;
+  static const int MAX_ACTIVE_DOWNLOADS = 6;
 
 private:
 

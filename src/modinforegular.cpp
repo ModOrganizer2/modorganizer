@@ -225,9 +225,9 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
   if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("endorsement"))) {
     QVariantMap endorsement = result["endorsement"].toMap();
     QString endorsementStatus = endorsement["endorse_status"].toString();
-    if (endorsementStatus.compare("Endorsed") == 00)
+    if (endorsementStatus.compare("Endorsed", Qt::CaseInsensitive) == 00)
       setEndorsedState(ENDORSED_TRUE);
-    else if (endorsementStatus.compare("Abstained") == 00)
+    else if (endorsementStatus.compare("Abstained", Qt::CaseInsensitive) == 00)
       setEndorsedState(ENDORSED_NEVER);
     else
       setEndorsedState(ENDORSED_FALSE);
@@ -235,6 +235,7 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
   m_LastNexusQuery = QDateTime::currentDateTimeUtc();
   m_MetaInfoChanged = true;
   saveMeta();
+  disconnect(sender(), SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant)));
   emit modDetailsUpdated(true);
 }
 

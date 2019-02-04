@@ -294,7 +294,7 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
   //  NexusInterface::instance(pluginContainer)->requestUpdates(game->nexusModOrganizerID(), receiver, QVariant(), game->gameShortName(), QString());
   //}
 
-  std::multimap<QString, int> organizedGames;
+  std::set<std::pair<QString, int>> organizedGames;
   for (auto mod : s_Collection) {
     if (mod->canBeUpdated()) {
       organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
@@ -317,7 +317,7 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
 int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
-  std::multimap<QString, int> organizedGames;
+  std::set<std::pair<QString, int>> organizedGames;
 
   for (auto ID : IDs) {
     auto matchedMods = getByModID(ID.first, ID.second);
