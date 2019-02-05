@@ -25,8 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 class PluginContainer;
 class QDir;
+class QDateTime;
 
-#include <QDateTime>
 #include <QMutex>
 #include <QSharedPointer>
 #include <QString>
@@ -462,7 +462,7 @@ public:
   /**
    * @return the mod update check expiration date
    */
-  virtual QDateTime getExpires() const { return QDateTime(); }
+  virtual QDateTime getExpires() const = 0;
 
   /**
    * @return true if the mod can be enabled/disabled
