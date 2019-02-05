@@ -122,7 +122,11 @@ void NXMAccessManager::startValidationCheck()
 
   QNetworkRequest request(requestString);
   request.setRawHeader("APIKEY", m_ApiKey.toUtf8());
-  request.setRawHeader("User-Agent", userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, userAgent().toUtf8());
+  request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
+  request.setRawHeader("Protocol-Version", "1.0.0");
+  request.setRawHeader("Application-Name", "MO2");
+  request.setRawHeader("Application-Version", m_MOVersion.toUtf8());
 
   m_ProgressDialog = new QProgressDialog(nullptr);
   m_ProgressDialog->setLabelText(tr("Validating Nexus Connection"));
@@ -192,12 +196,19 @@ void NXMAccessManager::apiCheck(const QString &apiKey)
 QString NXMAccessManager::userAgent(const QString &subModule) const
 {
   QStringList comments;
+  QString os;
+  if (QSysInfo::productType() == "windows")
+    comments << ((QSysInfo::kernelType() == "winnt") ? "Windows_NT " : "Windows ") + QSysInfo::kernelVersion();
+  else
+    comments << QSysInfo::kernelType().left(1).toUpper() + QSysInfo::kernelType().mid(1)
+    << QSysInfo::productType().left(1).toUpper() + QSysInfo::kernelType().mid(1) + " " + QSysInfo::productVersion();
   comments << "Nexus Client v" + m_NMMVersion;
   if (!subModule.isEmpty()) {
     comments << "module: " + subModule;
   }
+  comments << ((QSysInfo::buildCpuArchitecture() == "x86_64") ? "x64" : "x86");
 
-  return  QString("Mod Organizer/%1 (%2)").arg(m_MOVersion, comments.join("; "));
+  return  QString("Mod Organizer/%1 (%2) Qt/%3").arg(m_MOVersion, comments.join("; "), qVersion());
 }
 
 

@@ -557,10 +557,11 @@ void NexusInterface::nextRequest()
     url = info.m_URL;
   }
   QNetworkRequest request(url);
-  request.setRawHeader("apikey", m_AccessManager->apiKey().toUtf8());
+  request.setRawHeader("APIKEY", m_AccessManager->apiKey().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
-  request.setRawHeader("Protocol-Version", "0.5.5");
+  request.setRawHeader("Protocol-Version", "1.0.0");
+  request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", QApplication::applicationVersion().toUtf8());
 
   if (postData.object().isEmpty())
