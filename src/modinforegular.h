@@ -259,6 +259,11 @@ public:
   virtual bool canBeUpdated() const;
 
   /**
+   * @return the update expiration date based on the last updated date from Nexus
+   */
+  virtual QDateTime getExpires() const;
+
+  /**
    * @return true if the mod can be enabled/disabled
    */
   virtual bool canBeEnabled() const { return true; }
@@ -348,6 +353,16 @@ public:
    */
   virtual void setLastNexusQuery(QDateTime time);
 
+  /**
+   * @return last time the mod was updated on Nexus
+   */
+  virtual QDateTime getNexusLastModified() const;
+
+  /**
+   * @brief set the last time the mod was updated on Nexus
+   */
+  virtual void setNexusLastModified(QDateTime time);
+
   virtual QStringList archives(bool checkOnDisk = false);
 
   virtual void setColor(QColor color);
@@ -405,6 +420,7 @@ private:
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
   QDateTime m_LastNexusUpdate;
+  QDateTime m_NexusLastModified;
 
   QColor m_Color;
 

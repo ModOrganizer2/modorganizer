@@ -31,6 +31,7 @@ public:
   virtual void ignoreUpdate(bool /*ignore*/) {}
 
   virtual bool canBeUpdated() const { return false; }
+  virtual QDateTime getExpires() const { return QDateTime(); }
   virtual bool canBeEnabled() const { return false; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
 
@@ -49,6 +50,8 @@ public:
   virtual void setLastNexusUpdate(QDateTime) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual void setLastNexusQuery(QDateTime) {}
+  virtual QDateTime getNexusLastModified() const { return QDateTime(); }
+  virtual void setNexusLastModified(QDateTime) {}
   virtual QDateTime creationTime() const { return QDateTime(); }
 
   virtual void getNexusFiles

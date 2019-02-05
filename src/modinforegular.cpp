@@ -100,6 +100,7 @@ void ModInfoRegular::readMeta()
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
   m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
+  m_NexusLastModified = QDateTime::fromString(metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(), Qt::ISODate);
   m_Color            = metaFile.value("color",QColor()).value<QColor>();
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
@@ -165,6 +166,7 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("nexusFileStatus", m_NexusFileStatus);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
       metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
+      metaFile.setValue("nexusLastModified", m_NexusLastModified.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
@@ -233,6 +235,7 @@ void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant re
       setEndorsedState(ENDORSED_FALSE);
   }
   m_LastNexusQuery = QDateTime::currentDateTimeUtc();
+  m_NexusLastModified = QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt());
   m_MetaInfoChanged = true;
   saveMeta();
   disconnect(sender(), SIGNAL(nxmDescriptionAvailable(QString, int, QVariant, QVariant)));
@@ -496,12 +499,31 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
 bool ModInfoRegular::canBeUpdated() const
 {
   QDateTime now = QDateTime::currentDateTimeUtc();
-  QDateTime target = m_LastNexusUpdate.addSecs(3600);
+  QDateTime target = getExpires();
   if (now >= target)
     return m_NexusID > 0;
   return false;
 }
 
+QDateTime ModInfoRegular::getExpires() const
+{
+  qint64 diff = m_NexusLastModified.msecsTo(QDateTime::currentDateTimeUtc());
+  qint64 year = 31536000000;
+  qint64 sixMonths = 15768000000;
+  qint64 threeMonths = 7884000000;
+  qint64 oneMonth = 1314000000;
+
+  if (diff < oneMonth)
+    return m_LastNexusUpdate.addSecs(7200);
+  else if (diff < threeMonths)
+    return m_LastNexusUpdate.addSecs(14400);
+  else if (diff < sixMonths)
+    return m_LastNexusUpdate.addSecs(21600);
+  else if (diff < year)
+    return m_LastNexusUpdate.addSecs(43200);
+  else
+    return m_LastNexusUpdate.addSecs(86400);
+}
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
@@ -681,6 +703,19 @@ QDateTime ModInfoRegular::getLastNexusQuery() const
 void ModInfoRegular::setLastNexusQuery(QDateTime time)
 {
   m_LastNexusQuery = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+QDateTime ModInfoRegular::getNexusLastModified() const
+{
+  return m_NexusLastModified;
+}
+
+void ModInfoRegular::setNexusLastModified(QDateTime time)
+{
+  m_NexusLastModified = time;
   m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);

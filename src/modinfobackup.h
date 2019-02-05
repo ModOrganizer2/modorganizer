@@ -21,6 +21,7 @@ public:
   virtual int getFixedPriority() const { return -1; }
   virtual void ignoreUpdate(bool) {}
   virtual bool canBeUpdated() const { return false; }
+  virtual QDateTime getExpires() const { return QDateTime(); }
   virtual bool canBeEnabled() const { return false; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
   virtual std::vector<EFlag> getFlags() const;
@@ -31,6 +32,8 @@ public:
   virtual void setLastNexusQuery(QDateTime) {}
   virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
   virtual void setLastNexusUpdate(QDateTime) {}
+  virtual QDateTime getNexusLastModified() const { return QDateTime(); }
+  virtual void setNexusLastModified(QDateTime) {}
   virtual void getNexusFiles(QList<MOBase::ModRepositoryFileInfo*>::const_iterator&,
                              QList<MOBase::ModRepositoryFileInfo*>::const_iterator&) {}
   virtual QString getNexusDescription() const { return QString(); }

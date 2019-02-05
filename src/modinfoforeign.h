@@ -43,6 +43,7 @@ public:
   virtual QString getInstallationFile() const { return ""; }
   virtual QString getGameName() const { return ""; }
   virtual int getNexusID() const { return -1; }
+  virtual QDateTime getExpires() const { return QDateTime(); }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
   virtual std::vector<ModInfo::EFlag> getFlags() const;
   virtual int getHighlight() const;
@@ -53,6 +54,8 @@ public:
   virtual void setLastNexusUpdate(QDateTime) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
   virtual void setLastNexusQuery(QDateTime) {}
+  virtual QDateTime getNexusLastModified() const { return QDateTime(); }
+  virtual void setNexusLastModified(QDateTime) {}
   virtual QString getNexusDescription() const { return QString(); }
   virtual int getFixedPriority() const { return INT_MIN; }
   virtual QStringList archives(bool checkOnDisk = false)  { return m_Archives; }

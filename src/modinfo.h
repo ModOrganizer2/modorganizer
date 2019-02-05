@@ -24,9 +24,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "versioninfo.h"
 
 class PluginContainer;
-
-class QDateTime;
 class QDir;
+
+#include <QDateTime>
 #include <QMutex>
 #include <QSharedPointer>
 #include <QString>
@@ -460,6 +460,11 @@ public:
   virtual bool canBeUpdated() const { return false; }
 
   /**
+   * @return the mod update check expiration date
+   */
+  virtual QDateTime getExpires() const { return QDateTime(); }
+
+  /**
    * @return true if the mod can be enabled/disabled
    */
   virtual bool canBeEnabled() const { return false; }
@@ -554,6 +559,16 @@ public:
    * @brief set the last time nexus was queried for info on this mod
    */
   virtual void setLastNexusQuery(QDateTime time) = 0;
+
+  /**
+   * @return last time the mod was updated on Nexus
+   */
+  virtual QDateTime getNexusLastModified() const = 0;
+
+  /**
+   * @brief set the last time the mod was updated on Nexus
+   */
+  virtual void setNexusLastModified(QDateTime time) = 0;
 
   /**
    * @return a list of files that, if they exist in the data directory are treated as files in THIS mod

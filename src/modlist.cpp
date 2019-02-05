@@ -467,7 +467,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         if (!modInfo->canBeUpdated()) {
           text += "<br>" + tr("This mod was last checked on %1. It will be available to check after %2.")
             .arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate))
-            .arg(modInfo->getLastNexusUpdate().toLocalTime().addSecs(3600).time().toString(Qt::DefaultLocaleShortDate));
+            .arg(modInfo->getExpires().toLocalTime().time().toString(Qt::DefaultLocaleShortDate));
         } else {
           text += "<br>" + tr("This mod is eligible for an update check.");
           text += "<br>" + tr("It was last checked on %1").arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate));
