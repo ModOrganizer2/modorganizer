@@ -57,7 +57,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug> // for qDebug, qWarning
 
 #include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
-#include <wincrypt.h> // For storage
+#include <wincred.h> // For storage
 
 #include <algorithm> // for sort
 #include <memory>
@@ -176,45 +176,59 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-QString Settings::obfuscate(const QString &info)
+bool Settings::obfuscate(const QString key, const QString data)
 {
-  QByteArray byteData = info.toUtf8();
-  QString result;
-  DATA_BLOB input;
-  DATA_BLOB output;
-  std::vector<uint8_t> data(byteData.begin(), byteData.end());
-  DWORD cbInput = data.size() + 1;
-  input.pbData = data.data();
-  input.cbData = cbInput;
-
-  if (CryptProtectData(&input, NULL, NULL, NULL, NULL, 0, &output)) {
-    QByteArray buffer = QByteArray::fromRawData((const char *)output.pbData, output.cbData);
-    result = buffer.toBase64();
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  bool result = false;
+  if (data.isEmpty()) {
+    result = CredDeleteW(keyData, CRED_TYPE_GENERIC, 0);
+    if (!result)
+      if (GetLastError() == ERROR_NOT_FOUND)
+        result = true;
   } else {
-    qCritical() << "Failed to encrypt the data!";
+    wchar_t* charData = new wchar_t[data.size()];
+    data.toWCharArray(charData);
+
+    CREDENTIALW cred = {};
+    cred.Flags = 0;
+    cred.Type = CRED_TYPE_GENERIC;
+    cred.TargetName = keyData;
+    cred.CredentialBlob = (LPBYTE)charData;
+    cred.CredentialBlobSize = sizeof(wchar_t) * data.size();
+    cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+
+    result = CredWriteW(&cred, 0);
+    delete[] charData;
   }
-  LocalFree(output.pbData);
+  delete[] keyData;
   return result;
 }
 
-QString Settings::deObfuscate(const QString &info)
+QString Settings::deObfuscate(const QString key)
 {
   QString result;
-  QByteArray realInfo = QByteArray::fromBase64(info.toUtf8());
-  DATA_BLOB input;
-  DATA_BLOB output;
-  std::vector<uint8_t> data(realInfo.begin(), realInfo.end());
-  DWORD cbInput = data.size() + 1;
-  input.pbData = data.data();
-  input.cbData = cbInput;
-
-  if (CryptUnprotectData(&input, NULL, NULL, NULL, NULL, 0, &output)) {
-    QByteArray buffer = QByteArray::fromRawData((const char *)output.pbData, output.cbData);
-    result = buffer;
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  PCREDENTIALW creds;
+  if (CredReadW(keyData, 1, 0, &creds)) {
+    wchar_t *charData = (wchar_t *)creds->CredentialBlob;
+    result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
   } else {
-    qCritical() << "Failed to decrypt data!";
+    if (GetLastError() != ERROR_NOT_FOUND) {
+      wchar_t buffer[256];
+      FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+      qCritical() << "Retrieving encrypted data failed:" << buffer;
+    }
   }
-  LocalFree(output.pbData);
+  CredFree(creds);
+  delete[] keyData;
   return result;
 }
 
@@ -355,22 +369,24 @@ QString Settings::getNMMVersion() const
 
 bool Settings::getNexusApiKey(QString &apiKey) const
 {
-  if (m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty())
+  QString tempKey = deObfuscate("APIKEY");
+  if (tempKey.isEmpty())
     return false;
-  apiKey = deObfuscate(m_Settings.value("Settings/nexus_api_key", "").toString());
+  apiKey = tempKey;
   return true;
 }
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
-  if (m_Settings.contains("Settings/steam_username")
-      && m_Settings.contains("Settings/steam_password")) {
-    username = m_Settings.value("Settings/steam_username").toString();
-    password = deObfuscate(m_Settings.value("Settings/steam_password").toString());
-    return true;
-  } else {
-    return false;
+  if (m_Settings.contains("Settings/steam_username")) {
+    QString tempPass = deObfuscate("steam_password");
+    if (!tempPass.isEmpty()) {
+      username = m_Settings.value("Settings/steam_username").toString();
+      password = tempPass;
+      return true;
+    }
   }
+  return false;
 }
 bool Settings::compactDownloads() const
 {
@@ -451,7 +467,13 @@ QString Settings::executablesBlacklist() const
 
 void Settings::setNexusApiKey(QString apiKey)
 {
-  m_Settings.setValue("Settings/nexus_api_key", obfuscate(apiKey));
+  if (!obfuscate("APIKEY", apiKey)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing API key failed:" << buffer;
+  }
 }
 
 void Settings::setSteamLogin(QString username, QString password)
@@ -462,10 +484,12 @@ void Settings::setSteamLogin(QString username, QString password)
   } else {
     m_Settings.setValue("Settings/steam_username", username);
   }
-  if (password == "") {
-    m_Settings.remove("Settings/steam_password");
-  } else {
-    m_Settings.setValue("Settings/steam_password", obfuscate(password));
+  if (!obfuscate("steam_password", password)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing or deleting password failed:" << buffer;
   }
 }
 
@@ -692,19 +716,25 @@ void Settings::resetDialogs()
 
 void Settings::processApiKey(const QString &apiKey)
 {
-  m_Settings.setValue("Settings/nexus_api_key", obfuscate(apiKey));
+  if (!obfuscate("APIKEY", apiKey)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing or deleting API key failed:" << buffer;
+  }
 }
 
 void Settings::clearApiKey(QPushButton *nexusButton)
 {
-  m_Settings.remove("Settings/nexus_api_key");
+  obfuscate("APIKEY", "");
   nexusButton->setEnabled(true);
   nexusButton->setText("Connect to Nexus");
 }
 
 void Settings::checkApiKey(QPushButton *nexusButton)
 {
-  if (m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty()) {
+  if (deObfuscate("APIKEY").isEmpty()) {
     nexusButton->setEnabled(true);
     nexusButton->setText("Connect to Nexus");
     QMessageBox::warning(qApp->activeWindow(), tr("Error"),
@@ -1010,7 +1040,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
         dialog.findChild<QListWidget *>("preferredServersList"))
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
 {
-  if (!m_Settings.value("Settings/nexus_api_key", "").toString().isEmpty()) {
+  if (!deObfuscate("APIKEY").isEmpty()) {
     m_nexusConnect->setText("Nexus API Key Stored");
     m_nexusConnect->setDisabled(true);
   }
@@ -1088,8 +1118,9 @@ Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog)
 {
   if (m_Settings.contains("Settings/steam_username")) {
     m_steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
-    if (m_Settings.contains("Settings/steam_password")) {
-      m_steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
+    QString password = deObfuscate("steam_password");
+    if (!password.isEmpty()) {
+      m_steamPassEdit->setText(password);
     }
   }
 }
