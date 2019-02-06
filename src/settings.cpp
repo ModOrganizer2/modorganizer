@@ -81,10 +81,6 @@ private:
   int m_SortRole;
 };
 
-
-static const unsigned char Key2[20] = { 0x99, 0xb8, 0x76, 0x42, 0x3e, 0xc1, 0x60, 0xa4, 0x5b, 0x01,
-                                        0xdb, 0xf8, 0x43, 0x3a, 0xb7, 0xb6, 0x98, 0xd4, 0x7d, 0xa2 };
-
 Settings *Settings::s_Instance = nullptr;
 
 
@@ -96,6 +92,8 @@ Settings::Settings(const QSettings &settingsSource)
   } else {
     s_Instance = this;
   }
+
+  qRegisterMetaType<Settings::NexusUpdateStrategy>("NexusUpdateStrategy");
 }
 
 
@@ -416,6 +414,11 @@ int Settings::crashDumpsType() const
 int Settings::crashDumpsMax() const
 {
   return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
+}
+
+Settings::NexusUpdateStrategy Settings::nexusUpdateStrategy() const
+{
+  return static_cast<NexusUpdateStrategy>(m_Settings.value("Settings/nexus_update_strategy", std::rand() / ((RAND_MAX + 1u) / 2)).toInt());
 }
 
 QColor Settings::modlistOverwrittenLooseColor() const
@@ -1039,7 +1042,10 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   , m_preferredServersList(
         dialog.findChild<QListWidget *>("preferredServersList"))
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
+  , m_updateStrategyBox(dialog.findChild<QCheckBox *>("updateStrategy"))
 {
+  qRegisterMetaType<Settings::NexusUpdateStrategy>("NexusUpdateStrategy");
+
   if (!deObfuscate("APIKEY").isEmpty()) {
     m_nexusConnect->setText("Nexus API Key Stored");
     m_nexusConnect->setDisabled(true);
@@ -1048,6 +1054,9 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
   m_endorsementBox->setChecked(parent->endorsementIntegration());
+  if (parent->nexusUpdateStrategy() == Settings::NexusUpdateStrategy::Flexible)
+    m_updateStrategyBox->setChecked(true);
+
 
   // display server preferences
   m_Settings.beginGroup("Servers");
@@ -1092,6 +1101,8 @@ void Settings::NexusTab::update()
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
   m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
+  m_Settings.setValue("Settings/nexus_update_strategy", m_updateStrategyBox->isChecked()
+    ? Settings::NexusUpdateStrategy::Flexible : Settings::NexusUpdateStrategy::Rigid);
 
   // store server preference
   m_Settings.beginGroup("Servers");

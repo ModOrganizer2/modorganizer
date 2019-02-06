@@ -507,22 +507,29 @@ bool ModInfoRegular::canBeUpdated() const
 
 QDateTime ModInfoRegular::getExpires() const
 {
-  qint64 diff = m_NexusLastModified.msecsTo(QDateTime::currentDateTimeUtc());
-  qint64 year = 31536000000;
-  qint64 sixMonths = 15768000000;
-  qint64 threeMonths = 7884000000;
-  qint64 oneMonth = 1314000000;
+  switch (Settings::instance().nexusUpdateStrategy()) {
+    case Settings::NexusUpdateStrategy::Flexible: {
+      qint64 diff = m_NexusLastModified.msecsTo(QDateTime::currentDateTimeUtc());
+      qint64 year = 31536000000;
+      qint64 sixMonths = 15768000000;
+      qint64 threeMonths = 7884000000;
+      qint64 oneMonth = 1314000000;
 
-  if (diff < oneMonth)
-    return m_LastNexusUpdate.addSecs(7200);
-  else if (diff < threeMonths)
-    return m_LastNexusUpdate.addSecs(14400);
-  else if (diff < sixMonths)
-    return m_LastNexusUpdate.addSecs(21600);
-  else if (diff < year)
-    return m_LastNexusUpdate.addSecs(43200);
-  else
-    return m_LastNexusUpdate.addSecs(86400);
+      if (diff < oneMonth)
+        return m_LastNexusUpdate.addSecs(7200);
+      else if (diff < threeMonths)
+        return m_LastNexusUpdate.addSecs(14400);
+      else if (diff < sixMonths)
+        return m_LastNexusUpdate.addSecs(21600);
+      else if (diff < year)
+        return m_LastNexusUpdate.addSecs(43200);
+      else
+        return m_LastNexusUpdate.addSecs(86400);
+    } break;
+    case Settings::NexusUpdateStrategy::Rigid: {
+      return m_LastNexusUpdate.addSecs(86400);
+    } break;
+  }
 }
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
