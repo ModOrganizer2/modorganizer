@@ -216,6 +216,7 @@ QString Settings::deObfuscate(const QString key)
   if (CredReadW(keyData, 1, 0, &creds)) {
     wchar_t *charData = (wchar_t *)creds->CredentialBlob;
     result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
+    CredFree(creds);
   } else {
     if (GetLastError() != ERROR_NOT_FOUND) {
       wchar_t buffer[256];
@@ -225,7 +226,6 @@ QString Settings::deObfuscate(const QString key)
       qCritical() << "Retrieving encrypted data failed:" << buffer;
     }
   }
-  CredFree(creds);
   delete[] keyData;
   return result;
 }
