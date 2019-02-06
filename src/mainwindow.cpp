@@ -5622,11 +5622,10 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
   for (const QVariant &server : serverList) {
     QVariantMap serverInfo = server.toMap();
     ServerInfo info;
-    info.name = serverInfo["Name"].toString();
-    info.premium = serverInfo["IsPremium"].toBool();
+    info.name = serverInfo["short_name"].toString();
+    info.premium = serverInfo["name"].toString().contains("Premium", Qt::CaseInsensitive);
     info.lastSeen = QDate::currentDate();
-    info.preferred = !info.name.compare("CDN", Qt::CaseInsensitive);
-    // other keys: ConnectedUsers, Country, URI
+    info.preferred = serverInfo["short_name"].toString().contains("CDN", Qt::CaseInsensitive);
     servers.append(info);
   }
   m_OrganizerCore.settings().updateServers(servers);
