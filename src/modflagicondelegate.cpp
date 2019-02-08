@@ -14,9 +14,19 @@ ModInfo::EFlag ModFlagIconDelegate::m_ArchiveConflictFlags[3] = { ModInfo::FLAG_
                                                                 , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE
                                                                 , ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN };
 
-ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent)
+ModFlagIconDelegate::ModFlagIconDelegate(QObject *parent, int logicalIndex, int compactSize)
   : IconDelegate(parent)
+  , m_LogicalIndex(logicalIndex)
+  , m_CompactSize(compactSize)
+  , m_Compact(false)
 {
+}
+
+void ModFlagIconDelegate::columnResized(int logicalIndex, int, int newSize)
+{
+  if (logicalIndex == m_LogicalIndex) {
+    m_Compact = newSize < m_CompactSize;
+  }
 }
 
 QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
@@ -33,7 +43,7 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
-      } else {
+      } else if (!m_Compact) {
         result.append(QString());
       }
     }
@@ -44,8 +54,7 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
-      }
-      else {
+      } else if (!m_Compact) {
         result.append(QString());
       }
     }
@@ -56,8 +65,7 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
-      }
-      else {
+      } else if (!m_Compact) {
         result.append(QString());
       }
     }
@@ -68,7 +76,7 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
       if (iter != flags.end()) {
         result.append(getFlagIcon(*iter));
         flags.erase(iter);
-      } else {
+      } else if (!m_Compact) {
         result.append(QString());
       }
     }

@@ -283,7 +283,9 @@ MainWindow::MainWindow(QSettings &initSettings
   GenericIconDelegate *contentDelegate = new GenericIconDelegate(ui->modList, Qt::UserRole + 3, ModList::COL_CONTENT, 150);
   connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), contentDelegate, SLOT(columnResized(int,int,int)));
   ui->modList->sortByColumn(ModList::COL_PRIORITY, Qt::AscendingOrder);
-  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, new ModFlagIconDelegate(ui->modList));
+  ModFlagIconDelegate *flagDelegate = new ModFlagIconDelegate(ui->modList, ModList::COL_FLAGS, 120);
+  connect(ui->modList->header(), SIGNAL(sectionResized(int,int,int)), flagDelegate, SLOT(columnResized(int,int,int)));
+  ui->modList->setItemDelegateForColumn(ModList::COL_FLAGS, flagDelegate);
   ui->modList->setItemDelegateForColumn(ModList::COL_CONTENT, contentDelegate);
   ui->modList->header()->installEventFilter(m_OrganizerCore.modList());
   connect(ui->modList->header(), SIGNAL(sectionResized(int, int, int)), this, SLOT(modListSectionResized(int, int, int)));
