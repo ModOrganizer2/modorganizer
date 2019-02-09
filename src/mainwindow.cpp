@@ -4025,6 +4025,9 @@ void MainWindow::ignoreUpdate() {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->ignoreUpdate(true);
   }
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
+  }
 }
 
 void MainWindow::unignoreUpdate()
@@ -4039,6 +4042,9 @@ void MainWindow::unignoreUpdate()
   else {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->ignoreUpdate(false);
+  }
+  if (m_ModListSortProxy != nullptr) {
+    m_ModListSortProxy->invalidate();
   }
 }
 
