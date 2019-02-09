@@ -343,6 +343,26 @@ int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receive
   return -1;
 }
 
+int NexusInterface::requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
+  const QString &subModule, const MOBase::IPluginGame const *game)
+{
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
+    NXMRequestInfo requestInfo(period, NXMRequestInfo::TYPE_CHECKUPDATES, userData, subModule, game);
+    m_RequestQueue.enqueue(requestInfo);
+
+    connect(this, SIGNAL(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)),
+      receiver, SLOT(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+    nextRequest();
+    return requestInfo.m_ID;
+  }
+  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
+    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
+  return -1;
+}
 
 int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant userData,
                                    QString gameName, const QString &subModule)
@@ -531,6 +551,21 @@ void NexusInterface::nextRequest()
       case NXMRequestInfo::TYPE_MODINFO: {
         url = QString("%1/games/%2/mods/%3").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
       } break;
+      case NXMRequestInfo::TYPE_CHECKUPDATES: {
+        QString period;
+        switch (info.m_UpdatePeriod) {
+        case UpdatePeriod::DAY:
+          period = "1d";
+          break;
+        case UpdatePeriod::WEEK:
+          period = "1w";
+          break;
+        case UpdatePeriod::MONTH:
+          period = "1m";
+          break;
+        }
+        url = QString("%1/games/%2/mods/updated?period=%3").arg(info.m_URL).arg(info.m_GameName).arg(period);
+      } break;
       case NXMRequestInfo::TYPE_FILES:
       case NXMRequestInfo::TYPE_GETUPDATES: {
         url = QString("%1/games/%2/mods/%3/files").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID);
@@ -623,6 +658,9 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
           case NXMRequestInfo::TYPE_MODINFO: {
             emit nxmModInfoAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+          } break;
+          case NXMRequestInfo::TYPE_CHECKUPDATES: {
+            emit nxmUpdateInfoAvailable(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
           } break;
           case NXMRequestInfo::TYPE_FILES: {
             emit nxmFilesAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
@@ -726,6 +764,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_FileID(0)
   , m_Reply(nullptr)
   , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
   , m_UserData(userData)
   , m_Timeout(nullptr)
   , m_Reroute(false)
@@ -750,6 +789,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_FileID(0)
   , m_Reply(nullptr)
   , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
   , m_UserData(userData)
   , m_Timeout(nullptr)
   , m_Reroute(false)
@@ -773,6 +813,30 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_FileID(fileID)
   , m_Reply(nullptr)
   , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
+  , m_UserData(userData)
+  , m_Timeout(nullptr)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(get_management_url(game))
+  , m_SubModule(subModule)
+  , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameNexusName())
+  , m_Endorse(false)
+{}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(UpdatePeriod period
+  , NexusInterface::NXMRequestInfo::Type type
+  , QVariant userData
+  , const QString &subModule
+  , MOBase::IPluginGame const *game
+)
+  : m_ModID(0)
+  , m_ModVersion("0")
+  , m_FileID(0)
+  , m_Reply(nullptr)
+  , m_Type(type)
+  , m_UpdatePeriod(period)
   , m_UserData(userData)
   , m_Timeout(nullptr)
   , m_Reroute(false)

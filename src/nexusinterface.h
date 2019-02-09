@@ -129,6 +129,15 @@ class NexusInterface : public QObject
 
 public:
 
+  enum UpdatePeriod {
+    NONE,
+    DAY,
+    WEEK,
+    MONTH
+  };
+
+public:
+
   ~NexusInterface();
 
   static NexusInterface *instance(PluginContainer *pluginContainer);
@@ -201,6 +210,15 @@ public:
    **/
   int requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData, const QString &subModule,
     MOBase::IPluginGame const *game);
+
+  int requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
+    const QString &subModule)
+  {
+    return requestUpdateInfo(gameName, period, receiver, userData, subModule, getGame(gameName));
+  }
+
+  int requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
+    const QString &subModule, MOBase::IPluginGame const *game);
 
   /**
    * @brief request nexus descriptions for multiple mods at once
@@ -378,6 +396,7 @@ signals:
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
@@ -415,8 +434,10 @@ private:
       TYPE_FILEINFO,
       TYPE_DOWNLOADURL,
       TYPE_TOGGLEENDORSEMENT,
-      TYPE_GETUPDATES
+      TYPE_GETUPDATES,
+      TYPE_CHECKUPDATES
     } m_Type;
+    UpdatePeriod m_UpdatePeriod;
     QVariant m_UserData;
     QTimer *m_Timeout;
     QString m_URL;
@@ -430,6 +451,7 @@ private:
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(UpdatePeriod period, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   private:
     static QAtomicInt s_NextID;

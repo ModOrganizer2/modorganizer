@@ -195,6 +195,8 @@ public:
    **/
   static int checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
+  static std::set<QSharedPointer<ModInfo>> filteredMods(QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
+
   /**
    * @brief create a new mod from the specified directory and add it to the collection
    * @param dir directory to create from

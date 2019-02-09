@@ -510,6 +510,7 @@ private slots:
 
   void modUpdateCheck(std::multimap<QString, int> IDs);
 
+  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);

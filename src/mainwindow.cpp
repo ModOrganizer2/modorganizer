@@ -5468,10 +5468,39 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([=]() { this->modUpdateCheck(IDs); });
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
+    } else
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+  }
+}
+
+void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int)
+{
+  QString gameNameReal;
+  for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
+    if (game->gameNexusName() == gameName) {
+      gameNameReal = game->gameShortName();
+      break;
     }
   }
+  QVariantList resultList = resultData.toList();
+  std::set<QSharedPointer<ModInfo>> finalMods = ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true);
+
+  if (finalMods.empty()) {
+    qInfo("None of your mods appear to have had recent file updates.");
+  }
+
+  std::set<std::pair<QString, int>> organizedGames;
+  for (auto mod : finalMods) {
+    if (mod->canBeUpdated()) {
+      organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
+    }
+  }
+
+  if (!finalMods.empty() && organizedGames.empty())
+    qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+
+  for (auto game : organizedGames)
+    NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
 }
 
 void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -5594,7 +5623,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
         mod->setIsEndorsed(false);
     }
     mod->setLastNexusQuery(QDateTime::currentDateTimeUtc());
-    mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt()));
+    mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC));
     mod->saveMeta();
   }
 }
