@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "report.h"
 #include "modinfo.h"
+#include "settings.h"
 
 #include <QApplication>
 #include <QDir>
@@ -158,7 +159,10 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
                                            , const QStringList &archives)
 {
   addModFilesToStructure(directoryStructure, modName, priority, directory, stealFiles);
-  addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
+  
+  if (Settings::instance().archiveParsing()) {
+    addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
+  }
 }
 
 void DirectoryRefresher::refresh()
