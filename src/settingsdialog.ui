@@ -1090,13 +1090,13 @@ Uncheck this if you want to use Mod Organizer with total conversions (like Nehri
          <item row="3" column="0">
           <widget class="QCheckBox" name="enableArchiveParsingBox">
            <property name="toolTip">
-            <string>Enable parsing of Archives.  Has negative effects on performance.</string>
+            <string>Enable parsing of Archives. This is an Experimental Feature. Has negative effects on performance and known incorrectness.</string>
            </property>
            <property name="whatsThis">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, MO will parse archive files (BSA, BA2) to calculate conflicts between the contents of the archive files and other loose files. This process has a noticeable cost in performance.&lt;/p&gt;&lt;p&gt;This feature should not be confused with the archive management feature offered by MO1. MO2 will only show conflicts with archives and will NOT load them into the game or program.&lt;/p&gt;&lt;p&gt;If you disable this feature, MO will only display conflicts between loose files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Enable parsing of Archives</string>
+            <string>Enable parsing of Archives (Experimental Feature)</string>
            </property>
            <property name="checked">
             <bool>true</bool>
