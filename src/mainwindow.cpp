@@ -5676,18 +5676,12 @@ void MainWindow::on_actionNotifications_triggered()
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
   if (problems.hasProblems()) {
     QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QSize size = settings.value(QString("geometry/%1/size").arg(problems.objectName())).toSize();
-    QPoint pos = settings.value(QString("geometry/%1/pos").arg(problems.objectName())).toPoint();
-    if (size.isValid())
-      problems.resize(size);
-    if (!pos.isNull())
-      problems.move(pos);
-
+    QString key = QString("geometry/%1").arg(problems.objectName());
+    if (settings.contains(key)) {
+      problems.restoreGeometry(settings.value(key).toByteArray());
+    }
     problems.exec();
-
-    settings.setValue(QString("geometry/%1/size").arg(problems.objectName()), problems.size());
-    settings.setValue(QString("geometry/%1/pos").arg(problems.objectName()), problems.pos());
-
+    settings.setValue(key, problems.saveGeometry());
     updateProblemsButton();
   }
 }
