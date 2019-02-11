@@ -125,6 +125,15 @@ void NexusBridge::nxmDownloadURLsAvailable(QString gameName, int modID, int file
   }
 }
 
+void NexusBridge::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID)
+{
+  std::set<int>::iterator iter = m_RequestIDs.find(requestID);
+  if (iter != m_RequestIDs.end()) {
+    m_RequestIDs.erase(iter);
+    emit endorsementsAvailable(userData, resultData);
+  }
+}
+
 void NexusBridge::nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator iter = m_RequestIDs.find(requestID);
@@ -455,6 +464,21 @@ int NexusInterface::requestDownloadURL(QString gameName, int modID, int fileID, 
   return requestInfo.m_ID;
 }
 
+int NexusInterface::requestEndorsementInfo(QObject *receiver, QVariant userData, const QString &subModule)
+{
+  NXMRequestInfo requestInfo(NXMRequestInfo::TYPE_ENDORSEMENTS, userData, subModule);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmEndorsementsAvailable(QVariant, QVariant, int)),
+    receiver, SLOT(nxmEndorsementsAvailable(QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
+}
+
 
 int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
@@ -476,12 +500,6 @@ int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QStrin
   qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
     .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
   return -1;
-}
-
-bool NexusInterface::requiresLogin(const NXMRequestInfo &info)
-{
-  return (info.m_Type == NXMRequestInfo::TYPE_TOGGLEENDORSEMENT)
-      || (info.m_Type == NXMRequestInfo::TYPE_DOWNLOADURL);
 }
 
 IPluginGame* NexusInterface::getGame(QString gameName) const
@@ -516,7 +534,7 @@ void NexusInterface::nextRequest()
     return;
   }
 
-  if (requiresLogin(m_RequestQueue.head()) && !getAccessManager()->validated()) {
+  if (!getAccessManager()->validated()) {
     if (!getAccessManager()->validateAttempted()) {
       emit needLogin();
       return;
@@ -580,6 +598,9 @@ void NexusInterface::nextRequest()
           .arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID).arg(fileInfo->nexusKey).arg(fileInfo->nexusExpires);
         else
           url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
+      } break;
+      case NXMRequestInfo::TYPE_ENDORSEMENTS: {
+        url = QString("%1/user/endorsements").arg(info.m_URL);
       } break;
       case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
         QString endorse = info.m_Endorse ? "endorse" : "abstain";
@@ -674,6 +695,9 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           case NXMRequestInfo::TYPE_DOWNLOADURL: {
             emit nxmDownloadURLsAvailable(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, result, iter->m_ID);
           } break;
+          case NXMRequestInfo::TYPE_ENDORSEMENTS: {
+            emit nxmEndorsementsAvailable(iter->m_UserData, result, iter->m_ID);
+          } break;
           case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
             emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
           } break;
@@ -747,7 +771,7 @@ void NexusInterface::requestTimeout()
 }
 
 namespace {
-  QString get_management_url(MOBase::IPluginGame const *game)
+  QString get_management_url()
   {
     return "https://api.nexusmods.com/v1";
   }
@@ -769,7 +793,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(get_management_url(game))
+  , m_URL(get_management_url())
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
@@ -794,7 +818,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(get_management_url(game))
+  , m_URL(get_management_url())
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
@@ -818,12 +842,34 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(get_management_url(game))
+  , m_URL(get_management_url())
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
 {}
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type
+  , QVariant userData
+  , const QString &subModule
+)
+  : m_ModID(0)
+  , m_ModVersion("0")
+  , m_FileID(0)
+  , m_Reply(nullptr)
+  , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
+  , m_UserData(userData)
+  , m_Timeout(nullptr)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(get_management_url())
+  , m_SubModule(subModule)
+  , m_NexusGameID(0)
+  , m_GameName("")
+  , m_Endorse(false)
+{}
+
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(UpdatePeriod period
   , NexusInterface::NXMRequestInfo::Type type
@@ -841,7 +887,7 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(UpdatePeriod period
   , m_Timeout(nullptr)
   , m_Reroute(false)
   , m_ID(s_NextID.fetchAndAddAcquire(1))
-  , m_URL(get_management_url(game))
+  , m_URL(get_management_url())
   , m_SubModule(subModule)
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())

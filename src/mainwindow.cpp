@@ -261,7 +261,8 @@ MainWindow::MainWindow(QSettings &initSettings
 
   actionToToolButton(ui->actionEndorseMO);
   createEndorseWidget();
-  ui->actionEndorseMO->setVisible(false);
+  
+  toggleMO2EndorseState();
 
   for (QAction *action : ui->toolBar->actions()) {
     if (action->isSeparator()) {
@@ -752,7 +753,7 @@ void MainWindow::createEndorseWidget()
   buttonMenu->addAction(endorseAction);
 
   QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
-  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(wontEndorse()));
+  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(on_actionWontEndorseMO_triggered()));
   buttonMenu->addAction(wontEndorseAction);
 }
 
@@ -3983,8 +3984,8 @@ void MainWindow::checkModsForUpdates()
 {
   statusBar()->show();
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    m_ModsToUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
-    m_RefreshProgress->setRange(0, m_ModsToUpdate);
+    ModInfo::checkAllForUpdate(&m_PluginContainer, this);
+    NexusInterface::instance(&m_PluginContainer)->requestEndorsementInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
@@ -5318,25 +5319,7 @@ void MainWindow::motdReceived(const QString &motd)
       m_OrganizerCore.settings().setMotDHash(hash);
     }
   }
-
-  ui->actionEndorseMO->setVisible(false);
 }
-
-
-void MainWindow::notEndorsedYet()
-{
-  if (!Settings::instance().directInterface().value("wont_endorse_MO", false).toBool()) {
-    ui->actionEndorseMO->setVisible(true);
-  }
-}
-
-
-void MainWindow::wontEndorse()
-{
-  Settings::instance().directInterface().setValue("wont_endorse_MO", true);
-  ui->actionEndorseMO->setVisible(false);
-}
-
 
 void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
 {
@@ -5398,6 +5381,21 @@ void MainWindow::on_actionEndorseMO_triggered()
   }
 }
 
+void MainWindow::on_actionWontEndorseMO_triggered()
+{
+  // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
+  IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
+  if (!game) return;
+
+  if (QMessageBox::question(this, tr("Abstain from Endorsing Mod Organizer"),
+    tr("Are you sure you want to abstain from endorsing Mod Organizer 2?\n"
+      "You will have to visit the mod page on the %1 Nexus site to change your mind.").arg(
+      NexusInterface::instance(&m_PluginContainer)->getGameURL(game->gameShortName())),
+    QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+    NexusInterface::instance(&m_PluginContainer)->requestToggleEndorsement(
+      game->gameShortName(), game->nexusModOrganizerID(), m_OrganizerCore.getVersion().canonicalString(), false, this, QVariant(), QString());
+  }
+}
 
 void MainWindow::initDownloadView()
 {
@@ -5448,21 +5446,10 @@ void MainWindow::updateDownloadView()
   m_OrganizerCore.downloadManager()->refreshList();
 }
 
-void MainWindow::modDetailsUpdated(bool)
-{
-  if (m_ModsToUpdate <= 0) {
-    statusBar()->hide();
-    m_RefreshProgress->setVisible(false);
-  } else {
-    m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
-  }
-}
-
 void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 {
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    m_ModsToUpdate += ModInfo::manualUpdateCheck(&m_PluginContainer, this, IDs);
-    m_RefreshProgress->setRange(0, m_ModsToUpdate);
+    ModInfo::manualUpdateCheck(&m_PluginContainer, this, IDs);
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
@@ -5470,6 +5457,80 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
+  }
+}
+
+void MainWindow::toggleMO2EndorseState()
+{
+  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
+  if (Settings::instance().endorsementIntegration()) {
+    ui->actionEndorseMO->setVisible(true);
+    if (Settings::instance().directInterface().contains("endorse_state")) {
+      ui->actionEndorseMO->setEnabled(false);
+      if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
+        ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
+        toolBtn->setToolTip(tr("Thank you for endorsing MO2! :)"));
+      } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
+        ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
+        toolBtn->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
+      }
+    } else {
+      ui->actionEndorseMO->setEnabled(true);
+    }
+  } else
+    ui->actionEndorseMO->setVisible(false);
+}
+
+void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int)
+{
+  QVariantList data = resultData.toList();
+  std::multimap<QString, std::pair<int, QString>> sorted;
+  QStringList games = m_OrganizerCore.managedGame()->validShortNames();
+  games += m_OrganizerCore.managedGame()->gameShortName();
+  bool searchedMO2NexusGame = false;
+  for (auto endorsementData : data) {
+    QVariantMap endorsement = endorsementData.toMap();
+    std::pair<int, QString> data = std::make_pair<int, QString>(endorsement["mod_id"].toInt(), endorsement["status"].toString());
+    sorted.insert(std::pair<QString, std::pair<int, QString>>(endorsement["domain_name"].toString(), data));
+  }
+  for (auto game : games) {
+    IPluginGame *gamePlugin = m_OrganizerCore.getGame(game);
+    if (gamePlugin->gameShortName().compare("SkyrimSE", Qt::CaseInsensitive) == 0)
+      searchedMO2NexusGame = true;
+    auto iter = sorted.equal_range(gamePlugin->gameNexusName());
+    for (auto result = iter.first; result != iter.second; ++result) {
+      std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(result->first, result->second.first);
+
+      for (auto mod : modsList) {
+        if (result->second.second == "Endorsed")
+          mod->setIsEndorsed(true);
+        else if (result->second.second == "Abstained")
+          mod->setNeverEndorse();
+        else
+          mod->setIsEndorsed(false);
+      }
+
+      if (Settings::instance().endorsementIntegration()) {
+        if (result->first == "skyrimspecialedition" && result->second.first == gamePlugin->nexusModOrganizerID()) {
+          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          toggleMO2EndorseState();
+        }
+      }
+    }
+  }
+
+  if (!searchedMO2NexusGame && Settings::instance().endorsementIntegration()) {
+    auto gamePlugin = m_OrganizerCore.getGame("SkyrimSE");
+    if (gamePlugin) {
+      auto iter = sorted.equal_range(gamePlugin->gameNexusName());
+      for (auto result = iter.first; result != iter.second; ++result) {
+        if (result->second.first == gamePlugin->nexusModOrganizerID()) {
+          Settings::instance().directInterface().setValue("endorse_state", result->second.second);
+          toggleMO2EndorseState();
+          break;
+        }
+      }
+    }
   }
 }
 
@@ -5483,7 +5544,20 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
     }
   }
   QVariantList resultList = resultData.toList();
-  std::set<QSharedPointer<ModInfo>> finalMods = ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true);
+
+  QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *watcher = new QFutureWatcher<std::set<QSharedPointer<ModInfo>>>();
+  QObject::connect(watcher, &QFutureWatcher<std::set<QSharedPointer<ModInfo>>>::finished, this, &MainWindow::finishUpdateInfo);
+  QFuture<std::set<QSharedPointer<ModInfo>>> future = QtConcurrent::run([=]() -> std::set<QSharedPointer<ModInfo>> {
+    return ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true);
+  });
+  watcher->setFuture(future);
+}
+
+void MainWindow::finishUpdateInfo()
+{
+  QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *watcher = static_cast<QFutureWatcher<std::set<QSharedPointer<ModInfo>>> *>(sender());
+
+  auto finalMods = watcher->result();
 
   if (finalMods.empty()) {
     qInfo("None of your mods appear to have had recent file updates.");
@@ -5501,6 +5575,9 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
 
   for (auto game : organizedGames)
     NexusInterface::instance(&m_PluginContainer)->requestUpdates(game.second, this, QVariant(), game.first, QString());
+
+  disconnect(sender());
+  delete sender();
 }
 
 void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -5508,7 +5585,6 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   QVariantMap resultInfo = resultData.toMap();
   QList files = resultInfo["files"].toList();
   QList fileUpdates = resultInfo["file_updates"].toList();
-  m_ModsToUpdate--;
   QString gameNameReal;
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
@@ -5578,19 +5654,10 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
       // Scrape mod data here so we can use the mod version if no file update was located
       requiresInfo = true;
     }
-
-    if (mod->getLastNexusQuery().addDays(1) <= QDateTime::currentDateTimeUtc())
-      requiresInfo = true;
   }
 
   if (requiresInfo)
     NexusInterface::instance(&m_PluginContainer)->requestModInfo(gameName, modID, this, QVariant(), QString());
-
-  if (--m_ModsToUpdate <= 0) {
-    statusBar()->hide();
-  } else {
-    m_RefreshProgress->setValue(m_RefreshProgress->maximum() - m_ModsToUpdate);
-  }
 }
 
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -5663,11 +5730,6 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
 
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
-  if (modID == -1) {
-    // must be the update-check that failed
-    m_ModsToUpdate = 0;
-    statusBar()->hide();
-  }
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
     QString gameNameReal;
     for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {

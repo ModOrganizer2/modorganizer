@@ -284,16 +284,8 @@ ModInfo::ModInfo(PluginContainer *pluginContainer)
 }
 
 
-int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
+void ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
 {
-  int result = 0;
-
-  // MO2 endorsement status is no longer available via this method - an alternative must be found
-  //IPluginGame const *game = pluginContainer->managedGame("Skyrim Special Edition");
-  //if (game && game->nexusModOrganizerID()) {
-  //  NexusInterface::instance(pluginContainer)->requestUpdates(game->nexusModOrganizerID(), receiver, QVariant(), game->gameShortName(), QString());
-  //}
-
   QDateTime earliest = QDateTime::currentDateTimeUtc();
   QDateTime latest;
   std::set<QString> games;
@@ -315,8 +307,6 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
       }
     }
 
-    result = organizedGames.size();
-
     if (organizedGames.empty())
       qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
 
@@ -336,8 +326,6 @@ int ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiv
     for (auto gameName : games)
       NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
   }
-
-  return result;
 }
 
 std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVariantList updateData, bool addOldMods, bool markUpdated)
@@ -345,10 +333,12 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
   std::set<QSharedPointer<ModInfo>> finalMods;
   for (QVariant result : updateData) {
     QVariantMap update = result.toMap();
-    for (auto mod : s_Collection)
-      if (mod->getNexusID() == update["mod_id"].toInt() && mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
-        if (mod->getLastNexusUpdate() > QDateTime::fromSecsSinceEpoch(update["latest_file_update"].toInt(), Qt::UTC))
-          finalMods.insert(mod);
+    std::copy_if(s_Collection.begin(), s_Collection.end(), std::inserter(finalMods, finalMods.end()), [=](QSharedPointer<ModInfo> info) -> bool {
+      if (info->getNexusID() == update["mod_id"].toInt() && info->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
+        if (info->getLastNexusUpdate() > QDateTime::fromSecsSinceEpoch(update["latest_file_update"].toInt(), Qt::UTC))
+          return true;
+      return false;
+    });
   }
 
   if (addOldMods)
@@ -358,20 +348,21 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
 
   if (markUpdated) {
     std::set<QSharedPointer<ModInfo>> updates;
-    for (auto mod : s_Collection)
-      if (mod->getGameName().compare(gameName, Qt::CaseInsensitive) == 0 && mod->canBeUpdated())
-        updates.insert(mod);
+    std::copy_if(s_Collection.begin(), s_Collection.end(), std::inserter(updates, updates.end()), [=](QSharedPointer<ModInfo> info) -> bool {
+      if (info->getGameName().compare(gameName, Qt::CaseInsensitive) == 0 && info->canBeUpdated())
+        return true;
+      return false;
+    });
     std::set<QSharedPointer<ModInfo>> diff;
     std::set_difference(updates.begin(), updates.end(), finalMods.begin(), finalMods.end(), std::inserter(diff, diff.end()));
     for (auto skipped : diff) {
       skipped->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
-      skipped->updateNXMInfo();
     }
   }
   return finalMods;
 }
 
-int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
+void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs)
 {
   std::vector<QSharedPointer<ModInfo>> mods;
   std::set<std::pair<QString, int>> organizedGames;
@@ -402,8 +393,6 @@ int ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiv
   } else {
     qInfo("None of the selected mods can be updated.");
   }
-
-  return organizedGames.size();
 }
 
 

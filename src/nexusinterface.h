@@ -104,6 +104,7 @@ public slots:
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorMessage);
 
@@ -298,6 +299,10 @@ public:
    **/
   int requestDownloadURL(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
+
+  int requestEndorsementInfo(QObject *receiver, QVariant userData, const QString &subModule);
+
+
   /**
    * @param gameName the game short name to support multiple game sources
    * @brief toggle endorsement state of the mod
@@ -401,6 +406,7 @@ signals:
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
   void requestsChanged(int queueCount, std::tuple<int,int,int,int> requestsRemaining);
@@ -433,6 +439,7 @@ private:
       TYPE_FILES,
       TYPE_FILEINFO,
       TYPE_DOWNLOADURL,
+      TYPE_ENDORSEMENTS,
       TYPE_TOGGLEENDORSEMENT,
       TYPE_GETUPDATES,
       TYPE_CHECKUPDATES
@@ -451,6 +458,7 @@ private:
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(Type type, QVariant userData, const QString &subModule);
     NXMRequestInfo(UpdatePeriod period, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   private:
@@ -464,7 +472,6 @@ private:
   NexusInterface(PluginContainer *pluginContainer);
   void nextRequest();
   void requestFinished(std::list<NXMRequestInfo>::iterator iter);
-  bool requiresLogin(const NXMRequestInfo &info);
   MOBase::IPluginGame *getGame(QString gameName) const;
   QString getOldModsURL(QString gameName) const;
 

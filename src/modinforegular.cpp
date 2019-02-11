@@ -507,6 +507,8 @@ bool ModInfoRegular::canBeUpdated() const
 
 QDateTime ModInfoRegular::getExpires() const
 {
+  return m_LastNexusUpdate.addSecs(300);
+  /*
   switch (Settings::instance().nexusUpdateStrategy()) {
     case Settings::NexusUpdateStrategy::Flexible: {
       qint64 diff = m_NexusLastModified.msecsTo(QDateTime::currentDateTimeUtc());
@@ -530,6 +532,7 @@ QDateTime ModInfoRegular::getExpires() const
       return m_LastNexusUpdate.addSecs(86400);
     } break;
   }
+  */
 }
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const

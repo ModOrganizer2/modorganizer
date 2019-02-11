@@ -64,6 +64,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QVariant>
 #include <Qt>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QFutureWatcher>
 
 class QAction;
 class QAbstractItemModel;
@@ -303,6 +304,8 @@ private:
   void sendSelectedModsToPriority(int newPriority);
   void sendSelectedPluginsToPriority(int newPriority);
 
+  void toggleMO2EndorseState();
+
 private:
 
   static const char *PATTERN_BACKUP_GLOB;
@@ -340,8 +343,6 @@ private:
   QAction *m_ContextAction;
 
   CategoryFactory &m_CategoryFactory;
-
-  int m_ModsToUpdate;
 
   bool m_LoginAttempted;
 
@@ -494,8 +495,6 @@ private slots:
   void updateAvailable();
 
   void motdReceived(const QString &motd);
-  void notEndorsedYet();
-  void wontEndorse();
 
   void originModified(int originID);
 
@@ -504,12 +503,13 @@ private slots:
 
   void addPrimaryCategoryCandidates();
 
-  void modDetailsUpdated(bool success);
-
   void modInstalled(const QString &modName);
 
   void modUpdateCheck(std::multimap<QString, int> IDs);
 
+  void finishUpdateInfo();
+
+  void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int);
   void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
@@ -622,6 +622,7 @@ private slots: // ui slots
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
   void on_actionEndorseMO_triggered();
+  void on_actionWontEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();

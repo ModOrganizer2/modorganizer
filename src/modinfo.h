@@ -188,12 +188,12 @@ public:
   /**
    * @brief run a limited batch of mod update checks for "newest version" information
    */
-  static int manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
+  static void manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
    **/
-  static int checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
+  static void checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
   static std::set<QSharedPointer<ModInfo>> filteredMods(QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
 
