@@ -259,33 +259,40 @@ void NXMAccessManager::validateFinished()
 
   if (m_ValidateReply != nullptr) {
     QJsonDocument jdoc = QJsonDocument::fromJson(m_ValidateReply->readAll());
-    QJsonObject credentialsData = jdoc.object();
-    if (credentialsData.contains("user_id")) {
-      QString name = credentialsData.value("name").toString();
-      bool premium = credentialsData.value("is_premium").toBool();
+    if (!jdoc.isNull()) {
+      QJsonObject credentialsData = jdoc.object();
+      if (credentialsData.contains("user_id")) {
+        QString name = credentialsData.value("name").toString();
+        bool premium = credentialsData.value("is_premium").toBool();
 
-      std::tuple<int, int, int, int> limits(std::make_tuple(
-        m_ValidateReply->rawHeader("x-rl-daily-remaining").toInt(),
-        m_ValidateReply->rawHeader("x-rl-daily-limit").toInt(),
-        m_ValidateReply->rawHeader("x-rl-hourly-remaining").toInt(),
-        m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
-      ));
+        std::tuple<int, int, int, int> limits(std::make_tuple(
+          m_ValidateReply->rawHeader("x-rl-daily-remaining").toInt(),
+          m_ValidateReply->rawHeader("x-rl-daily-limit").toInt(),
+          m_ValidateReply->rawHeader("x-rl-hourly-remaining").toInt(),
+          m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
+        ));
 
-      emit credentialsReceived(name, premium, limits);
+        emit credentialsReceived(name, premium, limits);
 
-      m_ValidateReply->deleteLater();
-      m_ValidateReply = nullptr;
+        m_ValidateReply->deleteLater();
+        m_ValidateReply = nullptr;
 
-      m_ValidateState = VALIDATE_VALID;
-      emit validateSuccessful(true);
+        m_ValidateState = VALIDATE_VALID;
+        emit validateSuccessful(true);
+      } else {
+        m_ApiKey.clear();
+        m_ValidateState = VALIDATE_NOT_VALID;
+        emit validateFailed(tr("Validation failed, please reauthenticate in the Settings -> Nexus tab: %1").arg(credentialsData.value("message").toString()));
+      }
     } else {
       m_ApiKey.clear();
-      m_ValidateState = VALIDATE_NOT_VALID;
-      emit validateFailed(tr("Validation failed, please reauthenticate in the Settings -> Nexus tab: %1").arg(credentialsData.value("message").toString()));
+      m_ValidateState = VALIDATE_NOT_CHECKED;
+      emit validateFailed(tr("Could not parse response. Invalid JSON."));
     }
-  } else {
+  }
+  else {
     m_ApiKey.clear();
     m_ValidateState = VALIDATE_NOT_CHECKED;
-    emit validateFailed(tr("unknown error"));
+    emit validateFailed(tr("Unknown error."));
   }
 }

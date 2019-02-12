@@ -79,7 +79,6 @@ SET(organizer_SRCS
     previewgenerator.cpp
     previewdialog.cpp
     aboutdialog.cpp
-    json.cpp
     modflagicondelegate.cpp
     genericicondelegate.cpp
     organizerproxy.cpp
@@ -173,7 +172,6 @@ SET(organizer_HDRS
     previewgenerator.h
     previewdialog.h
     aboutdialog.h
-    json.h
     modflagicondelegate.h
     genericicondelegate.h
     organizerproxy.h

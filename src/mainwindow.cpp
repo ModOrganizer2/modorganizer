@@ -749,11 +749,11 @@ void MainWindow::createEndorseWidget()
   buttonMenu->clear();
 
   QAction *endorseAction = new QAction(tr("Endorse"), buttonMenu);
-  connect(endorseAction, SIGNAL(triggered()), this, SLOT(on_actionEndorseMO_triggered()));
+  connect(endorseAction, SIGNAL(triggered()), this, SLOT(actionEndorseMO()));
   buttonMenu->addAction(endorseAction);
 
   QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
-  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(on_actionWontEndorseMO_triggered()));
+  connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(actionWontEndorseMO()));
   buttonMenu->addAction(wontEndorseAction);
 }
 
@@ -1866,8 +1866,20 @@ void MainWindow::processUpdates() {
         lastHidden = hidden;
       }
     }
-    if (lastVersion < QVersionNumber(2,1,6)) {
+    if (lastVersion < QVersionNumber(2, 1, 6)) {
       ui->modList->header()->setSectionHidden(ModList::COL_NOTES, true);
+    }
+    if (lastVersion < QVersionNumber(2, 2, 0)) {
+      QSettings &instance = Settings::instance().directInterface();
+      instance.beginGroup("Settings");
+      instance.remove("steam_password");
+      instance.remove("nexus_username");
+      instance.remove("nexus_password");
+      instance.remove("nexus_api_key");
+      instance.endGroup();
+      instance.beginGroup("Servers");
+      instance.remove("");
+      instance.endGroup();
     }
   }
 
@@ -5366,7 +5378,7 @@ void MainWindow::on_actionUpdate_triggered()
 }
 
 
-void MainWindow::on_actionEndorseMO_triggered()
+void MainWindow::actionEndorseMO()
 {
   // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
   IPluginGame * game = m_OrganizerCore.getGame("skyrimse");
@@ -5381,7 +5393,7 @@ void MainWindow::on_actionEndorseMO_triggered()
   }
 }
 
-void MainWindow::on_actionWontEndorseMO_triggered()
+void MainWindow::actionWontEndorseMO()
 {
   // Normally this would be the managed game but MO2 is only uploaded to the Skyrim SE site right now
   IPluginGame * game = m_OrganizerCore.getGame("skyrimse");

@@ -466,15 +466,11 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       if (modInfo->getNexusID() > 0) {
         if (!modInfo->canBeUpdated()) {
           qint64 remains = QDateTime::currentDateTimeUtc().secsTo(modInfo->getExpires());
-          qint64 hours = remains / 3600;
-          qint64 minutes = (remains % 3600) / 60;
-          QString remainsStr(tr("%1 hours and %2 minutes").arg(hours).arg(minutes));
-          text += "<br>" + tr("This mod was last checked on %1. It will be available to check in %2.")
-            .arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate))
+          qint64 minutes = remains / 60;
+          qint64 seconds = (remains % 60) / 60;
+          QString remainsStr(tr("%1 minute(s) and %2 second(s)").arg(minutes).arg(seconds));
+          text += "<br>" + tr("This mod will be available to check in %2.")
             .arg(remainsStr);
-        } else {
-          text += "<br>" + tr("This mod is eligible for an update check.");
-          text += "<br>" + tr("It was last checked on %1").arg(modInfo->getLastNexusUpdate().toLocalTime().toString(Qt::DefaultLocaleShortDate));
         }
       }
       return text;

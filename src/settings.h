@@ -65,14 +65,6 @@ class Settings : public QObject
 {
 
   Q_OBJECT
-  Q_ENUMS(NexusUpdateStrategy)
-
-public:
-
-  enum NexusUpdateStrategy {
-    Rigid,
-    Flexible
-  };
 
 public:
 
@@ -238,11 +230,6 @@ public:
   * @return the configured crash dumps max
   */
   int crashDumpsMax() const;
-
-  /**
-   * @return the configured Nexus update strategy
-   */
-  NexusUpdateStrategy nexusUpdateStrategy() const;
 
   QColor modlistOverwrittenLooseColor() const;
 
@@ -499,7 +486,6 @@ private:
     QListWidget *m_knownServersList;
     QListWidget *m_preferredServersList;
     QCheckBox *m_endorsementBox;
-    QCheckBox *m_updateStrategyBox;
   };
 
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */
@@ -577,7 +563,5 @@ private:
   QSet<QString> m_PluginBlacklist;
 
 };
-
-Q_DECLARE_METATYPE(Settings::NexusUpdateStrategy)
 
 #endif // SETTINGS_H

@@ -494,6 +494,9 @@ private slots:
 
   void updateAvailable();
 
+  void actionEndorseMO();
+  void actionWontEndorseMO();
+
   void motdReceived(const QString &motd);
 
   void originModified(int originID);
@@ -621,8 +624,6 @@ private slots: // ui slots
   void on_actionNotifications_triggered();
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
-  void on_actionEndorseMO_triggered();
-  void on_actionWontEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();

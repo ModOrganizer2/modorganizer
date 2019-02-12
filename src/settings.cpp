@@ -92,8 +92,6 @@ Settings::Settings(const QSettings &settingsSource)
   } else {
     s_Instance = this;
   }
-
-  qRegisterMetaType<Settings::NexusUpdateStrategy>("NexusUpdateStrategy");
 }
 
 
@@ -414,11 +412,6 @@ int Settings::crashDumpsType() const
 int Settings::crashDumpsMax() const
 {
   return m_Settings.value("Settings/crash_dumps_max", 5).toInt();
-}
-
-Settings::NexusUpdateStrategy Settings::nexusUpdateStrategy() const
-{
-  return static_cast<NexusUpdateStrategy>(m_Settings.value("Settings/nexus_update_strategy", std::rand() / ((RAND_MAX + 1u) / 2)).toInt());
 }
 
 QColor Settings::modlistOverwrittenLooseColor() const
@@ -1042,10 +1035,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   , m_preferredServersList(
         dialog.findChild<QListWidget *>("preferredServersList"))
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
-  , m_updateStrategyBox(dialog.findChild<QCheckBox *>("updateStrategy"))
 {
-  qRegisterMetaType<Settings::NexusUpdateStrategy>("NexusUpdateStrategy");
-
   if (!deObfuscate("APIKEY").isEmpty()) {
     m_nexusConnect->setText("Nexus API Key Stored");
     m_nexusConnect->setDisabled(true);
@@ -1054,8 +1044,6 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
   m_endorsementBox->setChecked(parent->endorsementIntegration());
-  if (parent->nexusUpdateStrategy() == Settings::NexusUpdateStrategy::Flexible)
-    m_updateStrategyBox->setChecked(true);
 
 
   // display server preferences
@@ -1101,8 +1089,6 @@ void Settings::NexusTab::update()
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
   m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
-  m_Settings.setValue("Settings/nexus_update_strategy", m_updateStrategyBox->isChecked()
-    ? Settings::NexusUpdateStrategy::Flexible : Settings::NexusUpdateStrategy::Rigid);
 
   // store server preference
   m_Settings.beginGroup("Servers");

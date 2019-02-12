@@ -578,16 +578,6 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="updateStrategy">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rather than a global &lt;span style=&quot; font-weight:600;&quot;&gt;1 day&lt;/span&gt; cache, update caches will expire at different rates depending on how recently a mod has been updated on Nexus.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Less than a month: &lt;span style=&quot; font-style:italic;&quot;&gt;2 hours&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Less than three months: &lt;span style=&quot; font-style:italic;&quot;&gt;4 hours&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Less than six months: &lt;span style=&quot; font-style:italic;&quot;&gt;6 hours&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Less than one year: &lt;span style=&quot; font-style:italic;&quot;&gt;12 hours&lt;/span&gt;&lt;/p&gt;&lt;p&gt;More than one year: &lt;span style=&quot; font-style:italic;&quot;&gt;1 day&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Use dynamic update timeouts</string>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
        <item>

@@ -21,7 +21,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "iplugingame.h"
 #include "nxmaccessmanager.h"
-#include "json.h"
 #include "selectiondialog.h"
 #include "bbcode.h"
 #include <utility.h>
@@ -613,6 +612,8 @@ void NexusInterface::nextRequest()
     url = info.m_URL;
   }
   QNetworkRequest request(url);
+  request.setAttribute(QNetworkRequest::CacheSaveControlAttribute, false);
+  request.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::AlwaysNetwork);
   request.setRawHeader("APIKEY", m_AccessManager->apiKey().toUtf8());
   request.setHeader(QNetworkRequest::KnownHeaders::UserAgentHeader, m_AccessManager->userAgent(info.m_SubModule));
   request.setHeader(QNetworkRequest::KnownHeaders::ContentTypeHeader, "application/json");
@@ -645,7 +646,10 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
   if (reply->error() != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 429) {
-      qWarning("All API requests have been consumed and are now being denied.");
+      if (reply->rawHeader("x-rl-daily-remaining").toInt() || reply->rawHeader("x-rl-hourly-remaining").toInt())
+        qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
+      else
+        qWarning("All API requests have been consumed and are now being denied.");
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
@@ -670,9 +674,9 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
       qDebug("nexus error: %s", qUtf8Printable(nexusError));
       emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), nexusError);
     } else {
-      bool ok;
-      QVariant result = QtJson::parse(data, ok);
-      if (result.isValid() && ok) {
+      QJsonDocument responseDoc = QJsonDocument::fromJson(data);
+      if (!responseDoc.isNull()) {
+        QVariant result = responseDoc.toVariant();
         switch (iter->m_Type) {
           case NXMRequestInfo::TYPE_DESCRIPTION: {
             emit nxmDescriptionAvailable(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
