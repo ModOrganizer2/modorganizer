@@ -1491,7 +1491,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
     } else {
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
-      for (QVariant file : result) {
+      for (QVariant file : files) {
         QVariantMap fileInfo = file.toMap();
         if (fileInfo["category_id"].toInt() != 6)
           selection.addChoice(fileInfo["file_name"].toString(), "", file);
