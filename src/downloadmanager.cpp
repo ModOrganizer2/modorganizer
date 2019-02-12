@@ -550,8 +550,8 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto tuple : m_PendingDownloads) {
     if (std::get<0>(tuple).compare(nxmInfo.game(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
-      qDebug("download requested is already started (mod id: %s, file id: %s)", qUtf8Printable(QString(nxmInfo.modId())), qUtf8Printable(QString(nxmInfo.fileId())));
-      QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
+      qDebug("download requested is already queued (mod id: %d, file id: %d)", nxmInfo.modId(), nxmInfo.fileId()); 
+      QMessageBox::information(nullptr, tr("Already Queued"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
       return;
     }
   }
@@ -559,11 +559,9 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod: %s, file: %s)", qUtf8Printable(QString(download->m_FileInfo->modID)),
-          qUtf8Printable(download->m_FileInfo->fileName));
-
-        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (mod: %1, file: %2).")
-          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->fileName), QMessageBox::Ok);
+        qDebug("download requested is already started (mod id: %d, file name: %s, file: %s)", download->m_FileInfo->modID,
+          qUtf8Printable(download->m_FileInfo->name), qUtf8Printable(download->m_FileName));
+        QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file already been started."), QMessageBox::Ok);
         return;
       }
     }
