@@ -467,7 +467,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         if (!modInfo->canBeUpdated()) {
           qint64 remains = QDateTime::currentDateTimeUtc().secsTo(modInfo->getExpires());
           qint64 minutes = remains / 60;
-          qint64 seconds = (remains % 60) / 60;
+          qint64 seconds = remains % 60;
           QString remainsStr(tr("%1 minute(s) and %2 second(s)").arg(minutes).arg(seconds));
           text += "<br>" + tr("This mod will be available to check in %2.")
             .arg(remainsStr);
