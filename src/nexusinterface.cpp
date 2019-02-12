@@ -539,6 +539,8 @@ void NexusInterface::nextRequest()
       return;
     } else if (getAccessManager()->validateWaiting()) {
       return;
+    } else {
+      qCritical("You must authorize MO2 in Settings -> Nexus to use the Nexus API.");
     }
   }
 

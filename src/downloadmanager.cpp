@@ -1671,7 +1671,16 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
     }
   }
 
-  removePending(gameName, modID, fileID);
+  QString gameRealName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gameRealName = gamePlugin->gameShortName();
+    }
+  }
+  removePending(gameRealName, modID, fileID);
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
 
