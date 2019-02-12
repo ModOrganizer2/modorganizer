@@ -193,7 +193,8 @@ void PluginList::refresh(const QString &profileName
       }
 
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
-                            std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
+        primaryPlugins.contains(filename, Qt::CaseInsensitive);
+        //(std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end());
 
       bool archive = false;
       try {
