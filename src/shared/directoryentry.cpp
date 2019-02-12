@@ -313,18 +313,18 @@ bool FileEntry::removeOrigin(int origin)
       m_Origin = currentID;
 
       // now we need to update the file time...
-      std::wstring filePath = getFullPath();
-      HANDLE file = ::CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
-                                 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-      if (!::GetFileTime(file, nullptr, nullptr, &m_FileTime)) {
+      //std::wstring filePath = getFullPath();
+      //HANDLE file = ::CreateFile(filePath.c_str(), GENERIC_READ | GENERIC_WRITE,
+      //                           0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+      //if (!::GetFileTime(file, nullptr, nullptr, &m_FileTime)) {
         // maybe this file is in a bsa, but there is no easy way to find out which. User should refresh
         // the view to find out
         //m_Archive = std::pair<std::wstring, int>(L"bsa?", -1);
-      } else {
+      //} else {
         //m_Archive = std::pair<std::wstring, int>(L"", -1);
-      }
+      //}
 
-      ::CloseHandle(file);
+      //::CloseHandle(file);
 
     } else {
       m_Origin = -1;

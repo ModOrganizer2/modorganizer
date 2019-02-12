@@ -47,7 +47,9 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
 
   //populate m_Archives
   m_Archives = QStringList();
-  archives(true);
+  if (Settings::instance().archiveParsing()) {
+    archives(true);
+  }
 
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
