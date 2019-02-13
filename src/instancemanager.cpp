@@ -144,7 +144,7 @@ QString InstanceManager::queryInstanceName(const QStringList &instanceList) cons
     // the required initialization order requires the ini file to be
     // available *before* we load plugins
     dialog.setComboBoxItems({ "NewName", "Fallout 4", "SkyrimSE", "Skyrim", "SkyrimVR", "Fallout 3",
-                              "Fallout NV", "TTW", "FO4VR", "Oblivion", "Morrowind" });
+                              "Fallout NV", "TTW", "FO4VR", "Oblivion", "Morrowind", "Enderal" });
     dialog.setComboBoxEditable(true);
 
     if (dialog.exec() == QDialog::Rejected) {
