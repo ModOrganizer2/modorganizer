@@ -5673,6 +5673,7 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 
 void MainWindow::on_actionNotifications_triggered()
 {
+  updateProblemsButton();
   ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
   if (problems.hasProblems()) {
     QSettings &settings = m_OrganizerCore.settings().directInterface();
