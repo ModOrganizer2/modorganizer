@@ -338,7 +338,7 @@ MainWindow::MainWindow(QSettings &initSettings
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
-  ui->listOptionsBtn->setMenu(modListContextMenu());
+  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
   connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
@@ -4375,9 +4375,9 @@ QMenu *MainWindow::openFolderMenu()
 	return FolderMenu;
 }
 
-QMenu *MainWindow::modListContextMenu()
+QMenu *MainWindow::modListContextMenu(QWidget *parent)
 {
-  QMenu *menu = new QMenu(this);
+  QMenu *menu = new QMenu(parent);
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
 
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
@@ -4404,7 +4404,7 @@ void MainWindow::addModSendToContextMenu(QMenu *menu)
   if (m_ModListSortProxy->sortColumn() != ModList::COL_PRIORITY)
     return;
 
-  QMenu *sub_menu = new QMenu(this);
+  QMenu *sub_menu = new QMenu(menu);
   sub_menu->setTitle(tr("Send to"));
   sub_menu->addAction(tr("Top"), this, SLOT(sendSelectedModsToTop_clicked()));
   sub_menu->addAction(tr("Bottom"), this, SLOT(sendSelectedModsToBottom_clicked()));
@@ -4439,12 +4439,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     m_ContextRow = m_ContextIdx.row();
 
     QMenu *menu = nullptr;
-    QMenu *allMods = modListContextMenu();
     if (m_ContextRow == -1) {
       // no selection
-      menu = allMods;
+      menu = modListContextMenu(this);
     } else {
       menu = new QMenu(this);
+      QMenu *allMods = modListContextMenu(menu);
       allMods->setTitle(tr("All Mods"));
       menu->addMenu(allMods);
       menu->addSeparator();
@@ -4463,11 +4463,11 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
         menu->addSeparator();
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
-        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), menu);
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
         addMenuAsPushButton(menu, primaryCategoryMenu);
         menu->addSeparator();
@@ -4482,12 +4482,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
         addModSendToContextMenu(menu);
       } else {
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"));
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
         addMenuAsPushButton(menu, addRemoveCategoriesMenu);
 
-        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"));
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), menu);
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
         addMenuAsPushButton(menu, primaryCategoryMenu);
 
@@ -4568,6 +4568,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     }
 
     menu->exec(modList->mapToGlobal(pos));
+    delete menu;
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
   } catch (...) {
@@ -4920,7 +4921,7 @@ void MainWindow::languageChange(const QString &newLanguage)
   updateDownloadView();
   updateProblemsButton();
 
-  ui->listOptionsBtn->setMenu(modListContextMenu());
+  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 }

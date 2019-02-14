@@ -281,7 +281,7 @@ private:
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
 
-  QMenu *modListContextMenu();
+  QMenu *modListContextMenu(QWidget *parent);
   void addModSendToContextMenu(QMenu *menu);
   void addPluginSendToContextMenu(QMenu *menu);
 
