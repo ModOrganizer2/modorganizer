@@ -338,7 +338,7 @@ MainWindow::MainWindow(QSettings &initSettings
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
-  ui->listOptionsBtn->setMenu(modListContextMenu());
+  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
   connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
@@ -4375,9 +4375,9 @@ QMenu *MainWindow::openFolderMenu()
 	return FolderMenu;
 }
 
-QMenu *MainWindow::modListContextMenu()
+QMenu *MainWindow::modListContextMenu(QWidget *parent)
 {
-  QMenu *menu = new QMenu(this);
+  QMenu *menu = new QMenu(parent);
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
 
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
@@ -4439,13 +4439,12 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     m_ContextRow = m_ContextIdx.row();
 
     QMenu *menu = nullptr;
-    QMenu *allMods = modListContextMenu();
     if (m_ContextRow == -1) {
       // no selection
-      menu = allMods;
+      menu = modListContextMenu(this);
     } else {
       menu = new QMenu(this);
-      allMods->setParent(menu);
+      QMenu *allMods = modListContextMenu(menu);
       allMods->setTitle(tr("All Mods"));
       menu->addMenu(allMods);
       menu->addSeparator();
@@ -4922,7 +4921,7 @@ void MainWindow::languageChange(const QString &newLanguage)
   updateDownloadView();
   updateProblemsButton();
 
-  ui->listOptionsBtn->setMenu(modListContextMenu());
+  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 }
