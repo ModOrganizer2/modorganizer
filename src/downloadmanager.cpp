@@ -875,7 +875,8 @@ void DownloadManager::queryInfo(int index)
           std::numeric_limits<int>::max(), 1, &ok);
       // careful now: while the dialog was displayed, events were processed.
       // the download list might have changed and our info-ptr invalidated.
-      m_ActiveDownloads[index]->m_FileInfo->modID = modId;
+      if (ok)
+        m_ActiveDownloads[index]->m_FileInfo->modID = modId;
       return;
     }
   }
