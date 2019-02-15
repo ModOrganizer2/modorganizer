@@ -3128,7 +3128,11 @@ void MainWindow::openOriginExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 0) {
     for (QModelIndex idx : selection->selectedRows()) {
       QString fileName = idx.data().toString();
-      ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
+      unsigned int modIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName));
+      if (modIndex == UINT_MAX) {
+        continue;
+      }
+      ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
       std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
       ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -3137,7 +3141,6 @@ void MainWindow::openOriginExplorer_clicked()
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
-
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
@@ -3171,14 +3174,15 @@ void MainWindow::openExplorer_activated()
 			QString fileName = idx.data().toString();
 
 
+      unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName));
+      if (modInfoIndex != UINT_MAX) {
+        ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
+        std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
-			ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-			}
-
+        if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
+          ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        }
+      }
 		}
 	}
 }
@@ -5837,15 +5841,20 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   }
 
   menu.addSeparator();
-  menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openOriginExplorer_clicked()));
+  
 
   QModelIndex idx = ui->espList->selectionModel()->currentIndex();
-  ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString())));
-  std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
+  unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString()));
+  //this is to avoid showing the option on game files like skyrim.esm
+  if (modInfoIndex != UINT_MAX) {
+    menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openOriginExplorer_clicked()));
+    ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
+    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
-  if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
-    QAction *infoAction = menu.addAction(tr("Open Origin Info..."), this, SLOT(openOriginInformation_clicked()));
-    menu.setDefaultAction(infoAction);
+    if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
+      QAction *infoAction = menu.addAction(tr("Open Origin Info..."), this, SLOT(openOriginInformation_clicked()));
+      menu.setDefaultAction(infoAction);
+    }
   }
 
   try {
