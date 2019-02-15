@@ -377,13 +377,30 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
 
     if (!gamePath.isEmpty()) {
       QDir gameDir(gamePath);
+      QList<IPluginGame *> possibleGames;
       for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
         if (game->looksValid(gameDir)) {
-          return selectGame(settings, gameDir, game);
+          possibleGames.append(game);
+          //return selectGame(settings, gameDir, game);
         }
       }
-      reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
-                              "the game binary.").arg(gamePath));
+      if (possibleGames.count() > 1) {
+        SelectionDialog browseSelection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+        for (IPluginGame *game : possibleGames) {
+          QString path = game->gameDirectory().absolutePath();
+          browseSelection.addChoice(game->gameIcon(), game->gameName(), path, QVariant::fromValue(game));
+        }
+        if (browseSelection.exec() == QDialog::Accepted) {
+          return selectGame(settings, gameDir, browseSelection.getChoiceData().value<IPluginGame *>());
+        } else {
+          reportError(QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
+        }
+      } else if(possibleGames.count() == 1) {
+        return selectGame(settings, gameDir, possibleGames[0]);
+      } else {
+        reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
+                                "the game binary.").arg(gamePath));
+      }
     }
   }
 

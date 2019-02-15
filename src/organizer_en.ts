@@ -1945,10 +1945,6 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="mainwindow.ui" line="1618"/>
         <source>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.</source>
-        <oldsource>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.
-
-!Work in progress!
-Right now this has very limited functionality</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3318,13 +3314,11 @@ Click OK to restart MO now.</source>
     <message>
         <location filename="modinfo.cpp" line="113"/>
         <source>invalid content type: %1</source>
-        <oldsource>invalid content type %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfo.cpp" line="136"/>
         <source>invalid mod index: %1</source>
-        <oldsource>invalid mod index %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4091,19 +4085,16 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modlist.cpp" line="161"/>
         <source>Overwrites loose files</source>
-        <oldsource>Overwrites files</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modlist.cpp" line="162"/>
         <source>Overwritten loose files</source>
-        <oldsource>Overwritten files</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modlist.cpp" line="163"/>
         <source>Loose files Overwrites &amp; Overwritten</source>
-        <oldsource>Overwrites &amp; Overwritten</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4452,7 +4443,6 @@ p, li { white-space: pre-wrap; }
         <location filename="organizercore.cpp" line="1013"/>
         <location filename="organizercore.cpp" line="1071"/>
         <source>mod not found: %1</source>
-        <oldsource>mod &quot;%1&quot; not found</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4642,7 +4632,6 @@ Continue?</source>
     <message>
         <location filename="overwriteinfodialog.cpp" line="113"/>
         <source>mod not found: %1</source>
-        <oldsource>%1 not found</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4752,7 +4741,6 @@ Continue?</source>
     <message>
         <location filename="pluginlist.cpp" line="302"/>
         <source>Plugin not found: %1</source>
-        <oldsource>esp not found: %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4897,7 +4885,6 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="profile.cpp" line="81"/>
         <source>invalid profile name: %1</source>
-        <oldsource>invalid profile name %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4939,7 +4926,6 @@ p, li { white-space: pre-wrap; }
         <location filename="profile.cpp" line="605"/>
         <location filename="profile.cpp" line="615"/>
         <source>invalid mod index: %1</source>
-        <oldsource>invalid index %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5306,13 +5292,11 @@ p, li { white-space: pre-wrap; }
         <location filename="categories.cpp" line="316"/>
         <location filename="categories.cpp" line="326"/>
         <source>invalid category index: %1</source>
-        <oldsource>invalid index %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="categories.cpp" line="337"/>
         <source>invalid category id: %1</source>
-        <oldsource>invalid category id %1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5433,8 +5417,6 @@ If the folder was still in use, restart MO and try again.</source>
         <source>Enter a new name or select one from the suggested list: 
 (This is just a name for the Instance and can be whatever you wish,
  the actual game selection will happen on the next screen regardless of chosen name)</source>
-        <oldsource>Enter a new name or select one from the suggested list: 
-(This is just the name of the Instance, not the game selection)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5528,7 +5510,6 @@ If the folder was still in use, restart MO and try again.</source>
         <location filename="loadmechanism.cpp" line="103"/>
         <location filename="loadmechanism.cpp" line="112"/>
         <source>file not found: %1</source>
-        <oldsource>%1 not found</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6029,31 +6010,6 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="142"/>
-        <source>Reset Colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="128"/>
-        <source>Is overwritten (loose files)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="149"/>
-        <source>Mod Contains selected Plugin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="121"/>
-        <source>Plugin is Contained in selected Mod</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settingsdialog.ui" line="135"/>
-        <source>Is overwriting (loose files)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="settingsdialog.ui" line="105"/>
         <location filename="settingsdialog.ui" line="108"/>
         <source>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</source>
@@ -6062,6 +6018,31 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
     <message>
         <location filename="settingsdialog.ui" line="111"/>
         <source>Show mod list separator colors on the scrollbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="121"/>
+        <source>Plugin is Contained in selected Mod</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="128"/>
+        <source>Is overwritten (loose files)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="135"/>
+        <source>Is overwriting (loose files)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="142"/>
+        <source>Reset Colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settingsdialog.ui" line="149"/>
+        <source>Mod Contains selected Plugin</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6413,19 +6394,19 @@ tl;dr-version: If Nexus-features don&apos;t work, insert the current version num
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1060"/>
-        <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
+        <location filename="settingsdialog.ui" line="1027"/>
+        <source>Enforces that inactive ESPs and ESMs are never loaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1063"/>
-        <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
-Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
+        <location filename="settingsdialog.ui" line="1030"/>
+        <source>It seems that the Games occasionally load ESP or ESM files even if they haven&apos;t been activated as plugins.
+I don&apos;t yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1067"/>
-        <source>Force-enable game files</source>
+        <location filename="settingsdialog.ui" line="1034"/>
+        <source>Hide inactive ESPs/ESMs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6447,19 +6428,19 @@ If you disable this feature, MO will only display official DLCs this way. Please
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1027"/>
-        <source>Enforces that inactive ESPs and ESMs are never loaded.</source>
+        <location filename="settingsdialog.ui" line="1060"/>
+        <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1030"/>
-        <source>It seems that the Games occasionally load ESP or ESM files even if they haven&apos;t been activated as plugins.
-I don&apos;t yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</source>
+        <location filename="settingsdialog.ui" line="1063"/>
+        <source>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
+Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.ui" line="1034"/>
-        <source>Hide inactive ESPs/ESMs</source>
+        <location filename="settingsdialog.ui" line="1067"/>
+        <source>Force-enable game files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6476,7 +6457,6 @@ I don&apos;t yet know what the circumstances are, but user reports imply it is i
     <message>
         <location filename="settingsdialog.ui" line="1093"/>
         <source>Enable parsing of Archives. This is an Experimental Feature. Has negative effects on performance and known incorrectness.</source>
-        <oldsource>Enable parsing of Archives.  Has negative effects on performance.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6487,7 +6467,6 @@ I don&apos;t yet know what the circumstances are, but user reports imply it is i
     <message>
         <location filename="settingsdialog.ui" line="1099"/>
         <source>Enable parsing of Archives (Experimental Feature)</source>
-        <oldsource>Enable parsing of Archives</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
