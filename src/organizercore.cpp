@@ -988,6 +988,13 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
     return nullptr;
   }
 
+  if (m_InstallationManager.isRunning()) {
+    QMessageBox::information(
+      qApp->activeWindow(), tr("Installation cancelled"),
+      tr("Another installation is currently in progress."), QMessageBox::Ok);
+    return nullptr;
+  }
+
   bool hasIniTweaks = false;
   GuessedValue<QString> modName;
   if (!initModName.isEmpty()) {
@@ -1029,6 +1036,13 @@ MOBase::IModInterface *OrganizerCore::installMod(const QString &fileName,
 
 void OrganizerCore::installDownload(int index)
 {
+  if (m_InstallationManager.isRunning()) {
+    QMessageBox::information(
+      qApp->activeWindow(), tr("Installation cancelled"),
+      tr("Another installation is currently in progress."), QMessageBox::Ok);
+    return;
+  }
+
   try {
     QString fileName = m_DownloadManager.getFilePath(index);
     QString gameName = m_DownloadManager.getGameName(index);

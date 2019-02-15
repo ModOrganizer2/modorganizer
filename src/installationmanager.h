@@ -90,6 +90,11 @@ public:
   bool wasCancelled();
 
   /**
+   * @return true if an installation is currently in progress
+   **/
+  bool isRunning();
+
+  /**
    * @brief retrieve a string describing the specified error code
    *
    * @param errorCode an error code as returned by the archiving function
@@ -201,6 +206,8 @@ private:
   };
 
 private:
+
+  bool m_IsRunning;
 
   QWidget *m_ParentWidget;
 
