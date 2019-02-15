@@ -338,7 +338,9 @@ MainWindow::MainWindow(QSettings &initSettings
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
 
-  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
+  QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
+  initModListContextMenu(listOptionsMenu);
+  ui->listOptionsBtn->setMenu(listOptionsMenu);
   connect(ui->listOptionsBtn, SIGNAL(pressed()), this, SLOT(on_listOptionsBtn_pressed()));
 
   ui->openFolderMenu->setMenu(openFolderMenu());
@@ -4379,28 +4381,19 @@ QMenu *MainWindow::openFolderMenu()
 	return FolderMenu;
 }
 
-QMenu *MainWindow::modListContextMenu(QWidget *parent)
+void MainWindow::initModListContextMenu(QMenu *menu)
 {
-  QMenu *menu = new QMenu(parent);
   menu->addAction(tr("Install Mod..."), this, SLOT(installMod_clicked()));
-
   menu->addAction(tr("Create empty mod"), this, SLOT(createEmptyMod_clicked()));
-
   menu->addAction(tr("Create Separator"), this, SLOT(createSeparator_clicked()));
 
   menu->addSeparator();
 
   menu->addAction(tr("Enable all visible"), this, SLOT(enableVisibleMods()));
   menu->addAction(tr("Disable all visible"), this, SLOT(disableVisibleMods()));
-
   menu->addAction(tr("Check all for update"), this, SLOT(checkModsForUpdates()));
-
   menu->addAction(tr("Refresh"), &m_OrganizerCore, SLOT(profileRefresh()));
-
   menu->addAction(tr("Export to csv..."), this, SLOT(exportModListCSV()));
-
-
-  return menu;
 }
 
 void MainWindow::addModSendToContextMenu(QMenu *menu)
@@ -4442,137 +4435,140 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
     m_ContextIdx = mapToModel(m_OrganizerCore.modList(), modList->indexAt(pos));
     m_ContextRow = m_ContextIdx.row();
 
-    QMenu *menu = nullptr;
     if (m_ContextRow == -1) {
       // no selection
-      menu = modListContextMenu(this);
+      QMenu menu(this);
+      initModListContextMenu(&menu);
+      menu.exec(modList->mapToGlobal(pos));
     } else {
-      menu = new QMenu(this);
-      QMenu *allMods = modListContextMenu(menu);
+      QMenu menu(this);
+
+      QMenu *allMods = new QMenu(&menu);
+      initModListContextMenu(allMods);
       allMods->setTitle(tr("All Mods"));
-      menu->addMenu(allMods);
-      menu->addSeparator();
+      menu.addMenu(allMods);
+      menu.addSeparator();
+
       ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
       std::vector<ModInfo::EFlag> flags = info->getFlags();
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) {
         if (QDir(info->absolutePath()).count() > 2) {
-          menu->addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
-          menu->addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
-          menu->addAction(tr("Move content to Mod..."), this, SLOT(moveOverwriteContentToExistingMod()));
-          menu->addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
+          menu.addAction(tr("Sync to Mods..."), &m_OrganizerCore, SLOT(syncOverwrite()));
+          menu.addAction(tr("Create Mod..."), this, SLOT(createModFromOverwrite()));
+          menu.addAction(tr("Move content to Mod..."), this, SLOT(moveOverwriteContentToExistingMod()));
+          menu.addAction(tr("Clear Overwrite..."), this, SLOT(clearOverwrite()));
         }
-        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
+        menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) {
-        menu->addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
-        menu->addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
+        menu.addAction(tr("Restore Backup"), this, SLOT(restoreBackup_clicked()));
+        menu.addAction(tr("Remove Backup..."), this, SLOT(removeMod_clicked()));
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end()){
-        menu->addSeparator();
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), menu);
+        menu.addSeparator();
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
-        addMenuAsPushButton(menu, addRemoveCategoriesMenu);
-        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), menu);
+        addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
-        addMenuAsPushButton(menu, primaryCategoryMenu);
-        menu->addSeparator();
-        menu->addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
-        menu->addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
-        menu->addSeparator();
-        addModSendToContextMenu(menu);
-        menu->addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
+        addMenuAsPushButton(&menu, primaryCategoryMenu);
+        menu.addSeparator();
+        menu.addAction(tr("Rename Separator..."), this, SLOT(renameMod_clicked()));
+        menu.addAction(tr("Remove Separator..."), this, SLOT(removeMod_clicked()));
+        menu.addSeparator();
+        addModSendToContextMenu(&menu);
+        menu.addAction(tr("Select Color..."), this, SLOT(setColor_clicked()));
         if(info->getColor().isValid())
-          menu->addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
-        menu->addSeparator();
+          menu.addAction(tr("Reset Color"), this, SLOT(resetColor_clicked()));
+        menu.addSeparator();
       } else if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) != flags.end()) {
-        addModSendToContextMenu(menu);
+        addModSendToContextMenu(&menu);
       } else {
-        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), menu);
+        QMenu *addRemoveCategoriesMenu = new QMenu(tr("Change Categories"), &menu);
         populateMenuCategories(addRemoveCategoriesMenu, 0);
         connect(addRemoveCategoriesMenu, SIGNAL(aboutToHide()), this, SLOT(addRemoveCategories_MenuHandler()));
-        addMenuAsPushButton(menu, addRemoveCategoriesMenu);
+        addMenuAsPushButton(&menu, addRemoveCategoriesMenu);
 
-        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), menu);
+        QMenu *primaryCategoryMenu = new QMenu(tr("Primary Category"), &menu);
         connect(primaryCategoryMenu, SIGNAL(aboutToShow()), this, SLOT(addPrimaryCategoryCandidates()));
-        addMenuAsPushButton(menu, primaryCategoryMenu);
+        addMenuAsPushButton(&menu, primaryCategoryMenu);
 
-        menu->addSeparator();
+        menu.addSeparator();
 
         if (info->downgradeAvailable()) {
-          menu->addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
+          menu.addAction(tr("Change versioning scheme"), this, SLOT(changeVersioningScheme()));
         }
 
         if (info->updateIgnored()) {
-          menu->addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
+          menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
         }
         else {
           if (info->updateAvailable() || info->downgradeAvailable()) {
-              menu->addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
+              menu.addAction(tr("Ignore update"), this, SLOT(ignoreUpdate()));
           }
         }
-        menu->addSeparator();
+        menu.addSeparator();
 
-        menu->addAction(tr("Enable selected"), this, SLOT(enableSelectedMods_clicked()));
-        menu->addAction(tr("Disable selected"), this, SLOT(disableSelectedMods_clicked()));
+        menu.addAction(tr("Enable selected"), this, SLOT(enableSelectedMods_clicked()));
+        menu.addAction(tr("Disable selected"), this, SLOT(disableSelectedMods_clicked()));
 
-        menu->addSeparator();
+        menu.addSeparator();
 
-        addModSendToContextMenu(menu);
+        addModSendToContextMenu(&menu);
 
-        menu->addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
-        menu->addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
-        menu->addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
-        menu->addAction(tr("Create Backup"), this, SLOT(backupMod_clicked()));
+        menu.addAction(tr("Rename Mod..."), this, SLOT(renameMod_clicked()));
+        menu.addAction(tr("Reinstall Mod"), this, SLOT(reinstallMod_clicked()));
+        menu.addAction(tr("Remove Mod..."), this, SLOT(removeMod_clicked()));
+        menu.addAction(tr("Create Backup"), this, SLOT(backupMod_clicked()));
 
-        menu->addSeparator();
+        menu.addSeparator();
 
         if (info->getNexusID() > 0 && Settings::instance().endorsementIntegration()) {
           switch (info->endorsedState()) {
             case ModInfo::ENDORSED_TRUE: {
-              menu->addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
+              menu.addAction(tr("Un-Endorse"), this, SLOT(unendorse_clicked()));
             } break;
             case ModInfo::ENDORSED_FALSE: {
-              menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
-              menu->addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
+              menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
+              menu.addAction(tr("Won't endorse"), this, SLOT(dontendorse_clicked()));
             } break;
             case ModInfo::ENDORSED_NEVER: {
-              menu->addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
+              menu.addAction(tr("Endorse"), this, SLOT(endorse_clicked()));
             } break;
             default: {
-              QAction *action = new QAction(tr("Endorsement state unknown"), menu);
+              QAction *action = new QAction(tr("Endorsement state unknown"), &menu);
               action->setEnabled(false);
-              menu->addAction(action);
+              menu.addAction(action);
             } break;
           }
         }
 
-        menu->addSeparator();
+        menu.addSeparator();
 
         std::vector<ModInfo::EFlag> flags = info->getFlags();
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_INVALID) != flags.end()) {
-          menu->addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
+          menu.addAction(tr("Ignore missing data"), this, SLOT(ignoreMissingData_clicked()));
         }
 
         if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_ALTERNATE_GAME) != flags.end()) {
-          menu->addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
+          menu.addAction(tr("Mark as converted/working"), this, SLOT(markConverted_clicked()));
         }
 
         if (info->getNexusID() > 0)  {
-          menu->addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
+          menu.addAction(tr("Visit on Nexus"), this, SLOT(visitOnNexus_clicked()));
         } else if ((info->getURL() != "")) {
-          menu->addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
+          menu.addAction(tr("Visit web page"), this, SLOT(visitWebPage_clicked()));
         }
 
-        menu->addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
+        menu.addAction(tr("Open in Explorer"), this, SLOT(openExplorer_clicked()));
       }
 
       if (std::find(flags.begin(), flags.end(), ModInfo::FLAG_FOREIGN) == flags.end()) {
-        QAction *infoAction = menu->addAction(tr("Information..."), this, SLOT(information_clicked()));
-        menu->setDefaultAction(infoAction);
+        QAction *infoAction = menu.addAction(tr("Information..."), this, SLOT(information_clicked()));
+        menu.setDefaultAction(infoAction);
       }
-    }
 
-    menu->exec(modList->mapToGlobal(pos));
-    delete menu;
+      menu.exec(modList->mapToGlobal(pos));
+    }
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
   } catch (...) {
@@ -4925,7 +4921,9 @@ void MainWindow::languageChange(const QString &newLanguage)
   updateDownloadView();
   updateProblemsButton();
 
-  ui->listOptionsBtn->setMenu(modListContextMenu(ui->listOptionsBtn));
+  QMenu *listOptionsMenu = new QMenu(ui->listOptionsBtn);
+  initModListContextMenu(listOptionsMenu);
+  ui->listOptionsBtn->setMenu(listOptionsMenu);
 
   ui->openFolderMenu->setMenu(openFolderMenu());
 }
