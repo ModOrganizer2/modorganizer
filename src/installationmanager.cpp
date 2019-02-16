@@ -80,7 +80,8 @@ static T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager()
     : m_ParentWidget(nullptr),
-      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}) {
+      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
+      m_IsRunning(false) {
   QLibrary archiveLib(QCoreApplication::applicationDirPath() +
                       "\\dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -664,6 +665,11 @@ bool InstallationManager::wasCancelled()
   return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
 }
 
+bool InstallationManager::isRunning()
+{
+  return m_IsRunning;
+}
+
 
 void InstallationManager::postInstallCleanup()
 {
@@ -705,6 +711,7 @@ bool InstallationManager::install(const QString &fileName,
                                   bool &hasIniTweaks,
                                   int modID)
 {
+  m_IsRunning = true;
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
@@ -853,6 +860,7 @@ bool InstallationManager::install(const QString &fileName,
     switch (installResult) {
       case IPluginInstaller::RESULT_CANCELED:
       case IPluginInstaller::RESULT_FAILED: {
+        m_IsRunning = false;
         return false;
       } break;
       case IPluginInstaller::RESULT_SUCCESS:
@@ -861,8 +869,10 @@ bool InstallationManager::install(const QString &fileName,
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
                          ((*iniTweakNode)->numLeafs() != 0);
+          m_IsRunning = false;
           return true;
         } else {
+          m_IsRunning = false;
           return false;
         }
       } break;
@@ -871,6 +881,8 @@ bool InstallationManager::install(const QString &fileName,
 
   reportError(tr("None of the available installer plugins were able to handle that archive.\n"
     "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
+
+  m_IsRunning = false;
   return false;
 }
 
