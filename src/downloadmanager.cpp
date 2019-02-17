@@ -447,9 +447,19 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
 
 void DownloadManager::removePending(QString gameName, int modID, int fileID)
 {
+  QString gameShortName = gameName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gameShortName = gamePlugin->gameShortName();
+      break;
+    }
+  }
   emit aboutToUpdate();
   for (auto iter : m_PendingDownloads) {
-    if (gameName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 && (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
+    if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 && (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
       m_PendingDownloads.removeAt(m_PendingDownloads.indexOf(iter));
       break;
     }
@@ -1612,21 +1622,10 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
     m_RequestIDs.erase(idIter);
   }
 
-  QString gameShortName;
-  QStringList games(m_ManagedGame->validShortNames());
-  games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
-    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin->gameNexusName() == gameName) {
-      gameShortName = gamePlugin->gameShortName();
-      break;
-    }
-  }
-
   ModRepositoryFileInfo *info = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
   QVariantList resultList = resultData.toList();
   if (resultList.length() == 0) {
-    removePending(gameShortName, modID, fileID);
+    removePending(gameName, modID, fileID);
     emit showMessage(tr("No download server available. Please try again later."));
     return;
   }
@@ -1640,7 +1639,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
   foreach (const QVariant &server, resultList) {
     URLs.append(server.toMap()["URI"].toString());
   }
-  addDownload(URLs, gameShortName, modID, fileID, info);
+  addDownload(URLs, gameName, modID, fileID, info);
 }
 
 
@@ -1669,16 +1668,7 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
     }
   }
 
-  QString gameRealName;
-  QStringList games(m_ManagedGame->validShortNames());
-  games += m_ManagedGame->gameShortName();
-  for (auto game : games) {
-    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
-      gameRealName = gamePlugin->gameShortName();
-    }
-  }
-  removePending(gameRealName, modID, fileID);
+  removePending(gameName, modID, fileID);
   emit showMessage(tr("Failed to request file info from nexus: %1").arg(errorString));
 }
 
