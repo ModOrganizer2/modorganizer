@@ -560,8 +560,14 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto tuple : m_PendingDownloads) {
     if (std::get<0>(tuple).compare(nxmInfo.game(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
-      qDebug("download requested is already queued (mod id: %d, file id: %d)", nxmInfo.modId(), nxmInfo.fileId()); 
-      QMessageBox::information(nullptr, tr("Already Queued"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
+      QString debugStr("download requested is already queued (mod: %1, file: %2)");
+      QString infoStr(tr("There is already a download queued for this file.\n\nMod %1\nFile %2"));
+
+      debugStr = debugStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
+      infoStr = infoStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
+
+      qDebug(qUtf8Printable(debugStr));
+      QMessageBox::information(nullptr, tr("Already Queued"), infoStr, QMessageBox::Ok);
       return;
     }
   }
@@ -569,9 +575,43 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod id: %d, file name: %s, file: %s)", download->m_FileInfo->modID,
-          qUtf8Printable(download->m_FileInfo->name), qUtf8Printable(download->m_FileName));
-        QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file already been started."), QMessageBox::Ok);
+        QString debugStr("download requested is already started (mod %1: %2, file %3: %4)");
+        QString infoStr(tr("There is already a download started for this file.\n\nMod %1:\t%2\nFile %3:\t%4"));
+
+        // %1
+        debugStr = debugStr.arg(download->m_FileInfo->modID);
+        infoStr = infoStr.arg(download->m_FileInfo->modID);
+
+        // %2
+        if (!download->m_FileInfo->name.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->name);
+          infoStr = infoStr.arg(download->m_FileInfo->name);
+        } else if (!download->m_FileInfo->modName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->modName);
+          infoStr = infoStr.arg(download->m_FileInfo->modName);
+        } else {
+          debugStr = debugStr.arg(QStringLiteral("<blank>"));
+          infoStr = infoStr.arg(QStringLiteral("<blank>"));
+        }
+
+        // %3
+        debugStr = debugStr.arg(download->m_FileInfo->fileID);
+        infoStr = infoStr.arg(download->m_FileInfo->fileID);
+
+        // %4
+        if (!download->m_FileInfo->fileName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->fileName);
+          infoStr = infoStr.arg(download->m_FileInfo->fileName);
+        } else if (!download->m_FileName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileName);
+          infoStr = infoStr.arg(download->m_FileName);
+        } else {
+          debugStr = debugStr.arg(QStringLiteral("<blank>"));
+          infoStr = infoStr.arg(QStringLiteral("<blank>"));
+        }
+
+        qDebug(qUtf8Printable(debugStr));
+        QMessageBox::information(nullptr, tr("Already Started"), infoStr, QMessageBox::Ok);
         return;
       }
     }
