@@ -335,7 +335,7 @@ std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVaria
     QVariantMap update = result.toMap();
     std::copy_if(s_Collection.begin(), s_Collection.end(), std::inserter(finalMods, finalMods.end()), [=](QSharedPointer<ModInfo> info) -> bool {
       if (info->getNexusID() == update["mod_id"].toInt() && info->getGameName().compare(gameName, Qt::CaseInsensitive) == 0)
-        if (info->getLastNexusUpdate() > QDateTime::fromSecsSinceEpoch(update["latest_file_update"].toInt(), Qt::UTC))
+        if (info->getLastNexusUpdate().addSecs(-3600) > QDateTime::fromSecsSinceEpoch(update["latest_file_update"].toInt(), Qt::UTC))
           return true;
       return false;
     });
