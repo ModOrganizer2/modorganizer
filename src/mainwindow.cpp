@@ -4871,7 +4871,11 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_actionNexus_triggered()
 {
-  QDesktopServices::openUrl(QUrl(NexusInterface::instance(&m_PluginContainer)->getGameURL(m_OrganizerCore.managedGame()->gameShortName())));
+  const IPluginGame *game = m_OrganizerCore.managedGame();
+  QString gameName = game->gameShortName();
+  if (game->gameNexusName().isEmpty() && game->primarySources().count())
+    gameName = game->primarySources()[0];
+  QDesktopServices::openUrl(QUrl(NexusInterface::instance(&m_PluginContainer)->getGameURL(gameName)));
 }
 
 
