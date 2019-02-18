@@ -3,6 +3,9 @@ image: Visual Studio 2017
 build_script:
 - cmd: >-
     git clone --depth=1 --branch=Appveyor https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
+
     mkdir c:\projects\modorganizer-build -type directory
+
     cd c:\projects\modorganizer-umbrella
+
     C:\Python37-x64\python.exe unimake.py -d c:\projects\modorganizer-build -s Appveyor_Build=True %APPVEYOR_PROJECT_NAME%
