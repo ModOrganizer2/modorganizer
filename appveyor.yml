@@ -2,6 +2,7 @@ version: 1.0.{build}
 image: Visual Studio 2017
 build_script:
 - cmd: >-
+
     git clone --depth=1 --branch=%APPVEYOR_REPO_BRANCH% https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
 
     mkdir c:\projects\modorganizer-build -type directory
