@@ -181,7 +181,6 @@ private:
     QString m_AuthToken;
 
     QString m_ExecutableBlacklist;
-
     QWebSocket *m_nexusLogin;
     QTimer m_loginTimer;
     int m_totalPings = 0;

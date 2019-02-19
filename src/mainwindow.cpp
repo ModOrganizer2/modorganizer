@@ -261,7 +261,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   actionToToolButton(ui->actionEndorseMO);
   createEndorseWidget();
-  
+
   toggleMO2EndorseState();
 
   for (QAction *action : ui->toolBar->actions()) {
@@ -4542,7 +4542,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         }
 
         if (info->getNexusID() > 0)
-          menu->addAction(tr("Force-check updates"), this, SLOT(checkModUpdates_clicked()));
+          menu.addAction(tr("Force-check updates"), this, SLOT(checkModUpdates_clicked()));
         if (info->updateIgnored()) {
           menu.addAction(tr("Un-ignore update"), this, SLOT(unignoreUpdate()));
         } else {
