@@ -1,8 +1,11 @@
 version: 1.0.{build}
+skip_branch_with_pr: true
 image: Visual Studio 2017
+environment:
+  WEBHOOK_URL:
+    secure: gOKbXaZM9ImtMD5XrYITvdyZUW/az082G9OIN1EC1VYoNNsKROB4s6VsQiL6qbLNLc4XQhc8Y9DhdU9Hfh49vhypcjUEQmMsENxnp+1hYMJctTqIYDunVSd767eez5wz6rKHqk+XOHmg5gyVNCV9u4DVcCZJSVe4UTKn1lc47H0=
 build_script:
 - cmd: >-
-
     git clone --depth=1 --branch=%APPVEYOR_REPO_BRANCH% https://github.com/ModOrganizer2/modorganizer-umbrella.git c:\projects\modorganizer-umbrella 2> $null
 
     mkdir c:\projects\modorganizer-build -type directory
@@ -10,3 +13,14 @@ build_script:
     cd c:\projects\modorganizer-umbrella
 
     C:\Python37-x64\python.exe unimake.py -d c:\projects\modorganizer-build -s Appveyor_Build=True %APPVEYOR_PROJECT_NAME%
+artifacts:
+- path: vsbuild\src\RelWithDebInfo\ModOrganizer.exe
+  name: modorganizer_exe
+- path: vsbuild\src\RelWithDebInfo\ModOrganizer.pdb
+  name: modorganizer_pdb
+on_success:
+  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+  - ps: ./send.ps1 success $env:WEBHOOK_URL
+on_failure:
+  - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
+  - ps: ./send.ps1 failure $env:WEBHOOK_URL
