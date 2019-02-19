@@ -272,7 +272,7 @@ private:
   void updateModActiveState(int index, bool active);
   void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
 
-  bool testForSteam();
+  bool testForSteam(bool *found, bool *access);
 
   bool createDirectory(const QString &path);
 

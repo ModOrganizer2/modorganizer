@@ -34,6 +34,7 @@
 #include "lockeddialog.h"
 #include "instancemanager.h"
 #include <scriptextender.h>
+#include "helper.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -438,58 +439,65 @@ void OrganizerCore::storeSettings()
   }
 }
 
-bool OrganizerCore::testForSteam()
+bool OrganizerCore::testForSteam(bool *found, bool *access)
 {
-  size_t currentSize = 1024;
-  std::unique_ptr<DWORD[]> processIDs;
-  DWORD bytesReturned;
-  bool success = false;
-  while (!success) {
-    processIDs.reset(new DWORD[currentSize]);
-    if (!::EnumProcesses(processIDs.get(),
-                         static_cast<DWORD>(currentSize) * sizeof(DWORD),
-                         &bytesReturned)) {
-      qWarning("failed to determine if steam is running");
-      return true;
-    }
-    if (bytesReturned == (currentSize * sizeof(DWORD))) {
-      // maximum size used, list probably truncated
-      currentSize *= 2;
-    } else {
-      success = true;
-    }
+  HANDLE hProcessSnap;
+  HANDLE hProcess;
+  PROCESSENTRY32 pe32;
+  DWORD lastError;
+
+  if (found == nullptr || access == nullptr) {
+    return false;
   }
-  TCHAR processName[MAX_PATH];
-  for (unsigned int i = 0; i < bytesReturned / sizeof(DWORD); ++i) {
-    memset(processName, '\0', sizeof(TCHAR) * MAX_PATH);
-    if (processIDs[i] != 0) {
-      HANDLE process = ::OpenProcess(
-          PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processIDs[i]);
 
-      if (process != nullptr) {
+  // Take a snapshot of all processes in the system.
+  hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+  if (hProcessSnap == INVALID_HANDLE_VALUE) {
+    lastError = GetLastError();
+    qCritical("unable to get snapshot of processes (error %d)", lastError);
+    return false;
+  }
 
-		  ON_BLOCK_EXIT([&]() {
-			  if (process != INVALID_HANDLE_VALUE)
-				  ::CloseHandle(process);
-		  });
+  // Retrieve information about the first process,
+  // and exit if unsuccessful
+  pe32.dwSize = sizeof(PROCESSENTRY32);
+  if (!Process32First(hProcessSnap, &pe32)) {
+    lastError = GetLastError();
+    qCritical("unable to get first process (error %d)", lastError);
+    CloseHandle(hProcessSnap);
+    return false;
+  }
 
-        HMODULE module;
-        DWORD ignore;
+  *found = false;
+  *access = true;
 
-        // first module in a process is always the binary
-        if (EnumProcessModules(process, &module, sizeof(HMODULE) * 1,
-                               &ignore)) {
-          ::GetModuleBaseName(process, module, processName, MAX_PATH);
-          if ((_tcsicmp(processName, TEXT("steam.exe")) == 0)
-              || (_tcsicmp(processName, TEXT("steamservice.exe")) == 0)) {
-            return true;
-          }
+  // Now walk the snapshot of processes, and
+  // display information about each process in turn
+  do {
+    if ((_tcsicmp(pe32.szExeFile, L"Steam.exe") == 0) ||
+        (_tcsicmp(pe32.szExeFile, L"SteamService.exe") == 0)) {
+
+      *found = true;
+      
+      // Try to open the process to determine if MO has the proper access
+      hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+                             FALSE, pe32.th32ProcessID);
+      if (hProcess == NULL) {
+        lastError = GetLastError();
+        if (lastError == ERROR_ACCESS_DENIED) {
+          *access = false;
         }
+      } else {
+        CloseHandle(hProcess);
       }
+      break;
     }
-  }
 
-  return false;
+} while(Process32Next(hProcessSnap, &pe32));
+
+CloseHandle(hProcessSnap);
+return true;
+
 }
 
 void OrganizerCore::updateExecutablesList(QSettings &settings)
@@ -1316,7 +1324,14 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                         "steam_api64.dll"))
               .exists())
       && (m_Settings.getLoadMechanism() == LoadMechanism::LOAD_MODORGANIZER)) {
-    if (!testForSteam()) {
+
+    bool steamFound = true;
+    bool steamAccess = true;
+    if (!testForSteam(&steamFound, &steamAccess)) {
+      qCritical("unable to determine state of Steam");
+    } 
+    
+    if (!steamFound) {
       QDialogButtonBox::StandardButton result;
       result = QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
                   tr("Start Steam?"),
@@ -1325,7 +1340,47 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
                   QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
       if (result == QDialogButtonBox::Yes) {
         startSteam(window);
-      } else if(result == QDialogButtonBox::Cancel) {
+
+        // double-check that Steam is started and MO has access
+        steamFound = true;
+        steamAccess = true;
+        if (!testForSteam(&steamFound, &steamAccess)) {
+          qCritical("unable to determine state of Steam");
+        } else if (!steamFound) {
+          qCritical("could not find Steam");
+        }
+
+      } else if (result == QDialogButtonBox::Cancel) {
+        return INVALID_HANDLE_VALUE;
+      }
+    } 
+    
+    if (!steamAccess) {
+      QDialogButtonBox::StandardButton result;
+      result = QuestionBoxMemory::query(window, "steamAdminQuery", binary.fileName(),
+                  tr("Steam: Access Denied"),
+                  tr("MO was denied access to the Steam process.  This normally indicates that "
+                     "Steam is being run as administrator while MO is not.  This can cause issues "
+                     "launching the game.  It is recommended to not run Steam as administrator unless "
+                     "absolutely neccessary.\n\n"
+                     "Restart MO as administrator?"),
+                  QDialogButtonBox::Yes | QDialogButtonBox::No | QDialogButtonBox::Cancel);
+      if (result == QDialogButtonBox::Yes) {
+        WCHAR cwd[MAX_PATH];
+        if (!GetCurrentDirectory(MAX_PATH, cwd)) {
+          qCritical("unable to get current directory (error %d)", GetLastError());
+          cwd[0] = L'\0';
+        }
+        if (!Helper::adminLaunch(
+          qApp->applicationDirPath().toStdWString(),
+          qApp->applicationFilePath().toStdWString(),
+          std::wstring(cwd))) {
+          qCritical("unable to relaunch MO as admin");
+          return INVALID_HANDLE_VALUE;
+        }
+        qApp->exit(0);
+        return INVALID_HANDLE_VALUE;
+      } else if (result == QDialogButtonBox::Cancel) {
         return INVALID_HANDLE_VALUE;
       }
     }
