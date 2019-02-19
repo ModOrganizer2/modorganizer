@@ -248,7 +248,8 @@ SOURCE_GROUP(Headers FILES ${organizer_HDRS})
 SOURCE_GROUP(UI FILES ${organizer_UIS})
 
 # MO projects
-SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
+SET(dependency_project_path "${DEPENDENCIES_DIR}")
+SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
@@ -295,7 +296,7 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/../usvfs/include
+                    ${dependency_project_path}/usvfs/include
                     ${project_path}/game_gamebryo/src/gamebryo
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
