@@ -1875,7 +1875,9 @@ void MainWindow::processUpdates() {
       instance.remove("steam_password");
       instance.remove("nexus_username");
       instance.remove("nexus_password");
+      instance.remove("nexus_login");
       instance.remove("nexus_api_key");
+      instance.remove("ask_for_nexuspw");
       instance.endGroup();
       instance.beginGroup("Servers");
       instance.remove("");
