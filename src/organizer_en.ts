@@ -6048,7 +6048,8 @@ Select Show Details option to see the full change-log.</source>
     </message>
     <message>
         <location filename="settings.cpp" line="737"/>
-        <source>Failed to retrieve a Nexus API key! Please try again.A browser window should open asking you to authorize.</source>
+        <source>Failed to retrieve a Nexus API key! Please try again. A browser window should open asking you to authorize.</source>
+        <oldsource>Failed to retrieve a Nexus API key! Please try again.A browser window should open asking you to authorize.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
