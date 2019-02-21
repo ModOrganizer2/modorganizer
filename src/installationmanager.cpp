@@ -713,6 +713,8 @@ bool InstallationManager::install(const QString &fileName,
                                   int modID)
 {
   m_IsRunning = true;
+  ON_BLOCK_EXIT([this]() { m_IsRunning = false; });
+
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
@@ -863,7 +865,6 @@ bool InstallationManager::install(const QString &fileName,
     switch (installResult) {
       case IPluginInstaller::RESULT_CANCELED:
       case IPluginInstaller::RESULT_FAILED: {
-        m_IsRunning = false;
         return false;
       } break;
       case IPluginInstaller::RESULT_SUCCESS:
@@ -872,10 +873,8 @@ bool InstallationManager::install(const QString &fileName,
           DirectoryTree::node_iterator iniTweakNode = filesTree->nodeFind(DirectoryTreeInformation("INI Tweaks"));
           hasIniTweaks = (iniTweakNode != filesTree->nodesEnd()) &&
                          ((*iniTweakNode)->numLeafs() != 0);
-          m_IsRunning = false;
           return true;
         } else {
-          m_IsRunning = false;
           return false;
         }
       } break;
@@ -885,7 +884,6 @@ bool InstallationManager::install(const QString &fileName,
   reportError(tr("None of the available installer plugins were able to handle that archive.\n"
     "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
 
-  m_IsRunning = false;
   return false;
 }
 
