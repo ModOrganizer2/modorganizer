@@ -734,7 +734,7 @@ void Settings::checkApiKey(QPushButton *nexusButton)
     nexusButton->setEnabled(true);
     nexusButton->setText("Connect to Nexus");
     QMessageBox::warning(qApp->activeWindow(), tr("Error"),
-      tr("Failed to retrieve a Nexus API key! Please try again."
+      tr("Failed to retrieve a Nexus API key! Please try again. "
         "A browser window should open asking you to authorize."));
   }
 }
