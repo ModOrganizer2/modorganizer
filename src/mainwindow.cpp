@@ -2347,6 +2347,12 @@ void MainWindow::modInstalled(const QString &modName)
   if (posList.count() == 1) {
     ui->modList->scrollTo(posList.at(0));
   }
+
+  // force an update to happen
+  std::multimap<QString, int> IDs;
+  ModInfo::Ptr info = ModInfo::getByIndex(ModInfo::getIndex(modName));
+  IDs.insert(std::make_pair<QString, int>(info->getGameName(), info->getNexusID()));
+  modUpdateCheck(IDs);
 }
 
 void MainWindow::procError(QProcess::ProcessError error)
