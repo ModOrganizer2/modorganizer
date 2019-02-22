@@ -375,6 +375,9 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
     std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return mod->getNexusID() <= 0; }),
     mods.end()
   );
+  for (auto mod : mods) {
+    mod->setLastNexusUpdate(QDateTime());
+  }
 
   std::sort(mods.begin(), mods.end(), [](QSharedPointer<ModInfo> a, QSharedPointer<ModInfo> b) -> bool {
     return a->getLastNexusUpdate() < b->getLastNexusUpdate();
