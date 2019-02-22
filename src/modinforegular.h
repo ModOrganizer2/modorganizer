@@ -44,7 +44,7 @@ public:
   /**
    * @return true if the current update is being ignored
    */
-  virtual bool updateIgnored() const { return m_IgnoredVersion == m_NewestVersion; }
+  virtual bool updateIgnored() const { return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion; }
 
   /**
    * @brief test if there is a newer version of the mod
