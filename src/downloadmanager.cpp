@@ -1476,7 +1476,6 @@ void DownloadManager::nxmDescriptionAvailable(QString, int, QVariant userData, Q
   QTextDocument doc;
   doc.setHtml(result["name"].toString().trimmed());
   info->m_FileInfo->modName = doc.toPlainText();
-  info->m_FileInfo->newestVersion.parse(result["version"].toString());
   if (info->m_FileInfo->fileID != 0) {
     setState(info, STATE_READY);
   } else {
