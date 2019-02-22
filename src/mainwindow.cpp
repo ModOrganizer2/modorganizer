@@ -2333,9 +2333,8 @@ void MainWindow::modorder_changed()
       m_OrganizerCore.modList()->setOverwriteMarkers(modInfo->getModOverwrite(), modInfo->getModOverwritten());
       m_OrganizerCore.modList()->setArchiveOverwriteMarkers(modInfo->getModArchiveOverwrite(), modInfo->getModArchiveOverwritten());
       m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(modInfo->getModArchiveLooseOverwrite(), modInfo->getModArchiveLooseOverwritten());
-      if (m_ModListSortProxy != nullptr) {
+      if (m_ModListSortProxy != nullptr)
         m_ModListSortProxy->invalidate();
-      }
       ui->modList->verticalScrollBar()->repaint();
     }
   }
@@ -2582,10 +2581,6 @@ void MainWindow::modlistSelectionChanged(const QModelIndex &current, const QMode
     m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
   }
-/*  if ((m_ModListSortProxy != nullptr)
-      && !m_ModListSortProxy->beingInvalidated()) {
-    m_ModListSortProxy->invalidate();
-  }*/
   ui->modList->verticalScrollBar()->repaint();
 }
 
@@ -4060,9 +4055,8 @@ void MainWindow::ignoreUpdate() {
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->ignoreUpdate(true);
   }
-  if (m_ModListSortProxy != nullptr) {
+  if (m_ModListSortProxy != nullptr)
     m_ModListSortProxy->invalidate();
-  }
 }
 
 void MainWindow::checkModUpdates_clicked()
@@ -4094,9 +4088,8 @@ void MainWindow::unignoreUpdate()
     ModInfo::Ptr info = ModInfo::getByIndex(m_ContextRow);
     info->ignoreUpdate(false);
   }
-  if (m_ModListSortProxy != nullptr) {
+  if (m_ModListSortProxy != nullptr)
     m_ModListSortProxy->invalidate();
-  }
 }
 
 void MainWindow::addPrimaryCategoryCandidates(QMenu *primaryCategoryMenu,
@@ -5565,6 +5558,8 @@ void MainWindow::nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVa
     return ModInfo::filteredMods(gameNameReal, resultList, userData.toBool(), true);
   });
   watcher->setFuture(future);
+  if (m_ModListSortProxy != nullptr)
+    m_ModListSortProxy->invalidate();
 }
 
 void MainWindow::finishUpdateInfo()
@@ -5664,6 +5659,8 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
     if (foundUpdate) {
       // Just get the standard data updates for endorsements and descriptions
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+      if (m_ModListSortProxy != nullptr)
+        m_ModListSortProxy->invalidate();
     } else {
       // Scrape mod data here so we can use the mod version if no file update was located
       requiresInfo = true;
@@ -5677,6 +5674,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
 {
   QVariantMap result = resultData.toMap();
+  bool foundUpdate = false;
   QString gameNameReal;
   for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
     if (game->gameNexusName() == gameName) {
@@ -5691,6 +5689,7 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
     if (now >= updateTarget) {
       mod->setNewestVersion(result["version"].toString());
       mod->setLastNexusUpdate(QDateTime::currentDateTimeUtc());
+      foundUpdate = true;
     }
     mod->setNexusDescription(result["description"].toString());
     if ((mod->endorsedState() != ModInfo::ENDORSED_NEVER) && (result.contains("endorsement"))) {
@@ -5707,6 +5706,8 @@ void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userD
     mod->setNexusLastModified(QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC));
     mod->saveMeta();
   }
+  if (foundUpdate && m_ModListSortProxy != nullptr)
+    m_ModListSortProxy->invalidate();
 }
 
 void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int)
