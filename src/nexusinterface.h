@@ -219,7 +219,7 @@ public:
   }
 
   int requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
-    const QString &subModule, MOBase::IPluginGame const *game);
+    const QString &subModule, const MOBase::IPluginGame *game);
 
   /**
    * @brief request nexus descriptions for multiple mods at once

@@ -352,7 +352,7 @@ int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receive
 }
 
 int NexusInterface::requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
-  const QString &subModule, const MOBase::IPluginGame const *game)
+  const QString &subModule, const MOBase::IPluginGame *game)
 {
   if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
     NXMRequestInfo requestInfo(period, NXMRequestInfo::TYPE_CHECKUPDATES, userData, subModule, game);
