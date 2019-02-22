@@ -156,7 +156,7 @@ QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
-  : m_NMMVersion(), m_PluginContainer(pluginContainer), m_RemainingDailyRequests(2500), m_RemainingHourlyRequests(100), m_MaxDailyRequests(2500), m_MaxHourlyRequests(100)
+  : m_PluginContainer(pluginContainer), m_RemainingDailyRequests(2500), m_RemainingHourlyRequests(100), m_MaxDailyRequests(2500), m_MaxHourlyRequests(100)
 {
   m_MOVersion = createVersionInfo();
 
@@ -185,12 +185,6 @@ void NexusInterface::setCacheDirectory(const QString &directory)
 {
   m_DiskCache->setCacheDirectory(directory);
   m_AccessManager->setCache(m_DiskCache);
-}
-
-void NexusInterface::setNMMVersion(const QString &nmmVersion)
-{
-  m_NMMVersion = nmmVersion;
-  m_AccessManager->setNMMVersion(nmmVersion);
 }
 
 void NexusInterface::loginCompleted()

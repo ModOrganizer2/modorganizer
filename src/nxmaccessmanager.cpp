@@ -69,11 +69,6 @@ NXMAccessManager::~NXMAccessManager()
   }
 }
 
-void NXMAccessManager::setNMMVersion(const QString &nmmVersion)
-{
-  m_NMMVersion = nmmVersion;
-}
-
 QNetworkReply *NXMAccessManager::createRequest(
     QNetworkAccessManager::Operation operation, const QNetworkRequest &request,
     QIODevice *device)
@@ -202,7 +197,6 @@ QString NXMAccessManager::userAgent(const QString &subModule) const
   else
     comments << QSysInfo::kernelType().left(1).toUpper() + QSysInfo::kernelType().mid(1)
     << QSysInfo::productType().left(1).toUpper() + QSysInfo::kernelType().mid(1) + " " + QSysInfo::productVersion();
-  comments << "Nexus Client v" + m_NMMVersion;
   if (!subModule.isEmpty()) {
     comments << "module: " + subModule;
   }

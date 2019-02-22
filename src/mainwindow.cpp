@@ -1878,6 +1878,7 @@ void MainWindow::processUpdates() {
       instance.remove("nexus_login");
       instance.remove("nexus_api_key");
       instance.remove("ask_for_nexuspw");
+      instance.remove("nmm_version");
       instance.endGroup();
       instance.beginGroup("Servers");
       instance.remove("");
@@ -4904,8 +4905,6 @@ void MainWindow::on_actionSettings_triggered()
   if (proxy != settings.useProxy()) {
     activateProxy(settings.useProxy());
   }
-
-  NexusInterface::instance(&m_PluginContainer)->setNMMVersion(settings.getNMMVersion());
 
   updateDownloadView();
 

@@ -960,53 +960,6 @@ If you use the Steam version of Oblivion the default will NOT work. In this case
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
-         <item>
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>NMM Version</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="nmmVersionEdit">
-           <property name="toolTip">
-            <string>The Version of Nexus Mod Manager to impersonate.</string>
-           </property>
-           <property name="whatsThis">
-            <string>Mod Organizer uses an API provided by the Nexus to provide features like checking for updates and downloading files. Unfortunately this API has not been made available officially to third party tools like MO so we have to impersonate the Nexus Mod Manager to be allowed in.
-On top of this Nexus has used the client identification to lock out outdated versions of NMM to force users to update. This means that MO also needs to impersonate the new version of NMM even if MO doesn't need an update. Therefore you can configure the version to identify as here.
-Please note that MO does identify itself as MO to the webserver, it's not lying about what it is. It is merely adding a &quot;compatible&quot; NMM version to the user agent.
-
-tl;dr-version: If Nexus-features don't work, insert the current version number of NMM here and try again.</string>
-           </property>
-           <property name="inputMask">
-            <string notr="true">009.009.009</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="placeholderText">
-            <string/>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
         <layout class="QGridLayout" name="gridLayout_6">
          <item row="1" column="0">
           <widget class="QCheckBox" name="hideUncheckedBox">
@@ -1388,7 +1341,6 @@ programs you are intentionally running.</string>
   <tabstop>pluginBlacklist</tabstop>
   <tabstop>appIDEdit</tabstop>
   <tabstop>mechanismBox</tabstop>
-  <tabstop>nmmVersionEdit</tabstop>
   <tabstop>bsaDateBtn</tabstop>
   <tabstop>tabWidget</tabstop>
  </tabstops>

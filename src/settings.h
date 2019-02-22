@@ -153,11 +153,6 @@ public:
   QString getModDirectory(bool resolve = true) const;
 
   /**
-   * returns the version of nmm to impersonate when connecting to nexus
-   **/
-  QString getNMMVersion() const;
-
-  /**
    * retrieve the directory where the web cache is stored (with native separators)
    **/
   QString getCacheDirectory(bool resolve = true) const;
@@ -525,7 +520,6 @@ private:
   private:
     QLineEdit *m_appIDEdit;
     QComboBox *m_mechanismBox;
-    QLineEdit *m_nmmVersionEdit;
     QCheckBox *m_hideUncheckedBox;
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;

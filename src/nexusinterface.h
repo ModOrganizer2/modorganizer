@@ -336,12 +336,6 @@ public:
   void setCacheDirectory(const QString &directory);
 
   /**
-   * MO has to send a "Nexus Client Vx.y.z" as part of the user agent to be allowed to use the API
-   * @param nmmVersion the version of nmm to impersonate
-   **/
-  void setNMMVersion(const QString &nmmVersion);
-
-  /**
    * @brief called when the log-in completes. This was, requests waiting for the log-in can be run
    */
   void loginCompleted();
@@ -485,7 +479,6 @@ private:
   QQueue<NXMRequestInfo> m_RequestQueue;
 
   MOBase::VersionInfo m_MOVersion;
-  QString m_NMMVersion;
 
   PluginContainer *m_PluginContainer;
 

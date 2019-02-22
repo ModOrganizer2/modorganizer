@@ -292,7 +292,6 @@ OrganizerCore::OrganizerCore(const QSettings &initSettings)
   m_DownloadManager.setPreferredServers(m_Settings.getPreferredServers());
 
   NexusInterface::instance(m_PluginContainer)->setCacheDirectory(m_Settings.getCacheDirectory());
-  NexusInterface::instance(m_PluginContainer)->setNMMVersion(m_Settings.getNMMVersion());
 
   MOBase::QuestionBoxMemory::init(initSettings.fileName());
 

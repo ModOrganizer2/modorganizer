@@ -41,8 +41,6 @@ public:
 
   ~NXMAccessManager();
 
-  void setNMMVersion(const QString &nmmVersion);
-
   bool validated() const;
 
   bool validateAttempted() const;
@@ -101,7 +99,6 @@ private:
   QProgressDialog *m_ProgressDialog { nullptr };
 
   QString m_MOVersion;
-  QString m_NMMVersion;
 
   QString m_ApiKey;
 

@@ -353,16 +353,6 @@ QString Settings::getOverwriteDirectory(bool resolve) const
                              ToQString(AppConfig::overwritePath()), resolve);
 }
 
-QString Settings::getNMMVersion() const
-{
-  static const QString MIN_NMM_VERSION = "0.65.2";
-  QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
-  if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
-    result = MIN_NMM_VERSION;
-  }
-  return result;
-}
-
 bool Settings::getNexusApiKey(QString &apiKey) const
 {
   QString tempKey = deObfuscate("APIKEY");
@@ -1179,7 +1169,6 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   : Settings::SettingsTab(m_parent, m_dialog)
   , m_appIDEdit(m_dialog.findChild<QLineEdit *>("appIDEdit"))
   , m_mechanismBox(m_dialog.findChild<QComboBox *>("mechanismBox"))
-  , m_nmmVersionEdit(m_dialog.findChild<QLineEdit *>("nmmVersionEdit"))
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
@@ -1214,7 +1203,6 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
 
   m_mechanismBox->setCurrentIndex(index);
 
-  m_nmmVersionEdit->setText(m_parent->getNMMVersion());
   m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
@@ -1233,7 +1221,6 @@ void Settings::WorkaroundsTab::update()
     m_Settings.remove("Settings/app_id");
   }
   m_Settings.setValue("Settings/load_mechanism", m_mechanismBox->itemData(m_mechanismBox->currentIndex()).toInt());
-  m_Settings.setValue("Settings/nmm_version", m_nmmVersionEdit->text());
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
