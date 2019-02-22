@@ -133,7 +133,7 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         text += tr("Information missing, please select \"Query Info\" from the context menu to re-retrieve.");
       } else {
         const MOBase::ModRepositoryFileInfo *info = m_Manager->getFileInfo(index.row());
-        return QString("%1 (ID %2) %3<br><span>%4</span>").arg(info->modName).arg(m_Manager->getModID(index.row())).arg(info->version.canonicalString()).arg(info->description);
+        return QString("%1 (ID %2) %3<br><span>%4</span>").arg(info->modName).arg(m_Manager->getModID(index.row())).arg(info->version.canonicalString()).arg(info->description.chopped(4096));
       }
       return text;
     }
