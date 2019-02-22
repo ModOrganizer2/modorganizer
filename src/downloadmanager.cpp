@@ -1526,7 +1526,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       info->m_FileInfo->fileTime = QDateTime::fromMSecsSinceEpoch(fileInfo["uploaded_timestamp"].toLongLong());
       info->m_FileInfo->fileID = fileInfo["file_id"].toInt();
       info->m_FileInfo->fileName = fileInfo["file_name"].toString();
-      info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["changelog_html"].toString());
+      info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["description"].toString());
       found = true;
       break;
     }
@@ -1585,7 +1585,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   info->fileName = result["file_name"].toString();
   info->fileCategory = result["category_id"].toInt();
   info->fileTime = QDateTime::fromMSecsSinceEpoch(result["uploaded_timestamp"].toLongLong());
-  info->description = BBCode::convertToHTML(result["changelog_html"].toString());
+  info->description = BBCode::convertToHTML(result["description"].toString());
 
   info->repository = "Nexus";
 

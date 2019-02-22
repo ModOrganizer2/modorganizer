@@ -94,7 +94,7 @@ void NexusBridge::nxmFilesAvailable(QString gameName, int modID, QVariant userDa
       QVariantMap fileInfo = file.toMap();
       temp.uri = fileInfo["file_name"].toString();
       temp.name = fileInfo["name"].toString();
-      temp.description = BBCode::convertToHTML(fileInfo["changelog_html"].toString());
+      temp.description = BBCode::convertToHTML(fileInfo["description"].toString());
       temp.version = VersionInfo(fileInfo["version"].toString());
       temp.categoryID = fileInfo["category_id"].toInt();
       temp.fileID = fileInfo["file_id"].toInt();
