@@ -5673,7 +5673,7 @@ void MainWindow::nxmUpdatesAvailable(QString gameName, int modID, QVariant userD
   }
 
   if (requiresInfo)
-    NexusInterface::instance(&m_PluginContainer)->requestModInfo(gameName, modID, this, QVariant(), QString());
+    NexusInterface::instance(&m_PluginContainer)->requestModInfo(gameNameReal, modID, this, QVariant(), QString());
 }
 
 void MainWindow::nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
