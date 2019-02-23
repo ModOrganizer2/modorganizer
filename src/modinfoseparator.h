@@ -20,7 +20,7 @@ public:
 
   virtual int getNexusID() const { return -1; }
 
-  virtual void setGameName(QString /*gameName*/) {}
+  virtual void setGameName(const QString& /*gameName*/) {}
 
   virtual void setNexusID(int /*modID*/) {}
 

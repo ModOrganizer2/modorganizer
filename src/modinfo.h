@@ -289,7 +289,7 @@ public:
   *
   * @param gameName the source game shortName
   */
-  virtual void setGameName(QString gameName) = 0;
+  virtual void setGameName(const QString &gameName) = 0;
 
   /**
    * @brief set/change the nexus mod id of this mod

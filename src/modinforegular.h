@@ -107,7 +107,7 @@ public:
    *
    * @param gameName the source game shortName
    */
-  void setGameName(QString gameName);
+  void setGameName(const QString &gameName);
 
   /**
    * @brief set/change the nexus mod id of this mod

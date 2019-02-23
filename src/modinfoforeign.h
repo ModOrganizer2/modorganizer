@@ -20,7 +20,7 @@ public:
   virtual bool setName(const QString&) { return false; }
   virtual void setComments(const QString&) {}
   virtual void setNotes(const QString&) {}
-  virtual void setGameName(QString) {}
+  virtual void setGameName(const QString&) {}
   virtual void setNexusID(int) {}
   virtual void setNewestVersion(const MOBase::VersionInfo&) {}
   virtual void ignoreUpdate(bool) {}
