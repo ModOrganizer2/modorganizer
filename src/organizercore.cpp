@@ -477,7 +477,7 @@ bool OrganizerCore::testForSteam(bool *found, bool *access)
         (_tcsicmp(pe32.szExeFile, L"SteamService.exe") == 0)) {
 
       *found = true;
-      
+
       // Try to open the process to determine if MO has the proper access
       hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
                              FALSE, pe32.th32ProcessID);
@@ -864,6 +864,11 @@ QString OrganizerCore::overwritePath() const
 QString OrganizerCore::basePath() const
 {
   return QDir::fromNativeSeparators(m_Settings.getBaseDirectory());
+}
+
+QString OrganizerCore::modsPath() const
+{
+  return QDir::fromNativeSeparators(m_Settings.getModDirectory());
 }
 
 MOBase::VersionInfo OrganizerCore::appVersion() const
@@ -1328,8 +1333,8 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
     bool steamAccess = true;
     if (!testForSteam(&steamFound, &steamAccess)) {
       qCritical("unable to determine state of Steam");
-    } 
-    
+    }
+
     if (!steamFound) {
       QDialogButtonBox::StandardButton result;
       result = QuestionBoxMemory::query(window, "steamQuery", binary.fileName(),
@@ -1352,8 +1357,8 @@ HANDLE OrganizerCore::spawnBinaryProcess(const QFileInfo &binary,
       } else if (result == QDialogButtonBox::Cancel) {
         return INVALID_HANDLE_VALUE;
       }
-    } 
-    
+    }
+
     if (!steamAccess) {
       QDialogButtonBox::StandardButton result;
       result = QuestionBoxMemory::query(window, "steamAdminQuery", binary.fileName(),

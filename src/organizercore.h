@@ -187,6 +187,7 @@ public:
   QString downloadsPath() const;
   QString overwritePath() const;
   QString basePath() const;
+  QString modsPath() const;
   MOBase::VersionInfo appVersion() const;
   MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;

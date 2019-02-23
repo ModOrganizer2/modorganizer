@@ -50,6 +50,11 @@ QString OrganizerProxy::basePath() const
   return m_Proxied->basePath();
 }
 
+QString OrganizerProxy::modsPath() const
+{
+  return m_Proxied->modsPath();
+}
+
 VersionInfo OrganizerProxy::appVersion() const
 {
   return m_Proxied->appVersion();
