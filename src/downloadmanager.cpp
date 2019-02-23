@@ -1601,7 +1601,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   info->fileID = fileID;
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(gameName, modID, fileID, this, qVariantFromValue(test), QString()));
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, qVariantFromValue(test), QString()));
 }
 
 static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
