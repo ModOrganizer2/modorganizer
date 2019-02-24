@@ -5725,7 +5725,7 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
     QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
     Settings::instance().directInterface().setValue("endorse_state", "Abstained");
   }
-  ui->actionEndorseMO->setEnabled(false);
+  toggleMO2EndorseState();
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
