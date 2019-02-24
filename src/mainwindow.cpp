@@ -5720,10 +5720,12 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
   QMap results = resultData.toMap();
   if (results["status"].toString().compare("Endorsed") == 0) {
     QMessageBox::information(this, tr("Thank you!"), tr("Thank you for your endorsement!"));
+    Settings::instance().directInterface().setValue("endorse_state", "Endorsed");
   } else if (results["status"].toString().compare("Abstained") == 0) {
     QMessageBox::information(this, tr("Okay."), tr("This mod will not be endorsed and will no longer ask you to endorse."));
+    Settings::instance().directInterface().setValue("endorse_state", "Abstained");
   }
-  ui->actionEndorseMO->setVisible(false);
+  ui->actionEndorseMO->setEnabled(false);
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
