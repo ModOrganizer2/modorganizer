@@ -387,8 +387,7 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       if (possibleGames.count() > 1) {
         SelectionDialog browseSelection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
         for (IPluginGame *game : possibleGames) {
-          QString path = game->gameDirectory().absolutePath();
-          browseSelection.addChoice(game->gameIcon(), game->gameName(), path, QVariant::fromValue(game));
+          browseSelection.addChoice(game->gameIcon(), game->gameName(), gamePath, QVariant::fromValue(game));
         }
         if (browseSelection.exec() == QDialog::Accepted) {
           return selectGame(settings, gameDir, browseSelection.getChoiceData().value<IPluginGame *>());
