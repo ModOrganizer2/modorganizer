@@ -1139,6 +1139,12 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
     }
   );
 
+  // Remove inactive plugins
+  toolPlugins.erase(
+    std::remove_if(toolPlugins.begin(), toolPlugins.end(), [](IPluginTool *plugin) -> bool { return !plugin->isActive(); }),
+    toolPlugins.end()
+    );
+
   // Group the plugins into submenus
   QMap<QString, QList<QPair<QString, IPluginTool *>>> submenuMap;
   for (auto toolPlugin : toolPlugins) {
