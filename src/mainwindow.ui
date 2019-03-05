@@ -334,97 +334,6 @@ p, li { white-space: pre-wrap; }
                 <height>400</height>
                </size>
               </property>
-              <property name="palette">
-               <palette>
-                <active>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>64</red>
-                    <green>64</green>
-                    <blue>64</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </active>
-                <inactive>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>64</red>
-                    <green>64</green>
-                    <blue>64</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </inactive>
-                <disabled>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>120</red>
-                    <green>120</green>
-                    <blue>120</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </disabled>
-               </palette>
-              </property>
               <property name="contextMenuPolicy">
                <enum>Qt::CustomContextMenu</enum>
               </property>
@@ -989,43 +898,6 @@ p, li { white-space: pre-wrap; }
                     <height>250</height>
                    </size>
                   </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>64</red>
-                        <green>64</green>
-                        <blue>64</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>64</red>
-                        <green>64</green>
-                        <blue>64</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1168,11 +1040,6 @@ p, li { white-space: pre-wrap; }
                   <property name="columnCount" stdset="0">
                    <number>1</number>
                   </property>
-                  <column>
-                   <property name="text">
-                    <string notr="true">Archives</string>
-                   </property>
-                  </column>
                  </widget>
                 </item>
                </layout>
