@@ -578,6 +578,19 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="hideAPICounterBox">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Hide API Request Counter</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>

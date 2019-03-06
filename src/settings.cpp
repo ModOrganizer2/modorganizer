@@ -506,6 +506,11 @@ bool Settings::endorsementIntegration() const
   return m_Settings.value("Settings/endorsement_integration", true).toBool();
 }
 
+bool Settings::hideAPICounter() const
+{
+  return m_Settings.value("Settings/hide_api_counter", false).toBool();
+}
+
 bool Settings::displayForeign() const
 {
   return m_Settings.value("Settings/display_foreign", true).toBool();
@@ -1025,6 +1030,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   , m_preferredServersList(
         dialog.findChild<QListWidget *>("preferredServersList"))
   , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
+  , m_hideAPICounterBox(dialog.findChild<QCheckBox *>("hideAPICounterBox"))
 {
   if (!deObfuscate("APIKEY").isEmpty()) {
     m_nexusConnect->setText("Nexus API Key Stored");
@@ -1034,7 +1040,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
   m_endorsementBox->setChecked(parent->endorsementIntegration());
-
+  m_hideAPICounterBox->setChecked(parent->hideAPICounter());
 
   // display server preferences
   m_Settings.beginGroup("Servers");
@@ -1079,6 +1085,7 @@ void Settings::NexusTab::update()
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
   m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
+  m_Settings.setValue("Settings/hide_api_counter", m_hideAPICounterBox->isChecked());
 
   // store server preference
   m_Settings.beginGroup("Servers");

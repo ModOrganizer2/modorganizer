@@ -277,6 +277,11 @@ public:
   bool endorsementIntegration() const;
 
   /**
+   * @return true if the API counter should be hidden
+   */
+  bool hideAPICounter() const;
+
+  /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
   bool displayForeign() const;
@@ -481,6 +486,7 @@ private:
     QListWidget *m_knownServersList;
     QListWidget *m_preferredServersList;
     QCheckBox *m_endorsementBox;
+    QCheckBox *m_hideAPICounterBox;
   };
 
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */

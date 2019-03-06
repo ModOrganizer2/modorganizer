@@ -369,6 +369,7 @@ MainWindow::MainWindow(QSettings &initSettings
   palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
   palette.setColor(ui->apiRequests->foregroundRole(), Qt::white);
   ui->apiRequests->setPalette(palette);
+  ui->apiRequests->setVisible(!m_OrganizerCore.settings().hideAPICounter());
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
@@ -4911,6 +4912,8 @@ void MainWindow::on_actionSettings_triggered()
   if (proxy != settings.useProxy()) {
     activateProxy(settings.useProxy());
   }
+
+  ui->apiRequests->setVisible(!settings.hideAPICounter());
 
   updateDownloadView();
 

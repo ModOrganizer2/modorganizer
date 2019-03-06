@@ -131,19 +131,6 @@ bool SettingsDialog::getResetGeometries()
   return ui->resetGeometryBtn->isChecked();
 }
 
-//void SettingsDialog::on_loginCheckBox_toggled(bool checked)
-//{
-//  QLineEdit *usernameEdit = findChild<QLineEdit*>("usernameEdit");
-//  QLineEdit *passwordEdit = findChild<QLineEdit*>("passwordEdit");
-//  if (checked) {
-//    passwordEdit->setEnabled(true);
-//    usernameEdit->setEnabled(true);
-//  } else {
-//    passwordEdit->setEnabled(false);
-//    usernameEdit->setEnabled(false);
-//  }
-//}
-
 void SettingsDialog::on_categoriesBtn_clicked()
 {
   CategoriesDialog dialog(this);
