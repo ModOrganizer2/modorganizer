@@ -126,37 +126,42 @@ void SelfUpdater::testForUpdate()
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
   try {
-  m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
-                    [this](const QJsonArray &releases) {
-    QJsonObject newest;
-    for (const QJsonValue &releaseVal : releases) {
-      QJsonObject release = releaseVal.toObject();
-      if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
-                                         || !release["prerelease"].toBool())) {
-        if (newest.empty() || (VersionInfo(release["tag_name"].toString())
-                               > VersionInfo(newest["tag_name"].toString()))) {
-          newest = release;
+    m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
+                      [this](const QJsonArray &releases) {
+      if (releases.isEmpty()) {
+        qDebug("Unable to connect to github.com to check version");
+        return;
+      }
+
+      QJsonObject newest;
+      for (const QJsonValue &releaseVal : releases) {
+        QJsonObject release = releaseVal.toObject();
+        if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
+                                           || !release["prerelease"].toBool())) {
+          if (newest.empty() || (VersionInfo(release["tag_name"].toString())
+                                 > VersionInfo(newest["tag_name"].toString()))) {
+            newest = release;
+          }
         }
       }
-    }
 
-    if (!newest.empty()) {
-      VersionInfo newestVer(newest["tag_name"].toString());
-      if (newestVer > this->m_MOVersion) {
-        m_UpdateCandidate = newest;
-        qDebug("update available: %s -> %s",
-               qUtf8Printable(this->m_MOVersion.displayString(3)),
-               qUtf8Printable(newestVer.displayString(3)));
-        emit updateAvailable();
-      } else if (newestVer < this->m_MOVersion) {
-        // this could happen if the user switches from using prereleases to
-        // stable builds. Should we downgrade?
-        qDebug("This version is newer than the latest released one: %s -> %s",
-               qUtf8Printable(this->m_MOVersion.displayString(3)),
-               qUtf8Printable(newestVer.displayString(3)));
+      if (!newest.empty()) {
+        VersionInfo newestVer(newest["tag_name"].toString());
+        if (newestVer > this->m_MOVersion) {
+          m_UpdateCandidate = newest;
+          qDebug("update available: %s -> %s",
+                 qUtf8Printable(this->m_MOVersion.displayString(3)),
+                 qUtf8Printable(newestVer.displayString(3)));
+          emit updateAvailable();
+        } else if (newestVer < this->m_MOVersion) {
+          // this could happen if the user switches from using prereleases to
+          // stable builds. Should we downgrade?
+          qDebug("This version is newer than the latest released one: %s -> %s",
+                 qUtf8Printable(this->m_MOVersion.displayString(3)),
+                 qUtf8Printable(newestVer.displayString(3)));
+        }
       }
-    }
-  });
+    });
   }
   //Catch all is bad by design, should be improved
   catch (...) {
