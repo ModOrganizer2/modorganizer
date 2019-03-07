@@ -1747,7 +1747,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   
   info->m_FileInfo->name = fileDetails["name"].toString();
   info->m_FileInfo->fileID = fileDetails["file_id"].toInt();
-  info->m_FileInfo->description = fileDetails["description"].toString();
+  info->m_FileInfo->description = BBCode::convertToHTML(fileDetails["description"].toString());
   info->m_FileInfo->version.parse(fileDetails["version"].toString());
   if (!info->m_FileInfo->version.isValid())
     info->m_FileInfo->version.parse(fileDetails["mod_version"].toString());
