@@ -29,8 +29,10 @@ public:
   virtual void addNexusCategory(int) {}
   virtual void setIsEndorsed(bool) {}
   virtual void setNeverEndorse() {}
+  virtual void setIsTracked(bool) {}
   virtual bool remove() { return false; }
   virtual void endorse(bool) {}
+  virtual void track(bool) {}
   virtual void parseNexusInfo() {}
   virtual bool isEmpty() const { return false; }
   virtual QString name() const;

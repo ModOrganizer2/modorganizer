@@ -93,26 +93,27 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
 QString ModFlagIconDelegate::getFlagIcon(ModInfo::EFlag flag) const
 {
   switch (flag) {
-    case ModInfo::FLAG_BACKUP: return ":/MO/gui/emblem_backup";
-    case ModInfo::FLAG_INVALID: return ":/MO/gui/problem";
-    case ModInfo::FLAG_NOTENDORSED: return ":/MO/gui/emblem_notendorsed";
-    case ModInfo::FLAG_NOTES: return ":/MO/gui/emblem_notes";
-    case ModInfo::FLAG_CONFLICT_MIXED: return ":/MO/gui/emblem_conflict_mixed";
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return ":/MO/gui/emblem_conflict_overwrite";
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return ":/MO/gui/emblem_conflict_overwritten";
-    case ModInfo::FLAG_CONFLICT_REDUNDANT: return ":MO/gui/emblem_conflict_redundant";
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_loose_conflict_overwrite";
-    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_loose_conflict_overwritten";
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return ":/MO/gui/archive_conflict_mixed";
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return ":/MO/gui/archive_conflict_winner";
-    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return ":/MO/gui/archive_conflict_loser";
-    case ModInfo::FLAG_ALTERNATE_GAME: return ":MO/gui/alternate_game";
+    case ModInfo::FLAG_BACKUP: return QStringLiteral(":/MO/gui/emblem_backup");
+    case ModInfo::FLAG_INVALID: return QStringLiteral(":/MO/gui/problem");
+    case ModInfo::FLAG_NOTENDORSED: return QStringLiteral(":/MO/gui/emblem_notendorsed");
+    case ModInfo::FLAG_NOTES: return QStringLiteral(":/MO/gui/emblem_notes");
+    case ModInfo::FLAG_CONFLICT_MIXED: return QStringLiteral(":/MO/gui/emblem_conflict_mixed");
+    case ModInfo::FLAG_CONFLICT_OVERWRITE: return QStringLiteral(":/MO/gui/emblem_conflict_overwrite");
+    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return QStringLiteral(":/MO/gui/emblem_conflict_overwritten");
+    case ModInfo::FLAG_CONFLICT_REDUNDANT: return QStringLiteral(":/MO/gui/emblem_conflict_redundant");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return QStringLiteral(":/MO/gui/archive_loose_conflict_overwrite");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return QStringLiteral(":/MO/gui/archive_loose_conflict_overwritten");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return QStringLiteral(":/MO/gui/archive_conflict_mixed");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return QStringLiteral(":/MO/gui/archive_conflict_winner");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return QStringLiteral(":/MO/gui/archive_conflict_loser");
+    case ModInfo::FLAG_ALTERNATE_GAME: return QStringLiteral(":/MO/gui/alternate_game");
     case ModInfo::FLAG_FOREIGN: return QString();
     case ModInfo::FLAG_SEPARATOR: return QString();
     case ModInfo::FLAG_OVERWRITE: return QString();
     case ModInfo::FLAG_PLUGIN_SELECTED: return QString();
-    default: 
-      qWarning("ModInfo flag %d has no defined icon", flag); 
+    case ModInfo::FLAG_TRACKED: return QStringLiteral(":/MO/gui/tracked");
+    default:
+      qWarning("ModInfo flag %d has no defined icon", flag);
       return QString();
   }
 }

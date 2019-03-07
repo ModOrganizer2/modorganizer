@@ -2826,6 +2826,73 @@ void MainWindow::unendorse_clicked()
   }
 }
 
+
+void MainWindow::trackMod(ModInfo::Ptr mod, bool doTrack)
+{
+  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+    ModInfo::getByIndex(m_ContextRow)->track(doTrack);
+  } else {
+    QString apiKey;
+    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+      m_OrganizerCore.doAfterLogin([&]() { this->trackMod(mod, doTrack); });
+      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+    } else {
+      MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
+    }
+  }
+}
+
+
+void MainWindow::track_clicked()
+{
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+      for (auto idx : selection->selectedRows()) {
+        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
+      }
+    } else {
+      QString apiKey;
+      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+        for (auto idx : selection->selectedRows()) {
+          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, true); });
+        }
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      } else {
+        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
+      }
+    }
+  } else {
+    trackMod(ModInfo::getByIndex(m_ContextRow), true);
+  }
+}
+
+void MainWindow::untrack_clicked()
+{
+  QItemSelectionModel *selection = ui->modList->selectionModel();
+  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
+    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+      for (auto idx : selection->selectedRows()) {
+        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
+      }
+    } else {
+      QString apiKey;
+      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
+        for (auto idx : selection->selectedRows()) {
+          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
+          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, false); });
+        }
+        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+      } else {
+        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
+      }
+    }
+  } else {
+    trackMod(ModInfo::getByIndex(m_ContextRow), false);
+  }
+}
+
 void MainWindow::validationFailed(const QString &error)
 {
   qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
@@ -4009,6 +4076,7 @@ void MainWindow::checkModsForUpdates()
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
     ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     NexusInterface::instance(&m_PluginContainer)->requestEndorsementInfo(this, QVariant(), QString());
+    NexusInterface::instance(&m_PluginContainer)->requestTrackingInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
@@ -4589,6 +4657,22 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
             } break;
             default: {
               QAction *action = new QAction(tr("Endorsement state unknown"), &menu);
+              action->setEnabled(false);
+              menu.addAction(action);
+            } break;
+          }
+        }
+
+        if (info->getNexusID() > 0) {
+          switch (info->trackedState()) {
+            case ModInfo::TRACKED_FALSE: {
+              menu.addAction(tr("Start tracking"), this, SLOT(track_clicked()));
+            } break;
+            case ModInfo::TRACKED_TRUE: {
+              menu.addAction(tr("Stop tracking"), this, SLOT(untrack_clicked()));
+            } break;
+            default: {
+              QAction *action = new QAction(tr("Tracked state unknown"), &menu);
               action->setEnabled(false);
               menu.addAction(action);
             } break;
@@ -5738,6 +5822,34 @@ void MainWindow::nxmEndorsementToggled(QString, int, QVariant, QVariant resultDa
   if (!disconnect(sender(), SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
     this, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)))) {
     qCritical("failed to disconnect endorsement slot");
+  }
+}
+
+void MainWindow::nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int)
+{
+  QMap<QString, QString> gameNames;
+  for (auto game : m_PluginContainer.plugins<IPluginGame>()) {
+    gameNames[game->gameNexusName()] = game->gameShortName();
+  }
+
+  for (unsigned int i = 0; i < ModInfo::getNumMods(); i++) {
+    auto modInfo = ModInfo::getByIndex(i);
+    if (modInfo->getNexusID() <= 0)
+      continue;
+
+    bool found = false;
+    auto resultsList = resultData.toList();
+    for (auto item : resultsList) {
+      auto results = item.toMap();
+      if ((gameNames[results["domain_name"].toString()].compare(modInfo->getGameName(), Qt::CaseInsensitive) == 0) &&
+          (results["mod_id"].toInt() == modInfo->getNexusID())) {
+        found = true;
+        break;
+      }
+    }
+    
+    modInfo->setIsTracked(found);
+    modInfo->saveMeta();
   }
 }
 

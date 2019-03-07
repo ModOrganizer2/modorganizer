@@ -35,6 +35,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Validated(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
+  , m_TrackedState(TRACKED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
 {
   testValid();
@@ -55,6 +56,8 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
           , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
+  connect(&m_NexusBridge, SIGNAL(trackingToggled(QString,int,QVariant,bool))
+          , this, SLOT(nxmTrackingToggled(QString,int,QVariant,bool)));
   connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString))
           , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString)));
 }
@@ -102,6 +105,7 @@ void ModInfoRegular::readMeta()
   m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
   m_NexusLastModified = QDateTime::fromString(metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(), Qt::ISODate);
   m_Color            = metaFile.value("color",QColor()).value<QColor>();
+  m_TrackedState = metaFile.value("tracked", false).toBool() ? TRACKED_TRUE : TRACKED_FALSE;
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       switch (metaFile.value("endorsed").toInt()) {
@@ -114,7 +118,7 @@ void ModInfoRegular::readMeta()
       m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
     }
   }
-
+  
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -173,6 +177,7 @@ void ModInfoRegular::saveMeta()
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
+      metaFile.setValue("tracked", m_TrackedState);
 
       metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
@@ -253,6 +258,18 @@ void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resu
   } else {
     m_EndorsedState = ENDORSED_FALSE;
   }
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+
+void ModInfoRegular::nxmTrackingToggled(QString, int, QVariant, bool tracked)
+{
+  if (tracked)
+    m_TrackedState = TRACKED_TRUE;
+  else
+    m_TrackedState = TRACKED_FALSE;
   m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);
@@ -414,6 +431,14 @@ void ModInfoRegular::setEndorsedState(EEndorsedState endorsedState)
   }
 }
 
+void ModInfoRegular::setTrackedState(ETrackedState trackedState)
+{
+  if (trackedState != m_TrackedState) {
+    m_TrackedState = trackedState;
+    m_MetaInfoChanged = true;
+  }
+}
+
 void ModInfoRegular::setInstallationFile(const QString &fileName)
 {
   m_InstallationFile = fileName;
@@ -433,13 +458,19 @@ void ModInfoRegular::setIsEndorsed(bool endorsed)
   }
 }
 
-
 void ModInfoRegular::setNeverEndorse()
 {
   m_EndorsedState = ENDORSED_NEVER;
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::setIsTracked(bool tracked)
+{
+  if (tracked != (m_TrackedState == TRACKED_TRUE)) {
+    m_TrackedState = tracked ? TRACKED_TRUE : TRACKED_FALSE;
+    m_MetaInfoChanged = true;
+  }
+}
 
 void ModInfoRegular::setColor(QColor color)
 {
@@ -462,6 +493,13 @@ void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == ENDORSED_TRUE)) {
     m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), m_Version.canonicalString(), doEndorse, QVariant(1));
+  }
+}
+
+void ModInfoRegular::track(bool doTrack)
+{
+  if (doTrack != (m_TrackedState == TRACKED_TRUE)) {
+    m_NexusBridge.requestToggleTracking(m_GameName, getNexusID(), doTrack, QVariant(1));
   }
 }
 
@@ -517,6 +555,10 @@ std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
       (endorsedState() == ENDORSED_FALSE) &&
       Settings::instance().endorsementIntegration()) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
+  }
+  if ((m_NexusID > 0) &&
+      (trackedState() == TRACKED_TRUE)) {
+    result.push_back(ModInfo::FLAG_TRACKED);
   }
   if (!isValid() && !m_Validated) {
     result.push_back(ModInfo::FLAG_INVALID);
@@ -665,6 +707,11 @@ QString ModInfoRegular::repository() const
 ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
 {
   return m_EndorsedState;
+}
+
+ModInfoRegular::ETrackedState ModInfoRegular::trackedState() const
+{
+  return m_TrackedState;
 }
 
 QDateTime ModInfoRegular::getLastNexusUpdate() const

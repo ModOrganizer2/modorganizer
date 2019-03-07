@@ -98,6 +98,13 @@ public:
    */
   virtual void requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QVariant userData);
 
+  /**
+   * @brief requestToggleTracking
+   * @param modID id of the mod caller is interested in
+   * @param userData user data to be returned with the result
+   */
+  virtual void requestToggleTracking(QString gameName, int modID, bool track, QVariant userData);
+
 public slots:
 
   void nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
@@ -106,6 +113,8 @@ public slots:
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int requestID);
+  void nxmTrackingToggled(QString gameName, int modID, QVariant userData, bool tracked, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 private:
@@ -330,6 +339,36 @@ public:
   int requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData, const QString &subModule,
                                MOBase::IPluginGame const *game);
 
+  int requestTrackingInfo(QObject *receiver, QVariant userData, const QString &subModule);
+
+  /**
+  * @param gameName the game short name to support multiple game sources
+  * @brief toggle tracking state of the mod
+  * @param modID id of the mod
+  * @param track true if the mod should be tracked, false for not tracked
+  * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+  * @param userData user data to be returned with the result
+  * @param game the game with which the mods are associated
+  * @return int an id to identify the request
+  */
+  int requestToggleTracking(QString gameName, int modID, bool track, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestToggleTracking(gameName, modID, track, receiver, userData, subModule, getGame(gameName));
+  }
+
+  /**
+  * @param gameName the game short name to support multiple game sources
+  * @brief toggle tracking state of the mod
+  * @param modID id of the mod
+  * @param track true if the mod should be tracked, false for not tracked
+  * @param receiver the object to receive the result asynchronously via a signal (nxmFilesAvailable)
+  * @param userData user data to be returned with the result
+  * @param game the game with which the mods are associated
+  * @return int an id to identify the request
+  */
+  int requestToggleTracking(QString gameName, int modID, bool track, QObject *receiver, QVariant userData, const QString &subModule,
+                            MOBase::IPluginGame const *game);
+
   /**
    * @param directory the directory to store cache files
    **/
@@ -402,6 +441,8 @@ signals:
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int requestID);
+  void nxmTrackingToggled(QString gameName, int modID, QVariant userData, bool tracked, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
   void requestsChanged(int queueCount, std::tuple<int,int,int,int> requestsRemaining);
 
@@ -436,7 +477,9 @@ private:
       TYPE_ENDORSEMENTS,
       TYPE_TOGGLEENDORSEMENT,
       TYPE_GETUPDATES,
-      TYPE_CHECKUPDATES
+      TYPE_CHECKUPDATES,
+      TYPE_TOGGLETRACKING,
+      TYPE_TRACKEDMODS,
     } m_Type;
     UpdatePeriod m_UpdatePeriod;
     QVariant m_UserData;
@@ -448,6 +491,7 @@ private:
     bool m_Reroute;
     int m_ID;
     int m_Endorse;
+    int m_Track;
 
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);

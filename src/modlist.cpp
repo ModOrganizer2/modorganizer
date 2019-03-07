@@ -169,6 +169,7 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
     case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
     case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
       "make sure it's compatible or it could cause crashes.");
+    case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
     default: return "";
   }
 }

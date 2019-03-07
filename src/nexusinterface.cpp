@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QApplication>
 #include <QNetworkCookieJar>
 #include <QJsonDocument>
+#include <QRegularExpression>
 
 #include <regex>
 
@@ -66,6 +67,11 @@ void NexusBridge::requestDownloadURL(QString gameName, int modID, int fileID, QV
 void NexusBridge::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QVariant userData)
 {
   m_RequestIDs.insert(m_Interface->requestToggleEndorsement(gameName, modID, modVersion, endorse, this, userData, m_SubModule));
+}
+
+void NexusBridge::requestToggleTracking(QString gameName, int modID, bool track, QVariant userData)
+{
+  m_RequestIDs.insert(m_Interface->requestToggleTracking(gameName, modID, track, this, userData, m_SubModule));
 }
 
 void NexusBridge::nxmDescriptionAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID)
@@ -139,6 +145,24 @@ void NexusBridge::nxmEndorsementToggled(QString gameName, int modID, QVariant us
   if (iter != m_RequestIDs.end()) {
     m_RequestIDs.erase(iter);
     emit endorsementToggled(gameName, modID, userData, resultData);
+  }
+}
+
+void NexusBridge::nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int requestID)
+{
+  std::set<int>::iterator iter = m_RequestIDs.find(requestID);
+  if (iter != m_RequestIDs.end()) {
+    m_RequestIDs.erase(iter);
+    emit trackedModsAvailable(userData, resultData);
+  }
+}
+
+void NexusBridge::nxmTrackingToggled(QString gameName, int modID, QVariant userData, bool tracked, int requestID)
+{
+  std::set<int>::iterator iter = m_RequestIDs.find(requestID);
+  if (iter != m_RequestIDs.end()) {
+    m_RequestIDs.erase(iter);
+    emit trackingToggled(gameName, modID, userData, tracked);
   }
 }
 
@@ -472,7 +496,6 @@ int NexusInterface::requestEndorsementInfo(QObject *receiver, QVariant userData,
   return requestInfo.m_ID;
 }
 
-
 int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
 {
@@ -483,6 +506,43 @@ int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QStrin
 
     connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
       receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+    nextRequest();
+    return requestInfo.m_ID;
+  }
+  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
+    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
+  return -1;
+}
+
+int NexusInterface::requestTrackingInfo(QObject *receiver, QVariant userData, const QString &subModule)
+{
+  NXMRequestInfo requestInfo(NXMRequestInfo::TYPE_TRACKEDMODS, userData, subModule);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmTrackedModsAvailable(QVariant, QVariant, int)),
+    receiver, SLOT(nxmTrackedModsAvailable(QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
+}
+
+int NexusInterface::requestToggleTracking(QString gameName, int modID, bool track, QObject *receiver, QVariant userData,
+                                          const QString &subModule, MOBase::IPluginGame const *game)
+{
+  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
+    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLETRACKING, userData, subModule, game);
+    requestInfo.m_Track = track;
+    m_RequestQueue.enqueue(requestInfo);
+
+    connect(this, SIGNAL(nxmTrackingToggled(QString, int, QVariant, bool, int)),
+      receiver, SLOT(nxmTrackingToggled(QString, int, QVariant, bool, int)), Qt::UniqueConnection);
 
     connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
       receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
@@ -555,6 +615,7 @@ void NexusInterface::nextRequest()
 
   QJsonObject postObject;
   QJsonDocument postData(postObject);
+  bool requestIsDelete = false;
 
   QString url;
   if (!info.m_Reroute) {
@@ -603,6 +664,15 @@ void NexusInterface::nextRequest()
         postObject.insert("Version", info.m_ModVersion);
         postData.setObject(postObject);
       } break;
+      case NXMRequestInfo::TYPE_TOGGLETRACKING: {
+        url = QStringLiteral("%1/user/tracked_mods?domain_name=%2").arg(info.m_URL).arg(info.m_GameName);
+        postObject.insert("mod_id", info.m_ModID);
+        postData.setObject(postObject);
+        requestIsDelete = !info.m_Track;
+      } break;
+      case NXMRequestInfo::TYPE_TRACKEDMODS: {
+        url = QStringLiteral("%1/user/tracked_mods").arg(info.m_URL);
+      } break;
     }
   } else {
     url = info.m_URL;
@@ -617,10 +687,18 @@ void NexusInterface::nextRequest()
   request.setRawHeader("Application-Name", "MO2");
   request.setRawHeader("Application-Version", QApplication::applicationVersion().toUtf8());
 
-  if (postData.object().isEmpty())
-    info.m_Reply = m_AccessManager->get(request);
-  else
+  if (postData.object().isEmpty()) {
+    if (!requestIsDelete) {
+      info.m_Reply = m_AccessManager->get(request);
+    } else {
+      info.m_Reply = m_AccessManager->deleteResource(request);
+    }
+  } else if (!requestIsDelete) {
     info.m_Reply = m_AccessManager->post(request, postData.toJson());
+  } else {
+    // Qt doesn't support DELETE with a payload as that's technically against the HTTP standard...
+    info.m_Reply = m_AccessManager->sendCustomRequest(request, "DELETE", postData.toJson());
+  }
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));
   connect(info.m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
@@ -700,6 +778,20 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
           case NXMRequestInfo::TYPE_TOGGLEENDORSEMENT: {
             emit nxmEndorsementToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, result, iter->m_ID);
+          } break;
+          case NXMRequestInfo::TYPE_TOGGLETRACKING: {
+            auto results = result.toMap();
+            auto message = results["message"].toString();
+            if (message.contains(QRegularExpression("User [0-9]+ is already Tracking Mod: [0-9]+")) ||
+                message.contains(QRegularExpression("User [0-9]+ is now Tracking Mod: [0-9]+"))) {
+              emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, true, iter->m_ID);
+            } else if (message.contains(QRegularExpression("User [0-9]+ is no longer tracking [0-9]+")) ||
+                       message.contains(QRegularExpression("Users is not tracking mod. Unable to untrack."))) {
+              emit nxmTrackingToggled(iter->m_GameName, iter->m_ModID, iter->m_UserData, false, iter->m_ID);
+            }
+          } break;
+          case NXMRequestInfo::TYPE_TRACKEDMODS: {
+            emit nxmTrackedModsAvailable(iter->m_UserData, result, iter->m_ID);
           } break;
         }
 

@@ -78,7 +78,8 @@ public:
     FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
     FLAG_ARCHIVE_CONFLICT_MIXED,
     FLAG_PLUGIN_SELECTED,
-    FLAG_ALTERNATE_GAME
+    FLAG_ALTERNATE_GAME,
+    FLAG_TRACKED,
   };
 
   enum EContent {
@@ -112,6 +113,12 @@ public:
     ENDORSED_TRUE,
     ENDORSED_UNKNOWN,
     ENDORSED_NEVER
+  };
+
+  enum ETrackedState {
+    TRACKED_FALSE,
+    TRACKED_TRUE,
+    TRACKED_UNKNOWN,
   };
 
   enum EModType {
@@ -363,6 +370,13 @@ public:
   virtual void setNeverEndorse() = 0;
 
   /**
+   * update the tracked state for the mod.  This only changes the
+   * buffered state, it does not sync with Nexus
+   * @param tracked the new tracked state
+   */
+  virtual void setIsTracked(bool tracked) = 0;
+
+  /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
@@ -374,6 +388,13 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse) = 0;
+
+  /**
+   * @brief track or untrack the mod.  This will sync with nexus!
+   * @param doTrack if true, the mod is tracked, if false, it's untracked.
+   * @note if doTrack doesn't differ from the current value, nothing happens.
+   */
+  virtual void track(bool doTrack) = 0;
 
   /**
    * @brief clear all caches held for this mod
@@ -635,6 +656,11 @@ public:
    * @return true if the file has been endorsed on nexus
    */
   virtual EEndorsedState endorsedState() const { return ENDORSED_NEVER; }
+
+  /**
+   * @return true if the file is being tracked on nexus
+   */
+  virtual ETrackedState trackedState() const { return TRACKED_FALSE; }
 
   /**
    * @brief updates the valid-flag for this mod

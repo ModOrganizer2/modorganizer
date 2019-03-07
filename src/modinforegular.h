@@ -178,6 +178,13 @@ public:
   virtual void setNeverEndorse();
 
   /**
+   * update the tracked state for the mod.  This only changes the
+   * buffered state.  It does not sync with Nexus
+   * @param tracked the new tracked state
+   */
+  virtual void setIsTracked(bool tracked);
+
+  /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
@@ -189,6 +196,13 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse);
+
+  /**
+  * @brief track or untrack the mod.  This will sync with nexus!
+  * @param doTrack if true, the mod is tracked, if false, it's untracked.
+  * @note if doTrack doesn't differ from the current value, nothing happens.
+  */
+  virtual void track(bool doTrack);
 
   /**
   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
@@ -334,6 +348,11 @@ public:
   virtual EEndorsedState endorsedState() const;
 
   /**
+   * @return true if the file is being tracked on nexus
+   */
+  virtual ETrackedState trackedState() const;
+
+  /**
    * @brief get the last time nexus was checked for file updates on this mod
    */
   virtual QDateTime getLastNexusUpdate() const;
@@ -391,11 +410,13 @@ public:
 private:
 
   void setEndorsedState(EEndorsedState endorsedState);
+  void setTrackedState(ETrackedState trackedState);
 
 private slots:
 
   void nxmDescriptionAvailable(QString, int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(QString, int, QVariant userData, QVariant resultData);
+  void nxmTrackingToggled(QString, int, QVariant userData, bool tracked);
   void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 protected:
@@ -436,6 +457,7 @@ private:
   MOBase::VersionInfo m_IgnoredVersion;
 
   EEndorsedState m_EndorsedState;
+  ETrackedState m_TrackedState;
 
   NexusBridge m_NexusBridge;
 

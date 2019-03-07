@@ -428,6 +428,8 @@ private slots:
   void endorse_clicked();
   void dontendorse_clicked();
   void unendorse_clicked();
+  void track_clicked();
+  void untrack_clicked();
   void ignoreMissingData_clicked();
   void markConverted_clicked();
   void visitOnNexus_clicked();
@@ -517,6 +519,7 @@ private slots:
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
+  void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int);
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
@@ -539,6 +542,7 @@ private slots:
   void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
   void unendorseMod(ModInfo::Ptr mod);
+  void trackMod(ModInfo::Ptr mod, bool doTrack);
   void cancelModListEditor();
 
   void lockESPIndex();
