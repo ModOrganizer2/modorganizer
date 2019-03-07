@@ -1373,6 +1373,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
     case STATE_FETCHINGMODINFO_MD5: {
+      qDebug(qUtf8Printable(QString("Searching %1 for Md5 of %2").arg(info->m_GamesToQuery[0]).arg(QString(info->m_Hash.toHex()))));
       m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
     } break;
     case STATE_READY: {
@@ -1796,12 +1797,12 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
       if (info->m_GamesToQuery.count() >= 2) {
         info->m_GamesToQuery.pop_front();
         setState(info, STATE_FETCHINGMODINFO_MD5);
-        break;
+        return;
       } else {
         info->m_State = STATE_READY;
         queryInfo(index);
         emit update(index);
-        break;
+        return;
       }
     } 
     

@@ -560,6 +560,8 @@ int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObje
 {
   NXMRequestInfo requestInfo(hash, NXMRequestInfo::TYPE_FILEINFO_MD5, userData, subModule, game);
   requestInfo.m_Hash = hash;
+  requestInfo.m_AllowedErrors[QNetworkReply::NetworkError::ContentNotFoundError].append(404);
+  requestInfo.m_IgnoreGenericErrorHandler = true;
   m_RequestQueue.enqueue(requestInfo);
 
   connect(this, SIGNAL(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), 
@@ -721,7 +723,8 @@ void NexusInterface::nextRequest()
   }
 
   connect(info.m_Reply, SIGNAL(finished()), this, SLOT(requestFinished()));
-  connect(info.m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
+  if (!info.m_IgnoreGenericErrorHandler)
+    connect(info.m_Reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(requestError(QNetworkReply::NetworkError)));
   connect(info.m_Timeout, SIGNAL(timeout()), this, SLOT(requestTimeout()));
   info.m_Timeout->start();
   m_ActiveRequest.push_back(info);
@@ -737,10 +740,13 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 {
   QNetworkReply *reply = iter->m_Reply;
 
-  if (reply->error() != QNetworkReply::NoError) {
+  auto error = reply->error();
+  if (error != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 
-    if (statusCode == 429) {
+    if (iter->m_AllowedErrors.contains(error) && iter->m_AllowedErrors[error].contains(statusCode)) {
+      // These errors are allows to silently happen.  They should be handled in nxmRequestFailed below.
+    } else if (statusCode == 429) {
       if (reply->rawHeader("x-rl-daily-remaining").toInt() || reply->rawHeader("x-rl-hourly-remaining").toInt())
         qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
       else
