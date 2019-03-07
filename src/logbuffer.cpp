@@ -51,21 +51,24 @@ LogBuffer::~LogBuffer()
 void LogBuffer::logMessage(QtMsgType type, const QString &message)
 {
   if (type >= m_MinMsgType) {
-    Message msg = {type, QTime::currentTime(), message};
-    if (m_NumMessages < m_Messages.size()) {
-      beginInsertRows(QModelIndex(), static_cast<int>(m_NumMessages),
-                      static_cast<int>(m_NumMessages) + 1);
-    }
-    m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
-    if (m_NumMessages < m_Messages.size()) {
-      endInsertRows();
-    } else {
-      emit dataChanged(createIndex(0, 0),
-                       createIndex(static_cast<int>(m_Messages.size()), 0));
-    }
-    ++m_NumMessages;
-    if (type >= QtCriticalMsg) {
-      write();
+    QStringList messagelist = message.split("\n");
+    for (auto split_message : messagelist) {
+      Message msg = {type, QTime::currentTime(), split_message};
+      if (m_NumMessages < m_Messages.size()) {
+        beginInsertRows(QModelIndex(), static_cast<int>(m_NumMessages),
+                        static_cast<int>(m_NumMessages) + 1);
+      }
+      m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
+      if (m_NumMessages < m_Messages.size()) {
+        endInsertRows();
+      } else {
+        emit dataChanged(createIndex(0, 0),
+                         createIndex(static_cast<int>(m_Messages.size()), 0));
+      }
+      ++m_NumMessages;
+      if (type >= QtCriticalMsg) {
+        write();
+      }
     }
   }
 }
