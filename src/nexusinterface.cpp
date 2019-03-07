@@ -555,6 +555,23 @@ int NexusInterface::requestToggleTracking(QString gameName, int modID, bool trac
   return -1;
 }
 
+int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData,
+                                       const QString &subModule, MOBase::IPluginGame const *game)
+{
+  NXMRequestInfo requestInfo(hash, NXMRequestInfo::TYPE_FILEINFO_MD5, userData, subModule, game);
+  requestInfo.m_Hash = hash;
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), 
+      receiver, SLOT(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
+}
+
 IPluginGame* NexusInterface::getGame(QString gameName) const
 {
   auto gamePlugins = m_PluginContainer->plugins<IPluginGame>();
@@ -673,6 +690,9 @@ void NexusInterface::nextRequest()
       case NXMRequestInfo::TYPE_TRACKEDMODS: {
         url = QStringLiteral("%1/user/tracked_mods").arg(info.m_URL);
       } break;
+      case NXMRequestInfo::TYPE_FILEINFO_MD5: {
+        url = QStringLiteral("%1/games/%2/mods/md5_search/%3").arg(info.m_URL).arg(info.m_GameName).arg(QString(info.m_Hash.toHex()));
+      }
     }
   } else {
     url = info.m_URL;
@@ -719,6 +739,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
 
   if (reply->error() != QNetworkReply::NoError) {
     int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+
     if (statusCode == 429) {
       if (reply->rawHeader("x-rl-daily-remaining").toInt() || reply->rawHeader("x-rl-hourly-remaining").toInt())
         qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
@@ -792,6 +813,9 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
           case NXMRequestInfo::TYPE_TRACKEDMODS: {
             emit nxmTrackedModsAvailable(iter->m_UserData, result, iter->m_ID);
+          } break;
+          case NXMRequestInfo::TYPE_FILEINFO_MD5: {
+            emit nxmFileInfoFromMd5Available(iter->m_GameName, iter->m_UserData, result, iter->m_ID);
           } break;
         }
 
@@ -890,6 +914,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
 {
 }
 
@@ -915,6 +941,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
@@ -939,6 +967,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(int modID
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
 {}
 
 NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type
@@ -960,6 +990,8 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(Type type
   , m_NexusGameID(0)
   , m_GameName("")
   , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
 {}
 
 
@@ -984,4 +1016,32 @@ NexusInterface::NXMRequestInfo::NXMRequestInfo(UpdatePeriod period
   , m_NexusGameID(game->nexusGameID())
   , m_GameName(game->gameNexusName())
   , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(QByteArray())
+{}
+
+
+NexusInterface::NXMRequestInfo::NXMRequestInfo(QByteArray &hash
+  , NexusInterface::NXMRequestInfo::Type type
+  , QVariant userData
+  , const QString &subModule
+  , MOBase::IPluginGame const *game
+)
+  : m_ModID(0)
+  , m_ModVersion("0")
+  , m_FileID(0)
+  , m_Reply(nullptr)
+  , m_Type(type)
+  , m_UpdatePeriod(UpdatePeriod::NONE)
+  , m_UserData(userData)
+  , m_Timeout(nullptr)
+  , m_Reroute(false)
+  , m_ID(s_NextID.fetchAndAddAcquire(1))
+  , m_URL(get_management_url())
+  , m_SubModule(subModule)
+  , m_NexusGameID(game->nexusGameID())
+  , m_GameName(game->gameNexusName())
+  , m_Endorse(false)
+  , m_Track(false)
+  , m_Hash(hash)
 {}

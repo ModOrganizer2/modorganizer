@@ -199,8 +199,8 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
     if (state >= DownloadManager::STATE_READY) {
       menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-      if (m_Manager->isInfoIncomplete(m_ContextRow))
-        menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfo()));
+      if (m_Manager->isInfoIncomplete(m_ContextRow)) 
+        menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfoMd5()));
       else
         menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
       menu.addAction(tr("Open File"), this, SLOT(issueOpenFile()));
@@ -250,6 +250,11 @@ void DownloadListWidget::issueInstall()
 void DownloadListWidget::issueQueryInfo()
 {
   emit queryInfo(m_ContextRow);
+}
+
+void DownloadListWidget::issueQueryInfoMd5()
+{
+  emit queryInfoMd5(m_ContextRow);
 }
 
 void DownloadListWidget::issueDelete()

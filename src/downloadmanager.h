@@ -61,6 +61,7 @@ public:
     STATE_ERROR,
     STATE_FETCHINGMODINFO,
     STATE_FETCHINGFILEINFO,
+    STATE_FETCHINGMODINFO_MD5,
     STATE_NOFETCH,
     STATE_READY,
     STATE_INSTALLED,
@@ -86,6 +87,8 @@ private:
     qint64 m_ResumePos;
     qint64 m_TotalSize;
     QDateTime m_Created; // used as a cache in DownloadManager::getFileTime, may not be valid elsewhere
+    QByteArray m_Hash;
+    QStringList m_GamesToQuery;
 
     int m_Tries;
     bool m_ReQueried;
@@ -153,16 +156,16 @@ public:
    **/
   void setOutputDirectory(const QString &outputDirectory);
 
-	/**
-	* @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called
-	* 
-	**/
-	static void startDisableDirWatcher();
+  /**
+  * @brief disables feedback from the downlods fileSystemWhatcher untill disableDownloadsWatcherEnd() is called
+  *
+  **/
+  static void startDisableDirWatcher();
 
-	/**
-	* @brief re-enables feedback from the downlods fileSystemWhatcher after disableDownloadsWatcherStart() was called
-	**/
-	static void endDisableDirWatcher();
+  /**
+  * @brief re-enables feedback from the downlods fileSystemWhatcher after disableDownloadsWatcherStart() was called
+  **/
+  static void endDisableDirWatcher();
 
   /**
    * @return current download directory
@@ -290,7 +293,7 @@ public:
    * the following states:
    *   started -> downloading -> fetching mod info -> fetching file info -> done
    * in case of downloads started via nxm-link, file information is fetched first
-   * 
+   *
    * @param index index of the file to look up
    * @return the download state
    **/
@@ -444,7 +447,9 @@ public slots:
 
   void queryInfo(int index);
 
-	void visitOnNexus(int index);
+  void queryInfoMd5(int index);
+
+  void visitOnNexus(int index);
 
   void openFile(int index);
 
@@ -457,6 +462,8 @@ public slots:
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
 
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+
+  void nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID);
 
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
@@ -547,10 +554,10 @@ private:
 
   QFileSystemWatcher m_DirWatcher;
 
-	//The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
-	//so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.
-	//Notably using QSettings to edit a file creates a temporarily .lock file that causes the Watcher to trigger multiple listRefreshes freezing the ui. 
-	static int m_DirWatcherDisabler;
+  //The dirWatcher is actually triggering off normal Mo operations such as deleting downloads or editing .meta files
+  //so it needs to be disabled during operations that are known to cause the creation or deletion of files in the Downloads folder.
+  //Notably using QSettings to edit a file creates a temporarily .lock file that causes the Watcher to trigger multiple listRefreshes freezing the ui.
+  static int m_DirWatcherDisabler;
 
 
   std::map<QString, int> m_DownloadFails;

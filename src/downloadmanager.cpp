@@ -262,7 +262,8 @@ void DownloadManager::pauseAll()
     foreach (DownloadInfo *info, m_ActiveDownloads) {
       if ((info->m_State < STATE_CANCELED) ||
           (info->m_State == STATE_FETCHINGFILEINFO) ||
-          (info->m_State == STATE_FETCHINGMODINFO)) {
+          (info->m_State == STATE_FETCHINGMODINFO) ||
+          (info->m_State == STATE_FETCHINGMODINFO_MD5)) {
         done = false;
         break;
       }
@@ -819,7 +820,9 @@ void DownloadManager::pauseDownload(int index)
     } else {
       setState(info, STATE_PAUSED);
     }
-  } else if ((info->m_State == STATE_FETCHINGMODINFO) || (info->m_State == STATE_FETCHINGFILEINFO)) {
+  } else if ((info->m_State == STATE_FETCHINGMODINFO) || 
+             (info->m_State == STATE_FETCHINGFILEINFO) ||
+             (info->m_State == STATE_FETCHINGMODINFO_MD5)) {
     setState(info, STATE_READY);
   }
 }
@@ -950,6 +953,46 @@ void DownloadManager::queryInfo(int index)
   }
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO);
+}
+
+void DownloadManager::queryInfoMd5(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("query: invalid download index %1").arg(index));
+    return;
+  }
+  DownloadInfo *info = m_ActiveDownloads[index];
+
+  if (info->m_FileInfo->repository != "Nexus") {
+    qWarning("re-querying file info is currently only possible with Nexus");
+    return;
+  }
+
+  if (info->m_State < DownloadManager::STATE_READY) {
+    // UI shouldn't allow this
+    return;
+  }
+
+  info->m_GamesToQuery << m_ManagedGame->gameShortName();
+  info->m_GamesToQuery << m_ManagedGame->validShortNames();
+
+  QFile downloadFile(info->m_FileName);
+  if (!downloadFile.exists()) {
+    downloadFile.setFileName(m_OrganizerCore->downloadsPath() + "\\" + info->m_FileName);
+  }
+  if (!downloadFile.exists()) {
+    qDebug("Can't find download file %s", info->m_FileName);
+    return;
+  }
+  if (!downloadFile.open(QIODevice::ReadOnly)) {
+    qDebug("Can't open download file %s", info->m_FileName);
+    return;
+  }
+  info->m_Hash = QCryptographicHash::hash(downloadFile.readAll(), QCryptographicHash::Md5);
+  downloadFile.close();
+
+  info->m_ReQueried = true;
+  setState(info, STATE_FETCHINGMODINFO_MD5);
 }
 
 void DownloadManager::visitOnNexus(int index)
@@ -1329,6 +1372,9 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     case STATE_FETCHINGFILEINFO: {
       m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
+    case STATE_FETCHINGMODINFO_MD5: {
+      m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
+    } break;
     case STATE_READY: {
       createMetaFile(info);
       emit downloadComplete(row);
@@ -1682,6 +1728,51 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
 }
 
 
+void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID)
+{
+  std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
+  if (idIter == m_RequestIDs.end()) {
+    return;
+  } else {
+    m_RequestIDs.erase(idIter);
+  }
+
+  auto resultlist = resultData.toList();
+  auto results = resultlist[0].toMap();
+  auto fileDetails = results["file_details"].toMap();
+  auto modDetails = results["mod"].toMap();
+
+  DownloadInfo *info = downloadInfoByID(userData.toInt());
+  
+  info->m_FileInfo->name = fileDetails["name"].toString();
+  info->m_FileInfo->fileID = fileDetails["file_id"].toInt();
+  info->m_FileInfo->description = fileDetails["description"].toString();
+  info->m_FileInfo->version.parse(fileDetails["version"].toString());
+  if (!info->m_FileInfo->version.isValid())
+    info->m_FileInfo->version.parse(fileDetails["mod_version"].toString());
+  info->m_FileInfo->fileCategory = fileDetails["category_id"].toInt();
+
+  info->m_FileInfo->modID = modDetails["mod_id"].toInt();
+  info->m_FileInfo->modName = modDetails["name"].toString();
+  info->m_FileInfo->categoryID = modDetails["category_id"].toInt();
+
+  QString gameShortName = gameName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gameShortName = gamePlugin->gameShortName();
+      break;
+    }
+  }
+
+  info->m_FileInfo->gameName = gameShortName;
+
+  setState(info, STATE_READY);
+}
+
+
 void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
@@ -1691,10 +1782,29 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
     m_RequestIDs.erase(idIter);
   }
 
+  DownloadInfo *userDataInfo = downloadInfoByID(userData.toInt());
+
   int index = 0;
 
   for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter, ++index) {
     DownloadInfo *info = *iter;
+    if (info != userDataInfo)
+      continue;
+
+    // MD5 searches continue until all possible games are done
+    if (info->m_State == STATE_FETCHINGMODINFO_MD5) {
+      if (info->m_GamesToQuery.count() >= 2) {
+        info->m_GamesToQuery.pop_front();
+        setState(info, STATE_FETCHINGMODINFO_MD5);
+        break;
+      } else {
+        info->m_State = STATE_READY;
+        queryInfo(index);
+        emit update(index);
+        break;
+      }
+    } 
+    
     if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
         m_ActiveDownloads.erase(iter);

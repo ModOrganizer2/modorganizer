@@ -104,8 +104,9 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
             case DownloadManager::STATE_CANCELED: return tr("Canceled");
             case DownloadManager::STATE_PAUSED: return tr("Paused");
             case DownloadManager::STATE_ERROR: return tr("Error");
-            case DownloadManager::STATE_FETCHINGMODINFO: return tr("Fetching Info 1");
-            case DownloadManager::STATE_FETCHINGFILEINFO: return tr("Fetching Info 2");
+            case DownloadManager::STATE_FETCHINGMODINFO: return tr("Fetching Info");
+            case DownloadManager::STATE_FETCHINGFILEINFO: return tr("Fetching Info");
+            case DownloadManager::STATE_FETCHINGMODINFO_MD5: return tr("Fetching Info");
             case DownloadManager::STATE_READY: return tr("Downloaded");
             case DownloadManager::STATE_INSTALLED: return tr("Installed");
             case DownloadManager::STATE_UNINSTALLED: return tr("Uninstalled");

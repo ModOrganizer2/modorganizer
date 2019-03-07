@@ -78,6 +78,7 @@ public:
 signals:
   void installDownload(int index);
   void queryInfo(int index);
+  void queryInfoMd5(int index);
   void removeDownload(int index, bool deleteFile);
   void restoreDownload(int index);
   void cancelDownload(int index);
@@ -109,6 +110,7 @@ private slots:
   void issueRemoveFromViewCompleted();
   void issueRemoveFromViewUninstalled();
   void issueQueryInfo();
+  void issueQueryInfoMd5();
 
 private:
   DownloadManager *m_Manager;

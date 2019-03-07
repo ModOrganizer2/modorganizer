@@ -370,6 +370,20 @@ public:
                             MOBase::IPluginGame const *game);
 
   /**
+  *
+  */
+  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule)
+  {
+    return requestInfoFromMd5(gameName, hash, receiver, userData, subModule, getGame(gameName));
+  }
+
+  /**
+   *
+   */
+  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule, 
+                         MOBase::IPluginGame const *game);
+
+  /**
    * @param directory the directory to store cache files
    **/
   void setCacheDirectory(const QString &directory);
@@ -438,6 +452,7 @@ signals:
   void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFilesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmFileInfoAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
+  void nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID);
   void nxmDownloadURLsAvailable(QString gameName, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
@@ -480,6 +495,7 @@ private:
       TYPE_CHECKUPDATES,
       TYPE_TOGGLETRACKING,
       TYPE_TRACKEDMODS,
+      TYPE_FILEINFO_MD5,
     } m_Type;
     UpdatePeriod m_UpdatePeriod;
     QVariant m_UserData;
@@ -492,12 +508,14 @@ private:
     int m_ID;
     int m_Endorse;
     int m_Track;
+    QByteArray m_Hash;
 
     NXMRequestInfo(int modID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, QString modVersion, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(int modID, int fileID, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
     NXMRequestInfo(Type type, QVariant userData, const QString &subModule);
     NXMRequestInfo(UpdatePeriod period, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
+    NXMRequestInfo(QByteArray &hash, Type type, QVariant userData, const QString &subModule, MOBase::IPluginGame const *game);
 
   private:
     static QAtomicInt s_NextID;
