@@ -235,9 +235,11 @@ void NXMAccessManager::validateError(QNetworkReply::NetworkError)
   m_ValidateState = VALIDATE_NOT_VALID;
 
   if (m_ValidateReply != nullptr) {
-    emit validateFailed(m_ValidateReply->errorString());
+    m_ValidateReply->disconnect();
+    QString error = m_ValidateReply->errorString();
     m_ValidateReply->deleteLater();
     m_ValidateReply = nullptr;
+    emit validateFailed(error);
   } else {
     emit validateFailed(tr("Unknown error"));
   }

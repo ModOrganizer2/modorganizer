@@ -642,7 +642,7 @@ bool OrganizerCore::nexusApi(bool retry)
     return false;
   } else {
     QString apiKey;
-    if (!retry && m_Settings.getNexusApiKey(apiKey)) {
+    if (m_Settings.getNexusApiKey(apiKey)) {
       // credentials stored or user entered them manually
       qDebug("attempt to verify nexus api key");
       accessManager->apiCheck(apiKey);
