@@ -386,15 +386,6 @@ p, li { white-space: pre-wrap; }
         <location filename="downloadlist.cpp" line="108"/>
         <location filename="downloadlist.cpp" line="109"/>
         <source>Fetching Info</source>
-        <oldsource>Fetching Info 1</oldsource>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="downloadlist.cpp" line="107"/>
-        <location filename="downloadlist.cpp" line="108"/>
-        <location filename="downloadlist.cpp" line="109"/>
-        <source>Fetching Info</source>
-        <oldsource>Fetching Info 2</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4294,123 +4285,123 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1077"/>
+        <location filename="modlist.cpp" line="1107"/>
         <source>drag&amp;drop failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1156"/>
+        <location filename="modlist.cpp" line="1186"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1157"/>
+        <location filename="modlist.cpp" line="1187"/>
         <source>Are you sure you want to remove &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1224"/>
+        <location filename="modlist.cpp" line="1254"/>
         <source>Flags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1225"/>
+        <location filename="modlist.cpp" line="1255"/>
         <source>Content</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1226"/>
+        <location filename="modlist.cpp" line="1256"/>
         <source>Mod Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1227"/>
+        <location filename="modlist.cpp" line="1257"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1228"/>
+        <location filename="modlist.cpp" line="1258"/>
         <source>Priority</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1229"/>
+        <location filename="modlist.cpp" line="1259"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1230"/>
+        <location filename="modlist.cpp" line="1260"/>
         <source>Source Game</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1231"/>
+        <location filename="modlist.cpp" line="1261"/>
         <source>Nexus ID</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1232"/>
+        <location filename="modlist.cpp" line="1262"/>
         <source>Installation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1233"/>
+        <location filename="modlist.cpp" line="1263"/>
         <source>Notes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1234"/>
-        <location filename="modlist.cpp" line="1270"/>
+        <location filename="modlist.cpp" line="1264"/>
+        <location filename="modlist.cpp" line="1300"/>
         <source>unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1242"/>
+        <location filename="modlist.cpp" line="1272"/>
         <source>Name of your mods</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1243"/>
+        <location filename="modlist.cpp" line="1273"/>
         <source>Version of the mod (if available)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1244"/>
+        <location filename="modlist.cpp" line="1274"/>
         <source>Installation priority of your mod. The higher, the more &quot;important&quot; it is and thus overwrites files from mods with lower priority.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1246"/>
+        <location filename="modlist.cpp" line="1276"/>
         <source>Category of the mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1247"/>
+        <location filename="modlist.cpp" line="1277"/>
         <source>The source game which was the origin of this mod.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1248"/>
+        <location filename="modlist.cpp" line="1278"/>
         <source>Id of the mod as used on Nexus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1249"/>
+        <location filename="modlist.cpp" line="1279"/>
         <source>Emblemes to highlight things that might require attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1250"/>
+        <location filename="modlist.cpp" line="1280"/>
         <source>Depicts the content of the mod:&lt;br&gt;&lt;table cellspacing=7&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/plugin&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Game plugins (esp/esm/esl)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/interface&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Interface&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/mesh&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Meshes&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/bsa&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;BSA&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/texture&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Textures&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/sound&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Sounds&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/music&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Music&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/string&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Strings&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/script&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Scripts (Papyrus)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skse&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Script Extender plugins&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/skyproc&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;SkyProc Patcher&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/menu&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;Mod Configuration Menu&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/inifile&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;INI files&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;img src=&quot;:/MO/gui/content/modgroup&quot; width=32/&gt;&lt;/td&gt;&lt;td&gt;ModGroup files&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1268"/>
+        <location filename="modlist.cpp" line="1298"/>
         <source>Time this mod was installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modlist.cpp" line="1269"/>
+        <location filename="modlist.cpp" line="1299"/>
         <source>User notes about the mod</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5173,49 +5164,47 @@ Missing files:
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;This is the list of profiles. Each Profile contains its own list and installation order of enabled mods (from a shared pool), a configuration of enabled esps/esms, a copy of the games ini-file and an optional savegame filter.&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Note&lt;/span&gt; For technical reasons it&apos;s currently not possible to have seperate load-orders for esps. This means you can&apos;t load moda.esp before modb.esp in one profile and the other way around in another.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8.25pt;&quot;&gt;This is the list of profiles. Each profile contains its own list and installation order of enabled mods (from a shared pool), its own list and load order of enabled plugins (esps/esms), a copy of the games ini-file and an optional savegame filter.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="38"/>
+        <location filename="profilesdialog.ui" line="36"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, save games are stored locally to this profile and will not appear when starting with a different profile.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="41"/>
+        <location filename="profilesdialog.ui" line="39"/>
         <source>If checked, save games are local to this profile and will not appear when starting with a different profile.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="44"/>
+        <location filename="profilesdialog.ui" line="42"/>
         <source>Use profile-specific Save Games</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="51"/>
+        <location filename="profilesdialog.ui" line="49"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked MO2 will use his own profile-specific game INI files, so that the &amp;quot;Global&amp;quot; ones in MyGames can be left vanilla. This different set of INI files is then offered to the game instead of the default one.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="54"/>
+        <location filename="profilesdialog.ui" line="52"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If checked, MO2 will use a local set of game INI files (configuration and settings files), different from the default ones found in MyGames. This way changes to the INI settings will only affect this profile and the Global INI files can remain vanilla. MO2 will then show the profile INI files to the game instead of the Global ones.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="57"/>
+        <location filename="profilesdialog.ui" line="55"/>
         <source>Use profile-specific Game INI Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="67"/>
+        <location filename="profilesdialog.ui" line="65"/>
         <source>This ensures data files from mods are actually used. You want to enable this unless you use a different tool for Archive Invalidation.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="70"/>
+        <location filename="profilesdialog.ui" line="68"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -5227,65 +5216,65 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="80"/>
+        <location filename="profilesdialog.ui" line="78"/>
         <source>Automatic Archive Invalidation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="91"/>
-        <location filename="profilesdialog.ui" line="94"/>
+        <location filename="profilesdialog.ui" line="89"/>
+        <location filename="profilesdialog.ui" line="92"/>
         <source>Create a new profile from scratch</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="97"/>
+        <location filename="profilesdialog.ui" line="95"/>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="107"/>
+        <location filename="profilesdialog.ui" line="105"/>
         <source>Clone the selected profile</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="110"/>
+        <location filename="profilesdialog.ui" line="108"/>
         <source>This creates a new profile with the same settings and active mods as the selected one.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="113"/>
+        <location filename="profilesdialog.ui" line="111"/>
         <source>Copy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="123"/>
-        <location filename="profilesdialog.ui" line="126"/>
+        <location filename="profilesdialog.ui" line="121"/>
+        <location filename="profilesdialog.ui" line="124"/>
         <source>Delete the selected Profile. This can not be un-done!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="129"/>
+        <location filename="profilesdialog.ui" line="127"/>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="139"/>
+        <location filename="profilesdialog.ui" line="137"/>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="149"/>
-        <location filename="profilesdialog.ui" line="152"/>
+        <location filename="profilesdialog.ui" line="147"/>
+        <location filename="profilesdialog.ui" line="150"/>
         <source>Transfer save games to the selected profile.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="155"/>
+        <location filename="profilesdialog.ui" line="153"/>
         <source>Transfer Saves</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="profilesdialog.ui" line="178"/>
+        <location filename="profilesdialog.ui" line="176"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6083,7 +6072,6 @@ Select Show Details option to see the full change-log.</source>
     <message>
         <location filename="settings.cpp" line="732"/>
         <source>Failed to retrieve a Nexus API key! Please try again. A browser window should open asking you to authorize.</source>
-        <oldsource>Failed to retrieve a Nexus API key! Please try again.A browser window should open asking you to authorize.</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
