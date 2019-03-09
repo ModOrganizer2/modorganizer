@@ -4,8 +4,8 @@
 /* Color Palette                    */
 /* Background - Main      | #CDC8B0 */
 /* Background - Content   | #DAD4BB */
-/* Hover                  | #B4AF9A */ 
-/* Selected               | #4E4B42 */ 
+/* Hover                  | #B4AF9A */
+/* Selected               | #4E4B42 */
 /* Accent                 | #CD664D */
 
 /* All */
@@ -145,7 +145,7 @@ QToolButton QMenu {
 	qproperty-icon: url(./Paper/Automata/Toolbar/settings.svg);
 }
 
-#actionProblems {
+#actionNotifications {
 	qproperty-icon: url(./Paper/Automata/Toolbar/problems.svg);
 }
 
@@ -508,7 +508,7 @@ QScrollBar::add-line:vertical {
 }
 
 QScrollBar::sub-line:vertical {
-	/* scroll up button */ 
+	/* scroll up button */
     background: #B4AF9A;
     image: url(./Paper/Automata/Arrows/up.svg);
     height: 23px;
@@ -521,29 +521,29 @@ QScrollBar::sub-line:vertical {
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover {
 	/* buttons and handles when moused-over */
 	background: #B4AF9A;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed {
 	/* buttons and handles when clicked */
 	background: #4E4B42;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
 	/* area on scroll bars where clicking it scrolls to where you clicked */
     background: transparent;
@@ -897,8 +897,8 @@ DownloadListWidget {
 	background: #DAD4BB;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
+DownloadListWidget QFrame,
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #DAD4BB;
@@ -914,7 +914,7 @@ DownloadListWidget#frame {
 	color: none;
 }
 
-DownloadListWidgetCompact, 
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #DAD4BB;

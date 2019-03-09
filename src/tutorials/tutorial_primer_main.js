@@ -81,7 +81,7 @@ function setupTooptips() {
   tooltipWidget("logList", qsTr("Log messages produced by MO. Please note that messages with a light bulb usually don't require your attention."))
 
   tooltipAction("actionSettings", qsTr("Configure Mod Organizer."))
-  tooltipAction("actionProblems", qsTr("Reports potential Problems about the current setup."))
+  tooltipAction("actionNotifications", qsTr("Notifications about the current setup."))
   tooltipAction("actionUpdate", qsTr("Activates if there is an update for MO. Please note that if, for any reason, MO can't communicate with NMM, this will not work either."))
 
   switch (manager.findControl("tabWidget").currentIndex) {

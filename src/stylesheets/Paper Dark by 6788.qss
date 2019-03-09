@@ -24,7 +24,7 @@ QWidget {
 }
 
 QWidget:disabled {
-	/* disabled parts of the window like the update button when there are no updates */ 
+	/* disabled parts of the window like the update button when there are no updates */
 	background: #242424;
 	color: #808080;
 }
@@ -133,7 +133,7 @@ QToolButton:menu-indicator {
 	qproperty-icon: url(./Paper/Dark/Toolbar/settings.svg);
 }
 
-#actionProblems {
+#actionNotifications {
 	qproperty-icon: url(./Paper/Dark/Toolbar/problems.svg);
 }
 
@@ -494,7 +494,7 @@ QScrollBar::add-line:vertical {
 }
 
 QScrollBar::sub-line:vertical {
-	/* scroll up button */ 
+	/* scroll up button */
     background: #141414;
     image: url(./Paper/Dark/Arrows/up.svg);
     height: 23px;
@@ -507,29 +507,29 @@ QScrollBar::sub-line:vertical {
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover {
 	/* buttons and handles when moused-over */
 	background: #006868;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed {
 	/* buttons and handles when clicked */
 	background: #006868;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
 	/* area on scroll bars where clicking it scrolls to where you clicked */
     background: transparent;
@@ -911,8 +911,8 @@ QSlider::handle:hover {
 	background: #141414;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
+DownloadListWidget QFrame,
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #141414;
@@ -928,7 +928,7 @@ DownloadListWidget#frame {
 	color: none;
 }
 
-DownloadListWidgetCompact, 
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab in Compact View */
 	background: #141414;
