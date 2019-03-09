@@ -217,6 +217,7 @@ QString NXMAccessManager::apiKey() const
 
 void NXMAccessManager::validateTimeout()
 {
+  m_ValidateTimeout.stop();
   if (m_ProgressDialog != nullptr) {
     m_ProgressDialog->hide();
     m_ProgressDialog->deleteLater();
@@ -237,7 +238,7 @@ void NXMAccessManager::validateTimeout()
 
 void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 {
-  qDebug("login error");
+  m_ValidateTimeout.stop();
   if (m_ProgressDialog != nullptr) {
     m_ProgressDialog->hide();
     m_ProgressDialog->deleteLater();
@@ -260,6 +261,7 @@ void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 
 void NXMAccessManager::validateFinished()
 {
+  m_ValidateTimeout.stop();
   if (m_ProgressDialog != nullptr) {
     m_ProgressDialog->deleteLater();
     m_ProgressDialog = nullptr;
