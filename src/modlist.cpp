@@ -990,15 +990,18 @@ bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
-  QStringList source;
-  QStringList target;
-
   if (row == -1) {
     row = parent.row();
   }
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  QDir modDirectory(modInfo->absolutePath());
-  QDir gameDirectory(Settings::instance().getOverwriteDirectory());
+  QDir modDir = QDir(modInfo->absolutePath());
+
+  QDir allModsDir(Settings::instance().getModDirectory());
+  QDir overwriteDir(Settings::instance().getOverwriteDirectory());
+
+  QStringList sourceList;
+  QStringList targetList;
+  QList<QPair<QString,QString>> relativePathList;
 
   unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
@@ -1006,27 +1009,54 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
-  for (const QUrl &url : mimeData->urls()) {
-    //qDebug("URL drop requested: %s", qUtf8Printable(url.toLocalFile()));
+  for (auto url : mimeData->urls()) {
+    //qDebug("URL drop requested: %s -> %s", qUtf8Printable(url.url()), qUtf8Printable(modDir.canonicalPath()));
     if (!url.isLocalFile()) {
-      qDebug("URL drop ignored: Not a local file.");
+      qDebug("URL drop ignored: \"%s\" is not a local file", qUtf8Printable(url.url()));
       continue;
     }
-    QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
-    if (relativePath.startsWith("..")) {
-      qDebug("URL drop ignored: relative path starts with ..");
+
+    QFileInfo sourceInfo(url.toLocalFile());
+    QString sourceFile = sourceInfo.canonicalFilePath();
+
+    QString relativePath;
+    QString originName;
+
+    if (sourceFile.startsWith(allModsDir.canonicalPath())) {
+      QDir relativeDir(allModsDir.relativeFilePath(sourceFile));
+      QStringList splitPath = relativeDir.path().split("/");
+      originName = splitPath[0];
+      splitPath.pop_front();
+      relativePath = splitPath.join("/"); 
+    } else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
+      originName = overwriteName;
+      relativePath = overwriteDir.relativeFilePath(sourceFile);
+    } else {
+      qDebug("URL drop ignored: \"%s\" is not a known file to MO", qUtf8Printable(sourceFile));
       continue;
     }
-    source.append(url.toLocalFile());
-    target.append(modDirectory.absoluteFilePath(relativePath));
-    emit fileMoved(relativePath, overwriteName, modInfo->name());
+
+    QFileInfo targetInfo(modDir.absoluteFilePath(sourceInfo.fileName()));
+    if (targetInfo.exists()) {
+      qDebug("URL drop ignored: \"%s\" already exists in origin \"%s\"", 
+        qUtf8Printable(relativePath), qUtf8Printable(modInfo->name()));
+      continue;
+    }
+     
+    sourceList << sourceFile;
+    targetList << targetInfo.absoluteFilePath();
+    relativePathList << QPair<QString,QString>(relativePath, originName);
   }
 
-  if (source.count() != 0) {
-    if (!shellMove(source, target)) {
-      qDebug("Move failed %lu",::GetLastError());
+  if (sourceList.count()) {
+    if (!shellMove(sourceList, targetList)) {
+      qDebug("Failed to move file (error %d)", ::GetLastError());
       return false;
     }
+  }
+
+  for (auto iter : relativePathList) {
+    emit fileMoved(iter.first, iter.second, modInfo->name());
   }
 
   if (!modInfo->isValid()) {
