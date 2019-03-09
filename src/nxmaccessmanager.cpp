@@ -52,6 +52,7 @@ NXMAccessManager::NXMAccessManager(QObject *parent, const QString &moVersion)
 {
   m_ValidateTimeout.setSingleShot(true);
   m_ValidateTimeout.setInterval(30000);
+  connect(&m_ValidateTimeout, SIGNAL(timeout()), this, SLOT(validateTimeout()));
   setCookieJar(new PersistentCookieJar(
       QDir::fromNativeSeparators(Settings::instance().getCacheDirectory() + "/nexus_cookies.dat")));
 
@@ -142,7 +143,9 @@ bool NXMAccessManager::validated() const
 {
   if (m_ValidateState == VALIDATE_CHECKING) {
     QProgressDialog progress;
-    progress.setLabelText(tr("Verifying Nexus login"));
+    progress.setLabelText(tr("Validating Nexus Connection"));
+    QList<QPushButton*> buttons = m_ProgressDialog->findChildren<QPushButton*>();
+    buttons.at(0)->setEnabled(false);
     progress.show();
     while (m_ValidateState == VALIDATE_CHECKING) {
       QCoreApplication::processEvents();
@@ -214,11 +217,19 @@ QString NXMAccessManager::apiKey() const
 
 void NXMAccessManager::validateTimeout()
 {
-  m_ValidateReply->deleteLater();
-  m_ValidateReply = nullptr;
-  m_ValidateAttempted = false; // this usually means we might have success later
+  if (m_ProgressDialog != nullptr) {
+    m_ProgressDialog->hide();
+    m_ProgressDialog->deleteLater();
+    m_ProgressDialog = nullptr;
+  }
   m_ApiKey.clear();
   m_ValidateState = VALIDATE_NOT_VALID;
+
+  if (m_ValidateReply != nullptr) {
+    m_ValidateReply->deleteLater();
+    m_ValidateReply = nullptr;
+    m_ValidateAttempted = false; // this usually means we might have success later
+  }
 
   emit validateFailed(tr("There was a timeout during the request"));
 }
@@ -228,6 +239,7 @@ void NXMAccessManager::validateError(QNetworkReply::NetworkError)
 {
   qDebug("login error");
   if (m_ProgressDialog != nullptr) {
+    m_ProgressDialog->hide();
     m_ProgressDialog->deleteLater();
     m_ProgressDialog = nullptr;
   }
