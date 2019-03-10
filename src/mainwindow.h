@@ -606,7 +606,6 @@ private slots:
   void about();
   void delayedRemove();
 
-  void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
   void modListSectionResized(int logicalIndex, int oldSize, int newSize);
 
