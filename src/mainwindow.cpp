@@ -3724,8 +3724,12 @@ void MainWindow::clearOverwrite()
       QStringList delList;
       for (auto f : overwriteDir.entryList(QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot))
         delList.push_back(overwriteDir.absoluteFilePath(f));
-      shellDelete(delList, true);
-      updateProblemsButton();
+      if (shellDelete(delList, true)) {
+        updateProblemsButton();
+        m_OrganizerCore.refreshModList();
+      } else {
+        qCritical("Delete operation failed: %s", qUtf8Printable(windowsErrorString(::GetLastError())));
+      }
     }
   }
 }
