@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QCoreApplication>
+
 
 #include <algorithm>
 
@@ -53,6 +55,17 @@ void ExecutablesList::init(IPluginGame const *game)
                             info.steamAppID());
     }
   }
+  ExecutableInfo explorerpp = ExecutableInfo("Explore Virtual Folder", QFileInfo(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe" ))
+      .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
+  
+  if (explorerpp.isValid()) {
+    addExecutableInternal(explorerpp.title(),
+      explorerpp.binary().absoluteFilePath(),
+      explorerpp.arguments().join(" "),
+      explorerpp.workingDirectory().absolutePath(),
+      explorerpp.steamAppID());
+  }
+  
 }
 
 void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end)
