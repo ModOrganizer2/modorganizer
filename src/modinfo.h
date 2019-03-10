@@ -750,7 +750,8 @@ protected:
 
 private:
 
-  static void createFromOverwrite(PluginContainer *pluginContainer);
+  static void createFromOverwrite(PluginContainer *pluginContainer,
+                                  MOShared::DirectoryEntry **directoryStructure);
 
 protected:
 

@@ -36,6 +36,10 @@ QList<QString> ModFlagIconDelegate::getIcons(const QModelIndex &index) const {
     ModInfo::Ptr info = ModInfo::getByIndex(modid.toInt());
     std::vector<ModInfo::EFlag> flags = info->getFlags();
 
+    // Don't do flags for overwrite
+    if (std::find(flags.begin(), flags.end(),ModInfo::FLAG_OVERWRITE) != flags.end())
+      return result;
+
     // insert conflict icons to provide nicer alignment
     { // insert loose file conflicts first
       auto iter = std::find_first_of(flags.begin(), flags.end(),

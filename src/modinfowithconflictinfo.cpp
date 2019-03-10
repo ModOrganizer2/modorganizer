@@ -46,16 +46,16 @@ std::vector<ModInfo::EFlag> ModInfoWithConflictInfo::getFlags() const
     default: { /* NOP */ }
   }
   switch (isArchiveConflicted()) {
-      case CONFLICT_MIXED: {
-          result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED);
-      } break;
-      case CONFLICT_OVERWRITE: {
-          result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE);
-      } break;
-      case CONFLICT_OVERWRITTEN: {
-          result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN);
-      } break;
-      default: { /* NOP */ }
+    case CONFLICT_MIXED: {
+      result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED);
+    } break;
+    case CONFLICT_OVERWRITE: {
+      result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE);
+    } break;
+    case CONFLICT_OVERWRITTEN: {
+      result.push_back(ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN);
+    } break;
+    default: { /* NOP */ }
   }
   return result;
 }

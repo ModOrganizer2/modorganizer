@@ -1,11 +1,11 @@
 #ifndef MODINFOOVERWRITE_H
 #define MODINFOOVERWRITE_H
 
-#include "modinfo.h"
+#include "modinfowithconflictinfo.h"
 
 #include <QDateTime>
 
-class ModInfoOverwrite : public ModInfo
+class ModInfoOverwrite : public ModInfoWithConflictInfo
 {
 
   Q_OBJECT
@@ -67,7 +67,7 @@ public:
 
 private:
 
-  ModInfoOverwrite(PluginContainer *pluginContainer);
+  ModInfoOverwrite(PluginContainer *pluginContainer, MOShared::DirectoryEntry **directoryStructure );
 
 };
 

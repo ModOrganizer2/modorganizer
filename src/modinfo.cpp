@@ -114,11 +114,12 @@ QString ModInfo::getContentTypeName(int contentType)
   }
 }
 
-void ModInfo::createFromOverwrite(PluginContainer *pluginContainer)
+void ModInfo::createFromOverwrite(PluginContainer *pluginContainer, 
+                                  MOShared::DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
 
-  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer)));
+  s_Collection.push_back(ModInfo::Ptr(new ModInfoOverwrite(pluginContainer, directoryStructure)));
 }
 
 unsigned int ModInfo::getNumMods()
@@ -255,7 +256,7 @@ void ModInfo::updateFromDisc(const QString &modDirectory,
     }
   }
 
-  createFromOverwrite(pluginContainer);
+  createFromOverwrite(pluginContainer, directoryStructure);
 
   std::sort(s_Collection.begin(), s_Collection.end(), ModInfo::ByName);
 
