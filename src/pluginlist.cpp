@@ -127,11 +127,10 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
     esp.m_ModSelected = false;
   }
   for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-    int modPriority = idx.data(Qt::UserRole).toInt();
-    if (modPriority < 0 || modPriority == INT_MAX)
+    int modIndex = idx.data(Qt::UserRole + 1).toInt();
+    if (modIndex == UINT_MAX)
       continue;
 
-    int modIndex = profile.modIndexByPriority(modPriority);
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
     if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
