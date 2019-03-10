@@ -521,20 +521,13 @@ std::vector<std::tuple<QString, QString, int> > Profile::getActiveMods()
   for (std::map<int, unsigned int>::const_iterator iter = m_ModIndexByPriority.begin(); iter != m_ModIndexByPriority.end(); iter++ ) {
     if ((iter->second != UINT_MAX) && m_ModStatus[iter->second].m_Enabled) {
       ModInfo::Ptr modInfo = ModInfo::getByIndex(iter->second);
-      result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
+      if (modInfo->hasFlag(ModInfo::FLAG_OVERWRITE))
+        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), INT_MAX));
+      else
+        result.push_back(std::make_tuple(modInfo->internalName(), modInfo->absolutePath(), m_ModStatus[iter->second].m_Priority));
     }
   }
 
-  unsigned int overwriteIndex = ModInfo::findMod([](ModInfo::Ptr mod) -> bool {
-    std::vector<ModInfo::EFlag> flags = mod->getFlags();
-    return std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end(); });
-
-  if (overwriteIndex != UINT_MAX) {
-    ModInfo::Ptr overwriteInfo = ModInfo::getByIndex(overwriteIndex);
-    result.push_back(std::make_tuple(overwriteInfo->name(), overwriteInfo->absolutePath(), UINT_MAX));
-  } else {
-    reportError(tr("Overwrite directory couldn't be parsed"));
-  }
   return result;
 }
 

@@ -126,7 +126,8 @@ void ModInfoWithConflictInfo::doConflictCheck() const
         for (auto altInfo : alternatives) {
           if ((altInfo.first != dataID) && (altInfo.first != origin.getID())) {
             FilesOrigin &altOrigin = (*m_DirectoryStructure)->getOriginByID(altInfo.first);
-            unsigned int altIndex = ModInfo::getIndex(ToQString(altOrigin.getName()));
+            QString altOriginName = ToQString(altOrigin.getName());
+            unsigned int altIndex = ModInfo::getIndex(altOriginName);
             if (altInfo.second.first.size() == 0) {
               if (archiveData.first.size() == 0) {
                 if (origin.getPriority() > altOrigin.getPriority()) {

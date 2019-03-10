@@ -178,10 +178,9 @@ void DirectoryRefresher::refresh()
   std::wstring dataDirectory = QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
 
-  // TODO what was the point of having the priority in this tuple? the list is already sorted by priority
+  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs){return lhs.priority < rhs.priority;});
   auto iter = m_Mods.begin();
 
-  //TODO i is the priority here, where higher = more important. the input vector is also sorted by priority but inverted!
   for (int i = 1; iter != m_Mods.end(); ++iter, ++i) {
     try {
       addModToStructure(m_DirectoryStructure, iter->modName, i, iter->absolutePath, iter->stealFiles, iter->archives);
