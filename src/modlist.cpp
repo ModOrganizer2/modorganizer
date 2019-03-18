@@ -1027,7 +1027,7 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
       QStringList splitPath = relativeDir.path().split("/");
       originName = splitPath[0];
       splitPath.pop_front();
-      relativePath = splitPath.join("/"); 
+      relativePath = splitPath.join("/");
     } else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
       originName = overwriteName;
       relativePath = overwriteDir.relativeFilePath(sourceFile);
@@ -1037,12 +1037,6 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
     }
 
     QFileInfo targetInfo(modDir.absoluteFilePath(sourceInfo.fileName()));
-    if (targetInfo.exists()) {
-      qDebug("URL drop ignored: \"%s\" already exists in origin \"%s\"", 
-        qUtf8Printable(relativePath), qUtf8Printable(modInfo->name()));
-      continue;
-    }
-     
     sourceList << sourceFile;
     targetList << targetInfo.absoluteFilePath();
     relativePathList << QPair<QString,QString>(relativePath, originName);
