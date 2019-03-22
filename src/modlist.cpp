@@ -245,7 +245,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     } else if (column == COL_MODID) {
       int modID = modInfo->getNexusID();
-      if (modID >= 0) {
+      if (modID > 0) {
         return modID;
       }
       else {
