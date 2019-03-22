@@ -166,6 +166,14 @@ std::vector<ModInfo::Ptr> ModInfo::getByModID(QString game, int modID)
 }
 
 
+ModInfo::Ptr ModInfo::getByName(const QString &name)
+{
+  QMutexLocker locker(&s_Mutex);
+
+  return s_Collection[ModInfo::getIndex(name)];
+}
+
+
 bool ModInfo::removeMod(unsigned int index)
 {
   QMutexLocker locker(&s_Mutex);
@@ -285,8 +293,10 @@ ModInfo::ModInfo(PluginContainer *pluginContainer)
 }
 
 
-void ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
+bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver)
 {
+  bool updatesAvailable = true;
+
   QDateTime earliest = QDateTime::currentDateTimeUtc();
   QDateTime latest;
   std::set<QString> games;
@@ -308,8 +318,10 @@ void ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
       }
     }
 
-    if (organizedGames.empty())
+    if (organizedGames.empty()) {
       qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      updatesAvailable = false;
+    }
 
     for (auto game : organizedGames) {
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
@@ -327,6 +339,8 @@ void ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
     for (auto gameName : games)
       NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::DAY, receiver, QVariant(false), QString());
   }
+
+  return updatesAvailable;
 }
 
 std::set<QSharedPointer<ModInfo>> ModInfo::filteredMods(QString gameName, QVariantList updateData, bool addOldMods, bool markUpdated)

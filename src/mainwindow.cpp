@@ -4075,26 +4075,38 @@ void MainWindow::saveArchiveList()
 
 void MainWindow::checkModsForUpdates()
 {
-  statusBar()->show();
+  bool checkingModsForUpdate = false;
   if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::checkAllForUpdate(&m_PluginContainer, this);
+    checkingModsForUpdate = ModInfo::checkAllForUpdate(&m_PluginContainer, this);
     NexusInterface::instance(&m_PluginContainer)->requestEndorsementInfo(this, QVariant(), QString());
     NexusInterface::instance(&m_PluginContainer)->requestTrackingInfo(this, QVariant(), QString());
   } else {
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
+      statusBar()->show();
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
     }
   }
 
-  m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
-  for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
-    if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
-      ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
+  bool updatesAvailable = false;
+  for (auto mod : m_OrganizerCore.modList()->allMods()) {
+    ModInfo::Ptr modInfo = ModInfo::getByName(mod);
+    if (modInfo->updateAvailable()) {
+      updatesAvailable = true;
       break;
+    }
+  }
+
+  if (updatesAvailable || checkingModsForUpdate) {
+    m_ModListSortProxy->setCategoryFilter(boost::assign::list_of(CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE));
+    for (int i = 0; i < ui->categoriesList->topLevelItemCount(); ++i) {
+      if (ui->categoriesList->topLevelItem(i)->data(0, Qt::UserRole) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE) {
+        ui->categoriesList->setCurrentItem(ui->categoriesList->topLevelItem(i));
+        break;
+      }
     }
   }
 }

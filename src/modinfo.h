@@ -168,6 +168,15 @@ public:
   static std::vector<ModInfo::Ptr> getByModID(QString game, int modID);
 
   /**
+   * @brief retrieve a ModInfo object based on its name
+   *
+   * @param name the name to look up
+   * @return a reference counting pointer to the mod info
+   * @note since the pointer is reference counter, the pointer remains valid even if the collection is refreshed in a different thread
+   **/
+  static ModInfo::Ptr getByName(const QString &name);
+
+  /**
    * @brief remove a mod by index
    *
    * this physically deletes the specified mod from the disc and updates the ModInfo collection
@@ -199,8 +208,9 @@ public:
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
+   * @return true if any mods are checked for update
    **/
-  static void checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
+  static bool checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
 
   static std::set<QSharedPointer<ModInfo>> filteredMods(QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
 
