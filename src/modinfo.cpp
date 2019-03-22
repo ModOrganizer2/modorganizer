@@ -114,7 +114,7 @@ QString ModInfo::getContentTypeName(int contentType)
   }
 }
 
-void ModInfo::createFromOverwrite(PluginContainer *pluginContainer, 
+void ModInfo::createFromOverwrite(PluginContainer *pluginContainer,
                                   MOShared::DirectoryEntry **directoryStructure)
 {
   QMutexLocker locker(&s_Mutex);
@@ -369,8 +369,17 @@ void ModInfo::manualUpdateCheck(PluginContainer *pluginContainer, QObject *recei
   std::set<std::pair<QString, int>> organizedGames;
 
   for (auto ID : IDs) {
-    auto matchedMods = getByModID(ID.first, ID.second);
-    mods.insert(mods.end(), matchedMods.begin(), matchedMods.end());
+    for (auto matchedMod : getByModID(ID.first, ID.second)) {
+      bool alreadyMatched = false;
+      for (auto mod : mods) {
+        if (mod == matchedMod) {
+          alreadyMatched = true;
+          break;
+        }
+      }
+      if (!alreadyMatched)
+        mods.push_back(matchedMod);
+    }
   }
   mods.erase(
     std::remove_if(mods.begin(), mods.end(), [](ModInfo::Ptr mod) -> bool { return mod->getNexusID() <= 0; }),
