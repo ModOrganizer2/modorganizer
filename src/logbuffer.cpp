@@ -114,6 +114,8 @@ char LogBuffer::msgTypeID(QtMsgType type)
   switch (type) {
     case QtDebugMsg:
       return 'D';
+    case QtInfoMsg:
+      return 'I';
     case QtWarningMsg:
       return 'W';
     case QtCriticalMsg:
@@ -203,6 +205,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
       if (index.column() == 1) {
         switch (m_Messages[msgIndex].type) {
           case QtDebugMsg:
+          case QtInfoMsg:
             return QIcon(":/MO/gui/information");
           case QtWarningMsg:
             return QIcon(":/MO/gui/warning");
@@ -218,6 +221,8 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
         switch (m_Messages[msgIndex].type) {
           case QtDebugMsg:
             return "D";
+          case QtInfoMsg:
+            return "I";
           case QtWarningMsg:
             return "W";
           case QtCriticalMsg:
