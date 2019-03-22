@@ -5878,18 +5878,7 @@ void MainWindow::nxmDownloadURLs(QString, int, int, QVariant, QVariant resultDat
 void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, int, QNetworkReply::NetworkError error, const QString &errorString)
 {
   if (error == QNetworkReply::ContentAccessDenied || error == QNetworkReply::ContentNotFoundError) {
-    QString gameNameReal;
-    for (IPluginGame *game : m_PluginContainer.plugins<IPluginGame>()) {
-      if (game->gameNexusName() == gameName) {
-        gameNameReal = game->gameShortName();
-        break;
-      }
-    }
-    std::vector<ModInfo::Ptr> modsList = ModInfo::getByModID(gameNameReal, modID);
-    for (auto mod : modsList) {
-      mod->setNexusID(-1);
-    }
-    MessageDialog::showMessage(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID), this);
+    qDebug(qUtf8Printable(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID)));
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
   }
