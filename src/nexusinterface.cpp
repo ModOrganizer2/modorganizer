@@ -564,7 +564,7 @@ int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObje
   requestInfo.m_IgnoreGenericErrorHandler = true;
   m_RequestQueue.enqueue(requestInfo);
 
-  connect(this, SIGNAL(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), 
+  connect(this, SIGNAL(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)),
       receiver, SLOT(nxmFileInfoFromMd5Available(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
 
   connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
@@ -747,10 +747,23 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
     if (iter->m_AllowedErrors.contains(error) && iter->m_AllowedErrors[error].contains(statusCode)) {
       // These errors are allows to silently happen.  They should be handled in nxmRequestFailed below.
     } else if (statusCode == 429) {
-      if (reply->rawHeader("x-rl-daily-remaining").toInt() || reply->rawHeader("x-rl-hourly-remaining").toInt())
+      m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
+      m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
+      m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+      m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
+
+      if (m_RemainingDailyRequests || m_RemainingHourlyRequests)
         qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
       else
         qWarning("All API requests have been consumed and are now being denied.");
+
+      emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
+        m_RemainingDailyRequests,
+        m_MaxDailyRequests,
+        m_RemainingHourlyRequests,
+        m_MaxHourlyRequests
+      )));
+
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
