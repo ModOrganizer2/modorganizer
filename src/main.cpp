@@ -288,8 +288,10 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
 {
   //Determine what game we are running where. Be very paranoid in case the
   //user has done something odd.
-  //If the game name has been set up, use that.
   QString gameName = settings.value("gameName", "").toString();
+  QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
+
+  //If the game name has been set up, use that.
   if (!gameName.isEmpty()) {
     MOBase::IPluginGame *game = plugins.managedGame(gameName);
     if (game == nullptr) {
@@ -305,48 +307,6 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       return selectGame(settings, gameDir, game);
     }
   }
-
-  //gameName wasn't set, or otherwise can't be found. Try looking through all
-  //the plugins using the gamePath
-  QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
-  if (!gamePath.isEmpty()) {
-    QDir gameDir(gamePath);
-    //Look to see if one of the installed games binary file exists in the current
-    //game directory.
-    for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
-      if (game->looksValid(gameDir)) {
-        return selectGame(settings, gameDir, game);
-      }
-    }
-  }
-
-  //The following code would try to determine the right game to mange but it would usually find the wrong one
-  //so it was commented out.
-  /*
-  //OK, we are in a new setup or existing info is useless.
-  //See if MO has been installed inside a game directory
-  for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
-    if (game->isInstalled() && moPath.startsWith(game->gameDirectory().absolutePath())) {
-      //Found it.
-      return selectGame(settings, game->gameDirectory(), game);
-    }
-  }
-
-  //Try walking up the directory tree to see if MO has been installed inside a game
-  {
-    QDir gameDir(moPath);
-    do {
-      //Look to see if one of the installed games binary file exists in the current
-      //directory.
-      for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
-        if (game->looksValid(gameDir)) {
-          return selectGame(settings, gameDir, game);
-        }
-      }
-      //OK, chop off the last directory and try again
-    } while (gameDir.cdUp());
-  }
-  */
 
   //Then try a selection dialogue.
   if (!gamePath.isEmpty() || !gameName.isEmpty()) {
@@ -381,7 +341,6 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
         if (game->looksValid(gameDir)) {
           possibleGames.append(game);
-          //return selectGame(settings, gameDir, game);
         }
       }
       if (possibleGames.count() > 1) {
