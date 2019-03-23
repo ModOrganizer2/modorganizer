@@ -238,20 +238,30 @@ void FileEntry::addOrigin(int origin, FILETIME fileTime, const std::wstring &arc
   if (m_Parent != nullptr) {
     m_Parent->propagateOrigin(origin);
   }
+
+  // If this file has no previous origin, this mod is now the origin with no alternatives
   if (m_Origin == -1) {
     m_Origin = origin;
     m_FileTime = fileTime;
     m_Archive = std::pair<std::wstring, int>(archive, order);
-  } else if ((m_Parent != nullptr)
-             && (m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())
-             && (archive.size() == 0 || m_Archive.first.size() > 0 )) {
+  }
+
+  // If this mod has a higher priority than the origin mod OR
+  // this mod has a loose file and the origin mod has an archived file,
+  // this mod is now the origin and the previous origin is the first alternative
+  else if ((m_Parent != nullptr)
+             && ((m_Parent->getOriginByID(origin).getPriority() > m_Parent->getOriginByID(m_Origin).getPriority())
+              || (archive.size() == 0 && m_Archive.first.size() > 0 ))) {
     if (std::find_if(m_Alternatives.begin(), m_Alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>> &i) -> bool { return i.first == m_Origin; }) == m_Alternatives.end()) {
       m_Alternatives.push_back(std::pair<int, std::pair<std::wstring, int>>(m_Origin, m_Archive));
     }
     m_Origin = origin;
     m_FileTime = fileTime;
     m_Archive = std::pair<std::wstring, int>(archive, order);
-  } else {
+  }
+
+  // This mod is just an alternative
+  else {
     bool found = false;
     if (m_Origin == origin) {
       // already an origin
