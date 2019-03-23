@@ -503,6 +503,12 @@ int runApplication(MOApplication &application, SingleInstance &instance,
     MOBase::IPluginGame *game = determineCurrentGame(
         application.applicationDirPath(), settings, pluginContainer);
     if (game == nullptr) {
+      InstanceManager &instance = InstanceManager::instance();
+      QString instanceName = instance.currentInstance();
+      if (instanceName.compare("Portable", Qt::CaseInsensitive) != 0) {
+        instance.clearCurrentInstance();
+        return INT_MAX;
+      }
       return 1;
     }
     if (splashPath.startsWith(':')) {
