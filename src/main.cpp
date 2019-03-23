@@ -288,11 +288,11 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
 {
   //Determine what game we are running where. Be very paranoid in case the
   //user has done something odd.
-  QString gameName = settings.value("gameName", "").toString();
-  QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
 
-  //If the game name has been set up, use that.
-  if (!gameName.isEmpty()) {
+  //If the game name has been set up, try to use that.
+  QString gameName = settings.value("gameName", "").toString();
+  bool gameConfigured = !gameName.isEmpty();
+  if (gameConfigured) {
     MOBase::IPluginGame *game = plugins.managedGame(gameName);
     if (game == nullptr) {
       reportError(QObject::tr("Plugin to handle %1 no longer installed").arg(gameName));
@@ -308,15 +308,23 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
     }
   }
 
-  //Then try a selection dialogue.
-  if (!gamePath.isEmpty() || !gameName.isEmpty()) {
+  //If we've made it this far and the instance is already configured for a game, something has gone wrong.
+  //Tell the user about it.
+  if (gameConfigured) {
+    QString gamePath = QString::fromUtf8(settings.value("gamePath", "").toByteArray());
     reportError(QObject::tr("Could not use configuration settings for game \"%1\", path \"%2\".").
                                                    arg(gameName).arg(gamePath));
   }
 
-  SelectionDialog selection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+  SelectionDialog selection(gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
+                                           : QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
 
   for (IPluginGame *game : plugins.plugins<IPluginGame>()) {
+    //If a game is already configured, skip any plugins that are not for that game
+    if (gameConfigured && gameName.compare(game->gameName(), Qt::CaseInsensitive) != 0)
+      continue;
+
+    //Only add games that are installed
     if (game->isInstalled()) {
       QString path = game->gameDirectory().absolutePath();
       selection.addChoice(game->gameIcon(), game->gameName(), path, QVariant::fromValue(game));
@@ -331,33 +339,40 @@ MOBase::IPluginGame *determineCurrentGame(QString const &moPath, QSettings &sett
       return selectGame(settings, game->gameDirectory(), game);
     }
 
-    gamePath = QFileDialog::getExistingDirectory(
-          nullptr, QObject::tr("Please select the game to manage"), QString(),
-          QFileDialog::ShowDirsOnly);
-
+    QString gamePath = QFileDialog::getExistingDirectory(nullptr, gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
+                                                                                 : QObject::tr("Please select the game to manage"),
+                                                         QString(), QFileDialog::ShowDirsOnly);
     if (!gamePath.isEmpty()) {
       QDir gameDir(gamePath);
       QList<IPluginGame *> possibleGames;
       for (IPluginGame * const game : plugins.plugins<IPluginGame>()) {
+        //If a game is already configured, skip any plugins that are not for that game
+        if (gameConfigured && gameName.compare(game->gameName(), Qt::CaseInsensitive) != 0)
+          continue;
+
+        //Only try plugins that look valid for this directory
         if (game->looksValid(gameDir)) {
           possibleGames.append(game);
         }
       }
       if (possibleGames.count() > 1) {
-        SelectionDialog browseSelection(QObject::tr("Please select the game to manage"), nullptr, QSize(32, 32));
+        SelectionDialog browseSelection(gameConfigured ? QObject::tr("Please select the installation of %1 to manage").arg(gameName)
+                                                       : QObject::tr("Please select the game to manage"),
+                                        nullptr, QSize(32, 32));
         for (IPluginGame *game : possibleGames) {
           browseSelection.addChoice(game->gameIcon(), game->gameName(), gamePath, QVariant::fromValue(game));
         }
         if (browseSelection.exec() == QDialog::Accepted) {
           return selectGame(settings, gameDir, browseSelection.getChoiceData().value<IPluginGame *>());
         } else {
-          reportError(QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
+          reportError(gameConfigured ? QObject::tr("Canceled finding %1 in \"%2\".").arg(gameName).arg(gamePath)
+                                     : QObject::tr("Canceled finding game in \"%1\".").arg(gamePath));
         }
       } else if(possibleGames.count() == 1) {
         return selectGame(settings, gameDir, possibleGames[0]);
       } else {
-        reportError(QObject::tr("No game identified in \"%1\". The directory is required to contain "
-                                "the game binary.").arg(gamePath));
+        reportError(gameConfigured ? QObject::tr("%1 not identified in \"%2\". The directory is required to contain the game binary.").arg(gameName).arg(gamePath)
+                                   : QObject::tr("No game identified in \"%1\". The directory is required to contain the game binary.").arg(gamePath));
       }
     }
   }
