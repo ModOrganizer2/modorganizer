@@ -1824,7 +1824,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   info->m_FileInfo->gameName = gameShortName;
 
   //If the file description is not present, send another query to get it
-  if (info->m_FileInfo->description.isEmpty()) {
+  if (!fileDetails["description"].isValid()) {
     info->m_RemoteFileName = fileDetails["file_name"].toString();
     setState(info, STATE_FETCHINGFILEINFO);
   } else {
