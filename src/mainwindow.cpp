@@ -727,8 +727,13 @@ bool MainWindow::errorReported(QString &logFile)
 size_t MainWindow::checkForProblems()
 {
   size_t numProblems = 0;
-  for (IPluginDiagnose *diagnose : m_PluginContainer.plugins<IPluginDiagnose>()) {
-    numProblems += diagnose->activeProblems().size();
+  for (QObject *pluginObj : m_PluginContainer.plugins<QObject>()) {
+    IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
+    if (plugin == nullptr || plugin->isActive()) {
+      IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
+      if (diagnose != nullptr)
+        numProblems += diagnose->activeProblems().size();
+    }
   }
   return numProblems;
 }
@@ -6063,7 +6068,7 @@ void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
 void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
-  ProblemsDialog problems(m_PluginContainer.plugins<IPluginDiagnose>(), this);
+  ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
   if (problems.hasProblems()) {
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(problems.objectName());

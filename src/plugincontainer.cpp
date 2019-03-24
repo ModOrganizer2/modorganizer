@@ -84,6 +84,10 @@ void PluginContainer::registerGame(IPluginGame *game)
 
 bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 {
+  // Storing the original QObject* is a bit of a hack as I couldn't figure out any
+  // way to cast directly between IPlugin* and IPluginDiagnose*
+  bf::at_key<QObject>(m_Plugins).push_back(plugin);
+
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
     if (pluginObj == nullptr) {

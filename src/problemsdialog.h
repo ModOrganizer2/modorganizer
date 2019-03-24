@@ -15,9 +15,9 @@ class ProblemsDialog;
 class ProblemsDialog : public QDialog
 {
   Q_OBJECT
-  
+
 public:
-  explicit ProblemsDialog(std::vector<MOBase::IPluginDiagnose*> diagnosePlugins, QWidget *parent = 0);
+  explicit ProblemsDialog(std::vector<QObject*> pluginObjects, QWidget *parent = 0);
   ~ProblemsDialog();
 
   bool hasProblems() const;
@@ -34,7 +34,7 @@ private slots:
 private:
 
   Ui::ProblemsDialog *ui;
-  std::vector<MOBase::IPluginDiagnose *> m_DiagnosePlugins;
+  std::vector<QObject *> m_PluginObjects;
 };
 
 #endif // PROBLEMSDIALOG_H

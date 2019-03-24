@@ -32,6 +32,7 @@ class PluginContainer : public QObject, public MOBase::IPluginDiagnose
 private:
 
   typedef boost::fusion::map<
+  boost::fusion::pair<QObject, std::vector<QObject*>>,
   boost::fusion::pair<MOBase::IPlugin, std::vector<MOBase::IPlugin*>>,
   boost::fusion::pair<MOBase::IPluginDiagnose, std::vector<MOBase::IPluginDiagnose*>>,
   boost::fusion::pair<MOBase::IPluginGame, std::vector<MOBase::IPluginGame*>>,
