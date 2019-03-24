@@ -371,6 +371,8 @@ MainWindow::MainWindow(QSettings &initSettings
   ui->apiRequests->setPalette(palette);
   ui->apiRequests->setVisible(!m_OrganizerCore.settings().hideAPICounter());
 
+  connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
+
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
 
   connect(ui->modList, SIGNAL(dropModeUpdate(bool)), m_OrganizerCore.modList(), SLOT(dropModeUpdate(bool)));
