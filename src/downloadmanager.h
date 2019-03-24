@@ -89,6 +89,7 @@ private:
     QDateTime m_Created; // used as a cache in DownloadManager::getFileTime, may not be valid elsewhere
     QByteArray m_Hash;
     QStringList m_GamesToQuery;
+    QString m_RemoteFileName;
 
     int m_Tries;
     bool m_ReQueried;

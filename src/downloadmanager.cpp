@@ -1373,7 +1373,7 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
       m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
     } break;
     case STATE_FETCHINGMODINFO_MD5: {
-      qDebug(qUtf8Printable(QString("Searching %1 for Md5 of %2").arg(info->m_GamesToQuery[0]).arg(QString(info->m_Hash.toHex()))));
+      qDebug(qUtf8Printable(QString("Searching %1 for MD5 of %2").arg(info->m_GamesToQuery[0]).arg(QString(info->m_Hash.toHex()))));
       m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
     } break;
     case STATE_READY: {
@@ -1561,8 +1561,9 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
     QVariantMap fileInfo = file.toMap();
     QString fileName = fileInfo["file_name"].toString();
     QString fileNameVariant = fileName.mid(0).replace(' ', '_');
-    if ((fileName == info->m_FileName) || (fileName == alternativeLocalName) ||
-        (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
+    if ((fileName == info->m_RemoteFileName) || (fileNameVariant == info->m_RemoteFileName) ||
+        (fileName == info->m_FileName) || (fileNameVariant == info->m_FileName) ||
+        (fileName == alternativeLocalName) || (fileNameVariant == alternativeLocalName)) {
       info->m_FileInfo->name = fileInfo["name"].toString();
       info->m_FileInfo->version.parse(fileInfo["version"].toString());
       if (!info->m_FileInfo->version.isValid()) {
@@ -1822,7 +1823,13 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
 
   info->m_FileInfo->gameName = gameShortName;
 
-  setState(info, STATE_READY);
+  //If the file description is not present, send another query to get it
+  if (info->m_FileInfo->description.isEmpty()) {
+    info->m_RemoteFileName = fileDetails["file_name"].toString();
+    setState(info, STATE_FETCHINGFILEINFO);
+  } else {
+    setState(info, STATE_READY);
+  }
 }
 
 
