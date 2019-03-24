@@ -645,6 +645,11 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
 int main(int argc, char *argv[])
 {
+  //Make sure the configured temp folder exists
+  QDir tempDir = QDir::temp();
+  if (!tempDir.exists())
+    tempDir.root().mkpath(tempDir.canonicalPath());
+
   //Should allow for better scaling of ui with higher resolution displays
   QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
