@@ -707,7 +707,7 @@ int main(int argc, char *argv[])
     // initialize dump collection only after "dataPath" since the crashes are stored under it
     prevUnhandledExceptionFilter = SetUnhandledExceptionFilter(MyUnhandledExceptionFilter);
 
-    LogBuffer::init(1000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
+    LogBuffer::init(1000000, QtDebugMsg, qApp->property("dataPath").toString() + "/logs/mo_interface.log");
 
     QString splash = dataPath + "/splash.png";
     if (!QFile::exists(dataPath + "/splash.png")) {
