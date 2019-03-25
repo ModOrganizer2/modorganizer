@@ -110,22 +110,22 @@ static bool renameFile(const QString &oldName, const QString &newName,
 
 static std::wstring getProcessName(HANDLE process)
 {
-	wchar_t buffer[MAX_PATH];
-	wchar_t *fileName = L"unknown";
+  wchar_t buffer[MAX_PATH];
+  wchar_t *fileName = L"unknown";
 
-	if (process == nullptr) return fileName;
+  if (process == nullptr) return fileName;
 
-	if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
-		fileName = wcsrchr(buffer, L'\\');
-		if (fileName == nullptr) {
-			fileName = buffer;
-		}
-		else {
-			fileName += 1;
-		}
-	}
+  if (::GetProcessImageFileNameW(process, buffer, MAX_PATH) != 0) {
+    fileName = wcsrchr(buffer, L'\\');
+    if (fileName == nullptr) {
+      fileName = buffer;
+    }
+    else {
+      fileName += 1;
+    }
+  }
 
-	return fileName;
+  return fileName;
 }
 
 // Get parent PID for the given process, return 0 on failure
@@ -677,8 +677,8 @@ void OrganizerCore::downloadRequestedNXM(const QString &url)
 void OrganizerCore::externalMessage(const QString &message)
 {
   if (MOShortcut moshortcut{ message } ) {
-	if(moshortcut.hasExecutable())
-		runShortcut(moshortcut);
+    if(moshortcut.hasExecutable())
+      runShortcut(moshortcut);
   }
   else if (isNxmLink(message)) {
     MessageDialog::showMessage(tr("Download started"), qApp->activeWindow());
@@ -1517,7 +1517,9 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
 HANDLE OrganizerCore::startApplication(const QString &executable,
                                        const QStringList &args,
                                        const QString &cwd,
-                                       const QString &profile)
+                                       const QString &profile,
+                                       const QString &forcedCustomOverwrite,
+                                       bool ignoreCustomOverwrite)
 {
   QFileInfo binary;
   QString arguments        = args.join(" ");
@@ -1582,7 +1584,18 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
   }
 
-  return spawnBinaryDirect(binary, arguments, profileName, currentDirectory, steamAppID, customOverwrite, forcedLibraries);
+  if (!forcedCustomOverwrite.isEmpty())
+    customOverwrite = forcedCustomOverwrite;
+  if (ignoreCustomOverwrite)
+    customOverwrite.clear();
+
+  return spawnBinaryDirect(binary,
+                           arguments,
+                           profileName,
+                           currentDirectory,
+                           steamAppID,
+                           customOverwrite,
+                           forcedLibraries);
 }
 
 bool OrganizerCore::waitForApplication(HANDLE handle, LPDWORD exitCode)
@@ -2222,8 +2235,8 @@ void OrganizerCore::loginSuccessful(bool necessary)
     task();
   }
 
-	m_PostLoginTasks.clear();
-	NexusInterface::instance(m_PluginContainer)->loginCompleted();
+  m_PostLoginTasks.clear();
+  NexusInterface::instance(m_PluginContainer)->loginCompleted();
 }
 
 void OrganizerCore::loginSuccessfulUpdate(bool necessary)

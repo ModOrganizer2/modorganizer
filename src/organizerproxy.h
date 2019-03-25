@@ -43,7 +43,8 @@ public:
   virtual MOBase::IPluginList *pluginList() const;
   virtual MOBase::IModList *modList() const;
   virtual MOBase::IProfile *profile() const override;
-  virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "", const QString &profile = "");
+  virtual HANDLE startApplication(const QString &executable, const QStringList &args = QStringList(), const QString &cwd = "",
+                                  const QString &profile = "", const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   virtual bool waitForApplication(HANDLE handle, LPDWORD exitCode = nullptr) const;
   virtual void refreshModList(bool saveChanges);
 

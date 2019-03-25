@@ -209,7 +209,7 @@ public:
   PluginList *pluginList();
   ModList *modList();
   HANDLE runShortcut(const MOShortcut& shortcut);
-  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
+  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile, const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
   HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
