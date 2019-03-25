@@ -287,13 +287,23 @@ bool NexusInterface::isURLGameRelated(const QUrl &url) const
 QString NexusInterface::getGameURL(QString gameName) const
 {
   IPluginGame *game = getGame(gameName);
-  return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
+  if (game != nullptr) {
+    return "https://www.nexusmods.com/" + game->gameNexusName().toLower();
+  } else {
+    qCritical("getGameURL can't find plugin for %s", qUtf8Printable(gameName));
+    return "";
+  }
 }
 
 QString NexusInterface::getOldModsURL(QString gameName) const
 {
   IPluginGame *game = getGame(gameName);
-  return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
+  if (game != nullptr) {
+    return "https://" + game->gameNexusName().toLower() + ".nexusmods.com/mods";
+  } else {
+    qCritical("getOldModsURL can't find plugin for %s", qUtf8Printable(gameName));
+    return "";
+  }
 }
 
 
@@ -395,6 +405,11 @@ int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant
 {
   if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
     IPluginGame *game = getGame(gameName);
+    if (game == nullptr) {
+      qCritical("requestUpdates can't find plugin for %s", qUtf8Printable(gameName));
+      return -1;
+    }
+
     NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
     m_RequestQueue.enqueue(requestInfo);
 
@@ -451,6 +466,11 @@ int NexusInterface::requestFiles(QString gameName, int modID, QObject *receiver,
 int NexusInterface::requestFileInfo(QString gameName, int modID, int fileID, QObject *receiver, QVariant userData, const QString &subModule)
 {
   IPluginGame *gamePlugin = getGame(gameName);
+  if (gamePlugin == nullptr) {
+    qCritical("requestFileInfo can't find plugin for %s", qUtf8Printable(gameName));
+    return -1;
+  }
+
   NXMRequestInfo requestInfo(modID, fileID, NXMRequestInfo::TYPE_FILEINFO, userData, subModule, gamePlugin);
   m_RequestQueue.enqueue(requestInfo);
 
@@ -579,7 +599,7 @@ IPluginGame* NexusInterface::getGame(QString gameName) const
   auto gamePlugins = m_PluginContainer->plugins<IPluginGame>();
   IPluginGame *gamePlugin = qApp->property("managed_game").value<IPluginGame*>();
   for (auto plugin : gamePlugins) {
-    if (plugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
+    if (plugin != nullptr && plugin->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
       gamePlugin = plugin;
       break;
     }

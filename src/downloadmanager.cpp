@@ -453,7 +453,7 @@ void DownloadManager::removePending(QString gameName, int modID, int fileID)
   games += m_ManagedGame->gameShortName();
   for (auto game : games) {
     MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
       gameShortName = gamePlugin->gameShortName();
       break;
     }
@@ -1640,7 +1640,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   games += m_ManagedGame->gameShortName();
   for (auto game : games) {
     MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
       info->gameName = gamePlugin->gameShortName();
     }
   }
@@ -1815,7 +1815,7 @@ void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant use
   games += m_ManagedGame->gameShortName();
   for (auto game : games) {
     MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
-    if (gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
       gameShortName = gamePlugin->gameShortName();
       break;
     }

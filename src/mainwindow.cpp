@@ -5623,7 +5623,7 @@ void MainWindow::nxmEndorsementsAvailable(QVariant userData, QVariant resultData
   }
   for (auto game : games) {
     IPluginGame *gamePlugin = m_OrganizerCore.getGame(game);
-    if (gamePlugin->gameShortName().compare("SkyrimSE", Qt::CaseInsensitive) == 0)
+    if (gamePlugin != nullptr && gamePlugin->gameShortName().compare("SkyrimSE", Qt::CaseInsensitive) == 0)
       searchedMO2NexusGame = true;
     auto iter = sorted.equal_range(gamePlugin->gameNexusName());
     for (auto result = iter.first; result != iter.second; ++result) {
