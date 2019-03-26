@@ -1138,7 +1138,7 @@ QStringList OrganizerCore::findFiles(
       }
     }
   } else {
-    qWarning("directory not found: %1", qUtf8Printable(path));
+    qWarning("directory not found: %s", qUtf8Printable(path));
   }
   return result;
 }
@@ -1146,8 +1146,7 @@ QStringList OrganizerCore::findFiles(
 QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
 {
   QStringList result;
-  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(
-      ToWString(QFileInfo(fileName).fileName()), nullptr);
+  const FileEntry::Ptr file = m_DirectoryStructure->searchFile(ToWString(fileName), nullptr);
 
   if (file.get() != nullptr) {
     result.append(ToQString(
@@ -1157,7 +1156,7 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
           ToQString(m_DirectoryStructure->getOriginByID(i.first).getName()));
     }
   } else {
-    qWarning("file not found: %1", qUtf8Printable(fileName));
+    qWarning("file not found: %s", qUtf8Printable(fileName));
   }
   return result;
 }
