@@ -2593,12 +2593,11 @@ void MainWindow::modlistSelectionsChanged(const QItemSelection &selected)
 {
   if (selected.count()) {
     auto selection = selected.last();
-    for (auto index : selection.indexes()) {
-      ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(Qt::UserRole + 1).toInt());
-      m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
-      m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
-      m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
-    }
+    auto index = selection.indexes().last();
+    ModInfo::Ptr selectedMod = ModInfo::getByIndex(index.data(Qt::UserRole + 1).toInt());
+    m_OrganizerCore.modList()->setOverwriteMarkers(selectedMod->getModOverwrite(), selectedMod->getModOverwritten());
+    m_OrganizerCore.modList()->setArchiveOverwriteMarkers(selectedMod->getModArchiveOverwrite(), selectedMod->getModArchiveOverwritten());
+    m_OrganizerCore.modList()->setArchiveLooseOverwriteMarkers(selectedMod->getModArchiveLooseOverwrite(), selectedMod->getModArchiveLooseOverwritten());
   } else {
     m_OrganizerCore.modList()->setOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
     m_OrganizerCore.modList()->setArchiveOverwriteMarkers(std::set<unsigned int>(), std::set<unsigned int>());
