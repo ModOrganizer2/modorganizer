@@ -1137,8 +1137,6 @@ QStringList OrganizerCore::findFiles(
         result.append(ToQString(file->getFullPath()));
       }
     }
-  } else {
-    qWarning("directory not found: %s", qUtf8Printable(path));
   }
   return result;
 }
@@ -1155,8 +1153,6 @@ QStringList OrganizerCore::getFileOrigins(const QString &fileName) const
       result.append(
           ToQString(m_DirectoryStructure->getOriginByID(i.first).getName()));
     }
-  } else {
-    qWarning("file not found: %s", qUtf8Printable(fileName));
   }
   return result;
 }
