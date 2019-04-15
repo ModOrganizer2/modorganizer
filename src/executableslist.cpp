@@ -57,7 +57,7 @@ void ExecutablesList::init(IPluginGame const *game)
   }
   ExecutableInfo explorerpp = ExecutableInfo("Explore Virtual Folder", QFileInfo(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe" ))
       .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
-  
+
   if (explorerpp.isValid()) {
     addExecutableInternal(explorerpp.title(),
       explorerpp.binary().absoluteFilePath(),
@@ -65,7 +65,7 @@ void ExecutablesList::init(IPluginGame const *game)
       explorerpp.workingDirectory().absolutePath(),
       explorerpp.steamAppID());
   }
-  
+
 }
 
 void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end)
@@ -152,6 +152,7 @@ void ExecutablesList::updateExecutable(const QString &title,
                                        Executable::Flags flags)
 {
   QFileInfo file(executableName);
+  QDir dir(workingDirectory);
   auto existingExe = findExe(title);
   flags &= mask;
 
@@ -165,8 +166,11 @@ void ExecutablesList::updateExecutable(const QString &title,
         // don't overwrite a valid binary with an invalid one
         existingExe->m_BinaryInfo = file;
       }
+      if (dir.exists()) {
+        // don't overwrite a valid working directory with an invalid one
+        existingExe->m_WorkingDirectory = workingDirectory;
+      }
       existingExe->m_Arguments = arguments;
-      existingExe->m_WorkingDirectory = workingDirectory;
       existingExe->m_SteamAppID = steamAppID;
     }
   } else {

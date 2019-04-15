@@ -83,8 +83,33 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 
 void EditExecutablesDialog::on_binaryEdit_textChanged(const QString &name)
 {
-  QFileInfo fileInfo(name);
-  ui->addButton->setEnabled(fileInfo.exists() && fileInfo.isFile());
+  updateButtonStates();
+}
+
+void EditExecutablesDialog::on_workingDirEdit_textChanged(const QString &dir)
+{
+  updateButtonStates();
+}
+
+void EditExecutablesDialog::updateButtonStates()
+{
+  bool enabled = true;
+
+  QString filePath(ui->binaryEdit->text());
+  QFileInfo fileInfo(filePath);
+  if (!fileInfo.exists())
+    enabled = false;
+  if (!fileInfo.isFile())
+    enabled = false;
+
+  QString dirPath(ui->workingDirEdit->text());
+  if (!dirPath.isEmpty()) {
+    QDir dirInfo(dirPath);
+    if (!dirInfo.exists())
+      enabled = false;
+  }
+
+  ui->addButton->setEnabled(enabled);
 }
 
 void EditExecutablesDialog::resetInput()
@@ -293,7 +318,6 @@ bool EditExecutablesDialog::executableChanged()
         && fileInfo.isFile();
   }
 }
-
 void EditExecutablesDialog::on_executablesListBox_itemSelectionChanged()
 {
   if (ui->executablesListBox->selectedItems().size() == 0) {

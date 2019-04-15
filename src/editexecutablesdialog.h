@@ -74,6 +74,8 @@ private slots:
 
   void on_binaryEdit_textChanged(const QString &arg1);
 
+  void on_workingDirEdit_textChanged(const QString &arg1);
+
   void on_addButton_clicked();
 
   void on_browseButton_clicked();
@@ -105,6 +107,8 @@ private:
   void refreshExecutablesWidget();
 
   bool executableChanged();
+
+  void updateButtonStates();
 
 private:
   Ui::EditExecutablesDialog *ui;
