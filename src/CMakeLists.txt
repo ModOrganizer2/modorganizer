@@ -362,7 +362,17 @@ INSTALL(FILES $<TARGET_PDB_FILE:ModOrganizer>
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
         DESTINATION bin/dlls
         RENAME dlls.manifest)
+		
+# qdds.dll needs installing manually as Qt no longer ships with it by default.
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
 
+install(FILES ${organizer_translations_qm} DESTINATION bin/translations)
+
+INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
+                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
+        DESTINATION bin)
+
+#We should do this last, since windeployqt.exe scans the folders in bin for required modules e.g QtQuick.2 required by tutorials.
 # use windeployqt.exe to install all required libraries
 SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
@@ -371,11 +381,7 @@ INSTALL(
         ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
-    # run it a second time because on the first run it misses some files
-    EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
-        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
-    )
+	
     EXECUTE_PROCESS(COMMAND
         ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
@@ -389,11 +395,3 @@ INSTALL(
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/qtplugins)"
 )
 
-# qdds.dll needs installing manually as Qt no longer ships with it by default.
-INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
-
-install(FILES ${organizer_translations_qm} DESTINATION bin/translations)
-
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
-                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
-        DESTINATION bin)
