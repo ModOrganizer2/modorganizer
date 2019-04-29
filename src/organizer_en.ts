@@ -1029,7 +1029,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </message>
     <message>
         <location filename="editexecutablesdialog.ui" line="256"/>
-        <location filename="editexecutablesdialog.cpp" line="247"/>
+        <location filename="editexecutablesdialog.cpp" line="272"/>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1050,54 +1050,54 @@ Right now the only case I know of where this needs to be overwritten is for the 
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="170"/>
+        <location filename="editexecutablesdialog.cpp" line="195"/>
         <source>Select a binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="171"/>
+        <location filename="editexecutablesdialog.cpp" line="196"/>
         <source>Executable (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="196"/>
+        <location filename="editexecutablesdialog.cpp" line="221"/>
         <source>Java (32-bit) required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="197"/>
+        <location filename="editexecutablesdialog.cpp" line="222"/>
         <source>MO requires 32-bit java to run this application. If you already have it installed, select javaw.exe from that installation as the binary.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="217"/>
+        <location filename="editexecutablesdialog.cpp" line="242"/>
         <source>Select a directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="224"/>
+        <location filename="editexecutablesdialog.cpp" line="249"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="224"/>
+        <location filename="editexecutablesdialog.cpp" line="249"/>
         <source>Really remove &quot;%1&quot; from executables?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="251"/>
+        <location filename="editexecutablesdialog.cpp" line="276"/>
         <source>Modify</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="313"/>
-        <location filename="editexecutablesdialog.cpp" line="333"/>
+        <location filename="editexecutablesdialog.cpp" line="337"/>
+        <location filename="editexecutablesdialog.cpp" line="357"/>
         <source>Save Changes?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="editexecutablesdialog.cpp" line="314"/>
-        <location filename="editexecutablesdialog.cpp" line="334"/>
+        <location filename="editexecutablesdialog.cpp" line="338"/>
+        <location filename="editexecutablesdialog.cpp" line="358"/>
         <source>You made changes to the current executable, do you want to save them?</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3876,155 +3876,155 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="956"/>
+        <location filename="modinfodialog.cpp" line="957"/>
         <source>Failed to delete %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="972"/>
-        <location filename="modinfodialog.cpp" line="978"/>
-        <location filename="modinfodialog.cpp" line="997"/>
-        <location filename="modinfodialog.cpp" line="1002"/>
+        <location filename="modinfodialog.cpp" line="973"/>
+        <location filename="modinfodialog.cpp" line="979"/>
+        <location filename="modinfodialog.cpp" line="998"/>
+        <location filename="modinfodialog.cpp" line="1003"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="972"/>
-        <location filename="modinfodialog.cpp" line="997"/>
+        <location filename="modinfodialog.cpp" line="973"/>
+        <location filename="modinfodialog.cpp" line="998"/>
         <source>Are sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="978"/>
-        <location filename="modinfodialog.cpp" line="1002"/>
+        <location filename="modinfodialog.cpp" line="979"/>
+        <location filename="modinfodialog.cpp" line="1003"/>
         <source>Are sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1076"/>
-        <location filename="modinfodialog.cpp" line="1082"/>
+        <location filename="modinfodialog.cpp" line="1077"/>
+        <location filename="modinfodialog.cpp" line="1083"/>
         <source>New Folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1088"/>
+        <location filename="modinfodialog.cpp" line="1089"/>
         <source>Failed to create &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1192"/>
-        <location filename="modinfodialog.cpp" line="1216"/>
+        <location filename="modinfodialog.cpp" line="1193"/>
+        <location filename="modinfodialog.cpp" line="1217"/>
         <source>Replace file?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1192"/>
+        <location filename="modinfodialog.cpp" line="1193"/>
         <source>There already is a hidden version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1195"/>
-        <location filename="modinfodialog.cpp" line="1219"/>
+        <location filename="modinfodialog.cpp" line="1196"/>
+        <location filename="modinfodialog.cpp" line="1220"/>
         <source>File operation failed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1195"/>
-        <location filename="modinfodialog.cpp" line="1219"/>
+        <location filename="modinfodialog.cpp" line="1196"/>
+        <location filename="modinfodialog.cpp" line="1220"/>
         <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1206"/>
-        <location filename="modinfodialog.cpp" line="1229"/>
+        <location filename="modinfodialog.cpp" line="1207"/>
+        <location filename="modinfodialog.cpp" line="1230"/>
         <source>failed to rename %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1216"/>
+        <location filename="modinfodialog.cpp" line="1217"/>
         <source>There already is a visible version of this file. Replace it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1292"/>
+        <location filename="modinfodialog.cpp" line="1293"/>
         <source>Select binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1292"/>
+        <location filename="modinfodialog.cpp" line="1293"/>
         <source>Binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1364"/>
+        <location filename="modinfodialog.cpp" line="1365"/>
         <source>file not found: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1377"/>
+        <location filename="modinfodialog.cpp" line="1378"/>
         <source>failed to generate preview for %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1393"/>
+        <location filename="modinfodialog.cpp" line="1394"/>
         <source>Sorry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1393"/>
+        <location filename="modinfodialog.cpp" line="1394"/>
         <source>Sorry, can&apos;t preview anything. This function currently does not support extracting from bsas.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1407"/>
+        <location filename="modinfodialog.cpp" line="1408"/>
         <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1409"/>
+        <location filename="modinfodialog.cpp" line="1410"/>
         <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1412"/>
-        <location filename="modinfodialog.cpp" line="1432"/>
+        <location filename="modinfodialog.cpp" line="1413"/>
+        <location filename="modinfodialog.cpp" line="1433"/>
         <source>Open/Execute</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1416"/>
-        <location filename="modinfodialog.cpp" line="1436"/>
+        <location filename="modinfodialog.cpp" line="1417"/>
+        <location filename="modinfodialog.cpp" line="1437"/>
         <source>Preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1487"/>
+        <location filename="modinfodialog.cpp" line="1488"/>
         <source>Name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1487"/>
+        <location filename="modinfodialog.cpp" line="1488"/>
         <source>Please enter a name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1491"/>
-        <location filename="modinfodialog.cpp" line="1494"/>
+        <location filename="modinfodialog.cpp" line="1492"/>
+        <location filename="modinfodialog.cpp" line="1495"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1491"/>
+        <location filename="modinfodialog.cpp" line="1492"/>
         <source>Invalid name. Must be a valid file name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1494"/>
+        <location filename="modinfodialog.cpp" line="1495"/>
         <source>A tweak by that name exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1508"/>
+        <location filename="modinfodialog.cpp" line="1509"/>
         <source>Create Tweak</source>
         <translation type="unfinished"></translation>
     </message>
