@@ -5772,7 +5772,7 @@ If the folder was still in use, restart MO and try again.</source>
     </message>
     <message>
         <location filename="main.cpp" line="686"/>
-        <location filename="settings.cpp" line="1191"/>
+        <location filename="settings.cpp" line="1211"/>
         <source>Mod Organizer</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5849,12 +5849,12 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1198"/>
+        <location filename="settings.cpp" line="1218"/>
         <source>Script Extender</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1205"/>
+        <location filename="settings.cpp" line="1225"/>
         <source>Proxy DLL</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6077,7 +6077,7 @@ Select Show Details option to see the full change-log.</source>
     </message>
     <message>
         <location filename="settings.cpp" line="731"/>
-        <location filename="settings.cpp" line="967"/>
+        <location filename="settings.cpp" line="986"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6087,19 +6087,19 @@ Select Show Details option to see the full change-log.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="968"/>
+        <location filename="settings.cpp" line="803"/>
+        <source>In order to finish configuration changes, MO must be restarted.
+Restart it now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="settings.cpp" line="987"/>
         <source>Failed to create &quot;%1&quot;, you may not have the necessary permission. path remains unchanged.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settings.cpp" line="1242"/>
+        <location filename="settings.cpp" line="802"/>
         <source>Restart Mod Organizer?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="settings.cpp" line="1243"/>
-        <source>In order to reset the window geometries, MO must be restarted.
-Restart it now?</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6803,22 +6803,22 @@ programs you are intentionally running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="115"/>
+        <location filename="settingsdialog.cpp" line="117"/>
         <source>Confirm</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="116"/>
+        <location filename="settingsdialog.cpp" line="118"/>
         <source>Changing the mod directory affects all your profiles! Mods not present (or named differently) in the new location will be disabled in all profiles. There is no way to undo this unless you backed up your profiles manually. Proceed?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="147"/>
+        <location filename="settingsdialog.cpp" line="154"/>
         <source>Executables Blacklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="148"/>
+        <location filename="settingsdialog.cpp" line="155"/>
         <source>Enter one executable per line to be blacklisted from the virtual file system.
 Mods and other virtualized files will not be visible to these executables and
 any executables launched by them.
@@ -6829,47 +6829,47 @@ Example:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="181"/>
+        <location filename="settingsdialog.cpp" line="188"/>
         <source>Select base directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="192"/>
+        <location filename="settingsdialog.cpp" line="199"/>
         <source>Select download directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="203"/>
+        <location filename="settingsdialog.cpp" line="210"/>
         <source>Select mod directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="214"/>
+        <location filename="settingsdialog.cpp" line="221"/>
         <source>Select cache directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="225"/>
+        <location filename="settingsdialog.cpp" line="232"/>
         <source>Select profiles directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="236"/>
+        <location filename="settingsdialog.cpp" line="243"/>
         <source>Select overwrite directory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="246"/>
+        <location filename="settingsdialog.cpp" line="253"/>
         <source>Select game executable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="325"/>
+        <location filename="settingsdialog.cpp" line="332"/>
         <source>Confirm?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdialog.cpp" line="326"/>
+        <location filename="settingsdialog.cpp" line="333"/>
         <source>This will make all dialogs show up again where you checked the &quot;Remember selection&quot;-box. Continue?</source>
         <translation type="unfinished"></translation>
     </message>
