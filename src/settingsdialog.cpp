@@ -53,6 +53,8 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   , m_PluginContainer(pluginContainer)
   , m_nexusLogin(new QWebSocket)
   , m_KeyReceived(false)
+  , m_KeyCleared(false)
+  , m_GeometriesReset(false)
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
@@ -129,6 +131,11 @@ void SettingsDialog::accept()
 bool SettingsDialog::getResetGeometries()
 {
   return ui->resetGeometryBtn->isChecked();
+}
+
+bool SettingsDialog::getApiKeyChanged()
+{
+  return m_KeyReceived || m_KeyCleared;
 }
 
 void SettingsDialog::on_categoriesBtn_clicked()
@@ -476,6 +483,7 @@ void SettingsDialog::on_clearCacheButton_clicked()
 void SettingsDialog::on_revokeNexusAuthButton_clicked()
 {
   emit revokeApiKey(ui->nexusConnect);
+  m_KeyCleared = true;
 }
 
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)
@@ -515,4 +523,10 @@ void SettingsDialog::on_profilesDirEdit_editingFinished()
 void SettingsDialog::on_overwriteDirEdit_editingFinished()
 {
   normalizePath(ui->overwriteDirEdit);
+}
+
+void SettingsDialog::on_resetGeometryBtn_clicked()
+{
+  m_GeometriesReset = true;
+  ui->resetGeometryBtn->setChecked(true);
 }

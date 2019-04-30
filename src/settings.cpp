@@ -788,6 +788,25 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   }
   m_Settings.setValue(key, dialog.saveGeometry());
 
+  // These changes happen regardless of accepted or rejected
+  bool restartNeeded = false;
+  if (dialog.getApiKeyChanged()) {
+    restartNeeded = true;
+  }
+  if (dialog.getResetGeometries()) {
+    restartNeeded = true;
+    m_Settings.setValue("reset_geometry", true);
+  }
+  if (restartNeeded) {
+    if (QMessageBox::question(nullptr,
+      tr("Restart Mod Organizer?"),
+      tr("In order to finish configuration changes, MO must be restarted.\n"
+        "Restart it now?"),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      qApp->exit(INT_MAX);
+    }
+  }
+
 }
 
 Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
@@ -1181,6 +1200,7 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
   , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
   , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
+  , m_resetGeometriesBtn(m_dialog.findChild<QPushButton *>("resetGeometryBtn"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -1216,6 +1236,8 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   m_lockGUIBox->setChecked(m_parent->lockGUI());
   m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
 
+  m_resetGeometriesBtn->setChecked(m_parent->directInterface().value("reset_geometry", false).toBool());
+
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
 }
@@ -1235,15 +1257,4 @@ void Settings::WorkaroundsTab::update()
   m_Settings.setValue("Settings/archive_parsing_experimental", m_enableArchiveParsingBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
-
-  if (m_dialog.getResetGeometries()) {
-    m_Settings.setValue("reset_geometry", true);
-    if (QMessageBox::question(nullptr,
-          tr("Restart Mod Organizer?"),
-          tr("In order to reset the window geometries, MO must be restarted.\n"
-             "Restart it now?"),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      qApp->exit(INT_MAX);
-    }
-  }
 }

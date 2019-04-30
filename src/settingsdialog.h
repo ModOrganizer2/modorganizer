@@ -82,6 +82,7 @@ public:
   QColor getContainedColor() { return m_ContainedColor; }
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
   bool getResetGeometries();
+  bool getApiKeyChanged();
 
   void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
   void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
@@ -165,6 +166,8 @@ private slots:
 
   void completeApiConnection();
 
+  void on_resetGeometryBtn_clicked();
+
 private:
     Ui::SettingsDialog *ui;
     PluginContainer *m_PluginContainer;
@@ -177,6 +180,8 @@ private:
     QColor m_ContainedColor;
 
     bool m_KeyReceived;
+    bool m_KeyCleared;
+    bool m_GeometriesReset;
     QString m_UUID;
     QString m_AuthToken;
 

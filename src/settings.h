@@ -531,6 +531,7 @@ private:
     QCheckBox *m_displayForeignBox;
     QCheckBox *m_lockGUIBox;
     QCheckBox *m_enableArchiveParsingBox;
+    QPushButton *m_resetGeometriesBtn;
   };
 
 private slots:
