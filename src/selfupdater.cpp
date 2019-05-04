@@ -126,37 +126,42 @@ void SelfUpdater::testForUpdate()
   // TODO: if prereleases are disabled we could just request the latest release
   // directly
   try {
-  m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
-                    [this](const QJsonArray &releases) {
-    QJsonObject newest;
-    for (const QJsonValue &releaseVal : releases) {
-      QJsonObject release = releaseVal.toObject();
-      if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
-                                         || !release["prerelease"].toBool())) {
-        if (newest.empty() || (VersionInfo(release["tag_name"].toString())
-                               > VersionInfo(newest["tag_name"].toString()))) {
-          newest = release;
+    m_GitHub.releases(GitHub::Repository("Modorganizer2", "modorganizer"),
+                      [this](const QJsonArray &releases) {
+      if (releases.isEmpty()) {
+        qDebug("Unable to connect to github.com to check version");
+        return;
+      }
+
+      QJsonObject newest;
+      for (const QJsonValue &releaseVal : releases) {
+        QJsonObject release = releaseVal.toObject();
+        if (!release["draft"].toBool() && (Settings::instance().usePrereleases()
+                                           || !release["prerelease"].toBool())) {
+          if (newest.empty() || (VersionInfo(release["tag_name"].toString())
+                                 > VersionInfo(newest["tag_name"].toString()))) {
+            newest = release;
+          }
         }
       }
-    }
 
-    if (!newest.empty()) {
-      VersionInfo newestVer(newest["tag_name"].toString());
-      if (newestVer > this->m_MOVersion) {
-        m_UpdateCandidate = newest;
-        qDebug("update available: %s -> %s",
-               qPrintable(this->m_MOVersion.displayString()),
-               qPrintable(newestVer.displayString()));
-        emit updateAvailable();
-      } else if (newestVer < this->m_MOVersion) {
-        // this could happen if the user switches from using prereleases to
-        // stable builds. Should we downgrade?
-        qDebug("this version is newer than the newest installed one: %s -> %s",
-               qPrintable(this->m_MOVersion.displayString()),
-               qPrintable(newestVer.displayString()));
+      if (!newest.empty()) {
+        VersionInfo newestVer(newest["tag_name"].toString());
+        if (newestVer > this->m_MOVersion) {
+          m_UpdateCandidate = newest;
+          qDebug("update available: %s -> %s",
+                 qUtf8Printable(this->m_MOVersion.displayString(3)),
+                 qUtf8Printable(newestVer.displayString(3)));
+          emit updateAvailable();
+        } else if (newestVer < this->m_MOVersion) {
+          // this could happen if the user switches from using prereleases to
+          // stable builds. Should we downgrade?
+          qDebug("This version is newer than the latest released one: %s -> %s",
+                 qUtf8Printable(this->m_MOVersion.displayString(3)),
+                 qUtf8Printable(newestVer.displayString(3)));
+        }
       }
-    }
-  });
+    });
   }
   //Catch all is bad by design, should be improved
   catch (...) {
@@ -224,7 +229,7 @@ void SelfUpdater::closeProgress()
 void SelfUpdater::openOutputFile(const QString &fileName)
 {
   QString outputPath = QDir::fromNativeSeparators(qApp->property("dataPath").toString()) + "/" + fileName;
-  qDebug("downloading to %s", qPrintable(outputPath));
+  qDebug("downloading to %s", qUtf8Printable(outputPath));
   m_UpdateFile.setFileName(outputPath);
   m_UpdateFile.open(QIODevice::WriteOnly);
 }
@@ -327,10 +332,10 @@ void SelfUpdater::installUpdate()
   const QString mopath
       = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
 
-  const std::wstring params = L"/DIR=" + qApp->applicationDirPath().toStdWString();
+  std::wstring parameters = ToWString("/DIR=\"" + qApp->applicationDirPath() + "\" ");
 
   HINSTANCE res = ::ShellExecuteW(
-      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), params.c_str(),
+      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), parameters.c_str(),
       nullptr, SW_SHOW);
 
   if (res > (HINSTANCE)32) {
@@ -338,9 +343,8 @@ void SelfUpdater::installUpdate()
   } else {
     reportError(tr("Failed to start %1: %2")
                     .arg(m_UpdateFile.fileName())
-                    .arg((int)res));
+                    .arg((INT_PTR)res));
   }
-
   m_UpdateFile.remove();
 }
 

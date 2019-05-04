@@ -32,16 +32,6 @@ CredentialsDialog::~CredentialsDialog()
   delete ui;
 }
 
-QString CredentialsDialog::username() const
-{
-  return ui->usernameEdit->text();
-}
-
-QString CredentialsDialog::password() const
-{
-  return ui->passwordEdit->text();
-}
-
 bool CredentialsDialog::store() const
 {
   return ui->rememberCheck->isChecked();

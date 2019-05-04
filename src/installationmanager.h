@@ -90,6 +90,11 @@ public:
   bool wasCancelled();
 
   /**
+   * @return true if an installation is currently in progress
+   **/
+  bool isRunning();
+
+  /**
    * @brief retrieve a string describing the specified error code
    *
    * @param errorCode an error code as returned by the archiving function
@@ -171,7 +176,7 @@ private:
   MOBase::DirectoryTree::Node *getSimpleArchiveBase(MOBase::DirectoryTree *dataTree);
 
   bool doInstall(MOBase::GuessedValue<QString> &modName, QString gameName,
-                 int modID, const QString &version, const QString &newestVersion, int categoryID, const QString &repository);
+                 int modID, const QString &version, const QString &newestVersion, int categoryID, int fileCategoryID, const QString &repository);
 
   //QString generateBackupName(const QString &directoryName) const;
 
@@ -201,6 +206,8 @@ private:
   };
 
 private:
+
+  bool m_IsRunning;
 
   QWidget *m_ParentWidget;
 

@@ -39,10 +39,6 @@ ModListSortProxy::ModListSortProxy(Profile* profile, QObject *parent)
   , m_FilterActive(false)
   , m_FilterMode(FILTER_AND)
 {
-  m_EnabledColumns.set(ModList::COL_FLAGS);
-  m_EnabledColumns.set(ModList::COL_NAME);
-  m_EnabledColumns.set(ModList::COL_VERSION);
-  m_EnabledColumns.set(ModList::COL_PRIORITY);
   setDynamicSortFilter(true); // this seems to work without dynamicsortfilter
                               // but I don't know why. This should be necessary
 }
@@ -62,16 +58,21 @@ void ModListSortProxy::updateFilterActive()
 
 void ModListSortProxy::setCategoryFilter(const std::vector<int> &categories)
 {
-  m_CategoryFilter = categories;
-  updateFilterActive();
-  invalidate();
+  //avoid refreshing the filter unless we are checking all mods for update.
+  if (categories != m_CategoryFilter || (!categories.empty() && categories.at(0) == CategoryFactory::CATEGORY_SPECIAL_UPDATEAVAILABLE)) {
+    m_CategoryFilter = categories;
+    updateFilterActive();
+    invalidate();
+  }
 }
 
 void ModListSortProxy::setContentFilter(const std::vector<int> &content)
 {
-  m_ContentFilter = content;
-  updateFilterActive();
-  invalidate();
+  if (content != m_ContentFilter) {
+    m_ContentFilter = content;
+    updateFilterActive();
+    invalidate();
+  }
 }
 
 Qt::ItemFlags ModListSortProxy::flags(const QModelIndex &modelIndex) const
@@ -85,10 +86,12 @@ void ModListSortProxy::enableAllVisible()
 {
   if (m_Profile == nullptr) return;
 
+  QList<unsigned int> modsToEnable;
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modID, true);
+    modsToEnable.append(modID);
   }
+  m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
   invalidate();
 }
 
@@ -96,10 +99,12 @@ void ModListSortProxy::disableAllVisible()
 {
   if (m_Profile == nullptr) return;
 
+  QList<unsigned int> modsToDisable;
   for (int i = 0; i < this->rowCount(); ++i) {
     int modID = mapToSource(index(i, 0)).data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modID, false);
+    modsToDisable.append(modID);
   }
+  m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
   invalidate();
 }
 
@@ -218,8 +223,24 @@ bool ModListSortProxy::lessThan(const QModelIndex &left,
           lt = comp < 0;
        }
     } break;
+    case ModList::COL_NOTES: {
+      QString leftComments = leftMod->comments();
+      QString rightComments = rightMod->comments();
+      if (leftComments != rightComments) {
+        if (leftComments.isEmpty()) {
+          lt = sortOrder() == Qt::DescendingOrder;
+        } else if (rightComments.isEmpty()) {
+          lt = sortOrder() == Qt::AscendingOrder;
+        } else {
+          lt = leftComments < rightComments;
+        }
+      }
+    } break;
     case ModList::COL_PRIORITY: {
       // nop, already compared by priority
+    } break;
+    default: {
+      qWarning() << "Sorting is not defined for column " << left.column();
     } break;
   }
   return lt;
@@ -238,9 +259,14 @@ bool ModListSortProxy::hasConflictFlag(const std::vector<ModInfo::EFlag> &flags)
 {
   for (ModInfo::EFlag flag : flags) {
     if ((flag == ModInfo::FLAG_CONFLICT_MIXED) ||
-        (flag == ModInfo::FLAG_CONFLICT_OVERWRITE) ||
-        (flag == ModInfo::FLAG_CONFLICT_OVERWRITTEN) ||
-        (flag == ModInfo::FLAG_CONFLICT_REDUNDANT)) {
+      (flag == ModInfo::FLAG_CONFLICT_OVERWRITE) ||
+      (flag == ModInfo::FLAG_CONFLICT_OVERWRITTEN) ||
+      (flag == ModInfo::FLAG_CONFLICT_REDUNDANT) ||
+      (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE) ||
+      (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN) ||
+      (flag == ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED) ||
+      (flag == ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE) ||
+      (flag == ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN)) {
       return true;
     }
   }
@@ -340,16 +366,97 @@ bool ModListSortProxy::filterMatchesModOr(ModInfo::Ptr info, bool enabled) const
 
 bool ModListSortProxy::filterMatchesMod(ModInfo::Ptr info, bool enabled) const
 {
-  if (!m_CurrentFilter.isEmpty() &&
-      !info->name().contains(m_CurrentFilter, Qt::CaseInsensitive)) {
-    return false;
-  }
+  if (!m_CurrentFilter.isEmpty()) {
+    bool display = false;
+    QString filterCopy = QString(m_CurrentFilter);
+    filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
+    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
+
+    bool segmentGood = true;
+
+    //split in ORSegments that internally use AND logic
+    for (auto& ORSegment : ORList) {
+      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      segmentGood = true;
+      bool foundKeyword = false;
+
+      //check each word in the segment for match, each word needs to be matched but it doesn't matter where.
+      for (auto& currentKeyword : ANDKeywords) {
+        foundKeyword = false;
+
+        //search keyword in name
+        if (m_EnabledColumns[ModList::COL_NAME] &&
+          info->name().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
+        }
+
+        // Search by notes
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_NOTES] &&
+          info->comments().contains(currentKeyword, Qt::CaseInsensitive)) {
+          foundKeyword = true;
+        }
+
+        // Search by categories
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_CATEGORY]) {
+          for (auto category : info->categories()) {
+            if (category.contains(currentKeyword, Qt::CaseInsensitive)) {
+              foundKeyword = true;
+              break;
+            }
+          }
+        }
+
+        // Search by Nexus ID
+        if (!foundKeyword &&
+          m_EnabledColumns[ModList::COL_MODID]) {
+          bool ok;
+          int filterID = currentKeyword.toInt(&ok);
+          if (ok) {
+            int modID = info->getNexusID();
+            while (modID > 0) {
+              if (modID == filterID) {
+                foundKeyword = true;
+                break;
+              }
+              modID = (int)(modID / 10);
+            }
+          }
+        }
+
+        if (!foundKeyword) {
+          //currentKeword is missing from everything, AND fails and we need to check next ORsegment
+          segmentGood = false;
+          break;
+        }
+
+      }//for ANDKeywords loop
+
+      if (segmentGood) {
+        //the last AND loop didn't break so the ORSegments is true so mod matches filter
+        display = true;
+        break;
+      }
+
+    }//for ORList loop
+
+    if (!display) {
+      return false;
+    }
+  }//if (!m_CurrentFilter.isEmpty())
 
   if (m_FilterMode == FILTER_AND) {
     return filterMatchesModAnd(info, enabled);
-  } else {
+  }
+  else {
     return filterMatchesModOr(info, enabled);
   }
+}
+
+void ModListSortProxy::setColumnVisible(int column, bool visible)
+{
+  m_EnabledColumns[column] = visible;
 }
 
 void ModListSortProxy::setFilterMode(ModListSortProxy::FilterMode mode)
@@ -367,13 +474,13 @@ bool ModListSortProxy::filterAcceptsRow(int row, const QModelIndex &parent) cons
   }
 
   if (row >= static_cast<int>(m_Profile->numMods())) {
-    qWarning("invalid row idx %d", row);
+    qWarning("invalid row index: %d", row);
     return false;
   }
 
   QModelIndex idx = sourceModel()->index(row, 0, parent);
   if (!idx.isValid()) {
-    qDebug("invalid index");
+    qDebug("invalid mod index");
     return false;
   }
   if (sourceModel()->hasChildren(idx)) {

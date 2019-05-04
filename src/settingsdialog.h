@@ -22,8 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include <iplugin.h>
+#include <QComboBox>
 #include <QDialog>
+#include <QWebSocket>
 #include <QListWidgetItem>
+#include <QTimer>
 
 class PluginContainer;
 
@@ -50,6 +53,8 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
+  void setButtonColor(QPushButton *button, QColor &color);
+
 public slots:
 
   virtual void accept();
@@ -57,6 +62,10 @@ public slots:
 signals:
 
   void resetDialogs();
+  void processApiKey(const QString &);
+  void closeApiConnection(QPushButton *);
+  void revokeApiKey(QPushButton *);
+  void retryApiConnection();
 
 private:
 
@@ -67,20 +76,25 @@ public:
 
   QColor getOverwritingColor() { return m_OverwritingColor; }
   QColor getOverwrittenColor() { return m_OverwrittenColor; }
+  QColor getOverwritingArchiveColor() { return m_OverwritingArchiveColor; }
+  QColor getOverwrittenArchiveColor() { return m_OverwrittenArchiveColor; }
   QColor getContainsColor() { return m_ContainsColor; }
   QColor getContainedColor() { return m_ContainedColor; }
   QString getExecutableBlacklist() { return m_ExecutableBlacklist; }
   bool getResetGeometries();
+  bool getApiKeyChanged();
 
   void setOverwritingColor(QColor col) { m_OverwritingColor = col; }
   void setOverwrittenColor(QColor col) { m_OverwrittenColor = col; }
+  void setOverwritingArchiveColor(QColor col) { m_OverwritingArchiveColor = col; }
+  void setOverwrittenArchiveColor(QColor col) { m_OverwrittenArchiveColor = col; }
   void setContainsColor(QColor col) { m_ContainsColor = col; }
   void setContainedColor(QColor col) { m_ContainedColor = col; }
   void setExecutableBlacklist(QString blacklist) { m_ExecutableBlacklist = blacklist; }
 
 
 private slots:
-  void on_loginCheckBox_toggled(bool checked);
+  //void on_loginCheckBox_toggled(bool checked);
 
   void on_categoriesBtn_clicked();
 
@@ -104,6 +118,8 @@ private slots:
 
   void on_clearCacheButton_clicked();
 
+  void on_revokeNexusAuthButton_clicked();
+
   void on_browseBaseDirBtn_clicked();
 
   void on_browseOverwriteDirBtn_clicked();
@@ -115,6 +131,10 @@ private slots:
   void on_overwritingBtn_clicked();
 
   void on_overwrittenBtn_clicked();
+
+  void on_overwritingArchiveBtn_clicked();
+
+  void on_overwrittenArchiveBtn_clicked();
 
   void on_containsBtn_clicked();
 
@@ -134,16 +154,41 @@ private slots:
 
   void on_overwriteDirEdit_editingFinished();
 
+  void on_nexusConnect_clicked();
+
+  void dispatchLogin();
+
+  void loginPing();
+
+  void authError(QAbstractSocket::SocketError error);
+
+  void receiveApiKey(const QString &apiKey);
+
+  void completeApiConnection();
+
+  void on_resetGeometryBtn_clicked();
+
 private:
     Ui::SettingsDialog *ui;
     PluginContainer *m_PluginContainer;
 
     QColor m_OverwritingColor;
     QColor m_OverwrittenColor;
+    QColor m_OverwritingArchiveColor;
+    QColor m_OverwrittenArchiveColor;
     QColor m_ContainsColor;
     QColor m_ContainedColor;
 
+    bool m_KeyReceived;
+    bool m_KeyCleared;
+    bool m_GeometriesReset;
+    QString m_UUID;
+    QString m_AuthToken;
+
     QString m_ExecutableBlacklist;
+    QWebSocket *m_nexusLogin;
+    QTimer m_loginTimer;
+    int m_totalPings = 0;
 };
 
 

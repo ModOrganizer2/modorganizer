@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 #include "executableslist.h"
 #include "profile.h"
+#include "iplugingame.h"
 
 namespace Ui {
     class EditExecutablesDialog;
@@ -52,6 +53,7 @@ public:
   explicit EditExecutablesDialog(const ExecutablesList &executablesList,
                                  const ModList &modList,
                                  Profile *profile,
+                                 const MOBase::IPluginGame *game,
                                  QWidget *parent = 0);
 
   ~EditExecutablesDialog();
@@ -71,6 +73,8 @@ private slots:
 private slots:
 
   void on_binaryEdit_textChanged(const QString &arg1);
+
+  void on_workingDirEdit_textChanged(const QString &arg1);
 
   void on_addButton_clicked();
 
@@ -92,6 +96,10 @@ private slots:
 
   void on_executablesListBox_clicked(const QModelIndex &index);
 
+  void on_forceLoadButton_clicked();
+
+  void on_forceLoadCheckBox_toggled();
+
 private:
 
   void resetInput();
@@ -99,6 +107,8 @@ private:
   void refreshExecutablesWidget();
 
   bool executableChanged();
+
+  void updateButtonStates();
 
 private:
   Ui::EditExecutablesDialog *ui;
@@ -108,6 +118,10 @@ private:
   ExecutablesList m_ExecutablesList;
 
   Profile *m_Profile;
+
+  QList<MOBase::ExecutableForcedLoadSetting> m_ForcedLibraries;
+
+  const MOBase::IPluginGame *m_GamePlugin;
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

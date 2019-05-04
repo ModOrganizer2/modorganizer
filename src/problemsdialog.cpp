@@ -1,6 +1,7 @@
 #include "problemsdialog.h"
 #include "ui_problemsdialog.h"
 #include <utility.h>
+#include <iplugin.h>
 #include <iplugindiagnose.h>
 #include <QPushButton>
 #include <Shellapi.h>
@@ -9,8 +10,8 @@
 using namespace MOBase;
 
 
-ProblemsDialog::ProblemsDialog(std::vector<MOBase::IPluginDiagnose *> diagnosePlugins, QWidget *parent)
-  : QDialog(parent), ui(new Ui::ProblemsDialog), m_DiagnosePlugins(diagnosePlugins)
+ProblemsDialog::ProblemsDialog(std::vector<QObject *> pluginObjects, QWidget *parent)
+  : QDialog(parent), ui(new Ui::ProblemsDialog), m_PluginObjects(pluginObjects)
 {
   ui->setupUi(this);
 
@@ -29,7 +30,15 @@ ProblemsDialog::~ProblemsDialog()
 void ProblemsDialog::runDiagnosis()
 {
   ui->problemsWidget->clear();
-  foreach (IPluginDiagnose *diagnose, m_DiagnosePlugins) {
+  for(QObject *pluginObj : m_PluginObjects) {
+    IPlugin *plugin = qobject_cast<IPlugin*>(pluginObj);
+    if (plugin != nullptr && !plugin->isActive())
+      continue;
+
+    IPluginDiagnose *diagnose = qobject_cast<IPluginDiagnose*>(pluginObj);
+    if (diagnose == nullptr)
+      continue;
+
     std::vector<unsigned int> activeProblems = diagnose->activeProblems();
     foreach (unsigned int key, activeProblems) {
       QTreeWidgetItem *newItem = new QTreeWidgetItem();

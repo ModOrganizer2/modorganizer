@@ -60,6 +60,7 @@ public:
 
   virtual void setSourceModel(QAbstractItemModel *sourceModel) override;
 
+
   /**
    * @brief enable all mods visible under the current filter
    **/
@@ -93,6 +94,13 @@ public:
   virtual bool hasChildren ( const QModelIndex & parent = QModelIndex() ) const {
     return rowCount(parent) > 0;
   }
+
+  /**
+   * @brief sets whether a column is visible
+   * @param column the index of the column
+   * @param visible the visibility of the column
+   */
+  void setColumnVisible(int column, bool visible);
 
 public slots:
 

@@ -24,9 +24,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "versioninfo.h"
 
 class PluginContainer;
-
-class QDateTime;
 class QDir;
+class QDateTime;
+
 #include <QMutex>
 #include <QSharedPointer>
 #include <QString>
@@ -72,8 +72,14 @@ public:
     FLAG_CONFLICT_OVERWRITTEN,
     FLAG_CONFLICT_MIXED,
     FLAG_CONFLICT_REDUNDANT,
+    FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE,
+    FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN,
+    FLAG_ARCHIVE_CONFLICT_OVERWRITE,
+    FLAG_ARCHIVE_CONFLICT_OVERWRITTEN,
+    FLAG_ARCHIVE_CONFLICT_MIXED,
     FLAG_PLUGIN_SELECTED,
-    FLAG_ALTERNATE_GAME
+    FLAG_ALTERNATE_GAME,
+    FLAG_TRACKED,
   };
 
   enum EContent {
@@ -90,7 +96,6 @@ public:
     CONTENT_MCM,
     CONTENT_INI,
     CONTENT_MODGROUP
-
   };
 
   static const int NUM_CONTENT_TYPES = CONTENT_MODGROUP + 1;
@@ -108,6 +113,12 @@ public:
     ENDORSED_TRUE,
     ENDORSED_UNKNOWN,
     ENDORSED_NEVER
+  };
+
+  enum ETrackedState {
+    TRACKED_FALSE,
+    TRACKED_TRUE,
+    TRACKED_UNKNOWN,
   };
 
   enum EModType {
@@ -157,6 +168,15 @@ public:
   static std::vector<ModInfo::Ptr> getByModID(QString game, int modID);
 
   /**
+   * @brief retrieve a ModInfo object based on its name
+   *
+   * @param name the name to look up
+   * @return a reference counting pointer to the mod info
+   * @note since the pointer is reference counter, the pointer remains valid even if the collection is refreshed in a different thread
+   **/
+  static ModInfo::Ptr getByName(const QString &name);
+
+  /**
    * @brief remove a mod by index
    *
    * this physically deletes the specified mod from the disc and updates the ModInfo collection
@@ -182,16 +202,17 @@ public:
   static unsigned int findMod(const boost::function<bool (ModInfo::Ptr)> &filter);
 
   /**
-   * @brief check a bunch of mods for updates
-   * @param modIDs list of mods (Nexus Mod IDs) to check for updates
-   * @return
+   * @brief run a limited batch of mod update checks for "newest version" information
    */
-  static void checkChunkForUpdate(PluginContainer *pluginContainer, const std::vector<int> &modIDs, QObject *receiver, QString gameName);
+  static void manualUpdateCheck(PluginContainer *pluginContainer, QObject *receiver, std::multimap<QString, int> IDs);
 
   /**
    * @brief query nexus information for every mod and update the "newest version" information
+   * @return true if any mods are checked for update
    **/
-  static int checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
+  static bool checkAllForUpdate(PluginContainer *pluginContainer, QObject *receiver);
+
+  static std::set<QSharedPointer<ModInfo>> filteredMods(QString gameName, QVariantList updateData, bool addOldMods = false, bool markUpdated = false);
 
   /**
    * @brief create a new mod from the specified directory and add it to the collection
@@ -285,7 +306,7 @@ public:
   *
   * @param gameName the source game shortName
   */
-  virtual void setGameName(QString gameName) = 0;
+  virtual void setGameName(const QString &gameName) = 0;
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -359,6 +380,13 @@ public:
   virtual void setNeverEndorse() = 0;
 
   /**
+   * update the tracked state for the mod.  This only changes the
+   * buffered state, it does not sync with Nexus
+   * @param tracked the new tracked state
+   */
+  virtual void setIsTracked(bool tracked) = 0;
+
+  /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
@@ -370,6 +398,13 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse) = 0;
+
+  /**
+   * @brief track or untrack the mod.  This will sync with nexus!
+   * @param doTrack if true, the mod is tracked, if false, it's untracked.
+   * @note if doTrack doesn't differ from the current value, nothing happens.
+   */
+  virtual void track(bool doTrack) = 0;
 
   /**
    * @brief clear all caches held for this mod
@@ -458,6 +493,11 @@ public:
   virtual bool canBeUpdated() const { return false; }
 
   /**
+   * @return the mod update check expiration date
+   */
+  virtual QDateTime getExpires() const = 0;
+
+  /**
    * @return true if the mod can be enabled/disabled
    */
   virtual bool canBeEnabled() const { return false; }
@@ -502,6 +542,18 @@ public:
   virtual QString getDescription() const = 0;
 
   /**
+   * @return the nexus file status (aka category ID)
+   */
+  virtual int getNexusFileStatus() const = 0;
+
+
+  /**
+   * @brief sets the file status (category ID) from Nexus
+   * @param status the status id of the installed file
+   */
+  virtual void setNexusFileStatus(int status) = 0;
+
+  /**
    * @return comments for this mod
    */
   virtual QString comments() const = 0;
@@ -522,9 +574,34 @@ public:
   virtual QString getNexusDescription() const = 0;
 
   /**
+   * @brief get the last time nexus was checked for file updates on this mod
+   */
+  virtual QDateTime getLastNexusUpdate() const = 0;
+
+  /**
+   * @brief set the last time nexus was checked for file updates on this mod
+   */
+  virtual void setLastNexusUpdate(QDateTime time) = 0;
+
+  /**
    * @return last time nexus was queried for infos on this mod
    */
   virtual QDateTime getLastNexusQuery() const = 0;
+
+  /**
+   * @brief set the last time nexus was queried for info on this mod
+   */
+  virtual void setLastNexusQuery(QDateTime time) = 0;
+
+  /**
+   * @return last time the mod was updated on Nexus
+   */
+  virtual QDateTime getNexusLastModified() const = 0;
+
+  /**
+   * @brief set the last time the mod was updated on Nexus
+   */
+  virtual void setNexusLastModified(QDateTime time) = 0;
 
   /**
    * @return a list of files that, if they exist in the data directory are treated as files in THIS mod
@@ -534,7 +611,7 @@ public:
   /**
    * @return a list of archives belonging to this mod (as absolute file paths)
    */
-  virtual QStringList archives() const = 0;
+  virtual QStringList archives(bool checkOnDisk = false) = 0;
 
   /*
    *@return the color choosen by the user for the mod/separator
@@ -591,6 +668,11 @@ public:
   virtual EEndorsedState endorsedState() const { return ENDORSED_NEVER; }
 
   /**
+   * @return true if the file is being tracked on nexus
+   */
+  virtual ETrackedState trackedState() const { return TRACKED_FALSE; }
+
+  /**
    * @brief updates the valid-flag for this mod
    */
   void testValid();
@@ -626,6 +708,26 @@ public:
   virtual std::set<unsigned int> getModOverwritten() { return std::set<unsigned int>(); }
 
   /**
+   * @return retrieve list of mods (as mod index) with archives that are overwritten by this one. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+  * @return list of mods (as mod index) with archives that overwrite this one. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveOverwritten() { return std::set<unsigned int>(); }
+
+  /**
+  * @return retrieve list of mods (as mod index) with archives that are overwritten by thos mod's loose files. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveLooseOverwrite() { return std::set<unsigned int>(); }
+
+  /**
+  * @return list of mods (as mod index) with loose files that overwrite this one's archive files. Updates may be delayed
+  */
+  virtual std::set<unsigned int> getModArchiveLooseOverwritten() { return std::set<unsigned int>(); }
+
+  /**
    * @brief update conflict information
    */
   virtual void doConflictCheck() const {}
@@ -658,7 +760,8 @@ protected:
 
 private:
 
-  static void createFromOverwrite(PluginContainer *pluginContainer);
+  static void createFromOverwrite(PluginContainer *pluginContainer,
+                                  MOShared::DirectoryEntry **directoryStructure);
 
 protected:
 

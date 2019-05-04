@@ -26,6 +26,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <Shellapi.h>
 #include <appconfig.h>
 #include <windows_error.h>
+#include "helper.h"
 
 #include <QApplication>
 #include <QMessageBox>
@@ -93,7 +94,7 @@ static bool spawn(LPCWSTR binary, LPCWSTR arguments, LPCWSTR currentDirectory,
   PROCESS_INFORMATION pi;
   BOOL success = FALSE;
   if (hooked) {
-    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, length) <<">";
+    qDebug() << "Creating process hooked: <" << QString::fromWCharArray(commandLine, static_cast<int>(length)) <<">";
     success = ::CreateProcessHooked(nullptr,
                                     commandLine,
                                     nullptr, nullptr,       // no special process or thread attributes
@@ -148,23 +149,31 @@ HANDLE startBinary(const QFileInfo &binary,
     }
   } catch (const windows_error &e) {
     if (e.getErrorCode() == ERROR_ELEVATION_REQUIRED) {
-      // TODO: check if this is really correct. Are all settings updated that the secondary instance may use?
-
-      if (QMessageBox::question(nullptr, QObject::tr("Elevation required"),
+      if (QMessageBox::question(QApplication::activeModalWidget(), QObject::tr("Elevation required"),
                                 QObject::tr("This process requires elevation to run.\n"
                                     "This is a potential security risk so I highly advice you to investigate if\n"
                                     "\"%1\"\n"
                                     "can be installed to work without elevation.\n\n"
-                                    "Start elevated anyway? "
-                                    "(you will be asked if you want to allow ModOrganizer.exe to make changes to the system)").arg(
+                                    "Restart Mod Organizer as an elevated process?\n"
+                                    "You will be asked if you want to allow helper.exe to make changes to the system. "
+                                    "You will need to relaunch the process above manually.").arg(
                                         QDir::toNativeSeparators(binary.absoluteFilePath())),
                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-        ::ShellExecuteW(nullptr, L"runas", ToWString(QCoreApplication::applicationFilePath()).c_str(),
-                        (std::wstring(L"\"") + binaryName + L"\" " + ToWString(arguments)).c_str(), currentDirectoryName.c_str(), SW_SHOWNORMAL);
-        return INVALID_HANDLE_VALUE;
-      } else {
-        return INVALID_HANDLE_VALUE;
+        WCHAR cwd[MAX_PATH];
+        if (!GetCurrentDirectory(MAX_PATH, cwd)) {
+          reportError(QObject::tr("failed to spawn \"%1\": %2").arg(binary.fileName()).arg(::GetLastError()));
+          cwd[0] = L'\0';
+        }
+        if (!Helper::adminLaunch(
+              qApp->applicationDirPath().toStdWString(),
+              qApp->applicationFilePath().toStdWString(),
+              std::wstring(cwd))) {
+          return INVALID_HANDLE_VALUE;
+        }
+        qApp->exit(0);
       }
+      return INVALID_HANDLE_VALUE;
+
     } else {
       reportError(QObject::tr("failed to spawn \"%1\": %2").arg(binary.fileName()).arg(e.what()));
       return INVALID_HANDLE_VALUE;

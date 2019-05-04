@@ -25,11 +25,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <QPushButton>
 #include <QSet>
 #include <QSettings>
 #include <QString>
 #include <QVariant>
 #include <QColor>
+#include <QMetaType>
 
 #include <QtGlobal> //for uint
 
@@ -151,11 +153,6 @@ public:
   QString getModDirectory(bool resolve = true) const;
 
   /**
-   * returns the version of nmm to impersonate when connecting to nexus
-   **/
-  QString getNMMVersion() const;
-
-  /**
    * retrieve the directory where the web cache is stored (with native separators)
    **/
   QString getCacheDirectory(bool resolve = true) const;
@@ -188,7 +185,7 @@ public:
    * @param password (out) received the password for nexus
    * @return true if automatic login is active, false otherwise
    **/
-  bool getNexusLogin(QString &username, QString &password) const;
+  bool getNexusApiKey(QString &apiKey) const;
 
   /**
    * @brief retrieve the login information for steam
@@ -233,6 +230,10 @@ public:
 
   QColor modlistOverwritingLooseColor() const;
 
+  QColor modlistOverwrittenArchiveColor() const;
+
+  QColor modlistOverwritingArchiveColor() const;
+
   QColor modlistContainsPluginColor() const;
 
   QColor pluginListContainedColor() const;
@@ -245,7 +246,7 @@ public:
    * @param username username
    * @param password password
    */
-  void setNexusLogin(QString username, QString password);
+  void setNexusApiKey(QString apiKey);
 
   /**
    * @brief set the steam login information
@@ -271,6 +272,16 @@ public:
   bool useProxy() const;
 
   /**
+   * @return true if endorsement integration is enabled
+   */
+  bool endorsementIntegration() const;
+
+  /**
+   * @return true if the API counter should be hidden
+   */
+  bool hideAPICounter() const;
+
+  /**
    * @return true if the user wants to see non-official plugins installed outside MO in his mod list
    */
   bool displayForeign() const;
@@ -279,6 +290,11 @@ public:
    * @brief sets the new motd hash
    **/
   void setMotDHash(uint hash);
+
+  /**
+  * @return true if the user wants to have archives being parsed to show conflicts and contents
+  */
+  bool archiveParsing() const;
 
   /**
    * @return hash of the last displayed message of the day
@@ -378,8 +394,8 @@ public:
   static QColor getIdealTextColor(const QColor&  rBackgroundColor);
 private:
 
-  static QString obfuscate(const QString &password);
-  static QString deObfuscate(const QString &password);
+  static bool obfuscate(const QString key, const QString data);
+  static QString deObfuscate(const QString key);
 
   void addLanguages(QComboBox *languageBox);
   void addStyles(QComboBox *styleBox);
@@ -418,6 +434,8 @@ private:
     QCheckBox *m_usePrereleaseBox;
     QPushButton *m_overwritingBtn;
     QPushButton *m_overwrittenBtn;
+    QPushButton *m_overwritingArchiveBtn;
+    QPushButton *m_overwrittenArchiveBtn;
     QPushButton *m_containsBtn;
     QPushButton *m_containedBtn;
     QCheckBox *m_colorSeparatorsBox;
@@ -459,17 +477,16 @@ private:
   {
   public:
     NexusTab(Settings *m_parent, SettingsDialog &m_dialog);
-
     void update();
 
   private:
-    QCheckBox *m_loginCheckBox;
-    QLineEdit *m_usernameEdit;
-    QLineEdit *m_passwordEdit;
+    QPushButton *m_nexusConnect;
     QCheckBox *m_offlineBox;
     QCheckBox *m_proxyBox;
     QListWidget *m_knownServersList;
     QListWidget *m_preferredServersList;
+    QCheckBox *m_endorsementBox;
+    QCheckBox *m_hideAPICounterBox;
   };
 
   /** Display/store the configuration in the 'steam' tab of the settings dialogue */
@@ -509,16 +526,20 @@ private:
   private:
     QLineEdit *m_appIDEdit;
     QComboBox *m_mechanismBox;
-    QLineEdit *m_nmmVersionEdit;
     QCheckBox *m_hideUncheckedBox;
     QCheckBox *m_forceEnableBox;
     QCheckBox *m_displayForeignBox;
     QCheckBox *m_lockGUIBox;
+    QCheckBox *m_enableArchiveParsingBox;
+    QPushButton *m_resetGeometriesBtn;
   };
 
 private slots:
 
   void resetDialogs();
+  void processApiKey(const QString &);
+  void clearApiKey(QPushButton *nexusButton);
+  void checkApiKey(QPushButton *nexusButton);
 
 signals:
 
@@ -537,8 +558,8 @@ private:
 
   std::vector<MOBase::IPlugin*> m_Plugins;
 
-  QMap<QString, QMap<QString, QVariant>> m_PluginSettings;
-  QMap<QString, QMap<QString, QVariant>> m_PluginDescriptions;
+  QMap<QString, QVariantMap> m_PluginSettings;
+  QMap<QString, QVariantMap> m_PluginDescriptions;
 
   QSet<QString> m_PluginBlacklist;
 

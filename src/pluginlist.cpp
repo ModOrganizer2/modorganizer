@@ -41,6 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTextCodec>
 #include <QFileInfo>
 #include <QListWidgetItem>
+#include <QRegularExpression>
 #include <QString>
 #include <QApplication>
 #include <QKeyEvent>
@@ -126,11 +127,10 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
     esp.m_ModSelected = false;
   }
   for (QModelIndex idx : selection->selectedRows(ModList::COL_PRIORITY)) {
-    int modPriority = idx.data(Qt::UserRole).toInt();
-    if (modPriority < 0 || modPriority == INT_MAX)
+    int modIndex = idx.data(Qt::UserRole + 1).toInt();
+    if (modIndex == UINT_MAX)
       continue;
 
-    int modIndex = profile.modIndexByPriority(modPriority);
     ModInfo::Ptr selectedMod = ModInfo::getByIndex(modIndex);
     if (!selectedMod.isNull() && profile.modEnabled(modIndex)) {
       QDir dir(selectedMod->absolutePath());
@@ -140,8 +140,8 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
         for (auto plugin : plugins) {
           MOShared::FileEntry::Ptr file = directoryEntry.findFile(plugin.toStdWString());
           if (file->getOrigin() != origin.getID()) {
-            const std::vector<std::pair<int, std::wstring>> alternatives = file->getAlternatives();
-            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::wstring>& element) { return element.first == origin.getID(); }) == alternatives.end())
+            const std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = file->getAlternatives();
+            if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>>& element) { return element.first == origin.getID(); }) == alternatives.end())
               continue;
           }
           std::map<QString, int>::iterator iter = m_ESPsByName.find(plugin.toLower());
@@ -152,7 +152,7 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
       }
     }
   }
-  emit dataChanged(this->index(0, 0), this->index(m_ESPs.size() - 1, this->columnCount() - 1));
+  emit dataChanged(this->index(0, 0), this->index(static_cast<int>(m_ESPs.size()) - 1, this->columnCount() - 1));
 }
 
 void PluginList::refresh(const QString &profileName
@@ -181,31 +181,38 @@ void PluginList::refresh(const QString &profileName
     }
     QString filename = ToQString(current->getName());
 
-    availablePlugins.append(filename.toLower());
-
-    if (m_ESPsByName.find(filename.toLower()) != m_ESPsByName.end()) {
-      continue;
-    }
-
     QString extension = filename.right(3).toLower();
 
     if ((extension == "esp") || (extension == "esm") || (extension == "esl")) {
+
+      availablePlugins.append(filename.toLower());
+
+      if (m_ESPsByName.find(filename.toLower()) != m_ESPsByName.end()) {
+        continue;
+      }
+
       bool forceEnabled = Settings::instance().forceEnableCoreFiles() &&
-                            std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end();
+        primaryPlugins.contains(filename, Qt::CaseInsensitive);
+        //(std::find(primaryPlugins.begin(), primaryPlugins.end(), filename.toLower()) != primaryPlugins.end());
 
       bool archive = false;
       try {
         FilesOrigin &origin = baseDirectory.getOriginByID(current->getOrigin(archive));
 
+        //name without extension
+        QString baseName = QFileInfo(filename).baseName();
 
-        QString iniPath = QFileInfo(filename).baseName() + ".ini";
+        QString iniPath = baseName + ".ini";
         bool hasIni = baseDirectory.findFile(ToWString(iniPath)).get() != nullptr;
-
         std::set<QString> loadedArchives;
-        QString originPath = QString::fromWCharArray(origin.getPath().c_str());
-        QDir dir(QDir::toNativeSeparators(originPath));
-        for (QString filename : dir.entryList(QStringList() << QFileInfo(filename).baseName() + "*.bsa" << QFileInfo(filename).baseName() + "*.ba2")) {
-          loadedArchives.insert(filename);
+        QString candidateName;
+        for (FileEntry::Ptr archiveCandidate : files) {
+          candidateName = ToQString(archiveCandidate->getName());
+          if (candidateName.startsWith(baseName, Qt::CaseInsensitive) &&
+             (candidateName.endsWith(".bsa", Qt::CaseInsensitive) ||
+              candidateName.endsWith(".ba2", Qt::CaseInsensitive))) {
+            loadedArchives.insert(candidateName);
+          }
         }
 
         QString originName = ToQString(origin.getName());
@@ -291,7 +298,7 @@ void PluginList::enableESP(const QString &name, bool enable)
 
     emit writePluginsList();
   } else {
-    reportError(tr("esp not found: %1").arg(name));
+    reportError(tr("Plugin not found: %1").arg(qUtf8Printable(name)));
   }
 }
 
@@ -410,7 +417,7 @@ void PluginList::addInformation(const QString &name, const QString &message)
   if (iter != m_ESPsByName.end()) {
     m_AdditionalInfo[name.toLower()].m_Messages.append(message);
   } else {
-    qWarning("failed to associate message for \"%s\"", qPrintable(name));
+    qWarning("failed to associate message for \"%s\"", qUtf8Printable(name));
   }
 }
 
@@ -474,7 +481,7 @@ void PluginList::writeLockedOrder(const QString &fileName) const
     file->write(QString("%1|%2\r\n").arg(iter->first).arg(iter->second).toUtf8());
   }
   file.commit();
-  qDebug("%s saved", QDir::toNativeSeparators(fileName).toUtf8().constData());
+  qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(fileName)));
 }
 
 
@@ -499,7 +506,7 @@ void PluginList::saveTo(const QString &lockedOrderFileName
       }
     }
     if (deleterFile.commitIfDifferent(m_LastSaveHash[deleterFileName])) {
-      qDebug("%s saved", qPrintable(QDir::toNativeSeparators(deleterFileName)));
+      qDebug("%s saved", qUtf8Printable(QDir::toNativeSeparators(deleterFileName)));
     }
   } else if (QFile::exists(deleterFileName)) {
     shellDelete(QStringList() << deleterFileName);
@@ -687,7 +694,7 @@ void PluginList::setState(const QString &name, PluginStates state) {
     m_ESPs[iter->second].m_Enabled = (state == IPluginList::STATE_ACTIVE) ||
                                      m_ESPs[iter->second].m_ForceEnabled;
   } else {
-    qWarning("plugin %s not found", qPrintable(name));
+    qWarning("Plugin not found: %s", qUtf8Printable(name));
   }
 }
 
@@ -817,7 +824,7 @@ void PluginList::updateIndices()
       continue;
     }
     if (m_ESPs[i].m_Priority >= static_cast<int>(m_ESPs.size())) {
-      qCritical("invalid priority %d", m_ESPs[i].m_Priority);
+      qCritical("invalid plugin priority: %d", m_ESPs[i].m_Priority);
       continue;
     }
     m_ESPsByName[m_ESPs[i].m_Name.toLower()] = i;
@@ -846,6 +853,7 @@ void PluginList::generatePluginIndexes()
       m_ESPs[i].m_Index = QString("%1").arg(l - numESLs - numSkipped, 2, 16, QChar('0')).toUpper();
     }
   }
+  emit esplist_changed();
 }
 
 
@@ -1360,7 +1368,7 @@ PluginList::ESPInfo::ESPInfo(const QString &name, bool enabled,
       m_Masters.insert(QString(iter->c_str()));
     }
   } catch (const std::exception &e) {
-    qCritical("failed to parse plugin file %s: %s", qPrintable(fullPath), e.what());
+    qCritical("failed to parse plugin file %s: %s", qUtf8Printable(fullPath), e.what());
     m_IsMaster = false;
     m_IsLight = false;
     m_IsLightFlagged = false;

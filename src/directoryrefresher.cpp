@@ -23,10 +23,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "report.h"
 #include "modinfo.h"
+#include "settings.h"
 
 #include <QApplication>
 #include <QDir>
 #include <QString>
+#include <QTextCodec>
+#include <gameplugins.h>
 
 
 using namespace MOBase;
@@ -83,13 +86,29 @@ void DirectoryRefresher::addModBSAToStructure(DirectoryEntry *directoryStructure
                                               int priority, const QString &directory, const QStringList &archives)
 {
   std::wstring directoryW = ToWString(QDir::toNativeSeparators(directory));
+  IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+
+  GamePlugins *gamePlugins = game->feature<GamePlugins>();
+  QStringList loadOrder = QStringList();
+  gamePlugins->getLoadOrder(loadOrder);
 
   for (const QString &archive : archives) {
     QFileInfo fileInfo(archive);
     if (m_EnabledArchives.find(fileInfo.fileName()) != m_EnabledArchives.end()) {
+
+      int order = -1;
+
+      for (auto plugin : loadOrder)
+      {
+        QString name = plugin.left(plugin.size() - 4);
+        if (fileInfo.fileName().startsWith(name + " - ", Qt::CaseInsensitive) || fileInfo.fileName().startsWith(name + ".", Qt::CaseInsensitive)) {
+          order = loadOrder.indexOf(plugin);
+        }
+      }
+
       try {
-        //directoryStructure->addFromBSA(ToWString(modName), directoryW,
-        //                                ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority);
+        IPluginGame *game = qApp->property("managed_game").value<IPluginGame*>();
+        directoryStructure->addFromBSA(ToWString(modName), directoryW, ToWString(QDir::toNativeSeparators(fileInfo.absoluteFilePath())), priority, order);
       } catch (const std::exception &e) {
         throw MyException(tr("failed to parse bsa %1: %2").arg(archive, e.what()));
       }
@@ -107,6 +126,10 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
     // files to this mod
     FilesOrigin &origin = directoryStructure->createOrigin(ToWString(modName), directoryW, priority);
     for (const QString &filename : stealFiles) {
+      if (filename.isEmpty()) {
+        qWarning("Trying to find file with no name");
+        continue;
+      }
       QFileInfo fileInfo(filename);
       FileEntry::Ptr file = directoryStructure->findFile(ToWString(fileInfo.fileName()));
       if (file.get() != nullptr) {
@@ -115,9 +138,12 @@ void DirectoryRefresher::addModFilesToStructure(DirectoryEntry *directoryStructu
           file->removeOrigin(0);
         }
         origin.addFile(file->getIndex());
-        file->addOrigin(origin.getID(), file->getFileTime(), L"");
+        file->addOrigin(origin.getID(), file->getFileTime(), L"", -1);
       } else {
-        qWarning("%s not found", qPrintable(fileInfo.fileName()));
+        QString warnStr = fileInfo.absolutePath();
+        if (warnStr.isEmpty())
+          warnStr = filename;
+        qWarning("file not found: %s", qUtf8Printable(warnStr));
       }
     }
   } else {
@@ -133,7 +159,10 @@ void DirectoryRefresher::addModToStructure(DirectoryEntry *directoryStructure
                                            , const QStringList &archives)
 {
   addModFilesToStructure(directoryStructure, modName, priority, directory, stealFiles);
-  addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
+  
+  if (Settings::instance().archiveParsing()) {
+    addModBSAToStructure(directoryStructure, modName, priority, directory, archives);
+  }
 }
 
 void DirectoryRefresher::refresh()
@@ -149,10 +178,9 @@ void DirectoryRefresher::refresh()
   std::wstring dataDirectory = QDir::toNativeSeparators(game->dataDirectory().absolutePath()).toStdWString();
   m_DirectoryStructure->addFromOrigin(L"data", dataDirectory, 0);
 
-  // TODO what was the point of having the priority in this tuple? the list is already sorted by priority
+  std::sort(m_Mods.begin(), m_Mods.end(), [](auto lhs, auto rhs){return lhs.priority < rhs.priority;});
   auto iter = m_Mods.begin();
 
-  //TODO i is the priority here, where higher = more important. the input vector is also sorted by priority but inverted!
   for (int i = 1; iter != m_Mods.end(); ++iter, ++i) {
     try {
       addModToStructure(m_DirectoryStructure, iter->modName, i, iter->absolutePath, iter->stealFiles, iter->archives);
@@ -161,6 +189,8 @@ void DirectoryRefresher::refresh()
     }
     emit progress((i * 100) / static_cast<int>(m_Mods.size()) + 1);
   }
+
+  m_DirectoryStructure->getFileRegister()->sortOrigins();
 
   emit progress(100);
 

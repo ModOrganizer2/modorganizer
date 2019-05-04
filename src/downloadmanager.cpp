@@ -19,11 +19,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "downloadmanager.h"
 
+#include "organizercore.h"
 #include "nxmurl.h"
 #include "nexusinterface.h"
 #include "nxmaccessmanager.h"
 #include "iplugingame.h"
-#include "downloadmanager.h"
 #include <nxmurl.h>
 #include <taskprogressmanager.h>
 #include "utility.h"
@@ -64,7 +64,7 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createNew(const Mo
   info->m_DownloadID = s_NextDownloadID++;
   info->m_StartTime.start();
   info->m_PreResumeSize = 0LL;
-  info->m_Progress = std::make_pair<int, QString>(0, "     0.0 Bytes/s ");
+  info->m_Progress = std::make_pair<int, QString>(0, "0.0 B/s ");
   info->m_ResumePos = 0;
   info->m_FileInfo = new ModRepositoryFileInfo(*fileInfo);
   info->m_Urls = URLs;
@@ -146,21 +146,21 @@ DownloadManager::DownloadInfo *DownloadManager::DownloadInfo::createFromMeta(con
 
 void DownloadManager::startDisableDirWatcher()
 {
-	DownloadManager::m_DirWatcherDisabler++;
+  DownloadManager::m_DirWatcherDisabler++;
 }
 
 
 void DownloadManager::endDisableDirWatcher()
 {
-	if (DownloadManager::m_DirWatcherDisabler > 0)
-	{
-		if (DownloadManager::m_DirWatcherDisabler == 1)
-			QCoreApplication::processEvents();
-		DownloadManager::m_DirWatcherDisabler--;
-	}
-	else {
-		DownloadManager::m_DirWatcherDisabler = 0;
-	}
+  if (DownloadManager::m_DirWatcherDisabler > 0)
+  {
+    if (DownloadManager::m_DirWatcherDisabler == 1)
+      QCoreApplication::processEvents();
+    DownloadManager::m_DirWatcherDisabler--;
+  }
+  else {
+    DownloadManager::m_DirWatcherDisabler = 0;
+  }
 }
 
 void DownloadManager::DownloadInfo::setName(QString newName, bool renameFile)
@@ -201,9 +201,9 @@ QString DownloadManager::DownloadInfo::currentURL()
 
 
 DownloadManager::DownloadManager(NexusInterface *nexusInterface, QObject *parent)
-  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false),
-    m_DateExpression("/Date\\((\\d+)\\)/")
+  : IDownloadManager(parent), m_NexusInterface(nexusInterface), m_DirWatcher(), m_ShowHidden(false)
 {
+  m_OrganizerCore = dynamic_cast<OrganizerCore*>(parent);
   connect(&m_DirWatcher, SIGNAL(directoryChanged(QString)), this, SLOT(directoryChanged(QString)));
   m_TimeoutTimer.setSingleShot(false);
   //connect(&m_TimeoutTimer, SIGNAL(timeout()), this, SLOT(checkDownloadTimeout()));
@@ -262,7 +262,8 @@ void DownloadManager::pauseAll()
     foreach (DownloadInfo *info, m_ActiveDownloads) {
       if ((info->m_State < STATE_CANCELED) ||
           (info->m_State == STATE_FETCHINGFILEINFO) ||
-          (info->m_State == STATE_FETCHINGMODINFO)) {
+          (info->m_State == STATE_FETCHINGMODINFO) ||
+          (info->m_State == STATE_FETCHINGMODINFO_MD5)) {
         done = false;
         break;
       }
@@ -318,8 +319,8 @@ void DownloadManager::setPluginContainer(PluginContainer *pluginContainer)
 void DownloadManager::refreshList()
 {
   try {
-		//avoid triggering other refreshes
-		startDisableDirWatcher();
+    //avoid triggering other refreshes
+    startDisableDirWatcher();
 
     int downloadsBefore = m_ActiveDownloads.size();
 
@@ -378,12 +379,12 @@ void DownloadManager::refreshList()
     }
 
     //if (m_ActiveDownloads.size() != downloadsBefore) {
-      qDebug("downloads after refresh: %d", m_ActiveDownloads.size());
+      qDebug("Downloads after refresh: %d", m_ActiveDownloads.size());
     //}
     emit update(-1);
 
-		//let watcher trigger refreshes again
-		endDisableDirWatcher();
+    //let watcher trigger refreshes again
+    endDisableDirWatcher();
 
   } catch (const std::bad_alloc&) {
     reportError(tr("Memory allocation error (in refreshing directory)."));
@@ -400,7 +401,7 @@ bool DownloadManager::addDownload(const QStringList &URLs, QString gameName,
   }
 
   QUrl preferredUrl = QUrl::fromEncoded(URLs.first().toLocal8Bit());
-  qDebug("selected download url: %s", qPrintable(preferredUrl.toString()));
+  qDebug("selected download url: %s", qUtf8Printable(preferredUrl.toString()));
   QNetworkRequest request(preferredUrl);
   request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
   return addDownload(m_NexusInterface->getAccessManager()->get(request), URLs, fileName, gameName, modID, fileID, fileInfo);
@@ -435,9 +436,9 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
     }
   }
 
-	startDisableDirWatcher();
+  startDisableDirWatcher();
   newDownload->setName(getDownloadFileName(baseName), false);
-	endDisableDirWatcher();
+  endDisableDirWatcher();
 
   startDownload(reply, newDownload, false);
 //  emit update(-1);
@@ -447,9 +448,19 @@ bool DownloadManager::addDownload(QNetworkReply *reply, const QStringList &URLs,
 
 void DownloadManager::removePending(QString gameName, int modID, int fileID)
 {
+  QString gameShortName = gameName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gameShortName = gamePlugin->gameShortName();
+      break;
+    }
+  }
   emit aboutToUpdate();
   for (auto iter : m_PendingDownloads) {
-    if (gameName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 && (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
+    if (gameShortName.compare(std::get<0>(iter), Qt::CaseInsensitive) == 0 && (std::get<1>(iter) == modID) && (std::get<2>(iter) == fileID)) {
       m_PendingDownloads.removeAt(m_PendingDownloads.indexOf(iter));
       break;
     }
@@ -499,17 +510,17 @@ void DownloadManager::startDownload(QNetworkReply *reply, DownloadInfo *newDownl
     if (QFile::exists(m_OutputDirectory + "/" + newDownload->m_FileName)) {
       setState(newDownload, STATE_PAUSING);
       QCoreApplication::processEvents();
-      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name has already been downloaded. "
-          "Do you want to download it again? The new file will receive a different name."),
+      if (QMessageBox::question(nullptr, tr("Download again?"), tr("A file with the same name \"%1\" has already been downloaded. "
+          "Do you want to download it again? The new file will receive a different name.").arg(newDownload->m_FileName),
           QMessageBox::Yes | QMessageBox::No) == QMessageBox::No) {
         if (reply->isFinished())
           setState(newDownload, STATE_CANCELED);
         else
           setState(newDownload, STATE_CANCELING);
       } else {
-				startDisableDirWatcher();
+        startDisableDirWatcher();
         newDownload->setName(getDownloadFileName(newDownload->m_FileName, true), true);
-				endDisableDirWatcher();
+        endDisableDirWatcher();
         if (newDownload->m_State == STATE_PAUSED)
           resumeDownload(indexByName(newDownload->m_FileName));
         else
@@ -540,9 +551,9 @@ void DownloadManager::addNXMDownload(const QString &url)
   QStringList validGames;
   validGames.append(m_ManagedGame->gameShortName());
   validGames.append(m_ManagedGame->validShortNames());
-  qDebug("add nxm download: %s", qPrintable(url));
+  qDebug("add nxm download: %s", qUtf8Printable(url));
   if (!validGames.contains(nxmInfo.game(), Qt::CaseInsensitive)) {
-    qDebug("download requested for wrong game (game: %s, url: %s)", qPrintable(m_ManagedGame->gameShortName()), qPrintable(nxmInfo.game()));
+    qDebug("download requested for wrong game (game: %s, url: %s)", qUtf8Printable(m_ManagedGame->gameShortName()), qUtf8Printable(nxmInfo.game()));
     QMessageBox::information(nullptr, tr("Wrong Game"), tr("The download link is for a mod for \"%1\" but this instance of MO "
     "has been set up for \"%2\".").arg(nxmInfo.game()).arg(m_ManagedGame->gameShortName()), QMessageBox::Ok);
     return;
@@ -550,8 +561,14 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   for (auto tuple : m_PendingDownloads) {
     if (std::get<0>(tuple).compare(nxmInfo.game(), Qt::CaseInsensitive) == 0, std::get<1>(tuple) == nxmInfo.modId() && std::get<2>(tuple) == nxmInfo.fileId()) {
-      qDebug("download requested is already started (mod id: %s, file id: %s)", qPrintable(QString(nxmInfo.modId())), qPrintable(QString(nxmInfo.fileId())));
-      QMessageBox::information(nullptr, tr("Already Started"), tr("A download for this mod file has already been queued."), QMessageBox::Ok);
+      QString debugStr("download requested is already queued (mod: %1, file: %2)");
+      QString infoStr(tr("There is already a download queued for this file.\n\nMod %1\nFile %2"));
+
+      debugStr = debugStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
+      infoStr = infoStr.arg(nxmInfo.modId()).arg(nxmInfo.fileId());
+
+      qDebug(qUtf8Printable(debugStr));
+      QMessageBox::information(nullptr, tr("Already Queued"), infoStr, QMessageBox::Ok);
       return;
     }
   }
@@ -559,11 +576,43 @@ void DownloadManager::addNXMDownload(const QString &url)
   for (DownloadInfo *download : m_ActiveDownloads) {
     if (download->m_FileInfo->modID == nxmInfo.modId() && download->m_FileInfo->fileID == nxmInfo.fileId()) {
       if (download->m_State == STATE_DOWNLOADING || download->m_State == STATE_PAUSED || download->m_State == STATE_STARTED) {
-        qDebug("download requested is already started (mod: %s, file: %s)", qPrintable(QString(download->m_FileInfo->modID)),
-          qPrintable(download->m_FileInfo->fileName));
+        QString debugStr("download requested is already started (mod %1: %2, file %3: %4)");
+        QString infoStr(tr("There is already a download started for this file.\n\nMod %1:\t%2\nFile %3:\t%4"));
 
-        QMessageBox::information(nullptr, tr("Already Started"), tr("There is already a download started for this file (mod: %1, file: %2).")
-          .arg(download->m_FileInfo->modName).arg(download->m_FileInfo->fileName), QMessageBox::Ok);
+        // %1
+        debugStr = debugStr.arg(download->m_FileInfo->modID);
+        infoStr = infoStr.arg(download->m_FileInfo->modID);
+
+        // %2
+        if (!download->m_FileInfo->name.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->name);
+          infoStr = infoStr.arg(download->m_FileInfo->name);
+        } else if (!download->m_FileInfo->modName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->modName);
+          infoStr = infoStr.arg(download->m_FileInfo->modName);
+        } else {
+          debugStr = debugStr.arg(QStringLiteral("<blank>"));
+          infoStr = infoStr.arg(QStringLiteral("<blank>"));
+        }
+
+        // %3
+        debugStr = debugStr.arg(download->m_FileInfo->fileID);
+        infoStr = infoStr.arg(download->m_FileInfo->fileID);
+
+        // %4
+        if (!download->m_FileInfo->fileName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileInfo->fileName);
+          infoStr = infoStr.arg(download->m_FileInfo->fileName);
+        } else if (!download->m_FileName.isEmpty()) {
+          debugStr = debugStr.arg(download->m_FileName);
+          infoStr = infoStr.arg(download->m_FileName);
+        } else {
+          debugStr = debugStr.arg(QStringLiteral("<blank>"));
+          infoStr = infoStr.arg(QStringLiteral("<blank>"));
+        }
+
+        qDebug(qUtf8Printable(debugStr));
+        QMessageBox::information(nullptr, tr("Already Started"), infoStr, QMessageBox::Ok);
         return;
       }
     }
@@ -575,14 +624,20 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   emit update(-1);
   emit downloadAdded();
-  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, nxmInfo.fileId(), ""));
+  ModRepositoryFileInfo *info = new ModRepositoryFileInfo();
+
+  info->nexusKey = nxmInfo.key();
+  info->nexusExpires = nxmInfo.expires();
+
+  QObject *test = info;
+  m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));
 }
 
 
 void DownloadManager::removeFile(int index, bool deleteFile)
 {
-	//Avoid triggering refreshes from DirWatcher
-	startDisableDirWatcher();
+  //Avoid triggering refreshes from DirWatcher
+  startDisableDirWatcher();
 
   if (index >= m_ActiveDownloads.size()) {
     throw MyException(tr("remove: invalid download index %1").arg(index));
@@ -594,7 +649,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
       (download->m_State == STATE_DOWNLOADING)) {
     // shouldn't have been possible
     qCritical("tried to remove active download");
-		endDisableDirWatcher();
+    endDisableDirWatcher();
     return;
   }
 
@@ -605,7 +660,7 @@ void DownloadManager::removeFile(int index, bool deleteFile)
   if (deleteFile) {
     if (!shellDelete(QStringList(filePath), true)) {
       reportError(tr("failed to delete %1").arg(filePath));
-			endDisableDirWatcher();
+      endDisableDirWatcher();
       return;
     }
 
@@ -615,11 +670,11 @@ void DownloadManager::removeFile(int index, bool deleteFile)
     }
   } else {
     QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-		if(!download->m_Hidden)
-			metaSettings.setValue("removed", true);
+    if(!download->m_Hidden)
+      metaSettings.setValue("removed", true);
   }
 
-	endDisableDirWatcher();
+  endDisableDirWatcher();
 }
 
 class LessThanWrapper
@@ -657,74 +712,70 @@ void DownloadManager::refreshAlphabeticalTranslation()
 void DownloadManager::restoreDownload(int index)
 {
 
-	if (index < 0) {
-		DownloadState minState = STATE_READY ;
-		index = 0;
+  if (index < 0) {
+    DownloadState minState = STATE_READY ;
+    index = 0;
 
-		for (QVector<DownloadInfo*>::const_iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter ) {
+    for (QVector<DownloadInfo*>::const_iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter ) {
 
-			if ((*iter)->m_State >= minState) {
-				restoreDownload(index);
-			}
-			index++;
-		}
-	}
-	else {
-		if (index >= m_ActiveDownloads.size()) {
-			throw MyException(tr("restore: invalid download index: %1").arg(index));
-		}
+      if ((*iter)->m_State >= minState) {
+        restoreDownload(index);
+      }
+      index++;
+    }
+  }
+  else {
+    if (index >= m_ActiveDownloads.size()) {
+      throw MyException(tr("restore: invalid download index: %1").arg(index));
+    }
 
-		DownloadInfo *download = m_ActiveDownloads.at(index);
-		if (download->m_Hidden) {
-			download->m_Hidden = false;
+    DownloadInfo *download = m_ActiveDownloads.at(index);
+    if (download->m_Hidden) {
+      download->m_Hidden = false;
 
-			QString filePath = m_OutputDirectory + "/" + download->m_FileName;
+      QString filePath = m_OutputDirectory + "/" + download->m_FileName;
 
-			//avoid dirWatcher triggering refreshes
-			startDisableDirWatcher();
-				QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
-			metaSettings.setValue("removed", false);
+      //avoid dirWatcher triggering refreshes
+      startDisableDirWatcher();
+        QSettings metaSettings(filePath.append(".meta"), QSettings::IniFormat);
+      metaSettings.setValue("removed", false);
 
-			endDisableDirWatcher();
-		}
-	}
+      endDisableDirWatcher();
+    }
+  }
 }
 
 
 void DownloadManager::removeDownload(int index, bool deleteFile)
 {
   try {
-		//avoid dirWatcher triggering refreshes
-		startDisableDirWatcher();
+    //avoid dirWatcher triggering refreshes
+    startDisableDirWatcher();
 
     emit aboutToUpdate();
 
     if (index < 0) {
-      DownloadState minState;
-      if (index == -3) {
-        minState = STATE_UNINSTALLED;
-      }
-      else
-			  minState = index == -1 ? STATE_READY : STATE_INSTALLED;
+      bool removeAll = (index == -1);
+      DownloadState removeState = (index == -2 ? STATE_INSTALLED : STATE_UNINSTALLED);
 
-			index = 0;
-			for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
-				if ((*iter)->m_State >= minState) {
-					removeFile(index, deleteFile);
-					delete *iter;
-					iter = m_ActiveDownloads.erase(iter);
-          //QCoreApplication::processEvents();
-				}
-				else {
-					++iter;
-					++index;
-				}
-			}
+      index = 0;
+      for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end();) {
+        DownloadState downloadState = (*iter)->m_State;
+        if ((removeAll && (downloadState >= STATE_READY)) ||
+            (removeState == downloadState)) {
+          removeFile(index, deleteFile);
+          delete *iter;
+          iter = m_ActiveDownloads.erase(iter);
+        } else {
+          ++iter;
+          ++index;
+        }
+      }
     } else {
       if (index >= m_ActiveDownloads.size()) {
         reportError(tr("remove: invalid download index %1").arg(index));
-				//emit update(-1);
-				endDisableDirWatcher();
+        //emit update(-1);
+        endDisableDirWatcher();
         return;
       }
 
@@ -733,11 +784,11 @@ void DownloadManager::removeDownload(int index, bool deleteFile)
       m_ActiveDownloads.erase(m_ActiveDownloads.begin() + index);
     }
     emit update(-1);
-		endDisableDirWatcher();
+    endDisableDirWatcher();
   } catch (const std::exception &e) {
     qCritical("failed to remove download: %s", e.what());
   }
-	refreshList();
+  refreshList();
 }
 
 
@@ -769,7 +820,9 @@ void DownloadManager::pauseDownload(int index)
     } else {
       setState(info, STATE_PAUSED);
     }
-  } else if ((info->m_State == STATE_FETCHINGMODINFO) || (info->m_State == STATE_FETCHINGFILEINFO)) {
+  } else if ((info->m_State == STATE_FETCHINGMODINFO) ||
+             (info->m_State == STATE_FETCHINGFILEINFO) ||
+             (info->m_State == STATE_FETCHINGMODINFO_MD5)) {
     setState(info, STATE_READY);
   }
 }
@@ -818,7 +871,7 @@ void DownloadManager::resumeDownloadInt(int index)
     if (info->m_State == STATE_ERROR) {
       info->m_CurrentUrl = (info->m_CurrentUrl + 1) % info->m_Urls.count();
     }
-    qDebug("request resume from url %s", qPrintable(info->currentURL()));
+    qDebug("request resume from url %s", qUtf8Printable(info->currentURL()));
     QNetworkRequest request(QUrl::fromEncoded(info->currentURL().toLocal8Bit()));
     request.setHeader(QNetworkRequest::UserAgentHeader, m_NexusInterface->getAccessManager()->userAgent());
     if (info->m_State != STATE_ERROR) {
@@ -879,7 +932,8 @@ void DownloadManager::queryInfo(int index)
           std::numeric_limits<int>::max(), 1, &ok);
       // careful now: while the dialog was displayed, events were processed.
       // the download list might have changed and our info-ptr invalidated.
-      m_ActiveDownloads[index]->m_FileInfo->modID = modId;
+      if (ok)
+        m_ActiveDownloads[index]->m_FileInfo->modID = modId;
       return;
     }
   }
@@ -899,6 +953,46 @@ void DownloadManager::queryInfo(int index)
   }
   info->m_ReQueried = true;
   setState(info, STATE_FETCHINGMODINFO);
+}
+
+void DownloadManager::queryInfoMd5(int index)
+{
+  if ((index < 0) || (index >= m_ActiveDownloads.size())) {
+    reportError(tr("query: invalid download index %1").arg(index));
+    return;
+  }
+  DownloadInfo *info = m_ActiveDownloads[index];
+
+  if (info->m_FileInfo->repository != "Nexus") {
+    qWarning("re-querying file info is currently only possible with Nexus");
+    return;
+  }
+
+  if (info->m_State < DownloadManager::STATE_READY) {
+    // UI shouldn't allow this
+    return;
+  }
+
+  info->m_GamesToQuery << m_ManagedGame->gameShortName();
+  info->m_GamesToQuery << m_ManagedGame->validShortNames();
+
+  QFile downloadFile(info->m_FileName);
+  if (!downloadFile.exists()) {
+    downloadFile.setFileName(m_OrganizerCore->downloadsPath() + "\\" + info->m_FileName);
+  }
+  if (!downloadFile.exists()) {
+    qDebug("Can't find download file %s", info->m_FileName);
+    return;
+  }
+  if (!downloadFile.open(QIODevice::ReadOnly)) {
+    qDebug("Can't open download file %s", info->m_FileName);
+    return;
+  }
+  info->m_Hash = QCryptographicHash::hash(downloadFile.readAll(), QCryptographicHash::Md5);
+  downloadFile.close();
+
+  info->m_ReQueried = true;
+  setState(info, STATE_FETCHINGMODINFO_MD5);
 }
 
 void DownloadManager::visitOnNexus(int index)
@@ -1007,7 +1101,8 @@ QString DownloadManager::getFileTypeString(int fileType)
     case 2: return tr("Update");
     case 3: return tr("Optional");
     case 4: return tr("Old");
-    case 5: return tr("Misc");
+    case 5: return tr("Miscellaneous");
+    case 6: return tr("Deleted");
     default: return tr("Unknown");
   }
 }
@@ -1141,15 +1236,15 @@ void DownloadManager::markInstalled(int index)
     throw MyException(tr("mark installed: invalid download index %1").arg(index));
   }
 
-	//Avoid triggering refreshes from DirWatcher
-	startDisableDirWatcher();
+  //Avoid triggering refreshes from DirWatcher
+  startDisableDirWatcher();
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("installed", true);
   metaFile.setValue("uninstalled", false);
 
-	endDisableDirWatcher();
+  endDisableDirWatcher();
 
   setState(m_ActiveDownloads.at(index), STATE_INSTALLED);
 }
@@ -1162,15 +1257,15 @@ void DownloadManager::markInstalled(QString fileName)
   } else {
     DownloadInfo *info = getDownloadInfo(fileName);
     if (info != nullptr) {
-			//Avoid triggering refreshes from DirWatcher
-			startDisableDirWatcher();
+      //Avoid triggering refreshes from DirWatcher
+      startDisableDirWatcher();
 
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("installed", true);
       metaFile.setValue("uninstalled", false);
       delete info;
 
-			endDisableDirWatcher();
+      endDisableDirWatcher();
     }
   }
 }
@@ -1186,14 +1281,14 @@ void DownloadManager::markUninstalled(int index)
     throw MyException(tr("mark uninstalled: invalid download index %1").arg(index));
   }
 
-	//Avoid triggering refreshes from DirWatcher
-	startDisableDirWatcher();
+  //Avoid triggering refreshes from DirWatcher
+  startDisableDirWatcher();
 
   DownloadInfo *info = m_ActiveDownloads.at(index);
   QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
   metaFile.setValue("uninstalled", true);
 
-	endDisableDirWatcher();
+  endDisableDirWatcher();
 
   setState(m_ActiveDownloads.at(index), STATE_UNINSTALLED);
 }
@@ -1209,14 +1304,14 @@ void DownloadManager::markUninstalled(QString fileName)
     DownloadInfo *info = getDownloadInfo(filePath);
     if (info != nullptr) {
 
-			//Avoid triggering refreshes from DirWatcher
-			startDisableDirWatcher();
+      //Avoid triggering refreshes from DirWatcher
+      startDisableDirWatcher();
 
       QSettings metaFile(info->m_Output.fileName() + ".meta", QSettings::IniFormat);
       metaFile.setValue("uninstalled", true);
       delete info;
 
-			endDisableDirWatcher();
+      endDisableDirWatcher();
     }
   }
 }
@@ -1276,6 +1371,10 @@ void DownloadManager::setState(DownloadManager::DownloadInfo *info, DownloadMana
     } break;
     case STATE_FETCHINGFILEINFO: {
       m_RequestIDs.insert(m_NexusInterface->requestFiles(info->m_FileInfo->gameName, info->m_FileInfo->modID, this, info->m_DownloadID, QString()));
+    } break;
+    case STATE_FETCHINGMODINFO_MD5: {
+      qDebug(qUtf8Printable(QString("Searching %1 for MD5 of %2").arg(info->m_GamesToQuery[0]).arg(QString(info->m_Hash.toHex()))));
+      m_RequestIDs.insert(m_NexusInterface->requestInfoFromMd5(info->m_GamesToQuery[0], info->m_Hash, this, info->m_DownloadID, QString()));
     } break;
     case STATE_READY: {
       createMetaFile(info);
@@ -1338,7 +1437,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 
         QString unit;
         if (speed < 1000) {
-          unit = "Bytes/s";
+          unit = "B/s";
         }
         else if (speed < 1000*1024) {
           speed /= 1024;
@@ -1349,7 +1448,7 @@ void DownloadManager::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
           unit = "MB/s";
         }
 
-        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(speed, 8, 'f', 1,' ').arg(unit, -8, ' ');
+        info->m_Progress.second = QString::fromLatin1("%1% - %2 %3").arg(info->m_Progress.first).arg(QString::number(speed, 'f', 1)).arg(unit);
 
         TaskProgressManager::instance().updateProgress(info->m_TaskProgressId, bytesReceived, bytesTotal);
         emit update(index);
@@ -1373,8 +1472,8 @@ void DownloadManager::downloadReadyRead()
 
 void DownloadManager::createMetaFile(DownloadInfo *info)
 {
-	//Avoid triggering refreshes from DirWatcher
-	startDisableDirWatcher();
+  //Avoid triggering refreshes from DirWatcher
+  startDisableDirWatcher();
 
   QSettings metaFile(QString("%1.meta").arg(info->m_Output.fileName()), QSettings::IniFormat);
   metaFile.setValue("gameName", info->m_FileInfo->gameName);
@@ -1397,7 +1496,7 @@ void DownloadManager::createMetaFile(DownloadInfo *info)
                               (info->m_State == DownloadManager::STATE_ERROR));
   metaFile.setValue("removed", info->m_Hidden);
 
-	endDisableDirWatcher();
+  endDisableDirWatcher();
   // slightly hackish...
   for (int i = 0; i < m_ActiveDownloads.size(); ++i) {
     if (m_ActiveDownloads[i] == info) {
@@ -1424,25 +1523,12 @@ void DownloadManager::nxmDescriptionAvailable(QString, int, QVariant userData, Q
   QTextDocument doc;
   doc.setHtml(result["name"].toString().trimmed());
   info->m_FileInfo->modName = doc.toPlainText();
-  info->m_FileInfo->newestVersion.parse(result["version"].toString());
   if (info->m_FileInfo->fileID != 0) {
     setState(info, STATE_READY);
   } else {
     setState(info, STATE_FETCHINGFILEINFO);
   }
 }
-
-
-QDateTime DownloadManager::matchDate(const QString &timeString)
-{
-  if (m_DateExpression.exactMatch(timeString)) {
-    return QDateTime::fromMSecsSinceEpoch(m_DateExpression.cap(1).toLongLong());
-  } else {
-    qWarning("date not matched: %s", qPrintable(timeString));
-    return QDateTime::currentDateTime();
-  }
-}
-
 
 void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVariant resultData, int requestID)
 {
@@ -1456,7 +1542,9 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
   DownloadInfo *info = downloadInfoByID(userData.toInt());
   if (info == nullptr) return;
 
-  QVariantList result = resultData.toList();
+  QVariantMap result = resultData.toMap();
+  QVariantList files = result["files"].toList();
+
 
   // MO sometimes prepends <digit>_ to the filename in case of duplicate downloads.
   // this may muck up the file name comparison
@@ -1469,21 +1557,22 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
 
   bool found = false;
 
-  for (QVariant file : result) {
+  for (QVariant file : files) {
     QVariantMap fileInfo = file.toMap();
-    QString fileName = fileInfo["uri"].toString();
+    QString fileName = fileInfo["file_name"].toString();
     QString fileNameVariant = fileName.mid(0).replace(' ', '_');
-    if ((fileName == info->m_FileName) || (fileName == alternativeLocalName) ||
-        (fileNameVariant == info->m_FileName) || (fileNameVariant == alternativeLocalName)) {
+    if ((fileName == info->m_RemoteFileName) || (fileNameVariant == info->m_RemoteFileName) ||
+        (fileName == info->m_FileName) || (fileNameVariant == info->m_FileName) ||
+        (fileName == alternativeLocalName) || (fileNameVariant == alternativeLocalName)) {
       info->m_FileInfo->name = fileInfo["name"].toString();
       info->m_FileInfo->version.parse(fileInfo["version"].toString());
       if (!info->m_FileInfo->version.isValid()) {
         info->m_FileInfo->version = info->m_FileInfo->newestVersion;
       }
       info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
-      info->m_FileInfo->fileTime = matchDate(fileInfo["date"].toString());
-      info->m_FileInfo->fileID = fileInfo["id"].toInt();
-      info->m_FileInfo->fileName = fileInfo["uri"].toString();
+      info->m_FileInfo->fileTime = QDateTime::fromMSecsSinceEpoch(fileInfo["uploaded_timestamp"].toLongLong());
+      info->m_FileInfo->fileID = fileInfo["file_id"].toInt();
+      info->m_FileInfo->fileName = fileInfo["file_name"].toString();
       info->m_FileInfo->description = BBCode::convertToHTML(fileInfo["description"].toString());
       found = true;
       break;
@@ -1497,16 +1586,17 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
       emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
     } else {
       SelectionDialog selection(tr("No file on Nexus matches the selected file by name. Please manually choose the correct one."));
-      for (QVariant file : result) {
+      for (QVariant file : files) {
         QVariantMap fileInfo = file.toMap();
-        selection.addChoice(fileInfo["uri"].toString(), "", file);
+        if (fileInfo["category_id"].toInt() != 6)
+          selection.addChoice(fileInfo["file_name"].toString(), "", file);
       }
       if (selection.exec() == QDialog::Accepted) {
         QVariantMap fileInfo = selection.getChoiceData().toMap();
         info->m_FileInfo->name = fileInfo["name"].toString();
         info->m_FileInfo->version.parse(fileInfo["version"].toString());
         info->m_FileInfo->fileCategory = fileInfo["category_id"].toInt();
-        info->m_FileInfo->fileID = fileInfo["id"].toInt();
+        info->m_FileInfo->fileID = fileInfo["file_id"].toInt();
       } else {
         emit showMessage(tr("No matching file found on Nexus! Maybe this file is no longer available or it was renamed?"));
       }
@@ -1514,7 +1604,7 @@ void DownloadManager::nxmFilesAvailable(QString, int, QVariant userData, QVarian
   } else {
     if (info->m_FileInfo->fileID == 0) {
       qWarning("could not determine file id for %s (state %d)",
-               info->m_FileName.toUtf8().constData(), info->m_State);
+               qUtf8Printable(info->m_FileName), info->m_State);
     }
   }
 
@@ -1531,7 +1621,7 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
     m_RequestIDs.erase(idIter);
   }
 
-  ModRepositoryFileInfo *info = new ModRepositoryFileInfo();
+  ModRepositoryFileInfo *info = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(userData));
 
   QVariantMap result = resultData.toMap();
   info->name = result["name"].toString();
@@ -1539,40 +1629,38 @@ void DownloadManager::nxmFileInfoAvailable(QString gameName, int modID, int file
   if (!info->version.isValid()) {
     info->version = info->newestVersion;
   }
-  info->fileName = result["uri"].toString();
+  info->fileName = result["file_name"].toString();
   info->fileCategory = result["category_id"].toInt();
-  info->fileTime = matchDate(result["date"].toString());
+  info->fileTime = QDateTime::fromMSecsSinceEpoch(result["uploaded_timestamp"].toLongLong());
   info->description = BBCode::convertToHTML(result["description"].toString());
 
   info->repository = "Nexus";
-  info->gameName = gameName;
+
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      info->gameName = gamePlugin->gameShortName();
+    }
+  }
+
   info->modID = modID;
   info->fileID = fileID;
 
   QObject *test = info;
-  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(gameName, modID, fileID, this, qVariantFromValue(test), QString()));
+  m_RequestIDs.insert(m_NexusInterface->requestDownloadURL(info->gameName, info->modID, info->fileID, this, qVariantFromValue(test), QString()));
 }
 
 static int evaluateFileInfoMap(const QVariantMap &map, const std::map<QString, int> &preferredServers)
 {
   int result = 0;
 
-  int users = map["ConnectedUsers"].toInt();
-  // 0 users is probably a sign that the server is offline. Since there is currently no
-  // mechanism to try a different server, we avoid those without users
-  if (users == 0) {
-    result -= 500;
-  } else {
-    result -= users;
-  }
-
-  auto preference = preferredServers.find(map["Name"].toString());
+  auto preference = preferredServers.find(map["short_name"].toString());
 
   if (preference != preferredServers.end()) {
     result += 100 + preference->second * 20;
   }
-
-  if (map["IsPremium"].toBool()) result += 5;
 
   return result;
 }
@@ -1642,7 +1730,7 @@ void DownloadManager::nxmDownloadURLsAvailable(QString gameName, int modID, int 
 }
 
 
-void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, const QString &errorString)
+void DownloadManager::nxmFileInfoFromMd5Available(QString gameName, QVariant userData, QVariant resultData, int requestID)
 {
   std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
   if (idIter == m_RequestIDs.end()) {
@@ -1651,10 +1739,132 @@ void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, 
     m_RequestIDs.erase(idIter);
   }
 
+  DownloadInfo *info = downloadInfoByID(userData.toInt());
+
+  //This can come back with multiple results with the same file was uploaded multiple times (for whatever reason)
+  auto resultlist = resultData.toList();
+  int chosenIdx = resultlist.count() > 1 ? -1 : 0;
+
+  //Look for the exact file name
+  if (chosenIdx < 0) {
+    for (int i = 0; i < resultlist.count(); i++) {
+      auto results = resultlist[i].toMap();
+      auto fileDetails = results["file_details"].toMap();
+
+      if (fileDetails["file_name"].toString().compare(info->m_FileName, Qt::CaseInsensitive) == 0) {
+        chosenIdx = i;
+        break;
+      }
+    }
+  }
+
+  //Look for the only active one
+  if (chosenIdx < 0) {
+    for (int i = 0; i < resultlist.count(); i++) {
+      auto results = resultlist[i].toMap();
+      auto fileDetails = results["file_details"].toMap();
+
+      if (fileDetails["category_id"].toInt() != 6) { //6 = deleted
+        if (chosenIdx < 0) {
+          chosenIdx = i; //intentional to not break in order to check other results
+        } else {
+          qDebug("Multiple active files found during MD5 search.  Defaulting to time stamps...");
+          chosenIdx = -1;
+          break;
+        }
+      }
+    }
+  }
+
+  //Look for the most recent one
+  if (chosenIdx < 0) {
+    int mostRecentTime = INT_MIN;
+    for (int i = 0; i < resultlist.count(); i++) {
+      auto results = resultlist[i].toMap();
+      auto fileDetails = results["file_details"].toMap();
+
+      int fileTime = fileDetails["uploaded_timestamp"].toInt();
+      if (fileTime > mostRecentTime) {
+        chosenIdx = i;
+        mostRecentTime = fileTime;
+      }
+    }
+  }
+
+  //If nothing is preferred, just use the first one
+  if (chosenIdx < 0) chosenIdx = 0;
+
+  auto results = resultlist[chosenIdx].toMap();
+  auto fileDetails = results["file_details"].toMap();
+  auto modDetails = results["mod"].toMap();
+
+  info->m_FileInfo->name = fileDetails["name"].toString();
+  info->m_FileInfo->fileID = fileDetails["file_id"].toInt();
+  info->m_FileInfo->description = BBCode::convertToHTML(fileDetails["description"].toString());
+  info->m_FileInfo->version.parse(fileDetails["version"].toString());
+  if (!info->m_FileInfo->version.isValid())
+    info->m_FileInfo->version.parse(fileDetails["mod_version"].toString());
+  info->m_FileInfo->fileCategory = fileDetails["category_id"].toInt();
+
+  info->m_FileInfo->modID = modDetails["mod_id"].toInt();
+  info->m_FileInfo->modName = modDetails["name"].toString();
+  info->m_FileInfo->categoryID = modDetails["category_id"].toInt();
+
+  QString gameShortName = gameName;
+  QStringList games(m_ManagedGame->validShortNames());
+  games += m_ManagedGame->gameShortName();
+  for (auto game : games) {
+    MOBase::IPluginGame *gamePlugin = m_OrganizerCore->getGame(game);
+    if (gamePlugin != nullptr && gamePlugin->gameNexusName().compare(gameName, Qt::CaseInsensitive) == 0) {
+      gameShortName = gamePlugin->gameShortName();
+      break;
+    }
+  }
+
+  info->m_FileInfo->gameName = gameShortName;
+
+  //If the file description is not present, send another query to get it
+  if (!fileDetails["description"].isValid()) {
+    info->m_RemoteFileName = fileDetails["file_name"].toString();
+    setState(info, STATE_FETCHINGFILEINFO);
+  } else {
+    setState(info, STATE_READY);
+  }
+}
+
+
+void DownloadManager::nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString)
+{
+  std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
+  if (idIter == m_RequestIDs.end()) {
+    return;
+  } else {
+    m_RequestIDs.erase(idIter);
+  }
+
+  DownloadInfo *userDataInfo = downloadInfoByID(userData.toInt());
+
   int index = 0;
 
   for (QVector<DownloadInfo*>::iterator iter = m_ActiveDownloads.begin(); iter != m_ActiveDownloads.end(); ++iter, ++index) {
     DownloadInfo *info = *iter;
+    if (info != userDataInfo)
+      continue;
+
+    // MD5 searches continue until all possible games are done
+    if (info->m_State == STATE_FETCHINGMODINFO_MD5) {
+      if (info->m_GamesToQuery.count() >= 2) {
+        info->m_GamesToQuery.pop_front();
+        setState(info, STATE_FETCHINGMODINFO_MD5);
+        return;
+      } else {
+        info->m_State = STATE_READY;
+        queryInfo(index);
+        emit update(index);
+        return;
+      }
+    }
+
     if (info->m_FileInfo->modID == modID) {
       if (info->m_State < STATE_FETCHINGMODINFO) {
         m_ActiveDownloads.erase(iter);
@@ -1738,7 +1948,7 @@ void DownloadManager::downloadFinished(int index)
           if (serverMap["URI"].toString() == url) {
             int deltaTime = info->m_StartTime.secsTo(QTime::currentTime());
             if (deltaTime > 5) {
-              emit downloadSpeed(serverMap["Name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
+              emit downloadSpeed(serverMap["short_name"].toString(), (info->m_TotalSize - info->m_PreResumeSize) / deltaTime);
             } // no division by zero please! Also, if the download is shorter than a few seconds, the result is way to inprecise
             break;
           }
@@ -1756,13 +1966,13 @@ void DownloadManager::downloadFinished(int index)
       QString newName = getFileNameFromNetworkReply(reply);
       QString oldName = QFileInfo(info->m_Output).fileName();
 
-			startDisableDirWatcher();
+      startDisableDirWatcher();
       if (!newName.isEmpty() && (oldName.isEmpty())) {
         info->setName(getDownloadFileName(newName), true);
       } else {
         info->setName(m_OutputDirectory + "/" + info->m_FileName, true); // don't rename but remove the ".unfinished" extension
       }
-			endDisableDirWatcher();
+      endDisableDirWatcher();
 
       if (!isNexus) {
         setState(info, STATE_READY);
@@ -1787,7 +1997,7 @@ void DownloadManager::downloadError(QNetworkReply::NetworkError error)
 {
   if (error != QNetworkReply::OperationCanceledError) {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    qWarning("%s (%d)", reply != nullptr ? qPrintable(reply->errorString())
+    qWarning("%s (%d)", reply != nullptr ? qUtf8Printable(reply->errorString())
                                          : "Download error occured",
              error);
   }
@@ -1802,9 +2012,9 @@ void DownloadManager::metaDataChanged()
   if (info != nullptr) {
     QString newName = getFileNameFromNetworkReply(info->m_Reply);
     if (!newName.isEmpty() && (info->m_FileName.isEmpty())) {
-			startDisableDirWatcher();
+      startDisableDirWatcher();
       info->setName(getDownloadFileName(newName), true);
-			endDisableDirWatcher();
+      endDisableDirWatcher();
       refreshAlphabeticalTranslation();
       if (!info->m_Output.isOpen() && !info->m_Output.open(QIODevice::WriteOnly | QIODevice::Append)) {
         reportError(tr("failed to re-open %1").arg(info->m_FileName));
@@ -1818,8 +2028,8 @@ void DownloadManager::metaDataChanged()
 
 void DownloadManager::directoryChanged(const QString&)
 {
-	if(DownloadManager::m_DirWatcherDisabler==0)
-		refreshList();
+  if(DownloadManager::m_DirWatcherDisabler==0)
+    refreshList();
 }
 
 void DownloadManager::managedGameChanged(MOBase::IPluginGame const *managedGame)

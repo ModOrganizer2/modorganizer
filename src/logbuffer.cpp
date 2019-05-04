@@ -51,21 +51,24 @@ LogBuffer::~LogBuffer()
 void LogBuffer::logMessage(QtMsgType type, const QString &message)
 {
   if (type >= m_MinMsgType) {
-    Message msg = {type, QTime::currentTime(), message};
-    if (m_NumMessages < m_Messages.size()) {
-      beginInsertRows(QModelIndex(), static_cast<int>(m_NumMessages),
-                      static_cast<int>(m_NumMessages) + 1);
-    }
-    m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
-    if (m_NumMessages < m_Messages.size()) {
-      endInsertRows();
-    } else {
-      emit dataChanged(createIndex(0, 0),
-                       createIndex(static_cast<int>(m_Messages.size()), 0));
-    }
-    ++m_NumMessages;
-    if (type >= QtCriticalMsg) {
-      write();
+    QStringList messagelist = message.split("\n");
+    for (auto split_message : messagelist) {
+      Message msg = {type, QTime::currentTime(), split_message};
+      if (m_NumMessages < m_Messages.size()) {
+        beginInsertRows(QModelIndex(), static_cast<int>(m_NumMessages),
+                        static_cast<int>(m_NumMessages) + 1);
+      }
+      m_Messages.at(m_NumMessages % m_Messages.size()) = msg;
+      if (m_NumMessages < m_Messages.size()) {
+        endInsertRows();
+      } else {
+        emit dataChanged(createIndex(0, 0),
+                         createIndex(static_cast<int>(m_Messages.size()), 0));
+      }
+      ++m_NumMessages;
+      if (type >= QtCriticalMsg) {
+        write();
+      }
     }
   }
 }
@@ -111,6 +114,8 @@ char LogBuffer::msgTypeID(QtMsgType type)
   switch (type) {
     case QtDebugMsg:
       return 'D';
+    case QtInfoMsg:
+      return 'I';
     case QtWarningMsg:
       return 'W';
     case QtCriticalMsg:
@@ -127,7 +132,7 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context,
 {
   // QMutexLocker doesn't support timeout...
   if (!s_Mutex.tryLock(100)) {
-    fprintf(stderr, "failed to log: %s", qPrintable(message));
+    fprintf(stderr, "failed to log: %s", qUtf8Printable(message));
     return;
   }
   ON_BLOCK_EXIT([]() { s_Mutex.unlock(); });
@@ -137,17 +142,17 @@ void LogBuffer::log(QtMsgType type, const QMessageLogContext &context,
   }
 
   if (type == QtDebugMsg) {
-    fprintf(stdout, "%s [%c] %s\n", qPrintable(QTime::currentTime().toString()),
-            msgTypeID(type), qPrintable(message));
+    fprintf(stdout, "%s [%c] %s\n", qUtf8Printable(QTime::currentTime().toString()),
+            msgTypeID(type), qUtf8Printable(message));
   } else {
     if (context.line != 0) {
       fprintf(stdout, "%s [%c] (%s:%u) %s\n",
-              qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-              context.file, context.line, qPrintable(message));
+              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
+              context.file, context.line, qUtf8Printable(message));
     } else {
       fprintf(stdout, "%s [%c] %s\n",
-              qPrintable(QTime::currentTime().toString()), msgTypeID(type),
-              qPrintable(message));
+              qUtf8Printable(QTime::currentTime().toString()), msgTypeID(type),
+              qUtf8Printable(message));
     }
   }
   fflush(stdout);
@@ -200,6 +205,7 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
       if (index.column() == 1) {
         switch (m_Messages[msgIndex].type) {
           case QtDebugMsg:
+          case QtInfoMsg:
             return QIcon(":/MO/gui/information");
           case QtWarningMsg:
             return QIcon(":/MO/gui/warning");
@@ -215,6 +221,8 @@ QVariant LogBuffer::data(const QModelIndex &index, int role) const
         switch (m_Messages[msgIndex].type) {
           case QtDebugMsg:
             return "D";
+          case QtInfoMsg:
+            return "I";
           case QtWarningMsg:
             return "W";
           case QtCriticalMsg:

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="128"
+   height="64"
+   viewBox="0 0 128 64"
+   version="1.1"
+   id="svg8"
+   inkscape:export-filename="D:\Bethesda Game Modding\Mod Organizer 2\stylesheets\Paper\Dark\dots.png"
+   inkscape:export-xdpi="307.20001"
+   inkscape:export-ydpi="307.20001"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"
+   sodipodi:docname="highlight.svg">
+  <defs
+     id="defs2">
+    <meshgradient
+       inkscape:collect="always"
+       id="meshgradient3955"
+       gradientUnits="userSpaceOnUse"
+       x="0"
+       y="-44">
+      <meshrow
+         id="meshrow18393">
+        <meshpatch
+           id="meshpatch18395">
+          <stop
+             path="c 4.96082,0  9.92164,0  14.8825,0"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18397" />
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18399" />
+          <stop
+             path="c -4.96082,1.77636e-015  -9.92165,1.77636e-015  -14.8825,1.77636e-015"
+             style="stop-color:#006868;stop-opacity:1"
+             id="stop18401" />
+          <stop
+             path="c 0,-10.6667  0,-21.3333  0,-32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18403" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18405">
+          <stop
+             path="c 16.3725,0  32.7451,0  49.1175,0"
+             id="stop18407" />
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18409" />
+          <stop
+             path="c -16.3725,0  -32.745,0  -49.1175,0"
+             style="stop-color:#006868;stop-opacity:1"
+             id="stop18411" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18413">
+          <stop
+             path="c 17.6536,0  35.3073,0  52.9609,0"
+             id="stop18415" />
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18417" />
+          <stop
+             path="c -17.6536,0  -35.3073,0  -52.9609,0"
+             style="stop-color:#006868;stop-opacity:1"
+             id="stop18419" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18421">
+          <stop
+             path="c 3.67971,0  7.35941,0  11.0391,0"
+             id="stop18423" />
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18425" />
+          <stop
+             path="c -3.6797,0  -7.35941,0  -11.0391,0"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18427" />
+        </meshpatch>
+      </meshrow>
+      <meshrow
+         id="meshrow18429">
+        <meshpatch
+           id="meshpatch18431">
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             id="stop18433" />
+          <stop
+             path="c -4.96082,-3.55271e-015  -9.92165,-3.55271e-015  -14.8825,-3.55271e-015"
+             style="stop-color:#007d7d;stop-opacity:1"
+             id="stop18435" />
+          <stop
+             path="c 0,-10.6667  0,-21.3333  0,-32"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18437" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18439">
+          <stop
+             path="c 0,10.6667  0,21.3333  0,32"
+             id="stop18441" />
+          <stop
+             path="c -16.3725,0  -32.745,0  -49.1175,0"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18443" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18445">
+          <stop
+             path="c 7.38594e-006,10.6667  0.000207035,21.333  2.21578e-005,32"
+             id="stop18447" />
+          <stop
+             path="c -17.6536,-4.55705e-005  -35.3071,-0.000147247  -52.9609,1.82555e-005"
+             style="stop-color:#007f7f;stop-opacity:1"
+             id="stop18449" />
+        </meshpatch>
+        <meshpatch
+           id="meshpatch18451">
+          <stop
+             path="c 0,10.6667  0.000232338,21.3329  0,32"
+             id="stop18453" />
+          <stop
+             path="c -3.6797,-1.69572e-006  -7.3594,-8.75677e-006  -11.0391,-1.82555e-005"
+             style="stop-color:#008484;stop-opacity:1"
+             id="stop18455" />
+        </meshpatch>
+      </meshrow>
+    </meshgradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#505050"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="5.2410685"
+     inkscape:cx="55.924572"
+     inkscape:cy="37.651744"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer25"
+     showgrid="false"
+     units="px"
+     borderlayer="true"
+     inkscape:showpageshadow="false"
+     inkscape:snap-page="true"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-nodes="true"
+     inkscape:snap-bbox-edge-midpoints="true"
+     inkscape:snap-bbox-midpoints="true"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:snap-center="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:measure-start="18.8975,12.498"
+     inkscape:measure-end="20,12.498"
+     inkscape:snap-intersection-paths="true"
+     inkscape:object-paths="true"
+     inkscape:snap-smooth-nodes="true"
+     inkscape:snap-midpoints="true"
+     inkscape:snap-global="true" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer25"
+     inkscape:label="Content"
+     transform="translate(0,44)">
+    <rect
+       style="opacity:1;fill:url(#meshgradient3955);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:120;stroke-opacity:1;paint-order:markers stroke fill"
+       id="rect3848"
+       width="128"
+       height="64"
+       x="0"
+       y="-44" />
+  </g>
+</svg>

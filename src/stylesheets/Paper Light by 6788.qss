@@ -1,4 +1,4 @@
-/* v4.3 Paper Light by 6788-00      */
+/* v5.0 Paper Light by 6788-00      */
 /* https://6788-00.tumblr.com/      */
 
 /* Color Palette                    */
@@ -24,7 +24,7 @@ QWidget {
 }
 
 QWidget:disabled {
-	/* disabled parts of the window like the update button when there are no updates */ 
+	/* disabled parts of the window like the update button when there are no updates */
 	background: #EBEBEB;
 	color: #808080;
 }
@@ -36,6 +36,10 @@ QAbstractItemView {
 	show-decoration-selected: 1;
 	selection-background-color: #008484;
 	selection-color: #FFFFFF;
+}
+
+QAbstractItemView::item {
+	min-height: 22px;
 }
 
 QAbstractItemView::item:hover {
@@ -128,7 +132,7 @@ QToolButton:menu-indicator {
 	qproperty-icon: url(./Paper/Light/Toolbar/settings.svg);
 }
 
-#actionProblems {
+#actionNotifications {
 	qproperty-icon: url(./Paper/Light/Toolbar/problems.svg);
 }
 
@@ -187,32 +191,21 @@ QListView {
 	border-radius: 6px;
 }
 
-QListView::item {
-	/* Increases the line height of the Saves tab */
-	padding: 2px 0px;
-}
-
 QListView::item:hover {
 	/* uncertain, assumed: rows on the saves window when moused-over */
 	background: #C2C2C2;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QListView::item:selected {
 	/*uncertain, assumed: rows on the saves window when clicked */
 	background: #008484;
 	color: #FFFFFF;
-	padding: 2px 0px;
+	padding: 0;
 }
 
 QTextEdit {
 	/* large text fields */
-	background: #FFFFFF;
-	border-radius: 6px;
-}
-
-QWebView {
-	/* Nexus Info window */
 	background: #FFFFFF;
 	border-radius: 6px;
 }
@@ -504,7 +497,7 @@ QScrollBar::add-line:vertical {
 }
 
 QScrollBar::sub-line:vertical {
-	/* scroll up button */ 
+	/* scroll up button */
     background: #FFFFFF;
     image: url(./Paper/Light/Arrows/up.svg);
     height: 23px;
@@ -517,29 +510,29 @@ QScrollBar::sub-line:vertical {
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover {
 	/* buttons and handles when moused-over */
 	background: #008484;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed {
 	/* buttons and handles when clicked */
 	background: #008484;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
 	/* area on scroll bars where clicking it scrolls to where you clicked */
     background: transparent;
@@ -706,10 +699,6 @@ QTabWidget::pane {
 	padding: 2px 2px 10px 2px;
 	border: 2px solid #FFFFFF;
 	border-radius: 10px;
-}
-
-QTabWidget QAbstractScrollArea::item {
-	padding: 2px;
 }
 
 QTabWidget::tab-bar {
@@ -922,15 +911,15 @@ QSlider::handle:hover {
 	background: #008484;
 }
 
-/* Downloads Tab */
+/* Pre-v2.1.7 Downloads Tab */
 
 #downloadTab QAbstractScrollArea {
 	/* background of the entire downloads tab */
-	background: #EBEBEB;
+	background: #FFFFFF;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
+DownloadListWidget QFrame,
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #FFFFFF;
@@ -946,12 +935,22 @@ DownloadListWidget #frame {
 	color: none;
 }
 
-/* Compact Downloads View */
-
-DownloadListWidgetCompact, 
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
-	/* an entry on the Downloads tab */
+	/* an entry on the Downloads tab in Compacts View*/
 	background: #FFFFFF;
+}
+
+/* New Downloads View */
+
+DownloadListWidget[downloadView=standard]::item {
+	/* an entry on the Downloads view */
+	min-height: 44px;
+}
+
+QProgressBar[downloadView=standard] {
+	/* a progress bar on the Downloads view */
+	margin: 11px 0;
 }
 
 /* Categories Filter */
@@ -970,4 +969,27 @@ DownloadListWidgetCompact QLabel {
 #categoriesGroup {
 	/* Categories group box */
 	padding-bottom: 0px;
+}
+
+/* Fixes */
+
+#executablesListBox {
+	/* Increase right margin of the select executables box */
+	margin-right: 8px;
+}
+
+#stepsStack QWidget {
+	/* Groupboxes on the FOMOD Installer Dialog */
+	border: none;
+}
+
+#stepsStack QGroupBox {
+	/* Fix to reimplement styling for Groupboxes on the FOMOD Installer dialog */
+	border: 2px solid #EBEBEB;
+	border-radius: 10px;
+}
+
+#activeModslabel, #activePluginsLabel {
+	/* Increase the left margin of the counters */
+	padding-left: 6px;
 }

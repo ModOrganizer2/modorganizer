@@ -342,7 +342,7 @@ bool TransferSavesDialog::transferCharacters(
       if (!method(sourceFile.absoluteFilePath(), destinationFile)) {
         qCritical(errmsg,
                   sourceFile.absoluteFilePath().toUtf8().constData(),
-                  destinationFile.toUtf8().constData());
+                  qUtf8Printable(destinationFile));
       }
     }
   }

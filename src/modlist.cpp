@@ -155,14 +155,21 @@ QString ModList::getFlagText(ModInfo::EFlag flag, ModInfo::Ptr modInfo) const
       if (!modInfo->comments().isEmpty())
         output << QString("<i>%1</i>").arg(modInfo->comments());
       if (!modInfo->notes().isEmpty())
-        output << QString("<i>%1</i>").arg(modInfo->notes()).replace("\n", "<br>");
-      return output.join("<br>");
+        output << QString("<i>%1</i>").arg(modInfo->notes());
+      return output.join("");
     }
-    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites files");
-    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten files");
-    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Overwrites & Overwritten");
+    case ModInfo::FLAG_CONFLICT_OVERWRITE: return tr("Overwrites loose files");
+    case ModInfo::FLAG_CONFLICT_OVERWRITTEN: return tr("Overwritten loose files");
+    case ModInfo::FLAG_CONFLICT_MIXED: return tr("Loose files Overwrites & Overwritten");
     case ModInfo::FLAG_CONFLICT_REDUNDANT: return tr("Redundant");
-    case ModInfo::FLAG_ALTERNATE_GAME: return tr("Alternate game source");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITE: return tr("Overwrites an archive with loose files");
+    case ModInfo::FLAG_ARCHIVE_LOOSE_CONFLICT_OVERWRITTEN: return tr("Archive is overwritten by loose files");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITE: return tr("Overwrites another archive file");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_OVERWRITTEN: return tr("Overwritten by another archive file");
+    case ModInfo::FLAG_ARCHIVE_CONFLICT_MIXED: return tr("Archive files overwrites & overwritten");
+    case ModInfo::FLAG_ALTERNATE_GAME: return tr("<br>This mod is for a different game, "
+      "make sure it's compatible or it could cause crashes.");
+    case ModInfo::FLAG_TRACKED: return tr("Mod is being tracked on the website");
     default: return "";
   }
 }
@@ -238,7 +245,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       }
     } else if (column == COL_MODID) {
       int modID = modInfo->getNexusID();
-      if (modID >= 0) {
+      if (modID > 0) {
         return modID;
       }
       else {
@@ -247,7 +254,7 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     } else if (column == COL_GAME) {
       if (m_PluginContainer != nullptr) {
         for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
-          if (game->gameShortName() == modInfo->getGameName())
+          if (game->gameShortName().compare(modInfo->getGameName(), Qt::CaseInsensitive) == 0)
             return game->gameName();
         }
       }
@@ -365,6 +372,9 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
       if (modInfo->updateAvailable() || modInfo->downgradeAvailable()) {
         result.setWeight(QFont::Bold);
       }
+      if (modInfo->canBeUpdated()) {
+        result.setItalic(true);
+      }
     }
     return result;
   } else if (role == Qt::DecorationRole) {
@@ -399,13 +409,22 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
     return QVariant();
   } else if ((role == Qt::BackgroundRole)
              || (role == ViewMarkingScrollBar::DEFAULT_ROLE)) {
+    bool overwrite = m_Overwrite.find(modIndex) != m_Overwrite.end();
+    bool archiveOverwrite = m_ArchiveOverwrite.find(modIndex) != m_ArchiveOverwrite.end();
+    bool archiveLooseOverwrite = m_ArchiveLooseOverwrite.find(modIndex) != m_ArchiveLooseOverwrite.end();
+    bool overwritten = m_Overwritten.find(modIndex) != m_Overwritten.end();
+    bool archiveOverwritten = m_ArchiveOverwritten.find(modIndex) != m_ArchiveOverwritten.end();
+    bool archiveLooseOverwritten = m_ArchiveLooseOverwritten.find(modIndex) != m_ArchiveLooseOverwritten.end();
     if (modInfo->getHighlight() & ModInfo::HIGHLIGHT_PLUGIN) {
       return Settings::instance().modlistContainsPluginColor();
-    } else if (m_Overwrite.find(modIndex) != m_Overwrite.end()) {
-      return Settings::instance().modlistOverwrittenLooseColor();
-    }
-    else if (m_Overwritten.find(modIndex) != m_Overwritten.end()) {
+    } else if (overwritten || archiveLooseOverwritten) {
       return Settings::instance().modlistOverwritingLooseColor();
+    } else if (overwrite || archiveLooseOverwrite) {
+      return Settings::instance().modlistOverwrittenLooseColor();
+    } else if (archiveOverwritten) {
+      return Settings::instance().modlistOverwritingArchiveColor();
+    } else if (archiveOverwrite) {
+      return Settings::instance().modlistOverwrittenArchiveColor();
     } else if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR)
                && modInfo->getColor().isValid()
                && ((role != ViewMarkingScrollBar::DEFAULT_ROLE)
@@ -434,11 +453,26 @@ QVariant ModList::data(const QModelIndex &modelIndex, int role) const
         return QString();
       }
     } else if (column == COL_VERSION) {
-      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString()).arg(modInfo->getNewestVersion().displayString());
+      QString text = tr("installed version: \"%1\", newest version: \"%2\"").arg(modInfo->getVersion().displayString(3)).arg(modInfo->getNewestVersion().displayString(3));
       if (modInfo->downgradeAvailable()) {
         text += "<br>" + tr("The newest version on Nexus seems to be older than the one you have installed. This could either mean the version you have has been withdrawn "
                           "(i.e. due to a bug) or the author uses a non-standard versioning scheme and that newest version is actually newer. "
                           "Either way you may want to \"upgrade\".");
+      }
+      if (modInfo->getNexusFileStatus() == 4) {
+        text += "<br>" + tr("This file has been marked as \"Old\". There is most likely an updated version of this file available.");
+      } else if (modInfo->getNexusFileStatus() == 6) {
+        text += "<br>" + tr("This file has been marked as \"Deleted\"! You may want to check for an update or remove the nexus ID from this mod!");
+      }
+      if (modInfo->getNexusID() > 0) {
+        if (!modInfo->canBeUpdated()) {
+          qint64 remains = QDateTime::currentDateTimeUtc().secsTo(modInfo->getExpires());
+          qint64 minutes = remains / 60;
+          qint64 seconds = remains % 60;
+          QString remainsStr(tr("%1 minute(s) and %2 second(s)").arg(minutes).arg(seconds));
+          text += "<br>" + tr("This mod will be available to check in %2.")
+            .arg(remainsStr);
+        }
       }
       return text;
     } else if (column == COL_CATEGORY) {
@@ -516,7 +550,6 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
   ModInfo::Ptr info = ModInfo::getByIndex(modID);
   IModList::ModStates oldState = state(modID);
 
-
   bool result = false;
 
   emit aboutToChangeData();
@@ -527,7 +560,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
       m_Profile->setModEnabled(modID, enabled);
       m_Modified = true;
       m_LastCheck.restart();
-      emit modlist_changed(index, role);
+      emit modlistChanged(index, role);
     }
     result = true;
     emit dataChanged(index, index);
@@ -562,7 +595,7 @@ bool ModList::setData(const QModelIndex &index, const QVariant &value, int role)
         int newID = value.toInt(&ok);
         if (ok) {
           info->setNexusID(newID);
-          emit modlist_changed(index, role);
+          emit modlistChanged(index, role);
           result = true;
         } else {
           result = false;
@@ -754,6 +787,20 @@ void ModList::setOverwriteMarkers(const std::set<unsigned int> &overwrite, const
   notifyChange(0, rowCount() - 1);
 }
 
+void ModList::setArchiveOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_ArchiveOverwrite = overwrite;
+  m_ArchiveOverwritten = overwritten;
+  notifyChange(0, rowCount() - 1);
+}
+
+void ModList::setArchiveLooseOverwriteMarkers(const std::set<unsigned int> &overwrite, const std::set<unsigned int> &overwritten)
+{
+  m_ArchiveLooseOverwrite = overwrite;
+  m_ArchiveLooseOverwritten = overwritten;
+  notifyChange(0, rowCount() - 1);
+}
+
 void ModList::setPluginContainer(PluginContainer *pluginContianer)
 {
   m_PluginContainer = pluginContianer;
@@ -810,10 +857,10 @@ void ModList::highlightMods(const QItemSelectionModel *selection, const MOShared
     const MOShared::FileEntry::Ptr fileEntry = directoryEntry.findFile(modName.toStdWString());
     if (fileEntry.get() != nullptr) {
       bool archive = false;
-      std::vector<std::pair<int, std::wstring>> origins;
+      std::vector<std::pair<int, std::pair<std::wstring, int>>> origins;
       {
-        std::vector<std::pair<int, std::wstring>> alternatives = fileEntry->getAlternatives();
-        origins.insert(origins.end(), std::pair<int, std::wstring>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
+        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = fileEntry->getAlternatives();
+        origins.insert(origins.end(), std::pair<int, std::pair<std::wstring, int>>(fileEntry->getOrigin(archive), fileEntry->getArchive()));
       }
       for (auto originInfo : origins) {
         MOShared::FilesOrigin &origin = directoryEntry.getOriginByID(originInfo.first);
@@ -943,16 +990,18 @@ bool ModList::onModMoved(const std::function<void (const QString &, int, int)> &
 
 bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &parent)
 {
-  QStringList source;
-  QStringList target;
-
   if (row == -1) {
     row = parent.row();
   }
-
   ModInfo::Ptr modInfo = ModInfo::getByIndex(row);
-  QDir modDirectory(modInfo->absolutePath());
-  QDir gameDirectory(Settings::instance().getOverwriteDirectory());
+  QDir modDir = QDir(modInfo->absolutePath());
+
+  QDir allModsDir(Settings::instance().getModDirectory());
+  QDir overwriteDir(Settings::instance().getOverwriteDirectory());
+
+  QStringList sourceList;
+  QStringList targetList;
+  QList<QPair<QString,QString>> relativePathList;
 
   unsigned int overwriteIndex = ModInfo::findMod([] (ModInfo::Ptr mod) -> bool {
     std::vector<ModInfo::EFlag> flags = mod->getFlags();
@@ -960,22 +1009,52 @@ bool ModList::dropURLs(const QMimeData *mimeData, int row, const QModelIndex &pa
 
   QString overwriteName = ModInfo::getByIndex(overwriteIndex)->name();
 
-  for (const QUrl &url : mimeData->urls()) {
+  for (auto url : mimeData->urls()) {
+    //qDebug("URL drop requested: %s -> %s", qUtf8Printable(url.url()), qUtf8Printable(modDir.canonicalPath()));
     if (!url.isLocalFile()) {
+      qDebug("URL drop ignored: \"%s\" is not a local file", qUtf8Printable(url.url()));
       continue;
     }
-    QString relativePath = gameDirectory.relativeFilePath(url.toLocalFile());
-    if (relativePath.startsWith("..")) {
-      qDebug("%s drop ignored", qPrintable(url.toLocalFile()));
+
+    QFileInfo sourceInfo(url.toLocalFile());
+    QString sourceFile = sourceInfo.canonicalFilePath();
+
+    QString relativePath;
+    QString originName;
+
+    if (sourceFile.startsWith(allModsDir.canonicalPath())) {
+      QDir relativeDir(allModsDir.relativeFilePath(sourceFile));
+      QStringList splitPath = relativeDir.path().split("/");
+      originName = splitPath[0];
+      splitPath.pop_front();
+      relativePath = splitPath.join("/");
+    } else if (sourceFile.startsWith(overwriteDir.canonicalPath())) {
+      originName = overwriteName;
+      relativePath = overwriteDir.relativeFilePath(sourceFile);
+    } else {
+      qDebug("URL drop ignored: \"%s\" is not a known file to MO", qUtf8Printable(sourceFile));
       continue;
     }
-    source.append(url.toLocalFile());
-    target.append(modDirectory.absoluteFilePath(relativePath));
-    emit fileMoved(relativePath, overwriteName, modInfo->name());
+
+    QFileInfo targetInfo(modDir.absoluteFilePath(sourceInfo.fileName()));
+    sourceList << sourceFile;
+    targetList << targetInfo.absoluteFilePath();
+    relativePathList << QPair<QString,QString>(relativePath, originName);
   }
 
-  if (source.count() != 0) {
-    shellMove(source, target);
+  if (sourceList.count()) {
+    if (!shellMove(sourceList, targetList)) {
+      qDebug("Failed to move file (error %d)", ::GetLastError());
+      return false;
+    }
+  }
+
+  for (auto iter : relativePathList) {
+    emit fileMoved(iter.first, iter.second, modInfo->name());
+  }
+
+  if (!modInfo->isValid()) {
+    modInfo->testValid();
   }
 
   return true;
@@ -1117,6 +1196,10 @@ void ModList::notifyChange(int rowStart, int rowEnd)
   if (rowStart < 0) {
     m_Overwrite.clear();
     m_Overwritten.clear();
+    m_ArchiveOverwrite.clear();
+    m_ArchiveOverwritten.clear();
+    m_ArchiveLooseOverwrite.clear();
+    m_ArchiveLooseOverwritten.clear();
     beginResetModel();
     endResetModel();
   } else {
@@ -1275,11 +1358,23 @@ bool ModList::toggleSelection(QAbstractItemView *itemView)
 
   QItemSelectionModel *selectionModel = itemView->selectionModel();
 
+  QList<unsigned int> modsToEnable;
+  QList<unsigned int> modsToDisable;
+  QModelIndexList dirtyMods;
   for (QModelIndex idx : selectionModel->selectedRows()) {
     int modId = idx.data(Qt::UserRole + 1).toInt();
-    m_Profile->setModEnabled(modId, !m_Profile->modEnabled(modId));
-    emit modlist_changed(idx, 0);
+    if (m_Profile->modEnabled(modId)) {
+      modsToDisable.append(modId);
+      dirtyMods.append(idx);
+    } else {
+      modsToEnable.append(modId);
+      dirtyMods.append(idx);
+    }
   }
+
+  m_Profile->setModsEnabled(modsToEnable, modsToDisable);
+
+  emit modlistChanged(dirtyMods, 0);
 
   m_Modified = true;
   m_LastCheck.restart();
@@ -1319,32 +1414,28 @@ bool ModList::eventFilter(QObject *obj, QEvent *event)
   return QAbstractItemModel::eventFilter(obj, event);
 }
 
-
+//note: caller needs to make sure sort proxy is updated
 void ModList::enableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QList<unsigned int> modsToEnable;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      if (!m_Profile->modEnabled(modID)) {
-        m_Profile->setModEnabled(modID, true);
-        emit modlist_changed(row, 0);
-      }
+      modsToEnable.append(modID);
     }
+    m_Profile->setModsEnabled(modsToEnable, QList<unsigned int>());
   }
 }
 
-
+//note: caller needs to make sure sort proxy is updated
 void ModList::disableSelected(const QItemSelectionModel *selectionModel)
 {
   if (selectionModel->hasSelection()) {
-    bool dirty = false;
+    QList<unsigned int> modsToDisable;
     for (auto row : selectionModel->selectedRows(COL_PRIORITY)) {
       int modID = m_Profile->modIndexByPriority(row.data().toInt());
-      if (m_Profile->modEnabled(modID)) {
-        m_Profile->setModEnabled(modID, false);
-        emit modlist_changed(row, 0);
-      }
+      modsToDisable.append(modID);
     }
+    m_Profile->setModsEnabled(QList<unsigned int>(), modsToDisable);
   }
 }

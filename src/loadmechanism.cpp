@@ -100,7 +100,7 @@ bool LoadMechanism::hashIdentical(const QString &fileNameLHS, const QString &fil
 {
   QFile fileLHS(fileNameLHS);
   if (!fileLHS.open(QIODevice::ReadOnly)) {
-    throw MyException(QObject::tr("%1 not found").arg(fileNameLHS));
+    throw MyException(QObject::tr("file not found: %1").arg(qUtf8Printable(fileNameLHS)));
   }
   QByteArray dataLHS = fileLHS.readAll();
   QByteArray hashLHS = QCryptographicHash::hash(dataLHS, QCryptographicHash::Md5);
@@ -109,7 +109,7 @@ bool LoadMechanism::hashIdentical(const QString &fileNameLHS, const QString &fil
 
   QFile fileRHS(fileNameRHS);
   if (!fileRHS.open(QIODevice::ReadOnly)) {
-    throw MyException(QObject::tr("%1 not found").arg(fileNameRHS));
+    throw MyException(QObject::tr("file not found: %1").arg(qUtf8Printable(fileNameRHS)));
   }
   QByteArray dataRHS = fileRHS.readAll();
   QByteArray hashRHS = QCryptographicHash::hash(dataRHS, QCryptographicHash::Md5);

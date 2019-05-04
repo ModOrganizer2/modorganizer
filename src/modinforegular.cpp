@@ -4,6 +4,7 @@
 #include "messagedialog.h"
 #include "report.h"
 #include "scriptextender.h"
+#include "settings.h"
 
 #include <QApplication>
 #include <QDirIterator>
@@ -34,6 +35,7 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
   , m_Validated(false)
   , m_MetaInfoChanged(false)
   , m_EndorsedState(ENDORSED_UNKNOWN)
+  , m_TrackedState(TRACKED_UNKNOWN)
   , m_NexusBridge(pluginContainer)
 {
   testValid();
@@ -44,12 +46,20 @@ ModInfoRegular::ModInfoRegular(PluginContainer *pluginContainer, const IPluginGa
     if (!game->primarySources().contains(m_GameName, Qt::CaseInsensitive))
       m_IsAlternate = true;
 
+  //populate m_Archives
+  m_Archives = QStringList();
+  if (Settings::instance().archiveParsing()) {
+    archives(true);
+  }
+
   connect(&m_NexusBridge, SIGNAL(descriptionAvailable(QString,int,QVariant,QVariant))
           , this, SLOT(nxmDescriptionAvailable(QString,int,QVariant,QVariant)));
   connect(&m_NexusBridge, SIGNAL(endorsementToggled(QString,int,QVariant,QVariant))
           , this, SLOT(nxmEndorsementToggled(QString,int,QVariant,QVariant)));
-  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QString))
-          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QString)));
+  connect(&m_NexusBridge, SIGNAL(trackingToggled(QString,int,QVariant,bool))
+          , this, SLOT(nxmTrackingToggled(QString,int,QVariant,bool)));
+  connect(&m_NexusBridge, SIGNAL(requestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString))
+          , this, SLOT(nxmRequestFailed(QString,int,int,QVariant,QNetworkReply::NetworkError,QString)));
 }
 
 
@@ -59,7 +69,7 @@ ModInfoRegular::~ModInfoRegular()
     saveMeta();
   } catch (const std::exception &e) {
     qCritical("failed to save meta information for \"%s\": %s",
-              m_Name.toUtf8().constData(), e.what());
+              qUtf8Printable(m_Name), e.what());
   }
 }
 
@@ -86,12 +96,16 @@ void ModInfoRegular::readMeta()
   m_IgnoredVersion   = metaFile.value("ignoredVersion", "").toString();
   m_InstallationFile = metaFile.value("installationFile", "").toString();
   m_NexusDescription = metaFile.value("nexusDescription", "").toString();
+  m_NexusFileStatus  = metaFile.value("nexusFileStatus", "1").toInt();
   m_Repository       = metaFile.value("repository", "Nexus").toString();
   m_Converted        = metaFile.value("converted", false).toBool();
   m_Validated        = metaFile.value("validated", false).toBool();
   m_URL              = metaFile.value("url", "").toString();
   m_LastNexusQuery   = QDateTime::fromString(metaFile.value("lastNexusQuery", "").toString(), Qt::ISODate);
+  m_LastNexusUpdate  = QDateTime::fromString(metaFile.value("lastNexusUpdate", "").toString(), Qt::ISODate);
+  m_NexusLastModified = QDateTime::fromString(metaFile.value("nexusLastModified", QDateTime::currentDateTimeUtc()).toString(), Qt::ISODate);
   m_Color            = metaFile.value("color",QColor()).value<QColor>();
+  m_TrackedState = metaFile.value("tracked", false).toBool() ? TRACKED_TRUE : TRACKED_FALSE;
   if (metaFile.contains("endorsed")) {
     if (metaFile.value("endorsed").canConvert<int>()) {
       switch (metaFile.value("endorsed").toInt()) {
@@ -104,7 +118,7 @@ void ModInfoRegular::readMeta()
       m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
     }
   }
-
+  
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -153,14 +167,19 @@ void ModInfoRegular::saveMeta()
       metaFile.setValue("notes", m_Notes);
       metaFile.setValue("nexusDescription", m_NexusDescription);
       metaFile.setValue("url", m_URL);
+      metaFile.setValue("nexusFileStatus", m_NexusFileStatus);
       metaFile.setValue("lastNexusQuery", m_LastNexusQuery.toString(Qt::ISODate));
+      metaFile.setValue("lastNexusUpdate", m_LastNexusUpdate.toString(Qt::ISODate));
+      metaFile.setValue("nexusLastModified", m_NexusLastModified.toString(Qt::ISODate));
       metaFile.setValue("converted", m_Converted);
       metaFile.setValue("validated", m_Validated);
       metaFile.setValue("color", m_Color);
       if (m_EndorsedState != ENDORSED_UNKNOWN) {
         metaFile.setValue("endorsed", m_EndorsedState);
       }
+      metaFile.setValue("tracked", m_TrackedState);
 
+      metaFile.remove("installedFiles");
       metaFile.beginWriteArray("installedFiles");
       int idx = 0;
       for (auto iter = m_InstalledFileIDs.begin(); iter != m_InstalledFileIDs.end(); ++iter) {
@@ -189,6 +208,9 @@ bool ModInfoRegular::updateAvailable() const
   if (m_IgnoredVersion.isValid() && (m_IgnoredVersion == m_NewestVersion)) {
     return false;
   }
+  if (m_NexusFileStatus == 4 || m_NexusFileStatus == 6) {
+    return true;
+  }
   return m_NewestVersion.isValid() && (m_Version < m_NewestVersion);
 }
 
@@ -205,29 +227,56 @@ bool ModInfoRegular::downgradeAvailable() const
 void ModInfoRegular::nxmDescriptionAvailable(QString, int, QVariant, QVariant resultData)
 {
   QVariantMap result = resultData.toMap();
-  setNewestVersion(VersionInfo(result["version"].toString()));
   setNexusDescription(result["description"].toString());
 
-  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("voted_by_user"))) {
-    setEndorsedState(result["voted_by_user"].toBool() ? ENDORSED_TRUE : ENDORSED_FALSE);
+  if ((m_EndorsedState != ENDORSED_NEVER) && (result.contains("endorsement"))) {
+    QVariantMap endorsement = result["endorsement"].toMap();
+    QString endorsementStatus = endorsement["endorse_status"].toString();
+    if (endorsementStatus.compare("Endorsed", Qt::CaseInsensitive) == 00)
+      setEndorsedState(ENDORSED_TRUE);
+    else if (endorsementStatus.compare("Abstained", Qt::CaseInsensitive) == 00)
+      setEndorsedState(ENDORSED_NEVER);
+    else
+      setEndorsedState(ENDORSED_FALSE);
   }
-  m_LastNexusQuery = QDateTime::currentDateTime();
-  //m_MetaInfoChanged = true;
+  m_LastNexusQuery = QDateTime::currentDateTimeUtc();
+  m_NexusLastModified = QDateTime::fromSecsSinceEpoch(result["updated_timestamp"].toInt(), Qt::UTC);
+  m_MetaInfoChanged = true;
   saveMeta();
+  disconnect(sender(), SIGNAL(descriptionAvailable(QString, int, QVariant, QVariant)));
   emit modDetailsUpdated(true);
 }
 
 
 void ModInfoRegular::nxmEndorsementToggled(QString, int, QVariant, QVariant resultData)
 {
-  m_EndorsedState = resultData.toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
+  QMap results = resultData.toMap();
+  if (results["status"].toString().compare("Endorsed") == 0) {
+    m_EndorsedState = ENDORSED_TRUE;
+  } else if (results["status"].toString().compare("Abstained") == 0) {
+    m_EndorsedState = ENDORSED_NEVER;
+  } else {
+    m_EndorsedState = ENDORSED_FALSE;
+  }
   m_MetaInfoChanged = true;
   saveMeta();
   emit modDetailsUpdated(true);
 }
 
 
-void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, const QString &errorMessage)
+void ModInfoRegular::nxmTrackingToggled(QString, int, QVariant, bool tracked)
+{
+  if (tracked)
+    m_TrackedState = TRACKED_TRUE;
+  else
+    m_TrackedState = TRACKED_FALSE;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+
+void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage)
 {
   QString fullMessage = errorMessage;
   if (userData.canConvert<int>() && (userData.toInt() == 1)) {
@@ -242,7 +291,9 @@ void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, cons
 
 bool ModInfoRegular::updateNXMInfo()
 {
-  if (m_NexusID > 0) {
+  QDateTime time = QDateTime::currentDateTimeUtc();
+  QDateTime target = m_LastNexusQuery.addDays(1);
+  if (m_NexusID > 0 && time >= target) {
     m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
@@ -301,7 +352,7 @@ bool ModInfoRegular::setName(const QString &name)
   } else {
     if (!shellRename(modDir.absoluteFilePath(m_Name), modDir.absoluteFilePath(name))) {
       qCritical("failed to rename mod %s (errorcode %d)",
-                qPrintable(name), ::GetLastError());
+                qUtf8Printable(name), ::GetLastError());
       return false;
     }
   }
@@ -338,7 +389,7 @@ void ModInfoRegular::setNotes(const QString &notes)
   m_MetaInfoChanged = true;
 }
 
-void ModInfoRegular::setGameName(QString gameName)
+void ModInfoRegular::setGameName(const QString &gameName)
 {
   m_GameName = gameName;
   m_MetaInfoChanged = true;
@@ -380,6 +431,14 @@ void ModInfoRegular::setEndorsedState(EEndorsedState endorsedState)
   }
 }
 
+void ModInfoRegular::setTrackedState(ETrackedState trackedState)
+{
+  if (trackedState != m_TrackedState) {
+    m_TrackedState = trackedState;
+    m_MetaInfoChanged = true;
+  }
+}
+
 void ModInfoRegular::setInstallationFile(const QString &fileName)
 {
   m_InstallationFile = fileName;
@@ -399,13 +458,19 @@ void ModInfoRegular::setIsEndorsed(bool endorsed)
   }
 }
 
-
 void ModInfoRegular::setNeverEndorse()
 {
   m_EndorsedState = ENDORSED_NEVER;
   m_MetaInfoChanged = true;
 }
 
+void ModInfoRegular::setIsTracked(bool tracked)
+{
+  if (tracked != (m_TrackedState == TRACKED_TRUE)) {
+    m_TrackedState = tracked ? TRACKED_TRUE : TRACKED_FALSE;
+    m_MetaInfoChanged = true;
+  }
+}
 
 void ModInfoRegular::setColor(QColor color)
 {
@@ -427,7 +492,14 @@ bool ModInfoRegular::remove()
 void ModInfoRegular::endorse(bool doEndorse)
 {
   if (doEndorse != (m_EndorsedState == ENDORSED_TRUE)) {
-    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), doEndorse, QVariant(1));
+    m_NexusBridge.requestToggleEndorsement(m_GameName, getNexusID(), m_Version.canonicalString(), doEndorse, QVariant(1));
+  }
+}
+
+void ModInfoRegular::track(bool doTrack)
+{
+  if (doTrack != (m_TrackedState == TRACKED_TRUE)) {
+    m_NexusBridge.requestToggleTracking(m_GameName, getNexusID(), doTrack, QVariant(1));
   }
 }
 
@@ -462,12 +534,31 @@ void ModInfoRegular::ignoreUpdate(bool ignore)
   m_MetaInfoChanged = true;
 }
 
+bool ModInfoRegular::canBeUpdated() const
+{
+  QDateTime now = QDateTime::currentDateTimeUtc();
+  QDateTime target = getExpires();
+  if (now >= target)
+    return m_NexusID > 0;
+  return false;
+}
+
+QDateTime ModInfoRegular::getExpires() const
+{
+  return m_LastNexusUpdate.addSecs(300);
+}
 
 std::vector<ModInfo::EFlag> ModInfoRegular::getFlags() const
 {
   std::vector<ModInfo::EFlag> result = ModInfoWithConflictInfo::getFlags();
-  if ((m_NexusID > 0) && (endorsedState() == ENDORSED_FALSE)) {
+  if ((m_NexusID > 0) &&
+      (endorsedState() == ENDORSED_FALSE) &&
+      Settings::instance().endorsementIntegration()) {
     result.push_back(ModInfo::FLAG_NOTENDORSED);
+  }
+  if ((m_NexusID > 0) &&
+      (trackedState() == TRACKED_TRUE)) {
+    result.push_back(ModInfo::FLAG_TRACKED);
   }
   if (!isValid() && !m_Validated) {
     result.push_back(ModInfo::FLAG_INVALID);
@@ -575,6 +666,19 @@ QString ModInfoRegular::getDescription() const
   }
 }
 
+int ModInfoRegular::getNexusFileStatus() const
+{
+  return m_NexusFileStatus;
+}
+
+void ModInfoRegular::setNexusFileStatus(int status)
+{
+  m_NexusFileStatus = status;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
 QString ModInfoRegular::comments() const
 {
   return m_Comments;
@@ -605,9 +709,48 @@ ModInfoRegular::EEndorsedState ModInfoRegular::endorsedState() const
   return m_EndorsedState;
 }
 
+ModInfoRegular::ETrackedState ModInfoRegular::trackedState() const
+{
+  return m_TrackedState;
+}
+
+QDateTime ModInfoRegular::getLastNexusUpdate() const
+{
+  return m_LastNexusUpdate;
+}
+
+void ModInfoRegular::setLastNexusUpdate(QDateTime time)
+{
+  m_LastNexusUpdate = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
 QDateTime ModInfoRegular::getLastNexusQuery() const
 {
   return m_LastNexusQuery;
+}
+
+void ModInfoRegular::setLastNexusQuery(QDateTime time)
+{
+  m_LastNexusQuery = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
+}
+
+QDateTime ModInfoRegular::getNexusLastModified() const
+{
+  return m_NexusLastModified;
+}
+
+void ModInfoRegular::setNexusLastModified(QDateTime time)
+{
+  m_NexusLastModified = time;
+  m_MetaInfoChanged = true;
+  saveMeta();
+  emit modDetailsUpdated(true);
 }
 
 void ModInfoRegular::setURL(QString const &url)
@@ -623,14 +766,18 @@ QString ModInfoRegular::getURL() const
 
 
 
-QStringList ModInfoRegular::archives() const
+QStringList ModInfoRegular::archives(bool checkOnDisk)
 {
-  QStringList result;
-  QDir dir(this->absolutePath());
-  for (const QString &archive : dir.entryList(QStringList({ "*.bsa", "*.ba2" }))) {
-    result.append(this->absolutePath() + "/" + archive);
+  if (checkOnDisk) {
+    QStringList result;
+    QDir dir(this->absolutePath());
+    QStringList bsaList = dir.entryList(QStringList({ "*.bsa", "*.ba2" }));
+    for (const QString &archive : bsaList) {
+      result.append(this->absolutePath() + "/" + archive);
+    }
+    m_Archives = result;
   }
-  return result;
+  return m_Archives;
 }
 
 void ModInfoRegular::addInstalledFile(int modId, int fileId)

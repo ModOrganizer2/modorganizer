@@ -84,6 +84,10 @@ void PluginContainer::registerGame(IPluginGame *game)
 
 bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
 {
+  // Storing the original QObject* is a bit of a hack as I couldn't figure out any
+  // way to cast directly between IPlugin* and IPluginDiagnose*
+  bf::at_key<QObject>(m_Plugins).push_back(plugin);
+
   { // generic treatment for all plugins
     IPlugin *pluginObj = qobject_cast<IPlugin*>(plugin);
     if (pluginObj == nullptr) {
@@ -160,12 +164,12 @@ bool PluginContainer::registerPlugin(QObject *plugin, const QString &fileName)
           for (QObject *proxiedPlugin : matchingPlugins) {
             if (proxiedPlugin != nullptr) {
               if (registerPlugin(proxiedPlugin, pluginName)) {
-                qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
+                qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));
               }
               else {
                 qWarning("plugin \"%s\" failed to load. If this plugin is for an older version of MO "
                          "you have to update it or delete it if no update exists.",
-                         qPrintable(pluginName));
+                         qUtf8Printable(pluginName));
               }
             }
           }
@@ -220,7 +224,7 @@ void PluginContainer::unloadPlugins()
     QPluginLoader *loader = m_PluginLoaders.back();
     m_PluginLoaders.pop_back();
     if ((loader != nullptr) && !loader->unload()) {
-      qDebug("failed to unload %s: %s", qPrintable(loader->fileName()), qPrintable(loader->errorString()));
+      qDebug("failed to unload %s: %s", qUtf8Printable(loader->fileName()), qUtf8Printable(loader->errorString()));
     }
     delete loader;
   }
@@ -275,7 +279,7 @@ void PluginContainer::loadPlugins()
   while (iter.hasNext()) {
     iter.next();
     if (m_Organizer->settings().pluginBlacklisted(iter.fileName())) {
-      qDebug("plugin \"%s\" blacklisted", qPrintable(iter.fileName()));
+      qDebug("plugin \"%s\" blacklisted", qUtf8Printable(iter.fileName()));
       continue;
     }
     loadCheck.write(iter.fileName().toUtf8());
@@ -287,14 +291,14 @@ void PluginContainer::loadPlugins()
       if (pluginLoader->instance() == nullptr) {
         m_FailedPlugins.push_back(pluginName);
         qCritical("failed to load plugin %s: %s",
-                  qPrintable(pluginName), qPrintable(pluginLoader->errorString()));
+                  qUtf8Printable(pluginName), qUtf8Printable(pluginLoader->errorString()));
       } else {
         if (registerPlugin(pluginLoader->instance(), pluginName)) {
-          qDebug("loaded plugin \"%s\"", qPrintable(QFileInfo(pluginName).fileName()));
+          qDebug("loaded plugin \"%s\"", qUtf8Printable(QFileInfo(pluginName).fileName()));
           m_PluginLoaders.push_back(pluginLoader.release());
         } else {
           m_FailedPlugins.push_back(pluginName);
-          qWarning("plugin \"%s\" failed to load (may be outdated)", qPrintable(pluginName));
+          qWarning("plugin \"%s\" failed to load (may be outdated)", qUtf8Printable(pluginName));
         }
       }
     }

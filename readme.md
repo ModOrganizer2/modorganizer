@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/23qmd9rufv9vpmg7?svg=true)](https://ci.appveyor.com/project/Modorganizer2/modorganizer)
+
 # Mod Organizer
 
 Mod Organizer (MO) is a tool for managing mod collections of arbitrary size. It is specifically designed for people who like to experiment with mods and thus need an easy and reliable way to install and uninstall them.
@@ -82,4 +84,3 @@ Here is a complete list:
 ### Unused Repositories
 * https://github.com/Modorganizer2/modorganizer-hookdll
 * https://github.com/TanninOne/modorganizer-tool_nmmimport
-

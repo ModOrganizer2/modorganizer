@@ -157,7 +157,7 @@
          <item row="0" column="0">
           <widget class="QGroupBox" name="groupBox">
            <property name="title">
-            <string>Current Maintainers</string>
+            <string>Lead Developers/ Maintainers</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
@@ -177,11 +177,6 @@
               </item>
               <item>
                <property name="text">
-                <string notr="true">Diana</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
                 <string notr="true">erasmux</string>
                </property>
               </item>
@@ -190,7 +185,7 @@
                 <string notr="true">Silarn</string>
                </property>
               </item>
-			  <item>
+              <item>
                <property name="text">
                 <string notr="true">LostDragonist</string>
                </property>
@@ -203,17 +198,27 @@
          <item row="1" column="0">
           <widget class="QGroupBox" name="groupBox_2">
            <property name="title">
-            <string>Major Contributors</string>
+            <string>Mo2 devs and Contributors</string>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0">
             <item>
-             <widget class="QListWidget" name="listWidget_2">
+             <widget class="QListWidget" name="listWidget_3">
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
               <item>
                <property name="text">
                 <string notr="true">AnyOldName3</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Project579</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>przester</string>
                </property>
               </item>
              </widget>
@@ -226,9 +231,9 @@
            <property name="title">
             <string>Translators</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_6">
+           <layout class="QVBoxLayout" name="verticalLayout_61">
             <item>
-             <widget class="QListWidget" name="listWidget_2">
+             <widget class="QListWidget" name="listWidget_4">
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
@@ -312,6 +317,11 @@
               </item>
               <item>
                <property name="text">
+                <string>zDas (Portuguese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string notr="true">tokcdk  (Russian)</string>
                </property>
               </item>
@@ -332,6 +342,11 @@
               </item>
               <item>
                <property name="text">
+                <string>yohru (Japanese)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
                 <string>...and all other Transifex contributors!</string>
                </property>
                <property name="toolTip">
@@ -348,12 +363,17 @@
            <property name="title">
             <string>Other Supporters &amp;&amp; Contributors</string>
            </property>
-           <layout class="QVBoxLayout" name="verticalLayout_7">
+           <layout class="QVBoxLayout" name="verticalLayout_71">
             <item>
              <widget class="QListWidget" name="listWidget">
               <property name="selectionMode">
                <enum>QAbstractItemView::NoSelection</enum>
               </property>
+              <item>
+               <property name="text">
+                <string>Tannin (Original Creator)</string>
+               </property>
+              </item>
               <item>
                <property name="text">
                 <string notr="true">blacksol</string>

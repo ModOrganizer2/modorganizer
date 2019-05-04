@@ -115,7 +115,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   ui->commentsEdit->setText(modInfo->comments());
   ui->notesEdit->setText(modInfo->notes());
 
-  ui->descriptionView->setPage(new DescriptionPage);
+  ui->descriptionView->setPage(new DescriptionPage());
 
   connect(&m_ThumbnailMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(thumbnailClickedSignal(const QString&)));
   connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
@@ -171,10 +171,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
-  if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
-    activateNexusTab();
-  }
 
+  ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
   ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
                              (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 
@@ -185,13 +183,21 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       break;
     }
   }
+
+  if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
+    activateNexusTab();
+  }
 }
 
 
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setComments(ui->commentsEdit->text());
-  m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  //Avoid saving html stump if notes field is empty.
+  if (ui->notesEdit->toPlainText().isEmpty())
+    m_ModInfo->setNotes(ui->notesEdit->toPlainText());
+  else
+    m_ModInfo->setNotes(ui->notesEdit->toHtml());
   saveCategories(ui->categoriesTree->invisibleRootItem());
   saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui->descriptionView->page();
@@ -312,10 +318,10 @@ void ModInfoDialog::refreshLists()
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
       bool archive;
       if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::wstring>> alternatives = (*iter)->getAlternatives();
+        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
         if (!alternatives.empty()) {
           std::wostringstream altString;
-          for (std::vector<std::pair<int, std::wstring>>::iterator altIter = alternatives.begin();
+          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
                altIter != alternatives.end(); ++altIter) {
             if (altIter != alternatives.begin()) {
               altString << ", ";
@@ -324,11 +330,18 @@ void ModInfoDialog::refreshLists()
           }
           QStringList fields(relativeName.prepend("..."));
           fields.append(ToQString(altString.str()));
+
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
           item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.begin()->first).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives.begin()->first);
+          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
+          item->setData(1, Qt::UserRole + 1, alternatives.back().first);
           item->setData(1, Qt::UserRole + 2, archive);
+          if (archive) {
+            QFont font = item->font(0);
+            font.setItalic(true);
+            item->setFont(0, font);
+            item->setFont(1, font);
+          }
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
         } else {// otherwise don't display the file
@@ -342,6 +355,12 @@ void ModInfoDialog::refreshLists()
         item->setData(0, Qt::UserRole, fileName);
         item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
         item->setData(1, Qt::UserRole + 2, archive);
+        if (archive) {
+          QFont font = item->font(0);
+          font.setItalic(true);
+          item->setFont(0, font);
+          item->setFont(1, font);
+        }
         ui->overwrittenTree->addTopLevelItem(item);
         ++numOverwritten;
       }
@@ -556,6 +575,7 @@ void ModInfoDialog::openIniFile(const QString &fileName)
 
 void ModInfoDialog::saveIniTweaks()
 {
+  m_Settings->remove("INI Tweaks");
   m_Settings->beginWriteArray("INI Tweaks");
 
   int countEnabled = 0;
@@ -778,52 +798,6 @@ void ModInfoDialog::refreshNexusData(int modID)
 }
 
 
-/*void ModInfoDialog::nxmDescriptionAvailable(int, QVariant, QVariant resultData, int requestID)
-{
-  std::set<int>::iterator idIter = m_RequestIDs.find(requestID);
-  if (idIter == m_RequestIDs.end()) {
-    return;
-  } else {
-    m_RequestIDs.erase(idIter);
-  }
-
-  QVariantMap result = resultData.toMap();
-
-  if (!result["description"].isNull()) {
-    QString descriptionAsHTML =
-        QString("<html>"
-                  "<head><style>body {background: #707070; } a { color: #5EA2E5; }</style></head>"
-                  "<body>%1</body>"
-                "</html>").arg(BBCode::convertToHTML(result["description"].toString()));
-
-//    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-    ui->descriptionView->setHtml(descriptionAsHTML);
-  } else {
-    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-  }
-
-  QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
-  QString version = result["version"].toString();
-
-  if (!version.isEmpty()) {
-    m_ModInfo->setNewestVersion(version);
-
-    VersionInfo currentVersion(versionEdit->text());
-    VersionInfo newestVersion(version);
-
-    QPalette versionColor;
-    if (currentVersion < newestVersion) {
-      versionColor.setColor(QPalette::Text, Qt::red);
-      versionEdit->setToolTip(tr("Current Version: %1").arg(version));
-    } else {
-      versionColor.setColor(QPalette::Text, Qt::green);
-      versionEdit->setToolTip(tr("No update available"));
-    }
-    versionEdit->setPalette(versionColor);
-  }
-}*/
-
-
 QString ModInfoDialog::getFileCategory(int categoryID)
 {
   switch (categoryID) {
@@ -831,7 +805,8 @@ QString ModInfoDialog::getFileCategory(int categoryID)
     case 2: return tr("Update");
     case 3: return tr("Optional");
     case 4: return tr("Old");
-    case 5: return tr("Misc");
+    case 5: return tr("Miscellaneous");
+    case 6: return tr("Deleted");
     default: return tr("Unknown");
   }
 }
@@ -855,46 +830,21 @@ void ModInfoDialog::updateVersionColor()
 
 void ModInfoDialog::modDetailsUpdated(bool success)
 {
-  if (success) {
-    QString nexusDescription = m_ModInfo->getNexusDescription();
-    if (!nexusDescription.isEmpty()) {
-  /*    QString input =
-         "[size=20]sizetest[/size]\r\n"
-          "[COLOR=yellow]colortest[/COLOR]\r\n"
-          "[center]centertest[/center]\r\n"
-          "[quote]quotetest 1[/quote]\r\n"
-          "[quote=bla]quotetest 2[/quote]\r\n"
-          "[url]www.skyrimnexus.com[/url]\r\n"
-          "[url=www.skyrimnexus.com]urltest 2[/url]\r\n"
-          "[ol]\r\n"
-          "[li]item 2[/li]"
-          "[*]item 1\r\n"
-          "[/ol]\r\n"
-          "[img]http://www.bbcode.org/images/bbcode_logo.png[/img]\r\n"
-          "[table][tr][th]headertest1[/th]"
-          "[th]headertest2[/th][/tr]"
-          "[tr][td]rowtest11[/td][td]rowtest12[/td][/tr]"
-          "[tr][td]rowtest21[/td][td]rowtest22[/td][/tr][/table]"
-          "[email=\"sherb@gmx.net\"]mail me[/email]";
-      ui->descriptionView->setHtml(BBCode::convertToHTML(input));*/
+  QString nexusDescription = m_ModInfo->getNexusDescription();
+  QString descriptionAsHTML = "<html>"
+    "<head><style class=\"nexus-description\">body {font-style: sans-serif; background: #707070; } a { color: #5EA2E5; }</style></head>"
+    "<body>%1</body>"
+    "</html>";
 
-      QString descriptionAsHTML =
-          QString("<html>"
-                    "<head><style>body {background: #707070; } a { color: #5EA2E5; }</style></head>"
-                    "<body>%1</body>"
-                  "</html>").arg(BBCode::convertToHTML(nexusDescription));
-
-      ui->descriptionView->page()->setHtml(descriptionAsHTML);
-
-  //    QString descriptionAsHTML = BBCode::convertToHTML(result["description"].toString());
-  //    ui->descriptionView->setHtml(descriptionAsHTML);
-    } else {
-  //    ui->descriptionView->setHtml(result["summary"].toString().append(QString("\r\n") + tr("(description incomplete, please visit nexus)")));
-      ui->descriptionView->page()->setHtml(tr("(description incomplete, please visit nexus)"));
-    }
-
-    updateVersionColor();
+  if (!nexusDescription.isEmpty()) {
+    descriptionAsHTML = descriptionAsHTML.arg(BBCode::convertToHTML(nexusDescription));
+  } else {
+    descriptionAsHTML = descriptionAsHTML.arg(tr("<div style=\"text-align: center;\"><h1>Uh oh!</h1><p>Sorry, there is no description available for this mod. :(</p></div>"));
   }
+
+  ui->descriptionView->page()->setHtml(descriptionAsHTML);
+
+  updateVersionColor();
 }
 
 
@@ -902,28 +852,30 @@ void ModInfoDialog::activateNexusTab()
 {
   QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
   int modID = modIDEdit->text().toInt();
-  if (modID != 0) {
+  if (modID > 0) {
     QString nexusLink = NexusInterface::instance(m_PluginContainer)->getModURL(modID, m_ModInfo->getGameName());
     QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
     visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
     visitNexusLabel->setToolTip(nexusLink);
+    m_ModInfo->setURL(nexusLink);
 
-    if (m_ModInfo->getNexusDescription().isEmpty() ||
-        QDateTime::currentDateTime() > m_ModInfo->getLastNexusQuery().addDays(1)) {
+    if (m_ModInfo->getNexusDescription().isEmpty() || QDateTime::currentDateTimeUtc() >= m_ModInfo->getLastNexusQuery().addDays(1)) {
       refreshNexusData(modID);
     } else {
-      this->modDetailsUpdated(true);
+      modDetailsUpdated(true);
     }
-  }
+  } else
+    modDetailsUpdated(true);
   QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
-  QString currentVersion = m_Settings->value("version", "0.0").toString();
+  QString currentVersion = m_Settings->value("version", "???").toString();
   versionEdit->setText(currentVersion);
+  ui->customUrlLineEdit->setText(m_ModInfo->getURL());
 }
 
 
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-  if (m_RealTabPos[index] == TAB_NEXUS) {
+  if (index == TAB_NEXUS || m_RealTabPos[index] == TAB_NEXUS) {
     activateNexusTab();
   }
 }
@@ -961,6 +913,10 @@ void ModInfoDialog::on_versionEdit_editingFinished()
   updateVersionColor();
 }
 
+void ModInfoDialog::on_customUrlLineEdit_editingFinished()
+{
+  m_ModInfo->setURL(ui->customUrlLineEdit->text());
+}
 
 bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 {
@@ -1098,7 +1054,7 @@ void ModInfoDialog::openFile(const QModelIndex &index)
 
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
   if ((unsigned long long)res <= 32) {
-    qCritical("failed to invoke %s: %d", fileName.toUtf8().constData(), res);
+    qCritical("failed to invoke %s: %d", qUtf8Printable(fileName), res);
   }
 }
 
@@ -1406,7 +1362,7 @@ void ModInfoDialog::previewDataFile()
 	const FileEntry::Ptr file = m_OrganizerCore->directoryStructure()->searchFile(ToWString(fileName), nullptr);
 
 	if (file.get() == nullptr) {
-		reportError(tr("file not found: %1").arg(fileName));
+		reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
 		return;
 	}
 
@@ -1495,9 +1451,12 @@ void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, 
 
 void ModInfoDialog::on_refreshButton_clicked()
 {
-  m_ModInfo->updateNXMInfo();
-
-  MessageDialog::showMessage(tr("Info requested, please wait"), this);
+  if (m_ModInfo->getNexusID() > 0) {
+    QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
+    int modID = modIDEdit->text().toInt();
+    refreshNexusData(modID);
+  } else
+    qInfo("Mod has no valid Nexus ID, info can't be updated.");
 }
 
 void ModInfoDialog::on_endorseBtn_clicked()

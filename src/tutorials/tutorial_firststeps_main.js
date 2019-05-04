@@ -14,12 +14,12 @@ function getTutorialSteps()
     },
 
     function() {
-        tutorial.text = qsTr("The highlighted button provides hints on solving problems MO recognized automatically.")
-        if (tutorialControl.waitForAction("actionProblems")) {
-            tutorial.text += qsTr("\nThere IS a problem now but you may want to hold off on fixing it until after completing the tutorial.")
-            highlightAction("actionProblems", true)
+        tutorial.text = qsTr("The highlighted button provides hints on solving potential problems MO recognized automatically.")
+        if (tutorialControl.waitForAction("actionNotifications")) {
+            tutorial.text += qsTr("\nThere IS a notification now but you may want to hold off on clearing it until after completing the tutorial.")
+            highlightAction("actionNotifications", true)
         } else {
-            highlightAction("actionProblems", false)
+            highlightAction("actionNotifications", false)
             waitForClick()
         }
     },

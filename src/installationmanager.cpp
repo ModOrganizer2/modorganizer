@@ -80,7 +80,8 @@ static T resolveFunction(QLibrary &lib, const char *name)
 
 InstallationManager::InstallationManager()
     : m_ParentWidget(nullptr),
-      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}) {
+      m_SupportedExtensions({"zip", "rar", "7z", "fomod", "001"}),
+      m_IsRunning(false) {
   QLibrary archiveLib(QCoreApplication::applicationDirPath() +
                       "\\dlls\\archive.dll");
   if (!archiveLib.load()) {
@@ -526,7 +527,7 @@ bool InstallationManager::testOverwrite(GuessedValue<QString> &modName, bool *me
           settingsFile.write(originalSettings);
           settingsFile.close();
         } else {
-          qCritical("failed to restore original settings: %s", metaFilename.toUtf8().constData());
+          qCritical("failed to restore original settings: %s", qUtf8Printable(metaFilename));
         }
         return true;
       } else if (overwriteDialog.action() == QueryOverwriteDialog::ACT_MERGE) {
@@ -560,7 +561,7 @@ bool InstallationManager::ensureValidModName(GuessedValue<QString> &name) const
 
 bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString gameName, int modID,
                                     const QString &version, const QString &newestVersion,
-                                    int categoryID, const QString &repository)
+                                    int categoryID, int fileCategoryID, const QString &repository)
 {
   if (!ensureValidModName(modName)) {
     return false;
@@ -575,10 +576,11 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   QString targetDirectory = QDir(m_ModsDirectory + "/" + modName).canonicalPath();
   QString targetDirectoryNative = QDir::toNativeSeparators(targetDirectory);
 
-  qDebug("installing to \"%s\"", targetDirectoryNative.toUtf8().constData());
+  qDebug("installing to \"%s\"", qUtf8Printable(targetDirectoryNative));
 
   m_InstallationProgress = new QProgressDialog(m_ParentWidget);
   ON_BLOCK_EXIT([this] () {
+    m_InstallationProgress->cancel();
     m_InstallationProgress->hide();
     m_InstallationProgress->deleteLater();
     m_InstallationProgress = nullptr;
@@ -639,9 +641,13 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
   if (!settingsFile.contains("category")) {
     settingsFile.setValue("category", QString::number(categoryID));
   }
+  settingsFile.setValue("nexusFileStatus", fileCategoryID);
   settingsFile.setValue("installationFile", m_CurrentFile);
   settingsFile.setValue("repository", repository);
   settingsFile.setValue("url", m_URL);
+
+  //cleanup of m_URL or this will persist across installs.
+  m_URL = "";
 
   if (!merge) {
     // this does not clear the list we have in memory but the mod is going to have to be re-read anyway
@@ -658,6 +664,11 @@ bool InstallationManager::doInstall(GuessedValue<QString> &modName, QString game
 bool InstallationManager::wasCancelled()
 {
   return m_ArchiveHandler->getLastError() == Archive::ERROR_EXTRACT_CANCELLED;
+}
+
+bool InstallationManager::isRunning()
+{
+  return m_IsRunning;
 }
 
 
@@ -701,6 +712,9 @@ bool InstallationManager::install(const QString &fileName,
                                   bool &hasIniTweaks,
                                   int modID)
 {
+  m_IsRunning = true;
+  ON_BLOCK_EXIT([this]() { m_IsRunning = false; });
+
   QFileInfo fileInfo(fileName);
   if (m_SupportedExtensions.find(fileInfo.suffix()) == m_SupportedExtensions.end()) {
     reportError(tr("File format \"%1\" not supported").arg(fileInfo.suffix()));
@@ -716,6 +730,7 @@ bool InstallationManager::install(const QString &fileName,
   QString version = "";
   QString newestVersion = "";
   int categoryID = 0;
+  int fileCategoryID = 1;
   QString repository = "Nexus";
 
   QString metaName = fileName + ".meta";
@@ -734,6 +749,7 @@ bool InstallationManager::install(const QString &fileName,
         metaFile.value("category", 0).toInt());
     categoryID = CategoryFactory::instance().getCategoryID(categoryIndex);
     repository = metaFile.value("repository", "").toString();
+    fileCategoryID = metaFile.value("fileCategory", 1).toInt();
   }
 
   if (version.isEmpty()) {
@@ -758,7 +774,7 @@ bool InstallationManager::install(const QString &fileName,
   if (fileInfo.dir() == QDir(m_DownloadsDirectory)) {
     m_CurrentFile = fileInfo.fileName();
   }
-  qDebug("using mod name \"%s\" (id %d) -> %s", modName->toUtf8().constData(), modID, qPrintable(m_CurrentFile));
+  qDebug("using mod name \"%s\" (id %d) -> %s", qUtf8Printable(modName), modID, qUtf8Printable(m_CurrentFile));
 
   //If there's an archive already open, close it. This happens with the bundle
   //installer when it uncompresses a split archive, then finds it has a real archive
@@ -770,8 +786,8 @@ bool InstallationManager::install(const QString &fileName,
                                             new MethodCallback<InstallationManager, void, QString *>(this, &InstallationManager::queryPassword));
   if (!archiveOpen) {
     qDebug("integrated archiver can't open %s: %s (%d)",
-           qPrintable(fileName),
-           qPrintable(getErrorString(m_ArchiveHandler->getLastError())),
+           qUtf8Printable(fileName),
+           qUtf8Printable(getErrorString(m_ArchiveHandler->getLastError())),
            m_ArchiveHandler->getLastError());
   }
   ON_BLOCK_EXIT(std::bind(&InstallationManager::postInstallCleanup, this));
@@ -811,7 +827,7 @@ bool InstallationManager::install(const QString &fileName,
             // the simple installer only prepares the installation, the rest
             // works the same for all installers
             if (!doInstall(modName, gameName, modID, version, newestVersion, categoryID,
-                           repository)) {
+                            fileCategoryID, repository)) {
               installResult = IPluginInstaller::RESULT_FAILED;
             }
           }
@@ -841,7 +857,7 @@ bool InstallationManager::install(const QString &fileName,
       }
     } catch (const IncompatibilityException &e) {
       qCritical("plugin \"%s\" incompatible: %s",
-                qPrintable(installer->name()), e.what());
+                qUtf8Printable(installer->name()), e.what());
     }
 
     // act upon the installation result. at this point the files have already been
@@ -867,6 +883,7 @@ bool InstallationManager::install(const QString &fileName,
 
   reportError(tr("None of the available installer plugins were able to handle that archive.\n"
     "This is likely due to a corrupted or incompatible download or unrecognized archive format."));
+
   return false;
 }
 

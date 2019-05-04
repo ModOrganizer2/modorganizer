@@ -44,7 +44,7 @@ public:
   /**
    * @return true if the current update is being ignored
    */
-  virtual bool updateIgnored() const { return m_IgnoredVersion == m_NewestVersion; }
+  virtual bool updateIgnored() const { return m_IgnoredVersion.isValid() && m_IgnoredVersion == m_NewestVersion; }
 
   /**
    * @brief test if there is a newer version of the mod
@@ -107,7 +107,7 @@ public:
    *
    * @param gameName the source game shortName
    */
-  void setGameName(QString gameName);
+  void setGameName(const QString &gameName);
 
   /**
    * @brief set/change the nexus mod id of this mod
@@ -178,6 +178,13 @@ public:
   virtual void setNeverEndorse();
 
   /**
+   * update the tracked state for the mod.  This only changes the
+   * buffered state.  It does not sync with Nexus
+   * @param tracked the new tracked state
+   */
+  virtual void setIsTracked(bool tracked);
+
+  /**
    * @brief delete the mod from the disc. This does not update the global ModInfo structure or indices
    * @return true if the mod was successfully removed
    **/
@@ -189,6 +196,13 @@ public:
    * @note if doEndorse doesn't differ from the current value, nothing happens.
    */
   virtual void endorse(bool doEndorse);
+
+  /**
+  * @brief track or untrack the mod.  This will sync with nexus!
+  * @param doTrack if true, the mod is tracked, if false, it's untracked.
+  * @note if doTrack doesn't differ from the current value, nothing happens.
+  */
+  virtual void track(bool doTrack);
 
   /**
   * @brief updates the mod to flag it as converted in order to ignore the alternate game warning
@@ -256,7 +270,12 @@ public:
   /**
    * @return true if the mod can be updated
    */
-  virtual bool canBeUpdated() const { return m_NexusID > 0; }
+  virtual bool canBeUpdated() const;
+
+  /**
+   * @return the update expiration date based on the last updated date from Nexus
+   */
+  virtual QDateTime getExpires() const;
 
   /**
    * @return true if the mod can be enabled/disabled
@@ -284,6 +303,19 @@ public:
    * @return a description about the mod, to be displayed in the ui
    */
   virtual QString getDescription() const;
+
+
+  /**
+   * @return the nexus file status (aka category ID)
+   */
+  virtual int getNexusFileStatus() const;
+
+
+  /**
+   * @brief sets the file status (category ID) from Nexus
+   * @param status the status id of the installed file
+   */
+  virtual void setNexusFileStatus(int status);
 
   /**
   * @return comments for this mod
@@ -316,11 +348,41 @@ public:
   virtual EEndorsedState endorsedState() const;
 
   /**
+   * @return true if the file is being tracked on nexus
+   */
+  virtual ETrackedState trackedState() const;
+
+  /**
+   * @brief get the last time nexus was checked for file updates on this mod
+   */
+  virtual QDateTime getLastNexusUpdate() const;
+
+  /**
+   * @brief set the last time nexus was checked for file updates on this mod
+   */
+  virtual void setLastNexusUpdate(QDateTime time);
+
+  /**
    * @return last time nexus was queried for infos on this mod
    */
   virtual QDateTime getLastNexusQuery() const;
 
-  virtual QStringList archives() const;
+  /**
+   * @brief set the last time nexus was queried for info on this mod
+   */
+  virtual void setLastNexusQuery(QDateTime time);
+
+  /**
+   * @return last time the mod was updated on Nexus
+   */
+  virtual QDateTime getNexusLastModified() const;
+
+  /**
+   * @brief set the last time the mod was updated on Nexus
+   */
+  virtual void setNexusLastModified(QDateTime time);
+
+  virtual QStringList archives(bool checkOnDisk = false);
 
   virtual void setColor(QColor color);
 
@@ -348,12 +410,14 @@ public:
 private:
 
   void setEndorsedState(EEndorsedState endorsedState);
+  void setTrackedState(ETrackedState trackedState);
 
 private slots:
 
   void nxmDescriptionAvailable(QString, int modID, QVariant userData, QVariant resultData);
   void nxmEndorsementToggled(QString, int, QVariant userData, QVariant resultData);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, const QString &errorMessage);
+  void nxmTrackingToggled(QString, int, QVariant userData, bool tracked);
+  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, QNetworkReply::NetworkError error, const QString &errorMessage);
 
 protected:
 
@@ -371,9 +435,13 @@ private:
   QString m_URL;
   QString m_GameName;
 
+  mutable QStringList m_Archives;
+
 
   QDateTime m_CreationTime;
   QDateTime m_LastNexusQuery;
+  QDateTime m_LastNexusUpdate;
+  QDateTime m_NexusLastModified;
 
   QColor m_Color;
 
@@ -384,10 +452,12 @@ private:
   bool m_IsAlternate;
   bool m_Converted;
   bool m_Validated;
+  int m_NexusFileStatus;
   MOBase::VersionInfo m_NewestVersion;
   MOBase::VersionInfo m_IgnoredVersion;
 
   EEndorsedState m_EndorsedState;
+  ETrackedState m_TrackedState;
 
   NexusBridge m_NexusBridge;
 

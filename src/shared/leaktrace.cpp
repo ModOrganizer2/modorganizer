@@ -1,3 +1,8 @@
+//disable warning messages 4302 , 4311 and 4312
+#pragma warning( disable : 4302 )
+#pragma warning( disable : 4311 )
+#pragma warning( disable : 4312 )
+
 #include "leaktrace.h"
 #include "stackdata.h"
 #include <Windows.h>
@@ -31,7 +36,7 @@ static struct __TraceData {
     for (auto iter = result.begin(); iter != result.end(); ++iter) {
       printf("-----------------------------------\n"
              "%d objects not freed, allocated at:\n%s",
-             iter->second.size(), iter->first.toString().c_str());
+        static_cast<int>(iter->second.size()), iter->first.toString().c_str());
       printf("Addresses: ");
       for (int i = 0;
            i < (std::min<int>)(5, static_cast<int>(iter->second.size())); ++i) {
@@ -55,3 +60,9 @@ void LeakTrace::TraceDealloc(void *ptr)
 {
   __trace.deregTrace(ptr);
 }
+
+//re-enable warning messages 4302 , 4311 and 4312
+#pragma warning( default : 4302 )
+#pragma warning( default : 4311 )
+#pragma warning( default : 4312 )
+

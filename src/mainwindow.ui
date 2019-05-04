@@ -179,7 +179,7 @@
              <number>2</number>
             </property>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,0,0,0,0,0,0,0">
               <item>
                <widget class="QLabel" name="label_3">
                 <property name="sizePolicy">
@@ -295,6 +295,35 @@ p, li { white-space: pre-wrap; }
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QLabel" name="activeModslabel">
+                <property name="text">
+                 <string>Active:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="LCDNumber" name="activeModsCounter">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>26</height>
+                 </size>
+                </property>
+                <property name="whatsThis">
+                 <string>This provides statistics about the mod list.  The total number of active mod is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+                <property name="digitCount">
+                 <number>5</number>
+                </property>
+                <property name="segmentStyle">
+                 <enum>QLCDNumber::Flat</enum>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
@@ -304,97 +333,6 @@ p, li { white-space: pre-wrap; }
                 <width>330</width>
                 <height>400</height>
                </size>
-              </property>
-              <property name="palette">
-               <palette>
-                <active>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>64</red>
-                    <green>64</green>
-                    <blue>64</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </active>
-                <inactive>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>64</red>
-                    <green>64</green>
-                    <blue>64</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </inactive>
-                <disabled>
-                 <colorrole role="ButtonText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>120</red>
-                    <green>120</green>
-                    <blue>120</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="Link">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>255</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="LinkVisited">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>0</red>
-                    <green>170</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </disabled>
-               </palette>
               </property>
               <property name="contextMenuPolicy">
                <enum>Qt::CustomContextMenu</enum>
@@ -448,7 +386,7 @@ p, li { white-space: pre-wrap; }
                <bool>false</bool>
               </property>
               <attribute name="headerDefaultSectionSize">
-               <number>20</number>
+               <number>35</number>
               </attribute>
               <attribute name="headerShowSortIndicator" stdset="0">
                <bool>true</bool>
@@ -459,7 +397,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,0,1,1,1">
+             <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="0,0,1,1,0,0,1,1,1">
               <item>
                <widget class="QPushButton" name="displayCategoriesBtn">
                 <property name="maximumSize">
@@ -517,6 +455,37 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="apiRequests">
+                <property name="toolTip">
+                 <string>Nexus API Queued and Remaining Requests</string>
+                </property>
+                <property name="whatsThis">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This tracks the number of queued Nexus API requests on the left (&lt;span style=&quot; font-weight:600;&quot;&gt;Q&lt;/span&gt;) and the remaining daily (&lt;span style=&quot; font-weight:600;&quot;&gt;D&lt;/span&gt;) and hourly (&lt;span style=&quot; font-weight:600;&quot;&gt;H&lt;/span&gt;) requests on the right. The Nexus API limits you to a pool of requests per day and requests per hour. It is dynamically updated every time a request is completed. If you run out of requests, you will be unable to queue downloads, check updates, parse mod info, or even log in. Both pools must be consumed before this happens.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Sunken</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>2</number>
+                </property>
+                <property name="midLineWidth">
+                 <number>1</number>
+                </property>
+                <property name="text">
+                 <string>API: Q: 0 | D: 0 | H: 0</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="margin">
+                 <number>2</number>
+                </property>
+               </widget>
               </item>
               <item alignment="Qt::AlignLeft">
                <widget class="QPushButton" name="clearFiltersButton">
@@ -612,7 +581,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="placeholderText">
-                 <string>Namefilter</string>
+                 <string>Filter</string>
                 </property>
                </widget>
               </item>
@@ -831,6 +800,9 @@ p, li { white-space: pre-wrap; }
                  <layout class="QHBoxLayout" name="horizontalLayout_7">
                   <item>
                    <widget class="QPushButton" name="bossButton">
+                    <property name="visible">
+                     <bool>true</bool>
+                    </property>
                     <property name="text">
                      <string>Sort</string>
                     </property>
@@ -887,6 +859,35 @@ p, li { white-space: pre-wrap; }
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QLabel" name="activePluginsLabel">
+                    <property name="text">
+                     <string>Active:</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="LCDNumber" name="activePluginsCounter">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>26</height>
+                     </size>
+                    </property>
+                    <property name="whatsThis">
+                     <string>This provides statistics about the plugin list.  The total number of active plugins is normally displayed.  Other statistics may be accessed with the tooltip of this counter.</string>
+                    </property>
+                    <property name="frameShadow">
+                     <enum>QFrame::Sunken</enum>
+                    </property>
+                    <property name="digitCount">
+                     <number>4</number>
+                    </property>
+                    <property name="segmentStyle">
+                     <enum>QLCDNumber::Flat</enum>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                 <item>
@@ -896,43 +897,6 @@ p, li { white-space: pre-wrap; }
                     <width>250</width>
                     <height>250</height>
                    </size>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>64</red>
-                        <green>64</green>
-                        <blue>64</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>64</red>
-                        <green>64</green>
-                        <blue>64</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>120</red>
-                        <green>120</green>
-                        <blue>120</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
                   </property>
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
@@ -999,7 +963,7 @@ p, li { white-space: pre-wrap; }
                      <string/>
                     </property>
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>
@@ -1045,7 +1009,7 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="QTreeWidget" name="bsaList">
+                 <widget class="MOBase::SortableTreeWidget" name="bsaList" native="true">
                   <property name="contextMenuPolicy">
                    <enum>Qt::CustomContextMenu</enum>
                   </property>
@@ -1061,26 +1025,21 @@ p, li { white-space: pre-wrap; }
                   <property name="showDropIndicator" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragEnabled">
+                  <property name="dragEnabled" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="dragDropOverwriteMode">
+                  <property name="dragDropOverwriteMode" stdset="0">
                    <bool>false</bool>
                   </property>
-                  <property name="indentation">
+                  <property name="indentation" stdset="0">
                    <number>20</number>
                   </property>
-                  <property name="itemsExpandable">
+                  <property name="itemsExpandable" stdset="0">
                    <bool>true</bool>
                   </property>
-                  <property name="columnCount">
+                  <property name="columnCount" stdset="0">
                    <number>1</number>
                   </property>
-                  <column>
-                   <property name="text">
-                    <string notr="true">Archives</string>
-                   </property>
-                  </column>
                  </widget>
                 </item>
                </layout>
@@ -1153,17 +1112,37 @@ p, li { white-space: pre-wrap; }
                  </layout>
                 </item>
                 <item>
-                 <widget class="QCheckBox" name="conflictsCheckBox">
-                  <property name="toolTip">
-                   <string>Filter the above list so that only conflicts are displayed.</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>Filter the above list so that only conflicts are displayed.</string>
-                  </property>
-                  <property name="text">
-                   <string>Show only conflicts</string>
-                  </property>
-                 </widget>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                  <item>
+                   <widget class="QCheckBox" name="conflictsCheckBox">
+                    <property name="toolTip">
+                     <string>Filters the above list so that only conflicts are displayed.</string>
+                    </property>
+                    <property name="whatsThis">
+                     <string>Filters the above list so that only conflicts are displayed.</string>
+                    </property>
+                    <property name="text">
+                     <string>Show only conflicts</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="showArchiveDataCheckBox">
+                    <property name="toolTip">
+                     <string>Filters the above list so that files from archives are not shown</string>
+                    </property>
+                    <property name="statusTip">
+                     <string/>
+                    </property>
+                    <property name="whatsThis">
+                     <string>Filters the above list so that files from archives are not shown</string>
+                    </property>
+                    <property name="text">
+                     <string>Show files from Archives</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                </layout>
               </widget>
@@ -1245,7 +1224,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <layout class="QVBoxLayout" name="downloadLayout">
                   <item>
-                   <widget class="QTreeView" name="downloadView">
+                   <widget class="DownloadListWidget" name="downloadView">
                     <property name="minimumSize">
                      <size>
                       <width>320</width>
@@ -1253,7 +1232,7 @@ p, li { white-space: pre-wrap; }
                      </size>
                     </property>
                     <property name="contextMenuPolicy">
-                     <enum>Qt::PreventContextMenu</enum>
+                     <enum>Qt::CustomContextMenu</enum>
                     </property>
                     <property name="acceptDrops">
                      <bool>true</bool>
@@ -1267,9 +1246,6 @@ p, li { white-space: pre-wrap; }
                     <property name="verticalScrollBarPolicy">
                      <enum>Qt::ScrollBarAlwaysOn</enum>
                     </property>
-                    <property name="horizontalScrollBarPolicy">
-                     <enum>Qt::ScrollBarAsNeeded</enum>
-                    </property>
                     <property name="dragEnabled">
                      <bool>true</bool>
                     </property>
@@ -1281,12 +1257,6 @@ p, li { white-space: pre-wrap; }
                     </property>
                     <property name="alternatingRowColors">
                      <bool>true</bool>
-                    </property>
-                    <property name="selectionMode">
-                     <enum>QAbstractItemView::SingleSelection</enum>
-                    </property>
-                    <property name="selectionBehavior">
-                     <enum>QAbstractItemView::SelectRows</enum>
                     </property>
                     <property name="verticalScrollMode">
                      <enum>QAbstractItemView::ScrollPerPixel</enum>
@@ -1300,15 +1270,6 @@ p, li { white-space: pre-wrap; }
                     <property name="sortingEnabled">
                      <bool>true</bool>
                     </property>
-                    <attribute name="headerDefaultSectionSize">
-                     <number>50</number>
-                    </attribute>
-                    <attribute name="headerMinimumSectionSize">
-                     <number>15</number>
-                    </attribute>
-                    <attribute name="headerStretchLastSection">
-                     <bool>true</bool>
-                    </attribute>
                    </widget>
                   </item>
                  </layout>
@@ -1338,7 +1299,7 @@ p, li { white-space: pre-wrap; }
                   <item>
                    <widget class="MOBase::LineEditClear" name="downloadFilterEdit">
                     <property name="placeholderText">
-                     <string>Namefilter</string>
+                     <string>Filter</string>
                     </property>
                    </widget>
                   </item>
@@ -1415,7 +1376,7 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionSettings"/>
    <addaction name="separator"/>
    <addaction name="actionEndorseMO"/>
-   <addaction name="actionProblems"/>
+   <addaction name="actionNotifications"/>
    <addaction name="actionUpdate"/>
    <addaction name="actionHelp"/>
   </widget>
@@ -1540,7 +1501,7 @@ p, li { white-space: pre-wrap; }
     <string>Mod Organizer is up-to-date</string>
    </property>
   </action>
-  <action name="actionProblems">
+  <action name="actionNotifications">
    <property name="enabled">
     <bool>false</bool>
    </property>
@@ -1549,13 +1510,10 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/warning</normaloff>:/MO/gui/warning</iconset>
    </property>
    <property name="text">
-    <string>No Problems</string>
+    <string>No Notifications</string>
    </property>
    <property name="whatsThis">
-    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.
-
-!Work in progress!
-Right now this has very limited functionality</string>
+    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
    </property>
   </action>
   <action name="actionHelp">
@@ -1619,6 +1577,21 @@ Right now this has very limited functionality</string>
    <class>PluginListView</class>
    <extends>QTreeView</extends>
    <header>pluginlistview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LCDNumber</class>
+   <extends>QLCDNumber</extends>
+   <header>lcdnumber.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DownloadListWidget</class>
+   <extends>QTreeView</extends>
+   <header>downloadlistwidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MOBase::SortableTreeWidget</class>
+   <extends>QWidget</extends>
+   <header>sortabletreewidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

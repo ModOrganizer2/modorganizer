@@ -533,8 +533,8 @@ QHeaderView::up-arrow {
   image: url(./vs15/sort-asc.png);
   margin-bottom: -37px; }
 
-QTreeView#downloadView QHeaderView::up-arrow {
-  margin-bottom: -32px; }
+DownloadListWidget QHeaderView::up-arrow {
+  margin-bottom: -47px; }
 
 QHeaderView::down-arrow {
   image: url(./vs15/sort-desc.png);
@@ -600,10 +600,18 @@ QProgressBar {
   text-align: center;
   border-style: solid;
   border-width: 1px;
-  margin: 0 10px; }
+  margin: 0px 0px; }
 
 QProgressBar::chunk {
   background: #06B025; }
+
+DownloadListWidget[downloadView=standard]::item {
+	padding: 16px;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	padding: 4px;
+}
 
 /* Right Pane and Tab Bars #QTabWidget, #QTabBar */
 QTabWidget::pane {

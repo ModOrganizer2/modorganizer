@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>586</width>
-    <height>462</height>
+    <height>486</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,42 +99,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
              <string>Colors</string>
             </property>
             <layout class="QGridLayout" name="gridLayout_5">
-             <item row="4" column="0" colspan="2">
-              <widget class="QPushButton" name="resetColorsBtn">
-               <property name="text">
-                <string>Reset Colors</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QPushButton" name="overwrittenBtn">
-               <property name="text">
-                <string>Is overwritten (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0" colspan="2">
-              <widget class="QPushButton" name="containsBtn">
-               <property name="text">
-                <string>Mod Contains selected Plugin</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0" colspan="2">
-              <widget class="QPushButton" name="containedBtn">
-               <property name="text">
-                <string>Plugin is Contained in selected Mod</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QPushButton" name="overwritingBtn">
-               <property name="text">
-                <string>Is overwriting (loose files)</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
+             <item row="6" column="0">
               <widget class="QCheckBox" name="colorSeparatorsBox">
                <property name="toolTip">
                 <string>When this is enabled, the color defined for a separator will be shown on the mod list scrollbar at the location of the separator.  This can be useful for quick navigation between separator sections or to a specific separator section.</string>
@@ -147,6 +112,55 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
                </property>
                <property name="checked">
                 <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0" colspan="2">
+              <widget class="QPushButton" name="containedBtn">
+               <property name="text">
+                <string>Plugin is Contained in selected Mod</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QPushButton" name="overwrittenBtn">
+               <property name="text">
+                <string>Is overwritten (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QPushButton" name="overwritingBtn">
+               <property name="text">
+                <string>Is overwriting (loose files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0" colspan="2">
+              <widget class="QPushButton" name="resetColorsBtn">
+               <property name="text">
+                <string>Reset Colors</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0" colspan="2">
+              <widget class="QPushButton" name="containsBtn">
+               <property name="text">
+                <string>Mod Contains selected Plugin</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="overwrittenArchiveBtn">
+               <property name="text">
+                <string>Is overwritten (archive files)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="overwritingArchiveBtn">
+               <property name="text">
+                <string>Is overwriting (archive files)</string>
                </property>
               </widget>
              </item>
@@ -441,62 +455,25 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
        <item>
         <widget class="QGroupBox" name="nexusBox">
          <property name="toolTip">
-          <string>Allows automatic log-in when the Nexus-Page for the game is clicked.</string>
+          <string>Allows Mod Organizer to connect to the Nexus for downloading mods, checking for updates, and other such things.</string>
          </property>
          <property name="whatsThis">
           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Allows automatic log-in when the Nexus-Page for the game is clicked. Please note that the obfuscation with which the password  is stored in modorganizer.ini is not very strong. If you're worried someone might steal your password, don't store it here.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Allows Mod Organizer to connect to the Nexus for downloading mods, checking for updates, and other such things.  Clicking &amp;quot;Connect to Nexus&amp;quot; will open a Nexus webpage to authorise Mod Organizer.  You will need to be logged into your Nexus account.  The authorisation is stored in the Windows Credential Manager.  Your Nexus username and password are not required or stored by Mod Organizer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="title">
           <string>Nexus</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QCheckBox" name="loginCheckBox">
-            <property name="toolTip">
-             <string/>
-            </property>
-            <property name="whatsThis">
-             <string>If checked and if correct credentials are entered below, log-in to Nexus (for browsing and downloading) is automatic.</string>
-            </property>
-            <property name="text">
-             <string>Automatically Log-In to Nexus</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
-             <widget class="QLabel" name="label_2">
+             <widget class="QPushButton" name="nexusConnect">
               <property name="text">
-               <string>Username</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="usernameEdit">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Password</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="passwordEdit">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="echoMode">
-               <enum>QLineEdit::Password</enum>
+               <string>Connect to Nexus</string>
               </property>
              </widget>
             </item>
@@ -505,9 +482,36 @@ p, li { white-space: pre-wrap; }
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_11">
             <item>
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="revokeNexusAuthButton">
+              <property name="toolTip">
+               <string>Clear the stored Nexus API key and force reauthorization.</string>
+              </property>
+              <property name="text">
+               <string>Revoke Nexus Authorization</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="clearCacheButton">
               <property name="toolTip">
-               <string>Remove cache and cookies. Forces a new login.</string>
+               <string>Remove cache and cookies.</string>
               </property>
               <property name="text">
                <string>Clear Cache</string>
@@ -537,30 +541,57 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="offlineBox">
-         <property name="statusTip">
-          <string>Disable automatic internet features</string>
-         </property>
-         <property name="whatsThis">
-          <string>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</string>
-         </property>
-         <property name="text">
-          <string>Offline Mode</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="proxyBox">
-         <property name="statusTip">
-          <string>Use a proxy for network connections.</string>
-         </property>
-         <property name="whatsThis">
-          <string>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</string>
-         </property>
-         <property name="text">
-          <string>Use HTTP Proxy (Uses System Settings)</string>
-         </property>
-        </widget>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="offlineBox">
+           <property name="statusTip">
+            <string>Disable automatic internet features</string>
+           </property>
+           <property name="whatsThis">
+            <string>Disable automatic internet features. This does not affect features that are explicitly invoked by the user (like checking mods for updates, endorsing, opening the web browser)</string>
+           </property>
+           <property name="text">
+            <string>Offline Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="proxyBox">
+           <property name="statusTip">
+            <string>Use a proxy for network connections.</string>
+           </property>
+           <property name="whatsThis">
+            <string>Use a proxy for network connections. This uses the system-wide settings which can be configured in Internet Explorer. Please note that MO will start up a few seconds slower on some systems when using a proxy.</string>
+           </property>
+           <property name="text">
+            <string>Use HTTP Proxy (Uses System Settings)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="endorsementBox">
+           <property name="text">
+            <string>Endorsement Integration</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="hideAPICounterBox">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, a counter is displayed under the mod list.  This informs the user of their remaining API requests.  The Nexus API becomes unusable once these API requests run out.  Checking this option will hide that counter.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Hide API Request Counter</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -942,68 +973,21 @@ If you use the Steam version of Oblivion the default will NOT work. In this case
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
-         <item>
-          <widget class="QLabel" name="label_11">
-           <property name="text">
-            <string>NMM Version</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="nmmVersionEdit">
-           <property name="toolTip">
-            <string>The Version of Nexus Mod Manager to impersonate.</string>
-           </property>
-           <property name="whatsThis">
-            <string>Mod Organizer uses an API provided by the Nexus to provide features like checking for updates and downloading files. Unfortunately this API has not been made available officially to third party tools like MO so we have to impersonate the Nexus Mod Manager to be allowed in.
-On top of this Nexus has used the client identification to lock out outdated versions of NMM to force users to update. This means that MO also needs to impersonate the new version of NMM even if MO doesn't need an update. Therefore you can configure the version to identify as here.
-Please note that MO does identify itself as MO to the webserver, it's not lying about what it is. It is merely adding a &quot;compatible&quot; NMM version to the user agent.
-
-tl;dr-version: If Nexus-features don't work, insert the current version number of NMM here and try again.</string>
-           </property>
-           <property name="inputMask">
-            <string notr="true">009.009.009</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="placeholderText">
-            <string/>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
         <layout class="QGridLayout" name="gridLayout_6">
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="forceEnableBox">
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="hideUncheckedBox">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="toolTip">
-            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
+            <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
            </property>
            <property name="whatsThis">
-            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
-Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</string>
+            <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
+I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
            </property>
            <property name="text">
-            <string>Force-enable game files</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Hide inactive ESPs/ESMs</string>
            </property>
           </widget>
          </item>
@@ -1026,20 +1010,20 @@ If you disable this feature, MO will only display official DLCs this way. Please
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="hideUncheckedBox">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="forceEnableBox">
            <property name="toolTip">
-            <string>Enforces that inactive ESPs and ESMs are never loaded.</string>
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)</string>
            </property>
            <property name="whatsThis">
-            <string>It seems that the Games occasionally load ESP or ESM files even if they haven't been activated as plugins.
-I don't yet know what the circumstances are, but user reports imply it is in some cases unwanted. If this is checked, ESPs and ESMs not checked in the List are invisible to the game and can not be loaded.</string>
+            <string>If checked, files (i.e. esps, esms and bsas) belonging to the core game can not be disabled in the UI. (default: on)
+Uncheck this if you want to use Mod Organizer with total conversions (like Nehrim) but be aware that the game will crash if required files are not enabled.</string>
            </property>
            <property name="text">
-            <string>Hide inactive ESPs/ESMs</string>
+            <string>Force-enable game files</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -1053,6 +1037,22 @@ I don't yet know what the circumstances are, but user reports imply it is in som
            </property>
            <property name="text">
             <string>Lock GUI when running executable</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QCheckBox" name="enableArchiveParsingBox">
+           <property name="toolTip">
+            <string>Enable parsing of Archives. This is an Experimental Feature. Has negative effects on performance and known incorrectness.</string>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, MO will parse archive files (BSA, BA2) to calculate conflicts between the contents of the archive files and other loose files. This process has a noticeable cost in performance.&lt;/p&gt;&lt;p&gt;This feature should not be confused with the archive management feature offered by MO1. MO2 will only show conflicts with archives and will NOT load them into the game or program.&lt;/p&gt;&lt;p&gt;If you disable this feature, MO will only display conflicts between loose files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Enable parsing of Archives (Experimental Feature)</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -1343,12 +1343,7 @@ programs you are intentionally running.</string>
   <tabstop>browseProfilesDirBtn</tabstop>
   <tabstop>overwriteDirEdit</tabstop>
   <tabstop>browseOverwriteDirBtn</tabstop>
-  <tabstop>loginCheckBox</tabstop>
-  <tabstop>usernameEdit</tabstop>
-  <tabstop>passwordEdit</tabstop>
   <tabstop>clearCacheButton</tabstop>
-  <tabstop>offlineBox</tabstop>
-  <tabstop>proxyBox</tabstop>
   <tabstop>associateButton</tabstop>
   <tabstop>knownServersList</tabstop>
   <tabstop>preferredServersList</tabstop>
@@ -1359,7 +1354,6 @@ programs you are intentionally running.</string>
   <tabstop>pluginBlacklist</tabstop>
   <tabstop>appIDEdit</tabstop>
   <tabstop>mechanismBox</tabstop>
-  <tabstop>nmmVersionEdit</tabstop>
   <tabstop>bsaDateBtn</tabstop>
   <tabstop>tabWidget</tabstop>
  </tabstops>

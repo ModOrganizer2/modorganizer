@@ -72,7 +72,7 @@ void CategoryFactory::loadCategories()
             bool ok = false;
             int temp = iter->toInt(&ok);
             if (!ok) {
-              qCritical("invalid id %s", iter->constData());
+              qCritical("invalid category id %s", iter->constData());
             }
             nexusIDs.push_back(temp);
           }
@@ -268,7 +268,7 @@ void CategoryFactory::loadDefaultCategories()
 int CategoryFactory::getParentID(unsigned int index) const
 {
   if (index >= m_Categories.size()) {
-    throw MyException(QObject::tr("invalid index %1").arg(index));
+    throw MyException(QObject::tr("invalid category index: %1").arg(index));
   }
 
   return m_Categories[index].m_ParentID;
@@ -303,7 +303,7 @@ bool CategoryFactory::isDecendantOf(int id, int parentID) const
 bool CategoryFactory::hasChildren(unsigned int index) const
 {
   if (index >= m_Categories.size()) {
-    throw MyException(QObject::tr("invalid index %1").arg(index));
+    throw MyException(QObject::tr("invalid category index: %1").arg(index));
   }
 
   return m_Categories[index].m_HasChildren;
@@ -313,7 +313,7 @@ bool CategoryFactory::hasChildren(unsigned int index) const
 QString CategoryFactory::getCategoryName(unsigned int index) const
 {
   if (index >= m_Categories.size()) {
-    throw MyException(QObject::tr("invalid index %1").arg(index));
+    throw MyException(QObject::tr("invalid category index: %1").arg(index));
   }
 
   return m_Categories[index].m_Name;
@@ -323,7 +323,7 @@ QString CategoryFactory::getCategoryName(unsigned int index) const
 int CategoryFactory::getCategoryID(unsigned int index) const
 {
   if (index >= m_Categories.size()) {
-    throw MyException(QObject::tr("invalid index %1").arg(index));
+    throw MyException(QObject::tr("invalid category index: %1").arg(index));
   }
 
   return m_Categories[index].m_ID;
@@ -334,7 +334,7 @@ int CategoryFactory::getCategoryIndex(int ID) const
 {
   std::map<int, unsigned int>::const_iterator iter = m_IDMap.find(ID);
   if (iter == m_IDMap.end()) {
-    throw MyException(QObject::tr("invalid category id %1").arg(ID));
+    throw MyException(QObject::tr("invalid category id: %1").arg(ID));
   }
   return iter->second;
 }

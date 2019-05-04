@@ -54,7 +54,6 @@ SET(organizer_SRCS
     executableslist.cpp
     editexecutablesdialog.cpp
     downloadmanager.cpp
-    downloadlistwidgetcompact.cpp
     downloadlistwidget.cpp
     downloadlistsortproxy.cpp
     downloadlist.cpp
@@ -80,7 +79,6 @@ SET(organizer_SRCS
     previewgenerator.cpp
     previewdialog.cpp
     aboutdialog.cpp
-    json.cpp
     modflagicondelegate.cpp
     genericicondelegate.cpp
     organizerproxy.cpp
@@ -92,6 +90,9 @@ SET(organizer_SRCS
     eventfilter.cpp
     moshortcut.cpp
     listdialog.cpp
+    lcdnumber.cpp
+    forcedloaddialog.cpp
+    forcedloaddialogwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -146,7 +147,6 @@ SET(organizer_HDRS
     executableslist.h
     editexecutablesdialog.h
     downloadmanager.h
-    downloadlistwidgetcompact.h
     downloadlistwidget.h
     downloadlistsortproxy.h
     downloadlist.h
@@ -172,7 +172,6 @@ SET(organizer_HDRS
     previewgenerator.h
     previewdialog.h
     aboutdialog.h
-    json.h
     modflagicondelegate.h
     genericicondelegate.h
     organizerproxy.h
@@ -187,6 +186,9 @@ SET(organizer_HDRS
     descriptionpage.h
     moshortcut.h
     listdialog.h
+    lcdnumber.h
+    forcedloaddialog.h
+    forcedloaddialogwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -216,8 +218,6 @@ SET(organizer_UIS
     installdialog.ui
     finddialog.ui
     editexecutablesdialog.ui
-    downloadlistwidgetcompact.ui
-    downloadlistwidget.ui
     credentialsdialog.ui
     categoriesdialog.ui
     activatemodsdialog.ui
@@ -228,6 +228,8 @@ SET(organizer_UIS
     browserdialog.ui
     aboutdialog.ui
     listdialog.ui
+    forcedloaddialog.ui
+    forcedloaddialogwidget.ui
   )
 
 SET(organizer_QRCS
@@ -246,7 +248,8 @@ SOURCE_GROUP(Headers FILES ${organizer_HDRS})
 SOURCE_GROUP(UI FILES ${organizer_UIS})
 
 # MO projects
-SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
+SET(dependency_project_path "${DEPENDENCIES_DIR}")
+SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
@@ -263,6 +266,7 @@ FIND_PACKAGE(Qt5Quick REQUIRED)
 FIND_PACKAGE(Qt5Network REQUIRED)
 FIND_PACKAGE(Qt5WinExtras REQUIRED)
 FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
+FIND_PACKAGE(Qt5WebSockets REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
@@ -292,7 +296,7 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/bsatk/src
                     ${project_path}/esptk/src
                     ${project_path}/archive/src
-                    ${project_path}/../usvfs/include
+                    ${dependency_project_path}/usvfs/include
                     ${project_path}/game_gamebryo/src/gamebryo
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
@@ -321,12 +325,12 @@ ENDIF()
 ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
-                      Qt5::Qml Qt5::QuickWidgets Qt5::Network
+                      Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
                       ${Boost_LIBRARIES}
                       zlibstatic
                       uibase esptk bsatk githubpp
                       ${usvfs_name}
-                      Dbghelp advapi32 Version Shlwapi liblz4)
+                      Dbghelp advapi32 Version Shlwapi liblz4 Crypt32)
 
 IF (MSVC)
   SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest")
@@ -359,17 +363,19 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dlls.manifest.qt5
         DESTINATION bin/dlls
         RENAME dlls.manifest)
 
+INSTALL(FILES ${organizer_translations_qm} DESTINATION bin/translations)
+
+INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
+                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
+        DESTINATION bin)
+
+#We should do this last, since windeployqt.exe scans the folders in bin for required modules e.g QtQuick.2 required by tutorials.
 # use windeployqt.exe to install all required libraries
 SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls --release-with-debug-info --no-compiler-runtime")
 INSTALL(
     CODE
     "EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
-        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
-    )
-    # run it a second time because on the first run it misses some files
-    EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     EXECUTE_PROCESS(COMMAND
@@ -387,9 +393,3 @@ INSTALL(
 
 # qdds.dll needs installing manually as Qt no longer ships with it by default.
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../qdds.dll DESTINATION bin/dlls/imageformats)
-
-install(FILES ${organizer_translations_qm} DESTINATION bin/translations)
-
-INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/stylesheets
-                  ${CMAKE_CURRENT_SOURCE_DIR}/tutorials
-        DESTINATION bin)

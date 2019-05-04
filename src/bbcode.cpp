@@ -88,7 +88,7 @@ public:
                 return temp.replace(tagIter->second.first, QString("<font style=\"color: #%1;\">%2</font>").arg(color, content));
               }
             } else {
-              qWarning("don't know how to deal with tag %s", qPrintable(tagName));
+              qWarning("don't know how to deal with tag %s", qUtf8Printable(tagName));
             }
           } else {
             if (tagName == "*") {
@@ -100,7 +100,7 @@ public:
           // expression doesn't match. either the input string is invalid
           // or the expression is
           qWarning("%s doesn't match the expression for %s",
-                   temp.toUtf8().constData(), tagName.toUtf8().constData());
+                   qUtf8Printable(temp), qUtf8Printable(tagName));
           length = 0;
           return QString();
         }

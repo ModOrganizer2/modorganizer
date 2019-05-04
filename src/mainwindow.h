@@ -64,6 +64,7 @@ namespace MOShared { class DirectoryEntry; }
 #include <QVariant>
 #include <Qt>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QFutureWatcher>
 
 class QAction;
 class QAbstractItemModel;
@@ -162,6 +163,7 @@ public slots:
   void displayColumnSelection(const QPoint &pos);
 
   void modorder_changed();
+  void esplist_changed();
   void refresher_progress(int percent);
   void directory_refreshed();
 
@@ -245,11 +247,13 @@ private:
 
   bool populateMenuCategories(QMenu *menu, int targetID);
 
-  void updateDownloadListDelegate();
+  void initDownloadView();
+  void updateDownloadView();
 
   // remove invalid category-references from mods
   void fixCategories();
 
+  void createEndorseWidget();
   void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
@@ -278,7 +282,7 @@ private:
   bool createBackup(const QString &filePath, const QDateTime &time);
   QString queryRestore(const QString &filePath);
 
-  QMenu *modListContextMenu();
+  void initModListContextMenu(QMenu *menu);
   void addModSendToContextMenu(QMenu *menu);
   void addPluginSendToContextMenu(QMenu *menu);
 
@@ -299,6 +303,8 @@ private:
 
   void sendSelectedModsToPriority(int newPriority);
   void sendSelectedPluginsToPriority(int newPriority);
+
+  void toggleMO2EndorseState();
 
 private:
 
@@ -338,8 +344,6 @@ private:
 
   CategoryFactory &m_CategoryFactory;
 
-  int m_ModsToUpdate;
-
   bool m_LoginAttempted;
 
   QTimer m_CheckBSATimer;
@@ -373,6 +377,8 @@ private:
 
   bool m_closing{ false };
 
+  bool m_showArchiveData{ true };
+
   std::vector<std::pair<QString, QHeaderView*>> m_PersistedGeometry;
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
@@ -400,6 +406,7 @@ private slots:
   void helpTriggered();
   void issueTriggered();
   void wikiTriggered();
+  void discordTriggered();
   void tutorialTriggered();
   void extractBSATriggered();
 
@@ -421,6 +428,8 @@ private slots:
   void endorse_clicked();
   void dontendorse_clicked();
   void unendorse_clicked();
+  void track_clicked();
+  void untrack_clicked();
   void ignoreMissingData_clicked();
   void markConverted_clicked();
   void visitOnNexus_clicked();
@@ -465,6 +474,14 @@ private slots:
   BSA::EErrorCode extractBSA(BSA::Archive &archive, BSA::Folder::Ptr folder, const QString &destination, QProgressDialog &extractProgress);
 
   void createModFromOverwrite();
+  /**
+   * @brief sends the content of the overwrite folder to an already existing mod
+   */
+  void moveOverwriteContentToExistingMod();
+  /**
+   * @brief actually sends the content of the overwrite folder to specified mod
+   */
+  void doMoveOverwriteContentToMod(const QString &modAbsolutePath);
   void clearOverwrite();
 
   void procError(QProcess::ProcessError error);
@@ -473,14 +490,16 @@ private slots:
   // nexus related
   void checkModsForUpdates();
 
-  void loginFailed(const QString &message);
+  void validationFailed(const QString &message);
 
   void linkClicked(const QString &url);
 
   void updateAvailable();
 
+  void actionEndorseMO();
+  void actionWontEndorseMO();
+
   void motdReceived(const QString &motd);
-  void notEndorsedYet();
 
   void originModified(int originID);
 
@@ -489,14 +508,22 @@ private slots:
 
   void addPrimaryCategoryCandidates();
 
-  void modDetailsUpdated(bool success);
-
   void modInstalled(const QString &modName);
 
-  void nxmUpdatesAvailable(const std::vector<int> &modIDs, QVariant userData, QVariant resultData, int requestID);
+  void modUpdateCheck(std::multimap<QString, int> IDs);
+
+  void finishUpdateInfo();
+
+  void nxmEndorsementsAvailable(QVariant userData, QVariant resultData, int);
+  void nxmUpdateInfoAvailable(QString gameName, QVariant userData, QVariant resultData, int requestID);
+  void nxmUpdatesAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
+  void nxmModInfoAvailable(QString gameName, int modID, QVariant userData, QVariant resultData, int requestID);
   void nxmEndorsementToggled(QString, int, QVariant, QVariant resultData, int);
+  void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int);
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
-  void nxmRequestFailed(QString, int modID, int fileID, QVariant userData, int requestID, const QString &errorString);
+  void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
+
+  void updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits);
 
   void editCategories();
   void deselectFilters();
@@ -514,6 +541,8 @@ private slots:
 
   void resumeDownload(int downloadIndex);
   void endorseMod(ModInfo::Ptr mod);
+  void unendorseMod(ModInfo::Ptr mod);
+  void trackMod(ModInfo::Ptr mod, bool doTrack);
   void cancelModListEditor();
 
   void lockESPIndex();
@@ -543,6 +572,7 @@ private slots:
   void updateStyle(const QString &style);
 
   void modlistChanged(const QModelIndex &index, int role);
+  void modlistChanged(const QModelIndexList &indicies, int role);
   void fileMoved(const QString &filePath, const QString &oldOriginName, const QString &newOriginName);
 
 
@@ -567,6 +597,7 @@ private slots:
   void overwriteClosed(int);
 
   void changeVersioningScheme();
+  void checkModUpdates_clicked();
   void ignoreUpdate();
   void unignoreUpdate();
 
@@ -575,8 +606,8 @@ private slots:
   void about();
   void delayedRemove();
 
-  void modlistSelectionChanged(const QModelIndex &current, const QModelIndex &previous);
   void modListSortIndicatorChanged(int column, Qt::SortOrder order);
+  void modListSectionResized(int logicalIndex, int oldSize, int newSize);
 
   void modlistSelectionsChanged(const QItemSelection &current);
   void esplistSelectionsChanged(const QItemSelection &current);
@@ -584,16 +615,18 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
+  void updateModCount();
+  void updatePluginCount();
+
 private slots: // ui slots
   // actions
   void on_actionAdd_Profile_triggered();
   void on_actionInstallMod_triggered();
   void on_actionModify_Executables_triggered();
   void on_actionNexus_triggered();
-  void on_actionProblems_triggered();
+  void on_actionNotifications_triggered();
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
-  void on_actionEndorseMO_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
@@ -601,6 +634,7 @@ private slots: // ui slots
   void on_btnRefreshDownloads_clicked();
   void on_categoriesList_customContextMenuRequested(const QPoint &pos);
   void on_conflictsCheckBox_toggled(bool checked);
+  void on_showArchiveDataCheckBox_toggled(bool checked);
   void on_dataTree_customContextMenuRequested(const QPoint &pos);
   void on_executablesListBox_currentIndexChanged(int index);
   void on_modList_customContextMenuRequested(const QPoint &pos);

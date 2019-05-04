@@ -25,6 +25,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QDir>
 #include <QDebug>
+#include <QCoreApplication>
+
 
 #include <algorithm>
 
@@ -53,6 +55,17 @@ void ExecutablesList::init(IPluginGame const *game)
                             info.steamAppID());
     }
   }
+  ExecutableInfo explorerpp = ExecutableInfo("Explore Virtual Folder", QFileInfo(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe" ))
+      .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
+
+  if (explorerpp.isValid()) {
+    addExecutableInternal(explorerpp.title(),
+      explorerpp.binary().absoluteFilePath(),
+      explorerpp.arguments().join(" "),
+      explorerpp.workingDirectory().absolutePath(),
+      explorerpp.steamAppID());
+  }
+
 }
 
 void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end)
@@ -75,7 +88,7 @@ const Executable &ExecutablesList::find(const QString &title) const
       return exe;
     }
   }
-  throw std::runtime_error(QString("invalid name %1").arg(title).toLocal8Bit().constData());
+  throw std::runtime_error(QString("invalid executable name: %1").arg(title).toLocal8Bit().constData());
 }
 
 
@@ -86,7 +99,7 @@ Executable &ExecutablesList::find(const QString &title)
       return exe;
     }
   }
-  throw std::runtime_error(QString("invalid executable name %1").arg(title).toLocal8Bit().constData());
+  throw std::runtime_error(QString("invalid executable name: %1").arg(title).toLocal8Bit().constData());
 }
 
 
@@ -139,6 +152,7 @@ void ExecutablesList::updateExecutable(const QString &title,
                                        Executable::Flags flags)
 {
   QFileInfo file(executableName);
+  QDir dir(workingDirectory);
   auto existingExe = findExe(title);
   flags &= mask;
 
@@ -152,8 +166,11 @@ void ExecutablesList::updateExecutable(const QString &title,
         // don't overwrite a valid binary with an invalid one
         existingExe->m_BinaryInfo = file;
       }
+      if (dir.exists()) {
+        // don't overwrite a valid working directory with an invalid one
+        existingExe->m_WorkingDirectory = workingDirectory;
+      }
       existingExe->m_Arguments = arguments;
-      existingExe->m_WorkingDirectory = workingDirectory;
       existingExe->m_SteamAppID = steamAppID;
     }
   } else {

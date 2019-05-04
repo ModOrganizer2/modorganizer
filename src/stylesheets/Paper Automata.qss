@@ -1,11 +1,11 @@
-/* v1.1 Paper Automata by 6788-00 */
-/* https://6788-00.tumblr.com/ */
+/* v2.0 Paper Automata by 6788-00   */
+/* https://6788-00.tumblr.com/      */
 
 /* Color Palette                    */
 /* Background - Main      | #CDC8B0 */
 /* Background - Content   | #DAD4BB */
-/* Hover                  | #B4AF9A */ 
-/* Selected               | #4E4B42 */ 
+/* Hover                  | #B4AF9A */
+/* Selected               | #4E4B42 */
 /* Accent                 | #CD664D */
 
 /* All */
@@ -53,6 +53,10 @@ QAbstractItemView {
 	show-decoration-selected: 1;
 	selection-background-color: #B4AF9A;
 	selection-color: #4E4B42;
+}
+
+QAbstractItemView::item {
+	min-height: 22px;
 }
 
 QAbstractItemView::item:hover {
@@ -141,7 +145,7 @@ QToolButton QMenu {
 	qproperty-icon: url(./Paper/Automata/Toolbar/settings.svg);
 }
 
-#actionProblems {
+#actionNotifications {
 	qproperty-icon: url(./Paper/Automata/Toolbar/problems.svg);
 }
 
@@ -233,7 +237,7 @@ QGroupBox::title {
 	background: transparent;
 	subcontrol-origin: padding;
 	subcontrol-position: top left;
-	padding: 8px;
+	padding: 4px 8px;
 }
 
 /* Text Fields */
@@ -335,90 +339,90 @@ QPushButton::menu-indicator {
 
 /* Icons */
 
-QPushButton#listOptionsBtn {
+#listOptionsBtn {
 	/* Options button */
 	qproperty-icon: url(./Paper/Automata/dots.svg);
 	qproperty-iconSize: 16px;
 	padding-left: 2px;
 }
 
-QPushButton#openFolderMenu {
+#openFolderMenu {
 	/* Open Folder button */
 	qproperty-icon: url(./Paper/Automata/folder.svg);
 	qproperty-iconSize: 14px;
 	padding-left: 4px;
 }
 
-QPushButton#restoreModsButton,
-QPushButton#restoreButton {
+#restoreModsButton,
+#restoreButton {
 	/* Restore Backup buttons */
 	qproperty-icon: url(./Paper/Automata/restore.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#saveModsButton,
-QPushButton#saveButton {
+#saveModsButton,
+#saveButton {
 	/* Backup buttons */
 	qproperty-icon: url(./Paper/Automata/backup.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#bossButton {
+#bossButton {
 	/* Sort button */
 	qproperty-icon: url(./Paper/Automata/sort.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#linkButton {
+#linkButton {
 	/* Shortcuts button */
 	qproperty-icon: url(./Paper/Automata/shortcut.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#btnRefreshData,
-QPushButton#refreshButton {
+#btnRefreshData,
+#refreshButton {
 	/* Refresh buttons */
 	qproperty-icon: url(./Paper/Automata/refresh.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#endorseBtn {
+#endorseBtn {
 	/* Endorse button on the Nexus Info tab of the Information window */
 	qproperty-icon: url(./Paper/Automata/heart.svg);
 	qproperty-iconSize: 14px;
 }
 
-QPushButton#clearCacheButton {
+#clearCacheButton {
 	/* Clear Cache button on the Nexus tab of the Settings window */
 	qproperty-icon: url(./Paper/Automata/cross.svg);
 	qproperty-iconSize: 14px;
 }
 
-QToolButton#deactivateESP,
-QToolButton#activateESP {
+#deactivateESP,
+#activateESP {
 	/* activate and deactivate ESP buttons */
 	background: #DAD4BB;
 }
 
-QToolButton:hover#deactivateESP,
-QToolButton:hover#activateESP {
+#deactivateESP:hover,
+#activateESP:hover {
 	/* activate and deactivate ESP buttons when moused-over */
 	background: #B4AF9A;
 }
 
-QToolButton#deactivateESP {
+#deactivateESP {
 	/* icon for the deactivate ESP button */
 	qproperty-icon: url(./Paper/Automata/backup.svg);
 }
 
-QToolButton#activateESP {
+#activateESP {
 	/* icon for the activate ESP button */
 	qproperty-icon: url(./Paper/Automata/restore-alt.svg);
 }
 
 /* Run button */
 
-QPushButton#startButton {
+#startButton {
 	/* Run button */
 	background: #4E4B42;
 	color: #DAD4BB;
@@ -427,7 +431,7 @@ QPushButton#startButton {
 	padding: 6px;
 }
 
-QPushButton:hover#startButton {
+#startButton:hover {
 	/* Run button when moused-over*/
 	background: #B4AF9A;
 	color: #4E4B42;
@@ -504,7 +508,7 @@ QScrollBar::add-line:vertical {
 }
 
 QScrollBar::sub-line:vertical {
-	/* scroll up button */ 
+	/* scroll up button */
     background: #B4AF9A;
     image: url(./Paper/Automata/Arrows/up.svg);
     height: 23px;
@@ -517,29 +521,29 @@ QScrollBar::sub-line:vertical {
 
 /* Combined */
 
-QScrollBar::handle:horizontal:hover, 
+QScrollBar::handle:horizontal:hover,
 QScrollBar::handle:vertical:hover,
-QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover {
 	/* buttons and handles when moused-over */
 	background: #B4AF9A;
 }
 
-QScrollBar::handle:horizontal:pressed, 
+QScrollBar::handle:horizontal:pressed,
 QScrollBar::handle:vertical:pressed,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed {
 	/* buttons and handles when clicked */
 	background: #4E4B42;
 }
 
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal, 
-QScrollBar::add-page:vertical, 
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
 	/* area on scroll bars where clicking it scrolls to where you clicked */
     background: transparent;
@@ -671,7 +675,7 @@ QToolTip {
 
 QProgressBar {
 	/* progress bars when downloading */
-	background: #DAD4BB;
+	background: transparent;
     text-align: center;
     border: 0px;
 	margin: 0px 10px;
@@ -747,7 +751,7 @@ QTabBar QToolButton:disabled {
 QLCDNumber {
 	/* LCD number on the Conflicts tab */
 	background: #DAD4BB;
-	color: #CD664D;
+	color: #4E4B42;
 	border: none;
 }
 
@@ -791,7 +795,7 @@ QRadioButton::indicator:unchecked:hover {
 QTreeView::indicator:unchecked:selected,
 QRadioButton::indicator:unchecked:selected {
 	/* a checkbox that is unchecked when clicked */
-	image: url(./Paper/Automata/unchecked-alt.svg);
+	border: 2px solid #DAD4BB;
 }
 
 QTreeView::indicator:checked,
@@ -887,53 +891,100 @@ QSlider::handle:hover {
 
 /* Downloads Tab */
 
-QWidget#downloadTab QAbstractScrollArea,
+#downloadTab QAbstractScrollArea,
 DownloadListWidget {
 	/* background of the entire downloads tab */
-	background: transparent;
+	background: #DAD4BB;
 }
 
-DownloadListWidget QFrame, 
-DownloadListWidgetCompact, 
+DownloadListWidget QFrame,
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #DAD4BB;
 }
 
-DownloadListWidget QFrame#frame {
+DownloadListWidget#frame {
 	/* outer box of an entry on the Downloads tab */
 	border: 2px solid #DAD4BB;
 }
 
-DownloadListWidget QLabel#installLabel {
+#installLabel {
 	/* installed/done label */
 	color: none;
 }
 
-/* Compact Downloads View */
-
-DownloadListWidgetCompact, 
+DownloadListWidgetCompact,
 DownloadListWidgetCompact QLabel {
 	/* an entry on the Downloads tab */
 	background: #DAD4BB;
 }
 
+/* New Downloads View */
+
+DownloadListWidget[downloadView=standard]::item {
+	/* Entries on the Standard Downloads View */
+	min-height: 44px;
+	margin: -16px 0;
+}
+
+DownloadListWidget[downloadView=compact]::item {
+	/* Entries on the Compact Downloads View */
+	min-height: 22px;
+	margin: -4px 0;
+}
+
+QProgressBar[downloadView=standard] {
+	/* Progress Bars on the Standard Downloads View */
+	background: transparent;
+	margin: 11px 0;
+}
+
+QProgressBar[downloadView=compact] {
+	/* Progress Bars on the Compact Downloads View */
+	background: transparent;
+}
+
 /* Categories Filter */
 
-QPushButton#displayCategoriesBtn {
+#displayCategoriesBtn {
 	/* Filter button */
 	min-width: 12px;
 }
 
-QTreeWidget#categoriesList {
+#categoriesList {
 	/* Categories panel */
 	min-width: 200px;
 	margin-bottom: 4px;
 }
 
-QGroupBox#categoriesGroup {
+#categoriesGroup {
 	/* Categories group box */
-	padding-bottom: 0px;
+	padding-bottom: 0;
+	margin-top: 3px;
+}
+
+/* Fixes */
+
+#executablesListBox {
+	/* Increase right margin of the select executables box */
+	margin-right: 8px;
+}
+
+#stepsStack QWidget {
+	/* Groupboxes on the FOMOD Installer Dialog */
+	background: #CDC8B0;
+	border: none;
+}
+
+#stepsStack QGroupBox {
+	/* Fix to reimplement styling for Groupboxes on the FOMOD Installer dialog */
+	border: 2px solid #4E4B42;
+}
+
+#activeModslabel, #activePluginsLabel {
+	/* Increase the left margin of the counters */
+	padding-left: 6px;
 }
 
 /* For the Glory of Mankind */

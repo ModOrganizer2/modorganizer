@@ -29,12 +29,17 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nexusinterface.h"
 #include "plugincontainer.h"
 
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <QDirIterator>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QShortcut>
 #include <QColorDialog>
 #include <QInputDialog>
+#include <QJsonDocument>
+#include <QDesktopServices>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -42,11 +47,14 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-
 SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
   , m_PluginContainer(pluginContainer)
+  , m_nexusLogin(new QWebSocket)
+  , m_KeyReceived(false)
+  , m_KeyCleared(false)
+  , m_GeometriesReset(false)
 {
   ui->setupUi(this);
   ui->pluginSettingsList->setStyleSheet("QTreeWidget::item {padding-right: 10px;}");
@@ -54,10 +62,19 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   QShortcut *delShortcut
       = new QShortcut(QKeySequence(Qt::Key_Delete), ui->pluginBlacklist);
   connect(delShortcut, SIGNAL(activated()), this, SLOT(deleteBlacklistItem()));
+  connect(m_nexusLogin, SIGNAL(connected()), this, SLOT(dispatchLogin()));
+  connect(m_nexusLogin, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(authError(QAbstractSocket::SocketError)));
+  connect(m_nexusLogin, SIGNAL(textMessageReceived(const QString &)), this, SLOT(receiveApiKey(const QString &)));
+  connect(m_nexusLogin, SIGNAL(disconnected()), this, SLOT(completeApiConnection()));
+  connect(this, SIGNAL(retryApiConnection()), this, SLOT(on_nexusConnect_clicked()));
+  m_loginTimer.callOnTimeout(this, &SettingsDialog::loginPing);
 }
 
 SettingsDialog::~SettingsDialog()
 {
+  m_loginTimer.stop();
+  m_nexusLogin->close();
+  disconnect(this);
   delete ui;
 }
 
@@ -70,6 +87,23 @@ QString SettingsDialog::getColoredButtonStyleSheet() const
     "padding: 3px;"
     "}");
 }
+
+void SettingsDialog::setButtonColor(QPushButton *button, QColor &color)
+{
+  button->setStyleSheet(
+    QString("QPushButton {"
+      "background-color: rgba(%1, %2, %3, %4);"
+      "color: %5;"
+      "border: 1px solid;"
+      "padding: 3px;"
+      "}")
+    .arg(color.red())
+    .arg(color.green())
+    .arg(color.blue())
+    .arg(color.alpha())
+    .arg(Settings::getIdealTextColor(color).name())
+    );
+};
 
 void SettingsDialog::accept()
 {
@@ -99,17 +133,9 @@ bool SettingsDialog::getResetGeometries()
   return ui->resetGeometryBtn->isChecked();
 }
 
-void SettingsDialog::on_loginCheckBox_toggled(bool checked)
+bool SettingsDialog::getApiKeyChanged()
 {
-  QLineEdit *usernameEdit = findChild<QLineEdit*>("usernameEdit");
-  QLineEdit *passwordEdit = findChild<QLineEdit*>("passwordEdit");
-  if (checked) {
-    passwordEdit->setEnabled(true);
-    usernameEdit->setEnabled(true);
-  } else {
-    passwordEdit->setEnabled(false);
-    usernameEdit->setEnabled(false);
-  }
+  return m_KeyReceived || m_KeyCleared;
 }
 
 void SettingsDialog::on_categoriesBtn_clicked()
@@ -232,73 +258,55 @@ void SettingsDialog::on_browseGameDirBtn_clicked()
 
 void SettingsDialog::on_containsBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainsColor, this);
+  QColor result = QColorDialog::getColor(m_ContainsColor, this, "Color Picker: Mod contains selected plugin", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainsColor = result;
-
-    ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-     result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->containsBtn->setAutoFillBackground(true);
-    ui->containsBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containsBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containsBtn->setPalette(palette);*/
+    setButtonColor(ui->containsBtn, result);
   }
 }
 
 void SettingsDialog::on_containedBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_ContainedColor, this);
+  QColor result = QColorDialog::getColor(m_ContainedColor, this, "ColorPicker: Plugin is Contained in selected Mod", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_ContainedColor = result;
-
-    ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->containedBtn->setAutoFillBackground(true);
-    ui->containedBtn->setPalette(QPalette(result));
-    QPalette palette = ui->containedBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->containedBtn->setPalette(palette);*/
+    setButtonColor(ui->containedBtn, result);
   }
 }
 
 void SettingsDialog::on_overwrittenBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwrittenColor, this);
+  QColor result = QColorDialog::getColor(m_OverwrittenColor, this, "ColorPicker: Is overwritten (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwrittenColor = result;
-
-    ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
-
-    /*ui->overwrittenBtn->setAutoFillBackground(true);
-    ui->overwrittenBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwrittenBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwrittenBtn->setPalette(palette);*/
+    setButtonColor(ui->overwrittenBtn, result);
   }
 }
 
 void SettingsDialog::on_overwritingBtn_clicked()
 {
-  QColor result = QColorDialog::getColor(m_OverwritingColor, this);
+  QColor result = QColorDialog::getColor(m_OverwritingColor, this, "ColorPicker: Is overwriting (loose files)", QColorDialog::ShowAlphaChannel);
   if (result.isValid()) {
     m_OverwritingColor = result;
+    setButtonColor(ui->overwritingBtn, result);
+  }
+}
 
-    ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-      result.name()).arg(Settings::getIdealTextColor(
-        result).name()));
+void SettingsDialog::on_overwrittenArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwrittenArchiveColor, this, "ColorPicker: Is overwritten (archive files)", QColorDialog::ShowAlphaChannel);
+  if (result.isValid()) {
+    m_OverwrittenArchiveColor = result;
+    setButtonColor(ui->overwrittenArchiveBtn, result);
+  }
+}
 
-    /*ui->overwritingBtn->setAutoFillBackground(true);
-    ui->overwritingBtn->setPalette(QPalette(result));
-    QPalette palette = ui->overwritingBtn->palette();
-    palette.setColor(QPalette::Background, result);
-    ui->overwritingBtn->setPalette(palette);*/
+void SettingsDialog::on_overwritingArchiveBtn_clicked()
+{
+  QColor result = QColorDialog::getColor(m_OverwritingArchiveColor, this, "ColorPicker: Is overwriting (archive files)", QColorDialog::ShowAlphaChannel);
+  if (result.isValid()) {
+    m_OverwritingArchiveColor = result;
+    setButtonColor(ui->overwritingArchiveBtn, result);
   }
 }
 
@@ -306,25 +314,17 @@ void SettingsDialog::on_resetColorsBtn_clicked()
 {
   m_OverwritingColor = QColor(255, 0, 0, 64);
   m_OverwrittenColor = QColor(0, 255, 0, 64);
+  m_OverwritingArchiveColor = QColor(255, 0, 255, 64);
+  m_OverwrittenArchiveColor = QColor(0, 255, 255, 64);
   m_ContainsColor = QColor(0, 0, 255, 64);
   m_ContainedColor = QColor(0, 0, 255, 64);
 
-  ui->overwritingBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(255, 0, 0, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(255, 0, 0, 64)).name()));
-
-  ui->overwrittenBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 255, 0, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 255, 0, 64)).name()));
-
-  ui->containsBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 0, 255, 64)).name()));
-
-  ui->containedBtn->setStyleSheet(getColoredButtonStyleSheet().arg(
-    QColor(0, 0, 255, 64).name()).arg(Settings::getIdealTextColor(
-      QColor(0, 0, 255, 64)).name()));
-
+  setButtonColor(ui->overwritingBtn, m_OverwritingColor);
+  setButtonColor(ui->overwrittenBtn, m_OverwrittenColor);
+  setButtonColor(ui->overwritingArchiveBtn, m_OverwritingArchiveColor);
+  setButtonColor(ui->overwrittenArchiveBtn, m_OverwrittenArchiveColor);
+  setButtonColor(ui->containsBtn, m_ContainsColor);
+  setButtonColor(ui->containedBtn, m_ContainedColor);
 }
 
 void SettingsDialog::on_resetDialogsButton_clicked()
@@ -336,10 +336,87 @@ void SettingsDialog::on_resetDialogsButton_clicked()
   }
 }
 
+void SettingsDialog::on_nexusConnect_clicked()
+{
+  ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
+  ui->nexusConnect->setDisabled(true);
+  QUrl url = QUrl("wss://sso.nexusmods.com");
+  m_nexusLogin->open(url);
+}
+
+void SettingsDialog::dispatchLogin()
+{
+  m_KeyReceived = false;
+  QJsonObject login;
+  if (m_UUID.isEmpty()) {
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid sessionId = generator();
+    m_UUID = boost::uuids::to_string(sessionId).c_str();
+  }
+  login.insert(QString("id"), QJsonValue(m_UUID));
+  login.insert(QString("token"), QJsonValue(m_AuthToken));
+  login.insert(QString("protocol"), 2);
+  QJsonDocument loginDoc(login);
+  QString finalMessage(loginDoc.toJson());
+  m_nexusLogin->sendTextMessage(finalMessage);
+  QDesktopServices::openUrl(QUrl(QString("https://www.nexusmods.com/sso?id=%1&application=%2").arg(m_UUID).arg("modorganizer2")));
+  m_loginTimer.start(30000);
+}
+
+void SettingsDialog::loginPing()
+{
+  if (m_nexusLogin->isValid()) {
+    m_nexusLogin->ping();
+    m_totalPings++;
+  }
+  if (m_totalPings >= 60) {
+    m_loginTimer.stop();
+    m_totalPings = 0;
+    m_nexusLogin->close(QWebSocketProtocol::CloseCodeGoingAway, "Timeout: No response received after thirty minutes. Cancelling request.");
+  }
+}
+
+void SettingsDialog::authError(QAbstractSocket::SocketError error)
+{
+  auto errorInfo = m_nexusLogin->errorString();
+  qCritical() << "An error occurred: " << errorInfo;
+}
+
+void SettingsDialog::receiveApiKey(const QString &response)
+{
+  QJsonDocument responseDoc = QJsonDocument::fromJson(response.toUtf8());
+  QVariantMap responseData = responseDoc.object().toVariantMap();
+  if (responseData["success"].toBool()) {
+    QVariantMap data = responseData["data"].toMap();
+    if (data.contains("connection_token")) {
+      m_AuthToken = data["connection_token"].toString();
+    } else {
+      m_KeyReceived = true;
+      emit processApiKey(data["api_key"].toString());
+      m_nexusLogin->close();
+      ui->nexusConnect->setText("Nexus API Key Stored");
+      m_loginTimer.stop();
+      m_totalPings = 0;
+    }
+  } else {
+    QString error("There was a problem with SSO initialization: %1");
+    qCritical() << error.arg(responseData["error"].toString());
+    m_nexusLogin->close();
+  }
+}
+
+void SettingsDialog::completeApiConnection()
+{
+  if (m_KeyReceived == true || !m_loginTimer.isActive())
+    emit closeApiConnection(ui->nexusConnect);
+  else
+    emit retryApiConnection();
+}
+
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)
 {
   if (pluginItem != nullptr) {
-    QMap<QString, QVariant> settings = pluginItem->data(Qt::UserRole + 1).toMap();
+    QVariantMap settings = pluginItem->data(Qt::UserRole + 1).toMap();
 
     for (int i = 0; i < ui->pluginSettingsList->topLevelItemCount(); ++i) {
       const QTreeWidgetItem *item = ui->pluginSettingsList->topLevelItem(i);
@@ -360,8 +437,8 @@ void SettingsDialog::on_pluginsList_currentItemChanged(QListWidgetItem *current,
   ui->versionLabel->setText(plugin->version().canonicalString());
   ui->descriptionLabel->setText(plugin->description());
 
-  QMap<QString, QVariant> settings = current->data(Qt::UserRole + 1).toMap();
-  QMap<QString, QVariant> descriptions = current->data(Qt::UserRole + 2).toMap();
+  QVariantMap settings = current->data(Qt::UserRole + 1).toMap();
+  QVariantMap descriptions = current->data(Qt::UserRole + 2).toMap();
   ui->pluginSettingsList->setEnabled(settings.count() != 0);
   for (auto iter = settings.begin(); iter != settings.end(); ++iter) {
     QTreeWidgetItem *newItem = new QTreeWidgetItem(QStringList(iter.key()));
@@ -403,6 +480,12 @@ void SettingsDialog::on_clearCacheButton_clicked()
   NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 
+void SettingsDialog::on_revokeNexusAuthButton_clicked()
+{
+  emit revokeApiKey(ui->nexusConnect);
+  m_KeyCleared = true;
+}
+
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)
 {
   QString text = lineEdit->text();
@@ -440,4 +523,10 @@ void SettingsDialog::on_profilesDirEdit_editingFinished()
 void SettingsDialog::on_overwriteDirEdit_editingFinished()
 {
   normalizePath(ui->overwriteDirEdit);
+}
+
+void SettingsDialog::on_resetGeometryBtn_clicked()
+{
+  m_GeometriesReset = true;
+  ui->resetGeometryBtn->setChecked(true);
 }

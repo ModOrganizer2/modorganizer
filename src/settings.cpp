@@ -57,6 +57,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QtDebug> // for qDebug, qWarning
 
 #include <Windows.h> // For ShellExecuteW, HINSTANCE, etc
+#include <wincred.h> // For storage
 
 #include <algorithm> // for sort
 #include <memory>
@@ -79,10 +80,6 @@ public:
 private:
   int m_SortRole;
 };
-
-
-static const unsigned char Key2[20] = { 0x99, 0xb8, 0x76, 0x42, 0x3e, 0xc1, 0x60, 0xa4, 0x5b, 0x01,
-                                        0xdb, 0xf8, 0x43, 0x3a, 0xb7, 0xb6, 0x98, 0xd4, 0x7d, 0xa2 };
 
 Settings *Settings::s_Instance = nullptr;
 
@@ -142,7 +139,7 @@ void Settings::registerAsNXMHandler(bool force)
   }
   parameters += L" \"" + executable + L"\"";
   HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
-  if ((int)res <= 32) {
+  if ((INT_PTR)res <= 32) {
     QMessageBox::critical(nullptr, tr("Failed"),
                           tr("Sorry, failed to start the helper application"));
   }
@@ -161,13 +158,13 @@ void Settings::managedGameChanged(IPluginGame const *gamePlugin)
 void Settings::registerPlugin(IPlugin *plugin)
 {
   m_Plugins.push_back(plugin);
-  m_PluginSettings.insert(plugin->name(), QMap<QString, QVariant>());
-  m_PluginDescriptions.insert(plugin->name(), QMap<QString, QVariant>());
+  m_PluginSettings.insert(plugin->name(), QVariantMap());
+  m_PluginDescriptions.insert(plugin->name(), QVariantMap());
   for (const PluginSetting &setting : plugin->settings()) {
     QVariant temp = m_Settings.value("Plugins/" + plugin->name() + "/" + setting.key, setting.defaultValue);
     if (!temp.convert(setting.defaultValue.type())) {
       qWarning("failed to interpret \"%s\" as correct type for \"%s\" in plugin \"%s\", using default",
-               qPrintable(temp.toString()), qPrintable(setting.key), qPrintable(plugin->name()));
+               qUtf8Printable(temp.toString()), qUtf8Printable(setting.key), qUtf8Printable(plugin->name()));
       temp = setting.defaultValue;
     }
     m_PluginSettings[plugin->name()][setting.key] = temp;
@@ -175,31 +172,68 @@ void Settings::registerPlugin(IPlugin *plugin)
   }
 }
 
-QString Settings::obfuscate(const QString &password)
+bool Settings::obfuscate(const QString key, const QString data)
 {
-  QByteArray temp = password.toUtf8();
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  bool result = false;
+  if (data.isEmpty()) {
+    result = CredDeleteW(keyData, CRED_TYPE_GENERIC, 0);
+    if (!result)
+      if (GetLastError() == ERROR_NOT_FOUND)
+        result = true;
+  } else {
+    wchar_t* charData = new wchar_t[data.size()];
+    data.toWCharArray(charData);
 
-  QByteArray buffer;
-  for (int i = 0; i < temp.length(); ++i) {
-    buffer.append(temp.at(i) ^ Key2[i % 20]);
+    CREDENTIALW cred = {};
+    cred.Flags = 0;
+    cred.Type = CRED_TYPE_GENERIC;
+    cred.TargetName = keyData;
+    cred.CredentialBlob = (LPBYTE)charData;
+    cred.CredentialBlobSize = sizeof(wchar_t) * data.size();
+    cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+
+    result = CredWriteW(&cred, 0);
+    delete[] charData;
   }
-  return buffer.toBase64();
+  delete[] keyData;
+  return result;
 }
 
-QString Settings::deObfuscate(const QString &password)
+QString Settings::deObfuscate(const QString key)
 {
-  QByteArray temp(QByteArray::fromBase64(password.toUtf8()));
-
-  QByteArray buffer;
-  for (int i = 0; i < temp.length(); ++i) {
-    buffer.append(temp.at(i) ^ Key2[i % 20]);
+  QString result;
+  QString finalKey("ModOrganizer2_" + key);
+  wchar_t* keyData = new wchar_t[finalKey.size()+1];
+  finalKey.toWCharArray(keyData);
+  keyData[finalKey.size()] = L'\0';
+  PCREDENTIALW creds;
+  if (CredReadW(keyData, 1, 0, &creds)) {
+    wchar_t *charData = (wchar_t *)creds->CredentialBlob;
+    result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
+    CredFree(creds);
+  } else {
+    if (GetLastError() != ERROR_NOT_FOUND) {
+      wchar_t buffer[256];
+      FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+      qCritical() << "Retrieving encrypted data failed:" << buffer;
+    }
   }
-  return QString::fromUtf8(buffer.constData());
+  delete[] keyData;
+  return result;
 }
 
-QColor Settings::getIdealTextColor(const QColor&  rBackgroundColor)
+QColor Settings::getIdealTextColor(const QColor& rBackgroundColor)
 {
-  const int THRESHOLD = 106;
+  if (rBackgroundColor.alpha() == 0)
+    return QColor(Qt::black);
+
+  const int THRESHOLD = 106 * 255.0f / rBackgroundColor.alpha();
   int BackgroundDelta = (rBackgroundColor.red() * 0.299) + (rBackgroundColor.green() * 0.587) + (rBackgroundColor.blue() * 0.114);
   return QColor((255 - BackgroundDelta <= THRESHOLD) ? Qt::black : Qt::white);
 }
@@ -319,37 +353,26 @@ QString Settings::getOverwriteDirectory(bool resolve) const
                              ToQString(AppConfig::overwritePath()), resolve);
 }
 
-QString Settings::getNMMVersion() const
+bool Settings::getNexusApiKey(QString &apiKey) const
 {
-  static const QString MIN_NMM_VERSION = "0.65.2";
-  QString result = m_Settings.value("Settings/nmm_version", MIN_NMM_VERSION).toString();
-  if (VersionInfo(result) < VersionInfo(MIN_NMM_VERSION)) {
-    result = MIN_NMM_VERSION;
-  }
-  return result;
-}
-
-bool Settings::getNexusLogin(QString &username, QString &password) const
-{
-  if (m_Settings.value("Settings/nexus_login", false).toBool()) {
-    username = m_Settings.value("Settings/nexus_username", "").toString();
-    password = deObfuscate(m_Settings.value("Settings/nexus_password", "").toString());
-    return true;
-  } else {
+  QString tempKey = deObfuscate("APIKEY");
+  if (tempKey.isEmpty())
     return false;
-  }
+  apiKey = tempKey;
+  return true;
 }
 
 bool Settings::getSteamLogin(QString &username, QString &password) const
 {
-  if (m_Settings.contains("Settings/steam_username")
-      && m_Settings.contains("Settings/steam_password")) {
-    username = m_Settings.value("Settings/steam_username").toString();
-    password = deObfuscate(m_Settings.value("Settings/steam_password").toString());
-    return true;
-  } else {
-    return false;
+  if (m_Settings.contains("Settings/steam_username")) {
+    QString tempPass = deObfuscate("steam_password");
+    if (!tempPass.isEmpty()) {
+      username = m_Settings.value("Settings/steam_username").toString();
+      password = tempPass;
+      return true;
+    }
   }
+  return false;
 }
 bool Settings::compactDownloads() const
 {
@@ -391,6 +414,16 @@ QColor Settings::modlistOverwritingLooseColor() const
   return m_Settings.value("Settings/overwritingLooseFilesColor", QColor(255, 0, 0, 64)).value<QColor>();
 }
 
+QColor Settings::modlistOverwrittenArchiveColor() const
+{
+  return m_Settings.value("Settings/overwrittenArchiveFilesColor", QColor(0, 255, 255, 64)).value<QColor>();
+}
+
+QColor Settings::modlistOverwritingArchiveColor() const
+{
+  return m_Settings.value("Settings/overwritingArchiveFilesColor", QColor(255, 0, 255, 64)).value<QColor>();
+}
+
 QColor Settings::modlistContainsPluginColor() const
 {
   return m_Settings.value("Settings/containsPluginColor", QColor(0, 0, 255, 64)).value<QColor>();
@@ -411,15 +444,22 @@ QString Settings::executablesBlacklist() const
         << "TGitCache.exe"
         << "Steam.exe"
         << "GameOverlayUI.exe"
+        << "Discord.exe"
+        << "GalaxyClient.exe"
+        << "Spotify.exe"
     ).join(";")
   ).toString();
 }
 
-void Settings::setNexusLogin(QString username, QString password)
+void Settings::setNexusApiKey(QString apiKey)
 {
-  m_Settings.setValue("Settings/nexus_login", true);
-  m_Settings.setValue("Settings/nexus_username", username);
-  m_Settings.setValue("Settings/nexus_password", obfuscate(password));
+  if (!obfuscate("APIKEY", apiKey)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing API key failed:" << buffer;
+  }
 }
 
 void Settings::setSteamLogin(QString username, QString password)
@@ -430,10 +470,12 @@ void Settings::setSteamLogin(QString username, QString password)
   } else {
     m_Settings.setValue("Settings/steam_username", username);
   }
-  if (password == "") {
-    m_Settings.remove("Settings/steam_password");
-  } else {
-    m_Settings.setValue("Settings/steam_password", obfuscate(password));
+  if (!obfuscate("steam_password", password)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing or deleting password failed:" << buffer;
   }
 }
 
@@ -459,6 +501,16 @@ bool Settings::useProxy() const
   return m_Settings.value("Settings/use_proxy", false).toBool();
 }
 
+bool Settings::endorsementIntegration() const
+{
+  return m_Settings.value("Settings/endorsement_integration", true).toBool();
+}
+
+bool Settings::hideAPICounter() const
+{
+  return m_Settings.value("Settings/hide_api_counter", false).toBool();
+}
+
 bool Settings::displayForeign() const
 {
   return m_Settings.value("Settings/display_foreign", true).toBool();
@@ -472,6 +524,11 @@ void Settings::setMotDHash(uint hash)
 uint Settings::getMotDHash() const
 {
   return m_Settings.value("motd_hash", 0).toUInt();
+}
+
+bool Settings::archiveParsing() const
+{
+  return m_Settings.value("Settings/archive_parsing_experimental", false).toBool();
 }
 
 QVariant Settings::pluginSetting(const QString &pluginName, const QString &key) const
@@ -566,7 +623,7 @@ void Settings::updateServers(const QList<ServerInfo> &servers)
     QVariantMap val = m_Settings.value(key).toMap();
     QDate lastSeen = val["lastSeen"].toDate();
     if (lastSeen.daysTo(now) > 30) {
-      qDebug("removing server %s since it hasn't been available for downloads in over a month", qPrintable(key));
+      qDebug("removing server %s since it hasn't been available for downloads in over a month", qUtf8Printable(key));
       m_Settings.remove(key);
     }
   }
@@ -584,6 +641,7 @@ void Settings::addBlacklistPlugin(const QString &fileName)
 
 void Settings::writePluginBlacklist()
 {
+  m_Settings.remove("pluginBlacklist");
   m_Settings.beginWriteArray("pluginBlacklist");
   int idx = 0;
   for (const QString &plugin : m_PluginBlacklist) {
@@ -647,11 +705,43 @@ void Settings::resetDialogs()
   QuestionBoxMemory::resetDialogs();
 }
 
+void Settings::processApiKey(const QString &apiKey)
+{
+  if (!obfuscate("APIKEY", apiKey)) {
+    wchar_t buffer[256];
+    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
+    qCritical() << "Storing or deleting API key failed:" << buffer;
+  }
+}
+
+void Settings::clearApiKey(QPushButton *nexusButton)
+{
+  obfuscate("APIKEY", "");
+  nexusButton->setEnabled(true);
+  nexusButton->setText("Connect to Nexus");
+}
+
+void Settings::checkApiKey(QPushButton *nexusButton)
+{
+  if (deObfuscate("APIKEY").isEmpty()) {
+    nexusButton->setEnabled(true);
+    nexusButton->setText("Connect to Nexus");
+    QMessageBox::warning(qApp->activeWindow(), tr("Error"),
+      tr("Failed to retrieve a Nexus API key! Please try again. "
+        "A browser window should open asking you to authorize."));
+  }
+}
+
 void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
 {
   SettingsDialog dialog(pluginContainer, parent);
 
   connect(&dialog, SIGNAL(resetDialogs()), this, SLOT(resetDialogs()));
+  connect(&dialog, SIGNAL(processApiKey(const QString &)), this, SLOT(processApiKey(const QString &)));
+  connect(&dialog, SIGNAL(closeApiConnection(QPushButton *)), this, SLOT(checkApiKey(QPushButton *)));
+  connect(&dialog, SIGNAL(revokeApiKey(QPushButton *)), this, SLOT(clearApiKey(QPushButton *)));
 
   std::vector<std::unique_ptr<SettingsTab>> tabs;
 
@@ -698,6 +788,25 @@ void Settings::query(PluginContainer *pluginContainer, QWidget *parent)
   }
   m_Settings.setValue(key, dialog.saveGeometry());
 
+  // These changes happen regardless of accepted or rejected
+  bool restartNeeded = false;
+  if (dialog.getApiKeyChanged()) {
+    restartNeeded = true;
+  }
+  if (dialog.getResetGeometries()) {
+    restartNeeded = true;
+    m_Settings.setValue("reset_geometry", true);
+  }
+  if (restartNeeded) {
+    if (QMessageBox::question(nullptr,
+      tr("Restart Mod Organizer?"),
+      tr("In order to finish configuration changes, MO must be restarted.\n"
+        "Restart it now?"),
+      QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      qApp->exit(INT_MAX);
+    }
+  }
+
 }
 
 Settings::SettingsTab::SettingsTab(Settings *m_parent, SettingsDialog &m_dialog)
@@ -719,6 +828,8 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   , m_usePrereleaseBox(m_dialog.findChild<QCheckBox *>("usePrereleaseBox"))
   , m_overwritingBtn(m_dialog.findChild<QPushButton *>("overwritingBtn"))
   , m_overwrittenBtn(m_dialog.findChild<QPushButton *>("overwrittenBtn"))
+  , m_overwritingArchiveBtn(m_dialog.findChild<QPushButton *>("overwritingArchiveBtn"))
+  , m_overwrittenArchiveBtn(m_dialog.findChild<QPushButton *>("overwrittenArchiveBtn"))
   , m_containsBtn(m_dialog.findChild<QPushButton *>("containsBtn"))
   , m_containedBtn(m_dialog.findChild<QPushButton *>("containedBtn"))
   , m_colorSeparatorsBox(m_dialog.findChild<QCheckBox *>("colorSeparatorsBox"))
@@ -773,21 +884,17 @@ Settings::GeneralTab::GeneralTab(Settings *m_parent, SettingsDialog &m_dialog)
   */
 
   //version with stylesheet
-  m_overwritingBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistOverwritingLooseColor().name()).arg(getIdealTextColor(
-      m_parent->modlistOverwritingLooseColor()).name()));
-  m_overwrittenBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistOverwrittenLooseColor().name()).arg(getIdealTextColor(
-      m_parent->modlistOverwrittenLooseColor()).name()));
-  m_containsBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->modlistContainsPluginColor().name()).arg(getIdealTextColor(
-      m_parent->modlistContainsPluginColor()).name()));
-  m_containedBtn->setStyleSheet(m_dialog.getColoredButtonStyleSheet().arg(
-    m_parent->pluginListContainedColor().name()).arg(getIdealTextColor(
-      m_parent->pluginListContainedColor()).name()));
+  m_dialog.setButtonColor(m_overwritingBtn, m_parent->modlistOverwritingLooseColor());
+  m_dialog.setButtonColor(m_overwrittenBtn, m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setButtonColor(m_overwritingArchiveBtn, m_parent->modlistOverwritingArchiveColor());
+  m_dialog.setButtonColor(m_overwrittenArchiveBtn, m_parent->modlistOverwrittenArchiveColor());
+  m_dialog.setButtonColor(m_containsBtn, m_parent->modlistContainsPluginColor());
+  m_dialog.setButtonColor(m_containedBtn, m_parent->pluginListContainedColor());
 
   m_dialog.setOverwritingColor(m_parent->modlistOverwritingLooseColor());
   m_dialog.setOverwrittenColor(m_parent->modlistOverwrittenLooseColor());
+  m_dialog.setOverwritingArchiveColor(m_parent->modlistOverwritingArchiveColor());
+  m_dialog.setOverwrittenArchiveColor(m_parent->modlistOverwrittenArchiveColor());
   m_dialog.setContainsColor(m_parent->modlistContainsPluginColor());
   m_dialog.setContainedColor(m_parent->pluginListContainedColor());
 
@@ -815,6 +922,8 @@ void Settings::GeneralTab::update()
 
   m_Settings.setValue("Settings/overwritingLooseFilesColor", m_dialog.getOverwritingColor());
   m_Settings.setValue("Settings/overwrittenLooseFilesColor", m_dialog.getOverwrittenColor());
+  m_Settings.setValue("Settings/overwritingArchiveFilesColor", m_dialog.getOverwritingArchiveColor());
+  m_Settings.setValue("Settings/overwrittenArchiveFilesColor", m_dialog.getOverwrittenArchiveColor());
   m_Settings.setValue("Settings/containsPluginColor", m_dialog.getContainsColor());
   m_Settings.setValue("Settings/containedColor", m_dialog.getContainedColor());
   m_Settings.setValue("Settings/compact_downloads", m_compactBox->isChecked());
@@ -933,23 +1042,24 @@ void Settings::DiagnosticsTab::update()
 
 Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
   : Settings::SettingsTab(parent, dialog)
-  , m_loginCheckBox(dialog.findChild<QCheckBox *>("loginCheckBox"))
-  , m_usernameEdit(dialog.findChild<QLineEdit *>("usernameEdit"))
-  , m_passwordEdit(dialog.findChild<QLineEdit *>("passwordEdit"))
+  , m_nexusConnect(dialog.findChild<QPushButton *>("nexusConnect"))
   , m_offlineBox(dialog.findChild<QCheckBox *>("offlineBox"))
   , m_proxyBox(dialog.findChild<QCheckBox *>("proxyBox"))
   , m_knownServersList(dialog.findChild<QListWidget *>("knownServersList"))
   , m_preferredServersList(
         dialog.findChild<QListWidget *>("preferredServersList"))
+  , m_endorsementBox(dialog.findChild<QCheckBox *>("endorsementBox"))
+  , m_hideAPICounterBox(dialog.findChild<QCheckBox *>("hideAPICounterBox"))
 {
-  if (parent->automaticLoginEnabled()) {
-    m_loginCheckBox->setChecked(true);
-    m_usernameEdit->setText(m_Settings.value("Settings/nexus_username", "").toString());
-    m_passwordEdit->setText(deObfuscate(m_Settings.value("Settings/nexus_password", "").toString()));
+  if (!deObfuscate("APIKEY").isEmpty()) {
+    m_nexusConnect->setText("Nexus API Key Stored");
+    m_nexusConnect->setDisabled(true);
   }
 
   m_offlineBox->setChecked(parent->offlineMode());
   m_proxyBox->setChecked(parent->useProxy());
+  m_endorsementBox->setChecked(parent->endorsementIntegration());
+  m_hideAPICounterBox->setChecked(parent->hideAPICounter());
 
   // display server preferences
   m_Settings.beginGroup("Servers");
@@ -980,6 +1090,7 @@ Settings::NexusTab::NexusTab(Settings *parent, SettingsDialog &dialog)
 
 void Settings::NexusTab::update()
 {
+  /*
   if (m_loginCheckBox->isChecked()) {
     m_Settings.setValue("Settings/nexus_login", true);
     m_Settings.setValue("Settings/nexus_username", m_usernameEdit->text());
@@ -989,8 +1100,11 @@ void Settings::NexusTab::update()
     m_Settings.remove("Settings/nexus_username");
     m_Settings.remove("Settings/nexus_password");
   }
+  */
   m_Settings.setValue("Settings/offline_mode", m_offlineBox->isChecked());
   m_Settings.setValue("Settings/use_proxy", m_proxyBox->isChecked());
+  m_Settings.setValue("Settings/endorsement_integration", m_endorsementBox->isChecked());
+  m_Settings.setValue("Settings/hide_api_counter", m_hideAPICounterBox->isChecked());
 
   // store server preference
   m_Settings.beginGroup("Servers");
@@ -1017,8 +1131,9 @@ Settings::SteamTab::SteamTab(Settings *m_parent, SettingsDialog &m_dialog)
 {
   if (m_Settings.contains("Settings/steam_username")) {
     m_steamUserEdit->setText(m_Settings.value("Settings/steam_username", "").toString());
-    if (m_Settings.contains("Settings/steam_password")) {
-      m_steamPassEdit->setText(deObfuscate(m_Settings.value("Settings/steam_password", "").toString()));
+    QString password = deObfuscate("steam_password");
+    if (!password.isEmpty()) {
+      m_steamPassEdit->setText(password);
     }
   }
 }
@@ -1080,11 +1195,12 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
   : Settings::SettingsTab(m_parent, m_dialog)
   , m_appIDEdit(m_dialog.findChild<QLineEdit *>("appIDEdit"))
   , m_mechanismBox(m_dialog.findChild<QComboBox *>("mechanismBox"))
-  , m_nmmVersionEdit(m_dialog.findChild<QLineEdit *>("nmmVersionEdit"))
   , m_hideUncheckedBox(m_dialog.findChild<QCheckBox *>("hideUncheckedBox"))
   , m_forceEnableBox(m_dialog.findChild<QCheckBox *>("forceEnableBox"))
   , m_displayForeignBox(m_dialog.findChild<QCheckBox *>("displayForeignBox"))
   , m_lockGUIBox(m_dialog.findChild<QCheckBox *>("lockGUIBox"))
+  , m_enableArchiveParsingBox(m_dialog.findChild<QCheckBox *>("enableArchiveParsingBox"))
+  , m_resetGeometriesBtn(m_dialog.findChild<QPushButton *>("resetGeometryBtn"))
 {
   m_appIDEdit->setText(m_parent->getSteamAppID());
 
@@ -1114,11 +1230,13 @@ Settings::WorkaroundsTab::WorkaroundsTab(Settings *m_parent,
 
   m_mechanismBox->setCurrentIndex(index);
 
-  m_nmmVersionEdit->setText(m_parent->getNMMVersion());
   m_hideUncheckedBox->setChecked(m_parent->hideUncheckedPlugins());
   m_forceEnableBox->setChecked(m_parent->forceEnableCoreFiles());
   m_displayForeignBox->setChecked(m_parent->displayForeign());
   m_lockGUIBox->setChecked(m_parent->lockGUI());
+  m_enableArchiveParsingBox->setChecked(m_parent->archiveParsing());
+
+  m_resetGeometriesBtn->setChecked(m_parent->directInterface().value("reset_geometry", false).toBool());
 
   m_dialog.setExecutableBlacklist(m_parent->executablesBlacklist());
 
@@ -1132,22 +1250,11 @@ void Settings::WorkaroundsTab::update()
     m_Settings.remove("Settings/app_id");
   }
   m_Settings.setValue("Settings/load_mechanism", m_mechanismBox->itemData(m_mechanismBox->currentIndex()).toInt());
-  m_Settings.setValue("Settings/nmm_version", m_nmmVersionEdit->text());
   m_Settings.setValue("Settings/hide_unchecked_plugins", m_hideUncheckedBox->isChecked());
   m_Settings.setValue("Settings/force_enable_core_files", m_forceEnableBox->isChecked());
   m_Settings.setValue("Settings/display_foreign", m_displayForeignBox->isChecked());
   m_Settings.setValue("Settings/lock_gui", m_lockGUIBox->isChecked());
+  m_Settings.setValue("Settings/archive_parsing_experimental", m_enableArchiveParsingBox->isChecked());
 
   m_Settings.setValue("Settings/executable_blacklist", m_dialog.getExecutableBlacklist());
-
-  if (m_dialog.getResetGeometries()) {
-    m_Settings.setValue("reset_geometry", true);
-    if (QMessageBox::question(nullptr,
-          tr("Restart Mod Organizer?"),
-          tr("In order to reset the window geometries, MO must be restarted.\n"
-             "Restart it now?"),
-          QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      qApp->exit(INT_MAX);
-    }
-  }
 }

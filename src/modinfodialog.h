@@ -78,7 +78,8 @@ public:
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
- explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer,QWidget *parent = 0);
+  explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent = 0);
+
   ~ModInfoDialog();
 
   /**
@@ -185,6 +186,7 @@ private slots:
   void on_modIDEdit_editingFinished();
   void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
+  void on_customUrlLineEdit_editingFinished();
   void on_iniFileView_textChanged();
   void on_textFileView_textChanged();
   void on_tabWidget_currentChanged(int index);

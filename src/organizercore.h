@@ -20,6 +20,7 @@
 #include <versioninfo.h>
 #include <delayedfilewriter.h>
 #include <boost/signals2.hpp>
+#include "executableinfo.h"
 
 class ModListSortProxy;
 class PluginListSortProxy;
@@ -135,26 +136,30 @@ public:
 
   void refreshDirectoryStructure();
   void updateModInDirectoryStructure(unsigned int index, ModInfo::Ptr modInfo);
+  void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
                    const QDir &currentDirectory = QDir(),
                    const QString &steamAppID = "",
-                   const QString &customOverwrite = "");
+                   const QString &customOverwrite = "",
+                   const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
   HANDLE spawnBinaryDirect(const QFileInfo &binary, const QString &arguments,
                            const QString &profileName,
                            const QDir &currentDirectory,
                            const QString &steamAppID,
                            const QString &customOverwrite,
+                           const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>(),
                            LPDWORD exitCode = nullptr);
 
   HANDLE spawnBinaryProcess(const QFileInfo &binary, const QString &arguments,
                             const QString &profileName,
                             const QDir &currentDirectory,
                             const QString &steamAppID,
-                            const QString &customOverwrite);
+                            const QString &customOverwrite,
+                            const QList<MOBase::ExecutableForcedLoadSetting> &forcedLibraries = QList<MOBase::ExecutableForcedLoadSetting>());
 
   void loginSuccessfulUpdate(bool necessary);
   void loginFailedUpdate(const QString &message);
@@ -182,6 +187,7 @@ public:
   QString downloadsPath() const;
   QString overwritePath() const;
   QString basePath() const;
+  QString modsPath() const;
   MOBase::VersionInfo appVersion() const;
   MOBase::IModInterface *getMod(const QString &name) const;
   MOBase::IPluginGame *getGame(const QString &gameName) const;
@@ -203,7 +209,7 @@ public:
   PluginList *pluginList();
   ModList *modList();
   HANDLE runShortcut(const MOShortcut& shortcut);
-  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile);
+  HANDLE startApplication(const QString &executable, const QStringList &args, const QString &cwd, const QString &profile, const QString &forcedCustomOverwrite = "", bool ignoreCustomOverwrite = false);
   bool waitForApplication(HANDLE processHandle, LPDWORD exitCode = nullptr);
   HANDLE findAndOpenAUSVFSProcess(const std::vector<QString>& hiddenList, DWORD preferedParentPid);
   bool onModInstalled(const std::function<void (const QString &)> &func);
@@ -211,6 +217,8 @@ public:
   bool onFinishedRun(const std::function<void (const QString &, unsigned int)> &func);
   void refreshModList(bool saveChanges = true);
   QStringList modsSortedByProfilePriority() const;
+  bool getArchiveParsing() const;
+  void setArchiveParsing(bool archiveParsing);
 
 public: // IPluginDiagnose interface
 
@@ -234,10 +242,11 @@ public slots:
   void installDownload(int downloadIndex);
 
   void modStatusChanged(unsigned int index);
+  void modStatusChanged(QList<unsigned int> index);
   void requestDownload(const QUrl &url, QNetworkReply *reply);
   void downloadRequestedNXM(const QString &url);
 
-  bool nexusLogin(bool retry = false);
+  bool nexusApi(bool retry = false);
 
 signals:
 
@@ -259,11 +268,12 @@ private:
 
   QString commitSettings(const QString &iniFile);
 
-  bool queryLogin(QString &username, QString &password);
+  bool queryApi(QString &apiKey);
 
   void updateModActiveState(int index, bool active);
+  void updateModsActiveState(const QList<unsigned int> &modIndices, bool active);
 
-  bool testForSteam();
+  bool testForSteam(bool *found, bool *access);
 
   bool createDirectory(const QString &path);
 
@@ -332,9 +342,9 @@ private:
 
   QThread m_RefresherThread;
 
-  bool m_AskForNexusPW;
   bool m_DirectoryUpdate;
   bool m_ArchivesInit;
+  bool m_ArchiveParsing{ m_Settings.archiveParsing() };
 
   MOBase::DelayedFileWriter m_PluginListsWriter;
   UsvfsConnector m_USVFS;

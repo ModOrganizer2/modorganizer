@@ -72,8 +72,7 @@ void PluginListSortProxy::updateFilter(const QString &filter)
 
 bool PluginListSortProxy::filterAcceptsRow(int row, const QModelIndex&) const
 {
-  return m_CurrentFilter.isEmpty() ||
-      sourceModel()->data(sourceModel()->index(row, 0)).toString().contains(m_CurrentFilter, Qt::CaseInsensitive);
+  return filterMatchesPlugin(sourceModel()->data(sourceModel()->index(row, 0)).toString());
 }
 
 
@@ -135,5 +134,43 @@ bool PluginListSortProxy::dropMimeData(const QMimeData *data, Qt::DropAction act
     QModelIndex sourceIndex = mapToSource(proxyIndex);
     return this->sourceModel()->dropMimeData(data, action, sourceIndex.row(), sourceIndex.column(),
                                              sourceIndex.parent());
+}
+
+
+bool PluginListSortProxy::filterMatchesPlugin(const QString &plugin) const
+{
+  if (!m_CurrentFilter.isEmpty()) {
+
+    bool display = false;
+    QString filterCopy = QString(m_CurrentFilter);
+    filterCopy.replace("||", ";").replace("OR", ";").replace("|", ";");
+    QStringList ORList = filterCopy.split(";", QString::SkipEmptyParts);
+
+    bool segmentGood = true;
+
+    //split in ORSegments that internally use AND logic
+    for (auto& ORSegment : ORList) {
+      QStringList ANDKeywords = ORSegment.split(" ", QString::SkipEmptyParts);
+      segmentGood = true;
+
+      //check each word in the segment for match, each word needs to be matched but it doesn't matter where.
+      for (auto& currentKeyword : ANDKeywords) {
+        if (!plugin.contains(currentKeyword, Qt::CaseInsensitive)) {
+          segmentGood = false;
+          break;
+        }
+      }
+
+      if (segmentGood) {
+        //the last AND loop didn't break so the ORSegments is true so mod matches filter
+        return true;
+      }
+
+    }//for ORList loop
+
+    return false;
+  }
+  else
+    return true;
 }
 

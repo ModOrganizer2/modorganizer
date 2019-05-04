@@ -86,7 +86,7 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
       if (subDir != nullptr) {
         readTree(fileInfo.absoluteFilePath(), subDir, newItem);
       } else {
-        qCritical("no directory structure for %s?", file.toUtf8().constData());
+        qCritical("no directory structure for %s?", qUtf8Printable(file));
         delete newItem;
         newItem = nullptr;
       }
@@ -98,8 +98,8 @@ void SyncOverwriteDialog::readTree(const QString &path, DirectoryEntry *director
         bool ignore;
         int origin = entry->getOrigin(ignore);
         addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(origin).getName()), origin);
-        const std::vector<std::pair<int, std::wstring>> &alternatives = entry->getAlternatives();
-        for (std::vector<std::pair<int, std::wstring>>::const_iterator iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
+        const std::vector<std::pair<int, std::pair<std::wstring, int>>> &alternatives = entry->getAlternatives();
+        for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::const_iterator iter = alternatives.begin(); iter != alternatives.end(); ++iter) {
           addToComboBox(combo, ToQString(m_DirectoryStructure->getOriginByID(iter->first).getName()), iter->first);
         }
         combo->setCurrentIndex(combo->count() - 1);

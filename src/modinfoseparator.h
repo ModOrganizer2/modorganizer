@@ -20,23 +20,18 @@ public:
 
   virtual int getNexusID() const { return -1; }
 
-  virtual void setGameName(QString /*gameName*/)
-  {
-  }
+  virtual void setGameName(const QString& /*gameName*/) {}
 
-  virtual void setNexusID(int /*modID*/)
-  {
-  }
+  virtual void setNexusID(int /*modID*/) {}
 
-  virtual void endorse(bool /*doEndorse*/)
-  {
-  }
+  virtual void endorse(bool /*doEndorse*/) {}
 
-  virtual void ignoreUpdate(bool /*ignore*/)
-  {
-  }
+  virtual void parseNexusInfo() {}
+
+  virtual void ignoreUpdate(bool /*ignore*/) {}
 
   virtual bool canBeUpdated() const { return false; }
+  virtual QDateTime getExpires() const { return QDateTime(); }
   virtual bool canBeEnabled() const { return false; }
   virtual std::vector<QString> getIniTweaks() const { return std::vector<QString>(); }
 
@@ -49,8 +44,14 @@ public:
   virtual QString getInstallationFile() const { return ""; }
   virtual QString getURL() const { return ""; }
   virtual QString repository() const { return ""; }
-
+  virtual int getNexusFileStatus() const { return 0; }
+  virtual void setNexusFileStatus(int) {}
+  virtual QDateTime getLastNexusUpdate() const { return QDateTime(); }
+  virtual void setLastNexusUpdate(QDateTime) {}
   virtual QDateTime getLastNexusQuery() const { return QDateTime(); }
+  virtual void setLastNexusQuery(QDateTime) {}
+  virtual QDateTime getNexusLastModified() const { return QDateTime(); }
+  virtual void setNexusLastModified(QDateTime) {}
   virtual QDateTime creationTime() const { return QDateTime(); }
 
   virtual void getNexusFiles
