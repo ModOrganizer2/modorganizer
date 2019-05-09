@@ -217,7 +217,7 @@ MainWindow::MainWindow(QSettings &initSettings
   QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
   ui->setupUi(this);
-  updateWindowTitle(QString(), false);
+  updateWindowTitle(QString(), 0, false);
 
   languageChange(m_OrganizerCore.settings().language());
 
@@ -403,10 +403,10 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
-          this, SLOT(updateWindowTitle(const QString&, bool)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, bool, std::tuple<int, int, int, int>)),
-    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, bool, std::tuple<int, int, int, int>)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
+          this, SLOT(updateWindowTitle(const QString&, int, bool)));
+  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
+    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, int, bool, std::tuple<int, int, int, int>)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, std::tuple<int, int, int, int>)), this, SLOT(updateAPICounter(int, std::tuple<int, int, int, int>)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
@@ -514,7 +514,7 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::updateWindowTitle(const QString &accountName, bool premium)
+void MainWindow::updateWindowTitle(const QString &accountName, int, bool premium)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),

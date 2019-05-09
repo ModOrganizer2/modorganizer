@@ -628,6 +628,7 @@ void DownloadManager::addNXMDownload(const QString &url)
 
   info->nexusKey = nxmInfo.key();
   info->nexusExpires = nxmInfo.expires();
+  info->nexusDownloadUser = nxmInfo.userId();
 
   QObject *test = info;
   m_RequestIDs.insert(m_NexusInterface->requestFileInfo(nxmInfo.game(), nxmInfo.modId(), nxmInfo.fileId(), this, qVariantFromValue(test), ""));

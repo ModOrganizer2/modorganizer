@@ -272,6 +272,7 @@ void NXMAccessManager::validateFinished()
     if (!jdoc.isNull()) {
       QJsonObject credentialsData = jdoc.object();
       if (credentialsData.contains("user_id")) {
+        int id = credentialsData.value("user_id").toInt();
         QString name = credentialsData.value("name").toString();
         bool premium = credentialsData.value("is_premium").toBool();
 
@@ -282,7 +283,7 @@ void NXMAccessManager::validateFinished()
           m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
         ));
 
-        emit credentialsReceived(name, premium, limits);
+        emit credentialsReceived(name, id, premium, limits);
 
         m_ValidateReply->deleteLater();
         m_ValidateReply = nullptr;

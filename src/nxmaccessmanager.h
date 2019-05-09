@@ -78,7 +78,7 @@ signals:
 
   void validateFailed(const QString &message);
 
-  void credentialsReceived(const QString &userName, bool premium, std::tuple<int, int, int, int> limits);
+  void credentialsReceived(const QString &userName, int userId, bool premium, std::tuple<int, int, int, int> limits);
 
 private slots:
 

@@ -463,7 +463,7 @@ signals:
 
 public slots:
 
-  void setRateMax(const QString&, bool, std::tuple<int,int,int,int> limits);
+  void setRateMax(const QString&, int userId, bool isPremium, std::tuple<int,int,int,int> limits);
 
 private slots:
 
@@ -550,6 +550,10 @@ private:
   int m_RemainingHourlyRequests;
   int m_MaxDailyRequests;
   int m_MaxHourlyRequests;
+
+  int m_UserID;
+
+  bool m_IsPremium;
 
 };
 

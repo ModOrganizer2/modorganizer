@@ -396,7 +396,7 @@ private:
 
 private slots:
 
-  void updateWindowTitle(const QString &accountName, bool premium);
+  void updateWindowTitle(const QString &accountName, int, bool premium);
 
   void showMessage(const QString &message);
   void showError(const QString &message);
