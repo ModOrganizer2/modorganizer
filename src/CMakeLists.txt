@@ -301,12 +301,12 @@ INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_gamebryo/src/creation
                     ${project_path}/game_features/src
                     ${project_path}/githubpp/src
-                    ${LZ4_ROOT}/include)
+                    ${LZ4_ROOT}/lib)
 
 INCLUDE_DIRECTORIES(shared ${ZLIB_INCLUDE_DIRS})
 LINK_DIRECTORIES(${lib_path}
                  ${ZLIB_ROOT}/lib
-                 ${LZ4_ROOT}/dll)
+                 ${LZ4_ROOT}/bin)
 EXECUTE_PROCESS(
   COMMAND git log -1 --format=%h
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
