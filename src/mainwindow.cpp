@@ -2628,18 +2628,34 @@ void MainWindow::modListSectionResized(int logicalIndex, int oldSize, int newSiz
 
 void MainWindow::removeMod_clicked()
 {
+  const int max_items = 20;
+
   try {
     QItemSelectionModel *selection = ui->modList->selectionModel();
     if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       QString mods;
       QStringList modNames;
+
+      int i = 0;
       for (QModelIndex idx : selection->selectedRows()) {
         QString name = idx.data().toString();
         if (!ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->isRegular()) {
           continue;
         }
-        mods += "<li>" + name + "</li>";
+
+        // adds an item for the mod name until `i` reaches `max_items`, which
+        // adds one "..." item; subsequent mods are not shown on the list but
+        // are still added to `modNames` below so they can be removed correctly
+
+        if (i < max_items) {
+          mods += "<li>" + name + "</li>";
+        }
+        else if (i == max_items) {
+          mods += "<li>...</li>";
+        }
+
         modNames.append(ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->name());
+        ++i;
       }
       if (QMessageBox::question(this, tr("Confirm"),
                                 tr("Remove the following mods?<br><ul>%1</ul>").arg(mods),
