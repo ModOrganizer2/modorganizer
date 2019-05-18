@@ -1233,18 +1233,38 @@ bool ModInfoDialog::unhideFile(const QString &oldName)
 }
 
 
-void ModInfoDialog::hideConflictFile()
+void ModInfoDialog::hideConflictFiles()
 {
-  if (hideFile(m_ConflictsContextItem->data(0, Qt::UserRole).toString())) {
+  bool changed = false;
+
+  for (const auto* item : ui->overwriteTree->selectedItems()) {
+    if (canHide(item)) {
+      if (hideFile(item->data(0, Qt::UserRole).toString())) {
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
     emit originModified(m_Origin->getID());
     refreshLists();
   }
 }
 
 
-void ModInfoDialog::unhideConflictFile()
+void ModInfoDialog::unhideConflictFiles()
 {
-  if (unhideFile(m_ConflictsContextItem->data(0, Qt::UserRole).toString())) {
+  bool changed = false;
+
+  for (const auto* item : ui->overwriteTree->selectedItems()) {
+    if (canUnhide(item)) {
+      if (unhideFile(item->data(0, Qt::UserRole).toString())) {
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
     emit originModified(m_Origin->getID());
     refreshLists();
   }
@@ -1309,33 +1329,75 @@ int ModInfoDialog::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &
 	}
 }
 
-void ModInfoDialog::openDataFile()
+void ModInfoDialog::previewOverwriteDataFile()
 {
-	if (m_ConflictsContextItem != nullptr) {
-		QFileInfo targetInfo(m_ConflictsContextItem->data(0, Qt::UserRole).toString());
-		QFileInfo binaryInfo;
-		QString arguments;
-		switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-		case 1: {
-			m_OrganizerCore->spawnBinaryDirect(
-				binaryInfo, arguments, m_OrganizerCore->currentProfile()->name(),
-				targetInfo.absolutePath(), "", "");
-		} break;
-		case 2: {
-			::ShellExecuteW(nullptr, L"open",
-				ToWString(targetInfo.absoluteFilePath()).c_str(),
-				nullptr, nullptr, SW_SHOWNORMAL);
-		} break;
-		default: {
-			// nop
-		} break;
-		}
+  // the menu item is only shown for a single selection, but check just in case
+  const auto selection = ui->overwriteTree->selectedItems();
+  if (!selection.empty()) {
+    previewDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::openOverwriteDataFile()
+{
+  // the menu item is only shown for a single selection, but check just in case
+  const auto selection = ui->overwriteTree->selectedItems();
+  if (!selection.empty()) {
+    openDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::previewOverwrittenDataFile()
+{
+  // the overwritten tree only supports single selection, but check just in case
+  const auto selection = ui->overwrittenTree->selectedItems();
+  if (!selection.empty()) {
+    previewDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::openOverwrittenDataFile()
+{
+  // the overwritten tree only supports single selection, but check just in case
+  const auto selection = ui->overwrittenTree->selectedItems();
+  if (!selection.empty()) {
+    openDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::openDataFile(const QTreeWidgetItem* item)
+{
+	if (!item) {
+    return;
+  }
+
+	QFileInfo targetInfo(item->data(0, Qt::UserRole).toString());
+	QFileInfo binaryInfo;
+	QString arguments;
+	switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
+	case 1: {
+		m_OrganizerCore->spawnBinaryDirect(
+			binaryInfo, arguments, m_OrganizerCore->currentProfile()->name(),
+			targetInfo.absolutePath(), "", "");
+	} break;
+	case 2: {
+		::ShellExecuteW(nullptr, L"open",
+			ToWString(targetInfo.absoluteFilePath()).c_str(),
+			nullptr, nullptr, SW_SHOWNORMAL);
+	} break;
+	default: {
+		// nop
+	} break;
 	}
 }
 
-void ModInfoDialog::previewDataFile()
+void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
 {
-	QString fileName = QDir::fromNativeSeparators(m_ConflictsContextItem->data(0, Qt::UserRole).toString());
+  if (!item) {
+    return;
+  }
+
+  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
 
 	// what we have is an absolute path to the file in its actual location (for the primary origin)
 	// what we want is the path relative to the virtual data directory
@@ -1395,53 +1457,124 @@ void ModInfoDialog::previewDataFile()
 	}
 }
 
+bool ModInfoDialog::canHide(const QTreeWidgetItem* item) const
+{
+  if (item->data(1, Qt::UserRole + 2).toBool()) {
+    // can't hide files from archives
+    return false;
+  }
+
+  if (item->text(0).endsWith(ModInfo::s_HiddenExt)) {
+    // already hidden
+    return false;
+  }
+
+  return true;
+}
+
+bool ModInfoDialog::canUnhide(const QTreeWidgetItem* item) const
+{
+  if (item->data(1, Qt::UserRole + 2).toBool()) {
+    // can't unhide files from archives
+    return false;
+  }
+
+  if (!item->text(0).endsWith(ModInfo::s_HiddenExt)) {
+    // already visible
+    return false;
+  }
+
+  return true;
+}
+
+bool ModInfoDialog::canPreview(const QTreeWidgetItem* item) const
+{
+  const QString fileName = item->data(0, Qt::UserRole).toString();
+  if (!m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
+    return false;
+  }
+
+  return true;
+}
 
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
 {
-  m_ConflictsContextItem = ui->overwriteTree->itemAt(pos.x(), pos.y());
-
-  if (m_ConflictsContextItem != nullptr) {
-    // offer to hide/unhide file, but not for files from archives
-    if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
-      QMenu menu;
-      if (m_ConflictsContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
-        menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFile()));
-      } else {
-        menu.addAction(tr("Hide"), this, SLOT(hideConflictFile()));
-      }
-
-	  menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
-
-      QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
-      if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-        menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
-      }
-
-      menu.exec(ui->overwriteTree->mapToGlobal(pos));
-    }
+  const auto selection = ui->overwriteTree->selectedItems();
+  if (selection.empty()) {
+    return;
   }
+
+  // for a single selection, hide/unhide is not shown for files from
+  // archives and whether the action is hide or unhide depends on the current
+  // state
+  //
+  // for multiple selection, both actions are shown unconditionally and
+  // handled in hideConflictFiles() and unhideConflictFiles()
+  bool enableHide = true;
+  bool enableUnhide = true;
+  bool enableOpen = true;
+  bool enablePreview = true;
+
+  if (selection.size() == 1) {
+    // this is a single selection
+    const auto* item = selection[0];
+    if (!item) {
+      return;
+    }
+
+    enableHide = canHide(item);
+    enableUnhide = canUnhide(item);
+    enablePreview = canPreview(item);
+    // open is always enabled
+  }
+  else {
+    // this is a multiple selection, don't show open/preview so users don't open
+    // a thousand files, but always enable hide/unhide to avoid potentially
+    // scanning hundreds of selected files to check their state
+    enableOpen = false;
+    enablePreview = false;
+  }
+
+
+  QMenu menu;
+
+  if (enableHide) {
+    menu.addAction(tr("Hide"), this, SLOT(hideConflictFiles()));
+  }
+
+  if (enableUnhide) {
+    menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFiles()));
+  }
+
+  if (enableOpen) {
+	  menu.addAction(tr("Open/Execute"), this, SLOT(openOverwriteDataFile()));
+  }
+
+  if (enablePreview) {
+    menu.addAction(tr("Preview"), this, SLOT(previewOverwriteDataFile()));
+  }
+
+  menu.exec(ui->overwriteTree->viewport()->mapToGlobal(pos));
 }
 
 void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
 {
-	m_ConflictsContextItem = ui->overwrittenTree->itemAt(pos.x(), pos.y());
+	auto* item = ui->overwrittenTree->itemAt(pos.x(), pos.y());
 
-	if (m_ConflictsContextItem != nullptr) {
-		if (!m_ConflictsContextItem->data(1, Qt::UserRole + 2).toBool()) {
+	if (item != nullptr) {
+		if (!item->data(1, Qt::UserRole + 2).toBool()) {
 			QMenu menu;
 
-			menu.addAction(tr("Open/Execute"), this, SLOT(openDataFile()));
+			menu.addAction(tr("Open/Execute"), this, SLOT(openOverwrittenDataFile()));
 
-			QString fileName = m_ConflictsContextItem->data(0, Qt::UserRole).toString();
-			if (m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-				menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
+      if (canPreview(item)) {
+				menu.addAction(tr("Preview"), this, SLOT(previewOverwrittenDataFile()));
 			}
 
-			menu.exec(ui->overwrittenTree->mapToGlobal(pos));
+			menu.exec(ui->overwrittenTree->viewport()->mapToGlobal(pos));
 		}
 	}
 }
-
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {

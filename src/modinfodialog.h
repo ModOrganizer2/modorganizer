@@ -156,12 +156,14 @@ private:
 
 private slots:
 
-  void hideConflictFile();
-  void unhideConflictFile();
+  void hideConflictFiles();
+  void unhideConflictFiles();
+  void previewOverwriteDataFile();
+  void openOverwriteDataFile();
   int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
-  void previewDataFile();
-  void openDataFile();
 
+  void previewOverwrittenDataFile();
+  void openOverwrittenDataFile();
 
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
@@ -241,13 +243,17 @@ private:
   QAction *m_HideAction;
   QAction *m_UnhideAction;
 
-  QTreeWidgetItem *m_ConflictsContextItem;
-
   const MOShared::DirectoryEntry *m_Directory;
   MOShared::FilesOrigin *m_Origin;
 
   std::map<int, int> m_RealTabPos;
 
+  bool canHide(const QTreeWidgetItem* item) const;
+  bool canUnhide(const QTreeWidgetItem* item) const;
+  bool canPreview(const QTreeWidgetItem* item) const;
+
+  void previewDataFile(const QTreeWidgetItem* item);
+  void openDataFile(const QTreeWidgetItem* item);
 };
 
 #endif // MODINFODIALOG_H
