@@ -430,6 +430,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
          </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
