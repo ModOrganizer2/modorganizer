@@ -73,6 +73,10 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
   return LHS.m_SortValue < RHS.m_SortValue;
 }
 
+// if there are more than 50 selected items in the conflict tree or filetree,
+// don't bother checking whether they're visible, just show both menu items
+const int max_scan_for_visibility = 50;
+
 
 FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
   : m_parent(parent), m_flags(flags)
@@ -1382,10 +1386,33 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
       }
     } else {
       // this is a multiple selection, don't show open action so users don't open
-      // a thousand files, but always enable hide/unhide to avoid potentially
-      // scanning hundreds of selected files to check their state
+      // a thousand files
       enableOpen = false;
       enableRename = false;
+
+      if (m_FileSelection.size() < max_scan_for_visibility) {
+        // if the number of selected items is low, checking them to accurately
+        // show the menu items is worth it
+        enableHide = false;
+        enableUnhide = false;
+
+        for (const auto& index : m_FileSelection) {
+          const QString fileName = m_FileSystemModel->fileName(index);
+
+          if (canHideFile(false, fileName)) {
+            enableHide = true;
+          }
+
+          if (canUnhideFile(false, fileName)) {
+            enableUnhide = true;
+          }
+
+          if (enableHide && enableUnhide) {
+            // found both, no need to check more
+            break;
+          }
+        }
+      }
     }
 
     if (enableOpen) {
@@ -1827,10 +1854,31 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
   }
   else {
     // this is a multiple selection, don't show open/preview so users don't open
-    // a thousand files, but always enable hide/unhide to avoid potentially
-    // scanning hundreds of selected files to check their state
+    // a thousand files
     enableOpen = false;
     enablePreview = false;
+
+    if (selection.size() < max_scan_for_visibility) {
+      // if the number of selected items is low, checking them to accurately
+      // show the menu items is worth it
+      enableHide = false;
+      enableUnhide = false;
+
+      for (const auto* item : selection) {
+        if (canHideConflictItem(item)) {
+          enableHide = true;
+        }
+
+        if (canUnhideConflictItem(item)) {
+          enableUnhide = true;
+        }
+
+        if (enableHide && enableUnhide) {
+          // found both, no need to check more
+          break;
+        }
+      }
+    }
   }
 
 
