@@ -164,7 +164,7 @@ private:
   * has already selected to replace all/none
   * @return whether to replace, skip or cancel
   **/
-  RenameDecision confirmReplace();
+  RenameDecision confirmReplace(const QString& newName);
 
   /**
   * removal of a file failed, ask the user to continue or cancel
@@ -383,13 +383,17 @@ private:
 
   std::map<int, int> m_RealTabPos;
 
-  bool canHide(const QTreeWidgetItem* item) const;
-  bool canUnhide(const QTreeWidgetItem* item) const;
-  bool canPreview(const QTreeWidgetItem* item) const;
+  bool canHideConflictItem(const QTreeWidgetItem* item) const;
+  bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
+  bool canPreviewConflictItem(const QTreeWidgetItem* item) const;
 
   void previewDataFile(const QTreeWidgetItem* item);
   void openDataFile(const QTreeWidgetItem* item);
-  void changeConflictFiles(bool hide);
+  void changeConflictFilesVisibility(bool hide);
+  void changeFiletreeVisibility(bool hide);
+
+  bool canHideFile(bool isArchive, const QString& filename) const;
+  bool canUnhideFile(bool isArchive, const QString& filename) const;
 };
 
 #endif // MODINFODIALOG_H

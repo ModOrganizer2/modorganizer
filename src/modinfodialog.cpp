@@ -93,7 +93,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
     qDebug().nospace() << newName << " already exists";
 
     // target file already exists, confirm replacement
-    auto answer = confirmReplace();
+    auto answer = confirmReplace(newName);
 
     switch (answer) {
       case DECISION_SKIP: {
@@ -153,7 +153,7 @@ FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QSt
   return RESULT_OK;
 }
 
-FileRenamer::RenameDecision FileRenamer::confirmReplace()
+FileRenamer::RenameDecision FileRenamer::confirmReplace(const QString& newName)
 {
   if (m_flags & REPLACE_ALL) {
     // user wants to silently replace all
@@ -169,10 +169,10 @@ FileRenamer::RenameDecision FileRenamer::confirmReplace()
   QString text;
 
   if (m_flags & HIDE) {
-    text = QObject::tr("There already is a hidden version of this file. Replace it?");
+    text = QObject::tr("The hidden file \"%1\" already exists. Replace it?").arg(newName);
   }
   else if (m_flags & UNHIDE) {
-    text = QObject::tr("There already is a visible version of this file. Replace it?");
+    text = QObject::tr("The visible file \"%1\" already exists. Replace it?").arg(newName);
   }
 
   auto buttons = QMessageBox::Yes | QMessageBox::No;
@@ -1213,30 +1213,80 @@ void ModInfoDialog::renameTriggered()
 
 void ModInfoDialog::hideTriggered()
 {
-  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::HIDE;
-  FileRenamer renamer(this, flags);
-
-  for (QModelIndexList::const_iterator iter = m_FileSelection.constBegin();
-       iter != m_FileSelection.constEnd(); ++iter) {
-    QString path = m_FileSystemModel->filePath(*iter);
-    if (!path.endsWith(ModInfo::s_HiddenExt)) {
-      hideFile(renamer, path);
-    }
-  }
+  changeFiletreeVisibility(true);
 }
 
 
 void ModInfoDialog::unhideTriggered()
 {
-  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
+  changeFiletreeVisibility(false);
+}
+
+void ModInfoDialog::changeFiletreeVisibility(bool hide)
+{
+  bool changed = false;
+  bool stop = false;
+
+  qDebug().nospace()
+    << (hide ? "hiding" : "unhiding") << " "
+    << m_FileSelection.size() << " filetree files";
+
+  QFlags<FileRenamer::RenameFlags> flags = (hide ? FileRenamer::HIDE : FileRenamer::UNHIDE);
+  if (m_FileSelection.size() > 1) {
+    flags |= FileRenamer::MULTIPLE;
+  }
+
   FileRenamer renamer(this, flags);
 
-  for (QModelIndexList::const_iterator iter = m_FileSelection.constBegin();
-       iter != m_FileSelection.constEnd(); ++iter) {
-    QString path = m_FileSystemModel->filePath(*iter);
-    if (path.endsWith(ModInfo::s_HiddenExt)) {
-      unhideFile(renamer, path);
+  for (const auto& index : m_FileSelection) {
+    if (stop) {
+      break;
     }
+
+    const QString path = m_FileSystemModel->filePath(index);
+    auto result = FileRenamer::RESULT_CANCEL;
+
+    if (hide) {
+      if (!canHideFile(false, path)) {
+        qDebug().nospace() << "cannot hide " << path << ", skipping";
+        continue;
+      }
+      result = hideFile(renamer, path);
+
+    } else {
+      if (!canUnhideFile(false, path)) {
+        qDebug().nospace() << "cannot unhide " << path << ", skipping";
+        continue;
+      }
+      result = unhideFile(renamer, path);
+    }
+
+    switch (result) {
+      case FileRenamer::RESULT_OK: {
+        // will trigger a refresh at the end
+        changed = true;
+        break;
+      }
+
+      case FileRenamer::RESULT_SKIP: {
+        // nop
+        break;
+      }
+
+      case FileRenamer::RESULT_CANCEL: {
+        // stop right now, but make sure to refresh if needed
+        stop = true;
+        break;
+      }
+    }
+  }
+
+  qDebug().nospace() << (hide ? "hiding" : "unhiding") << " filetree files done";
+
+  if (changed) {
+    qDebug().nospace() << "triggering refresh";
+    emit originModified(m_Origin->getID());
+    refreshLists();
   }
 }
 
@@ -1322,7 +1372,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
     m_FileSelection.clear();
     m_FileSelection.append(m_FileSystemModel->index(m_FileSystemModel->rootPath(), 0));
   }
-  menu.exec(ui->fileTree->mapToGlobal(pos));
+  menu.exec(ui->fileTree->viewport()->mapToGlobal(pos));
 }
 
 
@@ -1389,7 +1439,7 @@ FileRenamer::RenameResults ModInfoDialog::unhideFile(FileRenamer& renamer, const
   return renamer.rename(oldName, newName);
 }
 
-void ModInfoDialog::changeConflictFiles(bool hide)
+void ModInfoDialog::changeConflictFilesVisibility(bool hide)
 {
   bool changed = false;
   bool stop = false;
@@ -1415,14 +1465,14 @@ void ModInfoDialog::changeConflictFiles(bool hide)
     auto result = FileRenamer::RESULT_CANCEL;
 
     if (hide) {
-      if (!canHide(item)) {
+      if (!canHideConflictItem(item)) {
         qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
         continue;
       }
       result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
 
     } else {
-      if (!canUnhide(item)) {
+      if (!canUnhideConflictItem(item)) {
         qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
         continue;
       }
@@ -1460,12 +1510,12 @@ void ModInfoDialog::changeConflictFiles(bool hide)
 
 void ModInfoDialog::hideConflictFiles()
 {
-  changeConflictFiles(true);
+  changeConflictFilesVisibility(true);
 }
 
 void ModInfoDialog::unhideConflictFiles()
 {
-  changeConflictFiles(false);
+  changeConflictFilesVisibility(false);
 }
 
 int ModInfoDialog::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
@@ -1597,7 +1647,7 @@ void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
 
   QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
 
-	// what we have is an absolute path to the file in its actual location (for the primary origin)
+  // what we have is an absolute path to the file in its actual location (for the primary origin)
 	// what we want is the path relative to the virtual data directory
 
 	// we need to look in the virtual directory for the file to make sure the info is up to date.
@@ -1655,14 +1705,14 @@ void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
 	}
 }
 
-bool ModInfoDialog::canHide(const QTreeWidgetItem* item) const
+bool ModInfoDialog::canHideFile(bool isArchive, const QString& filename) const
 {
-  if (item->data(1, Qt::UserRole + 2).toBool()) {
+  if (isArchive) {
     // can't hide files from archives
     return false;
   }
 
-  if (item->text(0).endsWith(ModInfo::s_HiddenExt)) {
+  if (filename.endsWith(ModInfo::s_HiddenExt)) {
     // already hidden
     return false;
   }
@@ -1670,14 +1720,14 @@ bool ModInfoDialog::canHide(const QTreeWidgetItem* item) const
   return true;
 }
 
-bool ModInfoDialog::canUnhide(const QTreeWidgetItem* item) const
+bool ModInfoDialog::canUnhideFile(bool isArchive, const QString& filename) const
 {
-  if (item->data(1, Qt::UserRole + 2).toBool()) {
+  if (isArchive) {
     // can't unhide files from archives
     return false;
   }
 
-  if (!item->text(0).endsWith(ModInfo::s_HiddenExt)) {
+  if (!filename.endsWith(ModInfo::s_HiddenExt)) {
     // already visible
     return false;
   }
@@ -1685,7 +1735,17 @@ bool ModInfoDialog::canUnhide(const QTreeWidgetItem* item) const
   return true;
 }
 
-bool ModInfoDialog::canPreview(const QTreeWidgetItem* item) const
+bool ModInfoDialog::canHideConflictItem(const QTreeWidgetItem* item) const
+{
+  return canHideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+}
+
+bool ModInfoDialog::canUnhideConflictItem(const QTreeWidgetItem* item) const
+{
+  return canUnhideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+}
+
+bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
 {
   const QString fileName = item->data(0, Qt::UserRole).toString();
   if (!m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
@@ -1720,9 +1780,9 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
       return;
     }
 
-    enableHide = canHide(item);
-    enableUnhide = canUnhide(item);
-    enablePreview = canPreview(item);
+    enableHide = canHideConflictItem(item);
+    enableUnhide = canUnhideConflictItem(item);
+    enablePreview = canPreviewConflictItem(item);
     // open is always enabled
   }
   else {
@@ -1767,7 +1827,7 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 
 			menu.addAction(tr("Open/Execute"), this, SLOT(openOverwrittenDataFile()));
 
-      if (canPreview(item)) {
+      if (canPreviewConflictItem(item)) {
 				menu.addAction(tr("Preview"), this, SLOT(previewOverwrittenDataFile()));
 			}
 
