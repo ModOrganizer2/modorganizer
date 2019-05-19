@@ -74,6 +74,193 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 }
 
 
+FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
+  : m_parent(parent), m_flags(flags)
+{
+  // sanity check for flags
+  if ((m_flags & (HIDE|UNHIDE)) == 0) {
+    qCritical("renameFile() missing hide flag");
+    // doesn't really matter, it's just for text
+    m_flags = HIDE;
+  }
+}
+
+FileRenamer::RenameResults FileRenamer::rename(const QString& oldName, const QString& newName)
+{
+  qDebug().nospace() << "renaming " << oldName << " to " << newName;
+
+  if (QFileInfo(newName).exists()) {
+    qDebug().nospace() << newName << " already exists";
+
+    // target file already exists, confirm replacement
+    auto answer = confirmReplace();
+
+    switch (answer) {
+      case DECISION_SKIP: {
+        // user wants to skip this file
+        qDebug().nospace() << "skipping " << oldName;
+        return RESULT_SKIP;
+      }
+
+      case DECISION_REPLACE: {
+        qDebug().nospace() << "removing " << newName;
+        // user wants to replace the file, so remove it
+        if (!QFile(newName).remove()) {
+          qWarning().nospace() << "failed to remove " << newName;
+          // removal failed, warn the user and allow canceling
+          if (!removeFailed(newName)) {
+            qDebug().nospace() << "canceling " << oldName;
+            // user wants to cancel
+            return RESULT_CANCEL;
+          }
+
+          // ignore this file and continue on
+          qDebug().nospace() << "skipping " << oldName;
+          return RESULT_SKIP;
+        }
+
+        break;
+      }
+
+      case DECISION_CANCEL:  // fall-through
+      default: {
+        // user wants to stop
+        qDebug().nospace() << "canceling";
+        return RESULT_CANCEL;
+      }
+    }
+  }
+
+  // target either didn't exist or was removed correctly
+
+  if (!QFile::rename(oldName, newName)) {
+    qWarning().nospace() << "failed to rename " << oldName << " to " << newName;
+
+    // renaming failed, warn the user and allow canceling
+    if (!renameFailed(oldName, newName)) {
+      // user wants to cancel
+      qDebug().nospace() << "canceling";
+      return RESULT_CANCEL;
+    }
+
+    // ignore this file and continue on
+    qDebug().nospace() << "skipping " << oldName;
+    return RESULT_SKIP;
+  }
+
+  // everything worked
+  qDebug().nospace() << "successfully renamed " << oldName << " to " << newName;
+  return RESULT_OK;
+}
+
+FileRenamer::RenameDecision FileRenamer::confirmReplace()
+{
+  if (m_flags & REPLACE_ALL) {
+    // user wants to silently replace all
+    qDebug().nospace() << "user has selected replace all";
+    return DECISION_REPLACE;
+  }
+  else if (m_flags & REPLACE_NONE) {
+    // user wants to silently skip all
+    qDebug().nospace() << "user has selected replace none";
+    return DECISION_SKIP;
+  }
+
+  QString text;
+
+  if (m_flags & HIDE) {
+    text = QObject::tr("There already is a hidden version of this file. Replace it?");
+  }
+  else if (m_flags & UNHIDE) {
+    text = QObject::tr("There already is a visible version of this file. Replace it?");
+  }
+
+  auto buttons = QMessageBox::Yes | QMessageBox::No;
+  if (m_flags & MULTIPLE) {
+    // only show these buttons when there are multiple files to replace
+    buttons |= QMessageBox::YesToAll | QMessageBox::NoToAll | QMessageBox::Cancel;
+  }
+
+  const auto answer = QMessageBox::question(
+    m_parent, QObject::tr("Replace file?"), text, buttons);
+
+  switch (answer) {
+    case QMessageBox::Yes:
+      qDebug().nospace() << "user wants to replace";
+      return DECISION_REPLACE;
+
+    case QMessageBox::No:
+      qDebug().nospace() << "user wants to skip";
+      return DECISION_SKIP;
+
+    case QMessageBox::YesToAll:
+      qDebug().nospace() << "user wants to replace all";
+      // remember the answer
+      m_flags |= REPLACE_ALL;
+      return DECISION_REPLACE;
+
+    case QMessageBox::NoToAll:
+      qDebug().nospace() << "user wants to replace none";
+      // remember the answer
+      m_flags |= REPLACE_NONE;
+      return DECISION_SKIP;
+
+    case QMessageBox::Cancel:  // fall-through
+    default:
+      qDebug().nospace() << "user wants to cancel";
+      return DECISION_CANCEL;
+  }
+}
+
+bool FileRenamer::removeFailed(const QString& name)
+{
+  QMessageBox::StandardButtons buttons = QMessageBox::Ok;
+  if (m_flags & MULTIPLE) {
+    // only show cancel for multiple files
+    buttons |= QMessageBox::Cancel;
+  }
+
+  const auto answer = QMessageBox::critical(
+    m_parent, QObject::tr("File operation failed"),
+    QObject::tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(name),
+    buttons);
+
+  if (answer == QMessageBox::Cancel) {
+    // user wants to stop
+    qDebug().nospace() << "user wants to cancel";
+    return false;
+  }
+
+  // skip this one and continue
+  qDebug().nospace() << "user wants to skip";
+  return true;
+}
+
+bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
+{
+  QMessageBox::StandardButtons buttons = QMessageBox::Ok;
+  if (m_flags & MULTIPLE) {
+    // only show cancel for multiple files
+    buttons |= QMessageBox::Cancel;
+  }
+
+  const auto answer = QMessageBox::critical(
+    m_parent, QObject::tr("File operation failed"),
+    QObject::tr("failed to rename %1 to %2").arg(oldName).arg(QDir::toNativeSeparators(newName)),
+    buttons);
+
+  if (answer == QMessageBox::Cancel) {
+    // user wants to stop
+    qDebug().nospace() << "user wants to cancel";
+    return false;
+  }
+
+  // skip this one and continue
+  qDebug().nospace() << "user wants to skip";
+  return true;
+}
+
+
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
@@ -1026,11 +1213,14 @@ void ModInfoDialog::renameTriggered()
 
 void ModInfoDialog::hideTriggered()
 {
+  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::HIDE;
+  FileRenamer renamer(this, flags);
+
   for (QModelIndexList::const_iterator iter = m_FileSelection.constBegin();
        iter != m_FileSelection.constEnd(); ++iter) {
     QString path = m_FileSystemModel->filePath(*iter);
     if (!path.endsWith(ModInfo::s_HiddenExt)) {
-      hideFile(path);
+      hideFile(renamer, path);
     }
   }
 }
@@ -1038,11 +1228,14 @@ void ModInfoDialog::hideTriggered()
 
 void ModInfoDialog::unhideTriggered()
 {
+  QFlags<FileRenamer::RenameFlags> flags = FileRenamer::UNHIDE;
+  FileRenamer renamer(this, flags);
+
   for (QModelIndexList::const_iterator iter = m_FileSelection.constBegin();
        iter != m_FileSelection.constEnd(); ++iter) {
     QString path = m_FileSystemModel->filePath(*iter);
     if (path.endsWith(ModInfo::s_HiddenExt)) {
-      unhideFile(path);
+      unhideFile(renamer, path);
     }
   }
 }
@@ -1184,90 +1377,95 @@ void ModInfoDialog::on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, in
   emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
 }
 
-
-bool ModInfoDialog::hideFile(const QString &oldName)
+FileRenamer::RenameResults ModInfoDialog::hideFile(FileRenamer& renamer, const QString &oldName)
 {
-  QString newName = oldName + ModInfo::s_HiddenExt;
-
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(this, tr("Replace file?"), tr("There already is a hidden version of this file. Replace it?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(this, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return false;
-      }
-    } else {
-      return false;
-    }
-  }
-
-  if (QFile::rename(oldName, newName)) {
-    return true;
-  } else {
-    reportError(tr("failed to rename %1 to %2").arg(oldName).arg(QDir::toNativeSeparators(newName)));
-    return false;
-  }
+  const QString newName = oldName + ModInfo::s_HiddenExt;
+  return renamer.rename(oldName, newName);
 }
 
-
-bool ModInfoDialog::unhideFile(const QString &oldName)
+FileRenamer::RenameResults ModInfoDialog::unhideFile(FileRenamer& renamer, const QString &oldName)
 {
   QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
-  if (QFileInfo(newName).exists()) {
-    if (QMessageBox::question(this, tr("Replace file?"), tr("There already is a visible version of this file. Replace it?"),
-                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      if (!QFile(newName).remove()) {
-        QMessageBox::critical(this, tr("File operation failed"), tr("Failed to remove \"%1\". Maybe you lack the required file permissions?").arg(newName));
-        return false;
-      }
-    } else {
-      return false;
-    }
-  }
-  if (QFile::rename(oldName, newName)) {
-    return true;
-  } else {
-    reportError(tr("failed to rename %1 to %2").arg(QDir::toNativeSeparators(oldName)).arg(QDir::toNativeSeparators(newName)));
-    return false;
-  }
+  return renamer.rename(oldName, newName);
 }
 
+void ModInfoDialog::changeConflictFiles(bool hide)
+{
+  bool changed = false;
+  bool stop = false;
+
+  const auto items = ui->overwriteTree->selectedItems();
+
+  qDebug().nospace()
+    << (hide ? "hiding" : "unhiding") << " "
+    << items.size() << " conflict files";
+
+  QFlags<FileRenamer::RenameFlags> flags = (hide ? FileRenamer::HIDE : FileRenamer::UNHIDE);
+  if (items.size() > 1) {
+    flags |= FileRenamer::MULTIPLE;
+  }
+
+  FileRenamer renamer(this, flags);
+
+  for (const auto* item : items) {
+    if (stop) {
+      break;
+    }
+
+    auto result = FileRenamer::RESULT_CANCEL;
+
+    if (hide) {
+      if (!canHide(item)) {
+        qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
+        continue;
+      }
+      result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
+
+    } else {
+      if (!canUnhide(item)) {
+        qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
+        continue;
+      }
+      result = unhideFile(renamer, item->data(0, Qt::UserRole).toString());
+    }
+
+    switch (result) {
+      case FileRenamer::RESULT_OK: {
+        // will trigger a refresh at the end
+        changed = true;
+        break;
+      }
+
+      case FileRenamer::RESULT_SKIP: {
+        // nop
+        break;
+      }
+
+      case FileRenamer::RESULT_CANCEL: {
+        // stop right now, but make sure to refresh if needed
+        stop = true;
+        break;
+      }
+    }
+  }
+
+  qDebug().nospace() << (hide ? "hiding" : "unhiding") << " conflict files done";
+
+  if (changed) {
+    qDebug().nospace() << "triggering refresh";
+    emit originModified(m_Origin->getID());
+    refreshLists();
+  }
+}
 
 void ModInfoDialog::hideConflictFiles()
 {
-  bool changed = false;
-
-  for (const auto* item : ui->overwriteTree->selectedItems()) {
-    if (canHide(item)) {
-      if (hideFile(item->data(0, Qt::UserRole).toString())) {
-        changed = true;
-      }
-    }
-  }
-
-  if (changed) {
-    emit originModified(m_Origin->getID());
-    refreshLists();
-  }
+  changeConflictFiles(true);
 }
-
 
 void ModInfoDialog::unhideConflictFiles()
 {
-  bool changed = false;
-
-  for (const auto* item : ui->overwriteTree->selectedItems()) {
-    if (canUnhide(item)) {
-      if (unhideFile(item->data(0, Qt::UserRole).toString())) {
-        changed = true;
-      }
-    }
-  }
-
-  if (changed) {
-    emit originModified(m_Origin->getID());
-    refreshLists();
-  }
+  changeConflictFiles(false);
 }
 
 int ModInfoDialog::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
