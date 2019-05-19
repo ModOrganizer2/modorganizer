@@ -1343,35 +1343,75 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
   QItemSelectionModel *selectionModel = ui->fileTree->selectionModel();
   m_FileSelection = selectionModel->selectedRows(0);
 
-//  m_FileSelection = ui->fileTree->indexAt(pos);
   QMenu menu(ui->fileTree);
 
   menu.addAction(m_NewFolderAction);
 
-  bool hasFiles = false;
-
-  foreach(QModelIndex idx, m_FileSelection) {
-    if (m_FileSystemModel->fileInfo(idx).isFile()) {
-      hasFiles = true;
-      break;
-    }
-  }
-
   if (selectionModel->hasSelection()) {
-    if (hasFiles) {
+    bool enableOpen = true;
+    bool enableRename = true;
+    bool enableDelete = true;
+    bool enableHide = true;
+    bool enableUnhide = true;
+
+    if (m_FileSelection.size() == 1) {
+      // single selection
+
+      // only enable open action if a file is selected
+      bool hasFiles = false;
+
+      foreach(QModelIndex idx, m_FileSelection) {
+        if (m_FileSystemModel->fileInfo(idx).isFile()) {
+          hasFiles = true;
+          break;
+        }
+      }
+
+      if (!hasFiles) {
+        enableOpen = false;
+      }
+
+      const QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
+
+      if (!canHideFile(false, fileName)) {
+        enableHide = false;
+      }
+
+      if (!canUnhideFile(false, fileName)) {
+        enableUnhide = false;
+      }
+    } else {
+      // this is a multiple selection, don't show open action so users don't open
+      // a thousand files, but always enable hide/unhide to avoid potentially
+      // scanning hundreds of selected files to check their state
+      enableOpen = false;
+      enableRename = false;
+    }
+
+    if (enableOpen) {
       menu.addAction(m_OpenAction);
     }
-    menu.addAction(m_RenameAction);
-    menu.addAction(m_DeleteAction);
-    if (m_FileSystemModel->fileName(m_FileSelection.at(0)).endsWith(ModInfo::s_HiddenExt)) {
-      menu.addAction(m_UnhideAction);
-    } else {
+
+    if (enableRename) {
+      menu.addAction(m_RenameAction);
+    }
+
+    if (enableDelete) {
+      menu.addAction(m_DeleteAction);
+    }
+
+    if (enableHide) {
       menu.addAction(m_HideAction);
+    }
+
+    if (enableUnhide) {
+      menu.addAction(m_UnhideAction);
     }
   } else {
     m_FileSelection.clear();
     m_FileSelection.append(m_FileSystemModel->index(m_FileSystemModel->rootPath(), 0));
   }
+
   menu.exec(ui->fileTree->viewport()->mapToGlobal(pos));
 }
 
