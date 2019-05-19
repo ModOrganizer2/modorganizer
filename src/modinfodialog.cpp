@@ -1840,11 +1840,11 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
     menu.addAction(tr("Hide"), this, SLOT(hideConflictFiles()));
   }
 
-  // disabling this for now, because hidden files are never shows in this list
-  // at all; if this ever changes, this should be added back
-  //if (enableUnhide) {
-  //  menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFiles()));
-  //}
+  // note that it is possible for hidden files to appear if they override other
+  // hidden files from another mod
+  if (enableUnhide) {
+    menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFiles()));
+  }
 
   if (enableOpen) {
 	  menu.addAction(tr("Open/Execute"), this, SLOT(openOverwriteDataFile()));
