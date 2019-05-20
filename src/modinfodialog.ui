@@ -407,7 +407,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <layout class="QVBoxLayout" name="overwriteRoot">
          <item>
-          <layout class="QHBoxLayout" name="overwriteHeader" stretch="0,0,0">
+          <layout class="QHBoxLayout" name="overwriteHeader" stretch="1,0">
            <item>
             <widget class="QToolButton" name="overwriteExpander">
              <property name="sizePolicy">
@@ -417,25 +417,13 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               </sizepolicy>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: none</string>
+              <string notr="true">border: none;
+text-align: left;</string>
              </property>
              <property name="text">
               <string>The following conflicted files are provided by this mod</string>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="overwriteSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
            <item>
             <widget class="QLCDNumber" name="overwriteCount">
@@ -501,7 +489,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <layout class="QVBoxLayout" name="overwrittenRoot">
          <item>
-          <layout class="QHBoxLayout" name="overwrittenHeader" stretch="0,0,0">
+          <layout class="QHBoxLayout" name="overwrittenHeader" stretch="1,0">
            <item>
             <widget class="QToolButton" name="overwrittenExpander">
              <property name="sizePolicy">
@@ -511,25 +499,13 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               </sizepolicy>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: none</string>
+              <string notr="true">border: none;
+text-align: left;</string>
              </property>
              <property name="text">
               <string>The following conflicted files are provided by other mods</string>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="overwrittenSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
            <item>
             <widget class="QLCDNumber" name="overwrittenCount">
@@ -583,7 +559,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <layout class="QVBoxLayout" name="noConflictRoot">
          <item>
-          <layout class="QHBoxLayout" name="noConflictHeader" stretch="0,0,0">
+          <layout class="QHBoxLayout" name="noConflictHeader" stretch="1,0">
            <item>
             <widget class="QToolButton" name="noConflictExpander">
              <property name="sizePolicy">
@@ -593,25 +569,13 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               </sizepolicy>
              </property>
              <property name="styleSheet">
-              <string notr="true">border: none;</string>
+              <string notr="true">border: none;
+text-align: left;</string>
              </property>
              <property name="text">
               <string>The following files have no conflicts</string>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="noConflictSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
            <item>
             <widget class="QLCDNumber" name="noConflictCount">

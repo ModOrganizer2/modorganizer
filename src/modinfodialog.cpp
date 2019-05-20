@@ -1732,7 +1732,6 @@ void ModInfoDialog::openOverwriteDataFile()
 
 void ModInfoDialog::previewOverwrittenDataFile()
 {
-  // the overwritten tree only supports single selection, but check just in case
   const auto selection = ui->overwrittenTree->selectedItems();
   if (!selection.empty()) {
     previewDataFile(selection[0]);
@@ -1741,8 +1740,23 @@ void ModInfoDialog::previewOverwrittenDataFile()
 
 void ModInfoDialog::openOverwrittenDataFile()
 {
-  // the overwritten tree only supports single selection, but check just in case
   const auto selection = ui->overwrittenTree->selectedItems();
+  if (!selection.empty()) {
+    openDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::previewNoConflictDataFile()
+{
+  const auto selection = ui->noConflictTree->selectedItems();
+  if (!selection.empty()) {
+    previewDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::openNoConflictDataFile()
+{
+  const auto selection = ui->noConflictTree->selectedItems();
   if (!selection.empty()) {
     openDataFile(selection[0]);
   }
@@ -1990,6 +2004,25 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 			menu.exec(ui->overwrittenTree->viewport()->mapToGlobal(pos));
 		}
 	}
+}
+
+void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
+{
+  auto* item = ui->noConflictTree->itemAt(pos.x(), pos.y());
+
+  if (item != nullptr) {
+    if (!item->data(1, Qt::UserRole + 2).toBool()) {
+      QMenu menu;
+
+      menu.addAction(tr("Open/Execute"), this, SLOT(openNoConflictDataFile()));
+
+      if (canPreviewConflictItem(item)) {
+        menu.addAction(tr("Preview"), this, SLOT(previewNoConflictDataFile()));
+      }
+
+      menu.exec(ui->noConflictTree->viewport()->mapToGlobal(pos));
+    }
+  }
 }
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)

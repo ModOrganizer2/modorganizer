@@ -319,6 +319,9 @@ private slots:
   void previewOverwrittenDataFile();
   void openOverwrittenDataFile();
 
+  void previewNoConflictDataFile();
+  void openNoConflictDataFile();
+
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
   void linkClicked(QString url);
@@ -355,6 +358,7 @@ private slots:
   void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
   void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
+  void on_noConflictTree_customContextMenuRequested(const QPoint &pos);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();
