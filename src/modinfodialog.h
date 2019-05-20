@@ -183,6 +183,25 @@ private:
 };
 
 
+class ExpanderWidget
+{
+public:
+  ExpanderWidget();
+  ExpanderWidget(QToolButton* button, QWidget* content);
+
+  void set(QToolButton* button, QWidget* content, bool opened=false);
+
+  void open();
+  void close();
+  void toggle();
+  bool opened() const;
+
+private:
+  QToolButton* m_button;
+  QWidget* m_content;
+};
+
+
 /**
  * this is a larger dialog used to visualise information abount the mod.
  * @todo this would probably a good place for a plugin-system
@@ -382,6 +401,8 @@ private:
   MOShared::FilesOrigin *m_Origin;
 
   std::map<int, int> m_RealTabPos;
+
+  ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
 
   bool canHideConflictItem(const QTreeWidgetItem* item) const;
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;

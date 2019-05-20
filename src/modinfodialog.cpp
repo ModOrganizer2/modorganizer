@@ -265,6 +265,61 @@ bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
 }
 
 
+ExpanderWidget::ExpanderWidget()
+  : m_button(nullptr), m_content(nullptr)
+{
+}
+
+ExpanderWidget::ExpanderWidget(QToolButton* button, QWidget* content)
+  : ExpanderWidget()
+{
+  set(button, content);
+}
+
+void ExpanderWidget::set(QToolButton* button, QWidget* content, bool o)
+{
+  m_button = button;
+  m_content = content;
+
+  m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  m_button->setCheckable(true);
+
+  if (o)
+    open();
+  else
+    close();
+
+  QObject::connect(m_button, &QToolButton::clicked, [&]{ toggle(); });
+}
+
+void ExpanderWidget::open()
+{
+  m_button->setArrowType(Qt::DownArrow);
+  m_button->setChecked(false);
+  m_content->show();
+}
+
+void ExpanderWidget::close()
+{
+  m_button->setArrowType(Qt::RightArrow);
+  m_button->setChecked(false);
+  m_content->hide();
+}
+
+void ExpanderWidget::toggle()
+{
+  if (opened())
+    close();
+  else
+    open();
+}
+
+bool ExpanderWidget::opened() const
+{
+  return m_content->isVisible();
+}
+
+
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
@@ -378,6 +433,10 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
     activateNexusTab();
   }
+
+  m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
+  m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
+  m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
 }
 
 
@@ -501,7 +560,7 @@ void ModInfoDialog::refreshLists()
 
   ui->overwriteTree->clear();
   ui->overwrittenTree->clear();
-  ui->noconflictTree->clear();
+  ui->noConflictTree->clear();
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
@@ -520,7 +579,7 @@ void ModInfoDialog::refreshLists()
             }
             altString << m_Directory->getOriginByID(altIter->first).getName();
           }
-          QStringList fields(relativeName.prepend("..."));
+          QStringList fields(relativeName);
           fields.append(ToQString(altString.str()));
 
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
@@ -544,7 +603,7 @@ void ModInfoDialog::refreshLists()
             font.setItalic(true);
             item->setFont(0, font);
           }
-          ui->noconflictTree->addTopLevelItem(item);
+          ui->noConflictTree->addTopLevelItem(item);
           ++numNonConflicting;
         }
       } else {

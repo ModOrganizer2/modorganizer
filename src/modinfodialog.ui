@@ -400,28 +400,57 @@ Most mods do not have optional esps, so chances are good you are looking at an e
       <attribute name="title">
        <string>Conflicts</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_8">
+      <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,1,0,1,0,1,0">
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="1,0">
+        <layout class="QVBoxLayout" name="overwriteRoot">
          <item>
-          <widget class="QLabel" name="label_7">
-           <property name="text">
-            <string>The following conflicted files are provided by this mod</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLCDNumber" name="overwriteCount">
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="lineWidth">
-            <number>1</number>
-           </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="overwriteHeader" stretch="0,0,0">
+           <item>
+            <widget class="QToolButton" name="overwriteExpander">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">border: none</string>
+             </property>
+             <property name="text">
+              <string>The following conflicted files are provided by this mod</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="overwriteSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLCDNumber" name="overwriteCount">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="lineWidth">
+              <number>1</number>
+             </property>
+             <property name="segmentStyle">
+              <enum>QLCDNumber::Flat</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -470,23 +499,49 @@ Most mods do not have optional esps, so chances are good you are looking at an e
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="1,0">
+        <layout class="QVBoxLayout" name="overwrittenRoot">
          <item>
-          <widget class="QLabel" name="label_8">
-           <property name="text">
-            <string>The following conflicted files are provided by other mods</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLCDNumber" name="overwrittenCount">
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="overwrittenHeader" stretch="0,0,0">
+           <item>
+            <widget class="QToolButton" name="overwrittenExpander">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">border: none</string>
+             </property>
+             <property name="text">
+              <string>The following conflicted files are provided by other mods</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="overwrittenSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QLCDNumber" name="overwrittenCount">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="segmentStyle">
+              <enum>QLCDNumber::Flat</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -526,15 +581,37 @@ Most mods do not have optional esps, so chances are good you are looking at an e
         </widget>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_11">
+        <layout class="QVBoxLayout" name="noConflictRoot">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_15" stretch="1,0">
+          <layout class="QHBoxLayout" name="noConflictHeader" stretch="0,0,0">
            <item>
-            <widget class="QLabel" name="label_13">
+            <widget class="QToolButton" name="noConflictExpander">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">border: none;</string>
+             </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The following files have no conflicts&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>The following files have no conflicts</string>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="noConflictSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QLCDNumber" name="noConflictCount">
@@ -548,31 +625,44 @@ Most mods do not have optional esps, so chances are good you are looking at an e
            </item>
           </layout>
          </item>
-         <item>
-          <widget class="QTreeWidget" name="noconflictTree">
-           <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
-           </property>
-           <property name="textElideMode">
-            <enum>Qt::ElideLeft</enum>
-           </property>
-           <property name="sortingEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="animated">
-            <bool>true</bool>
-           </property>
-           <property name="columnCount">
-            <number>1</number>
-           </property>
-           <column>
-            <property name="text">
-             <string>File</string>
-            </property>
-           </column>
-          </widget>
-         </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QTreeWidget" name="noConflictTree">
+         <property name="contextMenuPolicy">
+          <enum>Qt::CustomContextMenu</enum>
+         </property>
+         <property name="textElideMode">
+          <enum>Qt::ElideLeft</enum>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="animated">
+          <bool>true</bool>
+         </property>
+         <property name="columnCount">
+          <number>1</number>
+         </property>
+         <column>
+          <property name="text">
+           <string>File</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
