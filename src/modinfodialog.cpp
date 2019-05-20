@@ -266,7 +266,7 @@ bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
 
 
 ExpanderWidget::ExpanderWidget()
-  : m_button(nullptr), m_content(nullptr)
+  : m_button(nullptr), m_content(nullptr), opened_(false)
 {
 }
 
@@ -284,39 +284,41 @@ void ExpanderWidget::set(QToolButton* button, QWidget* content, bool o)
   m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
   m_button->setCheckable(true);
 
-  if (o)
-    open();
-  else
-    close();
-
+  toggle(o);
   QObject::connect(m_button, &QToolButton::clicked, [&]{ toggle(); });
-}
-
-void ExpanderWidget::open()
-{
-  m_button->setArrowType(Qt::DownArrow);
-  m_button->setChecked(false);
-  m_content->show();
-}
-
-void ExpanderWidget::close()
-{
-  m_button->setArrowType(Qt::RightArrow);
-  m_button->setChecked(false);
-  m_content->hide();
 }
 
 void ExpanderWidget::toggle()
 {
-  if (opened())
-    close();
-  else
-    open();
+  if (opened()) {
+    toggle(false);
+  }
+  else {
+    toggle(true);
+  }
+}
+
+void ExpanderWidget::toggle(bool b)
+{
+  if (b) {
+    m_button->setArrowType(Qt::DownArrow);
+    m_button->setChecked(false);
+    m_content->show();
+  } else {
+    m_button->setArrowType(Qt::RightArrow);
+    m_button->setChecked(false);
+    m_content->hide();
+  }
+
+  // the state has to be remembered instead of using m_content's visibility
+  // because saving the state in saveConflictExpandersState() happens after the
+  // dialog is closed, which marks all the widgets hidden
+  opened_ = b;
 }
 
 bool ExpanderWidget::opened() const
 {
-  return m_content->isVisible();
+  return opened_;
 }
 
 
@@ -507,6 +509,18 @@ int ModInfoDialog::tabIndex(const QString &tabId)
 }
 
 
+void ModInfoDialog::saveState(Settings& s) const
+{
+  s.directInterface().setValue("mod_info_tabs", saveTabState());
+  s.directInterface().setValue("mod_info_conflict_expanders", saveConflictExpandersState());
+}
+
+void ModInfoDialog::restoreState(const Settings& s)
+{
+  restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
+  restoreConflictExpandersState(s.directInterface().value("mod_info_conflict_expanders").toByteArray());
+}
+
 void ModInfoDialog::restoreTabState(const QByteArray &state)
 {
   QDataStream stream(state);
@@ -538,6 +552,22 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   ui->tabWidget->blockSignals(false);
 }
 
+void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
+{
+  QDataStream stream(state);
+
+  bool overwriteExpanded = false;
+  bool overwrittenExpanded = false;
+  bool noConflictExpanded = false;
+
+  stream >> overwriteExpanded >> overwrittenExpanded >> noConflictExpanded;
+
+  if (stream.status() == QDataStream::Ok) {
+    m_overwriteExpander.toggle(overwriteExpanded);
+    m_overwrittenExpander.toggle(overwrittenExpanded);
+    m_nonconflictExpander.toggle(noConflictExpanded);
+  }
+}
 
 QByteArray ModInfoDialog::saveTabState() const
 {
@@ -551,6 +581,18 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
+QByteArray ModInfoDialog::saveConflictExpandersState() const
+{
+  QByteArray result;
+  QDataStream stream(&result, QIODevice::WriteOnly);
+
+  stream
+    << m_overwriteExpander.opened()
+    << m_overwrittenExpander.opened()
+    << m_nonconflictExpander.opened();
+
+  return result;
+}
 
 void ModInfoDialog::refreshLists()
 {

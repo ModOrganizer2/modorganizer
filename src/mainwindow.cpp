@@ -2983,7 +2983,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 		dialog.openTab(tab);
 	}
 
-  dialog.restoreTabState(m_OrganizerCore.settings().directInterface().value("mod_info_tabs").toByteArray());
+  dialog.restoreState(m_OrganizerCore.settings());
   QSettings &settings = m_OrganizerCore.settings().directInterface();
   QString key = QString("geometry/%1").arg(dialog.objectName());
   if (settings.contains(key)) {
@@ -3001,7 +3001,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 	}
 
     dialog.exec();
-    m_OrganizerCore.settings().directInterface().setValue("mod_info_tabs", dialog.saveTabState());
+    dialog.saveState(m_OrganizerCore.settings());
     settings.setValue(key, dialog.saveGeometry());
 
     modInfo->saveMeta();

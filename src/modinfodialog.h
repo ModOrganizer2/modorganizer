@@ -191,14 +191,14 @@ public:
 
   void set(QToolButton* button, QWidget* content, bool opened=false);
 
-  void open();
-  void close();
   void toggle();
+  void toggle(bool b);
   bool opened() const;
 
 private:
   QToolButton* m_button;
   QWidget* m_content;
+  bool opened_;
 };
 
 
@@ -257,9 +257,8 @@ public:
    **/
   void openTab(int tab);
 
-  void restoreTabState(const QByteArray &state);
-
-  QByteArray saveTabState() const;
+  void saveState(Settings& s) const;
+  void restoreState(const Settings& s);
 
 signals:
 
@@ -407,6 +406,13 @@ private:
   std::map<int, int> m_RealTabPos;
 
   ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
+
+
+  void restoreTabState(const QByteArray &state);
+  void restoreConflictExpandersState(const QByteArray &state);
+
+  QByteArray saveTabState() const;
+  QByteArray saveConflictExpandersState() const;
 
   bool canHideConflictItem(const QTreeWidgetItem* item) const;
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
