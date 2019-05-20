@@ -501,6 +501,7 @@ void ModInfoDialog::refreshLists()
 
   ui->overwriteTree->clear();
   ui->overwrittenTree->clear();
+  ui->noconflictTree->clear();
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
@@ -535,7 +536,15 @@ void ModInfoDialog::refreshLists()
           }
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
-        } else {// otherwise don't display the file
+        } else {// otherwise, put the file in the nonconflict tree
+          QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
+          item->setData(0, Qt::UserRole, fileName);
+          if (archive) {
+            QFont font = item->font(0);
+            font.setItalic(true);
+            item->setFont(0, font);
+          }
+          ui->noconflictTree->addTopLevelItem(item);
           ++numNonConflicting;
         }
       } else {

@@ -526,22 +526,50 @@ Most mods do not have optional esps, so chances are good you are looking at an e
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8" stretch="1,0">
+        <layout class="QVBoxLayout" name="verticalLayout_11">
          <item>
-          <widget class="QLabel" name="label_9">
-           <property name="text">
-            <string>Non-Conflicted files</string>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_15" stretch="1,0">
+           <item>
+            <widget class="QLabel" name="label_13">
+             <property name="text">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The following files have no conflicts&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLCDNumber" name="noConflictCount">
+             <property name="frameShadow">
+              <enum>QFrame::Sunken</enum>
+             </property>
+             <property name="segmentStyle">
+              <enum>QLCDNumber::Flat</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
-          <widget class="QLCDNumber" name="noConflictCount">
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
+          <widget class="QTreeWidget" name="noconflictTree">
+           <property name="contextMenuPolicy">
+            <enum>Qt::CustomContextMenu</enum>
            </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
+           <property name="textElideMode">
+            <enum>Qt::ElideLeft</enum>
            </property>
+           <property name="sortingEnabled">
+            <bool>true</bool>
+           </property>
+           <property name="animated">
+            <bool>true</bool>
+           </property>
+           <property name="columnCount">
+            <number>1</number>
+           </property>
+           <column>
+            <property name="text">
+             <string>File</string>
+            </property>
+           </column>
           </widget>
          </item>
         </layout>
