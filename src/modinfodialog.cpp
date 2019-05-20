@@ -282,10 +282,9 @@ void ExpanderWidget::set(QToolButton* button, QWidget* content, bool o)
   m_content = content;
 
   m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-  m_button->setCheckable(true);
+  QObject::connect(m_button, &QToolButton::clicked, [&]{ toggle(); });
 
   toggle(o);
-  QObject::connect(m_button, &QToolButton::clicked, [&]{ toggle(); });
 }
 
 void ExpanderWidget::toggle()
@@ -302,11 +301,9 @@ void ExpanderWidget::toggle(bool b)
 {
   if (b) {
     m_button->setArrowType(Qt::DownArrow);
-    m_button->setChecked(false);
     m_content->show();
   } else {
     m_button->setArrowType(Qt::RightArrow);
-    m_button->setChecked(false);
     m_content->hide();
   }
 
