@@ -16,9 +16,9 @@ build_script:
 
     C:\Python37-x64\python.exe unimake.py -d c:\projects\modorganizer-build -s Appveyor_Build=True %APPVEYOR_PROJECT_NAME%
 artifacts:
-- path: vsbuild\src\RelWithDebInfo\ModOrganizer.exe
+- path: ..\..\..\install\bin\ModOrganizer.exe
   name: modorganizer_exe
-- path: vsbuild\src\RelWithDebInfo\ModOrganizer.pdb
+- path: ..\..\..\install\pdb\ModOrganizer.pdb
   name: modorganizer_pdb
 on_success:
   - ps: Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
