@@ -1396,7 +1396,9 @@ void ModInfoDialog::changeFiletreeVisibility(bool hide)
 
   if (changed) {
     qDebug().nospace() << "triggering refresh";
-    emit originModified(m_Origin->getID());
+    if (m_Origin) {
+      emit originModified(m_Origin->getID());
+    }
     refreshLists();
   }
 }
@@ -1677,7 +1679,9 @@ void ModInfoDialog::changeConflictFilesVisibility(bool hide)
 
   if (changed) {
     qDebug().nospace() << "triggering refresh";
-    emit originModified(m_Origin->getID());
+    if (m_Origin) {
+      emit originModified(m_Origin->getID());
+    }
     refreshLists();
   }
 }
