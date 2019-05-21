@@ -25,6 +25,8 @@ on_success:
   - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
   - ps: ./send.ps1 success $env:WEBHOOK_URL
 on_failure:
+  - appveyor PushArtifact stdout.log
+  - appveyor PushArtifact stderr.log
   - ps: Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
   - ps: Invoke-RestMethod https://raw.githubusercontent.com/DiscordHooks/appveyor-discord-webhook/master/send.ps1 -o send.ps1
   - ps: ./send.ps1 failure $env:WEBHOOK_URL
