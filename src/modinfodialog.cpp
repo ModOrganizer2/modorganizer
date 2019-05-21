@@ -265,6 +265,60 @@ bool FileRenamer::renameFailed(const QString& oldName, const QString& newName)
 }
 
 
+ExpanderWidget::ExpanderWidget()
+  : m_button(nullptr), m_content(nullptr), opened_(false)
+{
+}
+
+ExpanderWidget::ExpanderWidget(QToolButton* button, QWidget* content)
+  : ExpanderWidget()
+{
+  set(button, content);
+}
+
+void ExpanderWidget::set(QToolButton* button, QWidget* content, bool o)
+{
+  m_button = button;
+  m_content = content;
+
+  m_button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+  QObject::connect(m_button, &QToolButton::clicked, [&]{ toggle(); });
+
+  toggle(o);
+}
+
+void ExpanderWidget::toggle()
+{
+  if (opened()) {
+    toggle(false);
+  }
+  else {
+    toggle(true);
+  }
+}
+
+void ExpanderWidget::toggle(bool b)
+{
+  if (b) {
+    m_button->setArrowType(Qt::DownArrow);
+    m_content->show();
+  } else {
+    m_button->setArrowType(Qt::RightArrow);
+    m_content->hide();
+  }
+
+  // the state has to be remembered instead of using m_content's visibility
+  // because saving the state in saveConflictExpandersState() happens after the
+  // dialog is closed, which marks all the widgets hidden
+  opened_ = b;
+}
+
+bool ExpanderWidget::opened() const
+{
+  return opened_;
+}
+
+
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
@@ -378,6 +432,10 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
     activateNexusTab();
   }
+
+  m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
+  m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
+  m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
 }
 
 
@@ -448,6 +506,18 @@ int ModInfoDialog::tabIndex(const QString &tabId)
 }
 
 
+void ModInfoDialog::saveState(Settings& s) const
+{
+  s.directInterface().setValue("mod_info_tabs", saveTabState());
+  s.directInterface().setValue("mod_info_conflict_expanders", saveConflictExpandersState());
+}
+
+void ModInfoDialog::restoreState(const Settings& s)
+{
+  restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
+  restoreConflictExpandersState(s.directInterface().value("mod_info_conflict_expanders").toByteArray());
+}
+
 void ModInfoDialog::restoreTabState(const QByteArray &state)
 {
   QDataStream stream(state);
@@ -479,6 +549,22 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   ui->tabWidget->blockSignals(false);
 }
 
+void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
+{
+  QDataStream stream(state);
+
+  bool overwriteExpanded = false;
+  bool overwrittenExpanded = false;
+  bool noConflictExpanded = false;
+
+  stream >> overwriteExpanded >> overwrittenExpanded >> noConflictExpanded;
+
+  if (stream.status() == QDataStream::Ok) {
+    m_overwriteExpander.toggle(overwriteExpanded);
+    m_overwrittenExpander.toggle(overwrittenExpanded);
+    m_nonconflictExpander.toggle(noConflictExpanded);
+  }
+}
 
 QByteArray ModInfoDialog::saveTabState() const
 {
@@ -492,6 +578,18 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
+QByteArray ModInfoDialog::saveConflictExpandersState() const
+{
+  QByteArray result;
+  QDataStream stream(&result, QIODevice::WriteOnly);
+
+  stream
+    << m_overwriteExpander.opened()
+    << m_overwrittenExpander.opened()
+    << m_nonconflictExpander.opened();
+
+  return result;
+}
 
 void ModInfoDialog::refreshLists()
 {
@@ -501,6 +599,7 @@ void ModInfoDialog::refreshLists()
 
   ui->overwriteTree->clear();
   ui->overwrittenTree->clear();
+  ui->noConflictTree->clear();
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
@@ -519,7 +618,7 @@ void ModInfoDialog::refreshLists()
             }
             altString << m_Directory->getOriginByID(altIter->first).getName();
           }
-          QStringList fields(relativeName.prepend("..."));
+          QStringList fields(relativeName);
           fields.append(ToQString(altString.str()));
 
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
@@ -535,7 +634,15 @@ void ModInfoDialog::refreshLists()
           }
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
-        } else {// otherwise don't display the file
+        } else {// otherwise, put the file in the nonconflict tree
+          QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
+          item->setData(0, Qt::UserRole, fileName);
+          if (archive) {
+            QFont font = item->font(0);
+            font.setItalic(true);
+            item->setFont(0, font);
+          }
+          ui->noConflictTree->addTopLevelItem(item);
           ++numNonConflicting;
         }
       } else {
@@ -1664,7 +1771,6 @@ void ModInfoDialog::openOverwriteDataFile()
 
 void ModInfoDialog::previewOverwrittenDataFile()
 {
-  // the overwritten tree only supports single selection, but check just in case
   const auto selection = ui->overwrittenTree->selectedItems();
   if (!selection.empty()) {
     previewDataFile(selection[0]);
@@ -1673,8 +1779,23 @@ void ModInfoDialog::previewOverwrittenDataFile()
 
 void ModInfoDialog::openOverwrittenDataFile()
 {
-  // the overwritten tree only supports single selection, but check just in case
   const auto selection = ui->overwrittenTree->selectedItems();
+  if (!selection.empty()) {
+    openDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::previewNoConflictDataFile()
+{
+  const auto selection = ui->noConflictTree->selectedItems();
+  if (!selection.empty()) {
+    previewDataFile(selection[0]);
+  }
+}
+
+void ModInfoDialog::openNoConflictDataFile()
+{
+  const auto selection = ui->noConflictTree->selectedItems();
   if (!selection.empty()) {
     openDataFile(selection[0]);
   }
@@ -1922,6 +2043,25 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 			menu.exec(ui->overwrittenTree->viewport()->mapToGlobal(pos));
 		}
 	}
+}
+
+void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
+{
+  auto* item = ui->noConflictTree->itemAt(pos.x(), pos.y());
+
+  if (item != nullptr) {
+    if (!item->data(1, Qt::UserRole + 2).toBool()) {
+      QMenu menu;
+
+      menu.addAction(tr("Open/Execute"), this, SLOT(openNoConflictDataFile()));
+
+      if (canPreviewConflictItem(item)) {
+        menu.addAction(tr("Preview"), this, SLOT(previewNoConflictDataFile()));
+      }
+
+      menu.exec(ui->noConflictTree->viewport()->mapToGlobal(pos));
+    }
+  }
 }
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)

@@ -306,6 +306,7 @@ public:
    * @return the wrapped QSettings object
    */
   QSettings &directInterface() { return m_Settings; }
+  const QSettings &directInterface() const { return m_Settings; }
 
   /**
    * @brief retrieve a setting for one of the installed plugins

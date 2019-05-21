@@ -183,6 +183,47 @@ private:
 };
 
 
+/* Takes a QToolButton and a widget and creates an expandable widget.
+ **/
+class ExpanderWidget
+{
+public:
+  /** empty expander, use set()
+   **/
+  ExpanderWidget();
+
+  /** see set()
+   **/
+  ExpanderWidget(QToolButton* button, QWidget* content);
+
+  /** @brief sets the button and content widgets to use
+    * the button will be given an arrow icon, clicking it will toggle the
+    * visibility of the given widget
+    * @param button the button that toggles the content
+    * @param content the widget that will be shown or hidden
+    * @param opened initial state, defaults to closed
+    **/
+  void set(QToolButton* button, QWidget* content, bool opened=false);
+
+  /** either opens or closes the expander depending on the current state
+   **/
+  void toggle();
+
+  /** sets the current state of the expander
+   **/
+  void toggle(bool b);
+
+  /** returns whether the expander is currently opened
+   **/
+  bool opened() const;
+
+private:
+  QToolButton* m_button;
+  QWidget* m_content;
+  bool opened_;
+};
+
+
 /**
  * this is a larger dialog used to visualise information abount the mod.
  * @todo this would probably a good place for a plugin-system
@@ -238,9 +279,8 @@ public:
    **/
   void openTab(int tab);
 
-  void restoreTabState(const QByteArray &state);
-
-  QByteArray saveTabState() const;
+  void saveState(Settings& s) const;
+  void restoreState(const Settings& s);
 
 signals:
 
@@ -300,6 +340,9 @@ private slots:
   void previewOverwrittenDataFile();
   void openOverwrittenDataFile();
 
+  void previewNoConflictDataFile();
+  void openNoConflictDataFile();
+
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
   void linkClicked(QString url);
@@ -336,6 +379,7 @@ private slots:
   void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
   void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
+  void on_noConflictTree_customContextMenuRequested(const QPoint &pos);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();
@@ -382,6 +426,15 @@ private:
   MOShared::FilesOrigin *m_Origin;
 
   std::map<int, int> m_RealTabPos;
+
+  ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
+
+
+  void restoreTabState(const QByteArray &state);
+  void restoreConflictExpandersState(const QByteArray &state);
+
+  QByteArray saveTabState() const;
+  QByteArray saveConflictExpandersState() const;
 
   bool canHideConflictItem(const QTreeWidgetItem* item) const;
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
