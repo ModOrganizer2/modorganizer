@@ -3952,13 +3952,13 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1894"/>
-        <source>Un-Hide</source>
+        <location filename="modinfodialog.cpp" line="1888"/>
+        <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="modinfodialog.cpp" line="1888"/>
-        <source>Hide</source>
+        <location filename="modinfodialog.cpp" line="1894"/>
+        <source>Un-Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5790,6 +5790,37 @@ If the folder was still in use, restart MO and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="modinfodialog.cpp" line="176"/>
+        <source>The hidden file &quot;%1&quot; already exists. Replace it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="179"/>
+        <source>The visible file &quot;%1&quot; already exists. Replace it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="189"/>
+        <source>Replace file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="228"/>
+        <location filename="modinfodialog.cpp" line="252"/>
+        <source>File operation failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="229"/>
+        <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="modinfodialog.cpp" line="253"/>
+        <source>failed to rename %1 to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="organizercore.cpp" line="171"/>
         <source>Failed to start &quot;%1&quot;</source>
         <translation type="unfinished"></translation>
@@ -5870,37 +5901,6 @@ You will be asked if you want to allow helper.exe to make changes to the system.
         <location filename="spawn.cpp" line="164"/>
         <location filename="spawn.cpp" line="178"/>
         <source>failed to spawn &quot;%1&quot;: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="176"/>
-        <source>The hidden file &quot;%1&quot; already exists. Replace it?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="179"/>
-        <source>The visible file &quot;%1&quot; already exists. Replace it?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="189"/>
-        <source>Replace file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="228"/>
-        <location filename="modinfodialog.cpp" line="252"/>
-        <source>File operation failed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="229"/>
-        <source>Failed to remove &quot;%1&quot;. Maybe you lack the required file permissions?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="modinfodialog.cpp" line="253"/>
-        <source>failed to rename %1 to %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
