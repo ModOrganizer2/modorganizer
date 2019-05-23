@@ -313,19 +313,23 @@ bool ModInfo::checkAllForUpdate(PluginContainer *pluginContainer, QObject *recei
   if (latest < QDateTime::currentDateTimeUtc().addDays(-30)) {
     std::set<std::pair<QString, int>> organizedGames;
     for (auto mod : s_Collection) {
-      if (mod->canBeUpdated()) {
+      if (mod->canBeUpdated() && mod->getLastNexusUpdate() < QDateTime::currentDateTimeUtc().addDays(-30)) {
         organizedGames.insert(std::make_pair<QString, int>(mod->getGameName().toLower(), mod->getNexusID()));
       }
     }
 
     if (organizedGames.empty()) {
-      qWarning("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
+      qWarning() << tr("All of your mods have been checked recently. We restrict update checks to help preserve your available API requests.");
       updatesAvailable = false;
+    } else {
+      qInfo() << tr(
+        "You have mods that haven't been checked within 30 days using the new API. These mods must be checked before we can use the bulk update API. "
+        "This will consume significantly more API requests than usual. You will need to rerun the update check once complete in order to parse the remaining mods."
+      );
     }
 
-    for (auto game : organizedGames) {
+    for (auto game : organizedGames)
       NexusInterface::instance(pluginContainer)->requestUpdates(game.second, receiver, QVariant(), game.first, QString());
-    }
   } else if (earliest < QDateTime::currentDateTimeUtc().addDays(-30)) {
     for (auto gameName : games)
       NexusInterface::instance(pluginContainer)->requestUpdateInfo(gameName, NexusInterface::UpdatePeriod::MONTH, receiver, QVariant(true), QString());

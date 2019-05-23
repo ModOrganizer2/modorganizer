@@ -280,11 +280,17 @@ QMenu::separator {
 /*
  * Scroll bar
  */
-QScrollBar {
+QScrollBar:vertical {
     background-color: transparent;
     margin: 0;
     height: 1px;
     width: 12px;
+}
+QScrollBar:horizontal {
+    background-color: transparent;
+    margin: 0;
+    height: 12px;
+    width: 1px;
 }
 QScrollBar::handle {
     border: 1px solid #555555;
