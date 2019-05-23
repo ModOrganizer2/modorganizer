@@ -1897,6 +1897,12 @@ void MainWindow::processUpdates() {
       instance.remove("");
       instance.endGroup();
     }
+    if (lastVersion < QVersionNumber(2, 2, 1)) {
+      // hide new columns by default
+      for (int i=DownloadList::COL_MODNAME; i<DownloadList::COL_COUNT; ++i) {
+        ui->downloadView->header()->hideSection(i);
+      }
+    }
   }
 
   if (currentVersion > lastVersion) {

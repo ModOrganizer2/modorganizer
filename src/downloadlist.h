@@ -39,7 +39,13 @@ public:
     COL_NAME = 0,
     COL_STATUS,
     COL_SIZE,
-    COL_FILETIME
+    COL_FILETIME,
+    COL_MODNAME,
+    COL_VERSION,
+    COL_ID,
+
+    // number of columns
+    COL_COUNT
   };
 
 public:
