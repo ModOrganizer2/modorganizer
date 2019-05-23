@@ -123,6 +123,15 @@ DownloadListWidget::~DownloadListWidget()
 void DownloadListWidget::setManager(DownloadManager *manager)
 {
   m_Manager = manager;
+
+  // hide these columns by default
+  //
+  // note that this is overridden by the ini if MO has been started at least
+  // once before, which is handled in MainWindow::processUpdates() for older
+  // versions
+  header()->hideSection(DownloadList::COL_MODNAME);
+  header()->hideSection(DownloadList::COL_VERSION);
+  header()->hideSection(DownloadList::COL_ID);
 }
 
 void DownloadListWidget::setSourceModel(DownloadList *sourceModel)
@@ -199,7 +208,7 @@ void DownloadListWidget::onCustomContextMenu(const QPoint &point)
 
     if (state >= DownloadManager::STATE_READY) {
       menu.addAction(tr("Install"), this, SLOT(issueInstall()));
-      if (m_Manager->isInfoIncomplete(m_ContextRow)) 
+      if (m_Manager->isInfoIncomplete(m_ContextRow))
         menu.addAction(tr("Query Info"), this, SLOT(issueQueryInfoMd5()));
       else
         menu.addAction(tr("Visit on Nexus"), this, SLOT(issueVisitOnNexus()));
