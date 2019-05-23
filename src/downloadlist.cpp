@@ -170,10 +170,10 @@ QVariant DownloadList::data(const QModelIndex &index, int role) const
         && m_Manager->isInfoIncomplete(index.row()))
       return QIcon(":/MO/gui/warning_16");
   } else if (role == Qt::TextAlignmentRole) {
-    if (index.column() == COL_NAME)
-      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
-    else
+    if (index.column() == COL_SIZE)
       return QVariant(Qt::AlignVCenter | Qt::AlignRight);
+    else
+      return QVariant(Qt::AlignVCenter | Qt::AlignLeft);
   }
   return QVariant();
 }
