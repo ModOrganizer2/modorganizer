@@ -243,16 +243,190 @@ SET(organizer_RCS
 	)
 
 
-SOURCE_GROUP(Source FILES ${organizer_SRCS})
-SOURCE_GROUP(Headers FILES ${organizer_HDRS})
-SOURCE_GROUP(UI FILES ${organizer_UIS})
+source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+
+set(application
+	iuserinterface
+	main
+	mainwindow
+	moapplication
+	moshortcut
+	selfupdater
+	singleinstance
+)
+
+set(browser
+	browserdialog
+	browserview
+)
+
+set(core
+	categories
+	shared/directoryentry
+	directoryrefresher
+	executableslist
+	installationmanager
+	instancemanager
+	loadmechanism
+	nexusinterface
+	nxmaccessmanager
+	organizercore
+	organizerproxy
+)
+
+set(dialogs
+	aboutdialog
+	activatemodsdialog
+	categoriesdialog
+	credentialsdialog
+	editexecutablesdialog
+	filedialogmemory
+	forcedloaddialog
+	forcedloaddialogwidget
+	listdialog
+	messagedialog
+	motddialog
+	overwriteinfodialog
+	queryoverwritedialog
+	problemsdialog
+	savetextasdialog
+	selectiondialog
+	syncoverwritedialog
+	transfersavesdialog
+	waitingonclosedialog
+)
+
+set(downloads
+	downloadlist
+	downloadlistsortproxy
+	downloadlistwidget
+	downloadmanager
+)
+
+set(locking
+	ilockedwaitingforprocess
+	lockeddialog
+	lockeddialogbase
+)
+
+set(modinfo
+	modinfo
+	modinfobackup
+	modinfodialog
+	modinfoforeign
+	modinfooverwrite
+	modinforegular
+	modinfoseparator
+	modinfowithconflictinfo
+)
+
+set(modlist
+	modlist
+	modlistsortproxy
+	modlistview
+)
+
+set(plugins
+	plugincontainer
+	pluginlist
+	pluginlistsortproxy
+	pluginlistview
+)
+
+set(previews
+	previewdialog
+	previewgenerator
+)
+
+set(profiles
+	profile
+	profileinputdialog
+	profilesdialog
+)
+
+set(resources
+	app_icon
+	version
+)
+
+set(settings
+	settings
+	settingsdialog
+)
+
+set(utilities
+	shared/appconfig
+	bbcode
+	csvbuilder
+	shared/error_report
+	eventfilter
+	helper
+	shared/leaktrace
+	persistentcookiejar
+	serverinfo
+	spawn
+	shared/stackdata
+	shared/util
+	usvfsconnector
+	shared/windows_error
+)
+
+set(widgets
+	descriptionpage
+	genericicondelegate
+	icondelegate
+	lcdnumber
+	logbuffer
+	loghighlighter
+	modflagicondelegate
+	modidlineedit
+	noeditdelegate
+	qtgroupingproxy
+	viewmarkingscrollbar
+)
+
+set(src_filters
+	application core browser dialogs downloads locking modinfo modlist plugins
+	previews profiles settings utilities widgets
+)
+
+set(root_filters resources)
+
+foreach(filter in list ${src_filters})
+	set(files)
+	foreach(d in lists ${${filter}})
+		set(files ${files} ${d}.cpp ${d}.h ${d}.rc ${d}.inc)
+	endforeach()
+
+	source_group(src\\${filter} FILES ${files})
+endforeach()
+
+foreach(filter in list ${root_filters})
+	set(files)
+	foreach(d in lists ${${filter}})
+		set(files ${files} ${d}.cpp ${d}.h ${d}.rc ${d}.inc)
+	endforeach()
+
+	source_group(${filter} FILES ${files})
+endforeach()
+
+file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
+source_group(cmake FILES CMakeLists.txt ${rule_files})
+
+source_group(qt FILES
+	${organizer_QRCS}
+	../vsbuild/src/ModOrganizer_autogen/mocs_compilation.cpp
+	../vsbuild/src/qrc_resources.cpp
+	../vsbuild/src/qrc_stylesheet_resource.cpp
+	../vsbuild/src/organizer_en.qm)
+
 
 # MO projects
 SET(dependency_project_path "${DEPENDENCIES_DIR}")
 SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
-
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+
 #TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
 
