@@ -33,7 +33,6 @@
 #include <Psapi.h>
 #include <Shellapi.h>
 #include <shlobj.h>
-#include <Shlobj.h>
 #include <Shlwapi.h>
 #include <tchar.h>
 #include <wincred.h>
@@ -58,7 +57,6 @@
 #include <boost/thread.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <bsainvalidation.h>
 
 // openssl
 #include <tlhelp32.h>
@@ -236,7 +234,6 @@
 #include <QTreeWidgetItem>
 #include <QTreeWidgetItemIterator>
 #include <QtTest/QtTest>
-#include <questionboxmemory.h>
 #include <QUrl>
 #include <QUrlQuery>
 #include <QVariant>
