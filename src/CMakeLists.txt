@@ -344,11 +344,6 @@ set(profiles
 	profilesdialog
 )
 
-set(resources
-	app_icon
-	version
-)
-
 set(settings
 	settings
 	settingsdialog
@@ -390,36 +385,21 @@ set(src_filters
 	previews profiles settings utilities widgets
 )
 
-set(root_filters resources)
-
 foreach(filter in list ${src_filters})
 	set(files)
 	foreach(d in lists ${${filter}})
-		set(files ${files} ${d}.cpp ${d}.h ${d}.rc ${d}.inc)
+		set(files ${files} ${d}.cpp ${d}.h ${d}.inc)
 	endforeach()
 
 	source_group(src\\${filter} FILES ${files})
 endforeach()
 
-foreach(filter in list ${root_filters})
-	set(files)
-	foreach(d in lists ${${filter}})
-		set(files ${files} ${d}.cpp ${d}.h ${d}.rc ${d}.inc)
-	endforeach()
-
-	source_group(${filter} FILES ${files})
-endforeach()
-
 file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
-source_group(cmake FILES CMakeLists.txt ${rule_files})
+file(GLOB qm_files ../vsbuild/src/*.qm)
 
-source_group(qt FILES
-	${organizer_QRCS}
-	../vsbuild/src/ModOrganizer_autogen/mocs_compilation.cpp
-	../vsbuild/src/qrc_resources.cpp
-	../vsbuild/src/qrc_stylesheet_resource.cpp
-	../vsbuild/src/organizer_en.qm)
-
+source_group(cmake FILES CMakeLists.txt)
+source_group(autogen FILES ${rule_files} ${qm_files})
+source_group(resources FILES ${organizer_RCS} ${organizer_QRCS})
 
 # MO projects
 SET(dependency_project_path "${DEPENDENCIES_DIR}")
@@ -435,6 +415,7 @@ SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
 SET(CMAKE_AUTORCC ON)
+
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
 FIND_PACKAGE(Qt5Quick REQUIRED)
@@ -444,7 +425,12 @@ FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
 FIND_PACKAGE(Qt5WebSockets REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
+
 SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
+set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
+
 QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts OPTIONS -silent)
 ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
