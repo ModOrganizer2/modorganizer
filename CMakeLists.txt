@@ -16,3 +16,16 @@ LIST(APPEND CMAKE_PREFIX_PATH ${QT_ROOT}/lib/cmake)
 LIST(APPEND CMAKE_PREFIX_PATH ${LZ4_ROOT}/dll)
 
 ADD_SUBDIRECTORY(src)
+
+set(vcxproj_user_file "${CMAKE_CURRENT_BINARY_DIR}/INSTALL.vcxproj.user")
+if(NOT EXISTS ${vcxproj_user_file})
+	FILE(WRITE ${vcxproj_user_file}
+		"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+			"<Project ToolsVersion=\"Current\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">\n"
+			  "<PropertyGroup>\n"
+				"<LocalDebuggerWorkingDirectory>${CMAKE_INSTALL_PREFIX}/bin</LocalDebuggerWorkingDirectory>\n"
+				"<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>"
+				"<LocalDebuggerCommand>${CMAKE_INSTALL_PREFIX}/bin/ModOrganizer.exe</LocalDebuggerCommand>\n"
+			  "</PropertyGroup>\n"
+			"</Project>\n")
+endif()
