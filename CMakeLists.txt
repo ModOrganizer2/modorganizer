@@ -7,6 +7,9 @@ PROJECT(organizer)
 # sets ModOrganizer as StartUp Project in Visual Studio
 set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT "ModOrganizer")
 
+set(CMAKE_VS_INCLUDE_INSTALL_TO_DEFAULT_BUILD 1)
+set(CMAKE_INSTALL_MESSAGE NEVER)
+
 SET(DEPENDENCIES_DIR CACHE PATH "")
 # hint to find qt in dependencies path
 LIST(APPEND CMAKE_PREFIX_PATH ${QT_ROOT}/lib/cmake)

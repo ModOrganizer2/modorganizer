@@ -446,7 +446,7 @@ FIND_PACKAGE(Qt5LinguistTools)
 QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
 QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
 SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
-QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
+QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts OPTIONS -silent)
 ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
@@ -549,11 +549,11 @@ SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls 
 INSTALL(
     CODE
     "EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
