@@ -9,6 +9,28 @@ IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   SET(PROJ_ARCH x64)
 ENDIF()
 
+macro(add_msvc_precompiled_header PrecompiledHeader PrecompiledSource SourcesVar HeadersVar)
+  if(MSVC)
+    get_filename_component(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
+    set(PrecompiledBinary "${CMAKE_CURRENT_BINARY_DIR}/${PrecompiledBasename}.pch")
+    set(Sources ${${SourcesVar}})
+
+    set_source_files_properties(
+		${PrecompiledSource} PROPERTIES
+		COMPILE_FLAGS "/Yc\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_OUTPUTS "${PrecompiledBinary}")
+
+    set_source_files_properties(
+		${Sources} PROPERTIES
+		COMPILE_FLAGS "/Yu\"${PrecompiledHeader}\" /FI\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_DEPENDS "${PrecompiledBinary}")
+
+    list(APPEND ${SourcesVar} ${PrecompiledSource})
+	list(APPEND ${HeadersVar} ${PrecompiledHeader})
+  endif(MSVC)
+endmacro(add_msvc_precompiled_header)
+
+
 SET(organizer_SRCS
     transfersavesdialog.cpp
     syncoverwritedialog.cpp
@@ -406,6 +428,8 @@ SET(dependency_project_path "${DEPENDENCIES_DIR}")
 SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+
+add_msvc_precompiled_header("pch.h" "pch.cpp" organizer_SRCS organizer_HDRS)
 
 #TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
