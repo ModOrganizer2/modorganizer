@@ -3241,12 +3241,12 @@ void MainWindow::openExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      ExploreFile(info->absolutePath());
     }
   }
   else {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3261,18 +3261,14 @@ void MainWindow::openOriginExplorer_clicked()
         continue;
       }
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-      ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      ExploreFile(modInfo->absolutePath());
     }
   }
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3287,7 +3283,7 @@ void MainWindow::openExplorer_activated()
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+				ExploreFile(modInfo->absolutePath());
 			}
 
 		}
@@ -3308,7 +3304,7 @@ void MainWindow::openExplorer_activated()
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
         if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+          ExploreFile(modInfo->absolutePath());
         }
       }
 		}
@@ -4275,64 +4271,61 @@ void MainWindow::disableVisibleMods()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  ::ShellExecuteW(nullptr, L"explore", ToWString(dataPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-
-  //opens BaseDirectory instead
-	//::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(dataPath);
 }
 
 void MainWindow::openLogsFolder()
 {
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(logsPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
 	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(pluginsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(pluginsPath);
 }
 
 
 void MainWindow::openProfileFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
   {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
   }
   else {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
 }
 
 void MainWindow::openModsFolder()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getModDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_OrganizerCore.settings().getModDirectory());
 }
 
 void MainWindow::openGameFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->gameDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 
@@ -5164,7 +5157,7 @@ void MainWindow::addAsExecutable()
   QString arguments;
   FileExecutionTypes type;
 
-  if (!m_OrganizerCore.getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
+  if (!GetFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
     return;
   }
 
