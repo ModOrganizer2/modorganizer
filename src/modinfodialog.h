@@ -414,10 +414,10 @@ private:
   std::set<int> m_RequestIDs;
   bool m_RequestStarted;
 
-  QAction *m_DeleteAction;
-  QAction *m_RenameAction;
-  QAction *m_OpenAction;
   QAction *m_NewFolderAction;
+  QAction *m_OpenAction;
+  QAction *m_RenameAction;
+  QAction *m_DeleteAction;
   QAction *m_HideAction;
   QAction *m_UnhideAction;
 

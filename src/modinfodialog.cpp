@@ -322,7 +322,8 @@ bool ExpanderWidget::opened() const
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
-  m_DeleteAction(nullptr), m_RenameAction(nullptr), m_OpenAction(nullptr),
+  m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_RenameAction(nullptr),
+  m_DeleteAction(nullptr), m_HideAction(nullptr), m_UnhideAction(nullptr),
   m_Directory(directory), m_Origin(nullptr),
   m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
 {
@@ -480,16 +481,17 @@ void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
   ui->fileTree->setRootIndex(m_FileSystemModel->index(m_RootPath));
   ui->fileTree->setColumnWidth(0, 300);
 
-  m_DeleteAction = new QAction(tr("&Delete"), ui->fileTree);
+  m_NewFolderAction = new QAction(tr("&New Folder"), ui->fileTree);
+  m_OpenAction = new QAction(tr("&Open"), ui->fileTree);
   m_RenameAction = new QAction(tr("&Rename"), ui->fileTree);
+  m_DeleteAction = new QAction(tr("&Delete"), ui->fileTree);
   m_HideAction = new QAction(tr("&Hide"), ui->fileTree);
   m_UnhideAction = new QAction(tr("&Unhide"), ui->fileTree);
-  m_OpenAction = new QAction(tr("&Open"), ui->fileTree);
-  m_NewFolderAction = new QAction(tr("&New Folder"), ui->fileTree);
-  QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
-  QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
-  QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
+
   QObject::connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
+  QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
+  QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
+  QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
   QObject::connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
   connect(m_UnhideAction, SIGNAL(triggered()), this, SLOT(unhideTriggered()));
 }
