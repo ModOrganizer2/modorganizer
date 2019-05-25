@@ -322,9 +322,9 @@ bool ExpanderWidget::opened() const
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
-  m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_RenameAction(nullptr),
-  m_DeleteAction(nullptr), m_HideAction(nullptr), m_UnhideAction(nullptr),
-  m_Directory(directory), m_Origin(nullptr),
+  m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_PreviewAction(nullptr),
+  m_RenameAction(nullptr), m_DeleteAction(nullptr), m_HideAction(nullptr),
+  m_UnhideAction(nullptr), m_Directory(directory), m_Origin(nullptr),
   m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
@@ -483,16 +483,18 @@ void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
 
   m_NewFolderAction = new QAction(tr("&New Folder"), ui->fileTree);
   m_OpenAction = new QAction(tr("&Open"), ui->fileTree);
+  m_PreviewAction = new QAction(tr("&Preview"), ui->fileTree);
   m_RenameAction = new QAction(tr("&Rename"), ui->fileTree);
   m_DeleteAction = new QAction(tr("&Delete"), ui->fileTree);
   m_HideAction = new QAction(tr("&Hide"), ui->fileTree);
   m_UnhideAction = new QAction(tr("&Unhide"), ui->fileTree);
 
-  QObject::connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
-  QObject::connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
-  QObject::connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
-  QObject::connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
-  QObject::connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
+  connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
+  connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
+  connect(m_PreviewAction, SIGNAL(triggered()), this, SLOT(previewTriggered()));
+  connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
+  connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
+  connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
   connect(m_UnhideAction, SIGNAL(triggered()), this, SLOT(unhideTriggered()));
 }
 
@@ -1244,12 +1246,11 @@ bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 
 void ModInfoDialog::on_openInExplorerButton_clicked()
 {
-  ExploreFile(m_ModInfo->absolutePath());
+  shell::ExploreFile(m_ModInfo->absolutePath());
 }
 
 void ModInfoDialog::deleteFile(const QModelIndex &index)
 {
-
   bool res = m_FileSystemModel->isDir(index) ? recursiveDelete(index)
                                              : m_FileSystemModel->remove(index);
   if (!res) {
@@ -1406,21 +1407,29 @@ void ModInfoDialog::changeFiletreeVisibility(bool hide)
 }
 
 
-void ModInfoDialog::openFile(const QModelIndex &index)
+void ModInfoDialog::openTriggered()
 {
-  QString fileName = m_FileSystemModel->filePath(index);
+  if (m_FileSelection.size() == 1) {
+    const auto index = m_FileSelection.at(0);
+    if (!index.isValid()) {
+      return;
+    }
 
-  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
-  if ((unsigned long long)res <= 32) {
-    qCritical("failed to invoke %s: %d", qUtf8Printable(fileName), res);
+    QString fileName = m_FileSystemModel->filePath(index);
+    shell::OpenFile(fileName);
   }
 }
 
-
-void ModInfoDialog::openTriggered()
+void ModInfoDialog::previewTriggered()
 {
-  foreach(QModelIndex idx, m_FileSelection) {
-    openFile(idx);
+  if (m_FileSelection.size() == 1) {
+    const auto index = m_FileSelection.at(0);
+    if (!index.isValid()) {
+      return;
+    }
+
+    QString fileName = m_FileSystemModel->filePath(index);
+    m_OrganizerCore->previewFile(this, m_ModInfo->name(), fileName);
   }
 }
 
@@ -1464,6 +1473,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
 
   if (selectionModel->hasSelection()) {
     bool enableOpen = true;
+    bool enablePreview = true;
     bool enableRename = true;
     bool enableDelete = true;
     bool enableHide = true;
@@ -1484,9 +1494,14 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
 
       if (!hasFiles) {
         enableOpen = false;
+        enablePreview = false;
       }
 
       const QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
+
+      if (!canPreviewFile(false, fileName)) {
+        enablePreview = false;
+      }
 
       if (!canHideFile(false, fileName)) {
         enableHide = false;
@@ -1499,6 +1514,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
       // this is a multiple selection, don't show open action so users don't open
       // a thousand files
       enableOpen = false;
+      enablePreview = false;
       enableRename = false;
 
       if (m_FileSelection.size() < max_scan_for_visibility) {
@@ -1528,6 +1544,10 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
 
     if (enableOpen) {
       menu.addAction(m_OpenAction);
+    }
+
+    if (enablePreview) {
+      menu.addAction(m_PreviewAction);
     }
 
     if (enableRename) {
@@ -1755,7 +1775,7 @@ void ModInfoDialog::openDataFile(const QTreeWidgetItem* item)
   }
 
 	QFileInfo targetInfo(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->executeFile(this, targetInfo);
+  m_OrganizerCore->executeFileVirtualized(this, targetInfo);
 }
 
 void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
@@ -1765,63 +1785,17 @@ void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
   }
 
   QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
+  m_OrganizerCore->previewFileWithAlternatives(this, fileName);
+}
 
-  // what we have is an absolute path to the file in its actual location (for the primary origin)
-	// what we want is the path relative to the virtual data directory
+bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) const
+{
+  if (isArchive) {
+    return false;
+  }
 
-	// we need to look in the virtual directory for the file to make sure the info is up to date.
-
-	// check if the file comes from the actual data folder instead of a mod
-	QDir gameDirectory = m_OrganizerCore->managedGame()->dataDirectory().absolutePath();
-	QString relativePath = gameDirectory.relativeFilePath(fileName);
-	QDir direRelativePath = gameDirectory.relativeFilePath(fileName);
-	// if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
-	if (!direRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
-		fileName = relativePath;
-	}
-	else {
-		// crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-		int offset = m_OrganizerCore->settings().getModDirectory().size() + 1;
-		offset = fileName.indexOf("/", offset);
-		fileName = fileName.mid(offset + 1);
-	}
-
-
-
-	const FileEntry::Ptr file = m_OrganizerCore->directoryStructure()->searchFile(ToWString(fileName), nullptr);
-
-	if (file.get() == nullptr) {
-		reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
-		return;
-	}
-
-	// set up preview dialog
-	PreviewDialog preview(fileName);
-	auto addFunc = [&](int originId) {
-		FilesOrigin &origin = m_OrganizerCore->directoryStructure()->getOriginByID(originId);
-		QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
-		if (QFile::exists(filePath)) {
-			// it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-			QWidget *wid = m_PluginContainer->previewGenerator().genPreview(filePath);
-			if (wid == nullptr) {
-				reportError(tr("failed to generate preview for %1").arg(filePath));
-			}
-			else {
-				preview.addVariant(ToQString(origin.getName()), wid);
-			}
-		}
-	};
-
-	addFunc(file->getOrigin());
-	for (auto alt : file->getAlternatives()) {
-		addFunc(alt.first);
-	}
-	if (preview.numVariants() > 0) {
-		preview.exec();
-	}
-	else {
-		QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
-	}
+  const auto ext = QFileInfo(filename).suffix();
+  return m_PluginContainer->previewGenerator().previewSupported(ext);
 }
 
 bool ModInfoDialog::canHideFile(bool isArchive, const QString& filename) const
@@ -1866,12 +1840,9 @@ bool ModInfoDialog::canUnhideConflictItem(const QTreeWidgetItem* item) const
 
 bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
 {
-  const QString fileName = item->data(0, Qt::UserRole).toString();
-  if (!m_PluginContainer->previewGenerator().previewSupported(QFileInfo(fileName).suffix())) {
-    return false;
-  }
-
-  return true;
+  return canPreviewFile(
+    item->data(1, Qt::UserRole + 2).toBool(),
+    item->data(0, Qt::UserRole).toString());
 }
 
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)

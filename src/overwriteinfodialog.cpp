@@ -264,7 +264,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  ExploreFile(m_ModInfo->absolutePath());
+  shell::ExploreFile(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)

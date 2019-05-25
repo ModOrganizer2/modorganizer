@@ -1037,7 +1037,7 @@ void DownloadManager::openFile(int index)
     return;
   }
 
-  ExploreFile(m_OutputDirectory);
+  shell::ExploreFile(m_OutputDirectory);
   return;
 }
 
@@ -1051,18 +1051,18 @@ void DownloadManager::openInDownloadsFolder(int index)
   const auto path = getFilePath(index);
 
   if (QFile::exists(path)) {
-    ExploreFile(path);
+    shell::ExploreFile(path);
     return;
   }
   else {
     const auto unfinished = path + ".unfinished";
     if (QFile::exists(unfinished)) {
-      ExploreFile(unfinished);
+      shell::ExploreFile(unfinished);
       return;
     }
   }
 
-  ExploreFile(m_OutputDirectory);
+  shell::ExploreFile(m_OutputDirectory);
 }
 
 

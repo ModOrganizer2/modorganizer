@@ -67,9 +67,14 @@ bool GetFileExecutionContext(
   QWidget* parent,  const QFileInfo &targetInfo,
   QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
-bool ExploreFile(const QFileInfo& info);
-bool ExploreFile(const QString& path);
-bool ExploreFile(const QDir& dir);
+namespace shell
+{
+  bool ExploreFile(const QFileInfo& info);
+  bool ExploreFile(const QString& path);
+  bool ExploreFile(const QDir& dir);
+
+  bool OpenFile(const QString& path);
+}
 
 
 class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
@@ -156,7 +161,9 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
-  bool executeFile(QWidget* parent, const QFileInfo& targetInfo);
+  bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
+  bool previewFileWithAlternatives(QWidget* parent, QString filename);
+  bool previewFile(QWidget* parent, const QString& originName, const QString& path);
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
                    const QDir &currentDirectory = QDir(),

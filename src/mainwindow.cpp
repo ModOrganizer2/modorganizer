@@ -3241,12 +3241,12 @@ void MainWindow::openExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      ExploreFile(info->absolutePath());
+      shell::ExploreFile(info->absolutePath());
     }
   }
   else {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-    ExploreFile(modInfo->absolutePath());
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3261,14 +3261,14 @@ void MainWindow::openOriginExplorer_clicked()
         continue;
       }
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      ExploreFile(modInfo->absolutePath());
+      shell::ExploreFile(modInfo->absolutePath());
     }
   }
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    ExploreFile(modInfo->absolutePath());
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3283,7 +3283,7 @@ void MainWindow::openExplorer_activated()
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-				ExploreFile(modInfo->absolutePath());
+        shell::ExploreFile(modInfo->absolutePath());
 			}
 
 		}
@@ -3304,7 +3304,7 @@ void MainWindow::openExplorer_activated()
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
         if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          ExploreFile(modInfo->absolutePath());
+          shell::ExploreFile(modInfo->absolutePath());
         }
       }
 		}
@@ -4271,61 +4271,61 @@ void MainWindow::disableVisibleMods()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  ExploreFile(dataPath);
+  shell::ExploreFile(dataPath);
 }
 
 void MainWindow::openLogsFolder()
 {
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-  ExploreFile(logsPath);
+  shell::ExploreFile(logsPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-  ExploreFile(qApp->applicationDirPath());
+  shell::ExploreFile(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
 	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-  ExploreFile(pluginsPath);
+  shell::ExploreFile(pluginsPath);
 }
 
 
 void MainWindow::openProfileFolder()
 {
-  ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
+  shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
   {
-    ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
+    shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
   }
   else {
-    ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
+    shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-  ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
+  shell::ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
 }
 
 void MainWindow::openModsFolder()
 {
-  ExploreFile(m_OrganizerCore.settings().getModDirectory());
+  shell::ExploreFile(m_OrganizerCore.settings().getModDirectory());
 }
 
 void MainWindow::openGameFolder()
 {
-  ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
+  shell::ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-  ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
+  shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 
@@ -5304,67 +5304,7 @@ void MainWindow::disableSelectedMods_clicked()
 void MainWindow::previewDataFile()
 {
   QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
-
-  // what we have is an absolute path to the file in its actual location (for the primary origin)
-  // what we want is the path relative to the virtual data directory
-
-  // we need to look in the virtual directory for the file to make sure the info is up to date.
-
-  // check if the file comes from the actual data folder instead of a mod
-  QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
-  QString relativePath = gameDirectory.relativeFilePath(fileName);
-  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
-  // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
-  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
-	  fileName = relativePath;
-  }
-  else {
-	  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-	  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
-	  offset = fileName.indexOf("/", offset);
-	  fileName = fileName.mid(offset + 1);
-  }
-
-
-
-  const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
-
-  if (file.get() == nullptr) {
-    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
-    return;
-  }
-
-  // set up preview dialog
-  PreviewDialog preview(fileName);
-  auto addFunc = [&] (int originId) {
-      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
-      QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
-      if (QFile::exists(filePath)) {
-        // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-        QWidget *wid = m_PluginContainer.previewGenerator().genPreview(filePath);
-        if (wid == nullptr) {
-          reportError(tr("failed to generate preview for %1").arg(filePath));
-        } else {
-          preview.addVariant(ToQString(origin.getName()), wid);
-        }
-      }
-    };
-
-  addFunc(file->getOrigin());
-  for (auto alt : file->getAlternatives()) {
-    addFunc(alt.first);
-  }
-  if (preview.numVariants() > 0) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(preview.objectName());
-    if (settings.contains(key)) {
-      preview.restoreGeometry(settings.value(key).toByteArray());
-    }
-    preview.exec();
-    settings.setValue(key, preview.saveGeometry());
-  } else {
-    QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
-  }
+  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
 }
 
 void MainWindow::openDataFile()
@@ -5374,7 +5314,7 @@ void MainWindow::openDataFile()
   }
 
   QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-  m_OrganizerCore.executeFile(this, targetInfo);
+  m_OrganizerCore.executeFileVirtualized(this, targetInfo);
 }
 
 
