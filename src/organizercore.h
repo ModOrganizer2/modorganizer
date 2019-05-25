@@ -67,8 +67,8 @@ bool GetFileExecutionContext(
   QWidget* parent,  const QFileInfo &targetInfo,
   QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
-bool ExploreFile(const QString& path);
 bool ExploreFile(const QFileInfo& info);
+bool ExploreFile(const QString& path);
 bool ExploreFile(const QDir& dir);
 
 

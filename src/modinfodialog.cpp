@@ -1242,7 +1242,7 @@ bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
 
 void ModInfoDialog::on_openInExplorerButton_clicked()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_ModInfo->absolutePath());
 }
 
 void ModInfoDialog::deleteFile(const QModelIndex &index)

@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_overwriteinfodialog.h"
 #include "report.h"
 #include "utility.h"
+#include "organizercore.h"
 #include <QMessageBox>
 #include <QMenu>
 #include <QShortcut>
@@ -263,7 +264,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  ExploreFile(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)

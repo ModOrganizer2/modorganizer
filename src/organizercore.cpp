@@ -330,25 +330,59 @@ bool GetFileExecutionContext(
   }
 }
 
-bool ExploreFile(const QString& path)
+
+bool ExploreDirectory(const QFileInfo& info)
 {
-  const auto ws = path.toStdWString();
+  const auto path = QDir::toNativeSeparators(info.absoluteFilePath());
+  const auto ws_path = path.toStdWString();
 
   const auto h = ::ShellExecuteW(
-    nullptr, L"explore", ws.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    nullptr, L"explore", ws_path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 
   // anything <= 32 is not an actual HINSTANCE and signals failure
   return (h > reinterpret_cast<HINSTANCE>(32));
 }
 
+bool ExploreFileInDirectory(const QFileInfo& info)
+{
+  const auto path = QDir::toNativeSeparators(info.absoluteFilePath());
+  const auto params = "/select,\"" + path + "\"";
+  const auto ws_params = params.toStdWString();
+
+  const auto h = ::ShellExecuteW(
+    nullptr, nullptr, L"explorer", ws_params.c_str(), nullptr, SW_SHOWNORMAL);
+
+  // anything <= 32 is not an actual HINSTANCE and signals failure
+  return (h > reinterpret_cast<HINSTANCE>(32));
+}
+
+
 bool ExploreFile(const QFileInfo& info)
 {
-  return ExploreFile(info.absolutePath());
+  if (info.isFile()) {
+    return ExploreFileInDirectory(info);
+  } else if (info.isDir()) {
+    return ExploreDirectory(info);
+  } else {
+    // try the parent directory
+    const auto parent = info.dir();
+
+    if (parent.exists()) {
+      return ExploreDirectory(parent.absolutePath());
+    }
+  }
+
+  return false;
+}
+
+bool ExploreFile(const QString& path)
+{
+  return ExploreFile(QFileInfo(path));
 }
 
 bool ExploreFile(const QDir& dir)
 {
-  return ExploreFile(dir.absolutePath());
+  return ExploreFile(QFileInfo(dir.absolutePath()));
 }
 
 
