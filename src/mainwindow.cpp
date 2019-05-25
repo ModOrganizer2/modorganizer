@@ -5153,73 +5153,28 @@ void MainWindow::writeDataToFile()
   }
 }
 
-
-int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
-{
-  QString extension = targetInfo.suffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("com", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    return 1;
-  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-    binaryInfo = targetInfo;
-    return 1;
-  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
-    QString binaryPath;
-
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = ToQString(buffer);
-        }
-      }
-    }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(this, tr("Select binary"), QString(), tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
-      return 0;
-    }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
-    return 1;
-  } else {
-    return 2;
-  }
-}
-
-
 void MainWindow::addAsExecutable()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!m_OrganizerCore.getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
+    return;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::executable: {
         QString name = QInputDialog::getText(this, tr("Enter Name"),
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
+
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
           m_OrganizerCore.executablesList()->addExecutable(name,
@@ -5230,14 +5185,15 @@ void MainWindow::addAsExecutable()
                                                            Executable::CustomExecutable);
           refreshExecutablesList();
         }
-      } break;
-      case 2: {
+
+        break;
+      }
+
+    case FileExecutionTypes::other:  // fall-through
+    default: {
         QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+        break;
+      }
   }
 }
 
@@ -5420,26 +5376,12 @@ void MainWindow::previewDataFile()
 
 void MainWindow::openDataFile()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
-        m_OrganizerCore.spawnBinaryDirect(
-            binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(),
-            targetInfo.absolutePath(), "", "");
-      } break;
-      case 2: {
-        ::ShellExecuteW(nullptr, L"open",
-                        ToWString(targetInfo.absoluteFilePath()).c_str(),
-                        nullptr, nullptr, SW_SHOWNORMAL);
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+  if (m_ContextItem == nullptr) {
+    return;
   }
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  m_OrganizerCore.executeFile(this, targetInfo);
 }
 
 

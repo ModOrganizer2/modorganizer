@@ -335,7 +335,6 @@ private slots:
   void unhideConflictFiles();
   void previewOverwriteDataFile();
   void openOverwriteDataFile();
-  int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
 
   void previewOverwrittenDataFile();
   void openOverwrittenDataFile();

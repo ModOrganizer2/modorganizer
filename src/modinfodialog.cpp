@@ -1696,65 +1696,6 @@ void ModInfoDialog::unhideConflictFiles()
   changeConflictFilesVisibility(false);
 }
 
-int ModInfoDialog::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
-{
-	QString extension = targetInfo.suffix();
-	if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-		(extension.compare("com", Qt::CaseInsensitive) == 0) ||
-		(extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-		binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-		arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-		return 1;
-	}
-	else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-		binaryInfo = targetInfo;
-		return 1;
-	}
-	else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-		// types that need to be injected into
-		std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
-		QString binaryPath;
-
-		{ // try to find java automatically
-			WCHAR buffer[MAX_PATH];
-			if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-				DWORD binaryType = 0UL;
-				if (!::GetBinaryTypeW(buffer, &binaryType)) {
-					qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-				}
-				else if (binaryType == SCS_32BIT_BINARY) {
-					binaryPath = ToQString(buffer);
-				}
-			}
-		}
-		if (binaryPath.isEmpty() && (extension == "jar")) {
-			// second attempt: look to the registry
-			QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-			if (javaReg.contains("CurrentVersion")) {
-				QString currentVersion = javaReg.value("CurrentVersion").toString();
-				binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-			}
-		}
-		if (binaryPath.isEmpty()) {
-			binaryPath = QFileDialog::getOpenFileName(this, tr("Select binary"), QString(), tr("Binary") + " (*.exe)");
-		}
-		if (binaryPath.isEmpty()) {
-			return 0;
-		}
-		binaryInfo = QFileInfo(binaryPath);
-		if (extension == "jar") {
-			arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-		}
-		else {
-			arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-		}
-		return 1;
-	}
-	else {
-		return 2;
-	}
-}
-
 void ModInfoDialog::previewOverwriteDataFile()
 {
   // the menu item is only shown for a single selection, but check just in case
@@ -1812,23 +1753,7 @@ void ModInfoDialog::openDataFile(const QTreeWidgetItem* item)
   }
 
 	QFileInfo targetInfo(item->data(0, Qt::UserRole).toString());
-	QFileInfo binaryInfo;
-	QString arguments;
-	switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-	case 1: {
-		m_OrganizerCore->spawnBinaryDirect(
-			binaryInfo, arguments, m_OrganizerCore->currentProfile()->name(),
-			targetInfo.absolutePath(), "", "");
-	} break;
-	case 2: {
-		::ShellExecuteW(nullptr, L"open",
-			ToWString(targetInfo.absoluteFilePath()).c_str(),
-			nullptr, nullptr, SW_SHOWNORMAL);
-	} break;
-	default: {
-		// nop
-	} break;
-	}
+  m_OrganizerCore->executeFile(this, targetInfo);
 }
 
 void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
@@ -2016,7 +1941,7 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
   // note that it is possible for hidden files to appear if they override other
   // hidden files from another mod
   if (enableUnhide) {
-    menu.addAction(tr("Un-Hide"), this, SLOT(unhideConflictFiles()));
+    menu.addAction(tr("Unhide"), this, SLOT(unhideConflictFiles()));
   }
 
   if (enableOpen) {

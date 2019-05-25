@@ -56,6 +56,13 @@ namespace MOBase {
   class IPluginGame;
 }
 
+enum class FileExecutionTypes
+{
+  executable = 1,
+  other = 2
+};
+
+
 class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 {
 
@@ -139,6 +146,12 @@ public:
   void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
+
+  static bool getFileExecutionContext(
+    QWidget* parent,  const QFileInfo &targetInfo,
+    QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
+
+  bool executeFile(QWidget* parent, const QFileInfo& targetInfo);
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",
                    const QDir &currentDirectory = QDir(),
