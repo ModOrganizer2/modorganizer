@@ -451,6 +451,7 @@ FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
 
 SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
 set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
 set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
