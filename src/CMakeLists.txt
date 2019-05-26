@@ -333,7 +333,7 @@ TARGET_LINK_LIBRARIES(ModOrganizer
                       Dbghelp advapi32 Version Shlwapi liblz4 Crypt32)
 
 IF (MSVC)
-  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest")
+  SET_TARGET_PROPERTIES(ModOrganizer PROPERTIES COMPILE_FLAGS "/std:c++latest /permissive-")
 ENDIF()
 IF (MSVC AND "${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
   # 32 bits
