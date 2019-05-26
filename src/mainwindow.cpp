@@ -5152,12 +5152,14 @@ void MainWindow::addAsExecutable()
     return;
   }
 
+  using FileExecutionTypes = OrganizerCore::FileExecutionTypes;
+
   QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
   QFileInfo binaryInfo;
   QString arguments;
   FileExecutionTypes type;
 
-  if (!GetFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
+  if (!OrganizerCore::getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
     return;
   }
 

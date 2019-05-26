@@ -57,16 +57,6 @@ namespace MOBase {
 }
 
 
-enum class FileExecutionTypes
-{
-  Executable = 1,
-  Other = 2
-};
-
-bool GetFileExecutionContext(
-  QWidget* parent,  const QFileInfo &targetInfo,
-  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
-
 namespace shell
 {
   bool ExploreFile(const QFileInfo& info);
@@ -111,6 +101,12 @@ private:
   typedef boost::signals2::signal<void (const QString&)> SignalModInstalled;
 
 public:
+  enum class FileExecutionTypes
+  {
+    Executable = 1,
+    Other = 2
+  };
+
   static bool isNxmLink(const QString &link) { return link.startsWith("nxm://", Qt::CaseInsensitive); }
 
   OrganizerCore(const QSettings &initSettings);
@@ -163,6 +159,10 @@ public:
   void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
+
+  static bool getFileExecutionContext(
+    QWidget* parent,  const QFileInfo &targetInfo,
+    QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
   bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
   bool previewFileWithAlternatives(QWidget* parent, QString filename);

@@ -269,69 +269,6 @@ bool checkService()
 }
 
 
-bool GetFileExecutionContext(
-  QWidget* parent, const QFileInfo &targetInfo,
-  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
-{
-  QString extension = targetInfo.suffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-    (extension.compare("com", Qt::CaseInsensitive) == 0) ||
-    (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    type = FileExecutionTypes::Executable;
-    return true;
-  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-    binaryInfo = targetInfo;
-    type = FileExecutionTypes::Executable;
-    return true;
-  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = targetInfo.absoluteFilePath().toStdWString();
-    QString binaryPath;
-
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = QString::fromWCharArray(buffer);
-        }
-      }
-    }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(
-        parent, QObject::tr("Select binary"), QString(), QObject::tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
-      return false;
-    }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
-
-    type = FileExecutionTypes::Executable;
-    return true;
-  } else {
-    type = FileExecutionTypes::Other;
-    return true;
-  }
-}
-
-
 const char* ShellExecuteError(int i)
 {
   switch (i) {
@@ -1448,6 +1385,68 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
+bool OrganizerCore::getFileExecutionContext(
+  QWidget* parent, const QFileInfo &targetInfo,
+  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
+{
+  QString extension = targetInfo.suffix();
+  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("com", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
+    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
+    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
+    binaryInfo = targetInfo;
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
+    // types that need to be injected into
+    std::wstring targetPathW = targetInfo.absoluteFilePath().toStdWString();
+    QString binaryPath;
+
+    { // try to find java automatically
+      WCHAR buffer[MAX_PATH];
+      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+        DWORD binaryType = 0UL;
+        if (!::GetBinaryTypeW(buffer, &binaryType)) {
+          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+        } else if (binaryType == SCS_32BIT_BINARY) {
+          binaryPath = QString::fromWCharArray(buffer);
+        }
+      }
+    }
+    if (binaryPath.isEmpty() && (extension == "jar")) {
+      // second attempt: look to the registry
+      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+      if (javaReg.contains("CurrentVersion")) {
+        QString currentVersion = javaReg.value("CurrentVersion").toString();
+        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+      }
+    }
+    if (binaryPath.isEmpty()) {
+      binaryPath = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"), QString(), QObject::tr("Binary") + " (*.exe)");
+    }
+    if (binaryPath.isEmpty()) {
+      return false;
+    }
+    binaryInfo = QFileInfo(binaryPath);
+    if (extension == "jar") {
+      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    } else {
+      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    }
+
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else {
+    type = FileExecutionTypes::Other;
+    return true;
+  }
+}
+
 bool OrganizerCore::executeFileVirtualized(
   QWidget* parent, const QFileInfo& targetInfo)
 {
@@ -1455,7 +1454,7 @@ bool OrganizerCore::executeFileVirtualized(
   QString arguments;
   FileExecutionTypes type;
 
-  if (!GetFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
+  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
     return false;
   }
 
