@@ -1,5 +1,6 @@
 #include "problemsdialog.h"
 #include "ui_problemsdialog.h"
+#include "organizercore.h"
 #include <utility.h>
 #include <iplugin.h>
 #include <iplugindiagnose.h>
@@ -87,5 +88,5 @@ void ProblemsDialog::startFix()
 
 void ProblemsDialog::urlClicked(const QUrl &url)
 {
-  ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::OpenLink(url);
 }

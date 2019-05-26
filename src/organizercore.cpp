@@ -478,6 +478,20 @@ bool OpenFile(const QString& path)
   return ShellExecuteWrapper(L"open", ws_path.c_str(), nullptr);
 }
 
+bool OpenLink(const QUrl& url)
+{
+  const auto ws_url = url.toString().toStdWString();
+  return ShellExecuteWrapper(L"open", ws_url.c_str(), nullptr);
+}
+
+bool Execute(const QString& program, const QString& params)
+{
+  const auto program_ws = program.toStdWString();
+  const auto params_ws = params.toStdWString();
+
+  return ShellExecuteWrapper(L"open", program_ws.c_str(), params_ws.c_str());
+}
+
 } // namespace shell
 
 

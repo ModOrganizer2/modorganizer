@@ -1030,10 +1030,10 @@ void DownloadManager::openFile(int index)
     reportError(tr("OpenFile: invalid download index %1").arg(index));
     return;
   }
+
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
-
-    ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(getFilePath(index))).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::OpenFile(getFilePath(index));
     return;
   }
 

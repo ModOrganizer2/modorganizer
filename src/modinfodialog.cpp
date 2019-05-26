@@ -1075,10 +1075,9 @@ void ModInfoDialog::linkClicked(const QUrl &url)
   //Ideally we'd ask the mod for the game and the web service then pass the game
   //and URL to the web service
   if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
-
     emit linkActivated(url.toString());
   } else {
-    ::ShellExecuteW(nullptr, L"open", ToWString(url.toString()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::OpenLink(url);
   }
 }
 

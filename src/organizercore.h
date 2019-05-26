@@ -74,6 +74,9 @@ namespace shell
   bool ExploreFile(const QDir& dir);
 
   bool OpenFile(const QString& path);
+  bool OpenLink(const QUrl& url);
+
+  bool Execute(const QString& program, const QString& params);
 }
 
 
