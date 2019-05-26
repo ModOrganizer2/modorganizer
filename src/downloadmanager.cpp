@@ -1041,14 +1041,14 @@ void DownloadManager::openFile(int index)
     reportError(tr("OpenFile: invalid download index %1").arg(index));
     return;
   }
+
   QDir path = QDir(m_OutputDirectory);
   if (path.exists(getFileName(index))) {
-
-    ::ShellExecuteW(nullptr, L"open", ToWString(QDir::toNativeSeparators(getFilePath(index))).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::OpenFile(getFilePath(index));
     return;
   }
 
-  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OutputDirectory);
   return;
 }
 
@@ -1058,23 +1058,22 @@ void DownloadManager::openInDownloadsFolder(int index)
     reportError(tr("OpenFileInDownloadsFolder: invalid download index %1").arg(index));
     return;
   }
-  QString params = "/select,\"";
-  QDir path = QDir(m_OutputDirectory);
-  if (path.exists(getFileName(index))) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)) + "\"";
 
-    ::ShellExecuteW(nullptr, nullptr, L"explorer", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
+  const auto path = getFilePath(index);
+
+  if (QFile::exists(path)) {
+    shell::ExploreFile(path);
     return;
   }
-  else if (path.exists(getFileName(index) + ".unfinished")) {
-    params = params + QDir::toNativeSeparators(getFilePath(index)+".unfinished") + "\"";
-
-    ::ShellExecuteW(nullptr, nullptr, L"explorer", ToWString(params).c_str(), nullptr, SW_SHOWNORMAL);
-    return;
+  else {
+    const auto unfinished = path + ".unfinished";
+    if (QFile::exists(unfinished)) {
+      shell::ExploreFile(unfinished);
+      return;
+    }
   }
 
-  ::ShellExecuteW(nullptr, L"explore", ToWString(QDir::toNativeSeparators(m_OutputDirectory)).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-  return;
+  shell::ExploreFile(m_OutputDirectory);
 }
 
 

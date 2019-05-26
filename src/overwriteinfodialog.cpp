@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_overwriteinfodialog.h"
 #include "report.h"
 #include "utility.h"
+#include "organizercore.h"
 #include <QMessageBox>
 #include <QMenu>
 #include <QShortcut>
@@ -217,12 +218,7 @@ void OverwriteInfoDialog::renameTriggered()
 
 void OverwriteInfoDialog::openFile(const QModelIndex &index)
 {
-  QString fileName = m_FileSystemModel->filePath(index);
-
-  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", ToWString(fileName).c_str(), nullptr, nullptr, SW_SHOW);
-  if ((INT_PTR)res <= 32) {
-    qCritical("failed to invoke %s: %d", qUtf8Printable(fileName), res);
-  }
+  shell::OpenFile(m_FileSystemModel->filePath(index));
 }
 
 
@@ -263,7 +259,7 @@ void OverwriteInfoDialog::createDirectoryTriggered()
 
 void OverwriteInfoDialog::on_explorerButton_clicked()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_ModInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_ModInfo->absolutePath());
 }
 
 void OverwriteInfoDialog::on_filesView_customContextMenuRequested(const QPoint &pos)

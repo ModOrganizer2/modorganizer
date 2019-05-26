@@ -130,18 +130,19 @@ bool Settings::pluginBlacklisted(const QString &fileName) const
 
 void Settings::registerAsNXMHandler(bool force)
 {
-  std::wstring nxmPath = ToWString(QCoreApplication::applicationDirPath() + "/nxmhandler.exe");
-  std::wstring executable = ToWString(QCoreApplication::applicationFilePath());
-  std::wstring mode = force ? L"forcereg" : L"reg";
-  std::wstring parameters = mode + L" " + m_GamePlugin->gameShortName().toStdWString();
-  for (QString altGame : m_GamePlugin->validShortNames()) {
-    parameters += L"," + altGame.toStdWString();
+  const auto nxmPath = QCoreApplication::applicationDirPath() + "/nxmhandler.exe";
+  const auto executable = QCoreApplication::applicationFilePath();
+
+  QString mode = force ? "forcereg" : "reg";
+  QString parameters = mode + " " + m_GamePlugin->gameShortName();
+  for (const QString& altGame : m_GamePlugin->validShortNames()) {
+    parameters += "," + altGame;
   }
-  parameters += L" \"" + executable + L"\"";
-  HINSTANCE res = ::ShellExecuteW(nullptr, L"open", nxmPath.c_str(), parameters.c_str(), nullptr, SW_SHOWNORMAL);
-  if ((INT_PTR)res <= 32) {
-    QMessageBox::critical(nullptr, tr("Failed"),
-                          tr("Sorry, failed to start the helper application"));
+  parameters += " \"" + executable + "\"";
+
+  if (!shell::Execute(nxmPath, parameters)) {
+    QMessageBox::critical(
+      nullptr, tr("Failed"), tr("Failed to start the helper application"));
   }
 }
 

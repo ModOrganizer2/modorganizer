@@ -35,6 +35,7 @@
 #include "instancemanager.h"
 #include <scriptextender.h>
 #include "helper.h"
+#include "previewdialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
@@ -266,6 +267,170 @@ bool checkService()
 
   return serviceRunning;
 }
+
+
+const char* ShellExecuteError(int i)
+{
+  switch (i) {
+    case 0:
+      return "The operating system is out of memory or resources";
+
+    case ERROR_FILE_NOT_FOUND:
+      return "The specified file was not found";
+
+    case ERROR_PATH_NOT_FOUND:
+      return "The specified path was not found";
+
+    case ERROR_BAD_FORMAT:
+      return "The .exe file is invalid (non-Win32 .exe or error in .exe image)";
+
+    case SE_ERR_ACCESSDENIED:
+      return "The operating system denied access to the specified file";
+
+    case SE_ERR_ASSOCINCOMPLETE:
+      return "The file name association is incomplete or invalid";
+
+    case SE_ERR_DDEBUSY:
+      return "The DDE transaction could not be completed because other DDE "
+             "transactions were being processed";
+
+    case SE_ERR_DDEFAIL:
+      return "The DDE transaction failed";
+
+    case SE_ERR_DDETIMEOUT:
+      return "The DDE transaction could not be completed because the request "
+             "timed out";
+
+    case SE_ERR_DLLNOTFOUND:
+      return "The specified DLL was not found";
+
+    case SE_ERR_NOASSOC:
+      return "There is no application associated with the given file name "
+             "extension";
+
+    case SE_ERR_OOM:
+      return "There was not enough memory to complete the operation";
+
+    case SE_ERR_SHARE:
+      return "A sharing violation occurred";
+
+    default:
+      return "Unknown error";
+  }
+}
+
+void LogShellFailure(
+  const wchar_t* operation, const wchar_t* file, const wchar_t* params,
+  HINSTANCE h)
+{
+  const auto code = static_cast<int>(reinterpret_cast<std::size_t>(h));
+
+  QString s = "failed to invoke";
+
+  if (operation) {
+    s += " " + QString::fromWCharArray(operation);
+  }
+
+  if (file) {
+    s += " " + QString::fromWCharArray(file);
+  }
+
+  if (params) {
+    s += " " + QString::fromWCharArray(params);
+  }
+
+  qCritical(
+    "failed to invoke %s: %s (error %d)",
+    s, ShellExecuteError(code), code);
+}
+
+bool ShellExecuteWrapper(
+  const wchar_t* operation, const wchar_t* file, const wchar_t* params)
+{
+  const auto h = ::ShellExecuteW(
+    0, operation, file, params, nullptr, SW_SHOWNORMAL);
+
+  // anything <= 32 is not an actual HINSTANCE and signals failure
+  if (h <= reinterpret_cast<HINSTANCE>(32))
+  {
+    LogShellFailure(operation, file, params, h);
+    return false;
+  }
+
+  return true;
+}
+
+bool ExploreDirectory(const QFileInfo& info)
+{
+  const auto path = QDir::toNativeSeparators(info.absoluteFilePath());
+  const auto ws_path = path.toStdWString();
+
+  return ShellExecuteWrapper(L"explore", ws_path.c_str(), nullptr);
+}
+
+bool ExploreFileInDirectory(const QFileInfo& info)
+{
+  const auto path = QDir::toNativeSeparators(info.absoluteFilePath());
+  const auto params = "/select,\"" + path + "\"";
+  const auto ws_params = params.toStdWString();
+
+  return ShellExecuteWrapper(nullptr, L"explorer", ws_params.c_str());
+}
+
+
+namespace shell
+{
+
+bool ExploreFile(const QFileInfo& info)
+{
+  if (info.isFile()) {
+    return ExploreFileInDirectory(info);
+  } else if (info.isDir()) {
+    return ExploreDirectory(info);
+  } else {
+    // try the parent directory
+    const auto parent = info.dir();
+
+    if (parent.exists()) {
+      return ExploreDirectory(parent.absolutePath());
+    }
+  }
+
+  return false;
+}
+
+bool ExploreFile(const QString& path)
+{
+  return ExploreFile(QFileInfo(path));
+}
+
+bool ExploreFile(const QDir& dir)
+{
+  return ExploreFile(QFileInfo(dir.absolutePath()));
+}
+
+bool OpenFile(const QString& path)
+{
+  const auto ws_path = path.toStdWString();
+  return ShellExecuteWrapper(L"open", ws_path.c_str(), nullptr);
+}
+
+bool OpenLink(const QUrl& url)
+{
+  const auto ws_url = url.toString().toStdWString();
+  return ShellExecuteWrapper(L"open", ws_url.c_str(), nullptr);
+}
+
+bool Execute(const QString& program, const QString& params)
+{
+  const auto program_ws = program.toStdWString();
+  const auto params_ws = params.toStdWString();
+
+  return ShellExecuteWrapper(L"open", program_ws.c_str(), params_ws.c_str());
+}
+
+} // namespace shell
+
 
 OrganizerCore::OrganizerCore(const QSettings &initSettings)
   : m_UserInterface(nullptr)
@@ -1218,6 +1383,212 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
     }
   }
   return res;
+}
+
+bool OrganizerCore::getFileExecutionContext(
+  QWidget* parent, const QFileInfo &targetInfo,
+  QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
+{
+  QString extension = targetInfo.suffix();
+  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("com", Qt::CaseInsensitive) == 0) ||
+    (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
+    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
+    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
+    binaryInfo = targetInfo;
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
+    // types that need to be injected into
+    std::wstring targetPathW = targetInfo.absoluteFilePath().toStdWString();
+    QString binaryPath;
+
+    { // try to find java automatically
+      WCHAR buffer[MAX_PATH];
+      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+        DWORD binaryType = 0UL;
+        if (!::GetBinaryTypeW(buffer, &binaryType)) {
+          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+        } else if (binaryType == SCS_32BIT_BINARY) {
+          binaryPath = QString::fromWCharArray(buffer);
+        }
+      }
+    }
+    if (binaryPath.isEmpty() && (extension == "jar")) {
+      // second attempt: look to the registry
+      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+      if (javaReg.contains("CurrentVersion")) {
+        QString currentVersion = javaReg.value("CurrentVersion").toString();
+        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+      }
+    }
+    if (binaryPath.isEmpty()) {
+      binaryPath = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"), QString(), QObject::tr("Binary") + " (*.exe)");
+    }
+    if (binaryPath.isEmpty()) {
+      return false;
+    }
+    binaryInfo = QFileInfo(binaryPath);
+    if (extension == "jar") {
+      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    } else {
+      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
+    }
+
+    type = FileExecutionTypes::Executable;
+    return true;
+  } else {
+    type = FileExecutionTypes::Other;
+    return true;
+  }
+}
+
+bool OrganizerCore::executeFileVirtualized(
+  QWidget* parent, const QFileInfo& targetInfo)
+{
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!getFileExecutionContext(parent, targetInfo, binaryInfo, arguments, type)) {
+    return false;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::Executable: {
+      spawnBinaryDirect(
+        binaryInfo, arguments, currentProfile()->name(),
+        targetInfo.absolutePath(), "", "");
+
+      return true;
+    }
+
+    case FileExecutionTypes::Other: {
+      ::ShellExecuteW(nullptr, L"open",
+        ToWString(targetInfo.absoluteFilePath()).c_str(),
+        nullptr, nullptr, SW_SHOWNORMAL);
+
+      return true;
+    }
+  }
+
+  // nop
+  return false;
+}
+
+bool OrganizerCore::previewFileWithAlternatives(
+  QWidget* parent, QString fileName)
+{
+  // what we have is an absolute path to the file in its actual location (for the primary origin)
+  // what we want is the path relative to the virtual data directory
+
+  // we need to look in the virtual directory for the file to make sure the info is up to date.
+
+  // check if the file comes from the actual data folder instead of a mod
+  QDir gameDirectory = managedGame()->dataDirectory().absolutePath();
+  QString relativePath = gameDirectory.relativeFilePath(fileName);
+  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
+
+  // if the file is on a different drive the dirRelativePath will actually be an
+  // absolute path so we make sure that is not the case
+  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
+    fileName = relativePath;
+  }
+  else {
+    // crude: we search for the next slash after the base mod directory to skip
+    // everything up to the data-relative directory
+    int offset = settings().getModDirectory().size() + 1;
+    offset = fileName.indexOf("/", offset);
+    fileName = fileName.mid(offset + 1);
+  }
+
+
+
+  const FileEntry::Ptr file = directoryStructure()->searchFile(ToWString(fileName), nullptr);
+
+  if (file.get() == nullptr) {
+    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
+    return false;
+  }
+
+  // set up preview dialog
+  PreviewDialog preview(fileName);
+  auto addFunc = [&](int originId) {
+    FilesOrigin &origin = directoryStructure()->getOriginByID(originId);
+    QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
+    if (QFile::exists(filePath)) {
+      // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
+      QWidget *wid = m_PluginContainer->previewGenerator().genPreview(filePath);
+      if (wid == nullptr) {
+        reportError(tr("failed to generate preview for %1").arg(filePath));
+      }
+      else {
+        preview.addVariant(ToQString(origin.getName()), wid);
+      }
+    }
+  };
+
+  addFunc(file->getOrigin());
+  for (auto alt : file->getAlternatives()) {
+    addFunc(alt.first);
+  }
+
+  if (preview.numVariants() > 0) {
+    QSettings &s = settings().directInterface();
+    QString key = QString("geometry/%1").arg(preview.objectName());
+    if (s.contains(key)) {
+      preview.restoreGeometry(s.value(key).toByteArray());
+    }
+
+    preview.exec();
+
+    s.setValue(key, preview.saveGeometry());
+
+    return true;
+  }
+  else {
+    QMessageBox::information(
+      parent, tr("Sorry"),
+      tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
+
+    return false;
+  }
+}
+
+bool OrganizerCore::previewFile(
+  QWidget* parent, const QString& originName, const QString& path)
+{
+  if (!QFile::exists(path)) {
+    reportError(tr("File '%1' not found.").arg(path));
+    return false;
+  }
+
+  PreviewDialog preview(path);
+
+  QWidget *wid = m_PluginContainer->previewGenerator().genPreview(path);
+  if (wid == nullptr) {
+    reportError(tr("Failed to generate preview for %1").arg(path));
+    return false;
+  }
+
+  preview.addVariant(originName, wid);
+
+  QSettings &s = settings().directInterface();
+  QString key = QString("geometry/%1").arg(preview.objectName());
+  if (s.contains(key)) {
+    preview.restoreGeometry(s.value(key).toByteArray());
+  }
+
+  preview.exec();
+
+  s.setValue(key, preview.saveGeometry());
+
+  return true;
 }
 
 void OrganizerCore::spawnBinary(const QFileInfo &binary,

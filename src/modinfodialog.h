@@ -313,7 +313,6 @@ private:
   QString getFileCategory(int categoryID);
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
-  void openFile(const QModelIndex &index);
   void saveIniTweaks();
   void saveCategories(QTreeWidgetItem *currentNode);
   void saveCurrentTextFile();
@@ -335,7 +334,6 @@ private slots:
   void unhideConflictFiles();
   void previewOverwriteDataFile();
   void openOverwriteDataFile();
-  int getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments);
 
   void previewOverwrittenDataFile();
   void openOverwrittenDataFile();
@@ -349,10 +347,11 @@ private slots:
 
   void delete_activated();
 
-  void deleteTriggered();
-  void renameTriggered();
-  void openTriggered();
   void createDirectoryTriggered();
+  void openTriggered();
+  void previewTriggered();
+  void renameTriggered();
+  void deleteTriggered();
   void hideTriggered();
   void unhideTriggered();
 
@@ -415,10 +414,11 @@ private:
   std::set<int> m_RequestIDs;
   bool m_RequestStarted;
 
-  QAction *m_DeleteAction;
-  QAction *m_RenameAction;
-  QAction *m_OpenAction;
   QAction *m_NewFolderAction;
+  QAction *m_OpenAction;
+  QAction *m_PreviewAction;
+  QAction *m_RenameAction;
+  QAction *m_DeleteAction;
   QAction *m_HideAction;
   QAction *m_UnhideAction;
 
@@ -440,11 +440,12 @@ private:
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
   bool canPreviewConflictItem(const QTreeWidgetItem* item) const;
 
-  void previewDataFile(const QTreeWidgetItem* item);
   void openDataFile(const QTreeWidgetItem* item);
+  void previewDataFile(const QTreeWidgetItem* item);
   void changeConflictFilesVisibility(bool hide);
   void changeFiletreeVisibility(bool hide);
 
+  bool canPreviewFile(bool isArchive, const QString& filename) const;
   bool canHideFile(bool isArchive, const QString& filename) const;
   bool canUnhideFile(bool isArchive, const QString& filename) const;
 };

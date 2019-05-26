@@ -3241,12 +3241,12 @@ void MainWindow::openExplorer_clicked()
   if (selection->hasSelection() && selection->selectedRows().count() > 1) {
     for (QModelIndex idx : selection->selectedRows()) {
       ModInfo::Ptr info = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-      ::ShellExecuteW(nullptr, L"explore", ToWString(info->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      shell::ExploreFile(info->absolutePath());
     }
   }
   else {
     ModInfo::Ptr modInfo = ModInfo::getByIndex(m_ContextRow);
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3261,18 +3261,14 @@ void MainWindow::openOriginExplorer_clicked()
         continue;
       }
       ModInfo::Ptr modInfo = ModInfo::getByIndex(modIndex);
-      std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-      ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+      shell::ExploreFile(modInfo->absolutePath());
     }
   }
   else {
     QModelIndex idx = selection->currentIndex();
     QString fileName = idx.data().toString();
     ModInfo::Ptr modInfo = ModInfo::getByIndex(ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(fileName)));
-    std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
-
-    ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(modInfo->absolutePath());
   }
 }
 
@@ -3287,7 +3283,7 @@ void MainWindow::openExplorer_activated()
 			std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
 			if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-				::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+        shell::ExploreFile(modInfo->absolutePath());
 			}
 
 		}
@@ -3308,7 +3304,7 @@ void MainWindow::openExplorer_activated()
         std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
         if (modInfo->isRegular() || (std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end())) {
-          ::ShellExecuteW(nullptr, L"explore", ToWString(modInfo->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+          shell::ExploreFile(modInfo->absolutePath());
         }
       }
 		}
@@ -4275,64 +4271,61 @@ void MainWindow::disableVisibleMods()
 void MainWindow::openInstanceFolder()
 {
   QString dataPath = qApp->property("dataPath").toString();
-  ::ShellExecuteW(nullptr, L"explore", ToWString(dataPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-
-  //opens BaseDirectory instead
-	//::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getBaseDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(dataPath);
 }
 
 void MainWindow::openLogsFolder()
 {
 	QString logsPath = qApp->property("dataPath").toString() + "/" + QString::fromStdWString(AppConfig::logPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(logsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(logsPath);
 }
 
 void MainWindow::openInstallFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(qApp->applicationDirPath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(qApp->applicationDirPath());
 }
 
 void MainWindow::openPluginsFolder()
 {
 	QString pluginsPath = QCoreApplication::applicationDirPath() + "/" + ToQString(AppConfig::pluginPath());
-	::ShellExecuteW(nullptr, L"explore", ToWString(pluginsPath).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(pluginsPath);
 }
 
 
 void MainWindow::openProfileFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
 }
 
 void MainWindow::openIniFolder()
 {
   if (m_OrganizerCore.currentProfile()->localSettingsEnabled())
   {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.currentProfile()->absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(m_OrganizerCore.currentProfile()->absolutePath());
   }
   else {
-    ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
   }
 }
 
 void MainWindow::openDownloadsFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getDownloadDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.settings().getDownloadDirectory());
 }
 
 void MainWindow::openModsFolder()
 {
-  ::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.settings().getModDirectory()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.settings().getModDirectory());
 }
 
 void MainWindow::openGameFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->gameDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.managedGame()->gameDirectory());
 }
 
 void MainWindow::openMyGamesFolder()
 {
-	::ShellExecuteW(nullptr, L"explore", ToWString(m_OrganizerCore.managedGame()->documentsDirectory().absolutePath()).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+  shell::ExploreFile(m_OrganizerCore.managedGame()->documentsDirectory());
 }
 
 
@@ -5153,73 +5146,30 @@ void MainWindow::writeDataToFile()
   }
 }
 
-
-int MainWindow::getBinaryExecuteInfo(const QFileInfo &targetInfo, QFileInfo &binaryInfo, QString &arguments)
-{
-  QString extension = targetInfo.suffix();
-  if ((extension.compare("cmd", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("com", Qt::CaseInsensitive) == 0) ||
-      (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
-    binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
-    arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    return 1;
-  } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
-    binaryInfo = targetInfo;
-    return 1;
-  } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = ToWString(targetInfo.absoluteFilePath());
-    QString binaryPath;
-
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = ToQString(buffer);
-        }
-      }
-    }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(this, tr("Select binary"), QString(), tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
-      return 0;
-    }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
-    return 1;
-  } else {
-    return 2;
-  }
-}
-
-
 void MainWindow::addAsExecutable()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  using FileExecutionTypes = OrganizerCore::FileExecutionTypes;
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  QFileInfo binaryInfo;
+  QString arguments;
+  FileExecutionTypes type;
+
+  if (!OrganizerCore::getFileExecutionContext(this, targetInfo, binaryInfo, arguments, type)) {
+    return;
+  }
+
+  switch (type)
+  {
+    case FileExecutionTypes::Executable: {
         QString name = QInputDialog::getText(this, tr("Enter Name"),
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
+
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
           m_OrganizerCore.executablesList()->addExecutable(name,
@@ -5230,14 +5180,15 @@ void MainWindow::addAsExecutable()
                                                            Executable::CustomExecutable);
           refreshExecutablesList();
         }
-      } break;
-      case 2: {
+
+        break;
+      }
+
+    case FileExecutionTypes::Other:  // fall-through
+    default: {
         QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+        break;
+      }
   }
 }
 
@@ -5355,91 +5306,17 @@ void MainWindow::disableSelectedMods_clicked()
 void MainWindow::previewDataFile()
 {
   QString fileName = QDir::fromNativeSeparators(m_ContextItem->data(0, Qt::UserRole).toString());
-
-  // what we have is an absolute path to the file in its actual location (for the primary origin)
-  // what we want is the path relative to the virtual data directory
-
-  // we need to look in the virtual directory for the file to make sure the info is up to date.
-
-  // check if the file comes from the actual data folder instead of a mod
-  QDir gameDirectory = m_OrganizerCore.managedGame()->dataDirectory().absolutePath();
-  QString relativePath = gameDirectory.relativeFilePath(fileName);
-  QDir dirRelativePath = gameDirectory.relativeFilePath(fileName);
-  // if the file is on a different drive the dirRelativePath will actually be an absolute path so we make sure that is not the case
-  if (!dirRelativePath.isAbsolute() && !relativePath.startsWith("..")) {
-	  fileName = relativePath;
-  }
-  else {
-	  // crude: we search for the next slash after the base mod directory to skip everything up to the data-relative directory
-	  int offset = m_OrganizerCore.settings().getModDirectory().size() + 1;
-	  offset = fileName.indexOf("/", offset);
-	  fileName = fileName.mid(offset + 1);
-  }
-
-
-
-  const FileEntry::Ptr file = m_OrganizerCore.directoryStructure()->searchFile(ToWString(fileName), nullptr);
-
-  if (file.get() == nullptr) {
-    reportError(tr("file not found: %1").arg(qUtf8Printable(fileName)));
-    return;
-  }
-
-  // set up preview dialog
-  PreviewDialog preview(fileName);
-  auto addFunc = [&] (int originId) {
-      FilesOrigin &origin = m_OrganizerCore.directoryStructure()->getOriginByID(originId);
-      QString filePath = QDir::fromNativeSeparators(ToQString(origin.getPath())) + "/" + fileName;
-      if (QFile::exists(filePath)) {
-        // it's very possible the file doesn't exist, because it's inside an archive. we don't support that
-        QWidget *wid = m_PluginContainer.previewGenerator().genPreview(filePath);
-        if (wid == nullptr) {
-          reportError(tr("failed to generate preview for %1").arg(filePath));
-        } else {
-          preview.addVariant(ToQString(origin.getName()), wid);
-        }
-      }
-    };
-
-  addFunc(file->getOrigin());
-  for (auto alt : file->getAlternatives()) {
-    addFunc(alt.first);
-  }
-  if (preview.numVariants() > 0) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(preview.objectName());
-    if (settings.contains(key)) {
-      preview.restoreGeometry(settings.value(key).toByteArray());
-    }
-    preview.exec();
-    settings.setValue(key, preview.saveGeometry());
-  } else {
-    QMessageBox::information(this, tr("Sorry"), tr("Sorry, can't preview anything. This function currently does not support extracting from bsas."));
-  }
+  m_OrganizerCore.previewFileWithAlternatives(this, fileName);
 }
 
 void MainWindow::openDataFile()
 {
-  if (m_ContextItem != nullptr) {
-    QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
-    QFileInfo binaryInfo;
-    QString arguments;
-    switch (getBinaryExecuteInfo(targetInfo, binaryInfo, arguments)) {
-      case 1: {
-        m_OrganizerCore.spawnBinaryDirect(
-            binaryInfo, arguments, m_OrganizerCore.currentProfile()->name(),
-            targetInfo.absolutePath(), "", "");
-      } break;
-      case 2: {
-        ::ShellExecuteW(nullptr, L"open",
-                        ToWString(targetInfo.absoluteFilePath()).c_str(),
-                        nullptr, nullptr, SW_SHOWNORMAL);
-      } break;
-      default: {
-        // nop
-      } break;
-    }
+  if (m_ContextItem == nullptr) {
+    return;
   }
+
+  QFileInfo targetInfo(m_ContextItem->data(0, Qt::UserRole).toString());
+  m_OrganizerCore.executeFileVirtualized(this, targetInfo);
 }
 
 

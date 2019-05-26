@@ -31,6 +31,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "bbcode.h"
 #include "plugincontainer.h"
+#include "organizercore.h"
 #include <versioninfo.h>
 #include <report.h>
 #include <util.h>
@@ -178,7 +179,7 @@ void SelfUpdater::startUpdate()
                     tr("New update available (%1)")
                         .arg(m_UpdateCandidate["tag_name"].toString()), tr("Do you want to install update? All your mods and setup will be left untouched.\nSelect Show Details option to see the full change-log."),
                     QMessageBox::Yes | QMessageBox::Cancel, m_Parent);
-	
+
   query.setDetailedText(m_UpdateCandidate["body"].toString());
   query.button(QMessageBox::Yes)->setText(tr("Install"));
 
@@ -329,22 +330,14 @@ void SelfUpdater::downloadCancel()
 
 void SelfUpdater::installUpdate()
 {
-  const QString mopath
-      = QDir::fromNativeSeparators(qApp->property("dataPath").toString());
+  const QString parameters = "/DIR=\"" + qApp->applicationDirPath() + "\" ";
 
-  std::wstring parameters = ToWString("/DIR=\"" + qApp->applicationDirPath() + "\" ");
-
-  HINSTANCE res = ::ShellExecuteW(
-      nullptr, L"open", m_UpdateFile.fileName().toStdWString().c_str(), parameters.c_str(),
-      nullptr, SW_SHOW);
-
-  if (res > (HINSTANCE)32) {
+  if (shell::Execute(m_UpdateFile.fileName(), parameters)) {
     QCoreApplication::quit();
   } else {
-    reportError(tr("Failed to start %1: %2")
-                    .arg(m_UpdateFile.fileName())
-                    .arg((INT_PTR)res));
+    reportError(tr("Failed to start %1").arg(m_UpdateFile.fileName()));
   }
+
   m_UpdateFile.remove();
 }
 
