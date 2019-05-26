@@ -57,19 +57,6 @@ namespace MOBase {
 }
 
 
-namespace shell
-{
-  bool ExploreFile(const QFileInfo& info);
-  bool ExploreFile(const QString& path);
-  bool ExploreFile(const QDir& dir);
-
-  bool OpenFile(const QString& path);
-  bool OpenLink(const QUrl& url);
-
-  bool Execute(const QString& program, const QString& params);
-}
-
-
 class OrganizerCore : public QObject, public MOBase::IPluginDiagnose
 {
 
