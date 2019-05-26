@@ -1025,6 +1025,15 @@ void MainWindow::setBrowserGeometry(const QByteArray &geometry)
 
 void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 {
+  // don't display the widget if the main window doesn't have focus
+  //
+  // this goes against the standard behaviour for tooltips, which are displayed
+  // on hover regardless of focus, but this widget is so large and busy that
+  // it's probably better this way
+  if (!isActiveWindow()){
+    return;
+  }
+
   QString const &save = newItem->data(Qt::UserRole).toString();
   if (m_CurrentSaveView == nullptr) {
     IPluginGame const *game = m_OrganizerCore.managedGame();
@@ -1056,8 +1065,6 @@ void MainWindow::displaySaveGameInfo(QListWidgetItem *newItem)
 
   m_CurrentSaveView->show();
   m_CurrentSaveView->setProperty("displayItem", qVariantFromValue(static_cast<void *>(newItem)));
-
-  ui->savegameList->activateWindow();
 }
 
 
