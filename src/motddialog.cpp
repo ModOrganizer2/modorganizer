@@ -22,7 +22,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "utility.h"
 #include "ui_motddialog.h"
 #include "organizercore.h"
+#include <utility.h>
 #include <Shlwapi.h>
+
+using namespace MOBase;
 
 MotDDialog::MotDDialog(const QString &message, QWidget *parent)
   : QDialog(parent), ui(new Ui::MotDDialog)
