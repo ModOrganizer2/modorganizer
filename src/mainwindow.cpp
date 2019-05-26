@@ -5163,7 +5163,7 @@ void MainWindow::addAsExecutable()
 
   switch (type)
   {
-    case FileExecutionTypes::executable: {
+    case FileExecutionTypes::Executable: {
         QString name = QInputDialog::getText(this, tr("Enter Name"),
               tr("Please enter a name for the executable"), QLineEdit::Normal,
               targetInfo.baseName());
@@ -5182,7 +5182,7 @@ void MainWindow::addAsExecutable()
         break;
       }
 
-    case FileExecutionTypes::other:  // fall-through
+    case FileExecutionTypes::Other:  // fall-through
     default: {
         QMessageBox::information(this, tr("Not an executable"), tr("This is not a recognized executable."));
         break;

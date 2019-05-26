@@ -279,11 +279,11 @@ bool GetFileExecutionContext(
     (extension.compare("bat", Qt::CaseInsensitive) == 0)) {
     binaryInfo = QFileInfo("C:\\Windows\\System32\\cmd.exe");
     arguments = QString("/C \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    type = FileExecutionTypes::executable;
+    type = FileExecutionTypes::Executable;
     return true;
   } else if (extension.compare("exe", Qt::CaseInsensitive) == 0) {
     binaryInfo = targetInfo;
-    type = FileExecutionTypes::executable;
+    type = FileExecutionTypes::Executable;
     return true;
   } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
     // types that need to be injected into
@@ -323,10 +323,10 @@ bool GetFileExecutionContext(
       arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     }
 
-    type = FileExecutionTypes::executable;
+    type = FileExecutionTypes::Executable;
     return true;
   } else {
-    type = FileExecutionTypes::other;
+    type = FileExecutionTypes::Other;
     return true;
   }
 }
@@ -1461,7 +1461,7 @@ bool OrganizerCore::executeFileVirtualized(
 
   switch (type)
   {
-    case FileExecutionTypes::executable: {
+    case FileExecutionTypes::Executable: {
       spawnBinaryDirect(
         binaryInfo, arguments, currentProfile()->name(),
         targetInfo.absolutePath(), "", "");
@@ -1469,7 +1469,7 @@ bool OrganizerCore::executeFileVirtualized(
       return true;
     }
 
-    case FileExecutionTypes::other: {
+    case FileExecutionTypes::Other: {
       ::ShellExecuteW(nullptr, L"open",
         ToWString(targetInfo.absoluteFilePath()).c_str(),
         nullptr, nullptr, SW_SHOWNORMAL);

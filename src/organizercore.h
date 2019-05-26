@@ -59,8 +59,8 @@ namespace MOBase {
 
 enum class FileExecutionTypes
 {
-  executable = 1,
-  other = 2
+  Executable = 1,
+  Other = 2
 };
 
 bool GetFileExecutionContext(
