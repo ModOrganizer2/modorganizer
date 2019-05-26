@@ -54,12 +54,12 @@ void ForcedLoadDialogWidget::setForced(bool forced)
   ui->processEdit->setEnabled(!forced);
 }
 
-void ForcedLoadDialogWidget::setLibraryPath(QString &path)
+void ForcedLoadDialogWidget::setLibraryPath(const QString &path)
 {
   ui->libraryPathEdit->setText(path);
 }
 
-void ForcedLoadDialogWidget::setProcess(QString &name)
+void ForcedLoadDialogWidget::setProcess(const QString &name)
 {
   ui->processEdit->setText(name);
 }
@@ -71,7 +71,7 @@ void ForcedLoadDialogWidget::on_enabledBox_toggled()
 
 void ForcedLoadDialogWidget::on_libraryPathBrowseButton_clicked()
 {
-  QDir gameDir(m_GamePlugin->gameDirectory()); 
+  QDir gameDir(m_GamePlugin->gameDirectory());
   QString startPath = gameDir.absolutePath();
   QString result = QFileDialog::getOpenFileName(nullptr, "Select a library...", startPath, "Dynamic link library (*.dll)", nullptr, QFileDialog::ReadOnly);
   if (!result.isEmpty()) {
@@ -100,7 +100,7 @@ void ForcedLoadDialogWidget::on_processBrowseButton_clicked()
     QString fileName = fileInfo.fileName();
 
     if (fileInfo.exists()) {
-      ui->processEdit->setText(fileName);  
+      ui->processEdit->setText(fileName);
     } else {
       qCritical("%ls does not exist", fileInfo.filePath().toStdWString().c_str());
     }

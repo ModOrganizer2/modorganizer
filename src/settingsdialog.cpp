@@ -88,7 +88,7 @@ QString SettingsDialog::getColoredButtonStyleSheet() const
     "}");
 }
 
-void SettingsDialog::setButtonColor(QPushButton *button, QColor &color)
+void SettingsDialog::setButtonColor(QPushButton *button, const QColor &color)
 {
   button->setStyleSheet(
     QString("QPushButton {"
