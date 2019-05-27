@@ -1636,12 +1636,11 @@ FileRenamer::RenameResults ModInfoDialog::unhideFile(FileRenamer& renamer, const
   return renamer.rename(oldName, newName);
 }
 
-void ModInfoDialog::changeConflictFilesVisibility(bool hide)
+void ModInfoDialog::changeConflictItemsVisibility(
+  const QList<QTreeWidgetItem*>& items, bool hide)
 {
   bool changed = false;
   bool stop = false;
-
-  const auto items = ui->overwriteTree->selectedItems();
 
   qDebug().nospace()
     << (hide ? "hiding" : "unhiding") << " "
@@ -1707,63 +1706,21 @@ void ModInfoDialog::changeConflictFilesVisibility(bool hide)
   }
 }
 
-void ModInfoDialog::hideConflictFiles()
+void ModInfoDialog::openConflictItems(const QList<QTreeWidgetItem*>& items)
 {
-  changeConflictFilesVisibility(true);
-}
-
-void ModInfoDialog::unhideConflictFiles()
-{
-  changeConflictFilesVisibility(false);
-}
-
-void ModInfoDialog::previewOverwriteDataFile()
-{
-  // the menu item is only shown for a single selection, but check just in case
-  const auto selection = ui->overwriteTree->selectedItems();
-  if (!selection.empty()) {
-    previewDataFile(selection[0]);
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for (auto* item : items) {
+    openDataFile(item);
   }
 }
 
-void ModInfoDialog::openOverwriteDataFile()
+void ModInfoDialog::previewConflictItems(const QList<QTreeWidgetItem*>& items)
 {
-  // the menu item is only shown for a single selection, but check just in case
-  const auto selection = ui->overwriteTree->selectedItems();
-  if (!selection.empty()) {
-    openDataFile(selection[0]);
-  }
-}
-
-void ModInfoDialog::previewOverwrittenDataFile()
-{
-  const auto selection = ui->overwrittenTree->selectedItems();
-  if (!selection.empty()) {
-    previewDataFile(selection[0]);
-  }
-}
-
-void ModInfoDialog::openOverwrittenDataFile()
-{
-  const auto selection = ui->overwrittenTree->selectedItems();
-  if (!selection.empty()) {
-    openDataFile(selection[0]);
-  }
-}
-
-void ModInfoDialog::previewNoConflictDataFile()
-{
-  const auto selection = ui->noConflictTree->selectedItems();
-  if (!selection.empty()) {
-    previewDataFile(selection[0]);
-  }
-}
-
-void ModInfoDialog::openNoConflictDataFile()
-{
-  const auto selection = ui->noConflictTree->selectedItems();
-  if (!selection.empty()) {
-    openDataFile(selection[0]);
+  // the menu item is only shown for a single selection, but handle all of them
+  // in case this changes
+  for (auto* item : items) {
+    previewDataFile(item);
   }
 }
 
@@ -1846,17 +1803,71 @@ bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
 
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
 {
-  const auto selection = ui->overwriteTree->selectedItems();
-  if (selection.empty()) {
+  showConflictMenu(pos, ui->overwriteTree);
+}
+
+void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
+{
+  showConflictMenu(pos, ui->overwrittenTree);
+}
+
+void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
+{
+  showConflictMenu(pos, ui->noConflictTree);
+}
+
+void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
+{
+  auto actions = createConflictMenuActions(tree->selectedItems());
+
+  QMenu menu;
+
+  if (actions.open) {
+    connect(actions.open, &QAction::triggered, [&]{
+      openConflictItems(tree->selectedItems());
+    });
+
+    menu.addAction(actions.open);
+  }
+
+  if (actions.preview) {
+    connect(actions.preview, &QAction::triggered, [&]{
+      previewConflictItems(tree->selectedItems());
+    });
+
+    menu.addAction(actions.preview);
+  }
+
+  if (actions.hide) {
+    connect(actions.hide, &QAction::triggered, [&]{
+      changeConflictItemsVisibility(tree->selectedItems(), false);
+    });
+
+    menu.addAction(actions.hide);
+  }
+
+  if (actions.unhide) {
+    connect(actions.unhide, &QAction::triggered, [&]{
+      changeConflictItemsVisibility(tree->selectedItems(), true);
+    });
+
+    menu.addAction(actions.unhide);
+  }
+
+  if (menu.isEmpty()) {
     return;
   }
 
-  // for a single selection, hide/unhide is not shown for files from
-  // archives and whether the action is hide or unhide depends on the current
-  // state
-  //
-  // for multiple selection, both actions are shown unconditionally and
-  // handled in hideConflictFiles() and unhideConflictFiles()
+  menu.exec(tree->viewport()->mapToGlobal(pos));
+}
+
+ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
+  const QList<QTreeWidgetItem*> selection)
+{
+  if (selection.empty()) {
+    return {};
+  }
+
   bool enableHide = true;
   bool enableUnhide = true;
   bool enableOpen = true;
@@ -1866,7 +1877,7 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
     // this is a single selection
     const auto* item = selection[0];
     if (!item) {
-      return;
+      return {};
     }
 
     enableHide = canHideConflictItem(item);
@@ -1903,66 +1914,27 @@ void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &po
     }
   }
 
-
-  QMenu menu;
+  ConflictActions actions;
 
   if (enableHide) {
-    menu.addAction(tr("Hide"), this, SLOT(hideConflictFiles()));
+    actions.hide = new QAction(tr("Hide"));
   }
 
   // note that it is possible for hidden files to appear if they override other
   // hidden files from another mod
   if (enableUnhide) {
-    menu.addAction(tr("Unhide"), this, SLOT(unhideConflictFiles()));
+    actions.unhide = new QAction(tr("Unhide"));
   }
 
   if (enableOpen) {
-	  menu.addAction(tr("Open/Execute"), this, SLOT(openOverwriteDataFile()));
+    actions.open = new QAction(tr("Open/Execute"));
   }
 
   if (enablePreview) {
-    menu.addAction(tr("Preview"), this, SLOT(previewOverwriteDataFile()));
+    actions.preview = new QAction(tr("Preview"));
   }
 
-  menu.exec(ui->overwriteTree->viewport()->mapToGlobal(pos));
-}
-
-void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
-{
-	auto* item = ui->overwrittenTree->itemAt(pos.x(), pos.y());
-
-	if (item != nullptr) {
-		if (!item->data(1, Qt::UserRole + 2).toBool()) {
-			QMenu menu;
-
-			menu.addAction(tr("Open/Execute"), this, SLOT(openOverwrittenDataFile()));
-
-      if (canPreviewConflictItem(item)) {
-				menu.addAction(tr("Preview"), this, SLOT(previewOverwrittenDataFile()));
-			}
-
-			menu.exec(ui->overwrittenTree->viewport()->mapToGlobal(pos));
-		}
-	}
-}
-
-void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
-{
-  auto* item = ui->noConflictTree->itemAt(pos.x(), pos.y());
-
-  if (item != nullptr) {
-    if (!item->data(1, Qt::UserRole + 2).toBool()) {
-      QMenu menu;
-
-      menu.addAction(tr("Open/Execute"), this, SLOT(openNoConflictDataFile()));
-
-      if (canPreviewConflictItem(item)) {
-        menu.addAction(tr("Preview"), this, SLOT(previewNoConflictDataFile()));
-      }
-
-      menu.exec(ui->noConflictTree->viewport()->mapToGlobal(pos));
-    }
-  }
+  return actions;
 }
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
