@@ -1326,25 +1326,27 @@ void ModInfoDialog::renameTriggered()
 
 void ModInfoDialog::hideTriggered()
 {
-  changeFiletreeVisibility(true);
+  changeFiletreeVisibility(false);
 }
 
 
 void ModInfoDialog::unhideTriggered()
 {
-  changeFiletreeVisibility(false);
+  changeFiletreeVisibility(true);
 }
 
-void ModInfoDialog::changeFiletreeVisibility(bool hide)
+void ModInfoDialog::changeFiletreeVisibility(bool visible)
 {
   bool changed = false;
   bool stop = false;
 
   qDebug().nospace()
-    << (hide ? "hiding" : "unhiding") << " "
+    << (visible ? "unhiding" : "hiding") << " "
     << m_FileSelection.size() << " filetree files";
 
-  QFlags<FileRenamer::RenameFlags> flags = (hide ? FileRenamer::HIDE : FileRenamer::UNHIDE);
+  QFlags<FileRenamer::RenameFlags> flags =
+    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
+
   if (m_FileSelection.size() > 1) {
     flags |= FileRenamer::MULTIPLE;
   }
@@ -1359,19 +1361,18 @@ void ModInfoDialog::changeFiletreeVisibility(bool hide)
     const QString path = m_FileSystemModel->filePath(index);
     auto result = FileRenamer::RESULT_CANCEL;
 
-    if (hide) {
-      if (!canHideFile(false, path)) {
-        qDebug().nospace() << "cannot hide " << path << ", skipping";
-        continue;
-      }
-      result = hideFile(renamer, path);
-
-    } else {
+    if (visible) {
       if (!canUnhideFile(false, path)) {
         qDebug().nospace() << "cannot unhide " << path << ", skipping";
         continue;
       }
       result = unhideFile(renamer, path);
+    } else {
+      if (!canHideFile(false, path)) {
+        qDebug().nospace() << "cannot hide " << path << ", skipping";
+        continue;
+      }
+      result = hideFile(renamer, path);
     }
 
     switch (result) {
@@ -1394,7 +1395,7 @@ void ModInfoDialog::changeFiletreeVisibility(bool hide)
     }
   }
 
-  qDebug().nospace() << (hide ? "hiding" : "unhiding") << " filetree files done";
+  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " filetree files done";
 
   if (changed) {
     qDebug().nospace() << "triggering refresh";
