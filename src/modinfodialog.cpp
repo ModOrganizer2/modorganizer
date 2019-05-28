@@ -597,6 +597,12 @@ QByteArray ModInfoDialog::saveConflictExpandersState() const
 
 void ModInfoDialog::refreshLists()
 {
+  refreshConflictLists();
+  refreshFiles();
+}
+
+void ModInfoDialog::refreshConflictLists()
+{
   int numNonConflicting = 0;
   int numOverwrite = 0;
   int numOverwritten = 0;
@@ -616,7 +622,7 @@ void ModInfoDialog::refreshLists()
         if (!alternatives.empty()) {
           std::wostringstream altString;
           for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-               altIter != alternatives.end(); ++altIter) {
+            altIter != alternatives.end(); ++altIter) {
             if (altIter != alternatives.begin()) {
               altString << ", ";
             }
@@ -669,6 +675,13 @@ void ModInfoDialog::refreshLists()
     }
   }
 
+  ui->overwriteCount->display(numOverwrite);
+  ui->overwrittenCount->display(numOverwritten);
+  ui->noConflictCount->display(numNonConflicting);
+}
+
+void ModInfoDialog::refreshFiles()
+{
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
@@ -677,7 +690,7 @@ void ModInfoDialog::refreshLists()
       if (fileName.endsWith(".txt", Qt::CaseInsensitive)) {
         ui->textFileList->addItem(fileName.mid(m_RootPath.length() + 1));
       } else if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
-                 !fileName.endsWith("meta.ini")) {
+        !fileName.endsWith("meta.ini")) {
         QString namePart = fileName.mid(m_RootPath.length() + 1);
         if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive)) {
           QListWidgetItem *newItem = new QListWidgetItem(namePart.mid(11), ui->iniTweaksList);
@@ -689,8 +702,8 @@ void ModInfoDialog::refreshLists()
           ui->iniFileList->addItem(namePart);
         }
       } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esm", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esl", Qt::CaseInsensitive)) {
+        fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+        fileName.endsWith(".esl", Qt::CaseInsensitive)) {
         QString relativePath = fileName.mid(m_RootPath.length() + 1);
         if (relativePath.contains('/')) {
           QFileInfo fileInfo(fileName);
@@ -701,7 +714,7 @@ void ModInfoDialog::refreshLists()
           ui->activeESPList->addItem(relativePath);
         }
       } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
-                 (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
+        (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
         QImage image = QImage(fileName);
         if (!image.isNull()) {
           if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
@@ -719,12 +732,7 @@ void ModInfoDialog::refreshLists()
       }
     }
   }
-
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
 }
-
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
 {

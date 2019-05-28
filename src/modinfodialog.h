@@ -429,6 +429,9 @@ private:
   ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
 
 
+  void refreshConflictLists();
+  void refreshFiles();
+
   void restoreTabState(const QByteArray &state);
   void restoreConflictExpandersState(const QByteArray &state);
 
