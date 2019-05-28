@@ -139,7 +139,7 @@ void PluginList::highlightPlugins(const QItemSelectionModel *selection, const MO
       if (plugins.size() > 0) {
         for (auto plugin : plugins) {
           MOShared::FileEntry::Ptr file = directoryEntry.findFile(plugin.toStdWString());
-          if (file->getOrigin() != origin.getID()) {
+          if (file && file->getOrigin() != origin.getID()) {
             const std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = file->getAlternatives();
             if (std::find_if(alternatives.begin(), alternatives.end(), [&](const std::pair<int, std::pair<std::wstring, int>>& element) { return element.first == origin.getID(); }) == alternatives.end())
               continue;
