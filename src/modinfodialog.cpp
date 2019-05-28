@@ -1637,16 +1637,18 @@ FileRenamer::RenameResults ModInfoDialog::unhideFile(FileRenamer& renamer, const
 }
 
 void ModInfoDialog::changeConflictItemsVisibility(
-  const QList<QTreeWidgetItem*>& items, bool hide)
+  const QList<QTreeWidgetItem*>& items, bool visible)
 {
   bool changed = false;
   bool stop = false;
 
   qDebug().nospace()
-    << (hide ? "hiding" : "unhiding") << " "
+    << (visible ? "unhiding" : "hiding") << " "
     << items.size() << " conflict files";
 
-  QFlags<FileRenamer::RenameFlags> flags = (hide ? FileRenamer::HIDE : FileRenamer::UNHIDE);
+  QFlags<FileRenamer::RenameFlags> flags =
+    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
+
   if (items.size() > 1) {
     flags |= FileRenamer::MULTIPLE;
   }
@@ -1660,19 +1662,19 @@ void ModInfoDialog::changeConflictItemsVisibility(
 
     auto result = FileRenamer::RESULT_CANCEL;
 
-    if (hide) {
-      if (!canHideConflictItem(item)) {
-        qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
-        continue;
-      }
-      result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
-
-    } else {
+    if (visible) {
       if (!canUnhideConflictItem(item)) {
         qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
         continue;
       }
       result = unhideFile(renamer, item->data(0, Qt::UserRole).toString());
+
+    } else {
+      if (!canHideConflictItem(item)) {
+        qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
+        continue;
+      }
+      result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
     }
 
     switch (result) {
@@ -1695,7 +1697,7 @@ void ModInfoDialog::changeConflictItemsVisibility(
     }
   }
 
-  qDebug().nospace() << (hide ? "hiding" : "unhiding") << " conflict files done";
+  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " conflict files done";
 
   if (changed) {
     qDebug().nospace() << "triggering refresh";
