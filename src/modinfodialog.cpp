@@ -766,16 +766,21 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
 
     for (const auto& alt : alternatives)
     {
-      auto altOrigin = m_Directory->getOriginByID(alt.first);
+      const auto altOrigin = m_Directory->getOriginByID(alt.first);
 
       if (ui->conflictsAdvancedShowAll->isChecked()) {
+        // fills 'before' and 'after' with all the alternatives that come
+        // before and after this mod in terms of priority
+
         if (altOrigin.getPriority() < m_Origin->getPriority()) {
+          // add all the mods having a lower priority than this one
           if (!before.isEmpty()) {
             before += ", ";
           }
 
           before += ToQString(altOrigin.getName());
         } else if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          // add all the mods having a higher priority than this one
           if (!after.isEmpty()) {
             after += ", ";
           }
@@ -783,15 +788,26 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
           after += ToQString(altOrigin.getName());
         }
       } else {
-        if (altOrigin.getPriority() > beforePrio) {
-          if (altOrigin.getPriority() < m_Origin->getPriority()) {
+        // keep track of the nearest mods that come before and after this one
+        // in terms of priority
+
+        if (altOrigin.getPriority() < m_Origin->getPriority()) {
+          // the alternative has a lower priority than this mod
+
+          if (altOrigin.getPriority() > beforePrio) {
+            // the alternative has a higher priority and therefore is closer
+            // to this mod, use it
             before = ToQString(altOrigin.getName());
             beforePrio = altOrigin.getPriority();
           }
         }
 
-        if (altOrigin.getPriority() < afterPrio) {
-          if (altOrigin.getPriority() > m_Origin->getPriority()) {
+        if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          // the alternative has a higher priority than this mod
+
+          if (altOrigin.getPriority() < afterPrio) {
+            // the alternative has a lower priority and there is closer
+            // to this mod, use it
             after = ToQString(altOrigin.getName());
             afterPrio = altOrigin.getPriority();
           }
@@ -799,9 +815,19 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
       }
     }
 
+    // the primary origin is never in the list of alternatives, so it has to
+    // be handled separately
+    //
+    // if 'after' is not empty, it means at least one alternative with a higher
+    // priority than this mod was found; if the user only wants to see the
+    // nearest mods, it's not worth checking for the primary origin because it
+    // will always have a higher priority than the alternatives (or it wouldn't
+    // be the primary)
     if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
       FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
 
+      // if no mods overwrite this file, the primary origin is the same as this
+      // mod, so ignore that
       if (realOrigin.getID() != m_Origin->getID()) {
         if (!after.isEmpty()) {
           after += ", ";
@@ -813,6 +839,8 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
   }
 
   if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
+    // if both before and after are empty, it means this file has no conflicts
+    // at all, only display it if the user wants it
     if (before.isEmpty() && after.isEmpty()) {
       return nullptr;
     }
