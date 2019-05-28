@@ -23,8 +23,8 @@ public:
 
     void setEnabled(bool enabled);
     void setForced(bool forced);
-    void setLibraryPath(QString &path);
-    void setProcess(QString &name);
+    void setLibraryPath(const QString &path);
+    void setProcess(const QString &name);
 
 private slots:
     void on_enabledBox_toggled();

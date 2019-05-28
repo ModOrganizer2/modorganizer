@@ -53,7 +53,7 @@ public:
   */
   QString getColoredButtonStyleSheet() const;
 
-  void setButtonColor(QPushButton *button, QColor &color);
+  void setButtonColor(QPushButton *button, const QColor &color);
 
 public slots:
 

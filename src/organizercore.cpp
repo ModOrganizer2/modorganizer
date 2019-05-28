@@ -112,7 +112,7 @@ static bool renameFile(const QString &oldName, const QString &newName,
 static std::wstring getProcessName(HANDLE process)
 {
   wchar_t buffer[MAX_PATH];
-  wchar_t *fileName = L"unknown";
+  const wchar_t *fileName = L"unknown";
 
   if (process == nullptr) return fileName;
 

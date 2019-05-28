@@ -227,7 +227,7 @@ QString InstanceManager::chooseInstance(const QStringList &instanceList) const
   if (choice.type() == QVariant::String) {
     return choice.toString();
   } else {
-    switch (choice.value<uint8_t>()) {
+    switch (static_cast<Special>(choice.value<uint8_t>())) {
       case Special::NewInstance: return queryInstanceName(instanceList);
       case Special::Portable: return QString();
       case Special::Manage: {
