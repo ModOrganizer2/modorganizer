@@ -1319,7 +1319,7 @@ bool OrganizerCore::executeFileVirtualized(
 }
 
 bool OrganizerCore::previewFileWithAlternatives(
-  QWidget* parent, QString fileName)
+  QWidget* parent, QString fileName, int selectedOrigin)
 {
   // what we have is an absolute path to the file in its actual location (for the primary origin)
   // what we want is the path relative to the virtual data directory
@@ -1370,9 +1370,42 @@ bool OrganizerCore::previewFileWithAlternatives(
     }
   };
 
-  addFunc(file->getOrigin());
-  for (auto alt : file->getAlternatives()) {
-    addFunc(alt.first);
+  if (selectedOrigin == -1) {
+    // don't bother with the vector of origins, just add them as they come
+    addFunc(file->getOrigin());
+    for (auto alt : file->getAlternatives()) {
+      addFunc(alt.first);
+    }
+  } else {
+    std::vector<int> origins;
+
+    // start with the primary origin
+    origins.push_back(file->getOrigin());
+
+    // add other origins, push to front if it's the selected one
+    for (auto alt : file->getAlternatives()) {
+      if (alt.first == selectedOrigin) {
+        origins.insert(origins.begin(), alt.first);
+      } else {
+        origins.push_back(alt.first);
+      }
+    }
+
+    // can't be empty; either the primary origin was the selected one, or it
+    // was one of the alternatives, which got inserted in front
+
+    if (origins[0] != selectedOrigin) {
+      // sanity check, this shouldn't happen unless the caller passed an
+      // incorrect id
+
+      qWarning().nospace()
+        << "selected preview origin " << selectedOrigin << " not found in "
+        << "list of alternatives";
+    }
+
+    for (int id : origins) {
+      addFunc(id);
+    }
   }
 
   if (preview.numVariants() > 0) {

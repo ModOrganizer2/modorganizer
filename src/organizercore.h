@@ -152,7 +152,7 @@ public:
     QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
 
   bool executeFileVirtualized(QWidget* parent, const QFileInfo& targetInfo);
-  bool previewFileWithAlternatives(QWidget* parent, QString filename);
+  bool previewFileWithAlternatives(QWidget* parent, QString filename, int selectedOrigin=-1);
   bool previewFile(QWidget* parent, const QString& originName, const QString& path);
 
   void spawnBinary(const QFileInfo &binary, const QString &arguments = "",

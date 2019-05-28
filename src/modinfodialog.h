@@ -397,7 +397,6 @@ private:
   Ui::ModInfoDialog *ui;
 
   ModInfo::Ptr m_ModInfo;
-  int m_OriginID;
 
   QSignalMapper m_ThumbnailMapper;
   QString m_RootPath;
