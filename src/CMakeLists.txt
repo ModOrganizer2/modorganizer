@@ -9,6 +9,28 @@ IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   SET(PROJ_ARCH x64)
 ENDIF()
 
+macro(add_msvc_precompiled_header PrecompiledHeader PrecompiledSource SourcesVar HeadersVar)
+  if(MSVC)
+    get_filename_component(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
+    set(PrecompiledBinary "${CMAKE_CURRENT_BINARY_DIR}/${PrecompiledBasename}.pch")
+    set(Sources ${${SourcesVar}})
+
+    set_source_files_properties(
+		${PrecompiledSource} PROPERTIES
+		COMPILE_FLAGS "/Yc\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_OUTPUTS "${PrecompiledBinary}")
+
+    set_source_files_properties(
+		${Sources} PROPERTIES
+		COMPILE_FLAGS "/Yu\"${PrecompiledHeader}\" /FI\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
+		OBJECT_DEPENDS "${PrecompiledBinary}")
+
+    list(APPEND ${SourcesVar} ${PrecompiledSource})
+	list(APPEND ${HeadersVar} ${PrecompiledHeader})
+  endif(MSVC)
+endmacro(add_msvc_precompiled_header)
+
+
 SET(organizer_SRCS
     transfersavesdialog.cpp
     syncoverwritedialog.cpp
@@ -243,16 +265,172 @@ SET(organizer_RCS
 	)
 
 
-SOURCE_GROUP(Source FILES ${organizer_SRCS})
-SOURCE_GROUP(Headers FILES ${organizer_HDRS})
-SOURCE_GROUP(UI FILES ${organizer_UIS})
+source_group(src REGULAR_EXPRESSION ".*\\.(h|cpp)")
+
+set(application
+	iuserinterface
+	main
+	mainwindow
+	moapplication
+	moshortcut
+	selfupdater
+	singleinstance
+)
+
+set(browser
+	browserdialog
+	browserview
+)
+
+set(core
+	categories
+	shared/directoryentry
+	directoryrefresher
+	executableslist
+	installationmanager
+	instancemanager
+	loadmechanism
+	nexusinterface
+	nxmaccessmanager
+	organizercore
+	organizerproxy
+)
+
+set(dialogs
+	aboutdialog
+	activatemodsdialog
+	categoriesdialog
+	credentialsdialog
+	editexecutablesdialog
+	filedialogmemory
+	forcedloaddialog
+	forcedloaddialogwidget
+	listdialog
+	messagedialog
+	motddialog
+	overwriteinfodialog
+	queryoverwritedialog
+	problemsdialog
+	savetextasdialog
+	selectiondialog
+	syncoverwritedialog
+	transfersavesdialog
+	waitingonclosedialog
+)
+
+set(downloads
+	downloadlist
+	downloadlistsortproxy
+	downloadlistwidget
+	downloadmanager
+)
+
+set(locking
+	ilockedwaitingforprocess
+	lockeddialog
+	lockeddialogbase
+)
+
+set(modinfo
+	modinfo
+	modinfobackup
+	modinfodialog
+	modinfoforeign
+	modinfooverwrite
+	modinforegular
+	modinfoseparator
+	modinfowithconflictinfo
+)
+
+set(modlist
+	modlist
+	modlistsortproxy
+	modlistview
+)
+
+set(plugins
+	plugincontainer
+	pluginlist
+	pluginlistsortproxy
+	pluginlistview
+)
+
+set(previews
+	previewdialog
+	previewgenerator
+)
+
+set(profiles
+	profile
+	profileinputdialog
+	profilesdialog
+)
+
+set(settings
+	settings
+	settingsdialog
+)
+
+set(utilities
+	shared/appconfig
+	bbcode
+	csvbuilder
+	shared/error_report
+	eventfilter
+	helper
+	shared/leaktrace
+	persistentcookiejar
+	serverinfo
+	spawn
+	shared/stackdata
+	shared/util
+	usvfsconnector
+	shared/windows_error
+)
+
+set(widgets
+	descriptionpage
+	genericicondelegate
+	icondelegate
+	lcdnumber
+	logbuffer
+	loghighlighter
+	modflagicondelegate
+	modidlineedit
+	noeditdelegate
+	qtgroupingproxy
+	viewmarkingscrollbar
+)
+
+set(src_filters
+	application core browser dialogs downloads locking modinfo modlist plugins
+	previews profiles settings utilities widgets
+)
+
+foreach(filter in list ${src_filters})
+	set(files)
+	foreach(d in lists ${${filter}})
+		set(files ${files} ${d}.cpp ${d}.h ${d}.inc)
+	endforeach()
+
+	source_group(src\\${filter} FILES ${files})
+endforeach()
+
+file(GLOB_RECURSE rule_files ../vsbuild/CMakeFiles/*.rule)
+file(GLOB qm_files ../vsbuild/src/*.qm)
+
+source_group(cmake FILES CMakeLists.txt)
+source_group(autogen FILES ${rule_files} ${qm_files})
+source_group(resources FILES ${organizer_RCS} ${organizer_QRCS})
 
 # MO projects
 SET(dependency_project_path "${DEPENDENCIES_DIR}")
 SET(default_project_path "${DEPENDENCIES_DIR}/modorganizer_super")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
-
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+
+add_msvc_precompiled_header("pch.h" "pch.cpp" organizer_SRCS organizer_HDRS)
+
 #TODO this should not be a hardcoded path
 SET(lib_path "${project_path}/../../install/libs")
 
@@ -260,6 +438,8 @@ SET(lib_path "${project_path}/../../install/libs")
 SET(CMAKE_INCLUDE_CURRENT_DIR ON)
 SET(CMAKE_AUTOMOC ON)
 SET(CMAKE_AUTOUIC ON)
+SET(CMAKE_AUTORCC ON)
+
 FIND_PACKAGE(Qt5Widgets REQUIRED)
 FIND_PACKAGE(Qt5QuickWidgets REQUIRED)
 FIND_PACKAGE(Qt5Quick REQUIRED)
@@ -269,10 +449,14 @@ FIND_PACKAGE(Qt5WebEngineWidgets REQUIRED)
 FIND_PACKAGE(Qt5WebSockets REQUIRED)
 FIND_PACKAGE(Qt5Qml REQUIRED)
 FIND_PACKAGE(Qt5LinguistTools)
-QT5_WRAP_UI(organizer_UIHDRS ${organizer_UIS})
-QT5_ADD_RESOURCES(organizer_RCCPPS ${organizer_QRCS})
+
 SET(mo_translation_sources ${CMAKE_SOURCE_DIR}/src ${project_path}/uibase/src)
-QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY AUTOGEN_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTOMOC_SOURCE_GROUP autogen)
+set_property(GLOBAL PROPERTY AUTORCC_SOURCE_GROUP autogen)
+
+QT5_CREATE_TRANSLATION(organizer_translations_qm ${mo_translation_sources} ${CMAKE_SOURCE_DIR}/src/organizer_en.ts OPTIONS -silent)
 ADD_CUSTOM_TARGET(translations DEPENDS ${organizer_translations_qm})
 
 INCLUDE_DIRECTORIES(${Qt5Declarative_INCLUDES})
@@ -322,7 +506,7 @@ ELSE()
   SET(usvfs_name usvfs_x86)
 ENDIF()
 
-ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_UIHDRS} ${organizer_RCS} ${organizer_RCCPPS} ${organizer_translations_qm})
+ADD_EXECUTABLE(ModOrganizer WIN32 ${organizer_HDRS} ${organizer_SRCS} ${organizer_RCS} ${organizer_QRCS} ${organizer_translations_qm})
 TARGET_LINK_LIBRARIES(ModOrganizer
                       Qt5::Widgets Qt5::WinExtras Qt5::WebEngineWidgets Qt5::Quick
                       Qt5::Qml Qt5::QuickWidgets Qt5::Network Qt5::WebSockets
@@ -375,11 +559,11 @@ SET(windeploy_parameters "--no-translations --plugindir qtplugins --libdir dlls 
 INSTALL(
     CODE
     "EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 ModOrganizer.exe --webenginewidgets --websockets ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     EXECUTE_PROCESS(COMMAND
-        ${qt5bin}/windeployqt.exe uibase.dll ${windeploy_parameters}
+        ${qt5bin}/windeployqt.exe --verbose 0 uibase.dll ${windeploy_parameters}
         WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
     )
     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/bin/platforms)
