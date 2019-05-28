@@ -1743,10 +1743,8 @@ void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
     return;
   }
 
-  const int originId = (m_Origin ? m_Origin->getID() : -1);
-
   QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->previewFileWithAlternatives(this, fileName, originId);
+  m_OrganizerCore->previewFileWithAlternatives(this, fileName);
 }
 
 bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) const
