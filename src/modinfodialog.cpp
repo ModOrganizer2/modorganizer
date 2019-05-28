@@ -437,6 +437,10 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
   m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
+
+  connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
+    refreshConflictLists(false, true);
+  });
 }
 
 
@@ -597,55 +601,76 @@ QByteArray ModInfoDialog::saveConflictExpandersState() const
 
 void ModInfoDialog::refreshLists()
 {
-  refreshConflictLists();
+  refreshConflictLists(true, true);
   refreshFiles();
 }
 
-void ModInfoDialog::refreshConflictLists()
+void ModInfoDialog::refreshConflictLists(
+  bool refreshGeneral, bool refreshAdvanced)
 {
   int numNonConflicting = 0;
   int numOverwrite = 0;
   int numOverwritten = 0;
 
-  ui->overwriteTree->clear();
-  ui->overwrittenTree->clear();
-  ui->noConflictTree->clear();
+  if (refreshGeneral) {
+    ui->overwriteTree->clear();
+    ui->overwrittenTree->clear();
+    ui->noConflictTree->clear();
+  }
+
+  if (refreshAdvanced) {
+    ui->conflictsAdvancedList->clear();
+  }
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
 
     for (const auto& file : m_Origin->getFiles()) {
-      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
-      QString fileName = relativeName.mid(0).prepend(m_RootPath);
+      const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      const QString fileName = relativeName.mid(0).prepend(m_RootPath);
+
       bool archive = false;
+      const int fileOrigin = file->getOrigin(archive);
+      const auto& alternatives = file->getAlternatives();
 
-      if (file->getOrigin(archive) == m_Origin->getID()) {
-        const auto& alternatives = file->getAlternatives();
+      if (refreshGeneral) {
+        if (fileOrigin == m_Origin->getID()) {
+          if (!alternatives.empty()) {
+            ui->overwriteTree->addTopLevelItem(createOverwriteItem(
+              archive, fileName, relativeName, alternatives));
 
-        if (!alternatives.empty()) {
-          ui->overwriteTree->addTopLevelItem(createOverwriteItem(
-            archive, fileName, relativeName, alternatives));
+            ++numOverwrite;
+          } else {
+            // otherwise, put the file in the noconflict tree
+            ui->noConflictTree->addTopLevelItem(createNoConflictItem(
+              archive, fileName, relativeName));
 
-          ++numOverwrite;
+            ++numNonConflicting;
+          }
         } else {
-          // otherwise, put the file in the nonconflict tree
-          ui->noConflictTree->addTopLevelItem(createNoConflictItem(
-            archive, fileName, relativeName));
+          ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
+            fileOrigin, archive, fileName, relativeName));
 
-          ++numNonConflicting;
+          ++numOverwritten;
         }
-      } else {
-        ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
-          file, archive, fileName, relativeName));
+      }
 
-        ++numOverwritten;
+      if (refreshAdvanced) {
+        auto* advancedItem = createAdvancedConflictItem(
+          fileOrigin, archive, fileName, relativeName, alternatives);
+
+        if (advancedItem) {
+          ui->conflictsAdvancedList->addTopLevelItem(advancedItem);
+        }
       }
     }
   }
 
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
+  if (refreshGeneral) {
+    ui->overwriteCount->display(numOverwrite);
+    ui->overwrittenCount->display(numOverwritten);
+    ui->noConflictCount->display(numNonConflicting);
+  }
 }
 
 QTreeWidgetItem* ModInfoDialog::createOverwriteItem(
@@ -697,10 +722,10 @@ QTreeWidgetItem* ModInfoDialog::createNoConflictItem(
 }
 
 QTreeWidgetItem* ModInfoDialog::createOverwrittenItem(
-  const MOShared::FileEntry::Ptr& file,
-  bool archive, const QString& fileName, const QString& relativeName)
+  int fileOrigin, bool archive,
+  const QString& fileName, const QString& relativeName)
 {
-  const FilesOrigin &realOrigin = m_Directory->getOriginByID(file->getOrigin(archive));
+  const FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
 
   QStringList fields(relativeName);
   fields.append(ToQString(realOrigin.getName()));
@@ -716,6 +741,59 @@ QTreeWidgetItem* ModInfoDialog::createOverwrittenItem(
     item->setFont(0, font);
     item->setFont(1, font);
   }
+
+  return item;
+}
+
+QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
+  int fileOrigin, bool archive,
+  const QString& fileName, const QString& relativeName,
+  const MOShared::FileEntry::AlternativesVector& alternatives)
+{
+  QString before, after;
+
+  if (!alternatives.empty()) {
+    int beforePrio = 0;
+    int afterPrio = std::numeric_limits<int>::max();
+
+    for (const auto& alt : alternatives)
+    {
+      auto altOrigin = m_Directory->getOriginByID(alt.first);
+
+      if (altOrigin.getPriority() > beforePrio) {
+        if (altOrigin.getPriority() < m_Origin->getPriority()) {
+          before = ToQString(altOrigin.getName());
+          beforePrio = altOrigin.getPriority();
+        }
+      }
+
+      if (altOrigin.getPriority() < afterPrio) {
+        if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          after = ToQString(altOrigin.getName());
+          afterPrio = altOrigin.getPriority();
+        }
+      }
+    }
+
+    if (after.isEmpty()) {
+      FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
+
+      if (realOrigin.getID() != m_Origin->getID()) {
+        after = ToQString(realOrigin.getName());
+      }
+    }
+  }
+
+  if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
+    if (before.isEmpty() && after.isEmpty()) {
+      return nullptr;
+    }
+  }
+
+  QTreeWidgetItem* item = new QTreeWidgetItem;
+  item->setText(0, before);
+  item->setText(1, relativeName);
+  item->setText(2, after);
 
   return item;
 }

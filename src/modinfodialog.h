@@ -429,7 +429,7 @@ private:
   ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
 
 
-  void refreshConflictLists();
+  void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);
   void refreshFiles();
 
   QTreeWidgetItem* createOverwriteItem(
@@ -440,8 +440,13 @@ private:
     bool archive, const QString& fileName, const QString& relativeName);
 
   QTreeWidgetItem* createOverwrittenItem(
-    const MOShared::FileEntry::Ptr& file,
-    bool archive, const QString& fileName, const QString& relativeName);
+    int fileOrigin, bool archive,
+    const QString& fileName, const QString& relativeName);
+
+  QTreeWidgetItem* createAdvancedConflictItem(
+    int fileOrigin, bool archive,
+    const QString& fileName, const QString& relativeName,
+    const MOShared::FileEntry::AlternativesVector& alternatives);
 
   void restoreTabState(const QByteArray &state);
   void restoreConflictExpandersState(const QByteArray &state);

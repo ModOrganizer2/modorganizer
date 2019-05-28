@@ -744,6 +744,9 @@ text-align: left;</string>
                    <property name="text">
                     <string>Show files that have no conflicts</string>
                    </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
