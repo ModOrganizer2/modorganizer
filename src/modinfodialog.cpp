@@ -613,62 +613,76 @@ void ModInfoDialog::refreshConflictLists()
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
+
+    for (const auto& file : m_Origin->getFiles()) {
+      QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       QString fileName = relativeName.mid(0).prepend(m_RootPath);
-      bool archive;
-      if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
+      bool archive = false;
+
+      if (file->getOrigin(archive) == m_Origin->getID()) {
+        const auto& alternatives = file->getAlternatives();
+
         if (!alternatives.empty()) {
-          std::wostringstream altString;
-          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-            altIter != alternatives.end(); ++altIter) {
-            if (altIter != alternatives.begin()) {
-              altString << ", ";
+          QString altString;
+
+          for (const auto& alt : alternatives) {
+            if (!altString.isEmpty()) {
+              altString += ", ";
             }
-            altString << m_Directory->getOriginByID(altIter->first).getName();
+
+            altString += ToQString(m_Directory->getOriginByID(alt.first).getName());
           }
+
           QStringList fields(relativeName);
-          fields.append(ToQString(altString.str()));
+          fields.append(altString);
 
           QTreeWidgetItem *item = new QTreeWidgetItem(fields);
           item->setData(0, Qt::UserRole, fileName);
           item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
           item->setData(1, Qt::UserRole + 1, alternatives.back().first);
           item->setData(1, Qt::UserRole + 2, archive);
+
           if (archive) {
             QFont font = item->font(0);
             font.setItalic(true);
             item->setFont(0, font);
             item->setFont(1, font);
           }
+
           ui->overwriteTree->addTopLevelItem(item);
           ++numOverwrite;
-        } else {// otherwise, put the file in the nonconflict tree
+        } else {
+          // otherwise, put the file in the nonconflict tree
           QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
           item->setData(0, Qt::UserRole, fileName);
+
           if (archive) {
             QFont font = item->font(0);
             font.setItalic(true);
             item->setFont(0, font);
           }
+
           ui->noConflictTree->addTopLevelItem(item);
           ++numNonConflicting;
         }
       } else {
-        FilesOrigin &realOrigin = m_Directory->getOriginByID((*iter)->getOrigin(archive));
+        const FilesOrigin &realOrigin = m_Directory->getOriginByID(file->getOrigin(archive));
+
         QStringList fields(relativeName);
         fields.append(ToQString(realOrigin.getName()));
+
         QTreeWidgetItem *item = new QTreeWidgetItem(fields);
         item->setData(0, Qt::UserRole, fileName);
         item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
         item->setData(1, Qt::UserRole + 2, archive);
+
         if (archive) {
           QFont font = item->font(0);
           font.setItalic(true);
           item->setFont(0, font);
           item->setFont(1, font);
         }
+
         ui->overwrittenTree->addTopLevelItem(item);
         ++numOverwritten;
       }
