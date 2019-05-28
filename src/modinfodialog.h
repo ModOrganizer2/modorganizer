@@ -432,6 +432,17 @@ private:
   void refreshConflictLists();
   void refreshFiles();
 
+  QTreeWidgetItem* createOverwriteItem(
+    bool archive, const QString& fileName, const QString& relativeName,
+    const MOShared::FileEntry::AlternativesVector& alternatives);
+
+  QTreeWidgetItem* createNoConflictItem(
+    bool archive, const QString& fileName, const QString& relativeName);
+
+  QTreeWidgetItem* createOverwrittenItem(
+    const MOShared::FileEntry::Ptr& file,
+    bool archive, const QString& fileName, const QString& relativeName);
+
   void restoreTabState(const QByteArray &state);
   void restoreConflictExpandersState(const QByteArray &state);
 
