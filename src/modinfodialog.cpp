@@ -441,6 +441,14 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
     refreshConflictLists(false, true);
   });
+
+  connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [&] {
+    refreshConflictLists(false, true);
+    });
+
+  connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [&] {
+    refreshConflictLists(false, true);
+  });
 }
 
 
@@ -760,26 +768,46 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
     {
       auto altOrigin = m_Directory->getOriginByID(alt.first);
 
-      if (altOrigin.getPriority() > beforePrio) {
+      if (ui->conflictsAdvancedShowAll->isChecked()) {
         if (altOrigin.getPriority() < m_Origin->getPriority()) {
-          before = ToQString(altOrigin.getName());
-          beforePrio = altOrigin.getPriority();
-        }
-      }
+          if (!before.isEmpty()) {
+            before += ", ";
+          }
 
-      if (altOrigin.getPriority() < afterPrio) {
-        if (altOrigin.getPriority() > m_Origin->getPriority()) {
-          after = ToQString(altOrigin.getName());
-          afterPrio = altOrigin.getPriority();
+          before += ToQString(altOrigin.getName());
+        } else if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          if (!after.isEmpty()) {
+            after += ", ";
+          }
+
+          after += ToQString(altOrigin.getName());
+        }
+      } else {
+        if (altOrigin.getPriority() > beforePrio) {
+          if (altOrigin.getPriority() < m_Origin->getPriority()) {
+            before = ToQString(altOrigin.getName());
+            beforePrio = altOrigin.getPriority();
+          }
+        }
+
+        if (altOrigin.getPriority() < afterPrio) {
+          if (altOrigin.getPriority() > m_Origin->getPriority()) {
+            after = ToQString(altOrigin.getName());
+            afterPrio = altOrigin.getPriority();
+          }
         }
       }
     }
 
-    if (after.isEmpty()) {
+    if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
       FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
 
       if (realOrigin.getID() != m_Origin->getID()) {
-        after = ToQString(realOrigin.getName());
+        if (!after.isEmpty()) {
+          after += ", ";
+        }
+
+        after += ToQString(realOrigin.getName());
       }
     }
   }

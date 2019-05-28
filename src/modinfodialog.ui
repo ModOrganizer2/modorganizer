@@ -750,6 +750,23 @@ text-align: left;</string>
                   </widget>
                  </item>
                  <item>
+                  <widget class="QRadioButton" name="conflictsAdvancedShowAll">
+                   <property name="text">
+                    <string>Show all conflicting mods</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="conflictsAdvancedShowNearest">
+                   <property name="text">
+                    <string>Show nearest conflicting mod</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <widget class="QWidget" name="widget_5" native="true">
                    <layout class="QHBoxLayout" name="horizontalLayout_8">
                     <property name="leftMargin">
