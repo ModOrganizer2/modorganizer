@@ -319,6 +319,20 @@ bool ExpanderWidget::opened() const
 }
 
 
+class ElideLeftDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+  void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const
+  {
+    QStyledItemDelegate::initStyleOption(option, index);
+    option->textElideMode = Qt::ElideLeft;
+  }
+};
+
+
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
@@ -437,6 +451,17 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
   m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
+
+
+  // left-elide the overwrites column so that the nearest are visible
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    0, new ElideLeftDelegate(ui->conflictsAdvancedList));
+
+  // left-elide the file column to see filenames
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    1, new ElideLeftDelegate(ui->conflictsAdvancedList));
+
+  // don't elide the overwritten by column so that the nearest are visible
 
   connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
     refreshConflictLists(false, true);
