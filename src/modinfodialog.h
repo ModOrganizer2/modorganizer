@@ -329,18 +329,6 @@ private:
   int tabIndex(const QString &tabId);
 
 private slots:
-
-  void hideConflictFiles();
-  void unhideConflictFiles();
-  void previewOverwriteDataFile();
-  void openOverwriteDataFile();
-
-  void previewOverwrittenDataFile();
-  void openOverwrittenDataFile();
-
-  void previewNoConflictDataFile();
-  void openNoConflictDataFile();
-
   void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
   void linkClicked(QString url);
@@ -393,11 +381,22 @@ private slots:
 
   void createTweak();
 private:
+  struct ConflictActions
+  {
+    QAction* hide;
+    QAction* unhide;
+    QAction* open;
+    QAction* preview;
+
+    ConflictActions()
+      : hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr)
+    {
+    }
+  };
 
   Ui::ModInfoDialog *ui;
 
   ModInfo::Ptr m_ModInfo;
-  int m_OriginID;
 
   QSignalMapper m_ThumbnailMapper;
   QString m_RootPath;
@@ -442,12 +441,21 @@ private:
 
   void openDataFile(const QTreeWidgetItem* item);
   void previewDataFile(const QTreeWidgetItem* item);
-  void changeConflictFilesVisibility(bool hide);
-  void changeFiletreeVisibility(bool hide);
+  void changeFiletreeVisibility(bool visible);
+
+  void openConflictItems(const QList<QTreeWidgetItem*>& items);
+  void previewConflictItems(const QList<QTreeWidgetItem*>& items);
+  void changeConflictItemsVisibility(
+    const QList<QTreeWidgetItem*>& items, bool visible);
 
   bool canPreviewFile(bool isArchive, const QString& filename) const;
   bool canHideFile(bool isArchive, const QString& filename) const;
   bool canUnhideFile(bool isArchive, const QString& filename) const;
+
+  void showConflictMenu(const QPoint &pos, QTreeWidget* tree);
+
+  ConflictActions createConflictMenuActions(
+    const QList<QTreeWidgetItem*> selection);
 };
 
 #endif // MODINFODIALOG_H

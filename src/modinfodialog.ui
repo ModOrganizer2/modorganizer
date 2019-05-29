@@ -453,23 +453,20 @@ text-align: left;</string>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
          </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
+         </property>
          <property name="sortingEnabled">
           <bool>true</bool>
          </property>
          <property name="animated">
           <bool>true</bool>
          </property>
-         <property name="headerHidden">
-          <bool>false</bool>
-         </property>
          <property name="columnCount">
           <number>2</number>
          </property>
          <attribute name="headerDefaultSectionSize">
           <number>365</number>
-         </attribute>
-         <attribute name="headerHighlightSections">
-          <bool>false</bool>
          </attribute>
          <attribute name="headerMinimumSectionSize">
           <number>200</number>
@@ -526,8 +523,14 @@ text-align: left;</string>
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
          </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
          </property>
          <property name="sortingEnabled">
           <bool>true</bool>
@@ -596,8 +599,14 @@ text-align: left;</string>
          <property name="contextMenuPolicy">
           <enum>Qt::CustomContextMenu</enum>
          </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
          <property name="textElideMode">
           <enum>Qt::ElideLeft</enum>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
          </property>
          <property name="sortingEnabled">
           <bool>true</bool>
