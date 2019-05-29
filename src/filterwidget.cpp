@@ -2,24 +2,23 @@
 #include "eventfilter.h"
 
 FilterWidget::FilterWidget()
-  : m_edit(nullptr), m_clear(nullptr), m_buddy(nullptr)
+  : m_edit(nullptr), m_eventFilter(nullptr), m_clear(nullptr)
 {
 }
 
 void FilterWidget::set(QLineEdit* edit)
 {
-  if (m_clear) {
-    delete m_clear;
-    m_clear = nullptr;
-  }
+  unhook();
 
   m_edit = edit;
+
   if (!m_edit) {
     return;
   }
 
   createClear();
   hookEvents();
+  clear();
 }
 
 void FilterWidget::clear()
@@ -29,6 +28,23 @@ void FilterWidget::clear()
   }
 
   m_edit->clear();
+}
+
+bool FilterWidget::matches(const QString& s) const
+{
+  return s.contains(m_text);
+}
+
+void FilterWidget::unhook()
+{
+  if (m_clear) {
+    delete m_clear;
+    m_clear = nullptr;
+  }
+
+  if (m_edit) {
+    m_edit->removeEventFilter(m_eventFilter);
+  }
 }
 
 void FilterWidget::createClear()
@@ -50,7 +66,7 @@ void FilterWidget::createClear()
 
 void FilterWidget::hookEvents()
 {
-  auto* f = new EventFilter(m_edit, [&](auto* w, auto* e) {
+  m_eventFilter = new EventFilter(m_edit, [&](auto* w, auto* e) {
     if (e->type() == QEvent::Resize) {
       onResized();
     }
@@ -58,12 +74,22 @@ void FilterWidget::hookEvents()
     return false;
   });
 
-  m_edit->installEventFilter(f);
+  m_edit->installEventFilter(m_eventFilter);
 }
 
 void FilterWidget::onTextChanged()
 {
   m_clear->setVisible(!m_edit->text().isEmpty());
+
+  const auto text = m_edit->text();
+
+  if (text != m_text) {
+    m_text = text;
+
+    if (changed) {
+      changed();
+    }
+  }
 }
 
 void FilterWidget::onResized()

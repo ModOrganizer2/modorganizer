@@ -454,6 +454,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
 
   m_advancedConflictFilter.set(ui->conflictsAdvancedFilter);
+  m_advancedConflictFilter.changed = [&]{ refreshConflictLists(false, true); };
 
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
@@ -871,6 +872,12 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
     if (before.isEmpty() && after.isEmpty()) {
       return nullptr;
     }
+  }
+
+  if (!m_advancedConflictFilter.matches(before) &&
+      !m_advancedConflictFilter.matches(relativeName) &&
+      !m_advancedConflictFilter.matches(after)) {
+      return nullptr;
   }
 
   QTreeWidgetItem* item = new QTreeWidgetItem;
