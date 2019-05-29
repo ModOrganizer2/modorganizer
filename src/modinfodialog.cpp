@@ -453,6 +453,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
 
 
+  m_advancedConflictFilter.set(ui->conflictsAdvancedFilter);
+
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
     0, new ElideLeftDelegate(ui->conflictsAdvancedList));

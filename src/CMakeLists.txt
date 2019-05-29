@@ -115,6 +115,7 @@ SET(organizer_SRCS
     lcdnumber.cpp
     forcedloaddialog.cpp
     forcedloaddialogwidget.cpp
+	filterwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -211,6 +212,7 @@ SET(organizer_HDRS
     lcdnumber.h
     forcedloaddialog.h
     forcedloaddialogwidget.h
+	filterwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -391,6 +393,7 @@ set(utilities
 set(widgets
 	descriptionpage
 	genericicondelegate
+	filterwidget
 	icondelegate
 	lcdnumber
 	logbuffer

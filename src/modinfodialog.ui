@@ -782,7 +782,7 @@ text-align: left;</string>
                      <number>0</number>
                     </property>
                     <item>
-                     <widget class="MOBase::LineEditClear" name="conflictsAdvancedFilter">
+                     <widget class="QLineEdit" name="conflictsAdvancedFilter">
                       <property name="placeholderText">
                        <string>Filter</string>
                       </property>
@@ -1200,11 +1200,6 @@ p, li { white-space: pre-wrap; }
    <class>ModIDLineEdit</class>
    <extends>QLineEdit</extends>
    <header>modidlineedit.h</header>
-  </customwidget>
-  <customwidget>
-   <class>MOBase::LineEditClear</class>
-   <extends>QLineEdit</extends>
-   <header>lineeditclear.h</header>
   </customwidget>
  </customwidgets>
  <resources>

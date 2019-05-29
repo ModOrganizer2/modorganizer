@@ -25,6 +25,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "tutorabledialog.h"
 #include "plugincontainer.h"
 #include "organizercore.h"
+#include "filterwidget.h"
 
 #include <QDialog>
 #include <QSignalMapper>
@@ -427,6 +428,7 @@ private:
   std::map<int, int> m_RealTabPos;
 
   ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
+  FilterWidget m_advancedConflictFilter;
 
 
   void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);
@@ -447,6 +449,7 @@ private:
     int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
+
 
   void restoreTabState(const QByteArray &state);
   void restoreConflictExpandersState(const QByteArray &state);
