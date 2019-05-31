@@ -452,10 +452,10 @@ private:
 
 
   void restoreTabState(const QByteArray &state);
-  void restoreConflictExpandersState(const QByteArray &state);
+  void restoreConflictsState(const QByteArray &state);
 
   QByteArray saveTabState() const;
-  QByteArray saveConflictExpandersState() const;
+  QByteArray saveConflictsState() const;
 
   bool canHideConflictItem(const QTreeWidgetItem* item) const;
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;

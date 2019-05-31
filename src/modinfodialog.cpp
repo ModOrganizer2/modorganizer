@@ -553,13 +553,13 @@ int ModInfoDialog::tabIndex(const QString &tabId)
 void ModInfoDialog::saveState(Settings& s) const
 {
   s.directInterface().setValue("mod_info_tabs", saveTabState());
-  s.directInterface().setValue("mod_info_conflict_expanders", saveConflictExpandersState());
+  s.directInterface().setValue("mod_info_conflicts", saveConflictsState());
 }
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
   restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
-  restoreConflictExpandersState(s.directInterface().value("mod_info_conflict_expanders").toByteArray());
+  restoreConflictsState(s.directInterface().value("mod_info_conflicts").toByteArray());
 }
 
 void ModInfoDialog::restoreTabState(const QByteArray &state)
@@ -593,7 +593,7 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   ui->tabWidget->blockSignals(false);
 }
 
-void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
+void ModInfoDialog::restoreConflictsState(const QByteArray &state)
 {
   QDataStream stream(state);
 
@@ -607,6 +607,20 @@ void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
     m_overwriteExpander.toggle(overwriteExpanded);
     m_overwrittenExpander.toggle(overwrittenExpanded);
     m_nonconflictExpander.toggle(noConflictExpanded);
+  }
+
+  int index = 0;
+  bool noConflictChecked = false;
+  bool showAllChecked = false;
+  bool showNearestChecked = false;
+
+  stream >> index >> noConflictChecked >> showAllChecked >> showNearestChecked;
+
+  if (stream.status() == QDataStream::Ok) {
+    ui->tabConflictsTabs->setCurrentIndex(index);
+    ui->conflictsAdvancedShowNoConflict->setChecked(noConflictChecked);
+    ui->conflictsAdvancedShowAll->setChecked(showAllChecked);
+    ui->conflictsAdvancedShowNearest->setChecked(showNearestChecked);
   }
 }
 
@@ -622,7 +636,7 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
-QByteArray ModInfoDialog::saveConflictExpandersState() const
+QByteArray ModInfoDialog::saveConflictsState() const
 {
   QByteArray result;
   QDataStream stream(&result, QIODevice::WriteOnly);
@@ -630,7 +644,11 @@ QByteArray ModInfoDialog::saveConflictExpandersState() const
   stream
     << m_overwriteExpander.opened()
     << m_overwrittenExpander.opened()
-    << m_nonconflictExpander.opened();
+    << m_nonconflictExpander.opened()
+    << ui->tabConflictsTabs->currentIndex()
+    << ui->conflictsAdvancedShowNoConflict->isChecked()
+    << ui->conflictsAdvancedShowAll->isChecked()
+    << ui->conflictsAdvancedShowNearest->isChecked();
 
   return result;
 }

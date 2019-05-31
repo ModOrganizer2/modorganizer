@@ -402,7 +402,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0">
        <item>
-        <widget class="QTabWidget" name="tabWidget_2">
+        <widget class="QTabWidget" name="tabConflictsTabs">
          <property name="currentIndex">
           <number>1</number>
          </property>
