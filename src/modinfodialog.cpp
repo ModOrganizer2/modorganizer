@@ -57,6 +57,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const auto FILENAME_USERROLE = Qt::UserRole + 1;
+const auto ORIGIN_USERROLE = Qt::UserRole + 2;
+const auto ARCHIVE_USERROLE = Qt::UserRole + 3;
+
 
 class ModFileListWidget : public QListWidgetItem {
   friend bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS);
@@ -744,18 +748,10 @@ QTreeWidgetItem* ModInfoDialog::createOverwriteItem(
   QStringList fields(relativeName);
   fields.append(altString);
 
-  QTreeWidgetItem *item = new QTreeWidgetItem(fields);
-  item->setData(0, Qt::UserRole, fileName);
-  item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
-  item->setData(1, Qt::UserRole + 1, alternatives.back().first);
-  item->setData(1, Qt::UserRole + 2, archive);
+  const auto origin = ToQString(m_Directory->getOriginByID(alternatives.back().first).getName());
 
-  if (archive) {
-    QFont font = item->font(0);
-    font.setItalic(true);
-    item->setFont(0, font);
-    item->setFont(1, font);
-  }
+  QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+  setConflictItem(item, fileName, origin, archive);
 
   return item;
 }
@@ -764,13 +760,7 @@ QTreeWidgetItem* ModInfoDialog::createNoConflictItem(
   bool archive, const QString& fileName, const QString& relativeName)
 {
   QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
-  item->setData(0, Qt::UserRole, fileName);
-
-  if (archive) {
-    QFont font = item->font(0);
-    font.setItalic(true);
-    item->setFont(0, font);
-  }
+  setConflictItem(item, fileName, "", archive);
 
   return item;
 }
@@ -785,16 +775,7 @@ QTreeWidgetItem* ModInfoDialog::createOverwrittenItem(
   fields.append(ToQString(realOrigin.getName()));
 
   QTreeWidgetItem *item = new QTreeWidgetItem(fields);
-  item->setData(0, Qt::UserRole, fileName);
-  item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
-  item->setData(1, Qt::UserRole + 2, archive);
-
-  if (archive) {
-    QFont font = item->font(0);
-    font.setItalic(true);
-    item->setFont(0, font);
-    item->setFont(1, font);
-  }
+  setConflictItem(item, fileName, ToQString(realOrigin.getName()), archive);
 
   return item;
 }
@@ -908,7 +889,42 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
   item->setText(1, relativeName);
   item->setText(2, after);
 
+  setConflictItem(item, fileName, "", archive);
+
   return item;
+}
+
+void ModInfoDialog::setConflictItem(
+  QTreeWidgetItem* item,
+  const QString& fileName, const QString& origin, bool archive) const
+{
+  item->setData(0, FILENAME_USERROLE, fileName);
+  item->setData(0, ORIGIN_USERROLE, origin);
+  item->setData(0, ARCHIVE_USERROLE, archive);
+
+  if (archive) {
+    QFont font = item->font(0);
+    font.setItalic(true);
+
+    for (int i=0; i<item->columnCount(); ++i) {
+      item->setFont(i, font);
+    }
+  }
+}
+
+QString ModInfoDialog::conflictFileName(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, FILENAME_USERROLE).toString();
+}
+
+QString ModInfoDialog::conflictOrigin(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, ORIGIN_USERROLE).toString();
+}
+
+bool ModInfoDialog::conflictIsArchive(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, ARCHIVE_USERROLE).toBool();
 }
 
 void ModInfoDialog::refreshFiles()
@@ -1860,8 +1876,12 @@ void ModInfoDialog::on_primaryCategoryBox_currentIndexChanged(int index)
 
 void ModInfoDialog::on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
-  this->close();
-  emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
+  const auto origin = conflictOrigin(item);
+
+  if (!origin.isEmpty()) {
+    close();
+    emit modOpen(origin, TAB_CONFLICTS);
+  }
 }
 
 FileRenamer::RenameResults ModInfoDialog::hideFile(FileRenamer& renamer, const QString &oldName)
@@ -1907,14 +1927,14 @@ void ModInfoDialog::changeConflictItemsVisibility(
         qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
         continue;
       }
-      result = unhideFile(renamer, item->data(0, Qt::UserRole).toString());
+      result = unhideFile(renamer, conflictFileName(item));
 
     } else {
       if (!canHideConflictItem(item)) {
         qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
         continue;
       }
-      result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
+      result = hideFile(renamer, conflictFileName(item));
     }
 
     switch (result) {
@@ -1953,7 +1973,9 @@ void ModInfoDialog::openConflictItems(const QList<QTreeWidgetItem*>& items)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for (auto* item : items) {
-    openDataFile(item);
+    if (item) {
+      m_OrganizerCore->executeFileVirtualized(this, conflictFileName(item));
+    }
   }
 }
 
@@ -1962,28 +1984,10 @@ void ModInfoDialog::previewConflictItems(const QList<QTreeWidgetItem*>& items)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for (auto* item : items) {
-    previewDataFile(item);
+    if (item) {
+      m_OrganizerCore->previewFileWithAlternatives(this, conflictFileName(item));
+    }
   }
-}
-
-void ModInfoDialog::openDataFile(const QTreeWidgetItem* item)
-{
-	if (!item) {
-    return;
-  }
-
-	QFileInfo targetInfo(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->executeFileVirtualized(this, targetInfo);
-}
-
-void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
-{
-  if (!item) {
-    return;
-  }
-
-  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->previewFileWithAlternatives(this, fileName);
 }
 
 bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) const
@@ -2028,19 +2032,17 @@ bool ModInfoDialog::canUnhideFile(bool isArchive, const QString& filename) const
 
 bool ModInfoDialog::canHideConflictItem(const QTreeWidgetItem* item) const
 {
-  return canHideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+  return canHideFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 bool ModInfoDialog::canUnhideConflictItem(const QTreeWidgetItem* item) const
 {
-  return canUnhideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+  return canUnhideFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
 {
-  return canPreviewFile(
-    item->data(1, Qt::UserRole + 2).toBool(),
-    item->data(0, Qt::UserRole).toString());
+  return canPreviewFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
@@ -2056,6 +2058,11 @@ void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &
 void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
 {
   showConflictMenu(pos, ui->noConflictTree);
+}
+
+void ModInfoDialog::on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos)
+{
+  showConflictMenu(pos, ui->conflictsAdvancedList);
 }
 
 void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
@@ -2181,8 +2188,12 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
-  emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
-  this->accept();
+  const auto origin = conflictOrigin(item);
+
+  if (!origin.isEmpty()) {
+    close();
+    emit modOpen(origin, TAB_CONFLICTS);
+  }
 }
 
 void ModInfoDialog::on_refreshButton_clicked()

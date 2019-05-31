@@ -1321,6 +1321,8 @@ bool OrganizerCore::executeFileVirtualized(
 bool OrganizerCore::previewFileWithAlternatives(
   QWidget* parent, QString fileName, int selectedOrigin)
 {
+  fileName = QDir::fromNativeSeparators(fileName);
+
   // what we have is an absolute path to the file in its actual location (for the primary origin)
   // what we want is the path relative to the virtual data directory
 

@@ -707,6 +707,15 @@ text-align: left;</string>
                  </property>
                  <item>
                   <widget class="QTreeWidget" name="conflictsAdvancedList">
+                   <property name="contextMenuPolicy">
+                    <enum>Qt::CustomContextMenu</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                   </property>
+                   <property name="uniformRowHeights">
+                    <bool>true</bool>
+                   </property>
                    <property name="columnCount">
                     <number>3</number>
                    </property>

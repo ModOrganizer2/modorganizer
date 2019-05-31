@@ -368,6 +368,7 @@ private slots:
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
   void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
   void on_noConflictTree_customContextMenuRequested(const QPoint &pos);
+  void on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();
@@ -450,6 +451,13 @@ private:
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
+  void setConflictItem(
+    QTreeWidgetItem* item,
+    const QString& fileName, const QString& origin, bool archive) const;
+
+  QString conflictFileName(const QTreeWidgetItem* conflictItem) const;
+  QString conflictOrigin(const QTreeWidgetItem* conflictItem) const;
+  bool conflictIsArchive(const QTreeWidgetItem* conflictItem) const;
 
   void restoreTabState(const QByteArray &state);
   void restoreConflictsState(const QByteArray &state);
@@ -461,8 +469,6 @@ private:
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
   bool canPreviewConflictItem(const QTreeWidgetItem* item) const;
 
-  void openDataFile(const QTreeWidgetItem* item);
-  void previewDataFile(const QTreeWidgetItem* item);
   void changeFiletreeVisibility(bool visible);
 
   void openConflictItems(const QList<QTreeWidgetItem*>& items);
