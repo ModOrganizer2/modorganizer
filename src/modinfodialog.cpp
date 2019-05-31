@@ -2000,6 +2000,12 @@ bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) cons
   return m_PluginContainer->previewGenerator().previewSupported(ext);
 }
 
+bool ModInfoDialog::canOpenFile(bool isArchive, const QString&) const
+{
+  // can open anything as long as it's not in an archive
+  return !isArchive;
+}
+
 bool ModInfoDialog::canHideFile(bool isArchive, const QString& filename) const
 {
   if (isArchive) {
@@ -2038,6 +2044,11 @@ bool ModInfoDialog::canHideConflictItem(const QTreeWidgetItem* item) const
 bool ModInfoDialog::canUnhideConflictItem(const QTreeWidgetItem* item) const
 {
   return canUnhideFile(conflictIsArchive(item), conflictFileName(item));
+}
+
+bool ModInfoDialog::canOpenConflictItem(const QTreeWidgetItem* item) const
+{
+  return canOpenFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
@@ -2131,8 +2142,8 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
 
     enableHide = canHideConflictItem(item);
     enableUnhide = canUnhideConflictItem(item);
+    enableOpen = canOpenConflictItem(item);
     enablePreview = canPreviewConflictItem(item);
-    // open is always enabled
   }
   else {
     // this is a multiple selection, don't show open/preview so users don't open

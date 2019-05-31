@@ -467,6 +467,7 @@ private:
 
   bool canHideConflictItem(const QTreeWidgetItem* item) const;
   bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
+  bool canOpenConflictItem(const QTreeWidgetItem* item) const;
   bool canPreviewConflictItem(const QTreeWidgetItem* item) const;
 
   void changeFiletreeVisibility(bool visible);
@@ -477,6 +478,7 @@ private:
     const QList<QTreeWidgetItem*>& items, bool visible);
 
   bool canPreviewFile(bool isArchive, const QString& filename) const;
+  bool canOpenFile(bool isArchive, const QString& filename) const;
   bool canHideFile(bool isArchive, const QString& filename) const;
   bool canUnhideFile(bool isArchive, const QString& filename) const;
 
