@@ -220,6 +220,11 @@ std::vector<FileEntry::Ptr> FilesOrigin::getFiles() const
   return result;
 }
 
+FileEntry::Ptr FilesOrigin::findFile(FileEntry::Index index) const
+{
+  return m_FileRegister.lock()->getFile(index);
+}
+
 bool FilesOrigin::containsArchive(std::wstring archiveName)
 {
   for (FileEntry::Index fileIdx : m_Files)

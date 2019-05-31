@@ -385,15 +385,20 @@ private slots:
 
   void createTweak();
 private:
+  using FileEntry = MOShared::FileEntry;
+
   struct ConflictActions
   {
     QAction* hide;
     QAction* unhide;
     QAction* open;
     QAction* preview;
+    QMenu* gotoMenu;
+    std::vector<QAction*> gotoActions;
 
-    ConflictActions()
-      : hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr)
+    ConflictActions() :
+      hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr),
+      gotoMenu(nullptr)
     {
     }
   };
@@ -438,28 +443,33 @@ private:
   void refreshFiles();
 
   QTreeWidgetItem* createOverwriteItem(
-    bool archive, const QString& fileName, const QString& relativeName,
+    FileEntry::Index index, bool archive,
+    const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
   QTreeWidgetItem* createNoConflictItem(
-    bool archive, const QString& fileName, const QString& relativeName);
+    FileEntry::Index index, bool archive,
+    const QString& fileName, const QString& relativeName);
 
   QTreeWidgetItem* createOverwrittenItem(
-    int fileOrigin, bool archive,
+    FileEntry::Index index, int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName);
 
   QTreeWidgetItem* createAdvancedConflictItem(
-    int fileOrigin, bool archive,
+    FileEntry::Index index, int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
   void setConflictItem(
-    QTreeWidgetItem* item,
-    const QString& fileName, const QString& origin, bool archive) const;
+    QTreeWidgetItem* item, FileEntry::Index index,
+    const QString& fileName, bool hasAltOrigins, const QString& altOrigin,
+    bool archive) const;
 
   QString conflictFileName(const QTreeWidgetItem* conflictItem) const;
-  QString conflictOrigin(const QTreeWidgetItem* conflictItem) const;
+  QString conflictAltOrigin(const QTreeWidgetItem* conflictItem) const;
+  bool conflictHasAlts(const QTreeWidgetItem* conflictItem) const;
   bool conflictIsArchive(const QTreeWidgetItem* conflictItem) const;
+  FileEntry::Index conflictFileIndex(const QTreeWidgetItem* conflictItem) const;
 
   void restoreTabState(const QByteArray &state);
   void restoreConflictsState(const QByteArray &state);
@@ -487,7 +497,10 @@ private:
   void showConflictMenu(const QPoint &pos, QTreeWidget* tree);
 
   ConflictActions createConflictMenuActions(
-    const QList<QTreeWidgetItem*> selection);
+    const QList<QTreeWidgetItem*>& selection);
+
+  std::vector<QAction*> createGotoActions(
+    const QList<QTreeWidgetItem*>& selection);
 };
 
 #endif // MODINFODIALOG_H

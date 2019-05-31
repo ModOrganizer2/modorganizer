@@ -135,6 +135,7 @@ public:
   const std::wstring &getPath() const { return m_Path; }
 
   std::vector<FileEntry::Ptr> getFiles() const;
+  FileEntry::Ptr findFile(FileEntry::Index index) const;
 
   void enable(bool enabled, time_t notAfter = LONG_MAX);
   bool isDisabled() const { return m_Disabled; }
