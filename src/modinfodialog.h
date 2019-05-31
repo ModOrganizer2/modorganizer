@@ -280,6 +280,8 @@ public:
    **/
   void openTab(int tab);
 
+  int exec() override;
+
   void saveState(Settings& s) const;
   void restoreState(const Settings& s);
 

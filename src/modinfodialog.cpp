@@ -397,8 +397,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
-  refreshLists();
-
   if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
   {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
@@ -501,6 +499,12 @@ ModInfoDialog::~ModInfoDialog()
 }
 
 
+int ModInfoDialog::exec()
+{
+  refreshLists();
+  return TutorableDialog::exec();
+}
+
 void ModInfoDialog::initINITweaks()
 {
   int numTweaks = m_Settings->beginReadArray("INI Tweaks");
@@ -558,12 +562,40 @@ void ModInfoDialog::saveState(Settings& s) const
 {
   s.directInterface().setValue("mod_info_tabs", saveTabState());
   s.directInterface().setValue("mod_info_conflicts", saveConflictsState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_overwrite",
+    ui->overwriteTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_noconflict",
+    ui->noConflictTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_overwritten",
+    ui->overwrittenTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_advanced_conflicts",
+    ui->conflictsAdvancedList->header()->saveState());
 }
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
   restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
   restoreConflictsState(s.directInterface().value("mod_info_conflicts").toByteArray());
+
+  ui->overwriteTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_overwrite").toByteArray());
+
+  ui->noConflictTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_noconflict").toByteArray());
+
+  ui->overwrittenTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_overwritten").toByteArray());
+
+  ui->conflictsAdvancedList->header()->restoreState(
+    s.directInterface().value("mod_info_advanced_conflicts").toByteArray());
 }
 
 void ModInfoDialog::restoreTabState(const QByteArray &state)
