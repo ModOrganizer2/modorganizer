@@ -762,6 +762,9 @@ text-align: left;</string>
                  </property>
                  <item>
                   <widget class="QCheckBox" name="conflictsAdvancedShowNoConflict">
+                   <property name="toolTip">
+                    <string>Whether files that have no conflicts should be visible in the list</string>
+                   </property>
                    <property name="text">
                     <string>Show files that have no conflicts</string>
                    </property>
@@ -772,6 +775,9 @@ text-align: left;</string>
                  </item>
                  <item>
                   <widget class="QRadioButton" name="conflictsAdvancedShowAll">
+                   <property name="toolTip">
+                    <string>Shows all mods overwriting or being overwritten by this mod</string>
+                   </property>
                    <property name="text">
                     <string>Show all conflicting mods</string>
                    </property>
@@ -782,6 +788,9 @@ text-align: left;</string>
                  </item>
                  <item>
                   <widget class="QRadioButton" name="conflictsAdvancedShowNearest">
+                   <property name="toolTip">
+                    <string>Shows only the nearest conflicting mods, in order of priority</string>
+                   </property>
                    <property name="text">
                     <string>Show nearest conflicting mod</string>
                    </property>
