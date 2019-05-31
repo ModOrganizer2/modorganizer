@@ -399,6 +399,12 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
+  // refresh everything but the conflict lists, which are done in exec() because
+  // they depend on restoring the state to some widgets; this refresh has to be
+  // done here because some of the checks below depend on the ui to decide which
+  // tabs to enable
+  refreshFiles();
+
   if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
   {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
@@ -503,7 +509,8 @@ ModInfoDialog::~ModInfoDialog()
 
 int ModInfoDialog::exec()
 {
-  refreshLists();
+  // no need to refresh the other stuff, that was done in the constructor
+  refreshConflictLists(true, true);
   return TutorableDialog::exec();
 }
 
