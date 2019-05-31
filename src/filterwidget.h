@@ -13,7 +13,7 @@ public:
   void set(QLineEdit* edit);
   void clear();
 
-  bool matches(const QString& s) const;
+  bool matches(std::function<bool (const QString& what)> pred) const;
 
 private:
   QLineEdit* m_edit;

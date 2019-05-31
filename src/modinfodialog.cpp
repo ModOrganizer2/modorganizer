@@ -874,10 +874,15 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
     }
   }
 
-  if (!m_advancedConflictFilter.matches(before) &&
-      !m_advancedConflictFilter.matches(relativeName) &&
-      !m_advancedConflictFilter.matches(after)) {
-      return nullptr;
+  bool matched = m_advancedConflictFilter.matches([&](auto&& what) {
+    return
+      before.contains(what, Qt::CaseInsensitive) ||
+      relativeName.contains(what, Qt::CaseInsensitive) ||
+      after.contains(what, Qt::CaseInsensitive);
+  });
+
+  if (!matched) {
+     return nullptr;
   }
 
   QTreeWidgetItem* item = new QTreeWidgetItem;
