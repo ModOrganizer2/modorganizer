@@ -57,6 +57,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const auto FILENAME_USERROLE = Qt::UserRole + 1;
+const auto ALT_ORIGIN_USERROLE = Qt::UserRole + 2;
+const auto ARCHIVE_USERROLE = Qt::UserRole + 3;
+const auto INDEX_USERROLE = Qt::UserRole + 4;
+const auto HAS_ALTS_USERROLE = Qt::UserRole + 5;
+
 
 class ModFileListWidget : public QListWidgetItem {
   friend bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS);
@@ -74,8 +80,8 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 }
 
 // if there are more than 50 selected items in the conflict tree or filetree,
-// don't bother checking whether they're visible, just show both menu items
-const int max_scan_for_visibility = 50;
+// don't bother checking whether menu items apply to them, just show all of them
+const int max_scan_for_context_menu = 50;
 
 
 FileRenamer::FileRenamer(QWidget* parent, QFlags<RenameFlags> flags)
@@ -319,6 +325,20 @@ bool ExpanderWidget::opened() const
 }
 
 
+class ElideLeftDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+  void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const
+  {
+    QStyledItemDelegate::initStyleOption(option, index);
+    option->textElideMode = Qt::ElideLeft;
+  }
+};
+
+
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
   m_ThumbnailMapper(this), m_RequestStarted(false),
@@ -379,7 +399,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
-  refreshLists();
+  // refresh everything but the conflict lists, which are done in exec() because
+  // they depend on restoring the state to some widgets; this refresh has to be
+  // done here because some of the checks below depend on the ui to decide which
+  // tabs to enable
+  refreshFiles();
 
   if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
   {
@@ -437,6 +461,32 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
   m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
+
+
+  m_advancedConflictFilter.set(ui->conflictsAdvancedFilter);
+  m_advancedConflictFilter.changed = [&]{ refreshConflictLists(false, true); };
+
+  // left-elide the overwrites column so that the nearest are visible
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    0, new ElideLeftDelegate(ui->conflictsAdvancedList));
+
+  // left-elide the file column to see filenames
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    1, new ElideLeftDelegate(ui->conflictsAdvancedList));
+
+  // don't elide the overwritten by column so that the nearest are visible
+
+  connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
+    refreshConflictLists(false, true);
+  });
+
+  connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [&] {
+    refreshConflictLists(false, true);
+    });
+
+  connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [&] {
+    refreshConflictLists(false, true);
+  });
 }
 
 
@@ -456,6 +506,13 @@ ModInfoDialog::~ModInfoDialog()
   delete m_Settings;
 }
 
+
+int ModInfoDialog::exec()
+{
+  // no need to refresh the other stuff, that was done in the constructor
+  refreshConflictLists(true, true);
+  return TutorableDialog::exec();
+}
 
 void ModInfoDialog::initINITweaks()
 {
@@ -513,13 +570,41 @@ int ModInfoDialog::tabIndex(const QString &tabId)
 void ModInfoDialog::saveState(Settings& s) const
 {
   s.directInterface().setValue("mod_info_tabs", saveTabState());
-  s.directInterface().setValue("mod_info_conflict_expanders", saveConflictExpandersState());
+  s.directInterface().setValue("mod_info_conflicts", saveConflictsState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_overwrite",
+    ui->overwriteTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_noconflict",
+    ui->noConflictTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_conflicts_overwritten",
+    ui->overwrittenTree->header()->saveState());
+
+  s.directInterface().setValue(
+    "mod_info_advanced_conflicts",
+    ui->conflictsAdvancedList->header()->saveState());
 }
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
   restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
-  restoreConflictExpandersState(s.directInterface().value("mod_info_conflict_expanders").toByteArray());
+  restoreConflictsState(s.directInterface().value("mod_info_conflicts").toByteArray());
+
+  ui->overwriteTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_overwrite").toByteArray());
+
+  ui->noConflictTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_noconflict").toByteArray());
+
+  ui->overwrittenTree->header()->restoreState(
+    s.directInterface().value("mod_info_conflicts_overwritten").toByteArray());
+
+  ui->conflictsAdvancedList->header()->restoreState(
+    s.directInterface().value("mod_info_advanced_conflicts").toByteArray());
 }
 
 void ModInfoDialog::restoreTabState(const QByteArray &state)
@@ -553,7 +638,7 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   ui->tabWidget->blockSignals(false);
 }
 
-void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
+void ModInfoDialog::restoreConflictsState(const QByteArray &state)
 {
   QDataStream stream(state);
 
@@ -567,6 +652,20 @@ void ModInfoDialog::restoreConflictExpandersState(const QByteArray &state)
     m_overwriteExpander.toggle(overwriteExpanded);
     m_overwrittenExpander.toggle(overwrittenExpanded);
     m_nonconflictExpander.toggle(noConflictExpanded);
+  }
+
+  int index = 0;
+  bool noConflictChecked = false;
+  bool showAllChecked = false;
+  bool showNearestChecked = false;
+
+  stream >> index >> noConflictChecked >> showAllChecked >> showNearestChecked;
+
+  if (stream.status() == QDataStream::Ok) {
+    ui->tabConflictsTabs->setCurrentIndex(index);
+    ui->conflictsAdvancedShowNoConflict->setChecked(noConflictChecked);
+    ui->conflictsAdvancedShowAll->setChecked(showAllChecked);
+    ui->conflictsAdvancedShowNearest->setChecked(showNearestChecked);
   }
 }
 
@@ -582,7 +681,7 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
-QByteArray ModInfoDialog::saveConflictExpandersState() const
+QByteArray ModInfoDialog::saveConflictsState() const
 {
   QByteArray result;
   QDataStream stream(&result, QIODevice::WriteOnly);
@@ -590,85 +689,306 @@ QByteArray ModInfoDialog::saveConflictExpandersState() const
   stream
     << m_overwriteExpander.opened()
     << m_overwrittenExpander.opened()
-    << m_nonconflictExpander.opened();
+    << m_nonconflictExpander.opened()
+    << ui->tabConflictsTabs->currentIndex()
+    << ui->conflictsAdvancedShowNoConflict->isChecked()
+    << ui->conflictsAdvancedShowAll->isChecked()
+    << ui->conflictsAdvancedShowNearest->isChecked();
 
   return result;
 }
 
 void ModInfoDialog::refreshLists()
 {
+  refreshConflictLists(true, true);
+  refreshFiles();
+}
+
+void ModInfoDialog::refreshConflictLists(
+  bool refreshGeneral, bool refreshAdvanced)
+{
   int numNonConflicting = 0;
   int numOverwrite = 0;
   int numOverwritten = 0;
 
-  ui->overwriteTree->clear();
-  ui->overwrittenTree->clear();
-  ui->noConflictTree->clear();
+  if (refreshGeneral) {
+    ui->overwriteTree->clear();
+    ui->overwrittenTree->clear();
+    ui->noConflictTree->clear();
+  }
+
+  if (refreshAdvanced) {
+    ui->conflictsAdvancedList->clear();
+  }
 
   if (m_Origin != nullptr) {
     std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
-    for (auto iter = files.begin(); iter != files.end(); ++iter) {
-      QString relativeName = QDir::fromNativeSeparators(ToQString((*iter)->getRelativePath()));
-      QString fileName = relativeName.mid(0).prepend(m_RootPath);
-      bool archive;
-      if ((*iter)->getOrigin(archive) == m_Origin->getID()) {
-        std::vector<std::pair<int, std::pair<std::wstring, int>>> alternatives = (*iter)->getAlternatives();
-        if (!alternatives.empty()) {
-          std::wostringstream altString;
-          for (std::vector<std::pair<int, std::pair<std::wstring, int>>>::iterator altIter = alternatives.begin();
-               altIter != alternatives.end(); ++altIter) {
-            if (altIter != alternatives.begin()) {
-              altString << ", ";
-            }
-            altString << m_Directory->getOriginByID(altIter->first).getName();
-          }
-          QStringList fields(relativeName);
-          fields.append(ToQString(altString.str()));
 
-          QTreeWidgetItem *item = new QTreeWidgetItem(fields);
-          item->setData(0, Qt::UserRole, fileName);
-          item->setData(1, Qt::UserRole, ToQString(m_Directory->getOriginByID(alternatives.back().first).getName()));
-          item->setData(1, Qt::UserRole + 1, alternatives.back().first);
-          item->setData(1, Qt::UserRole + 2, archive);
-          if (archive) {
-            QFont font = item->font(0);
-            font.setItalic(true);
-            item->setFont(0, font);
-            item->setFont(1, font);
+    for (const auto& file : m_Origin->getFiles()) {
+      const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
+      const QString fileName = relativeName.mid(0).prepend(m_RootPath);
+
+      bool archive = false;
+      const int fileOrigin = file->getOrigin(archive);
+      const auto& alternatives = file->getAlternatives();
+
+      if (refreshGeneral) {
+        if (fileOrigin == m_Origin->getID()) {
+          if (!alternatives.empty()) {
+            ui->overwriteTree->addTopLevelItem(createOverwriteItem(
+              file->getIndex(), archive, fileName, relativeName, alternatives));
+
+            ++numOverwrite;
+          } else {
+            // otherwise, put the file in the noconflict tree
+            ui->noConflictTree->addTopLevelItem(createNoConflictItem(
+              file->getIndex(), archive, fileName, relativeName));
+
+            ++numNonConflicting;
           }
-          ui->overwriteTree->addTopLevelItem(item);
-          ++numOverwrite;
-        } else {// otherwise, put the file in the nonconflict tree
-          QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
-          item->setData(0, Qt::UserRole, fileName);
-          if (archive) {
-            QFont font = item->font(0);
-            font.setItalic(true);
-            item->setFont(0, font);
-          }
-          ui->noConflictTree->addTopLevelItem(item);
-          ++numNonConflicting;
+        } else {
+          ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
+            file->getIndex(), fileOrigin, archive, fileName, relativeName));
+
+          ++numOverwritten;
         }
-      } else {
-        FilesOrigin &realOrigin = m_Directory->getOriginByID((*iter)->getOrigin(archive));
-        QStringList fields(relativeName);
-        fields.append(ToQString(realOrigin.getName()));
-        QTreeWidgetItem *item = new QTreeWidgetItem(fields);
-        item->setData(0, Qt::UserRole, fileName);
-        item->setData(1, Qt::UserRole, ToQString(realOrigin.getName()));
-        item->setData(1, Qt::UserRole + 2, archive);
-        if (archive) {
-          QFont font = item->font(0);
-          font.setItalic(true);
-          item->setFont(0, font);
-          item->setFont(1, font);
+      }
+
+      if (refreshAdvanced) {
+        auto* advancedItem = createAdvancedConflictItem(
+          file->getIndex(), fileOrigin, archive,
+          fileName, relativeName, alternatives);
+
+        if (advancedItem) {
+          ui->conflictsAdvancedList->addTopLevelItem(advancedItem);
         }
-        ui->overwrittenTree->addTopLevelItem(item);
-        ++numOverwritten;
       }
     }
   }
 
+  if (refreshGeneral) {
+    ui->overwriteCount->display(numOverwrite);
+    ui->overwrittenCount->display(numOverwritten);
+    ui->noConflictCount->display(numNonConflicting);
+  }
+}
+
+QTreeWidgetItem* ModInfoDialog::createOverwriteItem(
+  FileEntry::Index index, bool archive,
+  const QString& fileName, const QString& relativeName,
+  const FileEntry::AlternativesVector& alternatives)
+{
+  QString altString;
+
+  for (const auto& alt : alternatives) {
+    if (!altString.isEmpty()) {
+      altString += ", ";
+    }
+
+    altString += ToQString(m_Directory->getOriginByID(alt.first).getName());
+  }
+
+  QStringList fields(relativeName);
+  fields.append(altString);
+
+  const auto origin = ToQString(m_Directory->getOriginByID(alternatives.back().first).getName());
+
+  QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+  setConflictItem(item, index, fileName, true, origin, archive);
+
+  return item;
+}
+
+QTreeWidgetItem* ModInfoDialog::createNoConflictItem(
+  FileEntry::Index index, bool archive,
+  const QString& fileName, const QString& relativeName)
+{
+  QTreeWidgetItem *item = new QTreeWidgetItem(QStringList({relativeName}));
+  setConflictItem(item, index, fileName, false, "", archive);
+
+  return item;
+}
+
+QTreeWidgetItem* ModInfoDialog::createOverwrittenItem(
+  FileEntry::Index index, int fileOrigin, bool archive,
+  const QString& fileName, const QString& relativeName)
+{
+  const FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
+
+  QStringList fields(relativeName);
+  fields.append(ToQString(realOrigin.getName()));
+
+  QTreeWidgetItem *item = new QTreeWidgetItem(fields);
+  setConflictItem(item, index, fileName, true, ToQString(realOrigin.getName()), archive);
+
+  return item;
+}
+
+QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
+  FileEntry::Index index,int fileOrigin, bool archive,
+  const QString& fileName, const QString& relativeName,
+  const MOShared::FileEntry::AlternativesVector& alternatives)
+{
+  QString before, after;
+
+  if (!alternatives.empty()) {
+    int beforePrio = 0;
+    int afterPrio = std::numeric_limits<int>::max();
+
+    for (const auto& alt : alternatives)
+    {
+      const auto altOrigin = m_Directory->getOriginByID(alt.first);
+
+      if (ui->conflictsAdvancedShowAll->isChecked()) {
+        // fills 'before' and 'after' with all the alternatives that come
+        // before and after this mod in terms of priority
+
+        if (altOrigin.getPriority() < m_Origin->getPriority()) {
+          // add all the mods having a lower priority than this one
+          if (!before.isEmpty()) {
+            before += ", ";
+          }
+
+          before += ToQString(altOrigin.getName());
+        } else if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          // add all the mods having a higher priority than this one
+          if (!after.isEmpty()) {
+            after += ", ";
+          }
+
+          after += ToQString(altOrigin.getName());
+        }
+      } else {
+        // keep track of the nearest mods that come before and after this one
+        // in terms of priority
+
+        if (altOrigin.getPriority() < m_Origin->getPriority()) {
+          // the alternative has a lower priority than this mod
+
+          if (altOrigin.getPriority() > beforePrio) {
+            // the alternative has a higher priority and therefore is closer
+            // to this mod, use it
+            before = ToQString(altOrigin.getName());
+            beforePrio = altOrigin.getPriority();
+          }
+        }
+
+        if (altOrigin.getPriority() > m_Origin->getPriority()) {
+          // the alternative has a higher priority than this mod
+
+          if (altOrigin.getPriority() < afterPrio) {
+            // the alternative has a lower priority and there is closer
+            // to this mod, use it
+            after = ToQString(altOrigin.getName());
+            afterPrio = altOrigin.getPriority();
+          }
+        }
+      }
+    }
+
+    // the primary origin is never in the list of alternatives, so it has to
+    // be handled separately
+    //
+    // if 'after' is not empty, it means at least one alternative with a higher
+    // priority than this mod was found; if the user only wants to see the
+    // nearest mods, it's not worth checking for the primary origin because it
+    // will always have a higher priority than the alternatives (or it wouldn't
+    // be the primary)
+    if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
+      FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
+
+      // if no mods overwrite this file, the primary origin is the same as this
+      // mod, so ignore that
+      if (realOrigin.getID() != m_Origin->getID()) {
+        if (!after.isEmpty()) {
+          after += ", ";
+        }
+
+        after += ToQString(realOrigin.getName());
+      }
+    }
+  }
+
+  bool hasAlts = !before.isEmpty() || !after.isEmpty();
+
+  if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
+    // if both before and after are empty, it means this file has no conflicts
+    // at all, only display it if the user wants it
+    if (!hasAlts) {
+      return nullptr;
+    }
+  }
+
+  bool matched = m_advancedConflictFilter.matches([&](auto&& what) {
+    return
+      before.contains(what, Qt::CaseInsensitive) ||
+      relativeName.contains(what, Qt::CaseInsensitive) ||
+      after.contains(what, Qt::CaseInsensitive);
+  });
+
+  if (!matched) {
+     return nullptr;
+  }
+
+  QTreeWidgetItem* item = new QTreeWidgetItem;
+  item->setText(0, before);
+  item->setText(1, relativeName);
+  item->setText(2, after);
+
+  setConflictItem(item, index, fileName, hasAlts, "", archive);
+
+  return item;
+}
+
+void ModInfoDialog::setConflictItem(
+  QTreeWidgetItem* item, FileEntry::Index index,
+  const QString& fileName, bool hasAltOrigins, const QString& altOrigin,
+  bool archive) const
+{
+  item->setData(0, FILENAME_USERROLE, fileName);
+  item->setData(0, ALT_ORIGIN_USERROLE, altOrigin);
+  item->setData(0, ARCHIVE_USERROLE, archive);
+  item->setData(0, INDEX_USERROLE, index);
+  item->setData(0, HAS_ALTS_USERROLE, hasAltOrigins);
+
+  if (archive) {
+    QFont font = item->font(0);
+    font.setItalic(true);
+
+    for (int i=0; i<item->columnCount(); ++i) {
+      item->setFont(i, font);
+    }
+  }
+}
+
+QString ModInfoDialog::conflictFileName(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, FILENAME_USERROLE).toString();
+}
+
+QString ModInfoDialog::conflictAltOrigin(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, ALT_ORIGIN_USERROLE).toString();
+}
+
+bool ModInfoDialog::conflictHasAlts(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, HAS_ALTS_USERROLE).toBool();
+}
+
+bool ModInfoDialog::conflictIsArchive(const QTreeWidgetItem* conflictItem) const
+{
+  return conflictItem->data(0, ARCHIVE_USERROLE).toBool();
+}
+
+FileEntry::Index ModInfoDialog::conflictFileIndex(const QTreeWidgetItem* conflictItem) const
+{
+  static_assert(std::is_same_v<FileEntry::Index, unsigned int>);
+  return conflictItem->data(0, INDEX_USERROLE).toUInt();
+}
+
+void ModInfoDialog::refreshFiles()
+{
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
@@ -677,7 +997,7 @@ void ModInfoDialog::refreshLists()
       if (fileName.endsWith(".txt", Qt::CaseInsensitive)) {
         ui->textFileList->addItem(fileName.mid(m_RootPath.length() + 1));
       } else if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
-                 !fileName.endsWith("meta.ini")) {
+        !fileName.endsWith("meta.ini")) {
         QString namePart = fileName.mid(m_RootPath.length() + 1);
         if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive)) {
           QListWidgetItem *newItem = new QListWidgetItem(namePart.mid(11), ui->iniTweaksList);
@@ -689,8 +1009,8 @@ void ModInfoDialog::refreshLists()
           ui->iniFileList->addItem(namePart);
         }
       } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esm", Qt::CaseInsensitive) ||
-                 fileName.endsWith(".esl", Qt::CaseInsensitive)) {
+        fileName.endsWith(".esm", Qt::CaseInsensitive) ||
+        fileName.endsWith(".esl", Qt::CaseInsensitive)) {
         QString relativePath = fileName.mid(m_RootPath.length() + 1);
         if (relativePath.contains('/')) {
           QFileInfo fileInfo(fileName);
@@ -701,7 +1021,7 @@ void ModInfoDialog::refreshLists()
           ui->activeESPList->addItem(relativePath);
         }
       } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
-                 (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
+        (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
         QImage image = QImage(fileName);
         if (!image.isNull()) {
           if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
@@ -719,12 +1039,7 @@ void ModInfoDialog::refreshLists()
       }
     }
   }
-
-  ui->overwriteCount->display(numOverwrite);
-  ui->overwrittenCount->display(numOverwritten);
-  ui->noConflictCount->display(numNonConflicting);
 }
-
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
 {
@@ -1517,7 +1832,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
       enablePreview = false;
       enableRename = false;
 
-      if (m_FileSelection.size() < max_scan_for_visibility) {
+      if (m_FileSelection.size() < max_scan_for_context_menu) {
         // if the number of selected items is low, checking them to accurately
         // show the menu items is worth it
         enableHide = false;
@@ -1621,8 +1936,12 @@ void ModInfoDialog::on_primaryCategoryBox_currentIndexChanged(int index)
 
 void ModInfoDialog::on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
-  this->close();
-  emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
+  const auto origin = conflictAltOrigin(item);
+
+  if (!origin.isEmpty()) {
+    close();
+    emit modOpen(origin, TAB_CONFLICTS);
+  }
 }
 
 FileRenamer::RenameResults ModInfoDialog::hideFile(FileRenamer& renamer, const QString &oldName)
@@ -1668,14 +1987,14 @@ void ModInfoDialog::changeConflictItemsVisibility(
         qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
         continue;
       }
-      result = unhideFile(renamer, item->data(0, Qt::UserRole).toString());
+      result = unhideFile(renamer, conflictFileName(item));
 
     } else {
       if (!canHideConflictItem(item)) {
         qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
         continue;
       }
-      result = hideFile(renamer, item->data(0, Qt::UserRole).toString());
+      result = hideFile(renamer, conflictFileName(item));
     }
 
     switch (result) {
@@ -1714,7 +2033,9 @@ void ModInfoDialog::openConflictItems(const QList<QTreeWidgetItem*>& items)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for (auto* item : items) {
-    openDataFile(item);
+    if (item) {
+      m_OrganizerCore->executeFileVirtualized(this, conflictFileName(item));
+    }
   }
 }
 
@@ -1723,28 +2044,10 @@ void ModInfoDialog::previewConflictItems(const QList<QTreeWidgetItem*>& items)
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
   for (auto* item : items) {
-    previewDataFile(item);
+    if (item) {
+      m_OrganizerCore->previewFileWithAlternatives(this, conflictFileName(item));
+    }
   }
-}
-
-void ModInfoDialog::openDataFile(const QTreeWidgetItem* item)
-{
-	if (!item) {
-    return;
-  }
-
-	QFileInfo targetInfo(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->executeFileVirtualized(this, targetInfo);
-}
-
-void ModInfoDialog::previewDataFile(const QTreeWidgetItem* item)
-{
-  if (!item) {
-    return;
-  }
-
-  QString fileName = QDir::fromNativeSeparators(item->data(0, Qt::UserRole).toString());
-  m_OrganizerCore->previewFileWithAlternatives(this, fileName);
 }
 
 bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) const
@@ -1755,6 +2058,12 @@ bool ModInfoDialog::canPreviewFile(bool isArchive, const QString& filename) cons
 
   const auto ext = QFileInfo(filename).suffix();
   return m_PluginContainer->previewGenerator().previewSupported(ext);
+}
+
+bool ModInfoDialog::canOpenFile(bool isArchive, const QString&) const
+{
+  // can open anything as long as it's not in an archive
+  return !isArchive;
 }
 
 bool ModInfoDialog::canHideFile(bool isArchive, const QString& filename) const
@@ -1789,19 +2098,22 @@ bool ModInfoDialog::canUnhideFile(bool isArchive, const QString& filename) const
 
 bool ModInfoDialog::canHideConflictItem(const QTreeWidgetItem* item) const
 {
-  return canHideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+  return canHideFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 bool ModInfoDialog::canUnhideConflictItem(const QTreeWidgetItem* item) const
 {
-  return canUnhideFile(item->data(1, Qt::UserRole + 2).toBool(), item->text(0));
+  return canUnhideFile(conflictIsArchive(item), conflictFileName(item));
+}
+
+bool ModInfoDialog::canOpenConflictItem(const QTreeWidgetItem* item) const
+{
+  return canOpenFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 bool ModInfoDialog::canPreviewConflictItem(const QTreeWidgetItem* item) const
 {
-  return canPreviewFile(
-    item->data(1, Qt::UserRole + 2).toBool(),
-    item->data(0, Qt::UserRole).toString());
+  return canPreviewFile(conflictIsArchive(item), conflictFileName(item));
 }
 
 void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
@@ -1819,12 +2131,18 @@ void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &p
   showConflictMenu(pos, ui->noConflictTree);
 }
 
+void ModInfoDialog::on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos)
+{
+  showConflictMenu(pos, ui->conflictsAdvancedList);
+}
+
 void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
 {
   auto actions = createConflictMenuActions(tree->selectedItems());
 
   QMenu menu;
 
+  // open
   if (actions.open) {
     connect(actions.open, &QAction::triggered, [&]{
       openConflictItems(tree->selectedItems());
@@ -1833,6 +2151,7 @@ void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
     menu.addAction(actions.open);
   }
 
+  // preview
   if (actions.preview) {
     connect(actions.preview, &QAction::triggered, [&]{
       previewConflictItems(tree->selectedItems());
@@ -1841,6 +2160,7 @@ void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
     menu.addAction(actions.preview);
   }
 
+  // hide
   if (actions.hide) {
     connect(actions.hide, &QAction::triggered, [&]{
       changeConflictItemsVisibility(tree->selectedItems(), false);
@@ -1849,6 +2169,7 @@ void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
     menu.addAction(actions.hide);
   }
 
+  // unhide
   if (actions.unhide) {
     connect(actions.unhide, &QAction::triggered, [&]{
       changeConflictItemsVisibility(tree->selectedItems(), true);
@@ -1857,15 +2178,27 @@ void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
     menu.addAction(actions.unhide);
   }
 
-  if (menu.isEmpty()) {
-    return;
+  // goto
+  if (actions.gotoMenu) {
+    menu.addMenu(actions.gotoMenu);
+
+    for (auto* a : actions.gotoActions) {
+      connect(a, &QAction::triggered, [&, name=a->text()]{
+        close();
+        emit modOpen(name, TAB_CONFLICTS);
+      });
+
+      actions.gotoMenu->addAction(a);
+    }
   }
 
-  menu.exec(tree->viewport()->mapToGlobal(pos));
+  if (!menu.isEmpty()) {
+    menu.exec(tree->viewport()->mapToGlobal(pos));
+  }
 }
 
 ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
-  const QList<QTreeWidgetItem*> selection)
+  const QList<QTreeWidgetItem*>& selection)
 {
   if (selection.empty()) {
     return {};
@@ -1875,6 +2208,7 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
   bool enableUnhide = true;
   bool enableOpen = true;
   bool enablePreview = true;
+  bool enableGoto = true;
 
   if (selection.size() == 1) {
     // this is a single selection
@@ -1885,8 +2219,9 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
 
     enableHide = canHideConflictItem(item);
     enableUnhide = canUnhideConflictItem(item);
+    enableOpen = canOpenConflictItem(item);
     enablePreview = canPreviewConflictItem(item);
-    // open is always enabled
+    enableGoto = conflictHasAlts(item);
   }
   else {
     // this is a multiple selection, don't show open/preview so users don't open
@@ -1894,7 +2229,10 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
     enableOpen = false;
     enablePreview = false;
 
-    if (selection.size() < max_scan_for_visibility) {
+    // don't bother with this on multiple selection, at least for now
+    enableGoto = false;
+
+    if (selection.size() < max_scan_for_context_menu) {
       // if the number of selected items is low, checking them to accurately
       // show the menu items is worth it
       enableHide = false;
@@ -1909,8 +2247,8 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
           enableUnhide = true;
         }
 
-        if (enableHide && enableUnhide) {
-          // found both, no need to check more
+        if (enableHide && enableUnhide && enableGoto) {
+          // found all, no need to check more
           break;
         }
       }
@@ -1919,22 +2257,71 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
 
   ConflictActions actions;
 
-  if (enableHide) {
-    actions.hide = new QAction(tr("Hide"));
-  }
+  actions.hide = new QAction(tr("Hide"), this);
+  actions.hide->setEnabled(enableHide);
 
   // note that it is possible for hidden files to appear if they override other
   // hidden files from another mod
-  if (enableUnhide) {
-    actions.unhide = new QAction(tr("Unhide"));
+  actions.unhide = new QAction(tr("Unhide"), this);
+  actions.unhide->setEnabled(enableUnhide);
+
+  actions.open = new QAction(tr("Open/Execute"), this);
+  actions.open->setEnabled(enableOpen);
+
+  actions.preview = new QAction(tr("Preview"), this);
+  actions.preview->setEnabled(enablePreview);
+
+  actions.gotoMenu = new QMenu(tr("Go to..."), this);
+  actions.gotoMenu->setEnabled(enableGoto);
+
+  if (enableGoto) {
+    actions.gotoActions = createGotoActions(selection);
   }
 
-  if (enableOpen) {
-    actions.open = new QAction(tr("Open/Execute"));
+  return actions;
+}
+
+std::vector<QAction*> ModInfoDialog::createGotoActions(const QList<QTreeWidgetItem*>& selection)
+{
+  if (!m_Origin || selection.size() != 1) {
+    return {};
   }
 
-  if (enablePreview) {
-    actions.preview = new QAction(tr("Preview"));
+  auto* item = selection[0];
+  if (!item) {
+    return {};
+  }
+
+  auto file = m_Origin->findFile(conflictFileIndex(item));
+  if (!file) {
+    return {};
+  }
+
+
+  std::vector<QString> mods;
+
+  // add all alternatives
+  for (const auto& alt : file->getAlternatives()) {
+    const auto& o = m_Directory->getOriginByID(alt.first);
+    if (o.getID() != m_Origin->getID()) {
+      mods.push_back(ToQString(o.getName()));
+    }
+  }
+
+  // add the real origin if different from this mod
+  const FilesOrigin& realOrigin = m_Directory->getOriginByID(file->getOrigin());
+  if (realOrigin.getID() != m_Origin->getID()) {
+    mods.push_back(ToQString(realOrigin.getName()));
+  }
+
+  std::sort(mods.begin(), mods.end(), [](const auto& a, const auto& b) {
+    return (QString::localeAwareCompare(a, b) < 0);
+  });
+
+  std::vector<QAction*> actions;
+
+  for (const auto& name : mods) {
+    actions.push_back(new QAction(name, this));
   }
 
   return actions;
@@ -1942,8 +2329,12 @@ ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
 
 void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
 {
-  emit modOpen(item->data(1, Qt::UserRole).toString(), TAB_CONFLICTS);
-  this->accept();
+  const auto origin = conflictAltOrigin(item);
+
+  if (!origin.isEmpty()) {
+    close();
+    emit modOpen(origin, TAB_CONFLICTS);
+  }
 }
 
 void ModInfoDialog::on_refreshButton_clicked()

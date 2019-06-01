@@ -49,8 +49,8 @@ class FileEntry {
 public:
 
   typedef unsigned int Index;
-
   typedef boost::shared_ptr<FileEntry> Ptr;
+  typedef std::vector<std::pair<int, std::pair<std::wstring, int>>> AlternativesVector;
 
 public:
 
@@ -72,7 +72,7 @@ public:
 
   // gets the list of alternative origins (origins with lower priority than the primary one).
   // if sortOrigins has been called, it is sorted by priority (ascending)
-  const std::vector<std::pair<int, std::pair<std::wstring, int>>> &getAlternatives() const { return m_Alternatives; }
+  const AlternativesVector &getAlternatives() const { return m_Alternatives; }
 
   const std::wstring &getName() const { return m_Name; }
   int getOrigin() const { return m_Origin; }
@@ -98,7 +98,7 @@ private:
   std::wstring m_Name;
   int m_Origin = -1;
   std::pair<std::wstring, int> m_Archive;
-  std::vector<std::pair<int, std::pair<std::wstring, int>>> m_Alternatives;
+  AlternativesVector m_Alternatives;
   DirectoryEntry *m_Parent;
   mutable FILETIME m_FileTime;
 
@@ -135,6 +135,7 @@ public:
   const std::wstring &getPath() const { return m_Path; }
 
   std::vector<FileEntry::Ptr> getFiles() const;
+  FileEntry::Ptr findFile(FileEntry::Index index) const;
 
   void enable(bool enabled, time_t notAfter = LONG_MAX);
   bool isDisabled() const { return m_Disabled; }
