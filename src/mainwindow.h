@@ -211,6 +211,9 @@ private:
   void createEndorseMenu();
 
   void updateToolBar();
+  void setToolbarSize(const QSize& s);
+  void setToolbarButtonStyle(Qt::ToolButtonStyle s);
+  QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
   void setExecutableIndex(int index);

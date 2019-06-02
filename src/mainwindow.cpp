@@ -189,6 +189,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const QSize SmallToolbarSize(24, 24);
+const QSize LargeToolbarSize(42, 36);
+
 
 MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
@@ -635,6 +638,61 @@ void MainWindow::updateToolBar()
 
   // don't show the toolbar if there are no links
   ui->linksToolBar->setVisible(hasLinks);
+}
+
+QMenu* MainWindow::createPopupMenu()
+{
+  auto* m = QMainWindow::createPopupMenu();
+
+  m->addSeparator();
+
+  auto* a = new QAction(tr("Small Icons"), m);
+  connect(a, &QAction::triggered, [&]{ setToolbarSize(SmallToolbarSize); });
+  a->setCheckable(true);
+  a->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
+  m->addAction(a);
+
+  a = new QAction(tr("Large Icons"), m);
+  connect(a, &QAction::triggered, [&]{ setToolbarSize(LargeToolbarSize); });
+  a->setCheckable(true);
+  a->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
+  m->addAction(a);
+
+  m->addSeparator();
+
+  a = new QAction(tr("Icons only"), m);
+  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonIconOnly); });
+  a->setCheckable(true);
+  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
+  m->addAction(a);
+
+  a = new QAction(tr("Text only"), m);
+  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonTextOnly); });
+  a->setCheckable(true);
+  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
+  m->addAction(a);
+
+  a = new QAction(tr("Text and Icons"), m);
+  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon); });
+  a->setCheckable(true);
+  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+  m->addAction(a);
+
+  return m;
+}
+
+void MainWindow::setToolbarSize(const QSize& s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setIconSize(s);
+  }
+}
+
+void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setToolButtonStyle(s);
+  }
 }
 
 void MainWindow::scheduleUpdateButton()
@@ -1832,6 +1890,15 @@ void MainWindow::readSettings()
     restoreState(settings.value("window_state").toByteArray());
   }
 
+  if (settings.contains("toolbar_size")) {
+    setToolbarSize(settings.value("toolbar_size").toSize());
+  }
+
+  if (settings.contains("toolbar_button_style")) {
+    setToolbarButtonStyle(static_cast<Qt::ToolButtonStyle>(
+      settings.value("toolbar_button_style").toInt()));
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -1909,6 +1976,8 @@ void MainWindow::storeSettings(QSettings &settings) {
   if (settings.value("reset_geometry", false).toBool()) {
     settings.remove("window_geometry");
     settings.remove("window_state");
+    settings.remove("toolbar_size");
+    settings.remove("toolbar_button_style");
     settings.remove("window_split");
     settings.remove("log_split");
     settings.remove("filters_visible");
@@ -1918,6 +1987,8 @@ void MainWindow::storeSettings(QSettings &settings) {
   } else {
     settings.setValue("window_geometry", saveGeometry());
     settings.setValue("window_state", saveState());
+    settings.setValue("toolbar_size", ui->toolBar->iconSize());
+    settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
