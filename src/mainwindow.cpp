@@ -247,8 +247,6 @@ MainWindow::MainWindow(QSettings &initSettings
   updateProblemsButton();
 
   // Setup toolbar
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
 
   setupActionMenu(ui->actionTool);
   setupActionMenu(ui->actionHelp);
@@ -258,16 +256,6 @@ MainWindow::MainWindow(QSettings &initSettings
   createEndorseMenu();
 
   toggleMO2EndorseState();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->isSeparator()) {
-      // insert spacers
-      ui->toolBar->insertWidget(action, spacer);
-      m_Sep = action;
-      // m_Sep would only use the last separator anyway, and we only have the one anyway?
-      break;
-    }
-  }
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -407,7 +395,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
-  connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
+  connect(ui->linksToolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(linksToolBar_customContextMenuRequested(QPoint)));
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -618,29 +606,36 @@ void MainWindow::setupActionMenu(QAction* a)
 
 void MainWindow::updateToolBar()
 {
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->objectName().startsWith("custom__")) {
-      ui->toolBar->removeAction(action);
-      action->deleteLater();
-    }
+  for (auto* a : ui->linksToolBar->actions()) {
+    ui->linksToolBar->removeAction(a);
+    a->deleteLater();
   }
+
+  bool hasLinks = false;
 
   std::vector<Executable>::iterator begin, end;
   m_OrganizerCore.executablesList()->getExecutables(begin, end);
+
   for (auto iter = begin; iter != end; ++iter) {
     if (iter->isShownOnToolbar()) {
+      hasLinks = true;
+
       QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
                                         iter->m_Title,
                                         ui->toolBar);
+
       exeAction->setObjectName(QString("custom__") + iter->m_Title);
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
       }
-      ui->toolBar->insertAction(m_Sep, exeAction);
+
+      ui->linksToolBar->addAction(exeAction);
     }
   }
-}
 
+  // don't show the toolbar if there are no links
+  ui->linksToolBar->setVisible(hasLinks);
+}
 
 void MainWindow::scheduleUpdateButton()
 {
@@ -648,7 +643,6 @@ void MainWindow::scheduleUpdateButton()
     m_UpdateProblemsTimer.start(1000);
   }
 }
-
 
 void MainWindow::updateProblemsButton()
 {
@@ -1834,6 +1828,10 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value("window_geometry").toByteArray());
   }
 
+  if (settings.contains("window_state")) {
+    restoreState(settings.value("window_state").toByteArray());
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -1910,6 +1908,7 @@ void MainWindow::storeSettings(QSettings &settings) {
 
   if (settings.value("reset_geometry", false).toBool()) {
     settings.remove("window_geometry");
+    settings.remove("window_state");
     settings.remove("window_split");
     settings.remove("log_split");
     settings.remove("filters_visible");
@@ -1918,6 +1917,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("reset_geometry");
   } else {
     settings.setValue("window_geometry", saveGeometry());
+    settings.setValue("window_state", saveState());
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
@@ -6062,17 +6062,23 @@ void MainWindow::removeFromToolbar()
 }
 
 
-void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
+void MainWindow::linksToolBar_customContextMenuRequested(const QPoint &point)
 {
-  QAction *action = ui->toolBar->actionAt(point);
+  QAction *action = ui->linksToolBar->actionAt(point);
+
   if (action != nullptr) {
     if (action->objectName().startsWith("custom_")) {
       m_ContextAction = action;
       QMenu menu;
-      menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
-      menu.exec(ui->toolBar->mapToGlobal(point));
+      menu.addAction(tr("Remove '%1' from the toolbar").arg(action->text()), this, SLOT(removeFromToolbar()));
+      menu.exec(ui->linksToolBar->mapToGlobal(point));
+      return;
     }
   }
+
+  // did not click a link button, show the default context menu
+  auto* m = createPopupMenu();
+  m->exec(ui->linksToolBar->mapToGlobal(point));
 }
 
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)

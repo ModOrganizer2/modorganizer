@@ -316,8 +316,6 @@ private:
 
   Ui::MainWindow *ui;
 
-  QAction *m_Sep; // Executable Shortcuts are added after this. Non owning.
-
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
@@ -594,7 +592,7 @@ private slots:
    */
   void allowListResize();
 
-  void toolBar_customContextMenuRequested(const QPoint &point);
+  void linksToolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
   void overwriteClosed(int);
 

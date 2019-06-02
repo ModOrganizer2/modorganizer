@@ -1349,29 +1349,14 @@ p, li { white-space: pre-wrap; }
    </layout>
   </widget>
   <widget class="QToolBar" name="toolBar">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="contextMenuPolicy">
-    <enum>Qt::CustomContextMenu</enum>
-   </property>
    <property name="windowTitle">
-    <string>Tool Bar</string>
-   </property>
-   <property name="movable">
-    <bool>false</bool>
+    <string>Main ToolBar</string>
    </property>
    <property name="iconSize">
     <size>
      <width>42</width>
      <height>36</height>
     </size>
-   </property>
-   <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonIconOnly</enum>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
    </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
@@ -1380,9 +1365,11 @@ p, li { white-space: pre-wrap; }
     <bool>false</bool>
    </attribute>
    <addaction name="actionChange_Game"/>
-   <addaction name="actionInstallMod"/>
-   <addaction name="actionNexus"/>
    <addaction name="actionAdd_Profile"/>
+   <addaction name="separator"/>
+   <addaction name="actionNexus"/>
+   <addaction name="actionInstallMod"/>
+   <addaction name="separator"/>
    <addaction name="actionModify_Executables"/>
    <addaction name="actionTool"/>
    <addaction name="actionSettings"/>
@@ -1442,6 +1429,26 @@ p, li { white-space: pre-wrap; }
    <addaction name="menu_Edit"/>
    <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QToolBar" name="linksToolBar">
+   <property name="contextMenuPolicy">
+    <enum>Qt::CustomContextMenu</enum>
+   </property>
+   <property name="windowTitle">
+    <string>Links ToolBar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>42</width>
+     <height>36</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
   </widget>
   <action name="actionInstallMod">
    <property name="icon">
