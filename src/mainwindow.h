@@ -635,8 +635,9 @@ private slots: // ui slots
   void on_actionExit_triggered();
   void on_actionToolBarMainToggle_triggered();
   void on_actionToolBarLinksToggle_triggered();
-  void on_actionToolBarLargeIcons_triggered();
   void on_actionToolBarSmallIcons_triggered();
+  void on_actionToolBarMediumIcons_triggered();
+  void on_actionToolBarLargeIcons_triggered();
   void on_actionToolBarIconsOnly_triggered();
   void on_actionToolBarTextOnly_triggered();
   void on_actionToolBarIconsAndText_triggered();

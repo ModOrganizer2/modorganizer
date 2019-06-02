@@ -1358,9 +1358,6 @@ p, li { white-space: pre-wrap; }
      <height>36</height>
     </size>
    </property>
-   <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonTextUnderIcon</enum>
-   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -1438,6 +1435,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionToolBarLinksToggle"/>
      <addaction name="separator"/>
      <addaction name="actionToolBarSmallIcons"/>
+     <addaction name="actionToolBarMediumIcons"/>
      <addaction name="actionToolBarLargeIcons"/>
      <addaction name="separator"/>
      <addaction name="actionToolBarIconsOnly"/>
@@ -1784,6 +1782,11 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>I&amp;cons and Text</string>
+   </property>
+  </action>
+  <action name="actionToolBarMediumIcons">
+   <property name="text">
+    <string>M&amp;edium Icons</string>
    </property>
   </action>
  </widget>

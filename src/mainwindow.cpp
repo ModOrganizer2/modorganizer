@@ -190,6 +190,7 @@ using namespace MOBase;
 using namespace MOShared;
 
 const QSize SmallToolbarSize(24, 24);
+const QSize MediumToolbarSize(32, 32);
 const QSize LargeToolbarSize(42, 36);
 
 
@@ -655,8 +656,9 @@ void MainWindow::toolbarMenu_aboutToShow()
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
   ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
 
-  ui->actionToolBarLargeIcons->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
   ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
+  ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
+  ui->actionToolBarLargeIcons->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
 
   ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
   ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
@@ -678,14 +680,19 @@ void MainWindow::on_actionToolBarLinksToggle_triggered()
   ui->linksToolBar->setVisible(!ui->linksToolBar->isVisible());
 }
 
-void MainWindow::on_actionToolBarLargeIcons_triggered()
-{
-  setToolbarSize(LargeToolbarSize);
-}
-
 void MainWindow::on_actionToolBarSmallIcons_triggered()
 {
   setToolbarSize(SmallToolbarSize);
+}
+
+void MainWindow::on_actionToolBarMediumIcons_triggered()
+{
+  setToolbarSize(MediumToolbarSize);
+}
+
+void MainWindow::on_actionToolBarLargeIcons_triggered()
+{
+  setToolbarSize(LargeToolbarSize);
 }
 
 void MainWindow::on_actionToolBarIconsOnly_triggered()
