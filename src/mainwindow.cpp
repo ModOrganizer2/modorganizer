@@ -399,6 +399,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
   connect(ui->linksToolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(linksToolBar_customContextMenuRequested(QPoint)));
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -640,45 +641,66 @@ void MainWindow::updateToolBar()
   ui->linksToolBar->setVisible(hasLinks);
 }
 
+void MainWindow::toolbarMenu_aboutToShow()
+{
+  // well, this is a bit of a hack to allow the same toolbar menu to be shown
+  // in both the main menu and the context menu
+  //
+  // the toolbar menu is returned by createPopupMenu(), but Qt takes ownership
+  // of it and deletes it by setting the WA_DeleteOnClose attribute on it
+  //
+  // to avoid deleting the menu, the attribute is removed here
+  ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
+
+  ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
+  ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
+
+  ui->actionToolBarLargeIcons->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
+  ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
+
+  ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
+  ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
+  ui->actionToolBarIconsAndText->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+}
+
 QMenu* MainWindow::createPopupMenu()
 {
-  auto* m = QMainWindow::createPopupMenu();
+  return ui->menuToolbars;
+}
 
-  m->addSeparator();
+void MainWindow::on_actionToolBarMainToggle_triggered()
+{
+  ui->toolBar->setVisible(!ui->toolBar->isVisible());
+}
 
-  auto* a = new QAction(tr("Small Icons"), m);
-  connect(a, &QAction::triggered, [&]{ setToolbarSize(SmallToolbarSize); });
-  a->setCheckable(true);
-  a->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
-  m->addAction(a);
+void MainWindow::on_actionToolBarLinksToggle_triggered()
+{
+  ui->linksToolBar->setVisible(!ui->linksToolBar->isVisible());
+}
 
-  a = new QAction(tr("Large Icons"), m);
-  connect(a, &QAction::triggered, [&]{ setToolbarSize(LargeToolbarSize); });
-  a->setCheckable(true);
-  a->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
-  m->addAction(a);
+void MainWindow::on_actionToolBarLargeIcons_triggered()
+{
+  setToolbarSize(LargeToolbarSize);
+}
 
-  m->addSeparator();
+void MainWindow::on_actionToolBarSmallIcons_triggered()
+{
+  setToolbarSize(SmallToolbarSize);
+}
 
-  a = new QAction(tr("Icons only"), m);
-  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonIconOnly); });
-  a->setCheckable(true);
-  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
-  m->addAction(a);
+void MainWindow::on_actionToolBarIconsOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonIconOnly);
+}
 
-  a = new QAction(tr("Text only"), m);
-  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonTextOnly); });
-  a->setCheckable(true);
-  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
-  m->addAction(a);
+void MainWindow::on_actionToolBarTextOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextOnly);
+}
 
-  a = new QAction(tr("Text and Icons"), m);
-  connect(a, &QAction::triggered, [&]{ setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon); });
-  a->setCheckable(true);
-  a->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
-  m->addAction(a);
-
-  return m;
+void MainWindow::on_actionToolBarIconsAndText_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
 void MainWindow::setToolbarSize(const QSize& s)

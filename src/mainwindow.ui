@@ -1358,6 +1358,9 @@ p, li { white-space: pre-wrap; }
      <height>36</height>
     </size>
    </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextUnderIcon</enum>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -1405,10 +1408,8 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionNexus"/>
     <addaction name="separator"/>
-    <addaction name="actionNotifications"/>
     <addaction name="actionModify_Executables"/>
     <addaction name="actionTool"/>
-    <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -1425,8 +1426,30 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionCopy_Log_to_Clipboard"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuToolbars">
+     <property name="title">
+      <string>Toolbars</string>
+     </property>
+     <addaction name="actionToolBarMainToggle"/>
+     <addaction name="actionToolBarLinksToggle"/>
+     <addaction name="separator"/>
+     <addaction name="actionToolBarSmallIcons"/>
+     <addaction name="actionToolBarLargeIcons"/>
+     <addaction name="separator"/>
+     <addaction name="actionToolBarIconsOnly"/>
+     <addaction name="actionToolBarTextOnly"/>
+     <addaction name="actionToolBarIconsAndText"/>
+    </widget>
+    <addaction name="menuToolbars"/>
+    <addaction name="actionNotifications"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
+   <addaction name="menuView"/>
    <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
@@ -1695,6 +1718,72 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="statusTip">
     <string>Exits Mod Organizer</string>
+   </property>
+  </action>
+  <action name="actionToolbar_Size">
+   <property name="text">
+    <string>Toolbar Size</string>
+   </property>
+  </action>
+  <action name="actionToolbar_style">
+   <property name="text">
+    <string>Toolbar Buttons</string>
+   </property>
+  </action>
+  <action name="actionToolBarMainToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Main</string>
+   </property>
+  </action>
+  <action name="actionToolBarLinksToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Links</string>
+   </property>
+  </action>
+  <action name="actionToolBarSmallIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Small Icons</string>
+   </property>
+  </action>
+  <action name="actionToolBarLargeIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Lar&amp;ge Icons</string>
+   </property>
+  </action>
+  <action name="actionToolBarIconsOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Icons Only</string>
+   </property>
+  </action>
+  <action name="actionToolBarTextOnly">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Text Only</string>
+   </property>
+  </action>
+  <action name="actionToolBarIconsAndText">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>I&amp;cons and Text</string>
    </property>
   </action>
  </widget>

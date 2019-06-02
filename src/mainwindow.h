@@ -213,6 +213,8 @@ private:
   void updateToolBar();
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
+  void toolbarMenu_aboutToShow();
+
   QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
@@ -631,6 +633,14 @@ private slots: // ui slots
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
   void on_actionExit_triggered();
+  void on_actionToolBarMainToggle_triggered();
+  void on_actionToolBarLinksToggle_triggered();
+  void on_actionToolBarLargeIcons_triggered();
+  void on_actionToolBarSmallIcons_triggered();
+  void on_actionToolBarIconsOnly_triggered();
+  void on_actionToolBarTextOnly_triggered();
+  void on_actionToolBarIconsAndText_triggered();
+
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
