@@ -1417,8 +1417,11 @@ p, li { white-space: pre-wrap; }
      <string>&amp;Tools</string>
     </property>
     <addaction name="actionNexus"/>
+    <addaction name="separator"/>
+    <addaction name="actionNotifications"/>
     <addaction name="actionModify_Executables"/>
     <addaction name="actionTool"/>
+    <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -1427,13 +1430,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionHelp"/>
     <addaction name="actionUpdate"/>
-    <addaction name="actionEndorseMOMenu"/>
-   </widget>
-   <widget class="QMenu" name="menu_View">
-    <property name="title">
-     <string>&amp;View</string>
-    </property>
-    <addaction name="actionNotifications"/>
+    <addaction name="actionEndorseMO"/>
    </widget>
    <widget class="QMenu" name="menu_Edit">
     <property name="title">
@@ -1443,7 +1440,6 @@ p, li { white-space: pre-wrap; }
    </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
-   <addaction name="menu_View"/>
    <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
@@ -1692,14 +1688,6 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="statusTip">
     <string>Exits Mod Organizer</string>
-   </property>
-  </action>
-  <action name="actionEndorseMOMenu">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Endorse Mod Organizer</string>
    </property>
   </action>
  </widget>

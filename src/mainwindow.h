@@ -208,7 +208,7 @@ private:
 
   void setupActionMenu(QAction* a);
   void createHelpMenu();
-  void createEndorseWidget();
+  void createEndorseMenu();
 
   void updateToolBar();
   void activateSelectedProfile();

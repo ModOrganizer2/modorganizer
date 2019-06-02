@@ -255,7 +255,7 @@ MainWindow::MainWindow(QSettings &initSettings
   setupActionMenu(ui->actionEndorseMO);
 
   createHelpMenu();
-  createEndorseWidget();
+  createEndorseMenu();
 
   toggleMO2EndorseState();
 
@@ -722,22 +722,23 @@ void MainWindow::about()
 }
 
 
-void MainWindow::createEndorseWidget()
+void MainWindow::createEndorseMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionEndorseMO->menu();
+  if (!menu) {
+    // shouldn't happen
     return;
   }
-  buttonMenu->clear();
 
-  QAction *endorseAction = new QAction(tr("Endorse"), buttonMenu);
+  menu->clear();
+
+  QAction *endorseAction = new QAction(tr("Endorse"), menu);
   connect(endorseAction, SIGNAL(triggered()), this, SLOT(actionEndorseMO()));
-  buttonMenu->addAction(endorseAction);
+  menu->addAction(endorseAction);
 
-  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
+  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), menu);
   connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(actionWontEndorseMO()));
-  buttonMenu->addAction(wontEndorseAction);
+  menu->addAction(wontEndorseAction);
 }
 
 
@@ -5021,6 +5022,8 @@ void MainWindow::on_actionSettings_triggered()
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
+
+  toggleMO2EndorseState();
 }
 
 
@@ -5473,20 +5476,19 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 
 void MainWindow::toggleMO2EndorseState()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
   if (Settings::instance().endorsementIntegration()) {
     ui->actionEndorseMO->setVisible(true);
     if (Settings::instance().directInterface().contains("endorse_state")) {
-      ui->actionEndorseMO->setEnabled(false);
+      ui->actionEndorseMO->menu()->setEnabled(false);
       if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
         ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
-        toolBtn->setToolTip(tr("Thank you for endorsing MO2! :)"));
+        ui->actionEndorseMO->setStatusTip(tr("Thank you for endorsing MO2! :)"));
       } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
         ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-        toolBtn->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
+        ui->actionEndorseMO->setStatusTip(tr("Please reconsider endorsing MO2 on Nexus!"));
       }
     } else {
-      ui->actionEndorseMO->setEnabled(true);
+      ui->actionEndorseMO->menu()->setEnabled(true);
     }
   } else
     ui->actionEndorseMO->setVisible(false);
