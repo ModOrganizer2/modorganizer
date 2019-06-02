@@ -206,7 +206,9 @@ private:
 
   void cleanup();
 
-  void actionToToolButton(QAction *&sourceAction);
+  void setupActionMenu(QAction* a);
+  void createHelpMenu();
+  void createEndorseWidget();
 
   void updateToolBar();
   void activateSelectedProfile();
@@ -254,9 +256,6 @@ private:
 
   // remove invalid category-references from mods
   void fixCategories();
-
-  void createEndorseWidget();
-  void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
@@ -342,6 +341,8 @@ private:
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
+
+  QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
 

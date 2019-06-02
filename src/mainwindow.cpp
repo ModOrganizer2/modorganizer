@@ -206,6 +206,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
+  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -248,17 +249,12 @@ MainWindow::MainWindow(QSettings &initSettings
   // Setup toolbar
   QWidget *spacer = new QWidget(ui->toolBar);
   spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
 
-  if (toolBtn->menu() == nullptr) {
-    actionToToolButton(ui->actionTool);
-  }
+  setupActionMenu(ui->actionTool);
+  setupActionMenu(ui->actionHelp);
+  setupActionMenu(ui->actionEndorseMO);
 
-  actionToToolButton(ui->actionHelp);
-  createHelpWidget();
-
-  actionToToolButton(ui->actionEndorseMO);
+  createHelpMenu();
   createEndorseWidget();
 
   toggleMO2EndorseState();
@@ -611,28 +607,13 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
   return result;
 }
 
-
-void MainWindow::actionToToolButton(QAction *&sourceAction)
+void MainWindow::setupActionMenu(QAction* a)
 {
-  QToolButton *button = new QToolButton(ui->toolBar);
-  button->setObjectName(sourceAction->objectName());
-  button->setIcon(sourceAction->icon());
-  button->setText(sourceAction->text());
-  button->setPopupMode(QToolButton::InstantPopup);
-  button->setToolButtonStyle(ui->toolBar->toolButtonStyle());
-  button->setToolTip(sourceAction->toolTip());
-  button->setShortcut(sourceAction->shortcut());
-  QMenu *buttonMenu = new QMenu(sourceAction->text(), button);
-  button->setMenu(buttonMenu);
-  QAction *newAction = ui->toolBar->insertWidget(sourceAction, button);
-  newAction->setObjectName(sourceAction->objectName());
-  newAction->setIcon(sourceAction->icon());
-  newAction->setText(sourceAction->text());
-  newAction->setToolTip(sourceAction->toolTip());
-  newAction->setShortcut(sourceAction->shortcut());
-  ui->toolBar->removeAction(sourceAction);
-  sourceAction->deleteLater();
-  sourceAction = newAction;
+  a->setMenu(new QMenu(this));
+
+  auto* w = ui->toolBar->widgetForAction(a);
+  if (auto* tb=dynamic_cast<QToolButton*>(w))
+    tb->setPopupMode(QToolButton::InstantPopup);
 }
 
 void MainWindow::updateToolBar()
@@ -760,32 +741,34 @@ void MainWindow::createEndorseWidget()
 }
 
 
-void MainWindow::createHelpWidget()
+void MainWindow::createHelpMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionHelp));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionHelp->menu();
+  if (!menu) {
+    // this happens on startup because languageChanged() (which calls this) is
+    // called before the menus are actually created
     return;
   }
-  buttonMenu->clear();
 
-  QAction *helpAction = new QAction(tr("Help on UI"), buttonMenu);
+  menu->clear();
+
+  QAction *helpAction = new QAction(tr("Help on UI"), menu);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
-  buttonMenu->addAction(helpAction);
+  menu->addAction(helpAction);
 
-  QAction *wikiAction = new QAction(tr("Documentation"), buttonMenu);
+  QAction *wikiAction = new QAction(tr("Documentation"), menu);
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
-  buttonMenu->addAction(wikiAction);
+  menu->addAction(wikiAction);
 
-  QAction *discordAction = new QAction(tr("Chat on Discord"), buttonMenu);
+  QAction *discordAction = new QAction(tr("Chat on Discord"), menu);
   connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
-  buttonMenu->addAction(discordAction);
+  menu->addAction(discordAction);
 
-  QAction *issueAction = new QAction(tr("Report Issue"), buttonMenu);
+  QAction *issueAction = new QAction(tr("Report Issue"), menu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
-  buttonMenu->addAction(issueAction);
+  menu->addAction(issueAction);
 
-  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), buttonMenu);
+  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), menu);
 
   typedef std::vector<std::pair<int, QAction*> > ActionList;
 
@@ -823,9 +806,9 @@ void MainWindow::createHelpWidget()
     tutorialMenu->addAction(iter->second);
   }
 
-  buttonMenu->addMenu(tutorialMenu);
-  buttonMenu->addAction(tr("About"), this, SLOT(about()));
-  buttonMenu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
+  menu->addMenu(tutorialMenu);
+  menu->addAction(tr("About"), this, SLOT(about()));
+  menu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
 void MainWindow::modFilterActive(bool filterActive)
@@ -1128,21 +1111,20 @@ void MainWindow::modPagePluginInvoke()
 
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
+  if (!menu) {
+    menu = ui->actionTool->menu();
+  }
+
   if (name.isEmpty())
     name = tool->displayName();
 
-  QAction *action = new QAction(tool->icon(), name, ui->toolBar);
+  QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
   action->setData(qVariantFromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
 
-  if (menu == nullptr) {
-    QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-    toolBtn->menu()->addAction(action);
-  } else {
-    menu->addAction(action);
-  }
+  menu->addAction(action);
 }
 
 void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
@@ -1176,8 +1158,7 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
       for (auto info : submenuMap[submenuKey]) {
         registerPluginTool(info.second, info.first, submenu);
       }
-      QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-      toolBtn->menu()->addMenu(submenu);
+      ui->actionTool->menu()->addMenu(submenu);
     }
     else {
       registerPluginTool(submenuMap[submenuKey].front().second);
@@ -1188,25 +1169,23 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
   // turn the browser action into a drop-down menu if necessary
-  if (ui->actionNexus->menu() == nullptr) {
-    QAction *nexusAction = ui->actionNexus;
-    // TODO: use a different icon for nexus!
-    ui->actionNexus = new QAction(nexusAction->icon(), tr("Browse Mod Page"), ui->toolBar);
-    ui->toolBar->insertAction(nexusAction, ui->actionNexus);
-    ui->toolBar->removeAction(nexusAction);
-    actionToToolButton(ui->actionNexus);
+  if (!m_browseModPage) {
+    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
+    setupActionMenu(m_browseModPage);
 
-    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-    browserBtn->menu()->addAction(nexusAction);
+    m_browseModPage->menu()->addAction(ui->actionNexus);
+
+    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
+    ui->toolBar->removeAction(ui->actionNexus);
   }
 
-  QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
+  QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
   action->setData(qVariantFromValue(reinterpret_cast<QObject*>(modPage)));
 
   connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-  toolBtn->menu()->addAction(action);
+
+  m_browseModPage->menu()->addAction(action);
 }
 
 
@@ -5096,7 +5075,7 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
-  createHelpWidget();
+  createHelpMenu();
 
   updateDownloadView();
   updateProblemsButton();

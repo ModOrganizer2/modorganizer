@@ -1418,14 +1418,14 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionNexus"/>
     <addaction name="actionModify_Executables"/>
-    <addaction name="actionToolMenu"/>
+    <addaction name="actionTool"/>
     <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="actionHelpMenu"/>
+    <addaction name="actionHelp"/>
     <addaction name="actionUpdate"/>
     <addaction name="actionEndorseMOMenu"/>
    </widget>
@@ -1621,7 +1621,10 @@ p, li { white-space: pre-wrap; }
     <string>&amp;Help</string>
    </property>
    <property name="toolTip">
-    <string>Help</string>
+    <string>Show help options</string>
+   </property>
+   <property name="statusTip">
+    <string>Show help options</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+H</string>
@@ -1689,26 +1692,6 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="statusTip">
     <string>Exits Mod Organizer</string>
-   </property>
-  </action>
-  <action name="actionToolMenu">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="resources.qrc">
-     <normaloff>:/MO/gui/plugins</normaloff>:/MO/gui/plugins</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Tools</string>
-   </property>
-  </action>
-  <action name="actionHelpMenu">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Help menu</string>
    </property>
   </action>
   <action name="actionEndorseMOMenu">
