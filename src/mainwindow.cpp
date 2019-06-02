@@ -242,7 +242,6 @@ MainWindow::MainWindow(QSettings &initSettings
   m_RefreshProgress->setVisible(false);
   statusBar()->addWidget(m_RefreshProgress, 1000);
   statusBar()->clearMessage();
-  statusBar()->hide();
 
   updateProblemsButton();
 
@@ -674,8 +673,6 @@ void MainWindow::updateProblemsButton()
 {
   size_t numProblems = checkForProblems();
   if (numProblems > 0) {
-    ui->actionNotifications->setEnabled(true);
-    ui->actionNotifications->setIconText(tr("Notifications"));
     ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
     QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
@@ -686,8 +683,6 @@ void MainWindow::updateProblemsButton()
     }
     ui->actionNotifications->setIcon(QIcon(mergedIcon));
   } else {
-    ui->actionNotifications->setEnabled(false);
-    ui->actionNotifications->setIconText(tr("No Notifications"));
     ui->actionNotifications->setToolTip(tr("There are no notifications"));
     ui->actionNotifications->setIcon(QIcon(":/MO/gui/warning"));
   }
@@ -976,14 +971,20 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+  if (!exit()) {
+    event->ignore();
+  }
+}
+
+bool MainWindow::exit()
+{
   m_closing = true;
 
   if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
-      event->ignore();
-      return;
+      return false;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
     }
@@ -996,12 +997,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
   {
     m_OrganizerCore.waitForApplication(injected_process_still_running);
     if (!m_closing) { // if operation cancelled
-      event->ignore();
-      return;
+      return false;
     }
   }
 
   setCursor(Qt::WaitCursor);
+  return true;
 }
 
 void MainWindow::cleanup()
@@ -2292,11 +2293,9 @@ void MainWindow::refresher_progress(int percent)
 {
   if (percent == 100) {
     m_RefreshProgress->setVisible(false);
-    statusBar()->hide();
     this->setEnabled(true);
   } else if (!m_RefreshProgress->isVisible()) {
     this->setEnabled(false);
-    statusBar()->show();
     m_RefreshProgress->setVisible(true);
     m_RefreshProgress->setRange(0, 100);
     m_RefreshProgress->setValue(percent);
@@ -2309,7 +2308,6 @@ void MainWindow::directory_refreshed()
   // now
   refreshDataTreeKeepExpandedNodes();
   updateProblemsButton();
-  statusBar()->hide();
 }
 
 void MainWindow::esplist_changed()
@@ -2930,7 +2928,6 @@ void MainWindow::untrack_clicked()
 void MainWindow::validationFailed(const QString &error)
 {
   qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
-  statusBar()->hide();
 }
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
@@ -4115,7 +4112,6 @@ void MainWindow::checkModsForUpdates()
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      statusBar()->show();
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
@@ -5391,12 +5387,15 @@ void MainWindow::on_conflictsCheckBox_toggled(bool)
   refreshDataTreeKeepExpandedNodes();
 }
 
-
 void MainWindow::on_actionUpdate_triggered()
 {
   m_OrganizerCore.startMOUpdate();
 }
 
+void MainWindow::on_actionExit_triggered()
+{
+  exit();
+}
 
 void MainWindow::actionEndorseMO()
 {
@@ -5974,16 +5973,15 @@ void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
-  if (problems.hasProblems()) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(problems.objectName());
-    if (settings.contains(key)) {
-      problems.restoreGeometry(settings.value(key).toByteArray());
-    }
-    problems.exec();
-    settings.setValue(key, problems.saveGeometry());
-    updateProblemsButton();
+
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(problems.objectName());
+  if (settings.contains(key)) {
+    problems.restoreGeometry(settings.value(key).toByteArray());
   }
+  problems.exec();
+  settings.setValue(key, problems.saveGeometry());
+  updateProblemsButton();
 }
 
 void MainWindow::on_actionChange_Game_triggered()

@@ -21,20 +21,20 @@ public:
   ~ProblemsDialog();
 
   bool hasProblems() const;
-private:
 
+private:
   void runDiagnosis();
 
 private slots:
-
   void selectionChanged();
   void urlClicked(const QUrl &url);
 
   void startFix();
-private:
 
+private:
   Ui::ProblemsDialog *ui;
   std::vector<QObject *> m_PluginObjects;
+  bool m_hasProblems;
 };
 
 #endif // PROBLEMSDIALOG_H

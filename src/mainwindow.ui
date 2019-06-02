@@ -31,6 +31,18 @@
     </sizepolicy>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QSplitter" name="topLevelSplitter">
       <property name="orientation">
@@ -1381,18 +1393,75 @@ p, li { white-space: pre-wrap; }
    <addaction name="actionHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>926</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionChange_Game"/>
+    <addaction name="actionInstallMod"/>
+    <addaction name="actionAdd_Profile"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionNexus"/>
+    <addaction name="actionModify_Executables"/>
+    <addaction name="actionToolMenu"/>
+    <addaction name="actionSettings"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="actionHelpMenu"/>
+    <addaction name="actionUpdate"/>
+    <addaction name="actionEndorseMOMenu"/>
+   </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="actionNotifications"/>
+   </widget>
+   <widget class="QMenu" name="menu_Edit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="actionCopy_Log_to_Clipboard"/>
+   </widget>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_View"/>
+   <addaction name="menu_Tools"/>
+   <addaction name="menu_Help"/>
+  </widget>
   <action name="actionInstallMod">
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/MO/gui/resources/system-installer.png</normaloff>:/MO/gui/resources/system-installer.png</iconset>
    </property>
    <property name="text">
-    <string>Install Mod</string>
+    <string>Install &amp;Mod...</string>
    </property>
    <property name="iconText">
     <string>Install &amp;Mod</string>
    </property>
    <property name="toolTip">
+    <string>Install a new mod from an archive</string>
+   </property>
+   <property name="statusTip">
     <string>Install a new mod from an archive</string>
    </property>
    <property name="shortcut">
@@ -1405,13 +1474,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/profiles</normaloff>:/MO/gui/profiles</iconset>
    </property>
    <property name="text">
-    <string>Profiles</string>
+    <string>&amp;Profiles...</string>
    </property>
    <property name="iconText">
     <string>&amp;Profiles</string>
    </property>
    <property name="toolTip">
-    <string>Configure Profiles</string>
+    <string>Configure profiles</string>
+   </property>
+   <property name="statusTip">
+    <string>Configure profiles</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -1423,12 +1495,15 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/icon_executable</normaloff>:/MO/gui/icon_executable</iconset>
    </property>
    <property name="text">
-    <string>Executables</string>
+    <string>&amp;Executables...</string>
    </property>
    <property name="iconText">
     <string>&amp;Executables</string>
    </property>
    <property name="toolTip">
+    <string>Configure the executables that can be started through Mod Organizer</string>
+   </property>
+   <property name="statusTip">
     <string>Configure the executables that can be started through Mod Organizer</string>
    </property>
    <property name="shortcut">
@@ -1441,7 +1516,7 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/plugins</normaloff>:/MO/gui/plugins</iconset>
    </property>
    <property name="text">
-    <string>Tools</string>
+    <string>&amp;Tools</string>
    </property>
    <property name="iconText">
     <string>&amp;Tools</string>
@@ -1459,12 +1534,15 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/settings</normaloff>:/MO/gui/settings</iconset>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>&amp;Settings...</string>
    </property>
    <property name="iconText">
     <string>&amp;Settings</string>
    </property>
    <property name="toolTip">
+    <string>Configure settings and workarounds</string>
+   </property>
+   <property name="statusTip">
     <string>Configure settings and workarounds</string>
    </property>
    <property name="shortcut">
@@ -1477,10 +1555,16 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
    </property>
    <property name="text">
-    <string>Nexus</string>
+    <string>Visit &amp;Nexus</string>
+   </property>
+   <property name="iconText">
+    <string>Visit &amp;Nexus</string>
    </property>
    <property name="toolTip">
-    <string>Search nexus network for more mods</string>
+    <string>Visit the Nexus website in your browser for more mods</string>
+   </property>
+   <property name="statusTip">
+    <string>Visit the Nexus website in your browser for more mods</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -1495,25 +1579,34 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/update</normaloff>:/MO/gui/update</iconset>
    </property>
    <property name="text">
-    <string>Update</string>
+    <string>&amp;Update Mod Organizer</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Update Mod Organizer</string>
    </property>
    <property name="toolTip">
     <string>Mod Organizer is up-to-date</string>
    </property>
+   <property name="statusTip">
+    <string>Mod Organizer is up-to-date</string>
+   </property>
   </action>
   <action name="actionNotifications">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/MO/gui/warning</normaloff>:/MO/gui/warning</iconset>
    </property>
    <property name="text">
-    <string>No Notifications</string>
+    <string>Notifications...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open the notifications dialog</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the notifications dialog</string>
    </property>
    <property name="whatsThis">
-    <string>This button will be highlighted if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
+    <string>This button will be highlighted on the toolbar if MO discovered potential problems in your setup and provide tips on how to fix them.</string>
    </property>
   </action>
   <action name="actionHelp">
@@ -1522,7 +1615,10 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/help</normaloff>:/MO/gui/help</iconset>
    </property>
    <property name="text">
-    <string>Help</string>
+    <string>&amp;Help</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Help</string>
    </property>
    <property name="toolTip">
     <string>Help</string>
@@ -1537,15 +1633,30 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
    </property>
    <property name="text">
-    <string>Endorse MO</string>
+    <string>&amp;Endorse ModOrganizer</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Endorse ModOrganizer</string>
    </property>
    <property name="toolTip">
+    <string>Endorse Mod Organizer</string>
+   </property>
+   <property name="statusTip">
     <string>Endorse Mod Organizer</string>
    </property>
   </action>
   <action name="actionCopy_Log_to_Clipboard">
    <property name="text">
-    <string>Copy Log to Clipboard</string>
+    <string>Copy &amp;Log</string>
+   </property>
+   <property name="iconText">
+    <string>Copy &amp;Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Copy log to clipboard</string>
+   </property>
+   <property name="statusTip">
+    <string>Copy log to clipboard</string>
    </property>
   </action>
   <action name="actionChange_Game">
@@ -1554,10 +1665,58 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/instance_switch</normaloff>:/MO/gui/instance_switch</iconset>
    </property>
    <property name="text">
-    <string>Change Game</string>
+    <string>&amp;Change Game...</string>
+   </property>
+   <property name="iconText">
+    <string>&amp;Change Game</string>
    </property>
    <property name="toolTip">
     <string>Open the Instance selection dialog to manage a different Game</string>
+   </property>
+   <property name="statusTip">
+    <string>Open the Instance selection dialog to manage a different Game</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="iconText">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="toolTip">
+    <string>Exits Mod Organizer</string>
+   </property>
+   <property name="statusTip">
+    <string>Exits Mod Organizer</string>
+   </property>
+  </action>
+  <action name="actionToolMenu">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/MO/gui/plugins</normaloff>:/MO/gui/plugins</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Tools</string>
+   </property>
+  </action>
+  <action name="actionHelpMenu">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Help menu</string>
+   </property>
+  </action>
+  <action name="actionEndorseMOMenu">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Endorse Mod Organizer</string>
    </property>
   </action>
  </widget>

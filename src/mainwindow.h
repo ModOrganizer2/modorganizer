@@ -153,6 +153,8 @@ public:
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
 
+  bool exit();
+
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
@@ -626,6 +628,7 @@ private slots: // ui slots
   void on_actionNotifications_triggered();
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
+  void on_actionExit_triggered();
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
