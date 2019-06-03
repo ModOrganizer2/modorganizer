@@ -247,6 +247,11 @@ QMenu::item:selected
   border-color: #3EA0CA;
 }
 
+QMenuBar::item:selected {
+  background-color: #3c4b54;
+  border-color: #3EA0CA;
+}
+
 QProgressBar
 {
   border: 2px solid grey;

@@ -1407,6 +1407,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="separator"/>
     <addaction name="actionModify_Executables"/>
     <addaction name="actionTool"/>
+    <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -1785,6 +1786,9 @@ p, li { white-space: pre-wrap; }
    </property>
   </action>
   <action name="actionToolBarMediumIcons">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>M&amp;edium Icons</string>
    </property>

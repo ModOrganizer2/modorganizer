@@ -436,13 +436,13 @@ QScrollBar::sub-line {
   background-color: #3E3E42;
   border: none; }
 
-/*QScrollBar::add-line:horizontal:hover, 
-QScrollBar::sub-line:horizontal:hover, 
-QScrollBar::add-line:vertical:hover, 
+/*QScrollBar::add-line:horizontal:hover,
+QScrollBar::sub-line:horizontal:hover,
+QScrollBar::add-line:vertical:hover,
 QScrollBar::sub-line:vertical:hover,
-QScrollBar::add-line:horizontal:pressed, 
-QScrollBar::sub-line:horizontal:pressed, 
-QScrollBar::add-line:vertical:pressed, 
+QScrollBar::add-line:horizontal:pressed,
+QScrollBar::sub-line:horizontal:pressed,
+QScrollBar::add-line:vertical:pressed,
 QScrollBar::sub-line:vertical:pressed { }*/
 QScrollBar::handle:hover {
   background: #9E9E9E; }
@@ -552,7 +552,7 @@ QMenu::item {
   background: transparent;
   padding: 4px 20px; }
 
-QMenu::item:selected {
+QMenu::item:selected, QMenuBar::item:selected {
   background-color: #333334; }
 
 QMenu::item:disabled {
