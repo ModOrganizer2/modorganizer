@@ -1069,12 +1069,12 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  if (!exit()) {
+  if (!confirmExit()) {
     event->ignore();
   }
 }
 
-bool MainWindow::exit()
+bool MainWindow::confirmExit()
 {
   m_closing = true;
 
@@ -5518,7 +5518,9 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionExit_triggered()
 {
-  exit();
+  if (confirmExit()) {
+    qApp->exit();
+  }
 }
 
 void MainWindow::actionEndorseMO()

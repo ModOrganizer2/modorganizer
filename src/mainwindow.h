@@ -153,7 +153,7 @@ public:
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
 
-  bool exit();
+  bool confirmExit();
 
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
