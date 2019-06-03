@@ -153,6 +153,8 @@ public:
 
   void displayModInformation(ModInfo::Ptr modInfo, unsigned int index, int tab);
 
+  bool exit();
+
   virtual bool closeWindow();
   virtual void setWindowEnabled(bool enabled);
 
@@ -204,9 +206,16 @@ private:
 
   void cleanup();
 
-  void actionToToolButton(QAction *&sourceAction);
+  void setupActionMenu(QAction* a);
+  void createHelpMenu();
+  void createEndorseMenu();
 
   void updateToolBar();
+  void setToolbarSize(const QSize& s);
+  void setToolbarButtonStyle(Qt::ToolButtonStyle s);
+  void toolbarMenu_aboutToShow();
+
+  QMenu* createPopupMenu() override;
   void activateSelectedProfile();
 
   void setExecutableIndex(int index);
@@ -252,9 +261,6 @@ private:
 
   // remove invalid category-references from mods
   void fixCategories();
-
-  void createEndorseWidget();
-  void createHelpWidget();
 
   bool extractProgress(QProgressDialog &extractProgress, int percentage, std::string fileName);
 
@@ -315,8 +321,6 @@ private:
 
   Ui::MainWindow *ui;
 
-  QAction *m_Sep; // Executable Shortcuts are added after this. Non owning.
-
   bool m_WasVisible;
 
   MOBase::TutorialControl m_Tutorial;
@@ -340,6 +344,8 @@ private:
   QPersistentModelIndex m_ContextIdx;
   QTreeWidgetItem *m_ContextItem;
   QAction *m_ContextAction;
+
+  QAction* m_browseModPage;
 
   CategoryFactory &m_CategoryFactory;
 
@@ -591,7 +597,7 @@ private slots:
    */
   void allowListResize();
 
-  void toolBar_customContextMenuRequested(const QPoint &point);
+  void linksToolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
   void overwriteClosed(int);
 
@@ -626,6 +632,16 @@ private slots: // ui slots
   void on_actionNotifications_triggered();
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
+  void on_actionExit_triggered();
+  void on_actionToolBarMainToggle_triggered();
+  void on_actionToolBarLinksToggle_triggered();
+  void on_actionToolBarSmallIcons_triggered();
+  void on_actionToolBarMediumIcons_triggered();
+  void on_actionToolBarLargeIcons_triggered();
+  void on_actionToolBarIconsOnly_triggered();
+  void on_actionToolBarTextOnly_triggered();
+  void on_actionToolBarIconsAndText_triggered();
+
 
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();

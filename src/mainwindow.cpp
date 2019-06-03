@@ -189,6 +189,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const QSize SmallToolbarSize(24, 24);
+const QSize MediumToolbarSize(32, 32);
+const QSize LargeToolbarSize(42, 36);
+
 
 MainWindow::MainWindow(QSettings &initSettings
                        , OrganizerCore &organizerCore
@@ -206,6 +210,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , m_ContextItem(nullptr)
   , m_ContextAction(nullptr)
   , m_ContextRow(-1)
+  , m_browseModPage(nullptr)
   , m_CurrentSaveView(nullptr)
   , m_OrganizerCore(organizerCore)
   , m_PluginContainer(pluginContainer)
@@ -242,37 +247,19 @@ MainWindow::MainWindow(QSettings &initSettings
   m_RefreshProgress->setVisible(false);
   statusBar()->addWidget(m_RefreshProgress, 1000);
   statusBar()->clearMessage();
-  statusBar()->hide();
 
   updateProblemsButton();
 
   // Setup toolbar
-  QWidget *spacer = new QWidget(ui->toolBar);
-  spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-  QWidget *widget = ui->toolBar->widgetForAction(ui->actionTool);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(widget);
 
-  if (toolBtn->menu() == nullptr) {
-    actionToToolButton(ui->actionTool);
-  }
+  setupActionMenu(ui->actionTool);
+  setupActionMenu(ui->actionHelp);
+  setupActionMenu(ui->actionEndorseMO);
 
-  actionToToolButton(ui->actionHelp);
-  createHelpWidget();
-
-  actionToToolButton(ui->actionEndorseMO);
-  createEndorseWidget();
+  createHelpMenu();
+  createEndorseMenu();
 
   toggleMO2EndorseState();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->isSeparator()) {
-      // insert spacers
-      ui->toolBar->insertWidget(action, spacer);
-      m_Sep = action;
-      // m_Sep would only use the last separator anyway, and we only have the one anyway?
-      break;
-    }
-  }
 
   TaskProgressManager::instance().tryCreateTaskbar();
 
@@ -412,7 +399,8 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
-  connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
+  connect(ui->linksToolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(linksToolBar_customContextMenuRequested(QPoint)));
+  connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
   connect(&m_OrganizerCore, &OrganizerCore::close, this, &QMainWindow::close);
@@ -612,55 +600,129 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
   return result;
 }
 
-
-void MainWindow::actionToToolButton(QAction *&sourceAction)
+void MainWindow::setupActionMenu(QAction* a)
 {
-  QToolButton *button = new QToolButton(ui->toolBar);
-  button->setObjectName(sourceAction->objectName());
-  button->setIcon(sourceAction->icon());
-  button->setText(sourceAction->text());
-  button->setPopupMode(QToolButton::InstantPopup);
-  button->setToolButtonStyle(ui->toolBar->toolButtonStyle());
-  button->setToolTip(sourceAction->toolTip());
-  button->setShortcut(sourceAction->shortcut());
-  QMenu *buttonMenu = new QMenu(sourceAction->text(), button);
-  button->setMenu(buttonMenu);
-  QAction *newAction = ui->toolBar->insertWidget(sourceAction, button);
-  newAction->setObjectName(sourceAction->objectName());
-  newAction->setIcon(sourceAction->icon());
-  newAction->setText(sourceAction->text());
-  newAction->setToolTip(sourceAction->toolTip());
-  newAction->setShortcut(sourceAction->shortcut());
-  ui->toolBar->removeAction(sourceAction);
-  sourceAction->deleteLater();
-  sourceAction = newAction;
+  a->setMenu(new QMenu(this));
+
+  auto* w = ui->toolBar->widgetForAction(a);
+  if (auto* tb=dynamic_cast<QToolButton*>(w))
+    tb->setPopupMode(QToolButton::InstantPopup);
 }
 
 void MainWindow::updateToolBar()
 {
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->objectName().startsWith("custom__")) {
-      ui->toolBar->removeAction(action);
-      action->deleteLater();
-    }
+  for (auto* a : ui->linksToolBar->actions()) {
+    ui->linksToolBar->removeAction(a);
+    a->deleteLater();
   }
+
+  bool hasLinks = false;
 
   std::vector<Executable>::iterator begin, end;
   m_OrganizerCore.executablesList()->getExecutables(begin, end);
+
   for (auto iter = begin; iter != end; ++iter) {
     if (iter->isShownOnToolbar()) {
+      hasLinks = true;
+
       QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
                                         iter->m_Title,
                                         ui->toolBar);
+
       exeAction->setObjectName(QString("custom__") + iter->m_Title);
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
       }
-      ui->toolBar->insertAction(m_Sep, exeAction);
+
+      ui->linksToolBar->addAction(exeAction);
     }
+  }
+
+  // don't show the toolbar if there are no links
+  ui->linksToolBar->setVisible(hasLinks);
+}
+
+void MainWindow::toolbarMenu_aboutToShow()
+{
+  // well, this is a bit of a hack to allow the same toolbar menu to be shown
+  // in both the main menu and the context menu
+  //
+  // the toolbar menu is returned by createPopupMenu(), but Qt takes ownership
+  // of it and deletes it by setting the WA_DeleteOnClose attribute on it
+  //
+  // to avoid deleting the menu, the attribute is removed here
+  ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
+
+  ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
+  ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
+
+  ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
+  ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
+  ui->actionToolBarLargeIcons->setChecked(ui->toolBar->iconSize() == LargeToolbarSize);
+
+  ui->actionToolBarIconsOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonIconOnly);
+  ui->actionToolBarTextOnly->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextOnly);
+  ui->actionToolBarIconsAndText->setChecked(ui->toolBar->toolButtonStyle() == Qt::ToolButtonTextUnderIcon);
+}
+
+QMenu* MainWindow::createPopupMenu()
+{
+  return ui->menuToolbars;
+}
+
+void MainWindow::on_actionToolBarMainToggle_triggered()
+{
+  ui->toolBar->setVisible(!ui->toolBar->isVisible());
+}
+
+void MainWindow::on_actionToolBarLinksToggle_triggered()
+{
+  ui->linksToolBar->setVisible(!ui->linksToolBar->isVisible());
+}
+
+void MainWindow::on_actionToolBarSmallIcons_triggered()
+{
+  setToolbarSize(SmallToolbarSize);
+}
+
+void MainWindow::on_actionToolBarMediumIcons_triggered()
+{
+  setToolbarSize(MediumToolbarSize);
+}
+
+void MainWindow::on_actionToolBarLargeIcons_triggered()
+{
+  setToolbarSize(LargeToolbarSize);
+}
+
+void MainWindow::on_actionToolBarIconsOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonIconOnly);
+}
+
+void MainWindow::on_actionToolBarTextOnly_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextOnly);
+}
+
+void MainWindow::on_actionToolBarIconsAndText_triggered()
+{
+  setToolbarButtonStyle(Qt::ToolButtonTextUnderIcon);
+}
+
+void MainWindow::setToolbarSize(const QSize& s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setIconSize(s);
   }
 }
 
+void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
+{
+  for (auto* tb : findChildren<QToolBar*>()) {
+    tb->setToolButtonStyle(s);
+  }
+}
 
 void MainWindow::scheduleUpdateButton()
 {
@@ -669,13 +731,10 @@ void MainWindow::scheduleUpdateButton()
   }
 }
 
-
 void MainWindow::updateProblemsButton()
 {
   size_t numProblems = checkForProblems();
   if (numProblems > 0) {
-    ui->actionNotifications->setEnabled(true);
-    ui->actionNotifications->setIconText(tr("Notifications"));
     ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
     QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
@@ -686,8 +745,6 @@ void MainWindow::updateProblemsButton()
     }
     ui->actionNotifications->setIcon(QIcon(mergedIcon));
   } else {
-    ui->actionNotifications->setEnabled(false);
-    ui->actionNotifications->setIconText(tr("No Notifications"));
     ui->actionNotifications->setToolTip(tr("There are no notifications"));
     ui->actionNotifications->setIcon(QIcon(":/MO/gui/warning"));
   }
@@ -746,51 +803,54 @@ void MainWindow::about()
 }
 
 
-void MainWindow::createEndorseWidget()
+void MainWindow::createEndorseMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionEndorseMO->menu();
+  if (!menu) {
+    // shouldn't happen
     return;
   }
-  buttonMenu->clear();
 
-  QAction *endorseAction = new QAction(tr("Endorse"), buttonMenu);
+  menu->clear();
+
+  QAction *endorseAction = new QAction(tr("Endorse"), menu);
   connect(endorseAction, SIGNAL(triggered()), this, SLOT(actionEndorseMO()));
-  buttonMenu->addAction(endorseAction);
+  menu->addAction(endorseAction);
 
-  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), buttonMenu);
+  QAction *wontEndorseAction = new QAction(tr("Won't Endorse"), menu);
   connect(wontEndorseAction, SIGNAL(triggered()), this, SLOT(actionWontEndorseMO()));
-  buttonMenu->addAction(wontEndorseAction);
+  menu->addAction(wontEndorseAction);
 }
 
 
-void MainWindow::createHelpWidget()
+void MainWindow::createHelpMenu()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionHelp));
-  QMenu *buttonMenu = toolBtn->menu();
-  if (buttonMenu == nullptr) {
+  auto* menu = ui->actionHelp->menu();
+  if (!menu) {
+    // this happens on startup because languageChanged() (which calls this) is
+    // called before the menus are actually created
     return;
   }
-  buttonMenu->clear();
 
-  QAction *helpAction = new QAction(tr("Help on UI"), buttonMenu);
+  menu->clear();
+
+  QAction *helpAction = new QAction(tr("Help on UI"), menu);
   connect(helpAction, SIGNAL(triggered()), this, SLOT(helpTriggered()));
-  buttonMenu->addAction(helpAction);
+  menu->addAction(helpAction);
 
-  QAction *wikiAction = new QAction(tr("Documentation"), buttonMenu);
+  QAction *wikiAction = new QAction(tr("Documentation"), menu);
   connect(wikiAction, SIGNAL(triggered()), this, SLOT(wikiTriggered()));
-  buttonMenu->addAction(wikiAction);
+  menu->addAction(wikiAction);
 
-  QAction *discordAction = new QAction(tr("Chat on Discord"), buttonMenu);
+  QAction *discordAction = new QAction(tr("Chat on Discord"), menu);
   connect(discordAction, SIGNAL(triggered()), this, SLOT(discordTriggered()));
-  buttonMenu->addAction(discordAction);
+  menu->addAction(discordAction);
 
-  QAction *issueAction = new QAction(tr("Report Issue"), buttonMenu);
+  QAction *issueAction = new QAction(tr("Report Issue"), menu);
   connect(issueAction, SIGNAL(triggered()), this, SLOT(issueTriggered()));
-  buttonMenu->addAction(issueAction);
+  menu->addAction(issueAction);
 
-  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), buttonMenu);
+  QMenu *tutorialMenu = new QMenu(tr("Tutorials"), menu);
 
   typedef std::vector<std::pair<int, QAction*> > ActionList;
 
@@ -828,9 +888,9 @@ void MainWindow::createHelpWidget()
     tutorialMenu->addAction(iter->second);
   }
 
-  buttonMenu->addMenu(tutorialMenu);
-  buttonMenu->addAction(tr("About"), this, SLOT(about()));
-  buttonMenu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
+  menu->addMenu(tutorialMenu);
+  menu->addAction(tr("About"), this, SLOT(about()));
+  menu->addAction(tr("About Qt"), qApp, SLOT(aboutQt()));
 }
 
 void MainWindow::modFilterActive(bool filterActive)
@@ -976,14 +1036,20 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+  if (!exit()) {
+    event->ignore();
+  }
+}
+
+bool MainWindow::exit()
+{
   m_closing = true;
 
   if (m_OrganizerCore.downloadManager()->downloadsInProgressNoPause()) {
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
-      event->ignore();
-      return;
+      return false;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
     }
@@ -996,12 +1062,12 @@ void MainWindow::closeEvent(QCloseEvent* event)
   {
     m_OrganizerCore.waitForApplication(injected_process_still_running);
     if (!m_closing) { // if operation cancelled
-      event->ignore();
-      return;
+      return false;
     }
   }
 
   setCursor(Qt::WaitCursor);
+  return true;
 }
 
 void MainWindow::cleanup()
@@ -1127,21 +1193,20 @@ void MainWindow::modPagePluginInvoke()
 
 void MainWindow::registerPluginTool(IPluginTool *tool, QString name, QMenu *menu)
 {
+  if (!menu) {
+    menu = ui->actionTool->menu();
+  }
+
   if (name.isEmpty())
     name = tool->displayName();
 
-  QAction *action = new QAction(tool->icon(), name, ui->toolBar);
+  QAction *action = new QAction(tool->icon(), name, menu);
   action->setToolTip(tool->tooltip());
   tool->setParentWidget(this);
   action->setData(qVariantFromValue((QObject*)tool));
   connect(action, SIGNAL(triggered()), this, SLOT(toolPluginInvoke()), Qt::QueuedConnection);
 
-  if (menu == nullptr) {
-    QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-    toolBtn->menu()->addAction(action);
-  } else {
-    menu->addAction(action);
-  }
+  menu->addAction(action);
 }
 
 void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
@@ -1175,8 +1240,7 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
       for (auto info : submenuMap[submenuKey]) {
         registerPluginTool(info.second, info.first, submenu);
       }
-      QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionTool));
-      toolBtn->menu()->addMenu(submenu);
+      ui->actionTool->menu()->addMenu(submenu);
     }
     else {
       registerPluginTool(submenuMap[submenuKey].front().second);
@@ -1187,25 +1251,23 @@ void MainWindow::registerPluginTools(std::vector<IPluginTool *> toolPlugins)
 void MainWindow::registerModPage(IPluginModPage *modPage)
 {
   // turn the browser action into a drop-down menu if necessary
-  if (ui->actionNexus->menu() == nullptr) {
-    QAction *nexusAction = ui->actionNexus;
-    // TODO: use a different icon for nexus!
-    ui->actionNexus = new QAction(nexusAction->icon(), tr("Browse Mod Page"), ui->toolBar);
-    ui->toolBar->insertAction(nexusAction, ui->actionNexus);
-    ui->toolBar->removeAction(nexusAction);
-    actionToToolButton(ui->actionNexus);
+  if (!m_browseModPage) {
+    m_browseModPage = new QAction(ui->actionNexus->icon(), tr("Browse Mod Page"), this);
+    setupActionMenu(m_browseModPage);
 
-    QToolButton *browserBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-    browserBtn->menu()->addAction(nexusAction);
+    m_browseModPage->menu()->addAction(ui->actionNexus);
+
+    ui->toolBar->insertAction(ui->actionNexus, m_browseModPage);
+    ui->toolBar->removeAction(ui->actionNexus);
   }
 
-  QAction *action = new QAction(modPage->icon(), modPage->displayName(), ui->toolBar);
+  QAction *action = new QAction(modPage->icon(), modPage->displayName(), this);
   modPage->setParentWidget(this);
   action->setData(qVariantFromValue(reinterpret_cast<QObject*>(modPage)));
 
   connect(action, SIGNAL(triggered()), this, SLOT(modPagePluginInvoke()), Qt::QueuedConnection);
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionNexus));
-  toolBtn->menu()->addAction(action);
+
+  m_browseModPage->menu()->addAction(action);
 }
 
 
@@ -1853,6 +1915,19 @@ void MainWindow::readSettings()
     restoreGeometry(settings.value("window_geometry").toByteArray());
   }
 
+  if (settings.contains("window_state")) {
+    restoreState(settings.value("window_state").toByteArray());
+  }
+
+  if (settings.contains("toolbar_size")) {
+    setToolbarSize(settings.value("toolbar_size").toSize());
+  }
+
+  if (settings.contains("toolbar_button_style")) {
+    setToolbarButtonStyle(static_cast<Qt::ToolButtonStyle>(
+      settings.value("toolbar_button_style").toInt()));
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -1929,6 +2004,9 @@ void MainWindow::storeSettings(QSettings &settings) {
 
   if (settings.value("reset_geometry", false).toBool()) {
     settings.remove("window_geometry");
+    settings.remove("window_state");
+    settings.remove("toolbar_size");
+    settings.remove("toolbar_button_style");
     settings.remove("window_split");
     settings.remove("log_split");
     settings.remove("filters_visible");
@@ -1937,6 +2015,9 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("reset_geometry");
   } else {
     settings.setValue("window_geometry", saveGeometry());
+    settings.setValue("window_state", saveState());
+    settings.setValue("toolbar_size", ui->toolBar->iconSize());
+    settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
@@ -2292,11 +2373,9 @@ void MainWindow::refresher_progress(int percent)
 {
   if (percent == 100) {
     m_RefreshProgress->setVisible(false);
-    statusBar()->hide();
     this->setEnabled(true);
   } else if (!m_RefreshProgress->isVisible()) {
     this->setEnabled(false);
-    statusBar()->show();
     m_RefreshProgress->setVisible(true);
     m_RefreshProgress->setRange(0, 100);
     m_RefreshProgress->setValue(percent);
@@ -2309,7 +2388,6 @@ void MainWindow::directory_refreshed()
   // now
   refreshDataTreeKeepExpandedNodes();
   updateProblemsButton();
-  statusBar()->hide();
 }
 
 void MainWindow::esplist_changed()
@@ -2930,7 +3008,6 @@ void MainWindow::untrack_clicked()
 void MainWindow::validationFailed(const QString &error)
 {
   qDebug("Nexus API validation failed: %s", qUtf8Printable(error));
-  statusBar()->hide();
 }
 
 void MainWindow::windowTutorialFinished(const QString &windowName)
@@ -4115,7 +4192,6 @@ void MainWindow::checkModsForUpdates()
     QString apiKey;
     if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
       m_OrganizerCore.doAfterLogin([this] () { this->checkModsForUpdates(); });
-      statusBar()->show();
       NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
     } else {
       qWarning("You are not currently authenticated with Nexus. Please do so under Settings -> Nexus.");
@@ -5046,6 +5122,8 @@ void MainWindow::on_actionSettings_triggered()
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
   m_OrganizerCore.cycleDiagnostics();
+
+  toggleMO2EndorseState();
 }
 
 
@@ -5100,7 +5178,7 @@ void MainWindow::languageChange(const QString &newLanguage)
 
   ui->profileBox->setItemText(0, QObject::tr("<Manage...>"));
 
-  createHelpWidget();
+  createHelpMenu();
 
   updateDownloadView();
   updateProblemsButton();
@@ -5391,12 +5469,15 @@ void MainWindow::on_conflictsCheckBox_toggled(bool)
   refreshDataTreeKeepExpandedNodes();
 }
 
-
 void MainWindow::on_actionUpdate_triggered()
 {
   m_OrganizerCore.startMOUpdate();
 }
 
+void MainWindow::on_actionExit_triggered()
+{
+  exit();
+}
 
 void MainWindow::actionEndorseMO()
 {
@@ -5495,20 +5576,19 @@ void MainWindow::modUpdateCheck(std::multimap<QString, int> IDs)
 
 void MainWindow::toggleMO2EndorseState()
 {
-  QToolButton *toolBtn = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionEndorseMO));
   if (Settings::instance().endorsementIntegration()) {
     ui->actionEndorseMO->setVisible(true);
     if (Settings::instance().directInterface().contains("endorse_state")) {
-      ui->actionEndorseMO->setEnabled(false);
+      ui->actionEndorseMO->menu()->setEnabled(false);
       if (Settings::instance().directInterface().value("endorse_state").toString() == "Endorsed") {
         ui->actionEndorseMO->setToolTip(tr("Thank you for endorsing MO2! :)"));
-        toolBtn->setToolTip(tr("Thank you for endorsing MO2! :)"));
+        ui->actionEndorseMO->setStatusTip(tr("Thank you for endorsing MO2! :)"));
       } else if (Settings::instance().directInterface().value("endorse_state").toString() == "Abstained") {
         ui->actionEndorseMO->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
-        toolBtn->setToolTip(tr("Please reconsider endorsing MO2 on Nexus!"));
+        ui->actionEndorseMO->setStatusTip(tr("Please reconsider endorsing MO2 on Nexus!"));
       }
     } else {
-      ui->actionEndorseMO->setEnabled(true);
+      ui->actionEndorseMO->menu()->setEnabled(true);
     }
   } else
     ui->actionEndorseMO->setVisible(false);
@@ -5974,16 +6054,15 @@ void MainWindow::on_actionNotifications_triggered()
 {
   updateProblemsButton();
   ProblemsDialog problems(m_PluginContainer.plugins<QObject>(), this);
-  if (problems.hasProblems()) {
-    QSettings &settings = m_OrganizerCore.settings().directInterface();
-    QString key = QString("geometry/%1").arg(problems.objectName());
-    if (settings.contains(key)) {
-      problems.restoreGeometry(settings.value(key).toByteArray());
-    }
-    problems.exec();
-    settings.setValue(key, problems.saveGeometry());
-    updateProblemsButton();
+
+  QSettings &settings = m_OrganizerCore.settings().directInterface();
+  QString key = QString("geometry/%1").arg(problems.objectName());
+  if (settings.contains(key)) {
+    problems.restoreGeometry(settings.value(key).toByteArray());
   }
+  problems.exec();
+  settings.setValue(key, problems.saveGeometry());
+  updateProblemsButton();
 }
 
 void MainWindow::on_actionChange_Game_triggered()
@@ -6083,17 +6162,23 @@ void MainWindow::removeFromToolbar()
 }
 
 
-void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
+void MainWindow::linksToolBar_customContextMenuRequested(const QPoint &point)
 {
-  QAction *action = ui->toolBar->actionAt(point);
+  QAction *action = ui->linksToolBar->actionAt(point);
+
   if (action != nullptr) {
     if (action->objectName().startsWith("custom_")) {
       m_ContextAction = action;
       QMenu menu;
-      menu.addAction(tr("Remove"), this, SLOT(removeFromToolbar()));
-      menu.exec(ui->toolBar->mapToGlobal(point));
+      menu.addAction(tr("Remove '%1' from the toolbar").arg(action->text()), this, SLOT(removeFromToolbar()));
+      menu.exec(ui->linksToolBar->mapToGlobal(point));
+      return;
     }
   }
+
+  // did not click a link button, show the default context menu
+  auto* m = createPopupMenu();
+  m->exec(ui->linksToolBar->mapToGlobal(point));
 }
 
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)

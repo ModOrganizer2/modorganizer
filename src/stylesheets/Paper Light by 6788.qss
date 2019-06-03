@@ -590,6 +590,18 @@ QHeaderView::down-arrow {
 
 /* Right Click Menus, Toolbar Dropdown Menus, & Tooltips */
 
+QMenuBar {
+	background: #EBEBEB;
+	border: 1px solid #EBEBEB;
+}
+
+QMenuBar::item:selected {
+	background: #008484;
+	color: #FFFFFF;
+	border: 0px;
+	border-radius: 4px;
+}
+
 QMenu {
 	/* right click menu */
 	background: #FFFFFF;
