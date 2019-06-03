@@ -1426,11 +1426,11 @@ p, li { white-space: pre-wrap; }
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
     <widget class="QMenu" name="menuToolbars">
      <property name="title">
-      <string>Toolbars</string>
+      <string>&amp;Toolbars</string>
      </property>
      <addaction name="actionToolBarMainToggle"/>
      <addaction name="actionToolBarLinksToggle"/>
@@ -1622,7 +1622,7 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/warning</normaloff>:/MO/gui/warning</iconset>
    </property>
    <property name="text">
-    <string>Notifications...</string>
+    <string>&amp;Notifications...</string>
    </property>
    <property name="toolTip">
     <string>Open the notifications dialog</string>
