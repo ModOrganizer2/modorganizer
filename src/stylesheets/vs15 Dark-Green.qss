@@ -201,8 +201,7 @@ QToolBar::separator {
   width: 0; }
 
 QToolButton {
-  margin: 0 4px 0 4px;
-  padding: 5px; }
+  padding: 4px; }
   QToolButton:hover, QToolButton:focus {
     background-color: #3E3E40; }
   QToolButton:pressed {
