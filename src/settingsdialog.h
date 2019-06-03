@@ -156,6 +156,8 @@ private slots:
 
   void on_nexusConnect_clicked();
 
+  void on_nexusManualKey_clicked();
+
   void dispatchLogin();
 
   void loginPing();

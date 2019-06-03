@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settingsdialog.h"
 
 #include "ui_settingsdialog.h"
+#include "ui_nexusmanualkey.h"
 #include "categoriesdialog.h"
 #include "helper.h"
 #include "noeditdelegate.h"
@@ -27,6 +28,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "instancemanager.h"
 #include "nexusinterface.h"
+#include "nxmaccessmanager.h"
 #include "plugincontainer.h"
 
 #include <boost/uuid/uuid_generators.hpp>
@@ -46,6 +48,33 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 
 using namespace MOBase;
+
+
+class NexusManualKeyDialog : public QDialog
+{
+public:
+  NexusManualKeyDialog(QWidget* parent)
+    : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
+  {
+    ui->setupUi(this);
+  }
+
+  void accept() override
+  {
+    m_key = ui->key->toPlainText();
+    QDialog::accept();
+  }
+
+  const QString& key() const
+  {
+    return m_key;
+  }
+
+private:
+  std::unique_ptr<Ui::NexusManualKeyDialog> ui;
+  QString m_key;
+};
+
 
 SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
@@ -342,6 +371,20 @@ void SettingsDialog::on_nexusConnect_clicked()
   ui->nexusConnect->setDisabled(true);
   QUrl url = QUrl("wss://sso.nexusmods.com");
   m_nexusLogin->open(url);
+}
+
+void SettingsDialog::on_nexusManualKey_clicked()
+{
+  NexusManualKeyDialog dialog(this);
+
+  if (dialog.exec() != QDialog::Accepted) {
+    return;
+  }
+
+  const auto key = dialog.key();
+  emit processApiKey(key);
+  ui->nexusConnect->setText("Nexus API Key Stored");
+  NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(key, true);
 }
 
 void SettingsDialog::dispatchLogin()

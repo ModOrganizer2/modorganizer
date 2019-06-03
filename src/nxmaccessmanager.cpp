@@ -176,10 +176,14 @@ bool NXMAccessManager::validateWaiting() const
 }
 
 
-void NXMAccessManager::apiCheck(const QString &apiKey)
+void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
 {
   if (m_ValidateReply != nullptr) {
     return;
+  }
+
+  if (force) {
+    m_ValidateState = VALIDATE_NOT_CHECKED;
   }
 
   if (m_ValidateState == VALIDATE_VALID) {

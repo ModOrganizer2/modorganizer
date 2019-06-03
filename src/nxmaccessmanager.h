@@ -46,7 +46,7 @@ public:
   bool validateAttempted() const;
   bool validateWaiting() const;
 
-  void apiCheck(const QString &apiKey);
+  void apiCheck(const QString &apiKey, bool force=false);
 
   void showCookies() const;
 
