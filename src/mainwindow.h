@@ -211,7 +211,7 @@ private:
   void createHelpMenu();
   void createEndorseMenu();
 
-  void updateToolBar();
+  void updatePinnedExecutables();
   void setToolbarSize(const QSize& s);
   void setToolbarButtonStyle(Qt::ToolButtonStyle s);
   void toolbarMenu_aboutToShow();
@@ -323,6 +323,10 @@ private:
   Ui::MainWindow *ui;
 
   bool m_WasVisible;
+
+  // this has to be remembered because by the time storeSettings() is called,
+  // the window is closed and the menubar is hidden
+  bool m_menuBarVisible;
 
   MOBase::TutorialControl m_Tutorial;
 

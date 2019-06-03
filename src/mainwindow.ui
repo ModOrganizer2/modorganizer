@@ -1392,7 +1392,7 @@ p, li { white-space: pre-wrap; }
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menu_File">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>&amp;File</string>
     </property>
@@ -1402,7 +1402,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menu_Tools">
+   <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>&amp;Tools</string>
     </property>
@@ -1413,7 +1413,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
    </widget>
-   <widget class="QMenu" name="menu_Help">
+   <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>&amp;Help</string>
     </property>
@@ -1421,7 +1421,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionUpdate"/>
     <addaction name="actionEndorseMO"/>
    </widget>
-   <widget class="QMenu" name="menu_Edit">
+   <widget class="QMenu" name="menuEdit">
     <property name="title">
      <string>&amp;Edit</string>
     </property>
@@ -1450,11 +1450,17 @@ p, li { white-space: pre-wrap; }
     <addaction name="menuToolbars"/>
     <addaction name="actionNotifications"/>
    </widget>
-   <addaction name="menu_File"/>
-   <addaction name="menu_Edit"/>
+   <widget class="QMenu" name="menuRun">
+    <property name="title">
+     <string>&amp;Run</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
-   <addaction name="menu_Tools"/>
-   <addaction name="menu_Help"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuRun"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="linksToolBar">
    <property name="contextMenuPolicy">
