@@ -195,6 +195,7 @@ protected:
   virtual void resizeEvent(QResizeEvent *event);
   virtual void dragEnterEvent(QDragEnterEvent *event);
   virtual void dropEvent(QDropEvent *event);
+  void keyPressEvent(QKeyEvent *event) override;
 
 private slots:
   void on_actionChange_Game_triggered();
@@ -633,6 +634,7 @@ private slots: // ui slots
   void on_actionSettings_triggered();
   void on_actionUpdate_triggered();
   void on_actionExit_triggered();
+  void on_actionMainMenuToggle_triggered();
   void on_actionToolBarMainToggle_triggered();
   void on_actionToolBarLinksToggle_triggered();
   void on_actionToolBarSmallIcons_triggered();
@@ -642,7 +644,7 @@ private slots: // ui slots
   void on_actionToolBarTextOnly_triggered();
   void on_actionToolBarIconsAndText_triggered();
 
-
+  void on_centralWidget_customContextMenuRequested(const QPoint &pos);
   void on_bsaList_customContextMenuRequested(const QPoint &pos);
   void on_clearFiltersButton_clicked();
   void on_btnRefreshData_clicked();

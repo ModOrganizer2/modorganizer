@@ -653,6 +653,7 @@ void MainWindow::toolbarMenu_aboutToShow()
   // to avoid deleting the menu, the attribute is removed here
   ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
 
+  ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
   ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
 
@@ -668,6 +669,11 @@ void MainWindow::toolbarMenu_aboutToShow()
 QMenu* MainWindow::createPopupMenu()
 {
   return ui->menuToolbars;
+}
+
+void MainWindow::on_actionMainMenuToggle_triggered()
+{
+  ui->menuBar->setVisible(!ui->menuBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
@@ -722,6 +728,23 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
+}
+
+void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
+{
+  // the custom context menu event bubbles up to here if widgets don't actually
+  // process this, which would show the menu when right-clicking button, labels,
+  // etc.
+  //
+  // only show the context menu when right-clicking on the central widget
+  // itself, which is basically just the outer edges of the main window
+  auto* w = childAt(pos);
+  if (w != ui->centralWidget) {
+    return;
+  }
+
+  auto* m = createPopupMenu();
+  m->exec(ui->centralWidget->mapToGlobal(pos));
 }
 
 void MainWindow::scheduleUpdateButton()
@@ -1928,6 +1951,10 @@ void MainWindow::readSettings()
       settings.value("toolbar_button_style").toInt()));
   }
 
+  if (settings.contains("menubar_visible")) {
+    ui->menuBar->setVisible(settings.value("menubar_visible").toBool());
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -2007,6 +2034,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("window_state");
     settings.remove("toolbar_size");
     settings.remove("toolbar_button_style");
+    settings.remove("menubar_visible");
     settings.remove("window_split");
     settings.remove("window_monitor");
     settings.remove("log_split");
@@ -2019,6 +2047,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("window_state", saveState());
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
+    settings.setValue("menubar_visible", ui->menuBar->isVisible());
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
@@ -6815,6 +6844,17 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+  // if the menubar is hidden, pressing Alt will make it visible
+  if (event->key() == Qt::Key_Alt) {
+    if (!ui->menuBar->isVisible()) {
+      ui->menuBar->setVisible(true);
+    }
+  }
+
+  QMainWindow::keyPressEvent(event);
+}
 
 void MainWindow::on_clickBlankButton_clicked()
 {

@@ -30,6 +30,9 @@
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
+   <property name="contextMenuPolicy">
+    <enum>Qt::CustomContextMenu</enum>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout_8">
     <property name="leftMargin">
      <number>6</number>
@@ -1432,6 +1435,7 @@ p, li { white-space: pre-wrap; }
      <property name="title">
       <string>&amp;Toolbars</string>
      </property>
+     <addaction name="actionMainMenuToggle"/>
      <addaction name="actionToolBarMainToggle"/>
      <addaction name="actionToolBarLinksToggle"/>
      <addaction name="separator"/>
@@ -1719,22 +1723,12 @@ p, li { white-space: pre-wrap; }
     <string>Exits Mod Organizer</string>
    </property>
   </action>
-  <action name="actionToolbar_Size">
-   <property name="text">
-    <string>Toolbar Size</string>
-   </property>
-  </action>
-  <action name="actionToolbar_style">
-   <property name="text">
-    <string>Toolbar Buttons</string>
-   </property>
-  </action>
   <action name="actionToolBarMainToggle">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>&amp;Main</string>
+    <string>M&amp;ain</string>
    </property>
   </action>
   <action name="actionToolBarLinksToggle">
@@ -1791,6 +1785,14 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>M&amp;edium Icons</string>
+   </property>
+  </action>
+  <action name="actionMainMenuToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Menu</string>
    </property>
   </action>
  </widget>
