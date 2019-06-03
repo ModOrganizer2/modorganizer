@@ -597,6 +597,17 @@ int runApplication(MOApplication &application, SingleInstance &instance,
 
     QPixmap pixmap(splashPath);
     QSplashScreen splash(pixmap);
+
+    if (settings.contains("window_monitor")) {
+      const int monitor = settings.value("window_monitor").toInt();
+
+      if (monitor != -1) {
+        QDesktopWidget* desktop = QApplication::desktop();
+        const QPoint center = desktop->availableGeometry(monitor).center();
+        splash.move(center - splash.rect().center());
+      }
+    }
+
     splash.show();
     splash.activateWindow();
 

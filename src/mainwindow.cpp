@@ -2008,6 +2008,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("toolbar_size");
     settings.remove("toolbar_button_style");
     settings.remove("window_split");
+    settings.remove("window_monitor");
     settings.remove("log_split");
     settings.remove("filters_visible");
     settings.remove("browser_geometry");
@@ -2019,6 +2020,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("window_split", ui->splitter->saveState());
+    settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
