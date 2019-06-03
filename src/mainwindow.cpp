@@ -738,6 +738,10 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
 
 void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
 {
+  // this allows for getting the context menu even if both the menubar and all
+  // the toolbars are hidden; an alternative is the Alt key handled in
+  // keyPressEvent() below
+
   // the custom context menu event bubbles up to here if widgets don't actually
   // process this, which would show the menu when right-clicking button, labels,
   // etc.
