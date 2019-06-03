@@ -1930,6 +1930,7 @@ void MainWindow::storeSettings(QSettings &settings) {
   if (settings.value("reset_geometry", false).toBool()) {
     settings.remove("window_geometry");
     settings.remove("window_split");
+    settings.remove("window_monitor");
     settings.remove("log_split");
     settings.remove("filters_visible");
     settings.remove("browser_geometry");
@@ -1938,6 +1939,7 @@ void MainWindow::storeSettings(QSettings &settings) {
   } else {
     settings.setValue("window_geometry", saveGeometry());
     settings.setValue("window_split", ui->splitter->saveState());
+    settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
     settings.setValue("browser_geometry", m_IntegratedBrowser.saveGeometry());
     settings.setValue("filters_visible", ui->displayCategoriesBtn->isChecked());
