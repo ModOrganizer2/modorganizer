@@ -6880,7 +6880,7 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event)
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
@@ -6890,7 +6890,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
   }
 
-  QMainWindow::keyPressEvent(event);
+  QMainWindow::keyReleaseEvent(event);
 }
 
 void MainWindow::on_clickBlankButton_clicked()
