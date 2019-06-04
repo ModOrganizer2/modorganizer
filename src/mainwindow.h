@@ -207,6 +207,7 @@ private:
 
   void cleanup();
 
+  void setupToolbar();
   void setupActionMenu(QAction* a);
   void createHelpMenu();
   void createEndorseMenu();
@@ -327,6 +328,10 @@ private:
   // this has to be remembered because by the time storeSettings() is called,
   // the window is closed and the menubar is hidden
   bool m_menuBarVisible;
+
+  // last separator on the toolbar, used to add spacer for right-alignment and
+  // as an insert point for executables
+  QAction* m_linksSeparator;
 
   MOBase::TutorialControl m_Tutorial;
 
@@ -602,7 +607,7 @@ private slots:
    */
   void allowListResize();
 
-  void linksToolBar_customContextMenuRequested(const QPoint &point);
+  void toolBar_customContextMenuRequested(const QPoint &point);
   void removeFromToolbar();
   void overwriteClosed(int);
 
@@ -640,7 +645,6 @@ private slots: // ui slots
   void on_actionExit_triggered();
   void on_actionMainMenuToggle_triggered();
   void on_actionToolBarMainToggle_triggered();
-  void on_actionToolBarLinksToggle_triggered();
   void on_actionToolBarSmallIcons_triggered();
   void on_actionToolBarMediumIcons_triggered();
   void on_actionToolBarLargeIcons_triggered();
