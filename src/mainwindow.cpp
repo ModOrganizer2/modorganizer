@@ -201,6 +201,7 @@ MainWindow::MainWindow(QSettings &initSettings
   : QMainWindow(parent)
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
+  , m_menuBarVisible(true)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
   , m_ModListGroupingProxy(nullptr)
@@ -321,7 +322,7 @@ MainWindow::MainWindow(QSettings &initSettings
   resizeLists(modListAdjusted, pluginListAdjusted);
 
   QMenu *linkMenu = new QMenu(this);
-  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar"), this, SLOT(linkToolbar()));
+  linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Toolbar and Menu"), this, SLOT(linkToolbar()));
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Desktop"), this, SLOT(linkDesktop()));
   linkMenu->addAction(QIcon(":/MO/gui/link"), tr("Start Menu"), this, SLOT(linkMenu()));
   ui->linkButton->setMenu(linkMenu);
@@ -470,7 +471,7 @@ MainWindow::MainWindow(QSettings &initSettings
   }
 
   refreshExecutablesList();
-  updateToolBar();
+  updatePinnedExecutables();
 
   for (QAction *action : ui->toolBar->actions()) {
     // set the name of the widget to the name of the action to allow styling
@@ -609,12 +610,14 @@ void MainWindow::setupActionMenu(QAction* a)
     tb->setPopupMode(QToolButton::InstantPopup);
 }
 
-void MainWindow::updateToolBar()
+void MainWindow::updatePinnedExecutables()
 {
   for (auto* a : ui->linksToolBar->actions()) {
     ui->linksToolBar->removeAction(a);
     a->deleteLater();
   }
+
+  ui->menuRun->clear();
 
   bool hasLinks = false;
 
@@ -625,21 +628,23 @@ void MainWindow::updateToolBar()
     if (iter->isShownOnToolbar()) {
       hasLinks = true;
 
-      QAction *exeAction = new QAction(iconForExecutable(iter->m_BinaryInfo.filePath()),
-                                        iter->m_Title,
-                                        ui->toolBar);
+      QAction *exeAction = new QAction(
+        iconForExecutable(iter->m_BinaryInfo.filePath()), iter->m_Title);
 
       exeAction->setObjectName(QString("custom__") + iter->m_Title);
+
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
       }
 
       ui->linksToolBar->addAction(exeAction);
+      ui->menuRun->addAction(exeAction);
     }
   }
 
-  // don't show the toolbar if there are no links
+  // don't show the toolbar or menu if there are no links
   ui->linksToolBar->setVisible(hasLinks);
+  ui->menuRun->menuAction()->setVisible(hasLinks);
 }
 
 void MainWindow::toolbarMenu_aboutToShow()
@@ -653,6 +658,7 @@ void MainWindow::toolbarMenu_aboutToShow()
   // to avoid deleting the menu, the attribute is removed here
   ui->menuToolbars->setAttribute(Qt::WA_DeleteOnClose, false);
 
+  ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
   ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
 
@@ -668,6 +674,12 @@ void MainWindow::toolbarMenu_aboutToShow()
 QMenu* MainWindow::createPopupMenu()
 {
   return ui->menuToolbars;
+}
+
+void MainWindow::on_actionMainMenuToggle_triggered()
+{
+  ui->menuBar->setVisible(!ui->menuBar->isVisible());
+  m_menuBarVisible = ui->menuBar->isVisible();
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
@@ -722,6 +734,27 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
+}
+
+void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
+{
+  // this allows for getting the context menu even if both the menubar and all
+  // the toolbars are hidden; an alternative is the Alt key handled in
+  // keyPressEvent() below
+
+  // the custom context menu event bubbles up to here if widgets don't actually
+  // process this, which would show the menu when right-clicking button, labels,
+  // etc.
+  //
+  // only show the context menu when right-clicking on the central widget
+  // itself, which is basically just the outer edges of the main window
+  auto* w = childAt(pos);
+  if (w != ui->centralWidget) {
+    return;
+  }
+
+  auto* m = createPopupMenu();
+  m->exec(ui->centralWidget->mapToGlobal(pos));
 }
 
 void MainWindow::scheduleUpdateButton()
@@ -1036,12 +1069,12 @@ void MainWindow::showEvent(QShowEvent *event)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-  if (!exit()) {
+  if (!confirmExit()) {
     event->ignore();
   }
 }
 
-bool MainWindow::exit()
+bool MainWindow::confirmExit()
 {
   m_closing = true;
 
@@ -1929,6 +1962,11 @@ void MainWindow::readSettings()
       settings.value("toolbar_button_style").toInt()));
   }
 
+  if (settings.contains("menubar_visible")) {
+    m_menuBarVisible = settings.value("menubar_visible").toBool();
+    ui->menuBar->setVisible(m_menuBarVisible);
+  }
+
   if (settings.contains("window_split")) {
     ui->splitter->restoreState(settings.value("window_split").toByteArray());
   }
@@ -2008,6 +2046,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.remove("window_state");
     settings.remove("toolbar_size");
     settings.remove("toolbar_button_style");
+    settings.remove("menubar_visible");
     settings.remove("window_split");
     settings.remove("window_monitor");
     settings.remove("log_split");
@@ -2020,6 +2059,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("window_state", saveState());
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
+    settings.setValue("menubar_visible", m_menuBarVisible);
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
@@ -4973,7 +5013,7 @@ void MainWindow::linkToolbar()
   Executable &exe(getSelectedExecutable());
   exe.showOnToolbar(!exe.isShownOnToolbar());
   ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.isShownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
-  updateToolBar();
+  updatePinnedExecutables();
 }
 
 namespace {
@@ -5479,7 +5519,9 @@ void MainWindow::on_actionUpdate_triggered()
 
 void MainWindow::on_actionExit_triggered()
 {
-  exit();
+  if (confirmExit()) {
+    qApp->exit();
+  }
 }
 
 void MainWindow::actionEndorseMO()
@@ -6161,7 +6203,7 @@ void MainWindow::removeFromToolbar()
     qDebug("executable doesn't exist any more");
   }
 
-  updateToolBar();
+  updatePinnedExecutables();
 }
 
 
@@ -6816,6 +6858,18 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+  // if the menubar is hidden, pressing Alt will make it visible
+  if (event->key() == Qt::Key_Alt) {
+    if (!ui->menuBar->isVisible()) {
+      ui->menuBar->setVisible(true);
+      m_menuBarVisible = true;
+    }
+  }
+
+  QMainWindow::keyPressEvent(event);
+}
 
 void MainWindow::on_clickBlankButton_clicked()
 {
