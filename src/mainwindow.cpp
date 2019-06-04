@@ -1049,6 +1049,7 @@ bool MainWindow::exit()
     if (QMessageBox::question(this, tr("Downloads in progress"),
                           tr("There are still downloads in progress, do you really want to quit?"),
                           QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel) {
+      m_closing = false;
       return false;
     } else {
       m_OrganizerCore.downloadManager()->pauseAll();
