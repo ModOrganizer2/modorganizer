@@ -381,6 +381,19 @@ bool canUnhideFile(bool isArchive, const QString& filename)
 }
 
 
+int naturalCompare(const QString& a, const QString& b)
+{
+  static QCollator c = []{
+    QCollator c;
+    c.setNumericMode(true);
+    c.setCaseSensitivity(Qt::CaseInsensitive);
+    return c;
+  }();
+
+  return c.compare(a, b);
+}
+
+
 class ConflictItem : public QTreeWidgetItem
 {
 public:
@@ -455,6 +468,19 @@ public:
   bool canPreview(PluginContainer* pluginContainer) const
   {
     return canPreviewFile(pluginContainer, isArchive(), fileName());
+  }
+
+  bool operator<(const QTreeWidgetItem& other) const
+  {
+    const int column = treeWidget()->sortColumn();
+
+    if (column >= columnCount() || column >= other.columnCount()) {
+      // shouldn't happen
+      qWarning().nospace() << "ConflictItem::operator<() mistmatch in column count";
+      return false;
+    }
+
+    return (naturalCompare(text(column), other.text(column)) < 0);
   }
 };
 
