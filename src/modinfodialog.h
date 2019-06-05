@@ -460,27 +460,11 @@ private:
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
-  void setConflictItem(
-    QTreeWidgetItem* item, FileEntry::Index index,
-    const QString& fileName, bool hasAltOrigins, const QString& altOrigin,
-    bool archive) const;
-
-  QString conflictFileName(const QTreeWidgetItem* conflictItem) const;
-  QString conflictAltOrigin(const QTreeWidgetItem* conflictItem) const;
-  bool conflictHasAlts(const QTreeWidgetItem* conflictItem) const;
-  bool conflictIsArchive(const QTreeWidgetItem* conflictItem) const;
-  FileEntry::Index conflictFileIndex(const QTreeWidgetItem* conflictItem) const;
-
   void restoreTabState(const QByteArray &state);
   void restoreConflictsState(const QByteArray &state);
 
   QByteArray saveTabState() const;
   QByteArray saveConflictsState() const;
-
-  bool canHideConflictItem(const QTreeWidgetItem* item) const;
-  bool canUnhideConflictItem(const QTreeWidgetItem* item) const;
-  bool canOpenConflictItem(const QTreeWidgetItem* item) const;
-  bool canPreviewConflictItem(const QTreeWidgetItem* item) const;
 
   void changeFiletreeVisibility(bool visible);
 
@@ -488,11 +472,6 @@ private:
   void previewConflictItems(const QList<QTreeWidgetItem*>& items);
   void changeConflictItemsVisibility(
     const QList<QTreeWidgetItem*>& items, bool visible);
-
-  bool canPreviewFile(bool isArchive, const QString& filename) const;
-  bool canOpenFile(bool isArchive, const QString& filename) const;
-  bool canHideFile(bool isArchive, const QString& filename) const;
-  bool canUnhideFile(bool isArchive, const QString& filename) const;
 
   void showConflictMenu(const QPoint &pos, QTreeWidget* tree);
 
