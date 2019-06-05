@@ -3399,7 +3399,7 @@ void MainWindow::openExplorer_clicked()
   }
 }
 
-void MainWindow::openOriginExplorer_clicked()
+void MainWindow::openPluginOriginExplorer_clicked()
 {
   QItemSelectionModel *selection = ui->espList->selectionModel();
   if (selection->hasSelection() && selection->selectedRows().count() > 0) {
@@ -4743,7 +4743,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
       // no selection
       QMenu menu(this);
       initModListContextMenu(&menu);
-      menu.exec(modList->mapToGlobal(pos));
+      menu.exec(modList->viewport()->mapToGlobal(pos));
     } else {
       QMenu menu(this);
 
@@ -4888,7 +4888,7 @@ void MainWindow::on_modList_customContextMenuRequested(const QPoint &pos)
         menu.setDefaultAction(infoAction);
       }
 
-      menu.exec(modList->mapToGlobal(pos));
+      menu.exec(modList->viewport()->mapToGlobal(pos));
     }
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
@@ -5027,7 +5027,7 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 
   menu.addAction(deleteMenuLabel, this, SLOT(deleteSavegame_clicked()));
 
-  menu.exec(ui->savegameList->mapToGlobal(pos));
+  menu.exec(ui->savegameList->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::linkToolbar()
@@ -5469,6 +5469,24 @@ void MainWindow::openDataFile()
   m_OrganizerCore.executeFileVirtualized(this, targetInfo);
 }
 
+void MainWindow::openDataOriginExplorer_clicked()
+{
+  if (m_ContextItem == nullptr) {
+    return;
+  }
+
+  const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+  const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+  if (isArchive || isDirectory) {
+    return;
+  }
+
+  const auto fullPath = m_ContextItem->data(0, Qt::UserRole).toString();
+
+  qDebug().nospace() << "opening in explorer: " << fullPath;
+  shell::ExploreFile(fullPath);
+}
 
 void MainWindow::updateAvailable()
 {
@@ -5512,8 +5530,15 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
       menu.addAction(tr("Preview"), this, SLOT(previewDataFile()));
     }
 
+    const auto isArchive = m_ContextItem->data(0, Qt::UserRole + 1).toBool();
+    const auto isDirectory = m_ContextItem->data(0, Qt::UserRole + 3).toBool();
+
+    if (!isArchive && !isDirectory) {
+      menu.addAction("Open Origin in Explorer", this, SLOT(openDataOriginExplorer_clicked()));
+    }
+
     // offer to hide/unhide file, but not for files from archives
-    if (!m_ContextItem->data(0, Qt::UserRole + 1).toBool()) {
+    if (!isArchive) {
       if (m_ContextItem->text(0).endsWith(ModInfo::s_HiddenExt)) {
         menu.addAction(tr("Un-Hide"), this, SLOT(unhideFile()));
       } else {
@@ -5526,7 +5551,7 @@ void MainWindow::on_dataTree_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Write To File..."), this, SLOT(writeDataToFile()));
   menu.addAction(tr("Refresh"), this, SLOT(on_btnRefreshData_clicked()));
 
-  menu.exec(dataTree->mapToGlobal(pos));
+  menu.exec(dataTree->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::on_conflictsCheckBox_toggled(bool)
@@ -6108,7 +6133,7 @@ void MainWindow::on_bsaList_customContextMenuRequested(const QPoint &pos)
   QMenu menu;
   menu.addAction(tr("Extract..."), this, SLOT(extractBSATriggered()));
 
-  menu.exec(ui->bsaList->mapToGlobal(pos));
+  menu.exec(ui->bsaList->viewport()->mapToGlobal(pos));
 }
 
 void MainWindow::on_bsaList_itemChanged(QTreeWidgetItem*, int)
@@ -6185,7 +6210,7 @@ void MainWindow::on_categoriesList_customContextMenuRequested(const QPoint &pos)
   menu.addAction(tr("Edit Categories..."), this, SLOT(editCategories()));
   menu.addAction(tr("Deselect filter"), this, SLOT(deselectFilters()));
 
-  menu.exec(ui->categoriesList->mapToGlobal(pos));
+  menu.exec(ui->categoriesList->viewport()->mapToGlobal(pos));
 }
 
 
@@ -6293,7 +6318,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   unsigned int modInfoIndex = ModInfo::getIndex(m_OrganizerCore.pluginList()->origin(idx.data().toString()));
   //this is to avoid showing the option on game files like skyrim.esm
   if (modInfoIndex != UINT_MAX) {
-    menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openOriginExplorer_clicked()));
+    menu.addAction(tr("Open Origin in Explorer"), this, SLOT(openPluginOriginExplorer_clicked()));
     ModInfo::Ptr modInfo = ModInfo::getByIndex(modInfoIndex);
     std::vector<ModInfo::EFlag> flags = modInfo->getFlags();
 
@@ -6304,7 +6329,7 @@ void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
   }
 
   try {
-    menu.exec(ui->espList->mapToGlobal(pos));
+    menu.exec(ui->espList->viewport()->mapToGlobal(pos));
   } catch (const std::exception &e) {
     reportError(tr("Exception: ").arg(e.what()));
   } catch (...) {

@@ -450,7 +450,7 @@ private slots:
   void visitOnNexus_clicked();
   void visitWebPage_clicked();
   void openExplorer_clicked();
-  void openOriginExplorer_clicked();
+  void openPluginOriginExplorer_clicked();
   void openOriginInformation_clicked();
   void information_clicked();
   void enableSelectedMods_clicked();
@@ -469,6 +469,7 @@ private slots:
   void previewDataFile();
   void hideFile();
   void unhideFile();
+  void openDataOriginExplorer_clicked();
 
   // pluginlist context menu
   void enableSelectedPlugins_clicked();
