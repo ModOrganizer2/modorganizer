@@ -57,6 +57,10 @@ public:
     : QDialog(parent), ui(new Ui::NexusManualKeyDialog)
   {
     ui->setupUi(this);
+
+    connect(ui->openBrowser, &QPushButton::clicked, [&]{ openBrowser(); });
+    connect(ui->paste, &QPushButton::clicked, [&]{ paste(); });
+    connect(ui->clear, &QPushButton::clicked, [&]{ clear(); });
   }
 
   void accept() override
@@ -70,15 +74,34 @@ public:
     return m_key;
   }
 
+  void openBrowser()
+  {
+    shell::OpenLink(QUrl("https://www.nexusmods.com/users/myaccount?tab=api"));
+  }
+
+  void paste()
+  {
+    const auto text = QApplication::clipboard()->text();
+    if (!text.isEmpty()) {
+      ui->key->setPlainText(text);
+    }
+  }
+
+  void clear()
+  {
+    ui->key->clear();
+  }
+
 private:
   std::unique_ptr<Ui::NexusManualKeyDialog> ui;
   QString m_key;
 };
 
 
-SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent)
+SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, Settings* settings, QWidget *parent)
   : TutorableDialog("SettingsDialog", parent)
   , ui(new Ui::SettingsDialog)
+  , m_settings(settings)
   , m_PluginContainer(pluginContainer)
   , m_nexusLogin(new QWebSocket)
   , m_KeyReceived(false)
@@ -95,8 +118,9 @@ SettingsDialog::SettingsDialog(PluginContainer *pluginContainer, QWidget *parent
   connect(m_nexusLogin, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(authError(QAbstractSocket::SocketError)));
   connect(m_nexusLogin, SIGNAL(textMessageReceived(const QString &)), this, SLOT(receiveApiKey(const QString &)));
   connect(m_nexusLogin, SIGNAL(disconnected()), this, SLOT(completeApiConnection()));
-  connect(this, SIGNAL(retryApiConnection()), this, SLOT(on_nexusConnect_clicked()));
   m_loginTimer.callOnTimeout(this, &SettingsDialog::loginPing);
+
+  updateNexusButtons();
 }
 
 SettingsDialog::~SettingsDialog()
@@ -367,10 +391,7 @@ void SettingsDialog::on_resetDialogsButton_clicked()
 
 void SettingsDialog::on_nexusConnect_clicked()
 {
-  ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
-  ui->nexusConnect->setDisabled(true);
-  QUrl url = QUrl("wss://sso.nexusmods.com");
-  m_nexusLogin->open(url);
+  fetchNexusApiKey();
 }
 
 void SettingsDialog::on_nexusManualKey_clicked()
@@ -382,9 +403,21 @@ void SettingsDialog::on_nexusManualKey_clicked()
   }
 
   const auto key = dialog.key();
-  emit processApiKey(key);
-  ui->nexusConnect->setText("Nexus API Key Stored");
-  NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(key, true);
+
+  if (key.isEmpty()) {
+    clearKey();
+  } else {
+    if (setKey(key)) {
+      testApiKey();
+    }
+  }
+}
+
+void SettingsDialog::fetchNexusApiKey()
+{
+  QUrl url = QUrl("wss://sso.nexusmods.com");
+  m_nexusLogin->open(url);
+  updateNexusButtons();
 }
 
 void SettingsDialog::dispatchLogin()
@@ -434,12 +467,17 @@ void SettingsDialog::receiveApiKey(const QString &response)
     if (data.contains("connection_token")) {
       m_AuthToken = data["connection_token"].toString();
     } else {
-      m_KeyReceived = true;
-      emit processApiKey(data["api_key"].toString());
+      const auto key = data["api_key"].toString();
+
       m_nexusLogin->close();
-      ui->nexusConnect->setText("Nexus API Key Stored");
       m_loginTimer.stop();
       m_totalPings = 0;
+
+      if (key.isEmpty()) {
+        clearKey();
+      } else {
+        setKey(key);
+      }
     }
   } else {
     QString error("There was a problem with SSO initialization: %1");
@@ -450,10 +488,64 @@ void SettingsDialog::receiveApiKey(const QString &response)
 
 void SettingsDialog::completeApiConnection()
 {
-  if (m_KeyReceived == true || !m_loginTimer.isActive())
-    emit closeApiConnection(ui->nexusConnect);
-  else
-    emit retryApiConnection();
+  if (!m_KeyReceived && !m_loginTimer.isActive()) {
+    QMessageBox::warning(qApp->activeWindow(), tr("Error"),
+      tr("Failed to retrieve a Nexus API key! Please try again. "
+        "A browser window should open asking you to authorize."));
+
+    // try again
+    fetchNexusApiKey();
+  }
+}
+
+bool SettingsDialog::setKey(const QString& key)
+{
+  m_KeyReceived = true;
+  const bool ret = m_settings->setNexusApiKey(key);
+  updateNexusButtons();
+  return ret;
+}
+
+bool SettingsDialog::clearKey()
+{
+  m_KeyCleared = true;
+  const auto ret = m_settings->clearNexusApiKey();
+  updateNexusButtons();
+  return ret;
+}
+
+void SettingsDialog::testApiKey()
+{
+  QString key;
+  if (!m_settings->getNexusApiKey(key)) {
+    qWarning().nospace() << "can't test API key, nothing stored";
+    return;
+  }
+
+  auto* am = NexusInterface::instance(m_PluginContainer)->getAccessManager();
+  am->apiCheck(key, true);
+}
+
+void SettingsDialog::updateNexusButtons()
+{
+  if (m_nexusLogin->state() != QAbstractSocket::UnconnectedState) {
+    // api key is in the process of being retrieved
+    ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
+    ui->nexusConnect->setEnabled(false);
+  }
+  else if (m_settings->hasNexusApiKey()) {
+    // api key is present
+    ui->nexusConnect->setText("Nexus API Key Stored");
+    ui->nexusConnect->setEnabled(false);
+    ui->nexusDisconnect->setEnabled(true);
+    ui->nexusManualKey->setEnabled(false);
+  } else {
+    // api key not present
+    ui->nexusConnect->setText("Connect to Nexus");
+    ui->nexusConnect->setEnabled(true);
+    ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setEnabled(true);
+  }
 }
 
 void SettingsDialog::storeSettings(QListWidgetItem *pluginItem)
@@ -523,10 +615,9 @@ void SettingsDialog::on_clearCacheButton_clicked()
   NexusInterface::instance(m_PluginContainer)->clearCache();
 }
 
-void SettingsDialog::on_revokeNexusAuthButton_clicked()
+void SettingsDialog::on_nexusDisconnect_clicked()
 {
-  emit revokeApiKey(ui->nexusConnect);
-  m_KeyCleared = true;
+  clearKey();
 }
 
 void SettingsDialog::normalizePath(QLineEdit *lineEdit)

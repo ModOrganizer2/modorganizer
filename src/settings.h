@@ -188,6 +188,24 @@ public:
   bool getNexusApiKey(QString &apiKey) const;
 
   /**
+  * @brief set the nexus login information
+  *
+  * @param username username
+  * @param password password
+  */
+  bool setNexusApiKey(const QString& apiKey);
+
+  /**
+  * @brief clears the nexus login information
+  */
+  bool clearNexusApiKey();
+
+  /**
+   * @brief returns whether an API key is currently stored
+   */
+  bool hasNexusApiKey() const;
+
+  /**
    * @brief retrieve the login information for steam
    *
    * @param username (out) receives the user name for nexus
@@ -239,14 +257,6 @@ public:
   QColor pluginListContainedColor() const;
 
   QString executablesBlacklist() const;
-
-  /**
-   * @brief set the nexus login information
-   *
-   * @param username username
-   * @param password password
-   */
-  void setNexusApiKey(QString apiKey);
 
   /**
    * @brief set the steam login information
@@ -481,7 +491,6 @@ private:
     void update();
 
   private:
-    QPushButton *m_nexusConnect;
     QCheckBox *m_offlineBox;
     QCheckBox *m_proxyBox;
     QListWidget *m_knownServersList;
@@ -538,9 +547,6 @@ private:
 private slots:
 
   void resetDialogs();
-  void processApiKey(const QString &);
-  void clearApiKey(QPushButton *nexusButton);
-  void checkApiKey(QPushButton *nexusButton);
 
 signals:
 

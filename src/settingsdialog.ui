@@ -511,12 +511,12 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="revokeNexusAuthButton">
+             <widget class="QPushButton" name="nexusDisconnect">
               <property name="toolTip">
                <string>Clear the stored Nexus API key and force reauthorization.</string>
               </property>
               <property name="text">
-               <string>Revoke Nexus Authorization</string>
+               <string>Disconnect from Nexus</string>
               </property>
               <property name="icon">
                <iconset resource="resources.qrc">
