@@ -29,6 +29,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QTimer>
 
 class PluginContainer;
+class Settings;
 
 namespace Ui {
     class SettingsDialog;
@@ -44,7 +45,9 @@ class SettingsDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
-  explicit SettingsDialog(PluginContainer *pluginContainer, QWidget *parent = 0);
+  explicit SettingsDialog(
+    PluginContainer *pluginContainer, Settings* settings, QWidget *parent = 0);
+
   ~SettingsDialog();
 
   /**
@@ -62,9 +65,6 @@ public slots:
 signals:
 
   void resetDialogs();
-  void processApiKey(const QString &);
-  void closeApiConnection(QPushButton *);
-  void revokeApiKey(QPushButton *);
   void retryApiConnection();
 
 private:
@@ -94,103 +94,74 @@ public:
 
 
 private slots:
-  //void on_loginCheckBox_toggled(bool checked);
-
   void on_categoriesBtn_clicked();
-
   void on_execBlacklistBtn_clicked();
-
   void on_bsaDateBtn_clicked();
-
   void on_browseDownloadDirBtn_clicked();
-
   void on_browseModDirBtn_clicked();
-
   void on_browseCacheDirBtn_clicked();
-
   void on_resetDialogsButton_clicked();
-
   void on_pluginsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-
-  void deleteBlacklistItem();
-
   void on_associateButton_clicked();
-
   void on_clearCacheButton_clicked();
-
-  void on_revokeNexusAuthButton_clicked();
-
+  void on_nexusDisconnect_clicked();
   void on_browseBaseDirBtn_clicked();
-
   void on_browseOverwriteDirBtn_clicked();
-
   void on_browseProfilesDirBtn_clicked();
-
   void on_browseGameDirBtn_clicked();
-
   void on_overwritingBtn_clicked();
-
   void on_overwrittenBtn_clicked();
-
   void on_overwritingArchiveBtn_clicked();
-
   void on_overwrittenArchiveBtn_clicked();
-
   void on_containsBtn_clicked();
-
   void on_containedBtn_clicked();
-
   void on_resetColorsBtn_clicked();
-
   void on_baseDirEdit_editingFinished();
-
   void on_downloadDirEdit_editingFinished();
-
   void on_modDirEdit_editingFinished();
-
   void on_cacheDirEdit_editingFinished();
-
   void on_profilesDirEdit_editingFinished();
-
   void on_overwriteDirEdit_editingFinished();
-
   void on_nexusConnect_clicked();
-
-  void dispatchLogin();
-
-  void loginPing();
-
-  void authError(QAbstractSocket::SocketError error);
-
-  void receiveApiKey(const QString &apiKey);
-
-  void completeApiConnection();
-
+  void on_nexusManualKey_clicked();
   void on_resetGeometryBtn_clicked();
 
+  void deleteBlacklistItem();
+  void dispatchLogin();
+  void loginPing();
+  void authError(QAbstractSocket::SocketError error);
+  void receiveApiKey(const QString &apiKey);
+  void completeApiConnection();
+
 private:
-    Ui::SettingsDialog *ui;
-    PluginContainer *m_PluginContainer;
+  Ui::SettingsDialog *ui;
+  Settings* m_settings;
+  PluginContainer *m_PluginContainer;
 
-    QColor m_OverwritingColor;
-    QColor m_OverwrittenColor;
-    QColor m_OverwritingArchiveColor;
-    QColor m_OverwrittenArchiveColor;
-    QColor m_ContainsColor;
-    QColor m_ContainedColor;
+  QColor m_OverwritingColor;
+  QColor m_OverwrittenColor;
+  QColor m_OverwritingArchiveColor;
+  QColor m_OverwrittenArchiveColor;
+  QColor m_ContainsColor;
+  QColor m_ContainedColor;
 
-    bool m_KeyReceived;
-    bool m_KeyCleared;
-    bool m_GeometriesReset;
-    QString m_UUID;
-    QString m_AuthToken;
+  bool m_KeyReceived;
+  bool m_KeyCleared;
+  bool m_GeometriesReset;
+  QString m_UUID;
+  QString m_AuthToken;
 
-    QString m_ExecutableBlacklist;
-    QWebSocket *m_nexusLogin;
-    QTimer m_loginTimer;
-    int m_totalPings = 0;
+  QString m_ExecutableBlacklist;
+  QWebSocket *m_nexusLogin;
+  QTimer m_loginTimer;
+  int m_totalPings = 0;
+
+  bool setKey(const QString& key);
+  bool clearKey();
+  void updateNexusButtons();
+
+  void fetchNexusApiKey();
+  void testApiKey();
 };
-
-
 
 #endif // SETTINGSDIALOG_H
