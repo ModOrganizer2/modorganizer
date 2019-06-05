@@ -532,6 +532,8 @@ void SettingsDialog::updateNexusButtons()
     // api key is in the process of being retrieved
     ui->nexusConnect->setText("Connecting the API. Please login within the browser and accept the request. This will time out after 30 minutes.");
     ui->nexusConnect->setEnabled(false);
+    ui->nexusDisconnect->setEnabled(false);
+    ui->nexusManualKey->setEnabled(false);
   }
   else if (m_settings->hasNexusApiKey()) {
     // api key is present
