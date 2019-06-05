@@ -202,6 +202,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
   , m_menuBarVisible(true)
+  , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
   , m_ModListGroupingProxy(nullptr)
@@ -251,15 +252,7 @@ MainWindow::MainWindow(QSettings &initSettings
 
   updateProblemsButton();
 
-  // Setup toolbar
-
-  setupActionMenu(ui->actionTool);
-  setupActionMenu(ui->actionHelp);
-  setupActionMenu(ui->actionEndorseMO);
-
-  createHelpMenu();
-  createEndorseMenu();
-
+  setupToolbar();
   toggleMO2EndorseState();
 
   TaskProgressManager::instance().tryCreateTaskbar();
@@ -400,7 +393,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
   connect(ui->modList->header(), SIGNAL(sortIndicatorChanged(int,Qt::SortOrder)), this, SLOT(modListSortIndicatorChanged(int,Qt::SortOrder)));
-  connect(ui->linksToolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(linksToolBar_customContextMenuRequested(QPoint)));
+  connect(ui->toolBar, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(toolBar_customContextMenuRequested(QPoint)));
   connect(ui->menuToolbars, &QMenu::aboutToShow, [&]{ toolbarMenu_aboutToShow(); });
 
   connect(&m_OrganizerCore, &OrganizerCore::modInstalled, this, &MainWindow::modInstalled);
@@ -601,6 +594,34 @@ static QModelIndex mapToModel(const QAbstractItemModel *targetModel, QModelIndex
   return result;
 }
 
+void MainWindow::setupToolbar()
+{
+  setupActionMenu(ui->actionTool);
+  setupActionMenu(ui->actionHelp);
+  setupActionMenu(ui->actionEndorseMO);
+
+  createHelpMenu();
+  createEndorseMenu();
+
+  // find last separator, add a spacer just before it so the icons are
+  // right-aligned
+  m_linksSeparator = nullptr;
+  for (auto* a : ui->toolBar->actions()) {
+    if (a->isSeparator()) {
+      m_linksSeparator = a;
+    }
+  }
+
+  if (m_linksSeparator) {
+    auto* spacer = new QWidget(ui->toolBar);
+    spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+    ui->toolBar->insertWidget(m_linksSeparator, spacer);
+
+  } else {
+    qWarning("no separator found on the toolbar, icons won't be right-aligned");
+  }
+}
+
 void MainWindow::setupActionMenu(QAction* a)
 {
   a->setMenu(new QMenu(this));
@@ -612,9 +633,11 @@ void MainWindow::setupActionMenu(QAction* a)
 
 void MainWindow::updatePinnedExecutables()
 {
-  for (auto* a : ui->linksToolBar->actions()) {
-    ui->linksToolBar->removeAction(a);
-    a->deleteLater();
+  for (auto* a : ui->toolBar->actions()) {
+    if (a->objectName().startsWith("custom__")) {
+      ui->toolBar->removeAction(a);
+      a->deleteLater();
+    }
   }
 
   ui->menuRun->clear();
@@ -637,13 +660,18 @@ void MainWindow::updatePinnedExecutables()
         qDebug("failed to connect trigger?");
       }
 
-      ui->linksToolBar->addAction(exeAction);
+      if (m_linksSeparator) {
+        ui->toolBar->insertAction(m_linksSeparator, exeAction);
+      } else {
+        // separator wasn't found, add it to the end
+        ui->toolBar->addAction(exeAction);
+      }
+
       ui->menuRun->addAction(exeAction);
     }
   }
 
-  // don't show the toolbar or menu if there are no links
-  ui->linksToolBar->setVisible(hasLinks);
+  // don't show the menu if there are no links
   ui->menuRun->menuAction()->setVisible(hasLinks);
 }
 
@@ -660,7 +688,6 @@ void MainWindow::toolbarMenu_aboutToShow()
 
   ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
-  ui->actionToolBarLinksToggle->setChecked(ui->linksToolBar->isVisible());
 
   ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
   ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
@@ -685,11 +712,6 @@ void MainWindow::on_actionMainMenuToggle_triggered()
 void MainWindow::on_actionToolBarMainToggle_triggered()
 {
   ui->toolBar->setVisible(!ui->toolBar->isVisible());
-}
-
-void MainWindow::on_actionToolBarLinksToggle_triggered()
-{
-  ui->linksToolBar->setVisible(!ui->linksToolBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarSmallIcons_triggered()
@@ -6207,23 +6229,23 @@ void MainWindow::removeFromToolbar()
 }
 
 
-void MainWindow::linksToolBar_customContextMenuRequested(const QPoint &point)
+void MainWindow::toolBar_customContextMenuRequested(const QPoint &point)
 {
-  QAction *action = ui->linksToolBar->actionAt(point);
+  QAction *action = ui->toolBar->actionAt(point);
 
   if (action != nullptr) {
     if (action->objectName().startsWith("custom_")) {
       m_ContextAction = action;
       QMenu menu;
       menu.addAction(tr("Remove '%1' from the toolbar").arg(action->text()), this, SLOT(removeFromToolbar()));
-      menu.exec(ui->linksToolBar->mapToGlobal(point));
+      menu.exec(ui->toolBar->mapToGlobal(point));
       return;
     }
   }
 
   // did not click a link button, show the default context menu
   auto* m = createPopupMenu();
-  m->exec(ui->linksToolBar->mapToGlobal(point));
+  m->exec(ui->toolBar->mapToGlobal(point));
 }
 
 void MainWindow::on_espList_customContextMenuRequested(const QPoint &pos)
@@ -6858,7 +6880,7 @@ void MainWindow::dropEvent(QDropEvent *event)
   event->accept();
 }
 
-void MainWindow::keyPressEvent(QKeyEvent *event)
+void MainWindow::keyReleaseEvent(QKeyEvent *event)
 {
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
@@ -6868,7 +6890,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
   }
 
-  QMainWindow::keyPressEvent(event);
+  QMainWindow::keyReleaseEvent(event);
 }
 
 void MainWindow::on_clickBlankButton_clicked()
