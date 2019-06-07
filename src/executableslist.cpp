@@ -84,7 +84,7 @@ void ExecutablesList::getExecutables(std::vector<Executable>::const_iterator &be
 const Executable &ExecutablesList::find(const QString &title) const
 {
   for (Executable const &exe : m_Executables) {
-    if (exe.m_Title == title) {
+    if (exe.title() == title) {
       return exe;
     }
   }
@@ -95,7 +95,7 @@ const Executable &ExecutablesList::find(const QString &title) const
 Executable &ExecutablesList::find(const QString &title)
 {
   for (Executable &exe : m_Executables) {
-    if (exe.m_Title == title) {
+    if (exe.title() == title) {
       return exe;
     }
   }
@@ -106,7 +106,7 @@ Executable &ExecutablesList::find(const QString &title)
 Executable &ExecutablesList::findByBinary(const QFileInfo &info)
 {
   for (Executable &exe : m_Executables) {
-    if (info == exe.m_BinaryInfo) {
+    if (exe.binaryInfo() == info) {
       return exe;
     }
   }
@@ -117,7 +117,7 @@ Executable &ExecutablesList::findByBinary(const QFileInfo &info)
 std::vector<Executable>::iterator ExecutablesList::findExe(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->m_Title == title) {
+    if (iter->title() == title) {
       return iter;
     }
   }
@@ -127,14 +127,14 @@ std::vector<Executable>::iterator ExecutablesList::findExe(const QString &title)
 
 bool ExecutablesList::titleExists(const QString &title) const
 {
-  auto test = [&] (const Executable &exe) { return exe.m_Title == title; };
+  auto test = [&] (const Executable &exe) { return exe.title() == title; };
   return std::find_if(m_Executables.begin(), m_Executables.end(), test) != m_Executables.end();
 }
 
 
 void ExecutablesList::addExecutable(const Executable &executable)
 {
-  auto existingExe = findExe(executable.m_Title);
+  auto existingExe = findExe(executable.title());
   if (existingExe != m_Executables.end()) {
     *existingExe = executable;
   } else {
@@ -157,31 +157,32 @@ void ExecutablesList::updateExecutable(const QString &title,
   flags &= mask;
 
   if (existingExe != m_Executables.end()) {
-    existingExe->m_Title = title;
-    existingExe->m_Flags &= ~mask;
-    existingExe->m_Flags |= flags;
+    existingExe->setTitle(title);
+
+    auto newFlags = existingExe->flags();
+    newFlags &= ~mask;
+    newFlags |= flags;
+
+    existingExe->setFlags(newFlags);
+
     // for pre-configured executables don't overwrite settings we didn't store
     if (flags & Executable::CustomExecutable) {
       if (file.exists()) {
         // don't overwrite a valid binary with an invalid one
-        existingExe->m_BinaryInfo = file;
+        existingExe->setBinaryInfo(file);
       }
+
       if (dir.exists()) {
         // don't overwrite a valid working directory with an invalid one
-        existingExe->m_WorkingDirectory = workingDirectory;
+        existingExe->setWorkingDirectory(workingDirectory);
       }
-      existingExe->m_Arguments = arguments;
-      existingExe->m_SteamAppID = steamAppID;
+      existingExe->setArguments(arguments);
+      existingExe->setSteamAppID(steamAppID);
     }
   } else {
-    Executable newExe;
-    newExe.m_Title = title;
-    newExe.m_BinaryInfo = file;
-    newExe.m_Arguments = arguments;
-    newExe.m_WorkingDirectory = workingDirectory;
-    newExe.m_SteamAppID = steamAppID;
-    newExe.m_Flags = Executable::CustomExecutable | flags;
-    m_Executables.push_back(newExe);
+    m_Executables.push_back({
+      title, file, arguments, workingDirectory, steamAppID,
+      Executable::CustomExecutable | flags});
   }
 }
 
@@ -189,7 +190,7 @@ void ExecutablesList::updateExecutable(const QString &title,
 void ExecutablesList::remove(const QString &title)
 {
   for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->isCustom() && (iter->m_Title == title)) {
+    if (iter->isCustom() && (iter->title() == title)) {
       m_Executables.erase(iter);
       break;
     }
@@ -203,23 +204,105 @@ void ExecutablesList::addExecutableInternal(const QString &title, const QString 
 {
   QFileInfo file(executableName);
   if (file.exists()) {
-    Executable newExe;
-    newExe.m_BinaryInfo = file;
-    newExe.m_Title = title;
-    newExe.m_Arguments = arguments;
-    newExe.m_WorkingDirectory = workingDirectory;
-    newExe.m_SteamAppID = steamAppID;
-    newExe.m_Flags = Executable::UseApplicationIcon;
-    m_Executables.push_back(newExe);
+    m_Executables.push_back({
+      title, file, arguments, steamAppID,
+      workingDirectory, Executable::UseApplicationIcon});
   }
 }
 
 
-void Executable::showOnToolbar(bool state)
+Executable::Executable(
+  QString title, QFileInfo binaryInfo, QString arguments,
+  QString steamAppID, QString workingDirectory, Flags flags) :
+    m_title(std::move(title)),
+    m_binaryInfo(std::move(binaryInfo)),
+    m_arguments(std::move(arguments)),
+    m_steamAppID(std::move(steamAppID)),
+    m_workingDirectory(std::move(workingDirectory)),
+    m_flags(flags)
+{
+}
+
+const QString& Executable::title() const
+{
+  return m_title;
+}
+
+void Executable::setTitle(const QString& s)
+{
+  m_title = s;
+}
+
+const QFileInfo& Executable::binaryInfo() const
+{
+  return m_binaryInfo;
+}
+
+void Executable::setBinaryInfo(const QFileInfo& fi)
+{
+  m_binaryInfo = fi;
+}
+
+const QString& Executable::arguments() const
+{
+  return m_arguments;
+}
+
+void Executable::setArguments(const QString& s)
+{
+  m_arguments = s;
+}
+
+const QString& Executable::steamAppID() const
+{
+  return m_steamAppID;
+}
+
+void Executable::setSteamAppID(const QString& s)
+{
+  m_steamAppID = s;
+}
+
+const QString& Executable::workingDirectory() const
+{
+  return m_workingDirectory;
+}
+
+void Executable::setWorkingDirectory(const QString& s)
+{
+  m_workingDirectory = s;
+}
+
+Executable::Flags Executable::flags() const
+{
+  return m_flags;
+}
+
+void Executable::setFlags(Flags f)
+{
+  m_flags = f;
+}
+
+bool Executable::isCustom() const
+{
+  return m_flags.testFlag(CustomExecutable);
+}
+
+bool Executable::isShownOnToolbar() const
+{
+  return m_flags.testFlag(ShowInToolbar);
+}
+
+void Executable::setShownOnToolbar(bool state)
 {
   if (state) {
-    m_Flags |= ShowInToolbar;
+    m_flags |= ShowInToolbar;
   } else {
-    m_Flags &= ~ShowInToolbar;
+    m_flags &= ~ShowInToolbar;
   }
+}
+
+bool Executable::usesOwnIcon() const
+{
+  return m_flags.testFlag(UseApplicationIcon);
 }

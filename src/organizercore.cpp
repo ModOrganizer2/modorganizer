@@ -381,15 +381,15 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
   for (; current != end; ++current) {
     const Executable &item = *current;
     settings.setArrayIndex(count++);
-    settings.setValue("title", item.m_Title);
+    settings.setValue("title", item.title());
     settings.setValue("custom", item.isCustom());
     settings.setValue("toolbar", item.isShownOnToolbar());
     settings.setValue("ownicon", item.usesOwnIcon());
     if (item.isCustom()) {
-      settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-      settings.setValue("arguments", item.m_Arguments);
-      settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("steamAppID", item.m_SteamAppID);
+      settings.setValue("binary", item.binaryInfo().absoluteFilePath());
+      settings.setValue("arguments", item.arguments());
+      settings.setValue("workingDirectory", item.workingDirectory());
+      settings.setValue("steamAppID", item.steamAppID());
     }
   }
   settings.endArray();
@@ -1742,12 +1742,12 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
   }
 
   return spawnBinaryDirect(
-    exe.m_BinaryInfo, exe.m_Arguments,
+    exe.binaryInfo(), exe.arguments(),
     m_CurrentProfile->name(),
-    exe.m_WorkingDirectory.length() != 0
-    ? exe.m_WorkingDirectory
-    : exe.m_BinaryInfo.absolutePath(),
-    exe.m_SteamAppID,
+    exe.workingDirectory().length() != 0
+    ? exe.workingDirectory()
+    : exe.binaryInfo().absolutePath(),
+    exe.steamAppID(),
     "",
     forcedLibaries);
 }
@@ -1787,12 +1787,12 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     }
     try {
       const Executable &exe = m_ExecutablesList.findByBinary(binary);
-      steamAppID = exe.m_SteamAppID;
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
     } catch (const std::runtime_error &) {
       // nop
@@ -1801,19 +1801,19 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
     // only a file name, search executables list
     try {
       const Executable &exe = m_ExecutablesList.find(executable);
-      steamAppID = exe.m_SteamAppID;
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
       if (arguments == "") {
-        arguments = exe.m_Arguments;
+        arguments = exe.arguments();
       }
-      binary = exe.m_BinaryInfo;
+      binary = exe.binaryInfo();
       if (cwd.length() == 0) {
-        currentDirectory = exe.m_WorkingDirectory;
+        currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
       qWarning("\"%s\" not set up as executable",

@@ -32,14 +32,11 @@ namespace MOBase { class IPluginGame; }
 /*!
  * @brief Information about an executable
  **/
-struct Executable {
-  QString m_Title;
-  QFileInfo m_BinaryInfo;
-  QString m_Arguments;
-  QString m_SteamAppID;
-  QString m_WorkingDirectory;
-
-  enum Flag {
+class Executable
+{
+public:
+  enum Flag
+  {
     CustomExecutable = 0x01,
     ShowInToolbar = 0x02,
     UseApplicationIcon = 0x04,
@@ -47,17 +44,42 @@ struct Executable {
     AllFlags = 0xff //I know, I know
   };
 
-  Q_DECLARE_FLAGS(Flags, Flag)
+  Q_DECLARE_FLAGS(Flags, Flag);
 
-  Flags m_Flags;
+  Executable(
+    QString title, QFileInfo binaryInfo, QString arguments,
+    QString steamAppID, QString workingDirectory, Flags flags);
 
-  bool isCustom() const { return m_Flags.testFlag(CustomExecutable); }
+  const QString& title() const;
+  void setTitle(const QString& s);
 
-  bool isShownOnToolbar() const { return m_Flags.testFlag(ShowInToolbar); }
+  const QFileInfo& binaryInfo() const;
+  void setBinaryInfo(const QFileInfo& fi);
 
-  void showOnToolbar(bool state);
+  const QString& arguments() const;
+  void setArguments(const QString& s);
 
-  bool usesOwnIcon() const { return  m_Flags.testFlag(UseApplicationIcon); }
+  const QString& steamAppID() const;
+  void setSteamAppID(const QString& s);
+
+  const QString& workingDirectory() const;
+  void setWorkingDirectory(const QString& s);
+
+  Flags flags() const;
+  void setFlags(Flags f);
+
+  bool isCustom() const;
+  bool isShownOnToolbar() const;
+  void setShownOnToolbar(bool state);
+  bool usesOwnIcon() const;
+
+private:
+  QString m_title;
+  QFileInfo m_binaryInfo;
+  QString m_arguments;
+  QString m_steamAppID;
+  QString m_workingDirectory;
+  Flags m_flags;
 };
 
 

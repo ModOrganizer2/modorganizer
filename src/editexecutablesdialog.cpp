@@ -71,7 +71,7 @@ void EditExecutablesDialog::refreshExecutablesWidget()
   m_ExecutablesList.getExecutables(current, end);
 
   for(; current != end; ++current) {
-    QListWidgetItem *newItem = new QListWidgetItem(current->m_Title);
+    QListWidgetItem *newItem = new QListWidgetItem(current->title());
     newItem->setTextColor(current->isCustom() ? QColor(Qt::black) : QColor(Qt::darkGray));
     ui->executablesListBox->addItem(newItem);
   }
@@ -284,10 +284,10 @@ bool EditExecutablesDialog::executableChanged()
   if (m_CurrentItem != nullptr) {
     Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
 
-    QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.title()).toString();
 
     bool forcedLibrariesDirty = false;
-    auto forcedLibaries = m_Profile->determineForcedLibraries(selectedExecutable.m_Title);
+    auto forcedLibaries = m_Profile->determineForcedLibraries(selectedExecutable.title());
     forcedLibrariesDirty |= !std::equal(forcedLibaries.begin(), forcedLibaries.end(),
                                         m_ForcedLibraries.begin(), m_ForcedLibraries.end(),
                                         [](const ExecutableForcedLoadSetting &lhs, const ExecutableForcedLoadSetting &rhs)
@@ -300,13 +300,13 @@ bool EditExecutablesDialog::executableChanged()
     forcedLibrariesDirty |= m_Profile->setting("forced_libraries", ui->titleEdit->text() + "/enabled", false).toBool() !=
                             ui->forceLoadCheckBox->isChecked();
 
-    return selectedExecutable.m_Title != ui->titleEdit->text()
-        || selectedExecutable.m_Arguments != ui->argumentsEdit->text()
-        || selectedExecutable.m_SteamAppID != ui->appIDOverwriteEdit->text()
+    return selectedExecutable.title() != ui->titleEdit->text()
+        || selectedExecutable.arguments() != ui->argumentsEdit->text()
+        || selectedExecutable.steamAppID() != ui->appIDOverwriteEdit->text()
         || !storedCustomOverwrite.isEmpty() != ui->newFilesModCheckBox->isChecked()
         || !storedCustomOverwrite.isEmpty() && (storedCustomOverwrite != ui->newFilesModBox->currentText())
-        || selectedExecutable.m_WorkingDirectory != QDir::fromNativeSeparators(ui->workingDirEdit->text())
-        || selectedExecutable.m_BinaryInfo.absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
+        || selectedExecutable.workingDirectory() != QDir::fromNativeSeparators(ui->workingDirEdit->text())
+        || selectedExecutable.binaryInfo().absoluteFilePath() != QDir::fromNativeSeparators(ui->binaryEdit->text())
         || selectedExecutable.usesOwnIcon() != ui->useAppIconCheckBox->isChecked()
         || forcedLibrariesDirty
       ;
@@ -376,14 +376,14 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
 
     Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
 
-    ui->titleEdit->setText(selectedExecutable.m_Title);
-    ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath()));
-    ui->argumentsEdit->setText(selectedExecutable.m_Arguments);
-    ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.m_WorkingDirectory));
+    ui->titleEdit->setText(selectedExecutable.title());
+    ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.binaryInfo().absoluteFilePath()));
+    ui->argumentsEdit->setText(selectedExecutable.arguments());
+    ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.workingDirectory()));
     ui->removeButton->setEnabled(selectedExecutable.isCustom());
-    ui->overwriteAppIDBox->setChecked(!selectedExecutable.m_SteamAppID.isEmpty());
-    if (!selectedExecutable.m_SteamAppID.isEmpty()) {
-      ui->appIDOverwriteEdit->setText(selectedExecutable.m_SteamAppID);
+    ui->overwriteAppIDBox->setChecked(!selectedExecutable.steamAppID().isEmpty());
+    if (!selectedExecutable.steamAppID().isEmpty()) {
+      ui->appIDOverwriteEdit->setText(selectedExecutable.steamAppID());
     } else {
       ui->appIDOverwriteEdit->clear();
     }
@@ -391,7 +391,7 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
 
     int index = -1;
 
-    QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.m_Title).toString();
+    QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.title()).toString();
     if (!customOverwrite.isEmpty()) {
       index = ui->newFilesModBox->findText(customOverwrite);
       qDebug("find %s -> %d", qUtf8Printable(customOverwrite), index);
