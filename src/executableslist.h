@@ -103,9 +103,14 @@ public:
   bool empty() const;
 
   /**
-   * @brief add the executables preconfigured for this game
-   **/
-  void addFromPlugin(MOBase::IPluginGame const *game);
+   * @brief initializes the list from the settings and the given plugin
+   */
+  void load(const MOBase::IPluginGame* game, QSettings& settings);
+
+  /**
+   * @brief writes the current list to the settings
+   */
+  void store(QSettings& settings);
 
   /**
    * @brief get an executable by name
@@ -195,14 +200,16 @@ public:
   void remove(const QString &title);
 
 private:
+  std::vector<Executable> m_Executables;
+
   void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
                              const QString &workingDirectory,
                              const QString &steamAppID);
 
-private:
-
-  std::vector<Executable> m_Executables;
-
+  /**
+  * @brief add the executables preconfigured for this game
+  **/
+  void addFromPlugin(MOBase::IPluginGame const *game);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)

@@ -63,6 +63,60 @@ bool ExecutablesList::empty() const
   return m_Executables.empty();
 }
 
+void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
+{
+  addFromPlugin(game);
+
+  qDebug("setting up configured executables");
+
+  int numCustomExecutables = settings.beginReadArray("customExecutables");
+  for (int i = 0; i < numCustomExecutables; ++i) {
+    settings.setArrayIndex(i);
+
+    Executable::Flags flags;
+    if (settings.value("custom", true).toBool())
+      flags |= Executable::CustomExecutable;
+    if (settings.value("toolbar", false).toBool())
+      flags |= Executable::ShowInToolbar;
+    if (settings.value("ownicon", false).toBool())
+      flags |= Executable::UseApplicationIcon;
+
+    addExecutable(
+      settings.value("title").toString(), settings.value("binary").toString(),
+      settings.value("arguments").toString(),
+      settings.value("workingDirectory", "").toString(),
+      settings.value("steamAppID", "").toString(), flags);
+  }
+
+  settings.endArray();
+}
+
+void ExecutablesList::store(QSettings& settings)
+{
+  settings.remove("customExecutables");
+  settings.beginWriteArray("customExecutables");
+
+  int count = 0;
+
+  for (const auto& item : *this) {
+    settings.setArrayIndex(count++);
+
+    settings.setValue("title", item.title());
+    settings.setValue("custom", item.isCustom());
+    settings.setValue("toolbar", item.isShownOnToolbar());
+    settings.setValue("ownicon", item.usesOwnIcon());
+
+    if (item.isCustom()) {
+      settings.setValue("binary", item.binaryInfo().absoluteFilePath());
+      settings.setValue("arguments", item.arguments());
+      settings.setValue("workingDirectory", item.workingDirectory());
+      settings.setValue("steamAppID", item.steamAppID());
+    }
+  }
+
+  settings.endArray();
+}
+
 void ExecutablesList::addFromPlugin(IPluginGame const *game)
 {
   Q_ASSERT(game != nullptr);

@@ -365,33 +365,17 @@ QString OrganizerCore::commitSettings(const QString &iniFile)
 QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
 {
   QSettings settings(fileName, QSettings::IniFormat);
+
   if (m_UserInterface != nullptr) {
     m_UserInterface->storeSettings(settings);
   }
+
   if (m_CurrentProfile != nullptr) {
     settings.setValue("selected_profile",
                       m_CurrentProfile->name().toUtf8().constData());
   }
 
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-
-  int count = 0;
-
-  for (const auto& item : m_ExecutablesList) {
-    settings.setArrayIndex(count++);
-    settings.setValue("title", item.title());
-    settings.setValue("custom", item.isCustom());
-    settings.setValue("toolbar", item.isShownOnToolbar());
-    settings.setValue("ownicon", item.usesOwnIcon());
-    if (item.isCustom()) {
-      settings.setValue("binary", item.binaryInfo().absoluteFilePath());
-      settings.setValue("arguments", item.arguments());
-      settings.setValue("workingDirectory", item.workingDirectory());
-      settings.setValue("steamAppID", item.steamAppID());
-    }
-  }
-  settings.endArray();
+  m_ExecutablesList.store(settings);
 
   FileDialogMemory::save(settings);
 
@@ -507,30 +491,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.addFromPlugin(managedGame());
-
-  qDebug("setting up configured executables");
-
-  int numCustomExecutables = settings.beginReadArray("customExecutables");
-  for (int i = 0; i < numCustomExecutables; ++i) {
-    settings.setArrayIndex(i);
-
-    Executable::Flags flags;
-    if (settings.value("custom", true).toBool())
-      flags |= Executable::CustomExecutable;
-    if (settings.value("toolbar", false).toBool())
-      flags |= Executable::ShowInToolbar;
-    if (settings.value("ownicon", false).toBool())
-      flags |= Executable::UseApplicationIcon;
-
-    m_ExecutablesList.addExecutable(
-        settings.value("title").toString(), settings.value("binary").toString(),
-        settings.value("arguments").toString(),
-        settings.value("workingDirectory", "").toString(),
-        settings.value("steamAppID", "").toString(), flags);
-  }
-
-  settings.endArray();
+  m_ExecutablesList.load(managedGame(), settings);
 
   // TODO this has nothing to do with executables list move to an appropriate
   // function!
