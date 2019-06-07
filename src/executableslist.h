@@ -88,19 +88,33 @@ private:
  **/
 class ExecutablesList {
 public:
+  using vector_type = std::vector<Executable>;
+  using iterator = vector_type::iterator;
+  using const_iterator = vector_type::const_iterator;
 
   /**
-   * @brief constructor
+   * standard container interface
+   */
+  iterator begin();
+  const_iterator begin() const;
+  iterator end();
+  const_iterator end() const;
+  std::size_t size() const;
+  bool empty() const;
+
+  /**
+   * @brief add the executables preconfigured for this game
+   **/
+  void addFromPlugin(MOBase::IPluginGame const *game);
+
+  /**
+   * @brief get an executable by name
    *
+   * @param title the title of the executable to look up
+   * @return the executable
+   * @exception runtime_error will throw an exception if the executable is not found
    **/
-  ExecutablesList();
-
-  ~ExecutablesList();
-
-  /**
-   * @brief initialise the list with the executables preconfigured for this game
-   **/
-  void init(MOBase::IPluginGame const *game);
+  const Executable &get(const QString &title) const;
 
   /**
    * @brief find an executable by its name
@@ -109,16 +123,7 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    **/
-  const Executable &find(const QString &title) const;
-
-  /**
-   * @brief find an executable by its name
-   *
-   * @param title the title of the executable to look up
-   * @return the executable
-   * @exception runtime_error will throw an exception if the name is not correct
-   **/
-  Executable &find(const QString &title);
+  Executable &get(const QString &title);
 
   /**
    * @brief find an executable by a fileinfo structure
@@ -126,7 +131,13 @@ public:
    * @return the executable
    * @exception runtime_error will throw an exception if the name is not correct
    */
-  Executable &findByBinary(const QFileInfo &info);
+  Executable &getByBinary(const QFileInfo &info);
+
+  /**
+   * @brief returns an iterator for the given executable by title, or end()
+   */
+  iterator find(const QString &title);
+  const_iterator find(const QString &title) const;
 
   /**
    * @brief determine if an executable exists
@@ -183,33 +194,7 @@ public:
    **/
   void remove(const QString &title);
 
-  /**
-   * @brief retrieve begin and end iterators of the configured executables
-   *
-   * @param begin iterator to the first executable
-   * @param end iterator one past the last executable
-   **/
-  void getExecutables(std::vector<Executable>::const_iterator &begin, std::vector<Executable>::const_iterator &end) const;
-
-  /**
-   * @brief retrieve begin and end iterators of the configured executables
-   *
-   * @param begin iterator to the first executable
-   * @param end iterator one past the last executable
-   **/
-  void getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end);
-
-  /**
-   * @brief get the number of executables (custom or otherwise)
-   **/
-  size_t size() const {
-    return m_Executables.size();
-  }
-
 private:
-
-  std::vector<Executable>::iterator findExe(const QString &title);
-
   void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
                              const QString &workingDirectory,
                              const QString &steamAppID);

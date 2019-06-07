@@ -59,20 +59,29 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
 {
   ExecutablesList newList;
   for (int i = 0; i < ui->executablesListBox->count(); ++i) {
-    newList.addExecutable(m_ExecutablesList.find(ui->executablesListBox->item(i)->text()));
+    const auto& title = ui->executablesListBox->item(i)->text();
+    auto itor = m_ExecutablesList.find(title);
+
+    if (itor == m_ExecutablesList.end()) {
+      qWarning().nospace()
+        << "getExecutablesList(): executable '" << title << "' not found";
+
+      continue;
+    }
+
+    newList.addExecutable(*itor);
   }
+
   return newList;
 }
 
 void EditExecutablesDialog::refreshExecutablesWidget()
 {
   ui->executablesListBox->clear();
-  std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
 
-  for(; current != end; ++current) {
-    QListWidgetItem *newItem = new QListWidgetItem(current->title());
-    newItem->setTextColor(current->isCustom() ? QColor(Qt::black) : QColor(Qt::darkGray));
+  for(const auto& exe : m_ExecutablesList) {
+    QListWidgetItem *newItem = new QListWidgetItem(exe.title());
+    newItem->setTextColor(exe.isCustom() ? QColor(Qt::black) : QColor(Qt::darkGray));
     ui->executablesListBox->addItem(newItem);
   }
 
@@ -282,7 +291,17 @@ void EditExecutablesDialog::on_titleEdit_textChanged(const QString &arg1)
 bool EditExecutablesDialog::executableChanged()
 {
   if (m_CurrentItem != nullptr) {
-    Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
+    const auto& title = m_CurrentItem->text();
+    auto itor = m_ExecutablesList.find(title);
+
+    if (itor == m_ExecutablesList.end()) {
+      qWarning().nospace()
+        << "executableChanged(): title '" << title << "' not found";
+
+      return false;
+    }
+
+    const Executable& selectedExecutable = *itor;
 
     QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.title()).toString();
 
@@ -374,7 +393,15 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
 
     m_CurrentItem = ui->executablesListBox->item(current.row());
 
-    Executable const &selectedExecutable(m_ExecutablesList.find(m_CurrentItem->text()));
+    const auto& title = m_CurrentItem->text();
+    auto itor = m_ExecutablesList.find(title);
+
+    if (itor == m_ExecutablesList.end()) {
+      qWarning().nospace() << "selection: executable '" << title << "' not found";
+      return;
+    }
+
+    const Executable& selectedExecutable = *itor;
 
     ui->titleEdit->setText(selectedExecutable.title());
     ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.binaryInfo().absoluteFilePath()));

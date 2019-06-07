@@ -33,19 +33,40 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 
-
-ExecutablesList::ExecutablesList()
+ExecutablesList::iterator ExecutablesList::begin()
 {
+  return m_Executables.begin();
 }
 
-ExecutablesList::~ExecutablesList()
+ExecutablesList::const_iterator ExecutablesList::begin() const
 {
+  return m_Executables.begin();
 }
 
-void ExecutablesList::init(IPluginGame const *game)
+ExecutablesList::iterator ExecutablesList::end()
+{
+  return m_Executables.end();
+}
+
+ExecutablesList::const_iterator ExecutablesList::end() const
+{
+  return m_Executables.end();
+}
+
+std::size_t ExecutablesList::size() const
+{
+  return m_Executables.size();
+}
+
+bool ExecutablesList::empty() const
+{
+  return m_Executables.empty();
+}
+
+void ExecutablesList::addFromPlugin(IPluginGame const *game)
 {
   Q_ASSERT(game != nullptr);
-  m_Executables.clear();
+
   for (const ExecutableInfo &info : game->executables()) {
     if (info.isValid()) {
       addExecutableInternal(info.title(),
@@ -55,6 +76,7 @@ void ExecutablesList::init(IPluginGame const *game)
                             info.steamAppID());
     }
   }
+
   ExecutableInfo explorerpp = ExecutableInfo("Explore Virtual Folder", QFileInfo(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe" ))
       .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
 
@@ -65,45 +87,25 @@ void ExecutablesList::init(IPluginGame const *game)
       explorerpp.workingDirectory().absolutePath(),
       explorerpp.steamAppID());
   }
-
 }
 
-void ExecutablesList::getExecutables(std::vector<Executable>::iterator &begin, std::vector<Executable>::iterator &end)
+const Executable &ExecutablesList::get(const QString &title) const
 {
-  begin = m_Executables.begin();
-  end = m_Executables.end();
-}
-
-void ExecutablesList::getExecutables(std::vector<Executable>::const_iterator &begin,
-                                     std::vector<Executable>::const_iterator &end) const
-{
-  begin = m_Executables.begin();
-  end = m_Executables.end();
-}
-
-const Executable &ExecutablesList::find(const QString &title) const
-{
-  for (Executable const &exe : m_Executables) {
+  for (const auto& exe : m_Executables) {
     if (exe.title() == title) {
       return exe;
     }
   }
-  throw std::runtime_error(QString("invalid executable name: %1").arg(title).toLocal8Bit().constData());
+
+  throw std::runtime_error(QString("executable not found: %1").arg(title).toLocal8Bit().constData());
 }
 
-
-Executable &ExecutablesList::find(const QString &title)
+Executable &ExecutablesList::get(const QString &title)
 {
-  for (Executable &exe : m_Executables) {
-    if (exe.title() == title) {
-      return exe;
-    }
-  }
-  throw std::runtime_error(QString("invalid executable name: %1").arg(title).toLocal8Bit().constData());
+  return const_cast<Executable&>(std::as_const(*this).get(title));
 }
 
-
-Executable &ExecutablesList::findByBinary(const QFileInfo &info)
+Executable &ExecutablesList::getByBinary(const QFileInfo &info)
 {
   for (Executable &exe : m_Executables) {
     if (exe.binaryInfo() == info) {
@@ -113,17 +115,15 @@ Executable &ExecutablesList::findByBinary(const QFileInfo &info)
   throw std::runtime_error("invalid info");
 }
 
-
-std::vector<Executable>::iterator ExecutablesList::findExe(const QString &title)
+ExecutablesList::iterator ExecutablesList::find(const QString &title)
 {
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->title() == title) {
-      return iter;
-    }
-  }
-  return m_Executables.end();
+  return std::find_if(begin(), end(), [&](auto&& e) { return e.title() == title; });
 }
 
+ExecutablesList::const_iterator ExecutablesList::find(const QString &title) const
+{
+  return std::find_if(begin(), end(), [&](auto&& e) { return e.title() == title; });
+}
 
 bool ExecutablesList::titleExists(const QString &title) const
 {
@@ -131,17 +131,15 @@ bool ExecutablesList::titleExists(const QString &title) const
   return std::find_if(m_Executables.begin(), m_Executables.end(), test) != m_Executables.end();
 }
 
-
 void ExecutablesList::addExecutable(const Executable &executable)
 {
-  auto existingExe = findExe(executable.title());
+  auto existingExe = find(executable.title());
   if (existingExe != m_Executables.end()) {
     *existingExe = executable;
   } else {
     m_Executables.push_back(executable);
   }
 }
-
 
 void ExecutablesList::updateExecutable(const QString &title,
                                        const QString &executableName,
@@ -153,7 +151,7 @@ void ExecutablesList::updateExecutable(const QString &title,
 {
   QFileInfo file(executableName);
   QDir dir(workingDirectory);
-  auto existingExe = findExe(title);
+  auto existingExe = find(title);
   flags &= mask;
 
   if (existingExe != m_Executables.end()) {

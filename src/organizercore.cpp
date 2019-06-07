@@ -375,11 +375,10 @@ QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
 
   settings.remove("customExecutables");
   settings.beginWriteArray("customExecutables");
-  std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
+
   int count = 0;
-  for (; current != end; ++current) {
-    const Executable &item = *current;
+
+  for (const auto& item : m_ExecutablesList) {
     settings.setArrayIndex(count++);
     settings.setValue("title", item.title());
     settings.setValue("custom", item.isCustom());
@@ -508,7 +507,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.init(managedGame());
+  m_ExecutablesList.addFromPlugin(managedGame());
 
   qDebug("setting up configured executables");
 
@@ -1735,7 +1734,8 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
       .arg(shortcut.instance(),shortcut.executable())
       .toLocal8Bit().constData());
 
-  Executable& exe = m_ExecutablesList.find(shortcut.executable());
+  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
+
   auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
   if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
     forcedLibaries.clear();
@@ -1786,7 +1786,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       currentDirectory = binary.absolutePath();
     }
     try {
-      const Executable &exe = m_ExecutablesList.findByBinary(binary);
+      const Executable &exe = m_ExecutablesList.getByBinary(binary);
       steamAppID = exe.steamAppID();
       customOverwrite
           = m_CurrentProfile->setting("custom_overwrites", exe.title())
@@ -1800,7 +1800,7 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   } else {
     // only a file name, search executables list
     try {
-      const Executable &exe = m_ExecutablesList.find(executable);
+      const Executable &exe = m_ExecutablesList.get(executable);
       steamAppID = exe.steamAppID();
       customOverwrite
           = m_CurrentProfile->setting("custom_overwrites", exe.title())
