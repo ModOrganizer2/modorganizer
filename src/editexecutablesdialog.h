@@ -22,10 +22,11 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "tutorabledialog.h"
 #include <QListWidgetItem>
-#include <QTimer>
 #include "executableslist.h"
 #include "profile.h"
 #include "iplugingame.h"
+#include <QTimer>
+#include <QAbstractButton>
 
 namespace Ui {
     class EditExecutablesDialog;
@@ -88,7 +89,7 @@ private slots:
 
   void on_browseDirButton_clicked();
 
-  void on_closeButton_clicked();
+  void on_buttonBox_clicked(QAbstractButton *button);
 
   void delayedRefresh();
 

@@ -42,6 +42,9 @@ EditExecutablesDialog::EditExecutablesDialog(
   , m_GamePlugin(game)
 {
   ui->setupUi(this);
+  ui->splitter->setSizes({200, 1});
+  ui->splitter->setStretchFactor(0, 0);
+  ui->splitter->setStretchFactor(1, 1);
 
   refreshExecutablesWidget();
 
@@ -367,8 +370,10 @@ void EditExecutablesDialog::on_overwriteAppIDBox_toggled(bool checked)
   ui->appIDOverwriteEdit->setEnabled(checked);
 }
 
-void EditExecutablesDialog::on_closeButton_clicked()
+void EditExecutablesDialog::on_buttonBox_clicked(QAbstractButton*)
 {
+  // there's only a close button for now, so the actual button doesn't matter
+
   if (executableChanged()) {
     QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
         tr("You made changes to the current executable, do you want to save them?"),
@@ -382,7 +387,8 @@ void EditExecutablesDialog::on_closeButton_clicked()
       refreshExecutablesWidget();
     }
   }
-  this->accept();
+
+  accept();
 }
 
 void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
