@@ -69,7 +69,7 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
       continue;
     }
 
-    newList.addExecutable(*itor);
+    newList.setExecutable(*itor);
   }
 
   return newList;
@@ -138,17 +138,17 @@ void EditExecutablesDialog::resetInput()
 
 void EditExecutablesDialog::saveExecutable()
 {
-  m_ExecutablesList.updateExecutable(
-        ui->titleEdit->text(),
-        QDir::fromNativeSeparators(ui->binaryEdit->text()),
-        ui->argumentsEdit->text(),
-        QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-        ui->overwriteAppIDBox->isChecked() ?
-          ui->appIDOverwriteEdit->text() : "",
-        Executable::UseApplicationIcon | Executable::CustomExecutable,
-        (ui->useAppIconCheckBox->isChecked() ?
-           Executable::UseApplicationIcon : Executable::Flags())
-        | Executable::CustomExecutable);
+  Executable::Flags flags = Executable::CustomExecutable;
+  if (ui->useAppIconCheckBox->isChecked())
+    flags |= Executable::UseApplicationIcon;
+
+  m_ExecutablesList.setExecutable({
+    ui->titleEdit->text(),
+    QDir::fromNativeSeparators(ui->binaryEdit->text()),
+    ui->argumentsEdit->text(),
+    QDir::fromNativeSeparators(ui->workingDirEdit->text()),
+    ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
+    flags});
 
   if (ui->newFilesModCheckBox->isChecked()) {
     m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),

@@ -5507,12 +5507,10 @@ void MainWindow::addAsExecutable()
 
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->addExecutable(name,
-                                                           binaryInfo.absoluteFilePath(),
-                                                           arguments,
-                                                           targetInfo.absolutePath(),
-                                                           QString(),
-                                                           Executable::CustomExecutable);
+          m_OrganizerCore.executablesList()->setExecutable({
+            name, binaryInfo, arguments, targetInfo.absolutePath(), QString(),
+            Executable::CustomExecutable});
+
           refreshExecutablesList();
         }
 

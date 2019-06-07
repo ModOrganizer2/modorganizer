@@ -73,6 +73,8 @@ public:
   void setShownOnToolbar(bool state);
   bool usesOwnIcon() const;
 
+  void mergeFrom(const Executable& other);
+
 private:
   QString m_title;
   QFileInfo m_binaryInfo;
@@ -155,56 +157,20 @@ public:
    * @brief add a new executable to the list
    * @param executable
    */
-  void addExecutable(const Executable &executable);
+  void setExecutable(const Executable &executable);
 
   /**
-   * @brief add a new executable to the list
-   *
-   * @param title name displayed in the UI
-   * @param executableName the actual filename to execute
-   * @param arguments arguments to pass to the executable
-   **/
-  void addExecutable(const QString &title,
-                     const QString &executableName,
-                     const QString &arguments,
-                     const QString &workingDirectory,
-                     const QString &steamAppID,
-                     Executable::Flags flags)
-  {
-    updateExecutable(title, executableName, arguments, workingDirectory,
-                     steamAppID, Executable::AllFlags, flags);
-  }
-
-  /**
-   * @brief Update an executable to the list
-   *
-   * @param title name displayed in the UI
-   * @param executableName the actual filename to execute
-   * @param arguments arguments to pass to the executable
-   * @param closeMO if true, MO will be closed when the binary is started
-   **/
-  void updateExecutable(const QString &title,
-                        const QString &executableName,
-                        const QString &arguments,
-                        const QString &workingDirectory,
-                        const QString &steamAppID,
-                        Executable::Flags mask,
-                        Executable::Flags flags);
-
-  /**
-   * @brief remove the executable with the specified file name. This needs to be an absolute file path
+   * @brief remove the executable with the specified file name. This needs to
+   *        be an absolute file path
    *
    * @param title title of the executable to remove
-   * @note if the executable name is invalid, nothing happens. There is no way to determine if this was successful
+   * @note if the executable name is invalid, nothing happens. There is no way
+   *       to determine if this was successful
    **/
   void remove(const QString &title);
 
 private:
   std::vector<Executable> m_Executables;
-
-  void addExecutableInternal(const QString &title, const QString &executableName, const QString &arguments,
-                             const QString &workingDirectory,
-                             const QString &steamAppID);
 
   /**
   * @brief add the executables preconfigured for this game

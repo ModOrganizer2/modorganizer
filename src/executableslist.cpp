@@ -81,11 +81,13 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
     if (settings.value("ownicon", false).toBool())
       flags |= Executable::UseApplicationIcon;
 
-    addExecutable(
-      settings.value("title").toString(), settings.value("binary").toString(),
+    setExecutable({
+      settings.value("title").toString(),
+      settings.value("binary").toString(),
       settings.value("arguments").toString(),
       settings.value("workingDirectory", "").toString(),
-      settings.value("steamAppID", "").toString(), flags);
+      settings.value("steamAppID", "").toString(),
+      flags});
   }
 
   settings.endArray();
@@ -123,11 +125,13 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game)
 
   for (const ExecutableInfo &info : game->executables()) {
     if (info.isValid()) {
-      addExecutableInternal(info.title(),
-                            info.binary().absoluteFilePath(),
-                            info.arguments().join(" "),
-                            info.workingDirectory().absolutePath(),
-                            info.steamAppID());
+      setExecutable({
+        info.title(),
+        info.binary().absoluteFilePath(),
+        info.arguments().join(" "),
+        info.workingDirectory().absolutePath(),
+        info.steamAppID(),
+        Executable::UseApplicationIcon});
     }
   }
 
@@ -135,11 +139,13 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game)
       .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
 
   if (explorerpp.isValid()) {
-    addExecutableInternal(explorerpp.title(),
+    setExecutable({
+      explorerpp.title(),
       explorerpp.binary().absoluteFilePath(),
       explorerpp.arguments().join(" "),
       explorerpp.workingDirectory().absolutePath(),
-      explorerpp.steamAppID());
+      explorerpp.steamAppID(),
+      Executable::UseApplicationIcon});
   }
 }
 
@@ -185,59 +191,16 @@ bool ExecutablesList::titleExists(const QString &title) const
   return std::find_if(m_Executables.begin(), m_Executables.end(), test) != m_Executables.end();
 }
 
-void ExecutablesList::addExecutable(const Executable &executable)
+void ExecutablesList::setExecutable(const Executable &executable)
 {
-  auto existingExe = find(executable.title());
-  if (existingExe != m_Executables.end()) {
-    *existingExe = executable;
-  } else {
+  auto itor = find(executable.title());
+
+  if (itor == m_Executables.end()) {
     m_Executables.push_back(executable);
-  }
-}
-
-void ExecutablesList::updateExecutable(const QString &title,
-                                       const QString &executableName,
-                                       const QString &arguments,
-                                       const QString &workingDirectory,
-                                       const QString &steamAppID,
-                                       Executable::Flags mask,
-                                       Executable::Flags flags)
-{
-  QFileInfo file(executableName);
-  QDir dir(workingDirectory);
-  auto existingExe = find(title);
-  flags &= mask;
-
-  if (existingExe != m_Executables.end()) {
-    existingExe->setTitle(title);
-
-    auto newFlags = existingExe->flags();
-    newFlags &= ~mask;
-    newFlags |= flags;
-
-    existingExe->setFlags(newFlags);
-
-    // for pre-configured executables don't overwrite settings we didn't store
-    if (flags & Executable::CustomExecutable) {
-      if (file.exists()) {
-        // don't overwrite a valid binary with an invalid one
-        existingExe->setBinaryInfo(file);
-      }
-
-      if (dir.exists()) {
-        // don't overwrite a valid working directory with an invalid one
-        existingExe->setWorkingDirectory(workingDirectory);
-      }
-      existingExe->setArguments(arguments);
-      existingExe->setSteamAppID(steamAppID);
-    }
   } else {
-    m_Executables.push_back({
-      title, file, arguments, workingDirectory, steamAppID,
-      Executable::CustomExecutable | flags});
+    itor->mergeFrom(executable);
   }
 }
-
 
 void ExecutablesList::remove(const QString &title)
 {
@@ -246,19 +209,6 @@ void ExecutablesList::remove(const QString &title)
       m_Executables.erase(iter);
       break;
     }
-  }
-}
-
-
-void ExecutablesList::addExecutableInternal(const QString &title, const QString &executableName,
-                                            const QString &arguments, const QString &workingDirectory,
-                                            const QString &steamAppID)
-{
-  QFileInfo file(executableName);
-  if (file.exists()) {
-    m_Executables.push_back({
-      title, file, arguments, steamAppID,
-      workingDirectory, Executable::UseApplicationIcon});
   }
 }
 
@@ -357,4 +307,37 @@ void Executable::setShownOnToolbar(bool state)
 bool Executable::usesOwnIcon() const
 {
   return m_flags.testFlag(UseApplicationIcon);
+}
+
+void Executable::mergeFrom(const Executable& other)
+{
+  if (!isCustom()) {
+    // this happens when the user is trying to modify a plugin executable
+
+    // only change some of the flags
+    const auto allow = ShowInToolbar;
+
+    m_flags |= (other.flags() & allow);
+  } else {
+    // this happens after executables are loaded from settings and plugin
+    // executables are being added, or when users are modifying executables
+
+    m_title = other.title();
+    m_arguments = other.arguments();
+    m_steamAppID = other.steamAppID();
+    m_workingDirectory = other.workingDirectory();
+
+    // don't overwrite a valid binary with an invalid one
+    if (other.binaryInfo().exists()) {
+      m_binaryInfo = other.binaryInfo();
+    }
+
+    if (!other.isCustom()) {
+      // overwriting a custom executable with a plugin, merge all the flags
+      m_flags |= other.flags();
+    } else {
+      // overwriting a custom with another custom, just replace the flags
+      m_flags = other.flags();
+    }
+  }
 }
