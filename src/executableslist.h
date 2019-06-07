@@ -39,9 +39,7 @@ public:
   {
     CustomExecutable = 0x01,
     ShowInToolbar = 0x02,
-    UseApplicationIcon = 0x04,
-
-    AllFlags = 0xff //I know, I know
+    UseApplicationIcon = 0x04
   };
 
   Q_DECLARE_FLAGS(Flags, Flag);
@@ -51,22 +49,11 @@ public:
     QString steamAppID, QString workingDirectory, Flags flags);
 
   const QString& title() const;
-  void setTitle(const QString& s);
-
   const QFileInfo& binaryInfo() const;
-  void setBinaryInfo(const QFileInfo& fi);
-
   const QString& arguments() const;
-  void setArguments(const QString& s);
-
   const QString& steamAppID() const;
-  void setSteamAppID(const QString& s);
-
   const QString& workingDirectory() const;
-  void setWorkingDirectory(const QString& s);
-
   Flags flags() const;
-  void setFlags(Flags f);
 
   bool isCustom() const;
   bool isShownOnToolbar() const;

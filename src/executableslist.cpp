@@ -230,19 +230,9 @@ const QString& Executable::title() const
   return m_title;
 }
 
-void Executable::setTitle(const QString& s)
-{
-  m_title = s;
-}
-
 const QFileInfo& Executable::binaryInfo() const
 {
   return m_binaryInfo;
-}
-
-void Executable::setBinaryInfo(const QFileInfo& fi)
-{
-  m_binaryInfo = fi;
 }
 
 const QString& Executable::arguments() const
@@ -250,19 +240,9 @@ const QString& Executable::arguments() const
   return m_arguments;
 }
 
-void Executable::setArguments(const QString& s)
-{
-  m_arguments = s;
-}
-
 const QString& Executable::steamAppID() const
 {
   return m_steamAppID;
-}
-
-void Executable::setSteamAppID(const QString& s)
-{
-  m_steamAppID = s;
 }
 
 const QString& Executable::workingDirectory() const
@@ -270,19 +250,9 @@ const QString& Executable::workingDirectory() const
   return m_workingDirectory;
 }
 
-void Executable::setWorkingDirectory(const QString& s)
-{
-  m_workingDirectory = s;
-}
-
 Executable::Flags Executable::flags() const
 {
   return m_flags;
-}
-
-void Executable::setFlags(Flags f)
-{
-  m_flags = f;
 }
 
 bool Executable::isCustom() const
