@@ -27,7 +27,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QFileInfo>
 #include <QMetaType>
 
-namespace MOBase { class IPluginGame; }
+namespace MOBase { class IPluginGame; class ExecutableInfo; }
 
 /*!
  * @brief Information about an executable
@@ -44,9 +44,12 @@ public:
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  Executable(
-    QString title, QFileInfo binaryInfo, QString arguments,
-    QString steamAppID, QString workingDirectory, Flags flags);
+  Executable() = default;
+
+  /**
+  * @brief Executable from plugin
+  */
+  Executable(const MOBase::ExecutableInfo& info, Flags flags);
 
   const QString& title() const;
   const QFileInfo& binaryInfo() const;
@@ -54,6 +57,13 @@ public:
   const QString& steamAppID() const;
   const QString& workingDirectory() const;
   Flags flags() const;
+
+  Executable& title(const QString& s);
+  Executable& binaryInfo(const QFileInfo& fi);
+  Executable& arguments(const QString& s);
+  Executable& steamAppID(const QString& s);
+  Executable& workingDirectory(const QString& s);
+  Executable& flags(Flags f);
 
   bool isCustom() const;
   bool isShownOnToolbar() const;

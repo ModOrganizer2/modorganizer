@@ -81,13 +81,13 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
     if (settings.value("ownicon", false).toBool())
       flags |= Executable::UseApplicationIcon;
 
-    setExecutable({
-      settings.value("title").toString(),
-      settings.value("binary").toString(),
-      settings.value("arguments").toString(),
-      settings.value("workingDirectory", "").toString(),
-      settings.value("steamAppID", "").toString(),
-      flags});
+    setExecutable(Executable()
+      .title(settings.value("title").toString())
+      .binaryInfo(settings.value("binary").toString())
+      .arguments(settings.value("arguments").toString())
+      .steamAppID(settings.value("steamAppID", "").toString())
+      .workingDirectory(settings.value("workingDirectory", "").toString())
+      .flags(flags));
   }
 
   settings.endArray();
@@ -125,27 +125,22 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game)
 
   for (const ExecutableInfo &info : game->executables()) {
     if (info.isValid()) {
-      setExecutable({
-        info.title(),
-        info.binary().absoluteFilePath(),
-        info.arguments().join(" "),
-        info.workingDirectory().absolutePath(),
-        info.steamAppID(),
-        Executable::UseApplicationIcon});
+      setExecutable({info, Executable::UseApplicationIcon});
     }
   }
 
-  ExecutableInfo explorerpp = ExecutableInfo("Explore Virtual Folder", QFileInfo(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe" ))
-      .withArgument(QString("\"%1\"").arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath())));
+  const QFileInfo eppBin(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe");
 
-  if (explorerpp.isValid()) {
-    setExecutable({
-      explorerpp.title(),
-      explorerpp.binary().absoluteFilePath(),
-      explorerpp.arguments().join(" "),
-      explorerpp.workingDirectory().absolutePath(),
-      explorerpp.steamAppID(),
-      Executable::UseApplicationIcon});
+  if (eppBin.exists()) {
+    const auto args = QString("\"%1\"")
+      .arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
+
+    setExecutable(Executable()
+      .title("Explore Virtual Folder")
+      .binaryInfo(eppBin)
+      .arguments(args)
+      .workingDirectory(eppBin.absolutePath())
+      .flags(Executable::UseApplicationIcon));
   }
 }
 
@@ -213,15 +208,13 @@ void ExecutablesList::remove(const QString &title)
 }
 
 
-Executable::Executable(
-  QString title, QFileInfo binaryInfo, QString arguments,
-  QString steamAppID, QString workingDirectory, Flags flags) :
-    m_title(std::move(title)),
-    m_binaryInfo(std::move(binaryInfo)),
-    m_arguments(std::move(arguments)),
-    m_steamAppID(std::move(steamAppID)),
-    m_workingDirectory(std::move(workingDirectory)),
-    m_flags(flags)
+Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags) :
+  m_title(info.title()),
+  m_binaryInfo(info.binary()),
+  m_arguments(info.arguments().join(" ")),
+  m_steamAppID(info.steamAppID()),
+  m_workingDirectory(info.workingDirectory().absolutePath()),
+  m_flags(flags)
 {
 }
 
@@ -255,6 +248,42 @@ Executable::Flags Executable::flags() const
   return m_flags;
 }
 
+Executable& Executable::title(const QString& s)
+{
+  m_title = s;
+  return *this;
+}
+
+Executable& Executable::binaryInfo(const QFileInfo& fi)
+{
+  m_binaryInfo = fi;
+  return *this;
+}
+
+Executable& Executable::arguments(const QString& s)
+{
+  m_arguments = s;
+  return *this;
+}
+
+Executable& Executable::steamAppID(const QString& s)
+{
+  m_steamAppID = s;
+  return *this;
+}
+
+Executable& Executable::workingDirectory(const QString& s)
+{
+  m_workingDirectory = s;
+  return *this;
+}
+
+Executable& Executable::flags(Flags f)
+{
+  m_flags = f;
+  return *this;
+}
+
 bool Executable::isCustom() const
 {
   return m_flags.testFlag(CustomExecutable);
@@ -281,12 +310,25 @@ bool Executable::usesOwnIcon() const
 
 void Executable::mergeFrom(const Executable& other)
 {
-  if (!isCustom()) {
+  // flags on plugin executables that the user is allowed to chnage
+  const auto allow = ShowInToolbar;
+
+
+  if (!isCustom() && !other.isCustom()) {
+    // this happens when loading plugin executables in addFromPlugin(), replace
+    // everything in case the plugin has changed
+
+    // remember the flags though
+    const auto flags = m_flags;
+
+    // overwrite everything
+    *this = other;
+
+    // set the user flags
+    m_flags |= (flags & allow);
+  }
+  else if (!isCustom()) {
     // this happens when the user is trying to modify a plugin executable
-
-    // only change some of the flags
-    const auto allow = ShowInToolbar;
-
     m_flags |= (other.flags() & allow);
   } else {
     // this happens after executables are loaded from settings and plugin

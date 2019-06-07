@@ -81,7 +81,14 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 
   for(const auto& exe : m_ExecutablesList) {
     QListWidgetItem *newItem = new QListWidgetItem(exe.title());
-    newItem->setTextColor(exe.isCustom() ? QColor(Qt::black) : QColor(Qt::darkGray));
+
+    if (!exe.isCustom()) {
+      auto f = newItem->font();
+      f.setItalic(true);
+
+      newItem->setFont(f);
+    }
+
     ui->executablesListBox->addItem(newItem);
   }
 
@@ -142,13 +149,13 @@ void EditExecutablesDialog::saveExecutable()
   if (ui->useAppIconCheckBox->isChecked())
     flags |= Executable::UseApplicationIcon;
 
-  m_ExecutablesList.setExecutable({
-    ui->titleEdit->text(),
-    QDir::fromNativeSeparators(ui->binaryEdit->text()),
-    ui->argumentsEdit->text(),
-    QDir::fromNativeSeparators(ui->workingDirEdit->text()),
-    ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "",
-    flags});
+  m_ExecutablesList.setExecutable(Executable()
+    .title(ui->titleEdit->text())
+    .binaryInfo(QDir::fromNativeSeparators(ui->binaryEdit->text()))
+    .arguments(ui->argumentsEdit->text())
+    .steamAppID(ui->overwriteAppIDBox->isChecked() ? ui->appIDOverwriteEdit->text() : "")
+    .workingDirectory(QDir::fromNativeSeparators(ui->workingDirEdit->text()))
+    .flags(flags));
 
   if (ui->newFilesModCheckBox->isChecked()) {
     m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
@@ -198,11 +205,16 @@ void EditExecutablesDialog::on_addButton_clicked()
   refreshExecutablesWidget();
 }
 
-void EditExecutablesDialog::on_browseButton_clicked()
+void EditExecutablesDialog::on_browseBinaryButton_clicked()
 {
   QString binaryName = FileDialogMemory::getOpenFileName(
       "editExecutableBinary", this, tr("Select a binary"), QString(),
       tr("Executable (%1)").arg("*.exe *.bat *.jar"));
+
+  if (binaryName.isNull()) {
+    // canceled
+    return;
+  }
 
   if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
     QString binaryPath;
@@ -249,6 +261,11 @@ void EditExecutablesDialog::on_browseDirButton_clicked()
 {
   QString dirName = FileDialogMemory::getExistingDirectory("editExecutableDirectory", this,
                                                            tr("Select a directory"));
+
+  if (dirName.isNull()) {
+    // canceled
+    return;
+  }
 
   ui->workingDirEdit->setText(dirName);
 }

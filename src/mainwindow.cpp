@@ -2483,7 +2483,9 @@ bool MainWindow::modifyExecutablesDialog()
     EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
                                  *m_OrganizerCore.modList(),
                                  m_OrganizerCore.currentProfile(),
-                                 m_OrganizerCore.managedGame());
+                                 m_OrganizerCore.managedGame(),
+                                 this);
+
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
     if (settings.contains(key)) {
@@ -5507,9 +5509,12 @@ void MainWindow::addAsExecutable()
 
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->setExecutable({
-            name, binaryInfo, arguments, targetInfo.absolutePath(), QString(),
-            Executable::CustomExecutable});
+          m_OrganizerCore.executablesList()->setExecutable(Executable()
+            .title(name)
+            .binaryInfo(binaryInfo)
+            .arguments(arguments)
+            .workingDirectory(targetInfo.absolutePath())
+            .flags(Executable::CustomExecutable));
 
           refreshExecutablesList();
         }

@@ -80,7 +80,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="browseButton">
+      <widget class="QPushButton" name="browseBinaryButton">
        <property name="toolTip">
         <string>Browse filesystem</string>
        </property>
@@ -310,7 +310,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
   <tabstop>executablesListBox</tabstop>
   <tabstop>titleEdit</tabstop>
   <tabstop>binaryEdit</tabstop>
-  <tabstop>browseButton</tabstop>
+  <tabstop>browseBinaryButton</tabstop>
   <tabstop>workingDirEdit</tabstop>
   <tabstop>browseDirButton</tabstop>
   <tabstop>argumentsEdit</tabstop>

@@ -78,7 +78,7 @@ private slots:
 
   void on_addButton_clicked();
 
-  void on_browseButton_clicked();
+  void on_browseBinaryButton_clicked();
 
   void on_removeButton_clicked();
 
