@@ -59,43 +59,51 @@ public:
   ExecutablesList getExecutablesList() const;
 
 private slots:
-  void on_newFilesModCheckBox_toggled(bool checked);
-  void on_binaryEdit_textChanged(const QString &arg1);
-  void on_workingDirEdit_textChanged(const QString &arg1);
-  void on_addButton_clicked();
-  void on_browseBinaryButton_clicked();
-  void on_removeButton_clicked();
-  void on_titleEdit_textChanged(const QString &arg1);
-  void on_overwriteAppIDBox_toggled(bool checked);
-  void on_browseWorkingDirButton_clicked();
-  void on_buttonBox_accepted();
-  void on_buttonBox_rejected();
+  void on_list_itemSelectionChanged();
+
+  void on_add_clicked();
+  void on_remove_clicked();
+
+  void on_overwriteSteamAppID_toggled(bool checked);
+  void on_createFilesInMod_toggled(bool checked);
+  void on_forceLoadLibraries_toggled(bool checked);
+  void on_useApplicationIcon_toggled(bool checked);
+
+  void on_browseBinary_clicked();
+  void on_browseWorkingDirectory_clicked();
+  void on_configureLibraries_clicked();
+
+  void on_buttons_accepted();
+  void on_buttons_rejected();
+
   void delayedRefresh();
-  void on_executablesListBox_itemSelectionChanged();
-  void on_executablesListBox_clicked(const QModelIndex &index);
-  void on_forceLoadButton_clicked();
-  void on_forceLoadCheckBox_toggled();
 
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
   ExecutablesList m_executablesList;
   Profile *m_profile;
   const MOBase::IPluginGame *m_gamePlugin;
-  bool m_dirty;
+  bool m_settingUI;
 
   QListWidgetItem *m_currentItem;
   QList<MOBase::ExecutableForcedLoadSetting> m_forcedLibraries;
 
 
+  QListWidgetItem* selectedItem();
+  Executable* selectedExe();
+
   void updateUI(const Executable* e);
   void clearEdits();
   void setEdits(const Executable& e);
+  void save();
 
   void resetInput();
   void refreshExecutablesWidget();
   bool executableChanged();
   void updateButtonStates();
   void saveExecutable();
+
+  void onTitleChanged(const QString& s);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

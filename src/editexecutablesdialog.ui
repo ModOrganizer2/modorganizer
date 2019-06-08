@@ -58,7 +58,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QListWidget" name="executablesListBox">
+           <widget class="QListWidget" name="list">
             <property name="toolTip">
              <string>List of configured executables</string>
             </property>
@@ -89,7 +89,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="addButton">
+             <widget class="QPushButton" name="add">
               <property name="toolTip">
                <string>Add an executable</string>
               </property>
@@ -106,7 +106,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="removeButton">
+             <widget class="QPushButton" name="remove">
               <property name="toolTip">
                <string>Remove the selected executable</string>
               </property>
@@ -172,7 +172,7 @@
                 </widget>
                </item>
                <item row="0" column="1">
-                <widget class="QLineEdit" name="titleEdit">
+                <widget class="QLineEdit" name="title">
                  <property name="toolTip">
                   <string>Name of the executable. This is only for display purposes.</string>
                  </property>
@@ -191,7 +191,7 @@
                <item row="1" column="1">
                 <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
                  <item>
-                  <widget class="QLineEdit" name="binaryEdit">
+                  <widget class="QLineEdit" name="binary">
                    <property name="toolTip">
                     <string>Binary to run</string>
                    </property>
@@ -201,7 +201,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="browseBinaryButton">
+                  <widget class="QPushButton" name="browseBinary">
                    <property name="toolTip">
                     <string>Browse filesystem</string>
                    </property>
@@ -225,10 +225,10 @@
                <item row="2" column="1">
                 <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="1,0">
                  <item>
-                  <widget class="QLineEdit" name="workingDirEdit"/>
+                  <widget class="QLineEdit" name="workingDirectory"/>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="browseWorkingDirButton">
+                  <widget class="QPushButton" name="browseWorkingDirectory">
                    <property name="text">
                     <string>...</string>
                    </property>
@@ -244,7 +244,7 @@
                 </widget>
                </item>
                <item row="3" column="1">
-                <widget class="QLineEdit" name="argumentsEdit">
+                <widget class="QLineEdit" name="arguments">
                  <property name="toolTip">
                   <string>Arguments to pass to the application</string>
                  </property>
@@ -258,7 +258,7 @@
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <item>
-                <widget class="QCheckBox" name="overwriteAppIDBox">
+                <widget class="QCheckBox" name="overwriteSteamAppID">
                  <property name="toolTip">
                   <string>Allow the Steam AppID to be used for this executable to be changed.</string>
                  </property>
@@ -273,7 +273,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="appIDOverwriteEdit">
+                <widget class="QLineEdit" name="steamAppID">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
@@ -292,7 +292,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="0,1">
                <item>
-                <widget class="QCheckBox" name="newFilesModCheckBox">
+                <widget class="QCheckBox" name="createFilesInMod">
                  <property name="toolTip">
                   <string>If this is enabled, new files are created in the specified mod instead of the &quot;Overwrite&quot; mod.</string>
                  </property>
@@ -302,7 +302,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="newFilesModBox">
+                <widget class="QComboBox" name="mods">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
@@ -313,12 +313,12 @@ Right now the only case I know of where this needs to be overwritten is for the 
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_8">
                <item>
-                <widget class="QCheckBox" name="forceLoadCheckBox">
+                <widget class="QCheckBox" name="forceLoadLibraries">
                  <property name="toolTip">
                   <string>If this is enabled, the configured libraries will be automatically loaded when this executable is launched.</string>
                  </property>
                  <property name="text">
-                  <string>Force Load Libraries (Profile Specific)</string>
+                  <string>Force Load Libraries (*)</string>
                  </property>
                 </widget>
                </item>
@@ -336,7 +336,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="forceLoadButton">
+                <widget class="QPushButton" name="configureLibraries">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
@@ -348,9 +348,16 @@ Right now the only case I know of where this needs to be overwritten is for the 
               </layout>
              </item>
              <item>
-              <widget class="QCheckBox" name="useAppIconCheckBox">
+              <widget class="QCheckBox" name="useApplicationIcon">
                <property name="text">
                 <string>Use Application's Icon for shortcuts</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>(*) Profile Specific</string>
                </property>
               </widget>
              </item>
@@ -393,7 +400,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
     </widget>
    </item>
    <item>
-    <widget class="QDialogButtonBox" name="buttonBox">
+    <widget class="QDialogButtonBox" name="buttons">
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
@@ -402,16 +409,16 @@ Right now the only case I know of where this needs to be overwritten is for the 
   </layout>
  </widget>
  <tabstops>
-  <tabstop>binaryEdit</tabstop>
-  <tabstop>browseBinaryButton</tabstop>
-  <tabstop>workingDirEdit</tabstop>
-  <tabstop>browseWorkingDirButton</tabstop>
-  <tabstop>overwriteAppIDBox</tabstop>
-  <tabstop>appIDOverwriteEdit</tabstop>
-  <tabstop>newFilesModCheckBox</tabstop>
-  <tabstop>newFilesModBox</tabstop>
-  <tabstop>addButton</tabstop>
-  <tabstop>removeButton</tabstop>
+  <tabstop>binary</tabstop>
+  <tabstop>browseBinary</tabstop>
+  <tabstop>workingDirectory</tabstop>
+  <tabstop>browseWorkingDirectory</tabstop>
+  <tabstop>overwriteSteamAppID</tabstop>
+  <tabstop>steamAppID</tabstop>
+  <tabstop>createFilesInMod</tabstop>
+  <tabstop>mods</tabstop>
+  <tabstop>add</tabstop>
+  <tabstop>remove</tabstop>
  </tabstops>
  <resources/>
  <connections/>
