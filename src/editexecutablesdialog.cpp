@@ -370,10 +370,8 @@ void EditExecutablesDialog::on_overwriteAppIDBox_toggled(bool checked)
   ui->appIDOverwriteEdit->setEnabled(checked);
 }
 
-void EditExecutablesDialog::on_buttonBox_clicked(QAbstractButton*)
+void EditExecutablesDialog::on_buttonBox_accepted()
 {
-  // there's only a close button for now, so the actual button doesn't matter
-
   if (executableChanged()) {
     QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
         tr("You made changes to the current executable, do you want to save them?"),
@@ -389,6 +387,11 @@ void EditExecutablesDialog::on_buttonBox_clicked(QAbstractButton*)
   }
 
   accept();
+}
+
+void EditExecutablesDialog::on_buttonBox_rejected()
+{
+  reject();
 }
 
 void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
