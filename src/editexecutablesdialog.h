@@ -82,12 +82,12 @@ private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
   ExecutablesList m_executablesList;
   std::map<QString, QString> m_customOverwrites;
+  std::map<QString, QList<MOBase::ExecutableForcedLoadSetting>> m_forcedLibraries;
   Profile *m_profile;
   const MOBase::IPluginGame *m_gamePlugin;
   bool m_settingUI;
 
   QListWidgetItem *m_currentItem;
-  QList<MOBase::ExecutableForcedLoadSetting> m_forcedLibraries;
 
 
   QListWidgetItem* selectedItem();

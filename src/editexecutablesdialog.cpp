@@ -48,10 +48,15 @@ EditExecutablesDialog::EditExecutablesDialog(
   ui->splitter->setStretchFactor(1, 1);
 
   for (const auto& e : m_executablesList) {
+    // custom overwrites
     QString customOverwrite = m_profile->setting("custom_overwrites", e.title()).toString();
-
     if (!customOverwrite.isEmpty()) {
       m_customOverwrites[e.title()] = customOverwrite;
+    }
+
+    // forced libraries
+    if (m_profile->forcedLibrariesEnabled(e.title())) {
+      m_forcedLibraries[e.title()] = m_profile->determineForcedLibraries(e.title());
     }
   }
 
@@ -59,7 +64,6 @@ EditExecutablesDialog::EditExecutablesDialog(
   fillExecutableList();
   ui->mods->addItems(modList.allMods());
 
-  m_forcedLibraries = m_profile->determineForcedLibraries(ui->title->text());
 
   // some widgets need to do more than just save() and have their own handler
 
@@ -168,26 +172,32 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->steamAppID->setText(e.steamAppID());
   ui->useApplicationIcon->setChecked(e.usesOwnIcon());
 
-  int modIndex = -1;
+  {
+    int modIndex = -1;
 
-  auto itor = m_customOverwrites.find(e.title());
-  if (itor != m_customOverwrites.end()) {
-    modIndex = ui->mods->findText(itor->second);
+    auto itor = m_customOverwrites.find(e.title());
+    if (itor != m_customOverwrites.end()) {
+      modIndex = ui->mods->findText(itor->second);
 
-    if (modIndex == -1) {
-      qWarning().nospace()
-        << "executable '" << e.title() << "' uses mod '" << itor->second << "' "
-        << "as a custom overwrite, but that mod doesn't exist";
+      if (modIndex == -1) {
+        qWarning().nospace()
+          << "executable '" << e.title() << "' uses mod '" << itor->second << "' "
+          << "as a custom overwrite, but that mod doesn't exist";
+      }
     }
+
+    ui->createFilesInMod->setChecked(modIndex != -1);
+    ui->mods->setEnabled(modIndex != -1);
+    ui->mods->setCurrentIndex(modIndex);
   }
 
-  ui->createFilesInMod->setChecked(modIndex != -1);
-  ui->mods->setEnabled(modIndex != -1);
-  ui->mods->setCurrentIndex(modIndex);
+  {
+    auto itor = m_forcedLibraries.find(e.title());
+    const auto hasForcedLibraries = (itor != m_forcedLibraries.end());
 
-  const bool forcedLibraries = m_profile->forcedLibrariesEnabled(e.title());
-  ui->forceLoadLibraries->setChecked(forcedLibraries);
-  ui->configureLibraries->setEnabled(forcedLibraries);
+    ui->forceLoadLibraries->setChecked(hasForcedLibraries);
+    ui->configureLibraries->setEnabled(hasForcedLibraries);
+  }
 
   ui->pluginProvidedLabel->setVisible(!e.isCustom());
 
@@ -229,6 +239,8 @@ void EditExecutablesDialog::save()
       m_customOverwrites.erase(itor);
     }
   }
+
+  // forced libraries are saved in on_configureLibraries_clicked()
 
   e->title(ui->title->text());
   e->binaryInfo(ui->binary->text());
@@ -289,6 +301,26 @@ void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
   save();
 }
 
+void EditExecutablesDialog::on_configureLibraries_clicked()
+{
+  auto* e = selectedExe();
+  if (!e) {
+    qWarning("trying to configure libraries but nothing is selected");
+    return;
+  }
+
+  ForcedLoadDialog dialog(m_gamePlugin, this);
+
+  auto itor = m_forcedLibraries.find(e->title());
+  if (itor != m_forcedLibraries.end()) {
+    dialog.setValues(itor->second);
+  }
+
+  if (dialog.exec() == QDialog::Accepted) {
+    m_forcedLibraries[e->title()] = dialog.values();
+    save();
+  }
+}
 
 
 
@@ -372,9 +404,9 @@ void EditExecutablesDialog::saveExecutable()
 	  m_profile->removeSetting("custom_overwrites", ui->title->text());
   }
 
-  m_profile->removeForcedLibraries(ui->title->text());
-  m_profile->storeForcedLibraries(ui->title->text(), m_forcedLibraries);
-  m_profile->setForcedLibrariesEnabled(ui->title->text(), ui->forceLoadLibraries->isChecked());
+  //m_profile->removeForcedLibraries(ui->title->text());
+  //m_profile->storeForcedLibraries(ui->title->text(), m_forcedLibraries);
+  //m_profile->setForcedLibrariesEnabled(ui->title->text(), ui->forceLoadLibraries->isChecked());
 }
 
 
@@ -387,14 +419,6 @@ void EditExecutablesDialog::delayedRefresh()
 }
 
 
-void EditExecutablesDialog::on_configureLibraries_clicked()
-{
-  ForcedLoadDialog dialog(m_gamePlugin, this);
-  dialog.setValues(m_forcedLibraries);
-  if (dialog.exec() == QDialog::Accepted) {
-    m_forcedLibraries = dialog.values();
-  }
-}
 
 
 void EditExecutablesDialog::on_add_clicked()
@@ -488,7 +512,7 @@ void EditExecutablesDialog::on_remove_clicked()
 
 bool EditExecutablesDialog::executableChanged()
 {
-  if (m_currentItem != nullptr) {
+  /*if (m_currentItem != nullptr) {
     const auto& title = m_currentItem->text();
     auto itor = m_executablesList.find(title);
 
@@ -533,7 +557,9 @@ bool EditExecutablesDialog::executableChanged()
         && !ui->title->text().isEmpty()
         && fileInfo.exists()
         && fileInfo.isFile();
-  }
+  }*/
+
+  return false;
 }
 
 void EditExecutablesDialog::on_list_itemSelectionChanged()
