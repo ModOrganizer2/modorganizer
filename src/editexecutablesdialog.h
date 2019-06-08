@@ -87,7 +87,7 @@ private slots:
 
   void on_overwriteAppIDBox_toggled(bool checked);
 
-  void on_browseDirButton_clicked();
+  void on_browseWorkingDirButton_clicked();
 
   void on_buttonBox_accepted();
   void on_buttonBox_rejected();
@@ -113,7 +113,7 @@ private:
   void updateButtonStates();
 
 private:
-  Ui::EditExecutablesDialog *ui;
+  std::unique_ptr<Ui::EditExecutablesDialog> ui;
 
   QListWidgetItem *m_CurrentItem;
 
@@ -124,6 +124,11 @@ private:
   QList<MOBase::ExecutableForcedLoadSetting> m_ForcedLibraries;
 
   const MOBase::IPluginGame *m_GamePlugin;
+
+
+  void updateUI(const Executable* e);
+  void clearEdits();
+  void setEdits(const Executable& e);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

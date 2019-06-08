@@ -47,15 +47,96 @@ EditExecutablesDialog::EditExecutablesDialog(
   ui->splitter->setStretchFactor(1, 1);
 
   refreshExecutablesWidget();
-
   ui->newFilesModBox->addItems(modList.allMods());
 
   m_ForcedLibraries = m_Profile->determineForcedLibraries(ui->titleEdit->text());
+
+  updateUI(nullptr);
 }
 
-EditExecutablesDialog::~EditExecutablesDialog()
+EditExecutablesDialog::~EditExecutablesDialog() = default;
+
+void EditExecutablesDialog::updateUI(const Executable* e)
 {
-  delete ui;
+  if (e) {
+    setEdits(*e);
+  } else {
+    clearEdits();
+    ui->removeButton->setEnabled(false);
+  }
+}
+
+void EditExecutablesDialog::clearEdits()
+{
+  ui->titleEdit->clear();
+  ui->binaryEdit->clear();
+  ui->workingDirEdit->clear();
+  ui->argumentsEdit->clear();
+  ui->overwriteAppIDBox->setChecked(false);
+  ui->appIDOverwriteEdit->clear();
+  ui->newFilesModCheckBox->setChecked(false);
+  ui->newFilesModBox->setCurrentIndex(-1);
+  ui->forceLoadCheckBox->setChecked(false);
+  ui->useAppIconCheckBox->setChecked(false);
+
+  ui->pluginProvidedLabel->setVisible(false);
+}
+
+void EditExecutablesDialog::setEdits(const Executable& e)
+{
+  ui->titleEdit->setText(e.title());
+  ui->binaryEdit->setText(QDir::toNativeSeparators(e.binaryInfo().absoluteFilePath()));
+  ui->workingDirEdit->setText(QDir::toNativeSeparators(e.workingDirectory()));
+  ui->argumentsEdit->setText(e.arguments());
+  ui->overwriteAppIDBox->setChecked(!e.steamAppID().isEmpty());
+  ui->appIDOverwriteEdit->setText(e.steamAppID());
+  ui->useAppIconCheckBox->setChecked(e.usesOwnIcon());
+
+  int modIndex = -1;
+
+  QString customOverwrite = m_Profile->setting("custom_overwrites", e.title()).toString();
+  if (!customOverwrite.isEmpty()) {
+    modIndex = ui->newFilesModBox->findText(customOverwrite);
+  }
+
+  ui->newFilesModCheckBox->setChecked(modIndex != -1);
+  ui->newFilesModBox->setCurrentIndex(modIndex);
+
+  const bool forcedLibraries = m_Profile->forcedLibrariesEnabled(e.title());
+  ui->forceLoadCheckBox->setChecked(forcedLibraries);
+  ui->forceLoadButton->setEnabled(forcedLibraries);
+
+  ui->pluginProvidedLabel->setVisible(!e.isCustom());
+
+  // only enabled for custom executables
+  ui->titleEdit->setEnabled(e.isCustom());
+  ui->binaryEdit->setEnabled(e.isCustom());
+  ui->browseBinaryButton->setEnabled(e.isCustom());
+  ui->workingDirEdit->setEnabled(e.isCustom());
+  ui->browseWorkingDirButton->setEnabled(e.isCustom());
+  ui->argumentsEdit->setEnabled(e.isCustom());
+  ui->overwriteAppIDBox->setEnabled(e.isCustom());
+  ui->appIDOverwriteEdit->setEnabled(e.isCustom());
+  ui->useAppIconCheckBox->setEnabled(e.isCustom());
+
+  // always enabled
+  ui->newFilesModCheckBox->setEnabled(true);
+  ui->newFilesModBox->setEnabled(true);
+  ui->forceLoadCheckBox->setEnabled(true);
+}
+
+void EditExecutablesDialog::resetInput()
+{
+  ui->binaryEdit->setText("");
+  ui->titleEdit->setText("");
+  ui->workingDirEdit->clear();
+  ui->argumentsEdit->setText("");
+  ui->appIDOverwriteEdit->clear();
+  ui->overwriteAppIDBox->setChecked(false);
+  ui->useAppIconCheckBox->setChecked(false);
+  ui->newFilesModCheckBox->setChecked(false);
+  ui->forceLoadCheckBox->setChecked(false);
+  m_CurrentItem = nullptr;
 }
 
 ExecutablesList EditExecutablesDialog::getExecutablesList() const
@@ -95,8 +176,8 @@ void EditExecutablesDialog::refreshExecutablesWidget()
     ui->executablesListBox->addItem(newItem);
   }
 
-  ui->addButton->setEnabled(false);
-  ui->removeButton->setEnabled(false);
+  //ui->addButton->setEnabled(false);
+  //ui->removeButton->setEnabled(false);
 }
 
 
@@ -129,20 +210,6 @@ void EditExecutablesDialog::updateButtonStates()
   }
 
   ui->addButton->setEnabled(enabled);
-}
-
-void EditExecutablesDialog::resetInput()
-{
-  ui->binaryEdit->setText("");
-  ui->titleEdit->setText("");
-  ui->workingDirEdit->clear();
-  ui->argumentsEdit->setText("");
-  ui->appIDOverwriteEdit->clear();
-  ui->overwriteAppIDBox->setChecked(false);
-  ui->useAppIconCheckBox->setChecked(false);
-  ui->newFilesModCheckBox->setChecked(false);
-  ui->forceLoadCheckBox->setChecked(false);
-  m_CurrentItem = nullptr;
 }
 
 
@@ -260,7 +327,7 @@ void EditExecutablesDialog::on_browseBinaryButton_clicked()
   }
 }
 
-void EditExecutablesDialog::on_browseDirButton_clicked()
+void EditExecutablesDialog::on_browseWorkingDirButton_clicked()
 {
   QString dirName = FileDialogMemory::getExistingDirectory("editExecutableDirectory", this,
                                                            tr("Select a directory"));
@@ -359,10 +426,27 @@ bool EditExecutablesDialog::executableChanged()
 }
 void EditExecutablesDialog::on_executablesListBox_itemSelectionChanged()
 {
-  if (ui->executablesListBox->selectedItems().size() == 0) {
-    // deselected
-    resetInput();
+  const auto selection = ui->executablesListBox->selectedItems();
+
+  if (selection.empty()) {
+    updateUI(nullptr);
+    return;
   }
+
+  auto* item = selection[0];
+  if (!item) {
+    return;
+  }
+
+  const auto& title = item->text();
+  auto itor = m_ExecutablesList.find(title);
+
+  if (itor == m_ExecutablesList.end()) {
+    qWarning().nospace() << "selection: executable '" << title << "' not found";
+    return;
+  }
+
+  updateUI(&*itor);
 }
 
 void EditExecutablesDialog::on_overwriteAppIDBox_toggled(bool checked)
@@ -395,7 +479,7 @@ void EditExecutablesDialog::on_buttonBox_rejected()
 }
 
 void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
-{
+{/*
   if (current.isValid()) {
 
     if (executableChanged()) {
@@ -459,7 +543,7 @@ void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &cur
     bool forcedLibraries = m_Profile->forcedLibrariesEnabled(ui->titleEdit->text());
     ui->forceLoadButton->setEnabled(forcedLibraries);
     ui->forceLoadCheckBox->setChecked(forcedLibraries);
-  }
+  }*/
 }
 
 void EditExecutablesDialog::on_newFilesModCheckBox_toggled(bool checked)

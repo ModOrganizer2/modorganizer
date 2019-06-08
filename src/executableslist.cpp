@@ -65,8 +65,6 @@ bool ExecutablesList::empty() const
 
 void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 {
-  addFromPlugin(game);
-
   qDebug("setting up configured executables");
 
   int numCustomExecutables = settings.beginReadArray("customExecutables");
@@ -91,6 +89,8 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
   }
 
   settings.endArray();
+
+  addFromPlugin(game);
 }
 
 void ExecutablesList::store(QSettings& settings)
