@@ -114,17 +114,21 @@ void EditExecutablesDialog::fillExecutableList()
   ui->list->clear();
 
   for(const auto& exe : m_executablesList) {
-    QListWidgetItem *newItem = new QListWidgetItem(exe.title());
-
-    if (!exe.isCustom()) {
-      auto f = newItem->font();
-      f.setItalic(true);
-
-      newItem->setFont(f);
-    }
-
-    ui->list->addItem(newItem);
+    ui->list->addItem(createListItem(exe));
   }
+}
+
+QListWidgetItem* EditExecutablesDialog::createListItem(const Executable& exe)
+{
+  QListWidgetItem *newItem = new QListWidgetItem(exe.title());
+
+  if (!exe.isCustom()) {
+    auto f = newItem->font();
+    f.setItalic(true);
+    newItem->setFont(f);
+  }
+
+  return newItem;
 }
 
 void EditExecutablesDialog::updateUI(const Executable* e)
@@ -276,6 +280,24 @@ void EditExecutablesDialog::on_list_itemSelectionChanged()
   updateUI(selectedExe());
 }
 
+void EditExecutablesDialog::on_add_clicked()
+{
+  auto title = newExecutableTitle();
+  if (title.isNull()) {
+    return;
+  }
+
+  auto e = Executable()
+    .title(title)
+    .flags(Executable::CustomExecutable);
+
+  m_executablesList.setExecutable(e);
+
+  auto* item = createListItem(e);
+  ui->list->addItem(item);
+  item->setSelected(true);
+}
+
 void EditExecutablesDialog::on_title_textChanged(const QString& s)
 {
   if (m_settingUI) {
@@ -405,23 +427,25 @@ void EditExecutablesDialog::setJarBinary(const QString& binaryName)
   save();
 }
 
-
-
-
-void EditExecutablesDialog::resetInput()
+QString EditExecutablesDialog::newExecutableTitle()
 {
-  ui->binary->setText("");
-  ui->title->setText("");
-  ui->workingDirectory->clear();
-  ui->arguments->setText("");
-  ui->overwriteSteamAppID->setChecked(false);
-  ui->createFilesInMod->setChecked(false);
-  ui->forceLoadLibraries->setChecked(false);
-  ui->steamAppID->clear();
-  ui->useApplicationIcon->setChecked(false);
+  const auto prefix = tr("New Executable");
 
-  m_currentItem = nullptr;
+  QString title = prefix;
+
+  for (int i=1; i<100; ++i) {
+    if (!m_executablesList.titleExists(title)) {
+      return title;
+    }
+
+    title = prefix + QString(" (%1)").arg(i);
+  }
+
+  qCritical().nospace() << "ran out of new executable titles";
+  return QString::null;
 }
+
+
 
 ExecutablesList EditExecutablesDialog::getExecutablesList() const
 {
@@ -505,15 +529,6 @@ void EditExecutablesDialog::delayedRefresh()
 
 
 
-void EditExecutablesDialog::on_add_clicked()
-{
-  if (executableChanged()) {
-    saveExecutable();
-  }
-
-  resetInput();
-  //refreshExecutablesWidget();
-}
 
 void EditExecutablesDialog::on_remove_clicked()
 {
@@ -524,7 +539,6 @@ void EditExecutablesDialog::on_remove_clicked()
     m_executablesList.remove(ui->title->text());
   }
 
-  resetInput();
   //refreshExecutablesWidget();
 }
 

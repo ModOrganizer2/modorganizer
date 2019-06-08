@@ -94,13 +94,14 @@ private:
   Executable* selectedExe();
 
   void fillExecutableList();
+  QListWidgetItem* createListItem(const Executable& exe);
   void updateUI(const Executable* e);
   void clearEdits();
   void setEdits(const Executable& e);
   void save();
   void setJarBinary(const QString& binaryName);
+  QString newExecutableTitle();
 
-  void resetInput();
   bool executableChanged();
   void updateButtonStates();
   void saveExecutable();
