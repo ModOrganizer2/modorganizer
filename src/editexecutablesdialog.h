@@ -32,9 +32,7 @@ namespace Ui {
     class EditExecutablesDialog;
 }
 
-
 class ModList;
-
 
 /**
  * @brief Dialog to manage the list of executables
@@ -44,91 +42,60 @@ class EditExecutablesDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
-
   /**
-   * @brief constructor
-   *
    * @param executablesList current list of executables
    * @param parent parent widget
    **/
-  explicit EditExecutablesDialog(const ExecutablesList &executablesList,
-                                 const ModList &modList,
-                                 Profile *profile,
-                                 const MOBase::IPluginGame *game,
-                                 QWidget *parent = 0);
+  explicit EditExecutablesDialog(
+    const ExecutablesList &executablesList, const ModList &modList,
+    Profile *profile, const MOBase::IPluginGame *game, QWidget *parent = 0);
 
   ~EditExecutablesDialog();
 
   /**
    * @brief retrieve the updated list of executables
-   *
    * @return updated list of executables
    **/
   ExecutablesList getExecutablesList() const;
 
-  void saveExecutable();
-
 private slots:
   void on_newFilesModCheckBox_toggled(bool checked);
-
-private slots:
-
   void on_binaryEdit_textChanged(const QString &arg1);
-
   void on_workingDirEdit_textChanged(const QString &arg1);
-
   void on_addButton_clicked();
-
   void on_browseBinaryButton_clicked();
-
   void on_removeButton_clicked();
-
   void on_titleEdit_textChanged(const QString &arg1);
-
   void on_overwriteAppIDBox_toggled(bool checked);
-
   void on_browseWorkingDirButton_clicked();
-
   void on_buttonBox_accepted();
   void on_buttonBox_rejected();
-
   void delayedRefresh();
-
   void on_executablesListBox_itemSelectionChanged();
-
   void on_executablesListBox_clicked(const QModelIndex &index);
-
   void on_forceLoadButton_clicked();
-
   void on_forceLoadCheckBox_toggled();
 
 private:
-
-  void resetInput();
-
-  void refreshExecutablesWidget();
-
-  bool executableChanged();
-
-  void updateButtonStates();
-
-private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
+  ExecutablesList m_executablesList;
+  Profile *m_profile;
+  const MOBase::IPluginGame *m_gamePlugin;
+  bool m_dirty;
 
-  QListWidgetItem *m_CurrentItem;
-
-  ExecutablesList m_ExecutablesList;
-
-  Profile *m_Profile;
-
-  QList<MOBase::ExecutableForcedLoadSetting> m_ForcedLibraries;
-
-  const MOBase::IPluginGame *m_GamePlugin;
+  QListWidgetItem *m_currentItem;
+  QList<MOBase::ExecutableForcedLoadSetting> m_forcedLibraries;
 
 
   void updateUI(const Executable* e);
   void clearEdits();
   void setEdits(const Executable& e);
+
+  void resetInput();
+  void refreshExecutablesWidget();
+  bool executableChanged();
+  void updateButtonStates();
+  void saveExecutable();
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

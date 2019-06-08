@@ -36,10 +36,11 @@ EditExecutablesDialog::EditExecutablesDialog(
     Profile *profile, const IPluginGame *game, QWidget *parent)
   : TutorableDialog("EditExecutables", parent)
   , ui(new Ui::EditExecutablesDialog)
-  , m_CurrentItem(nullptr)
-  , m_ExecutablesList(executablesList)
-  , m_Profile(profile)
-  , m_GamePlugin(game)
+  , m_currentItem(nullptr)
+  , m_executablesList(executablesList)
+  , m_profile(profile)
+  , m_gamePlugin(game)
+  , m_dirty(false)
 {
   ui->setupUi(this);
   ui->splitter->setSizes({200, 1});
@@ -49,7 +50,7 @@ EditExecutablesDialog::EditExecutablesDialog(
   refreshExecutablesWidget();
   ui->newFilesModBox->addItems(modList.allMods());
 
-  m_ForcedLibraries = m_Profile->determineForcedLibraries(ui->titleEdit->text());
+  m_forcedLibraries = m_profile->determineForcedLibraries(ui->titleEdit->text());
 
   updateUI(nullptr);
 }
@@ -60,6 +61,7 @@ void EditExecutablesDialog::updateUI(const Executable* e)
 {
   if (e) {
     setEdits(*e);
+    ui->removeButton->setEnabled(e->isCustom());
   } else {
     clearEdits();
     ui->removeButton->setEnabled(false);
@@ -94,7 +96,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
 
   int modIndex = -1;
 
-  QString customOverwrite = m_Profile->setting("custom_overwrites", e.title()).toString();
+  QString customOverwrite = m_profile->setting("custom_overwrites", e.title()).toString();
   if (!customOverwrite.isEmpty()) {
     modIndex = ui->newFilesModBox->findText(customOverwrite);
   }
@@ -102,7 +104,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->newFilesModCheckBox->setChecked(modIndex != -1);
   ui->newFilesModBox->setCurrentIndex(modIndex);
 
-  const bool forcedLibraries = m_Profile->forcedLibrariesEnabled(e.title());
+  const bool forcedLibraries = m_profile->forcedLibrariesEnabled(e.title());
   ui->forceLoadCheckBox->setChecked(forcedLibraries);
   ui->forceLoadButton->setEnabled(forcedLibraries);
 
@@ -125,6 +127,10 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->forceLoadCheckBox->setEnabled(true);
 }
 
+
+
+
+
 void EditExecutablesDialog::resetInput()
 {
   ui->binaryEdit->setText("");
@@ -136,7 +142,7 @@ void EditExecutablesDialog::resetInput()
   ui->useAppIconCheckBox->setChecked(false);
   ui->newFilesModCheckBox->setChecked(false);
   ui->forceLoadCheckBox->setChecked(false);
-  m_CurrentItem = nullptr;
+  m_currentItem = nullptr;
 }
 
 ExecutablesList EditExecutablesDialog::getExecutablesList() const
@@ -144,9 +150,9 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
   ExecutablesList newList;
   for (int i = 0; i < ui->executablesListBox->count(); ++i) {
     const auto& title = ui->executablesListBox->item(i)->text();
-    auto itor = m_ExecutablesList.find(title);
+    auto itor = m_executablesList.find(title);
 
-    if (itor == m_ExecutablesList.end()) {
+    if (itor == m_executablesList.end()) {
       qWarning().nospace()
         << "getExecutablesList(): executable '" << title << "' not found";
 
@@ -163,7 +169,7 @@ void EditExecutablesDialog::refreshExecutablesWidget()
 {
   ui->executablesListBox->clear();
 
-  for(const auto& exe : m_ExecutablesList) {
+  for(const auto& exe : m_executablesList) {
     QListWidgetItem *newItem = new QListWidgetItem(exe.title());
 
     if (!exe.isCustom()) {
@@ -209,7 +215,7 @@ void EditExecutablesDialog::updateButtonStates()
       enabled = false;
   }
 
-  ui->addButton->setEnabled(enabled);
+  //ui->addButton->setEnabled(enabled);
 }
 
 
@@ -219,7 +225,7 @@ void EditExecutablesDialog::saveExecutable()
   if (ui->useAppIconCheckBox->isChecked())
     flags |= Executable::UseApplicationIcon;
 
-  m_ExecutablesList.setExecutable(Executable()
+  m_executablesList.setExecutable(Executable()
     .title(ui->titleEdit->text())
     .binaryInfo(QDir::fromNativeSeparators(ui->binaryEdit->text()))
     .arguments(ui->argumentsEdit->text())
@@ -228,16 +234,16 @@ void EditExecutablesDialog::saveExecutable()
     .flags(flags));
 
   if (ui->newFilesModCheckBox->isChecked()) {
-    m_Profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
+    m_profile->storeSetting("custom_overwrites", ui->titleEdit->text(),
                             ui->newFilesModBox->currentText());
   }
   else {
-	  m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+	  m_profile->removeSetting("custom_overwrites", ui->titleEdit->text());
   }
 
-  m_Profile->removeForcedLibraries(ui->titleEdit->text());
-  m_Profile->storeForcedLibraries(ui->titleEdit->text(), m_ForcedLibraries);
-  m_Profile->setForcedLibrariesEnabled(ui->titleEdit->text(), ui->forceLoadCheckBox->isChecked());
+  m_profile->removeForcedLibraries(ui->titleEdit->text());
+  m_profile->storeForcedLibraries(ui->titleEdit->text(), m_forcedLibraries);
+  m_profile->setForcedLibrariesEnabled(ui->titleEdit->text(), ui->forceLoadCheckBox->isChecked());
 }
 
 
@@ -252,10 +258,10 @@ void EditExecutablesDialog::delayedRefresh()
 
 void EditExecutablesDialog::on_forceLoadButton_clicked()
 {
-  ForcedLoadDialog dialog(m_GamePlugin, this);
-  dialog.setValues(m_ForcedLibraries);
+  ForcedLoadDialog dialog(m_gamePlugin, this);
+  dialog.setValues(m_forcedLibraries);
   if (dialog.exec() == QDialog::Accepted) {
-    m_ForcedLibraries = dialog.values();
+    m_forcedLibraries = dialog.values();
   }
 }
 
@@ -344,9 +350,9 @@ void EditExecutablesDialog::on_removeButton_clicked()
 {
   if (QMessageBox::question(this, tr("Confirm"), tr("Really remove \"%1\" from executables?").arg(ui->titleEdit->text()),
                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    m_Profile->removeSetting("custom_overwrites", ui->titleEdit->text());
-    m_Profile->removeForcedLibraries(ui->titleEdit->text());
-    m_ExecutablesList.remove(ui->titleEdit->text());
+    m_profile->removeSetting("custom_overwrites", ui->titleEdit->text());
+    m_profile->removeForcedLibraries(ui->titleEdit->text());
+    m_executablesList.remove(ui->titleEdit->text());
   }
 
   resetInput();
@@ -355,7 +361,7 @@ void EditExecutablesDialog::on_removeButton_clicked()
 
 void EditExecutablesDialog::on_titleEdit_textChanged(const QString &arg1)
 {
-  QPushButton *addButton = findChild<QPushButton*>("addButton");
+  /*QPushButton *addButton = findChild<QPushButton*>("addButton");
   QPushButton *removeButton = findChild<QPushButton*>("removeButton");
 
   QListWidget *executablesWidget = findChild<QListWidget*>("executablesListBox");
@@ -371,17 +377,17 @@ void EditExecutablesDialog::on_titleEdit_textChanged(const QString &arg1)
     // existing item. is it a custom one?
     addButton->setText(tr("Modify"));
     removeButton->setEnabled(true);
-  }
+  }*/
 }
 
 
 bool EditExecutablesDialog::executableChanged()
 {
-  if (m_CurrentItem != nullptr) {
-    const auto& title = m_CurrentItem->text();
-    auto itor = m_ExecutablesList.find(title);
+  if (m_currentItem != nullptr) {
+    const auto& title = m_currentItem->text();
+    auto itor = m_executablesList.find(title);
 
-    if (itor == m_ExecutablesList.end()) {
+    if (itor == m_executablesList.end()) {
       qWarning().nospace()
         << "executableChanged(): title '" << title << "' not found";
 
@@ -390,12 +396,12 @@ bool EditExecutablesDialog::executableChanged()
 
     const Executable& selectedExecutable = *itor;
 
-    QString storedCustomOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.title()).toString();
+    QString storedCustomOverwrite = m_profile->setting("custom_overwrites", selectedExecutable.title()).toString();
 
     bool forcedLibrariesDirty = false;
-    auto forcedLibaries = m_Profile->determineForcedLibraries(selectedExecutable.title());
+    auto forcedLibaries = m_profile->determineForcedLibraries(selectedExecutable.title());
     forcedLibrariesDirty |= !std::equal(forcedLibaries.begin(), forcedLibaries.end(),
-                                        m_ForcedLibraries.begin(), m_ForcedLibraries.end(),
+                                        m_forcedLibraries.begin(), m_forcedLibraries.end(),
                                         [](const ExecutableForcedLoadSetting &lhs, const ExecutableForcedLoadSetting &rhs)
                                         {
                                           return lhs.enabled() == rhs.enabled() &&
@@ -403,7 +409,7 @@ bool EditExecutablesDialog::executableChanged()
                                                  lhs.library() == rhs.library() &&
                                                  lhs.process() == rhs.process();
                                         });
-    forcedLibrariesDirty |= m_Profile->setting("forced_libraries", ui->titleEdit->text() + "/enabled", false).toBool() !=
+    forcedLibrariesDirty |= m_profile->setting("forced_libraries", ui->titleEdit->text() + "/enabled", false).toBool() !=
                             ui->forceLoadCheckBox->isChecked();
 
     return selectedExecutable.title() != ui->titleEdit->text()
@@ -439,9 +445,9 @@ void EditExecutablesDialog::on_executablesListBox_itemSelectionChanged()
   }
 
   const auto& title = item->text();
-  auto itor = m_ExecutablesList.find(title);
+  auto itor = m_executablesList.find(title);
 
-  if (itor == m_ExecutablesList.end()) {
+  if (itor == m_executablesList.end()) {
     qWarning().nospace() << "selection: executable '" << title << "' not found";
     return;
   }
