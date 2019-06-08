@@ -145,19 +145,28 @@ void EditExecutablesDialog::updateUI(const Executable* e)
 void EditExecutablesDialog::clearEdits()
 {
   ui->title->clear();
+  ui->title->setEnabled(false);
   ui->binary->clear();
+  ui->binary->setEnabled(false);
+  ui->browseBinary->setEnabled(false);
   ui->workingDirectory->clear();
+  ui->workingDirectory->setEnabled(false);
+  ui->browseWorkingDirectory->setEnabled(false);
   ui->arguments->clear();
+  ui->arguments->setEnabled(false);
+  ui->overwriteSteamAppID->setEnabled(false);
   ui->overwriteSteamAppID->setChecked(false);
   ui->steamAppID->setEnabled(false);
   ui->steamAppID->clear();
+  ui->createFilesInMod->setEnabled(false);
   ui->createFilesInMod->setChecked(false);
   ui->mods->setEnabled(false);
   ui->mods->setCurrentIndex(-1);
+  ui->forceLoadLibraries->setEnabled(false);
   ui->forceLoadLibraries->setChecked(false);
   ui->configureLibraries->setEnabled(false);
+  ui->useApplicationIcon->setEnabled(false);
   ui->useApplicationIcon->setChecked(false);
-
   ui->pluginProvidedLabel->setVisible(false);
 }
 
@@ -252,6 +261,17 @@ void EditExecutablesDialog::save()
   } else {
     e->steamAppID("");
   }
+
+  if (ui->useApplicationIcon->isChecked()) {
+    e->flags(e->flags() | Executable::UseApplicationIcon);
+  } else {
+    e->flags(e->flags() & (~Executable::UseApplicationIcon));
+  }
+}
+
+void EditExecutablesDialog::on_list_itemSelectionChanged()
+{
+  updateUI(selectedExe());
 }
 
 void EditExecutablesDialog::on_title_textChanged(const QString& s)
@@ -299,6 +319,20 @@ void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
 
   ui->configureLibraries->setEnabled(ui->forceLoadLibraries->isChecked());
   save();
+}
+
+void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
+{
+  QString dirName = FileDialogMemory::getExistingDirectory(
+    "editExecutableDirectory", this, tr("Select a directory"),
+    ui->workingDirectory->text());
+
+  if (dirName.isNull()) {
+    // canceled
+    return;
+  }
+
+  ui->workingDirectory->setText(dirName);
 }
 
 void EditExecutablesDialog::on_configureLibraries_clicked()
@@ -483,19 +517,6 @@ void EditExecutablesDialog::on_browseBinary_clicked()
   }
 }
 
-void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
-{
-  QString dirName = FileDialogMemory::getExistingDirectory("editExecutableDirectory", this,
-                                                           tr("Select a directory"));
-
-  if (dirName.isNull()) {
-    // canceled
-    return;
-  }
-
-  ui->workingDirectory->setText(dirName);
-}
-
 void EditExecutablesDialog::on_remove_clicked()
 {
   if (QMessageBox::question(this, tr("Confirm"), tr("Really remove \"%1\" from executables?").arg(ui->title->text()),
@@ -560,11 +581,6 @@ bool EditExecutablesDialog::executableChanged()
   }*/
 
   return false;
-}
-
-void EditExecutablesDialog::on_list_itemSelectionChanged()
-{
-  updateUI(selectedExe());
 }
 
 void EditExecutablesDialog::on_buttons_accepted()
