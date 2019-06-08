@@ -49,26 +49,13 @@ EditExecutablesDialog::EditExecutablesDialog(
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
-  for (const auto& e : m_executablesList) {
-    // custom overwrites
-    QString customOverwrite = m_profile->setting("custom_overwrites", e.title()).toString();
-    if (!customOverwrite.isEmpty()) {
-      m_customOverwrites[e.title()] = customOverwrite;
-    }
-
-    // forced libraries
-    if (m_profile->forcedLibrariesEnabled(e.title())) {
-      m_forcedLibraries[e.title()] = m_profile->determineForcedLibraries(e.title());
-    }
-  }
-
+  m_customOverwrites.load(profile, m_executablesList);
+  m_forcedLibraries.load(profile, m_executablesList);
 
   fillExecutableList();
   ui->mods->addItems(modList.allMods());
 
-
   // some widgets need to do more than just save() and have their own handler
-
   connect(ui->binary, &QLineEdit::textChanged, [&]{ save(); });
   connect(ui->workingDirectory, &QLineEdit::textChanged, [&]{ save(); });
   connect(ui->arguments, &QLineEdit::textChanged, [&]{ save(); });
@@ -190,13 +177,12 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   {
     int modIndex = -1;
 
-    auto itor = m_customOverwrites.find(e.title());
-    if (itor != m_customOverwrites.end()) {
-      modIndex = ui->mods->findText(itor->second);
+    if (const auto mod=m_customOverwrites.find(e.title())) {
+      modIndex = ui->mods->findText(*mod);
 
       if (modIndex == -1) {
         qWarning().nospace()
-          << "executable '" << e.title() << "' uses mod '" << itor->second << "' "
+          << "executable '" << e.title() << "' uses mod '" << *mod << "' "
           << "as a custom overwrite, but that mod doesn't exist";
       }
     }
@@ -207,8 +193,7 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   }
 
   {
-    auto itor = m_forcedLibraries.find(e.title());
-    const auto hasForcedLibraries = (itor != m_forcedLibraries.end());
+    const auto hasForcedLibraries = m_forcedLibraries.find(e.title()).has_value();
 
     ui->forceLoadLibraries->setChecked(hasForcedLibraries);
     ui->configureLibraries->setEnabled(hasForcedLibraries);
@@ -247,15 +232,19 @@ void EditExecutablesDialog::save()
 
   // title may have changed, start with the stuff using it
   if (ui->createFilesInMod->isChecked()) {
-    m_customOverwrites[e->title()] = ui->mods->currentText();
+    m_customOverwrites.set(e->title(), ui->mods->currentText());
   } else {
-    auto itor = m_customOverwrites.find(e->title());
-    if (itor != m_customOverwrites.end()) {
-      m_customOverwrites.erase(itor);
-    }
+    m_customOverwrites.remove(e->title());
   }
 
   // forced libraries are saved in on_configureLibraries_clicked()
+
+  // now rename both the custom overwrites and forced libraries if the title
+  // is being changed
+  if (e->title() != ui->title->text()) {
+    m_customOverwrites.rename(e->title(), ui->title->text());
+    m_forcedLibraries.rename(e->title(), ui->title->text());
+  }
 
   e->title(ui->title->text());
   e->binaryInfo(ui->binary->text());
@@ -316,21 +305,8 @@ void EditExecutablesDialog::on_remove_clicked()
   delete item;
 
 
-  // removing custom overwrite
-  {
-    auto itor = m_customOverwrites.find(exe->title());
-    if (itor != m_customOverwrites.end()) {
-      m_customOverwrites.erase(itor);
-    }
-  }
-
-  // removing forced libraries
-  {
-    auto itor = m_forcedLibraries.find(exe->title());
-    if (itor != m_forcedLibraries.end()) {
-      m_forcedLibraries.erase(itor);
-    }
-  }
+  m_customOverwrites.remove(exe->title());
+  m_forcedLibraries.remove(exe->title());
 
   // removing from main list, must be done last because it invalidates the
   // exe pointer
@@ -354,8 +330,8 @@ void EditExecutablesDialog::on_title_textChanged(const QString& s)
     return;
   }
 
-  // must save first because it relies on the text in the list to find the
-  // executable to modify
+  // must save before modifying the item in the list widget because saving
+  // relies on the item's text being the same as an item in m_executablesList
   save();
 
   // once the executable is saved, the list item must be changed to match the
@@ -443,13 +419,12 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
 
   ForcedLoadDialog dialog(m_gamePlugin, this);
 
-  auto itor = m_forcedLibraries.find(e->title());
-  if (itor != m_forcedLibraries.end()) {
-    dialog.setValues(itor->second);
+  if (auto list=m_forcedLibraries.find(e->title())) {
+    dialog.setValues(*list);
   }
 
   if (dialog.exec() == QDialog::Accepted) {
-    m_forcedLibraries[e->title()] = dialog.values();
+    m_forcedLibraries.set(e->title(), dialog.values());
     save();
   }
 }
@@ -725,3 +700,97 @@ void EditExecutablesDialog::on_buttons_rejected()
     ui->forceLoadCheckBox->setChecked(forcedLibraries);
   }
 }*/
+
+
+void CustomOverwrites::load(Profile* p, const ExecutablesList& exes)
+{
+  for (const auto& e : exes) {
+    const auto s = p->setting("custom_overwrites", e.title()).toString();
+
+    if (!s.isEmpty()) {
+      m_map[e.title()] = s;
+    }
+  }
+}
+
+std::optional<QString> CustomOverwrites::find(const QString& title) const
+{
+  auto itor = m_map.find(title);
+  if (itor == m_map.end()) {
+    return {};
+  }
+
+  return itor->second;
+}
+
+void CustomOverwrites::set(const QString& title, const QString& mod)
+{
+  m_map[title] = mod;
+}
+
+void CustomOverwrites::rename(const QString& oldTitle, const QString& newTitle)
+{
+  auto itor = m_map.find(oldTitle);
+  if (itor == m_map.end()) {
+    return;
+  }
+
+  // copy to new title, erase old
+  m_map[newTitle] = itor->second;
+  m_map.erase(itor);
+}
+
+void CustomOverwrites::remove(const QString& title)
+{
+  auto itor = m_map.find(title);
+
+  if (itor != m_map.end()) {
+    m_map.erase(itor);
+  }
+}
+
+
+void ForcedLibraries::load(Profile* p, const ExecutablesList& exes)
+{
+  for (const auto& e : exes) {
+    if (p->forcedLibrariesEnabled(e.title())) {
+      m_map[e.title()] = p->determineForcedLibraries(e.title());
+    }
+  }
+}
+
+std::optional<ForcedLibraries::list_type> ForcedLibraries::find(const QString& title) const
+{
+  auto itor = m_map.find(title);
+  if (itor == m_map.end()) {
+    return {};
+  }
+
+  return itor->second;
+}
+
+void ForcedLibraries::set(const QString& title, const list_type& mod)
+{
+  m_map[title] = mod;
+}
+
+void ForcedLibraries::rename(const QString& oldTitle, const QString& newTitle)
+{
+  auto itor = m_map.find(oldTitle);
+  if (itor == m_map.end()) {
+    return;
+  }
+
+  // copy to new title, erase old
+  m_map[newTitle] = itor->second;
+  m_map.erase(itor);
+}
+
+void ForcedLibraries::remove(const QString& title)
+{
+  auto itor = m_map.find(title);
+
+  if (itor != m_map.end()) {
+    m_map.erase(itor);
+  }
+}

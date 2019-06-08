@@ -27,12 +27,51 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "iplugingame.h"
 #include <QTimer>
 #include <QAbstractButton>
+#include <optional>
 
 namespace Ui {
     class EditExecutablesDialog;
 }
 
 class ModList;
+
+
+/** helper class to manage custom overwrites within the edit executables
+ *  dialog
+ **/
+class CustomOverwrites
+{
+public:
+  void load(Profile* p, const ExecutablesList& exes);
+  std::optional<QString> find(const QString& title) const;
+
+  void set(const QString& title, const QString& mod);
+  void rename(const QString& oldTitle, const QString& newTitle);
+  void remove(const QString& title);
+
+private:
+  std::map<QString, QString> m_map;
+};
+
+
+/** helper class to manage forced libraries within the edit executables dialog
+ **/
+class ForcedLibraries
+{
+public:
+  using list_type = QList<MOBase::ExecutableForcedLoadSetting>;
+
+  void load(Profile* p, const ExecutablesList& exes);
+  std::optional<list_type> find(const QString& title) const;
+
+  void set(const QString& title, const list_type& list);
+  void rename(const QString& oldTitle, const QString& newTitle);
+  void remove(const QString& title);
+
+private:
+  std::map<QString, list_type> m_map;
+};
+
 
 /**
  * @brief Dialog to manage the list of executables
@@ -81,8 +120,8 @@ private slots:
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
   ExecutablesList m_executablesList;
-  std::map<QString, QString> m_customOverwrites;
-  std::map<QString, QList<MOBase::ExecutableForcedLoadSetting>> m_forcedLibraries;
+  CustomOverwrites m_customOverwrites;
+  ForcedLibraries m_forcedLibraries;
   Profile *m_profile;
   const MOBase::IPluginGame *m_gamePlugin;
   bool m_settingUI;
