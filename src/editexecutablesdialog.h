@@ -98,6 +98,7 @@ private:
   void clearEdits();
   void setEdits(const Executable& e);
   void save();
+  void setJarBinary(const QString& binaryName);
 
   void resetInput();
   bool executableChanged();

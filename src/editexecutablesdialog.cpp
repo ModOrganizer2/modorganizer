@@ -22,10 +22,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "filedialogmemory.h"
 #include "stackdata.h"
 #include "modlist.h"
+#include "forcedloaddialog.h"
+#include "organizercore.h"
+
 #include <QMessageBox>
 #include <Shellapi.h>
 #include <utility.h>
-#include "forcedloaddialog.h"
 #include <algorithm>
 
 using namespace MOBase;
@@ -321,6 +323,30 @@ void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
   save();
 }
 
+void EditExecutablesDialog::on_browseBinary_clicked()
+{
+  const QString binaryName = FileDialogMemory::getOpenFileName(
+    "editExecutableBinary", this, tr("Select a binary"), ui->binary->text(),
+    tr("Executable (%1)").arg("*.exe *.bat *.jar"));
+
+  if (binaryName.isNull()) {
+    // canceled
+    return;
+  }
+
+  if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
+    setJarBinary(binaryName);
+  } else {
+    ui->binary->setText(QDir::toNativeSeparators(binaryName));
+  }
+
+  if (ui->title->text().isEmpty()) {
+    ui->title->setText(QFileInfo(binaryName).baseName());
+  }
+
+  save();
+}
+
 void EditExecutablesDialog::on_browseWorkingDirectory_clicked()
 {
   QString dirName = FileDialogMemory::getExistingDirectory(
@@ -355,6 +381,30 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
     save();
   }
 }
+
+void EditExecutablesDialog::setJarBinary(const QString& binaryName)
+{
+  auto java = OrganizerCore::findJavaInstallation(binaryName);
+
+  if (java.isEmpty()) {
+    QMessageBox::information(
+      this, tr("Java (32-bit) required"),
+      tr("MO requires 32-bit java to run this application. If you already "
+         "have it installed, select javaw.exe from that installation as "
+         "the binary."));
+  }
+
+  // only save once
+
+  m_settingUI = true;
+  ui->binary->setText(java);
+  ui->workingDirectory->setText(QDir::toNativeSeparators(QFileInfo(binaryName).absolutePath()));
+  ui->arguments->setText("-jar \"" + QDir::toNativeSeparators(binaryName) + "\"");
+  m_settingUI = false;
+
+  save();
+}
+
 
 
 
@@ -463,58 +513,6 @@ void EditExecutablesDialog::on_add_clicked()
 
   resetInput();
   //refreshExecutablesWidget();
-}
-
-void EditExecutablesDialog::on_browseBinary_clicked()
-{
-  QString binaryName = FileDialogMemory::getOpenFileName(
-      "editExecutableBinary", this, tr("Select a binary"), QString(),
-      tr("Executable (%1)").arg("*.exe *.bat *.jar"));
-
-  if (binaryName.isNull()) {
-    // canceled
-    return;
-  }
-
-  if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
-    QString binaryPath;
-    { // try to find java automatically
-      std::wstring binaryNameW = ToWString(binaryName);
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(binaryNameW.c_str(), nullptr, buffer)
-          > reinterpret_cast<HINSTANCE>(32)) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(binaryNameW.c_str(), &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", binaryNameW.c_str(), ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = ToQString(buffer);
-        }
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      QMessageBox::information(this, tr("Java (32-bit) required"),
-                               tr("MO requires 32-bit java to run this application. If you already have it installed, select javaw.exe "
-                                  "from that installation as the binary."));
-    } else {
-      ui->binary->setText(binaryPath);
-    }
-
-    ui->workingDirectory->setText(QDir::toNativeSeparators(QFileInfo(binaryName).absolutePath()));
-    ui->arguments->setText("-jar \"" + QDir::toNativeSeparators(binaryName) + "\"");
-  } else {
-    ui->binary->setText(QDir::toNativeSeparators(binaryName));
-  }
-
-  if (ui->title->text().isEmpty()) {
-    ui->title->setText(QFileInfo(binaryName).baseName());
-  }
 }
 
 void EditExecutablesDialog::on_remove_clicked()

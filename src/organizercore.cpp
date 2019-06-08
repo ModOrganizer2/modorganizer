@@ -1182,6 +1182,34 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
+QString OrganizerCore::findJavaInstallation(const QString& jarFile)
+{
+  if (!jarFile.isEmpty()) {
+    // try to find java automatically based on the given jar file
+    std::wstring jarFileW = jarFile.toStdWString();
+
+    WCHAR buffer[MAX_PATH];
+    if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+      DWORD binaryType = 0UL;
+      if (!::GetBinaryTypeW(buffer, &binaryType)) {
+        qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+      } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
+        return QString::fromWCharArray(buffer);
+      }
+    }
+  }
+
+  // second attempt: look to the registry
+  QSettings reg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+  if (reg.contains("CurrentVersion")) {
+    QString currentVersion = reg.value("CurrentVersion").toString();
+    return reg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+  }
+
+  // not found
+  return {};
+}
+
 bool OrganizerCore::getFileExecutionContext(
   QWidget* parent, const QFileInfo &targetInfo,
   QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
@@ -1199,44 +1227,22 @@ bool OrganizerCore::getFileExecutionContext(
     type = FileExecutionTypes::Executable;
     return true;
   } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = targetInfo.absoluteFilePath().toStdWString();
-    QString binaryPath;
+    auto java = findJavaInstallation(targetInfo.absoluteFilePath());
 
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = QString::fromWCharArray(buffer);
-        }
-      }
+    if (java.isEmpty()) {
+      java = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"),
+        QString(), QObject::tr("Binary") + " (*.exe)");
     }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(
-        parent, QObject::tr("Select binary"), QString(), QObject::tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
+
+    if (java.isEmpty()) {
       return false;
     }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
 
+    binaryInfo = QFileInfo(java);
+    arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     type = FileExecutionTypes::Executable;
+
     return true;
   } else {
     type = FileExecutionTypes::Other;
