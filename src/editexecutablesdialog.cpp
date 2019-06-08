@@ -298,6 +298,56 @@ void EditExecutablesDialog::on_add_clicked()
   item->setSelected(true);
 }
 
+void EditExecutablesDialog::on_remove_clicked()
+{
+  auto* item = selectedItem();
+  if (!item) {
+    qWarning("trying to remove entry but nothing is selected");
+    return;
+  }
+
+  auto* exe = selectedExe();
+  if (!exe) {
+    qWarning("trying to remove entry but nothing is selected");
+    return;
+  }
+
+  const int currentRow = ui->list->row(item);
+  delete item;
+
+
+  // removing custom overwrite
+  {
+    auto itor = m_customOverwrites.find(exe->title());
+    if (itor != m_customOverwrites.end()) {
+      m_customOverwrites.erase(itor);
+    }
+  }
+
+  // removing forced libraries
+  {
+    auto itor = m_forcedLibraries.find(exe->title());
+    if (itor != m_forcedLibraries.end()) {
+      m_forcedLibraries.erase(itor);
+    }
+  }
+
+  // removing from main list, must be done last because it invalidates the
+  // exe pointer
+  m_executablesList.remove(exe->title());
+
+
+  // reselecting the same row as before, or the last one
+  if (currentRow >= ui->list->count()) {
+    // that was the last item, select the new list item, if any
+    if (ui->list->count() > 0) {
+      ui->list->item(ui->list->count() - 1)->setSelected(true);
+    }
+  } else {
+    ui->list->item(currentRow)->setSelected(true);
+  }
+}
+
 void EditExecutablesDialog::on_title_textChanged(const QString& s)
 {
   if (m_settingUI) {
@@ -530,17 +580,6 @@ void EditExecutablesDialog::delayedRefresh()
 
 
 
-void EditExecutablesDialog::on_remove_clicked()
-{
-  if (QMessageBox::question(this, tr("Confirm"), tr("Really remove \"%1\" from executables?").arg(ui->title->text()),
-                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-    m_profile->removeSetting("custom_overwrites", ui->title->text());
-    m_profile->removeForcedLibraries(ui->title->text());
-    m_executablesList.remove(ui->title->text());
-  }
-
-  //refreshExecutablesWidget();
-}
 
 
 bool EditExecutablesDialog::executableChanged()
