@@ -67,6 +67,8 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 {
   qDebug("setting up configured executables");
 
+  m_Executables.clear();
+
   int numCustomExecutables = settings.beginReadArray("customExecutables");
   for (int i = 0; i < numCustomExecutables; ++i) {
     settings.setArrayIndex(i);

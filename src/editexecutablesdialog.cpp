@@ -47,16 +47,28 @@ EditExecutablesDialog::EditExecutablesDialog(
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
-  refreshExecutablesWidget();
+  for (const auto& e : m_executablesList) {
+    QString customOverwrite = m_profile->setting("custom_overwrites", e.title()).toString();
+
+    if (!customOverwrite.isEmpty()) {
+      m_customOverwrites[e.title()] = customOverwrite;
+    }
+  }
+
+
+  fillExecutableList();
   ui->mods->addItems(modList.allMods());
 
   m_forcedLibraries = m_profile->determineForcedLibraries(ui->title->text());
 
-  // title textbox also has to change the list item, will call save manually
-  connect(ui->title, &QLineEdit::textChanged, [&](auto&& s){ onTitleChanged(s); });
+  // some widgets need to do more than just save() and have their own handler
+
   connect(ui->binary, &QLineEdit::textChanged, [&]{ save(); });
   connect(ui->workingDirectory, &QLineEdit::textChanged, [&]{ save(); });
   connect(ui->arguments, &QLineEdit::textChanged, [&]{ save(); });
+  connect(ui->steamAppID, &QLineEdit::textChanged, [&]{ save(); });
+  connect(ui->mods, &QComboBox::currentTextChanged, [&]{ save(); });
+  connect(ui->useApplicationIcon, &QCheckBox::toggled, [&]{ save(); });
 
   updateUI(nullptr);
 }
@@ -91,8 +103,27 @@ Executable* EditExecutablesDialog::selectedExe()
   return &*itor;
 }
 
+void EditExecutablesDialog::fillExecutableList()
+{
+  ui->list->clear();
+
+  for(const auto& exe : m_executablesList) {
+    QListWidgetItem *newItem = new QListWidgetItem(exe.title());
+
+    if (!exe.isCustom()) {
+      auto f = newItem->font();
+      f.setItalic(true);
+
+      newItem->setFont(f);
+    }
+
+    ui->list->addItem(newItem);
+  }
+}
+
 void EditExecutablesDialog::updateUI(const Executable* e)
 {
+  // the ui is currently being set, ignore changes
   m_settingUI = true;
 
   if (e) {
@@ -103,6 +134,7 @@ void EditExecutablesDialog::updateUI(const Executable* e)
     ui->remove->setEnabled(false);
   }
 
+  // any changes from now on are from the user
   m_settingUI = false;
 }
 
@@ -113,10 +145,13 @@ void EditExecutablesDialog::clearEdits()
   ui->workingDirectory->clear();
   ui->arguments->clear();
   ui->overwriteSteamAppID->setChecked(false);
+  ui->steamAppID->setEnabled(false);
   ui->steamAppID->clear();
   ui->createFilesInMod->setChecked(false);
+  ui->mods->setEnabled(false);
   ui->mods->setCurrentIndex(-1);
   ui->forceLoadLibraries->setChecked(false);
+  ui->configureLibraries->setEnabled(false);
   ui->useApplicationIcon->setChecked(false);
 
   ui->pluginProvidedLabel->setVisible(false);
@@ -129,17 +164,25 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->workingDirectory->setText(QDir::toNativeSeparators(e.workingDirectory()));
   ui->arguments->setText(e.arguments());
   ui->overwriteSteamAppID->setChecked(!e.steamAppID().isEmpty());
+  ui->steamAppID->setEnabled(!e.steamAppID().isEmpty());
   ui->steamAppID->setText(e.steamAppID());
   ui->useApplicationIcon->setChecked(e.usesOwnIcon());
 
   int modIndex = -1;
 
-  QString customOverwrite = m_profile->setting("custom_overwrites", e.title()).toString();
-  if (!customOverwrite.isEmpty()) {
-    modIndex = ui->mods->findText(customOverwrite);
+  auto itor = m_customOverwrites.find(e.title());
+  if (itor != m_customOverwrites.end()) {
+    modIndex = ui->mods->findText(itor->second);
+
+    if (modIndex == -1) {
+      qWarning().nospace()
+        << "executable '" << e.title() << "' uses mod '" << itor->second << "' "
+        << "as a custom overwrite, but that mod doesn't exist";
+    }
   }
 
   ui->createFilesInMod->setChecked(modIndex != -1);
+  ui->mods->setEnabled(modIndex != -1);
   ui->mods->setCurrentIndex(modIndex);
 
   const bool forcedLibraries = m_profile->forcedLibrariesEnabled(e.title());
@@ -156,19 +199,16 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   ui->browseWorkingDirectory->setEnabled(e.isCustom());
   ui->arguments->setEnabled(e.isCustom());
   ui->overwriteSteamAppID->setEnabled(e.isCustom());
-  ui->steamAppID->setEnabled(e.isCustom());
   ui->useApplicationIcon->setEnabled(e.isCustom());
 
   // always enabled
   ui->createFilesInMod->setEnabled(true);
-  ui->mods->setEnabled(true);
   ui->forceLoadLibraries->setEnabled(true);
 }
 
 void EditExecutablesDialog::save()
 {
   if (m_settingUI) {
-    // the ui is currently being set, ignore changes
     return;
   }
 
@@ -179,6 +219,16 @@ void EditExecutablesDialog::save()
   }
 
   qDebug().nospace() << "saving '" << e->title() << "'";
+
+  // title may have changed, start with the stuff using it
+  if (ui->createFilesInMod->isChecked()) {
+    m_customOverwrites[e->title()] = ui->mods->currentText();
+  } else {
+    auto itor = m_customOverwrites.find(e->title());
+    if (itor != m_customOverwrites.end()) {
+      m_customOverwrites.erase(itor);
+    }
+  }
 
   e->title(ui->title->text());
   e->binaryInfo(ui->binary->text());
@@ -192,10 +242,9 @@ void EditExecutablesDialog::save()
   }
 }
 
-void EditExecutablesDialog::onTitleChanged(const QString& s)
+void EditExecutablesDialog::on_title_textChanged(const QString& s)
 {
   if (m_settingUI) {
-    // the ui is currently being set, ignore changes
     return;
   }
 
@@ -209,6 +258,38 @@ void EditExecutablesDialog::onTitleChanged(const QString& s)
     i->setText(s);
   }
 }
+
+void EditExecutablesDialog::on_overwriteSteamAppID_toggled(bool checked)
+{
+  if (m_settingUI) {
+    return;
+  }
+
+  ui->steamAppID->setEnabled(checked);
+  save();
+}
+
+void EditExecutablesDialog::on_createFilesInMod_toggled(bool checked)
+{
+  if (m_settingUI) {
+    return;
+  }
+
+  ui->mods->setEnabled(checked);
+  save();
+}
+
+void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
+{
+  if (m_settingUI) {
+    return;
+  }
+
+  ui->configureLibraries->setEnabled(ui->forceLoadLibraries->isChecked());
+  save();
+}
+
+
 
 
 void EditExecutablesDialog::resetInput()
@@ -244,27 +325,6 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
   }
 
   return newList;
-}
-
-void EditExecutablesDialog::refreshExecutablesWidget()
-{
-  ui->list->clear();
-
-  for(const auto& exe : m_executablesList) {
-    QListWidgetItem *newItem = new QListWidgetItem(exe.title());
-
-    if (!exe.isCustom()) {
-      auto f = newItem->font();
-      f.setItalic(true);
-
-      newItem->setFont(f);
-    }
-
-    ui->list->addItem(newItem);
-  }
-
-  //ui->addButton->setEnabled(false);
-  //ui->removeButton->setEnabled(false);
 }
 
 
@@ -336,11 +396,6 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
   }
 }
 
-void EditExecutablesDialog::on_forceLoadLibraries_toggled(bool checked)
-{
-  ui->configureLibraries->setEnabled(ui->forceLoadLibraries->isChecked());
-}
-
 
 void EditExecutablesDialog::on_add_clicked()
 {
@@ -349,7 +404,7 @@ void EditExecutablesDialog::on_add_clicked()
   }
 
   resetInput();
-  refreshExecutablesWidget();
+  //refreshExecutablesWidget();
 }
 
 void EditExecutablesDialog::on_browseBinary_clicked()
@@ -427,7 +482,7 @@ void EditExecutablesDialog::on_remove_clicked()
   }
 
   resetInput();
-  refreshExecutablesWidget();
+  //refreshExecutablesWidget();
 }
 
 
@@ -486,11 +541,6 @@ void EditExecutablesDialog::on_list_itemSelectionChanged()
   updateUI(selectedExe());
 }
 
-void EditExecutablesDialog::on_overwriteSteamAppID_toggled(bool checked)
-{
-  ui->steamAppID->setEnabled(checked);
-}
-
 void EditExecutablesDialog::on_buttons_accepted()
 {
   if (executableChanged()) {
@@ -503,7 +553,7 @@ void EditExecutablesDialog::on_buttons_accepted()
       saveExecutable();
       // the executable list returned to callers is generated from the user data in the widgets,
       // NOT the list we just saved
-      refreshExecutablesWidget();
+      //refreshExecutablesWidget();
     }
   }
 
@@ -582,12 +632,3 @@ void EditExecutablesDialog::on_buttons_rejected()
     ui->forceLoadCheckBox->setChecked(forcedLibraries);
   }
 }*/
-
-void EditExecutablesDialog::on_createFilesInMod_toggled(bool checked)
-{
-  ui->mods->setEnabled(checked);
-}
-
-void EditExecutablesDialog::on_useApplicationIcon_toggled(bool checked)
-{
-}
