@@ -490,6 +490,10 @@ void MainWindow::resetActionIcons()
   // sort of button, which typically happens on the toolbar) _and_ to the
   // QAction itself, which is used in the menu bar
 
+  // clearing the notification, will be set below if the stylesheet has set
+  // anything for it
+  m_originalNotificationIcon = {};
+
   // QActions created from the .ui file are children of the main window
   for (QAction* action : findChildren<QAction*>()) {
     // creating a dummy button
@@ -519,7 +523,16 @@ void MainWindow::resetActionIcons()
 
     // the action's icon is used by the menu bar
     action->setIcon(icon);
+
+    if (action == ui->actionNotifications) {
+      // if the stylesheet has set a notification icon, remember it here so it
+      // can be used in updateProblemsButton()
+      m_originalNotificationIcon = icon;
+    }
   }
+
+  // update the button for the potentially new icon
+  updateProblemsButton();
 }
 
 
@@ -831,20 +844,52 @@ void MainWindow::scheduleUpdateButton()
 
 void MainWindow::updateProblemsButton()
 {
-  size_t numProblems = checkForProblems();
+  // if the current stylesheet doesn't provide an icon, this is used instead
+  const char* DefaultIconName = ":/MO/gui/warning";
+
+  const std::size_t numProblems = checkForProblems();
+
+  // starting icon
+  const QIcon original = m_originalNotificationIcon.isNull() ?
+    QIcon(DefaultIconName) : m_originalNotificationIcon;
+
+  // final icon
+  QIcon final;
+
   if (numProblems > 0) {
     ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
-    QPixmap mergedIcon = QPixmap(":/MO/gui/warning").scaled(64, 64);
+    // will contain the original icon, plus a notification count; this also
+    // makes sure the pixmap is exactly 64x64 by 1) requesting the icon that's
+    // as close to 64x64 as possible, then scaling it up if it's too small
+    QPixmap merged = original.pixmap(64, 64).scaled(64, 64);
+
     {
-      QPainter painter(&mergedIcon);
-      std::string badgeName = std::string(":/MO/gui/badge_") + (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
+      QPainter painter(&merged);
+
+      const std::string badgeName =
+        std::string(":/MO/gui/badge_") +
+        (numProblems < 10 ? std::to_string(static_cast<long long>(numProblems)) : "more");
+
       painter.drawPixmap(32, 32, 32, 32, QPixmap(badgeName.c_str()));
     }
-    ui->actionNotifications->setIcon(QIcon(mergedIcon));
+
+    final = QIcon(merged);
   } else {
     ui->actionNotifications->setToolTip(tr("There are no notifications"));
-    ui->actionNotifications->setIcon(QIcon(":/MO/gui/warning"));
+
+    // no change
+    final = original;
+  }
+
+  // setting the icon on the action (shown on the menu)
+  ui->actionNotifications->setIcon(final);
+
+  // setting the icon on the toolbar button
+  if (auto* actionWidget=ui->toolBar->widgetForAction(ui->actionNotifications)) {
+    if (auto* button=dynamic_cast<QAbstractButton*>(actionWidget)) {
+      button->setIcon(final);
+    }
   }
 }
 
