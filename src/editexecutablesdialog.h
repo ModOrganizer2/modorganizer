@@ -135,7 +135,8 @@ private:
   void setEdits(const Executable& e);
   void save();
   void setJarBinary(const QString& binaryName);
-  QString newExecutableTitle();
+  std::optional<QString> makeNonConflictingTitle(const QString& prefix);
+  bool isTitleConflicting(const QString& s);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

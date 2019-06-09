@@ -275,16 +275,22 @@ void EditExecutablesDialog::save()
     m_customOverwrites.remove(e->title());
   }
 
+  QString newTitle = ui->title->text();
+  if (isTitleConflicting(newTitle)) {
+    // don't save conflicting titles
+    newTitle = e->title();
+  }
+
   // forced libraries are saved in on_configureLibraries_clicked()
 
   // now rename both the custom overwrites and forced libraries if the title
   // is being changed
-  if (e->title() != ui->title->text()) {
-    m_customOverwrites.rename(e->title(), ui->title->text());
-    m_forcedLibraries.rename(e->title(), ui->title->text());
+  if (e->title() != newTitle) {
+    m_customOverwrites.rename(e->title(), newTitle);
+    m_forcedLibraries.rename(e->title(), newTitle);
+    e->title(newTitle);
   }
 
-  e->title(ui->title->text());
   e->binaryInfo(ui->binary->text());
   e->workingDirectory(ui->workingDirectory->text());
   e->arguments(ui->arguments->text());
@@ -309,13 +315,13 @@ void EditExecutablesDialog::on_list_itemSelectionChanged()
 
 void EditExecutablesDialog::on_add_clicked()
 {
-  auto title = newExecutableTitle();
-  if (title.isNull()) {
+  auto title = makeNonConflictingTitle(tr("New Executable"));
+  if (!title) {
     return;
   }
 
   auto e = Executable()
-    .title(title)
+    .title(*title)
     .flags(Executable::CustomExecutable);
 
   m_executablesList.setExecutable(e);
@@ -362,9 +368,28 @@ void EditExecutablesDialog::on_remove_clicked()
   }
 }
 
+bool EditExecutablesDialog::isTitleConflicting(const QString& s)
+{
+  for (const auto& exe : m_executablesList) {
+    if (exe.title() == s) {
+      if (&exe != selectedExe()) {
+        // found an executable that's not the current one with the same title
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 void EditExecutablesDialog::on_title_textChanged(const QString& s)
 {
   if (m_settingUI) {
+    return;
+  }
+
+  // don't allow changing the title to something that already exists
+  if (isTitleConflicting(s)) {
     return;
   }
 
@@ -427,7 +452,12 @@ void EditExecutablesDialog::on_browseBinary_clicked()
   }
 
   if (ui->title->text().isEmpty()) {
-    ui->title->setText(QFileInfo(binaryName).baseName());
+    const auto prefix = QFileInfo(binaryName).baseName();
+    const auto newTitle = makeNonConflictingTitle(prefix);
+
+    if (newTitle) {
+      ui->title->setText(*newTitle);
+    }
   }
 
   save();
@@ -500,10 +530,9 @@ void EditExecutablesDialog::setJarBinary(const QString& binaryName)
   save();
 }
 
-QString EditExecutablesDialog::newExecutableTitle()
+std::optional<QString> EditExecutablesDialog::makeNonConflictingTitle(
+  const QString& prefix)
 {
-  const auto prefix = tr("New Executable");
-
   QString title = prefix;
 
   for (int i=1; i<100; ++i) {
@@ -514,8 +543,10 @@ QString EditExecutablesDialog::newExecutableTitle()
     title = prefix + QString(" (%1)").arg(i);
   }
 
-  qCritical().nospace() << "ran out of new executable titles";
-  return QString::null;
+  qCritical().nospace()
+    << "ran out of executable titles for prefix '" << prefix << "'";
+
+  return {};
 }
 
 
