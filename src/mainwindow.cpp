@@ -849,7 +849,7 @@ void MainWindow::updateProblemsButton()
 
   const std::size_t numProblems = checkForProblems();
 
-  // starting icon
+  // original icon without a count painted on it
   const QIcon original = m_originalNotificationIcon.isNull() ?
     QIcon(DefaultIconName) : m_originalNotificationIcon;
 
@@ -860,8 +860,8 @@ void MainWindow::updateProblemsButton()
     ui->actionNotifications->setToolTip(tr("There are notifications to read"));
 
     // will contain the original icon, plus a notification count; this also
-    // makes sure the pixmap is exactly 64x64 by 1) requesting the icon that's
-    // as close to 64x64 as possible, then scaling it up if it's too small
+    // makes sure the pixmap is exactly 64x64 by requesting the icon that's
+    // as close to 64x64 as possible, and then scaling it up if it's too small
     QPixmap merged = original.pixmap(64, 64).scaled(64, 64);
 
     {
