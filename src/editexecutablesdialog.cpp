@@ -63,10 +63,48 @@ EditExecutablesDialog::EditExecutablesDialog(
   connect(ui->mods, &QComboBox::currentTextChanged, [&]{ save(); });
   connect(ui->useApplicationIcon, &QCheckBox::toggled, [&]{ save(); });
 
-  updateUI(nullptr);
+  // select the first one in the list, if any
+  if (ui->list->count() > 0) {
+    ui->list->item(0)->setSelected(true);
+  } else {
+    updateUI(nullptr);
+  }
 }
 
 EditExecutablesDialog::~EditExecutablesDialog() = default;
+
+ExecutablesList EditExecutablesDialog::getExecutablesList() const
+{
+  ExecutablesList newList;
+
+  // make sure the executables are in the same order as in the list
+  for (int i = 0; i < ui->list->count(); ++i) {
+    const auto& title = ui->list->item(i)->text();
+
+    auto itor = m_executablesList.find(title);
+
+    if (itor == m_executablesList.end()) {
+      qWarning().nospace()
+        << "getExecutablesList(): executable '" << title << "' not found";
+
+      continue;
+    }
+
+    newList.setExecutable(*itor);
+  }
+
+  return newList;
+}
+
+const CustomOverwrites& EditExecutablesDialog::getCustomOverwrites() const
+{
+  return m_customOverwrites;
+}
+
+const ForcedLibraries& EditExecutablesDialog::getForcedLibraries() const
+{
+  return m_forcedLibraries;
+}
 
 QListWidgetItem* EditExecutablesDialog::selectedItem()
 {
@@ -429,6 +467,16 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
   }
 }
 
+void EditExecutablesDialog::on_buttons_accepted()
+{
+  accept();
+}
+
+void EditExecutablesDialog::on_buttons_rejected()
+{
+  reject();
+}
+
 void EditExecutablesDialog::setJarBinary(const QString& binaryName)
 {
   auto java = OrganizerCore::findJavaInstallation(binaryName);
@@ -469,237 +517,6 @@ QString EditExecutablesDialog::newExecutableTitle()
   qCritical().nospace() << "ran out of new executable titles";
   return QString::null;
 }
-
-
-
-ExecutablesList EditExecutablesDialog::getExecutablesList() const
-{
-  ExecutablesList newList;
-  for (int i = 0; i < ui->list->count(); ++i) {
-    const auto& title = ui->list->item(i)->text();
-    auto itor = m_executablesList.find(title);
-
-    if (itor == m_executablesList.end()) {
-      qWarning().nospace()
-        << "getExecutablesList(): executable '" << title << "' not found";
-
-      continue;
-    }
-
-    newList.setExecutable(*itor);
-  }
-
-  return newList;
-}
-
-
-void EditExecutablesDialog::updateButtonStates()
-{
-  bool enabled = true;
-
-  QString filePath(ui->binary->text());
-  QFileInfo fileInfo(filePath);
-  if (!fileInfo.exists())
-    enabled = false;
-  if (!fileInfo.isFile())
-    enabled = false;
-
-  QString dirPath(ui->workingDirectory->text());
-  if (!dirPath.isEmpty()) {
-    QDir dirInfo(dirPath);
-    if (!dirInfo.exists())
-      enabled = false;
-  }
-
-  //ui->addButton->setEnabled(enabled);
-}
-
-
-void EditExecutablesDialog::saveExecutable()
-{
-  Executable::Flags flags = Executable::CustomExecutable;
-  if (ui->useApplicationIcon->isChecked())
-    flags |= Executable::UseApplicationIcon;
-
-  m_executablesList.setExecutable(Executable()
-    .title(ui->title->text())
-    .binaryInfo(QDir::fromNativeSeparators(ui->binary->text()))
-    .arguments(ui->arguments->text())
-    .steamAppID(ui->overwriteSteamAppID->isChecked() ? ui->steamAppID->text() : "")
-    .workingDirectory(QDir::fromNativeSeparators(ui->workingDirectory->text()))
-    .flags(flags));
-
-  if (ui->createFilesInMod->isChecked()) {
-    m_profile->storeSetting("custom_overwrites", ui->title->text(),
-                            ui->mods->currentText());
-  }
-  else {
-	  m_profile->removeSetting("custom_overwrites", ui->title->text());
-  }
-
-  //m_profile->removeForcedLibraries(ui->title->text());
-  //m_profile->storeForcedLibraries(ui->title->text(), m_forcedLibraries);
-  //m_profile->setForcedLibrariesEnabled(ui->title->text(), ui->forceLoadLibraries->isChecked());
-}
-
-
-void EditExecutablesDialog::delayedRefresh()
-{
-  /*QModelIndex index = ui->executablesListBox->currentIndex();
-  resetInput();
-  refreshExecutablesWidget();
-  on_executablesListBox_clicked(index);*/
-}
-
-
-
-
-
-
-
-bool EditExecutablesDialog::executableChanged()
-{
-  /*if (m_currentItem != nullptr) {
-    const auto& title = m_currentItem->text();
-    auto itor = m_executablesList.find(title);
-
-    if (itor == m_executablesList.end()) {
-      qWarning().nospace()
-        << "executableChanged(): title '" << title << "' not found";
-
-      return false;
-    }
-
-    const Executable& selectedExecutable = *itor;
-
-    QString storedCustomOverwrite = m_profile->setting("custom_overwrites", selectedExecutable.title()).toString();
-
-    bool forcedLibrariesDirty = false;
-    auto forcedLibaries = m_profile->determineForcedLibraries(selectedExecutable.title());
-    forcedLibrariesDirty |= !std::equal(forcedLibaries.begin(), forcedLibaries.end(),
-                                        m_forcedLibraries.begin(), m_forcedLibraries.end(),
-                                        [](const ExecutableForcedLoadSetting &lhs, const ExecutableForcedLoadSetting &rhs)
-                                        {
-                                          return lhs.enabled() == rhs.enabled() &&
-                                                 lhs.forced() == rhs.forced() &&
-                                                 lhs.library() == rhs.library() &&
-                                                 lhs.process() == rhs.process();
-                                        });
-    forcedLibrariesDirty |= m_profile->setting("forced_libraries", ui->title->text() + "/enabled", false).toBool() !=
-                            ui->forceLoadLibraries->isChecked();
-
-    return selectedExecutable.title() != ui->title->text()
-        || selectedExecutable.arguments() != ui->arguments->text()
-        || selectedExecutable.steamAppID() != ui->steamAppID->text()
-        || !storedCustomOverwrite.isEmpty() != ui->createFilesInMod->isChecked()
-        || !storedCustomOverwrite.isEmpty() && (storedCustomOverwrite != ui->mods->currentText())
-        || selectedExecutable.workingDirectory() != QDir::fromNativeSeparators(ui->workingDirectory->text())
-        || selectedExecutable.binaryInfo().absoluteFilePath() != QDir::fromNativeSeparators(ui->binary->text())
-        || selectedExecutable.usesOwnIcon() != ui->useApplicationIcon->isChecked()
-        || forcedLibrariesDirty
-      ;
-  } else {
-    QFileInfo fileInfo(ui->binary->text());
-    return !ui->binary->text().isEmpty()
-        && !ui->title->text().isEmpty()
-        && fileInfo.exists()
-        && fileInfo.isFile();
-  }*/
-
-  return false;
-}
-
-void EditExecutablesDialog::on_buttons_accepted()
-{
-  if (executableChanged()) {
-    QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
-        tr("You made changes to the current executable, do you want to save them?"),
-        QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-    if (res == QMessageBox::Cancel) {
-      return;
-    } else if (res == QMessageBox::Yes) {
-      saveExecutable();
-      // the executable list returned to callers is generated from the user data in the widgets,
-      // NOT the list we just saved
-      //refreshExecutablesWidget();
-    }
-  }
-
-  accept();
-}
-
-void EditExecutablesDialog::on_buttons_rejected()
-{
-  reject();
-}
-
-/*void EditExecutablesDialog::on_executablesListBox_clicked(const QModelIndex &current)
-{
-  if (current.isValid()) {
-
-    if (executableChanged()) {
-      QMessageBox::StandardButton res = QMessageBox::question(this, tr("Save Changes?"),
-                                                              tr("You made changes to the current executable, do you want to save them?"),
-                                                              QMessageBox::Yes | QMessageBox::No);
-      if (res == QMessageBox::Yes) {
-        saveExecutable();
-
-        //This is necessary if we're adding a new item, but it doesn't look very nice.
-        //Ideally we'd end up with the correct row displayed
-        ui->executablesListBox->selectionModel()->clearSelection();
-        ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
-        QTimer::singleShot(50, this, SLOT(delayedRefresh()));
-        return;
-      }
-    }
-
-    ui->executablesListBox->selectionModel()->clearSelection();
-    ui->executablesListBox->selectionModel()->select(current, QItemSelectionModel::SelectCurrent);
-
-    m_CurrentItem = ui->executablesListBox->item(current.row());
-
-    const auto& title = m_CurrentItem->text();
-    auto itor = m_ExecutablesList.find(title);
-
-    if (itor == m_ExecutablesList.end()) {
-      qWarning().nospace() << "selection: executable '" << title << "' not found";
-      return;
-    }
-
-    const Executable& selectedExecutable = *itor;
-
-    ui->titleEdit->setText(selectedExecutable.title());
-    ui->binaryEdit->setText(QDir::toNativeSeparators(selectedExecutable.binaryInfo().absoluteFilePath()));
-    ui->argumentsEdit->setText(selectedExecutable.arguments());
-    ui->workingDirEdit->setText(QDir::toNativeSeparators(selectedExecutable.workingDirectory()));
-    ui->removeButton->setEnabled(selectedExecutable.isCustom());
-    ui->overwriteAppIDBox->setChecked(!selectedExecutable.steamAppID().isEmpty());
-    if (!selectedExecutable.steamAppID().isEmpty()) {
-      ui->appIDOverwriteEdit->setText(selectedExecutable.steamAppID());
-    } else {
-      ui->appIDOverwriteEdit->clear();
-    }
-    ui->useAppIconCheckBox->setChecked(selectedExecutable.usesOwnIcon());
-
-    int index = -1;
-
-    QString customOverwrite = m_Profile->setting("custom_overwrites", selectedExecutable.title()).toString();
-    if (!customOverwrite.isEmpty()) {
-      index = ui->newFilesModBox->findText(customOverwrite);
-      qDebug("find %s -> %d", qUtf8Printable(customOverwrite), index);
-    }
-
-    ui->newFilesModCheckBox->setChecked(index != -1);
-    if (index != -1) {
-      ui->newFilesModBox->setCurrentIndex(index);
-    }
-
-    m_ForcedLibraries = m_Profile->determineForcedLibraries(ui->titleEdit->text());
-    bool forcedLibraries = m_Profile->forcedLibrariesEnabled(ui->titleEdit->text());
-    ui->forceLoadButton->setEnabled(forcedLibraries);
-    ui->forceLoadCheckBox->setChecked(forcedLibraries);
-  }
-}*/
 
 
 void CustomOverwrites::load(Profile* p, const ExecutablesList& exes)

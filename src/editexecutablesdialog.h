@@ -91,11 +91,9 @@ public:
 
   ~EditExecutablesDialog();
 
-  /**
-   * @brief retrieve the updated list of executables
-   * @return updated list of executables
-   **/
   ExecutablesList getExecutablesList() const;
+  const CustomOverwrites& getCustomOverwrites() const;
+  const ForcedLibraries& getForcedLibraries() const;
 
 private slots:
   void on_list_itemSelectionChanged();
@@ -114,8 +112,6 @@ private slots:
 
   void on_buttons_accepted();
   void on_buttons_rejected();
-
-  void delayedRefresh();
 
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
@@ -140,11 +136,6 @@ private:
   void save();
   void setJarBinary(const QString& binaryName);
   QString newExecutableTitle();
-
-  bool executableChanged();
-  void updateButtonStates();
-  void saveExecutable();
-
 };
 
 #endif // EDITEXECUTABLESDIALOG_H
