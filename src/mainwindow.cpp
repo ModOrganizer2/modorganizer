@@ -401,8 +401,6 @@ MainWindow::MainWindow(QSettings &initSettings
 
   connect(&m_IntegratedBrowser, SIGNAL(requestDownload(QUrl,QNetworkReply*)), &m_OrganizerCore, SLOT(requestDownload(QUrl,QNetworkReply*)));
 
-  connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
-
   m_CheckBSATimer.setSingleShot(true);
   connect(&m_CheckBSATimer, SIGNAL(timeout()), this, SLOT(checkBSAList()));
 
@@ -465,17 +463,63 @@ MainWindow::MainWindow(QSettings &initSettings
 
   refreshExecutablesList();
   updatePinnedExecutables();
-
-  for (QAction *action : ui->toolBar->actions()) {
-    // set the name of the widget to the name of the action to allow styling
-    QWidget *actionWidget = ui->toolBar->widgetForAction(action);
-    actionWidget->setObjectName(action->objectName());
-    actionWidget->style()->unpolish(actionWidget);
-    actionWidget->style()->polish(actionWidget);
-  }
-
+  resetActionIcons();
   updatePluginCount();
   updateModCount();
+}
+
+void MainWindow::resetActionIcons()
+{
+  // this is a bit of a hack
+  //
+  // the .qss files have historically set qproperty-icon by id and these ids
+  // correspond to the QActions created in the .ui file
+  //
+  // the problem is that QActions do not support having their icon property
+  // set from a .qss because they're not widgets (they don't inherit from
+  // QWidget), and styling only works on widget
+  //
+  // a QAction _does_ have an associated icon, it just can't be set from a .qss
+  // file
+  //
+  // so here, a dummy QToolButton widget is created for each QAction and is
+  // given the same name as the action, which makes it pick up the icon
+  // specified in the .qss file
+  //
+  // that icon is then given to the widget used by the QAction (if it's some
+  // sort of button, which typically happens on the toolbar) _and_ to the
+  // QAction itself, which is used in the menu bar
+
+  // QActions created from the .ui file are children of the main window
+  for (QAction* action : findChildren<QAction*>()) {
+    // creating a dummy button
+    auto dummy = std::make_unique<QToolButton>();
+
+    // reusing the action name
+    dummy->setObjectName(action->objectName());
+
+    // styling the button, this has to be done manually because the button is
+    // never added anywhere
+    style()->polish(dummy.get());
+
+    // the button's icon may be null if it wasn't specified in the .qss file,
+    // which can happen if the stylesheet just doesn't override icons, or for
+    // other actions like the pinned custom executables
+    const auto icon = dummy->icon();
+    if (icon.isNull()) {
+      continue;
+    }
+
+    // button associated with the action on the toolbar
+    QWidget* actionWidget = ui->toolBar->widgetForAction(action);
+
+    if (auto* actionButton=dynamic_cast<QAbstractButton*>(actionWidget)) {
+      actionButton->setIcon(icon);
+    }
+
+    // the action's icon is used by the menu bar
+    action->setIcon(icon);
+  }
 }
 
 
@@ -565,8 +609,7 @@ void MainWindow::allowListResize()
 
 void MainWindow::updateStyle(const QString&)
 {
-  // no effect?
-  ensurePolished();
+  resetActionIcons();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -1049,6 +1092,16 @@ void MainWindow::showEvent(QShowEvent *event)
   QMainWindow::showEvent(event);
 
   if (!m_WasVisible) {
+    // this needs to be connected here instead of in the constructor because the
+    // actual changing of the stylesheet is done by MOApplication, which
+    // connects its signal in runApplication() (in main.cpp), and that happens
+    // _after_ the MainWindow is constructed, but _before_ it is shown
+    //
+    // by connecting the event here, changing the style setting will first be
+    // handled by MOApplication, and then in updateStyle(), at which point the
+    // stylesheet has already been set correctly
+    connect(this, SIGNAL(styleChanged(QString)), this, SLOT(updateStyle(QString)));
+
     // only the first time the window becomes visible
     m_Tutorial.registerControl();
 

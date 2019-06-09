@@ -631,6 +631,7 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
+  void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
 
