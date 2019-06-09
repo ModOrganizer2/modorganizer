@@ -359,6 +359,9 @@ Right now the only case I know of where this needs to be overwritten is for the 
                <property name="text">
                 <string>(*) Profile Specific</string>
                </property>
+               <property name="margin">
+                <number>5</number>
+               </property>
               </widget>
              </item>
             </layout>

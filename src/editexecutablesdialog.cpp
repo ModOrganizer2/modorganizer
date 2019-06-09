@@ -485,12 +485,15 @@ void EditExecutablesDialog::on_browseBinary_clicked()
     return;
   }
 
+  // setting binary
   if (binaryName.endsWith(".jar", Qt::CaseInsensitive)) {
+    // special case for jar files, uses the system java installation
     setJarBinary(binaryName);
   } else {
     ui->binary->setText(QDir::toNativeSeparators(binaryName));
   }
 
+  // setting title if currently empty
   if (ui->title->text().isEmpty()) {
     const auto prefix = QFileInfo(binaryName).baseName();
     const auto newTitle = makeNonConflictingTitle(prefix);
