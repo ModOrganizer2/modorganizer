@@ -2482,13 +2482,8 @@ bool MainWindow::modifyExecutablesDialog()
 
   try {
     const auto oldExecutables = *m_OrganizerCore.executablesList();
-    auto* profile = m_OrganizerCore.currentProfile();
 
-    EditExecutablesDialog dialog(oldExecutables,
-                                 *m_OrganizerCore.modList(),
-                                 profile,
-                                 m_OrganizerCore.managedGame(),
-                                 this);
+    EditExecutablesDialog dialog(m_OrganizerCore, this);
 
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
@@ -2497,34 +2492,7 @@ bool MainWindow::modifyExecutablesDialog()
       dialog.restoreGeometry(settings.value(key).toByteArray());
     }
 
-    if (dialog.exec() == QDialog::Accepted) {
-      const auto newExecutables = dialog.getExecutablesList();
-
-      // remove all the custom overwrites and forced libraries
-      for (const auto& e : oldExecutables) {
-        profile->removeSetting("custom_overwrites", e.title());
-        profile->removeForcedLibraries(e.title());
-      }
-
-      // set the new custom overwrites and forced libraries
-      for (const auto& e : newExecutables) {
-        if (auto modName=dialog.getCustomOverwrites().find(e.title())) {
-          profile->storeSetting("custom_overwrites", e.title(), *modName);
-        }
-
-        if (auto list=dialog.getForcedLibraries().find(e.title())) {
-          if (!list->empty()) {
-            profile->setForcedLibrariesEnabled(e.title(), true);
-            profile->storeForcedLibraries(e.title(), *list);
-          }
-        }
-      }
-
-      // set the new executables list
-      m_OrganizerCore.setExecutablesList(newExecutables);
-
-      result = true;
-    }
+    result = (dialog.exec() == QDialog::Accepted);
 
     settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();

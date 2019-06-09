@@ -34,7 +34,7 @@ namespace Ui {
 }
 
 class ModList;
-
+class OrganizerCore;
 
 /** helper class to manage custom overwrites within the edit executables
  *  dialog
@@ -42,15 +42,22 @@ class ModList;
 class CustomOverwrites
 {
 public:
-  void load(Profile* p, const ExecutablesList& exes);
-  std::optional<QString> find(const QString& title) const;
+  struct Info
+  {
+    bool enabled;
+    QString modName;
+  };
 
-  void set(const QString& title, const QString& mod);
+  void load(Profile* p, const ExecutablesList& exes);
+  std::optional<Info> find(const QString& title) const;
+
+  void setEnabled(const QString& title, bool b);
+  void setMod(const QString& title, const QString& mod);
   void rename(const QString& oldTitle, const QString& newTitle);
   void remove(const QString& title);
 
 private:
-  std::map<QString, QString> m_map;
+  std::map<QString, Info> m_map;
 };
 
 
@@ -61,15 +68,22 @@ class ForcedLibraries
 public:
   using list_type = QList<MOBase::ExecutableForcedLoadSetting>;
 
-  void load(Profile* p, const ExecutablesList& exes);
-  std::optional<list_type> find(const QString& title) const;
+  struct Info
+  {
+    bool enabled;
+    list_type list;
+  };
 
-  void set(const QString& title, const list_type& list);
+  void load(Profile* p, const ExecutablesList& exes);
+  std::optional<Info> find(const QString& title) const;
+
+  void setEnabled(const QString& title, bool b);
+  void setList(const QString& title, const list_type& list);
   void rename(const QString& oldTitle, const QString& newTitle);
   void remove(const QString& title);
 
 private:
-  std::map<QString, list_type> m_map;
+  std::map<QString, Info> m_map;
 };
 
 
@@ -85,9 +99,7 @@ public:
    * @param executablesList current list of executables
    * @param parent parent widget
    **/
-  explicit EditExecutablesDialog(
-    const ExecutablesList &executablesList, const ModList &modList,
-    Profile *profile, const MOBase::IPluginGame *game, QWidget *parent = 0);
+  explicit EditExecutablesDialog(OrganizerCore& oc, QWidget* parent=nullptr);
 
   ~EditExecutablesDialog();
 
@@ -115,14 +127,12 @@ private slots:
 
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
+  OrganizerCore& m_organizerCore;
+  const ExecutablesList m_originalExecutables;
   ExecutablesList m_executablesList;
   CustomOverwrites m_customOverwrites;
   ForcedLibraries m_forcedLibraries;
-  Profile *m_profile;
-  const MOBase::IPluginGame *m_gamePlugin;
   bool m_settingUI;
-
-  QListWidgetItem *m_currentItem;
 
 
   QListWidgetItem* selectedItem();
@@ -137,6 +147,7 @@ private:
   void setJarBinary(const QString& binaryName);
   std::optional<QString> makeNonConflictingTitle(const QString& prefix);
   bool isTitleConflicting(const QString& s);
+  void commitChanges();
 };
 
 #endif // EDITEXECUTABLESDIALOG_H
