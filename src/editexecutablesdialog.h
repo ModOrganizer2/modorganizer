@@ -142,11 +142,13 @@ private:
 
   void fillExecutableList();
   QListWidgetItem* createListItem(const Executable& exe);
-  void updateUI(const Executable* e);
+  void updateUI(const QListWidgetItem* item, const Executable* e);
   void clearEdits();
   void setEdits(const Executable& e);
+  void setButtons(const QListWidgetItem* item, const Executable* e);
   void save();
-  void moveSelection(int by);
+  bool canMove(const QListWidgetItem* item, int direction);
+  void move(QListWidgetItem* item, int direction);
   void setJarBinary(const QString& binaryName);
   std::optional<QString> makeNonConflictingTitle(const QString& prefix);
   bool isTitleConflicting(const QString& s);

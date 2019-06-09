@@ -84,6 +84,9 @@
               <property name="toolTip">
                <string>Add an executable</string>
               </property>
+              <property name="statusTip">
+               <string>Add an executable</string>
+              </property>
               <property name="whatsThis">
                <string>Add an executable</string>
               </property>
@@ -101,6 +104,9 @@
               <property name="toolTip">
                <string>Remove the selected executable</string>
               </property>
+              <property name="statusTip">
+               <string>Remove the selected executable</string>
+              </property>
               <property name="whatsThis">
                <string>Remove the selected executable</string>
               </property>
@@ -115,6 +121,15 @@
             </item>
             <item>
              <widget class="QToolButton" name="up">
+              <property name="toolTip">
+               <string>Move the executable up in the list</string>
+              </property>
+              <property name="statusTip">
+               <string>Move the executable up in the list</string>
+              </property>
+              <property name="whatsThis">
+               <string>Move the executable up in the list</string>
+              </property>
               <property name="text">
                <string>Move the executable up in the list</string>
               </property>
@@ -126,6 +141,15 @@
             </item>
             <item>
              <widget class="QToolButton" name="down">
+              <property name="toolTip">
+               <string>Move the executable down in the list</string>
+              </property>
+              <property name="statusTip">
+               <string>Move the executable down in the list</string>
+              </property>
+              <property name="whatsThis">
+               <string>Move the executable down in the list</string>
+              </property>
               <property name="text">
                <string>Move the executable down in the list</string>
               </property>

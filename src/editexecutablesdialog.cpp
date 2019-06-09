@@ -64,7 +64,7 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
   if (ui->list->count() > 0) {
     ui->list->item(0)->setSelected(true);
   } else {
-    updateUI(nullptr);
+    updateUI(nullptr, nullptr);
   }
 }
 
@@ -184,21 +184,38 @@ QListWidgetItem* EditExecutablesDialog::createListItem(const Executable& exe)
   return newItem;
 }
 
-void EditExecutablesDialog::updateUI(const Executable* e)
+void EditExecutablesDialog::updateUI(
+  const QListWidgetItem* item, const Executable* e)
 {
   // the ui is currently being set, ignore changes
   m_settingUI = true;
 
   if (e) {
     setEdits(*e);
-    ui->remove->setEnabled(e->isCustom());
   } else {
     clearEdits();
-    ui->remove->setEnabled(false);
   }
+
+  setButtons(item, e);
 
   // any changes from now on are from the user
   m_settingUI = false;
+}
+
+void EditExecutablesDialog::setButtons(
+  const QListWidgetItem* item, const Executable* e)
+{
+  // add is always enabled
+
+  if (item) {
+    ui->remove->setEnabled(e->isCustom());
+    ui->up->setEnabled(canMove(item, -1));
+    ui->down->setEnabled(canMove(item, +1));
+  } else {
+    ui->remove->setEnabled(false);
+    ui->up->setEnabled(false);
+    ui->down->setEnabled(false);
+  }
 }
 
 void EditExecutablesDialog::clearEdits()
@@ -348,47 +365,41 @@ void EditExecutablesDialog::save()
   }
 }
 
-void EditExecutablesDialog::moveSelection(int by)
+bool EditExecutablesDialog::canMove(const QListWidgetItem* item, int direction)
 {
-  auto* item = selectedItem();
   if (!item) {
+    return false;
+  }
+
+  if (direction < 0) {
+    // moving up
+    return (ui->list->row(item) > 0);
+
+  } else if (direction > 0) {
+    // moving down
+    return (ui->list->row(item) < (ui->list->count() - 1));
+  }
+
+  return false;
+}
+
+void EditExecutablesDialog::move(QListWidgetItem* item, int direction)
+{
+  if (!canMove(item, direction)) {
     return;
   }
 
-  // moving down the list
-  while (by > 0) {
-    const auto row = ui->list->row(item);
+  const auto row = ui->list->row(item);
 
-    if (row >= (ui->list->count() - 1)) {
-      break;
-    }
-
-    ui->list->takeItem(row);
-    ui->list->insertItem(row + 1, item);
-    item->setSelected(true);
-
-    --by;
-  }
-
-  // moving up the list
-  while (by < 0) {
-    const auto row = ui->list->row(item);
-
-    if (row <= 0) {
-      break;
-    }
-
-    ui->list->takeItem(row);
-    ui->list->insertItem(row - 1, item);
-    item->setSelected(true);
-
-    ++by;
-  }
+  // removing item
+  ui->list->takeItem(row);
+  ui->list->insertItem(row + (direction > 0 ? 1 : -1), item);
+  item->setSelected(true);
 }
 
 void EditExecutablesDialog::on_list_itemSelectionChanged()
 {
-  updateUI(selectedExe());
+  updateUI(selectedItem(), selectedExe());
 }
 
 void EditExecutablesDialog::on_add_clicked()
@@ -448,12 +459,22 @@ void EditExecutablesDialog::on_remove_clicked()
 
 void EditExecutablesDialog::on_up_clicked()
 {
-  moveSelection(-1);
+  auto* item = selectedItem();
+  if (!item) {
+    return;
+  }
+
+  move(item, -1);
 }
 
 void EditExecutablesDialog::on_down_clicked()
 {
-  moveSelection(+1);
+  auto* item = selectedItem();
+  if (!item) {
+    return;
+  }
+
+  move(item, +1);
 }
 
 bool EditExecutablesDialog::isTitleConflicting(const QString& s)
