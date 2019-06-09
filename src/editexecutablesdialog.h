@@ -112,6 +112,8 @@ private slots:
 
   void on_add_clicked();
   void on_remove_clicked();
+  void on_up_clicked();
+  void on_down_clicked();
 
   void on_title_textChanged(const QString& s);
   void on_overwriteSteamAppID_toggled(bool checked);
@@ -144,6 +146,7 @@ private:
   void clearEdits();
   void setEdits(const Executable& e);
   void save();
+  void moveSelection(int by);
   void setJarBinary(const QString& binaryName);
   std::optional<QString> makeNonConflictingTitle(const QString& prefix);
   bool isTitleConflicting(const QString& s);

@@ -348,6 +348,44 @@ void EditExecutablesDialog::save()
   }
 }
 
+void EditExecutablesDialog::moveSelection(int by)
+{
+  auto* item = selectedItem();
+  if (!item) {
+    return;
+  }
+
+  // moving down the list
+  while (by > 0) {
+    const auto row = ui->list->row(item);
+
+    if (row >= (ui->list->count() - 1)) {
+      break;
+    }
+
+    ui->list->takeItem(row);
+    ui->list->insertItem(row + 1, item);
+    item->setSelected(true);
+
+    --by;
+  }
+
+  // moving up the list
+  while (by < 0) {
+    const auto row = ui->list->row(item);
+
+    if (row <= 0) {
+      break;
+    }
+
+    ui->list->takeItem(row);
+    ui->list->insertItem(row - 1, item);
+    item->setSelected(true);
+
+    ++by;
+  }
+}
+
 void EditExecutablesDialog::on_list_itemSelectionChanged()
 {
   updateUI(selectedExe());
@@ -406,6 +444,16 @@ void EditExecutablesDialog::on_remove_clicked()
   } else {
     ui->list->item(currentRow)->setSelected(true);
   }
+}
+
+void EditExecutablesDialog::on_up_clicked()
+{
+  moveSelection(-1);
+}
+
+void EditExecutablesDialog::on_down_clicked()
+{
+  moveSelection(+1);
 }
 
 bool EditExecutablesDialog::isTitleConflicting(const QString& s)

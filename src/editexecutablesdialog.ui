@@ -58,23 +58,14 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QListWidget" name="list">
-            <property name="toolTip">
-             <string>List of configured executables</string>
-            </property>
-            <property name="whatsThis">
-             <string>This is a list of your configured executables. Executables in grey are automatically recognised and can not be modified.</string>
-            </property>
-            <property name="dragDropMode">
-             <enum>QAbstractItemView::InternalMove</enum>
-            </property>
-            <property name="defaultDropAction">
-             <enum>Qt::TargetMoveAction</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Executables</string>
+              </property>
+             </widget>
+            </item>
             <item>
              <spacer name="horizontalSpacer">
               <property name="orientation">
@@ -89,7 +80,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="add">
+             <widget class="QToolButton" name="add">
               <property name="toolTip">
                <string>Add an executable</string>
               </property>
@@ -100,13 +91,13 @@
                <string>Add</string>
               </property>
               <property name="icon">
-               <iconset>
-                <normaloff>:/new/guiresources/resources/list-add.png</normaloff>:/new/guiresources/resources/list-add.png</iconset>
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/add</normaloff>:/MO/gui/add</iconset>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="remove">
+             <widget class="QToolButton" name="remove">
               <property name="toolTip">
                <string>Remove the selected executable</string>
               </property>
@@ -117,25 +108,50 @@
                <string>Remove</string>
               </property>
               <property name="icon">
-               <iconset>
-                <normaloff>:/new/guiresources/resources/list-remove.png</normaloff>:/new/guiresources/resources/list-remove.png</iconset>
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/resources/list-remove.png</normaloff>:/MO/gui/resources/list-remove.png</iconset>
               </property>
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+             <widget class="QToolButton" name="up">
+              <property name="text">
+               <string>Move the executable up in the list</string>
               </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/resources/go-up.png</normaloff>:/MO/gui/resources/go-up.png</iconset>
               </property>
-             </spacer>
+             </widget>
+            </item>
+            <item>
+             <widget class="QToolButton" name="down">
+              <property name="text">
+               <string>Move the executable down in the list</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/resources/go-down.png</normaloff>:/MO/gui/resources/go-down.png</iconset>
+              </property>
+             </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QListWidget" name="list">
+            <property name="toolTip">
+             <string>List of configured executables</string>
+            </property>
+            <property name="whatsThis">
+             <string>This is a list of your configured executables. Executables in grey are automatically recognised and can not be modified.</string>
+            </property>
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::InternalMove</enum>
+            </property>
+            <property name="defaultDropAction">
+             <enum>Qt::TargetMoveAction</enum>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -420,9 +436,9 @@ Right now the only case I know of where this needs to be overwritten is for the 
   <tabstop>steamAppID</tabstop>
   <tabstop>createFilesInMod</tabstop>
   <tabstop>mods</tabstop>
-  <tabstop>add</tabstop>
-  <tabstop>remove</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
