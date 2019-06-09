@@ -312,11 +312,11 @@ bool Executable::usesOwnIcon() const
 
 void Executable::mergeFrom(const Executable& other)
 {
-  // flags on plugin executables that the user is allowed to chnage
+  // flags on plugin executables that the user is allowed to change
   const auto allow = ShowInToolbar;
 
 
-  if (!isCustom() && !other.isCustom()) {
+  if (!other.isCustom()) {
     // this happens when loading plugin executables in addFromPlugin(), replace
     // everything in case the plugin has changed
 
