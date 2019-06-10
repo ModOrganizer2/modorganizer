@@ -37,6 +37,7 @@ struct Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
+class StatusBar;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -75,7 +76,6 @@ class QListWidgetItem;
 class QMenu;
 class QModelIndex;
 class QPoint;
-class QProgressBar;
 class QProgressDialog;
 class QTranslator;
 class QTreeWidgetItem;
@@ -329,6 +329,8 @@ private:
   // the window is closed and the menubar is hidden
   bool m_menuBarVisible;
 
+  std::unique_ptr<StatusBar> m_statusBar;
+
   // last separator on the toolbar, used to add spacer for right-alignment and
   // as an insert point for executables
   QAction* m_linksSeparator;
@@ -338,7 +340,6 @@ private:
   int m_OldProfileIndex;
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
-  QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
   QStringList m_DefaultArchives;

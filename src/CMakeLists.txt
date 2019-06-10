@@ -116,6 +116,7 @@ SET(organizer_SRCS
     forcedloaddialog.cpp
     forcedloaddialogwidget.cpp
 	filterwidget.cpp
+	statusbar.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -213,6 +214,7 @@ SET(organizer_HDRS
     forcedloaddialog.h
     forcedloaddialogwidget.h
 	filterwidget.h
+	statusbar.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -277,6 +279,7 @@ set(application
 	moshortcut
 	selfupdater
 	singleinstance
+	statusbar
 )
 
 set(browser

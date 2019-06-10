@@ -77,6 +77,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include "eventfilter.h"
+#include "statusbar.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -242,13 +243,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
 
-  m_RefreshProgress = new QProgressBar(statusBar());
-  m_RefreshProgress->setTextVisible(true);
-  m_RefreshProgress->setRange(0, 100);
-  m_RefreshProgress->setValue(0);
-  m_RefreshProgress->setVisible(false);
-  statusBar()->addWidget(m_RefreshProgress, 1000);
-  statusBar()->clearMessage();
+  m_statusBar.reset(new StatusBar(statusBar()));
 
   updateProblemsButton();
 
@@ -2534,15 +2529,8 @@ void MainWindow::setESPListSorting(int index)
 
 void MainWindow::refresher_progress(int percent)
 {
-  if (percent == 100) {
-    m_RefreshProgress->setVisible(false);
-    this->setEnabled(true);
-  } else if (!m_RefreshProgress->isVisible()) {
-    this->setEnabled(false);
-    m_RefreshProgress->setVisible(true);
-    m_RefreshProgress->setRange(0, 100);
-    m_RefreshProgress->setValue(percent);
-  }
+  setEnabled(percent == 100);
+  m_statusBar->setProgress(percent);
 }
 
 void MainWindow::directory_refreshed()
