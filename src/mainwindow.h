@@ -398,6 +398,10 @@ private:
 
   MOBase::DelayedFileWriter m_ArchiveListWriter;
 
+  // icon set by the stylesheet, used to remember its original appearance
+  // when painting the count
+  QIcon m_originalNotificationIcon;
+
   enum class ShortcutType {
     Toolbar,
     Desktop,
@@ -631,6 +635,7 @@ private slots:
   void search_activated();
   void searchClear_activated();
 
+  void resetActionIcons();
   void updateModCount();
   void updatePluginCount();
 
