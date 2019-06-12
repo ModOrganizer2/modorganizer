@@ -316,8 +316,6 @@ void EditExecutablesDialog::save()
     return;
   }
 
-  qDebug().nospace() << "saving '" << e->title() << "'";
-
   // title may have changed, start with the stuff using it
 
   // custom overwrites
