@@ -29,7 +29,8 @@ void StatusBar::setProgress(int percent)
 {
   if (percent < 0 || percent >= 100) {
     m_progress->setVisible(false);
-  } else if (!m_progress->isVisible()) {
+  } else {
+    m_bar->showMessage(QObject::tr("Loading..."));
     m_progress->setVisible(true);
     m_progress->setValue(percent);
   }
