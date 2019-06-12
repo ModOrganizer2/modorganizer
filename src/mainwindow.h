@@ -416,8 +416,7 @@ private:
 
 private slots:
 
-  void updateWindowTitle(const QString &accountName, int, bool premium);
-
+  void updateWindowTitle(const APIUserAccount& user);
   void showMessage(const QString &message);
   void showError(const QString &message);
 
@@ -544,7 +543,7 @@ private slots:
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
-  void updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits);
+  void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
   void editCategories();
   void deselectFilters();

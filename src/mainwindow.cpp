@@ -225,7 +225,7 @@ MainWindow::MainWindow(QSettings &initSettings
   QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
   ui->setupUi(this);
-  updateWindowTitle(QString(), 0, false);
+  updateWindowTitle({});
 
   languageChange(m_OrganizerCore.settings().language());
 
@@ -340,13 +340,6 @@ MainWindow::MainWindow(QSettings &initSettings
     ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
   }
 
-  ui->apiRequests->setAutoFillBackground(true);
-  QPalette palette = ui->apiRequests->palette();
-  palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-  palette.setColor(ui->apiRequests->foregroundRole(), Qt::white);
-  ui->apiRequests->setPalette(palette);
-  ui->apiRequests->setVisible(!m_OrganizerCore.settings().hideAPICounter());
-
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
@@ -379,11 +372,24 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
-          this, SLOT(updateWindowTitle(const QString&, int, bool)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
-    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, int, bool, std::tuple<int, int, int, int>)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, std::tuple<int, int, int, int>)), this, SLOT(updateAPICounter(int, std::tuple<int, int, int, int>)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    this,
+    SLOT(updateWindowTitle(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    NexusInterface::instance(&m_PluginContainer),
+    SLOT(setUserAccount(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer),
+    SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)),
+    this,
+    SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -548,17 +554,24 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::updateWindowTitle(const QString &accountName, int, bool premium)
+void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString(3));
 
-  if (!accountName.isEmpty()) {
-    title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
+  if (!user.name().isEmpty()) {
+    const QString premium = (user.type() == APIUserAccountTypes::Premium ? "*" : "");
+    title.append(QString(" (%1%2)").arg(user.name(), premium));
   }
 
   this->setWindowTitle(title);
+}
+
+
+void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
+{
+  m_statusBar->updateAPI(stats, user);
 }
 
 
@@ -5267,8 +5280,7 @@ void MainWindow::on_actionSettings_triggered()
     activateProxy(settings.useProxy());
   }
 
-  ui->apiRequests->setVisible(!settings.hideAPICounter());
-
+  m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
@@ -6063,26 +6075,6 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     qDebug(qUtf8Printable(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID)));
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
-  }
-}
-
-
-void MainWindow::updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits)
-{
-  ui->apiRequests->setText(QString("API: Q: %1 | D: %2 | H: %3").arg(queueCount).arg(std::get<0>(limits)).arg(std::get<2>(limits)));
-  int requestsRemaining = std::get<0>(limits) + std::get<2>(limits);
-  if (requestsRemaining > 300) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-    ui->apiRequests->setPalette(palette);
-  } else if (requestsRemaining < 150) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkRed);
-    ui->apiRequests->setPalette(palette);
-  } else {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkYellow);
-    ui->apiRequests->setPalette(palette);
   }
 }
 

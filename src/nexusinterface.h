@@ -39,6 +39,131 @@ namespace MOBase { class IPluginGame; }
 class NexusInterface;
 class NXMAccessManager;
 
+
+/**
+ * represents user account types on a mod provider website such as nexus
+ */
+enum class APIUserAccountTypes
+{
+  // not logged in
+  None = 0,
+
+  // regular account
+  Regular,
+
+  // premium account
+  Premium
+};
+
+
+/**
+ * current limits imposed on the user account
+ **/
+struct APILimits
+{
+  // maximum number of requests per day
+  int maxDailyRequests = 0;
+
+  // remaining number of requests today
+  int remainingDailyRequests = 0;
+
+  // maximum number of requests per hour
+  int maxHourlyRequests = 0;
+
+  // remaining number of requests this hour
+  int remainingHourlyRequests = 0;
+};
+
+
+/**
+ * API statistics
+ */
+struct APIStats
+{
+  // number of API requests currently queued
+  int requestsQueued = 0;
+};
+
+
+/**
+ * represents a user account on the mod provier website
+ */
+class APIUserAccount
+{
+public:
+  // when the number of remanining requests is under this number, further
+  // requests will be throttled by avoiding non-critical ones
+  static const int ThrottleThreshold = 300;
+
+  APIUserAccount();
+
+  /**
+   * user id
+   */
+  const QString& id() const;
+
+  /**
+   * user name
+   */
+  const QString& name() const;
+
+  /**
+   * account type
+   */
+  APIUserAccountTypes type() const;
+
+  /**
+   * current API limits
+   */
+  const APILimits& limits() const;
+
+
+  /**
+   * sets the user id
+   */
+  APIUserAccount& id(const QString& id);
+
+  /**
+   * sets the user name
+   **/
+  APIUserAccount& name(const QString& name);
+
+  /**
+   * sets the acount type
+   */
+  APIUserAccount& type(APIUserAccountTypes type);
+
+  /**
+   * sets the current limits
+   */
+  APIUserAccount& limits(const APILimits& limits);
+
+
+  /**
+   * returns the number of remaining requests
+   */
+  int remainingRequests() const;
+
+  /**
+   * whether the number of remaining requests is low enough that further
+   * requests should be throttled
+   */
+  bool shouldThrottle() const;
+
+  /**
+   * true if all the remaining requests have been used and the API will refuse
+   * further requests
+   */
+  bool exhausted() const;
+
+private:
+  QString m_id, m_name;
+  APIUserAccountTypes m_type;
+  APILimits m_limits;
+  APIStats m_stats;
+};
+
+
 /**
  * @brief convenience class to make nxm requests easier
  * usually, all objects that started a nxm request will be signaled if one finished.
@@ -53,7 +178,6 @@ class NexusBridge : public MOBase::IModRepositoryBridge
   Q_OBJECT
 
 public:
-
   NexusBridge(PluginContainer *pluginContainer, const QString &subModule = "");
 
   /**
@@ -147,6 +271,8 @@ public:
   };
 
 public:
+  static APILimits defaultAPILimits();
+  static APILimits parseLimits(const QNetworkReply* reply);
 
   ~NexusInterface();
 
@@ -380,7 +506,7 @@ public:
   /**
    *
    */
-  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule, 
+  int requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData, const QString &subModule,
                          MOBase::IPluginGame const *game);
 
   /**
@@ -459,11 +585,11 @@ signals:
   void nxmTrackedModsAvailable(QVariant userData, QVariant resultData, int requestID);
   void nxmTrackingToggled(QString gameName, int modID, QVariant userData, bool tracked, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
-  void requestsChanged(int queueCount, std::tuple<int,int,int,int> requestsRemaining);
+  void requestsChanged(const APIStats& stats, const APIUserAccount& user);
 
 public slots:
 
-  void setRateMax(const QString&, int userId, bool isPremium, std::tuple<int,int,int,int> limits);
+  void setUserAccount(const APIUserAccount& user);
 
 private slots:
 
@@ -534,27 +660,15 @@ private:
   QString getOldModsURL(QString gameName) const;
 
 private:
-
   QNetworkDiskCache *m_DiskCache;
-
   NXMAccessManager *m_AccessManager;
-
   std::list<NXMRequestInfo> m_ActiveRequest;
   QQueue<NXMRequestInfo> m_RequestQueue;
-
   MOBase::VersionInfo m_MOVersion;
-
   PluginContainer *m_PluginContainer;
+  APIUserAccount m_User;
 
-  int m_RemainingDailyRequests;
-  int m_RemainingHourlyRequests;
-  int m_MaxDailyRequests;
-  int m_MaxHourlyRequests;
-
-  int m_UserID;
-
-  bool m_IsPremium;
-
+  APIStats stats() const;
 };
 
 #endif // NEXUSINTERFACE_H

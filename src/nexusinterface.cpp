@@ -38,6 +38,82 @@ using namespace MOBase;
 using namespace MOShared;
 
 
+void throttledWarning(const APIUserAccount& user)
+{
+  qCritical() <<
+    QString(
+      "You have fewer than %1 requests remaining (%2). Only downloads and "
+      "login validation are being allowed.")
+    .arg(APIUserAccount::ThrottleThreshold)
+    .arg(user.remainingRequests());
+}
+
+
+APIUserAccount::APIUserAccount()
+  : m_type(APIUserAccountTypes::None)
+{
+}
+
+const QString& APIUserAccount::id() const
+{
+  return m_id;
+}
+
+const QString& APIUserAccount::name() const
+{
+  return m_name;
+}
+
+APIUserAccountTypes APIUserAccount::type() const
+{
+  return m_type;
+}
+
+const APILimits& APIUserAccount::limits() const
+{
+  return m_limits;
+}
+
+APIUserAccount& APIUserAccount::id(const QString& id)
+{
+  m_id = id;
+  return *this;
+}
+
+APIUserAccount& APIUserAccount::name(const QString& name)
+{
+  m_name = name;
+  return *this;
+}
+
+APIUserAccount& APIUserAccount::type(APIUserAccountTypes type)
+{
+  m_type = type;
+  return *this;
+}
+
+APIUserAccount& APIUserAccount::limits(const APILimits& limits)
+{
+  m_limits = limits;
+  return *this;
+}
+
+int APIUserAccount::remainingRequests() const
+{
+  return m_limits.remainingDailyRequests + m_limits.remainingHourlyRequests;
+}
+
+bool APIUserAccount::shouldThrottle() const
+{
+  return (remainingRequests() < ThrottleThreshold);
+}
+
+bool APIUserAccount::exhausted() const
+{
+  return (remainingRequests() <= 0);
+}
+
+
 NexusBridge::NexusBridge(PluginContainer *pluginContainer, const QString &subModule)
   : m_Interface(NexusInterface::instance(pluginContainer))
   , m_SubModule(subModule)
@@ -179,15 +255,39 @@ void NexusBridge::nxmRequestFailed(QString gameName, int modID, int fileID, QVar
 QAtomicInt NexusInterface::NXMRequestInfo::s_NextID(0);
 
 
+APILimits NexusInterface::defaultAPILimits()
+{
+  // https://app.swaggerhub.com/apis-docs/NexusMods/nexus-mods_public_api_params_in_form_data/1.0#/
+  const int MaxDaily = 2500;
+  const int MaxHourly = 100;
+
+  APILimits limits;
+
+  limits.maxDailyRequests = MaxDaily;
+  limits.remainingDailyRequests = MaxDaily;
+  limits.maxHourlyRequests = MaxHourly;
+  limits.remainingHourlyRequests = MaxHourly;
+
+  return limits;
+}
+
+APILimits NexusInterface::parseLimits(const QNetworkReply* reply)
+{
+  APILimits limits;
+
+  limits.maxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
+  limits.remainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
+  limits.maxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
+  limits.remainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
+
+  return limits;
+}
+
+
 NexusInterface::NexusInterface(PluginContainer *pluginContainer)
   : m_PluginContainer(pluginContainer)
-  , m_RemainingDailyRequests(2500)
-  , m_RemainingHourlyRequests(100)
-  , m_MaxDailyRequests(2500)
-  , m_MaxHourlyRequests(100)
-  , m_IsPremium(false)
-  , m_UserID(0)
 {
+  m_User.limits(defaultAPILimits());
   m_MOVersion = createVersionInfo();
 
   m_AccessManager = new NXMAccessManager(this, m_MOVersion.displayString(3));
@@ -222,15 +322,10 @@ void NexusInterface::loginCompleted()
   nextRequest();
 }
 
-void NexusInterface::setRateMax(const QString&, int userId, bool isPremium, std::tuple<int, int, int, int> limits)
+void NexusInterface::setUserAccount(const APIUserAccount& user)
 {
-  m_RemainingDailyRequests = std::get<0>(limits);
-  m_MaxDailyRequests = std::get<1>(limits);
-  m_RemainingHourlyRequests = std::get<2>(limits);
-  m_MaxHourlyRequests = std::get<3>(limits);
-  m_IsPremium = isPremium;
-  m_UserID = userId;
-  emit requestsChanged(m_RequestQueue.size(), limits);
+  m_User = user;
+  emit requestsChanged(stats(), m_User);
 }
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
@@ -369,70 +464,70 @@ int NexusInterface::requestDescription(QString gameName, int modID, QObject *rec
 int NexusInterface::requestModInfo(QString gameName, int modID, QObject *receiver, QVariant userData,
   const QString &subModule, MOBase::IPluginGame const *game)
 {
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
-    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_MODINFO, userData, subModule, game);
-    m_RequestQueue.enqueue(requestInfo);
-
-    connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
-      receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
-
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
   }
-  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
-    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
-  return -1;
+
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_MODINFO, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmModInfoAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 int NexusInterface::requestUpdateInfo(QString gameName, NexusInterface::UpdatePeriod period, QObject *receiver, QVariant userData,
   const QString &subModule, const MOBase::IPluginGame *game)
 {
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
-    NXMRequestInfo requestInfo(period, NXMRequestInfo::TYPE_CHECKUPDATES, userData, subModule, game);
-    m_RequestQueue.enqueue(requestInfo);
-
-    connect(this, SIGNAL(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)),
-      receiver, SLOT(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
-
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
   }
-  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
-    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
-  return -1;
+
+  NXMRequestInfo requestInfo(period, NXMRequestInfo::TYPE_CHECKUPDATES, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)),
+    receiver, SLOT(nxmUpdateInfoAvailable(QString, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 int NexusInterface::requestUpdates(const int &modID, QObject *receiver, QVariant userData,
                                    QString gameName, const QString &subModule)
 {
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
-    IPluginGame *game = getGame(gameName);
-    if (game == nullptr) {
-      qCritical("requestUpdates can't find plugin for %s", qUtf8Printable(gameName));
-      return -1;
-    }
-
-    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
-    m_RequestQueue.enqueue(requestInfo);
-
-    connect(this, SIGNAL(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)),
-      receiver, SLOT(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
-
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
   }
-  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
-    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
-  return -1;
+
+  IPluginGame *game = getGame(gameName);
+  if (game == nullptr) {
+    qCritical("requestUpdates can't find plugin for %s", qUtf8Printable(gameName));
+    return -1;
+  }
+
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_GETUPDATES, userData, subModule, game);
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmUpdatesAvailable(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 
@@ -527,23 +622,23 @@ int NexusInterface::requestEndorsementInfo(QObject *receiver, QVariant userData,
 int NexusInterface::requestToggleEndorsement(QString gameName, int modID, QString modVersion, bool endorse, QObject *receiver, QVariant userData,
                                              const QString &subModule, MOBase::IPluginGame const *game)
 {
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
-    NXMRequestInfo requestInfo(modID, modVersion, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
-    requestInfo.m_Endorse = endorse;
-    m_RequestQueue.enqueue(requestInfo);
-
-    connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
-      receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
-
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
   }
-  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
-    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
-  return -1;
+
+  NXMRequestInfo requestInfo(modID, modVersion, NXMRequestInfo::TYPE_TOGGLEENDORSEMENT, userData, subModule, game);
+  requestInfo.m_Endorse = endorse;
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)),
+    receiver, SLOT(nxmEndorsementToggled(QString, int, QVariant, QVariant, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 int NexusInterface::requestTrackingInfo(QObject *receiver, QVariant userData, const QString &subModule)
@@ -564,23 +659,23 @@ int NexusInterface::requestTrackingInfo(QObject *receiver, QVariant userData, co
 int NexusInterface::requestToggleTracking(QString gameName, int modID, bool track, QObject *receiver, QVariant userData,
                                           const QString &subModule, MOBase::IPluginGame const *game)
 {
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) >= 200) {
-    NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLETRACKING, userData, subModule, game);
-    requestInfo.m_Track = track;
-    m_RequestQueue.enqueue(requestInfo);
-
-    connect(this, SIGNAL(nxmTrackingToggled(QString, int, QVariant, bool, int)),
-      receiver, SLOT(nxmTrackingToggled(QString, int, QVariant, bool, int)), Qt::UniqueConnection);
-
-    connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
-      receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
-
-    nextRequest();
-    return requestInfo.m_ID;
+  if (m_User.shouldThrottle()) {
+    throttledWarning(m_User);
+    return -1;
   }
-  qCritical() << QString("You have fewer than 200 requests remaining (%1). Only downloads and login validation are being allowed.")
-    .arg(std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests));
-  return -1;
+
+  NXMRequestInfo requestInfo(modID, NXMRequestInfo::TYPE_TOGGLETRACKING, userData, subModule, game);
+  requestInfo.m_Track = track;
+  m_RequestQueue.enqueue(requestInfo);
+
+  connect(this, SIGNAL(nxmTrackingToggled(QString, int, QVariant, bool, int)),
+    receiver, SLOT(nxmTrackingToggled(QString, int, QVariant, bool, int)), Qt::UniqueConnection);
+
+  connect(this, SIGNAL(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)),
+    receiver, SLOT(nxmRequestFailed(QString, int, int, QVariant, int, QNetworkReply::NetworkError, QString)), Qt::UniqueConnection);
+
+  nextRequest();
+  return requestInfo.m_ID;
 }
 
 int NexusInterface::requestInfoFromMd5(QString gameName, QByteArray &hash, QObject *receiver, QVariant userData,
@@ -645,7 +740,7 @@ void NexusInterface::nextRequest()
     }
   }
 
-  if (std::max(m_RemainingDailyRequests, m_RemainingHourlyRequests) <= 0) {
+  if (m_User.exhausted()) {
     m_RequestQueue.clear();
     QTime time = QTime::currentTime();
     QTime targetTime;
@@ -696,9 +791,9 @@ void NexusInterface::nextRequest()
       } break;
       case NXMRequestInfo::TYPE_DOWNLOADURL: {
         ModRepositoryFileInfo *fileInfo = qobject_cast<ModRepositoryFileInfo*>(qvariant_cast<QObject*>(info.m_UserData));
-        if (m_IsPremium) {
+        if (m_User.type() == APIUserAccountTypes::Premium) {
           url = QString("%1/games/%2/mods/%3/files/%4/download_link").arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID);
-        } else if (!fileInfo->nexusKey.isEmpty() && fileInfo->nexusExpires && fileInfo->nexusDownloadUser == m_UserID) {
+        } else if (!fileInfo->nexusKey.isEmpty() && fileInfo->nexusExpires && fileInfo->nexusDownloadUser == m_User.id().toInt()) {
           url = QString("%1/games/%2/mods/%3/files/%4/download_link?key=%5&expires=%6")
           .arg(info.m_URL).arg(info.m_GameName).arg(info.m_ModID).arg(info.m_FileID).arg(fileInfo->nexusKey).arg(fileInfo->nexusExpires);
         } else {
@@ -780,23 +875,16 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
     if (iter->m_AllowedErrors.contains(error) && iter->m_AllowedErrors[error].contains(statusCode)) {
       // These errors are allows to silently happen.  They should be handled in nxmRequestFailed below.
     } else if (statusCode == 429) {
-      m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
-      m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
-      m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
-      m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
+      m_User.limits(parseLimits(reply));
 
-      if (m_RemainingDailyRequests || m_RemainingHourlyRequests)
+      if (!m_User.exhausted()) {
         qWarning("You appear to be making requests to the Nexus API too quickly and are being throttled. Please inform the MO2 team.");
-      else
+      }
+      else {
         qWarning("All API requests have been consumed and are now being denied.");
+      }
 
-      emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
-        m_RemainingDailyRequests,
-        m_MaxDailyRequests,
-        m_RemainingHourlyRequests,
-        m_MaxHourlyRequests
-      )));
-
+      emit requestsChanged(stats(), m_User);
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
@@ -871,17 +959,8 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
           } break;
         }
 
-        m_RemainingDailyRequests = reply->rawHeader("x-rl-daily-remaining").toInt();
-        m_MaxDailyRequests = reply->rawHeader("x-rl-daily-limit").toInt();
-        m_RemainingHourlyRequests = reply->rawHeader("x-rl-hourly-remaining").toInt();
-        m_MaxHourlyRequests = reply->rawHeader("x-rl-hourly-limit").toInt();
-
-        emit requestsChanged(m_RequestQueue.size(), std::tuple<int, int, int, int>(std::make_tuple(
-          m_RemainingDailyRequests,
-          m_MaxDailyRequests,
-          m_RemainingHourlyRequests,
-          m_MaxHourlyRequests
-        )));
+        m_User.limits(parseLimits(reply));
+        emit requestsChanged(stats(), m_User);
       } else {
         emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), tr("invalid response"));
       }
@@ -937,6 +1016,15 @@ void NexusInterface::requestTimeout()
     }
   }
 }
+
+APIStats NexusInterface::stats() const
+{
+  APIStats stats;
+  stats.requestsQueued = m_RequestQueue.size();
+
+  return stats;
+}
+
 
 namespace {
   QString get_management_url()

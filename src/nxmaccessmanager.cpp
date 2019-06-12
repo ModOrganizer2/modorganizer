@@ -18,8 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
-
 #include "iplugingame.h"
+#include "nexusinterface.h"
 #include "nxmurl.h"
 #include "report.h"
 #include "utility.h"
@@ -280,14 +280,11 @@ void NXMAccessManager::validateFinished()
         QString name = credentialsData.value("name").toString();
         bool premium = credentialsData.value("is_premium").toBool();
 
-        std::tuple<int, int, int, int> limits(std::make_tuple(
-          m_ValidateReply->rawHeader("x-rl-daily-remaining").toInt(),
-          m_ValidateReply->rawHeader("x-rl-daily-limit").toInt(),
-          m_ValidateReply->rawHeader("x-rl-hourly-remaining").toInt(),
-          m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
-        ));
-
-        emit credentialsReceived(name, id, premium, limits);
+        emit credentialsReceived(APIUserAccount()
+          .id(QString("%1").arg(id))
+          .name(name)
+          .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+          .limits(NexusInterface::parseLimits(m_ValidateReply)));
 
         m_ValidateReply->deleteLater();
         m_ValidateReply = nullptr;

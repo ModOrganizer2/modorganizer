@@ -20,7 +20,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NXMACCESSMANAGER_H
 #define NXMACCESSMANAGER_H
 
-
 #include <QNetworkAccessManager>
 #include <QTimer>
 #include <QNetworkReply>
@@ -28,6 +27,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 namespace MOBase { class IPluginGame; }
+
+class APIUserAccount;
 
 /**
  * @brief access manager extended to handle nxm links
@@ -78,7 +79,7 @@ signals:
 
   void validateFailed(const QString &message);
 
-  void credentialsReceived(const QString &userName, int userId, bool premium, std::tuple<int, int, int, int> limits);
+  void credentialsReceived(const APIUserAccount& user);
 
 private slots:
 
