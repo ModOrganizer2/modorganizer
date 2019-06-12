@@ -1,13 +1,17 @@
 #include "statusbar.h"
 #include "nexusinterface.h"
 #include "settings.h"
+#include "ui_mainwindow.h"
 
-StatusBar::StatusBar(QStatusBar* bar, QAction* actionNotifications) :
-  m_bar(bar), m_notifications(new StatusBarNotifications(actionNotifications)),
-  m_progress(new QProgressBar), m_api(new QLabel)
+StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
+  m_bar(bar), m_progress(new QProgressBar),
+  m_notifications(new StatusBarAction(ui->actionNotifications)),
+  m_update(new StatusBarAction(ui->actionUpdate)),
+  m_api(new QLabel)
 {
   m_bar->addPermanentWidget(m_progress);
   m_bar->addPermanentWidget(m_notifications);
+  m_bar->addPermanentWidget(m_update);
   m_bar->addPermanentWidget(m_api);
 
   m_progress->setTextVisible(true);
@@ -15,12 +19,15 @@ StatusBar::StatusBar(QStatusBar* bar, QAction* actionNotifications) :
   m_progress->setMaximumWidth(150);
   m_progress->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
+  m_update->set(false);
+  m_notifications->set(false);
+
   m_api->setObjectName("apistats");
   m_api->setStyleSheet("QLabel{ padding: 0.1em 0 0.1em 0; }");
 
   m_bar->clearMessage();
   setProgress(-1);
-  updateAPI({}, {});
+  setAPI({}, {});
 }
 
 void StatusBar::setProgress(int percent)
@@ -35,12 +42,12 @@ void StatusBar::setProgress(int percent)
   }
 }
 
-void StatusBar::updateNotifications(bool hasNotifications)
+void StatusBar::setNotifications(bool hasNotifications)
 {
-  m_notifications->update(hasNotifications);
+  m_notifications->set(hasNotifications);
 }
 
-void StatusBar::updateAPI(const APIStats& stats, const APIUserAccount& user)
+void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
 {
   m_api->setText(
     QString("API: Q: %1 | D: %2 | H: %3")
@@ -73,13 +80,18 @@ void StatusBar::updateAPI(const APIStats& stats, const APIUserAccount& user)
   m_api->setAutoFillBackground(true);
 }
 
+void StatusBar::setUpdateAvailable(bool b)
+{
+  m_update->set(b);
+}
+
 void StatusBar::checkSettings(const Settings& settings)
 {
   m_api->setVisible(!settings.hideAPICounter());
 }
 
 
-StatusBarNotifications::StatusBarNotifications(QAction* action)
+StatusBarAction::StatusBarAction(QAction* action)
   : m_action(action), m_icon(new QLabel), m_text(new QLabel)
 {
   setLayout(new QHBoxLayout);
@@ -88,19 +100,33 @@ StatusBarNotifications::StatusBarNotifications(QAction* action)
   layout()->addWidget(m_text);
 }
 
-void StatusBarNotifications::update(bool hasNotifications)
+void StatusBarAction::set(bool visible)
 {
-  if (hasNotifications) {
+  if (visible) {
     m_icon->setPixmap(m_action->icon().pixmap(16, 16));
-    m_text->setText(QObject::tr("Notifications"));
+    m_text->setText(cleanupActionText(m_action->text()));
   }
 
-  setVisible(hasNotifications);
+  setVisible(visible);
 }
 
-void StatusBarNotifications::mouseDoubleClickEvent(QMouseEvent* e)
+void StatusBarAction::mouseDoubleClickEvent(QMouseEvent* e)
 {
   if (m_action->isEnabled()) {
     m_action->trigger();
   }
+}
+
+QString StatusBarAction::cleanupActionText(const QString& original) const
+{
+  QString s = original;
+
+  s.replace(QRegExp("\\&([^&])"), "\\1");  // &Item -> Item
+  s.replace("&&", "&"); // &&Item -> &Item
+
+  if (s.endsWith("...")) {
+    s = s.left(s.size() - 3);
+  }
+
+  return s;
 }

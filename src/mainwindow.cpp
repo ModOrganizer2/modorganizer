@@ -243,7 +243,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
 
-  m_statusBar.reset(new StatusBar(statusBar(), ui->actionNotifications));
+  m_statusBar.reset(new StatusBar(statusBar(), ui));
 
   updateProblemsButton();
 
@@ -571,7 +571,7 @@ void MainWindow::updateWindowTitle(const APIUserAccount& user)
 
 void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
 {
-  m_statusBar->updateAPI(stats, user);
+  m_statusBar->setAPI(stats, user);
 }
 
 
@@ -902,7 +902,7 @@ void MainWindow::updateProblemsButton()
 
   // updating the status bar, may be null very early when MO is starting
   if (m_statusBar) {
-    m_statusBar->updateNotifications(numProblems > 0);
+    m_statusBar->setNotifications(numProblems > 0);
   }
 }
 
@@ -5593,13 +5593,9 @@ void MainWindow::openDataOriginExplorer_clicked()
 
 void MainWindow::updateAvailable()
 {
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->text() == tr("Update")) {
-      action->setEnabled(true);
-      action->setToolTip(tr("Update available"));
-      break;
-    }
-  }
+  ui->actionUpdate->setEnabled(true);
+  ui->actionUpdate->setToolTip(tr("Update available"));
+  m_statusBar->setUpdateAvailable(true);
 }
 
 

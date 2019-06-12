@@ -7,14 +7,15 @@
 struct APIStats;
 class APIUserAccount;
 class Settings;
+namespace Ui { class MainWindow; }
 
 
-class StatusBarNotifications : public QWidget
+class StatusBarAction : public QWidget
 {
 public:
-  StatusBarNotifications(QAction* action);
+  StatusBarAction(QAction* action);
 
-  void update(bool hasNotifications);
+  void set(bool visible);
 
 protected:
   void mouseDoubleClickEvent(QMouseEvent* e) override;
@@ -23,23 +24,27 @@ private:
   QAction* m_action;
   QLabel* m_icon;
   QLabel* m_text;
+
+  QString cleanupActionText(const QString& s) const;
 };
 
 
 class StatusBar
 {
 public:
-  StatusBar(QStatusBar* bar, QAction* actionNotifications);
+  StatusBar(QStatusBar* bar, Ui::MainWindow* ui);
 
   void setProgress(int percent);
-  void updateNotifications(bool hasNotifications);
-  void updateAPI(const APIStats& stats, const APIUserAccount& user);
+  void setNotifications(bool hasNotifications);
+  void setAPI(const APIStats& stats, const APIUserAccount& user);
+  void setUpdateAvailable(bool b);
   void checkSettings(const Settings& settings);
 
 private:
   QStatusBar* m_bar;
-  StatusBarNotifications* m_notifications;
   QProgressBar* m_progress;
+  StatusBarAction* m_notifications;
+  StatusBarAction* m_update;
   QLabel* m_api;
 };
 
