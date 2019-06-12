@@ -8,20 +8,38 @@ struct APIStats;
 class APIUserAccount;
 class Settings;
 
+
+class StatusBarNotifications : public QWidget
+{
+public:
+  StatusBarNotifications(QAction* action);
+
+  void update(bool hasNotifications);
+
+protected:
+  void mouseDoubleClickEvent(QMouseEvent* e) override;
+
+private:
+  QAction* m_action;
+  QLabel* m_icon;
+  QLabel* m_text;
+};
+
+
 class StatusBar
 {
 public:
-  StatusBar(QStatusBar* bar, QAction* notifications);
+  StatusBar(QStatusBar* bar, QAction* actionNotifications);
 
   void setProgress(int percent);
-  void setHasNotifications(bool b);
+  void updateNotifications(bool hasNotifications);
   void updateAPI(const APIStats& stats, const APIUserAccount& user);
   void checkSettings(const Settings& settings);
 
 private:
   QStatusBar* m_bar;
+  StatusBarNotifications* m_notifications;
   QProgressBar* m_progress;
-  QToolButton* m_notifications;
   QLabel* m_api;
 };
 

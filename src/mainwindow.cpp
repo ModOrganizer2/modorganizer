@@ -902,7 +902,7 @@ void MainWindow::updateProblemsButton()
 
   // updating the status bar, may be null very early when MO is starting
   if (m_statusBar) {
-    m_statusBar->setHasNotifications(numProblems > 0);
+    m_statusBar->updateNotifications(numProblems > 0);
   }
 }
 

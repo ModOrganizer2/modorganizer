@@ -2,9 +2,9 @@
 #include "nexusinterface.h"
 #include "settings.h"
 
-StatusBar::StatusBar(QStatusBar* bar, QAction* notifications) :
-  m_bar(bar), m_progress(new QProgressBar), m_notifications(new QToolButton),
-  m_api(new QLabel)
+StatusBar::StatusBar(QStatusBar* bar, QAction* actionNotifications) :
+  m_bar(bar), m_notifications(new StatusBarNotifications(actionNotifications)),
+  m_progress(new QProgressBar), m_api(new QLabel)
 {
   m_bar->addPermanentWidget(m_progress);
   m_bar->addPermanentWidget(m_notifications);
@@ -12,13 +12,11 @@ StatusBar::StatusBar(QStatusBar* bar, QAction* notifications) :
 
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
-  m_progress->setMaximumWidth(100);
-
-  m_notifications->setDefaultAction(notifications);
-  m_notifications->setAutoRaise(true);
+  m_progress->setMaximumWidth(150);
+  m_progress->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
   m_api->setObjectName("apistats");
-  m_api->setStyleSheet("QLabel{ padding-left: 0.1em; padding-right: 0.1em; }");
+  m_api->setStyleSheet("QLabel{ padding: 0.1em 0 0.1em 0; }");
 
   m_bar->clearMessage();
   setProgress(-1);
@@ -28,6 +26,7 @@ StatusBar::StatusBar(QStatusBar* bar, QAction* notifications) :
 void StatusBar::setProgress(int percent)
 {
   if (percent < 0 || percent >= 100) {
+    m_bar->clearMessage();
     m_progress->setVisible(false);
   } else {
     m_bar->showMessage(QObject::tr("Loading..."));
@@ -36,9 +35,9 @@ void StatusBar::setProgress(int percent)
   }
 }
 
-void StatusBar::setHasNotifications(bool b)
+void StatusBar::updateNotifications(bool hasNotifications)
 {
-  m_notifications->setVisible(b);
+  m_notifications->update(hasNotifications);
 }
 
 void StatusBar::updateAPI(const APIStats& stats, const APIUserAccount& user)
@@ -77,4 +76,31 @@ void StatusBar::updateAPI(const APIStats& stats, const APIUserAccount& user)
 void StatusBar::checkSettings(const Settings& settings)
 {
   m_api->setVisible(!settings.hideAPICounter());
+}
+
+
+StatusBarNotifications::StatusBarNotifications(QAction* action)
+  : m_action(action), m_icon(new QLabel), m_text(new QLabel)
+{
+  setLayout(new QHBoxLayout);
+  layout()->setContentsMargins(0, 0, 0, 0);
+  layout()->addWidget(m_icon);
+  layout()->addWidget(m_text);
+}
+
+void StatusBarNotifications::update(bool hasNotifications)
+{
+  if (hasNotifications) {
+    m_icon->setPixmap(m_action->icon().pixmap(16, 16));
+    m_text->setText(QObject::tr("Notifications"));
+  }
+
+  setVisible(hasNotifications);
+}
+
+void StatusBarNotifications::mouseDoubleClickEvent(QMouseEvent* e)
+{
+  if (m_action->isEnabled()) {
+    m_action->trigger();
+  }
 }
