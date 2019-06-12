@@ -2,14 +2,16 @@
 #include "nexusinterface.h"
 #include "settings.h"
 
-StatusBar::StatusBar(QStatusBar* bar)
-  : m_bar(bar), m_api(new QLabel), m_progress(new QProgressBar)
+StatusBar::StatusBar(QStatusBar* bar) :
+  m_bar(bar), m_notifications(new QLabel), m_progress(new QProgressBar),
+  m_api(new QLabel)
 {
+  m_bar->addPermanentWidget(m_notifications);
+  m_bar->addPermanentWidget(m_progress);
+  m_bar->addPermanentWidget(m_api);
+
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
-
-  m_bar->addPermanentWidget(m_api);
-  m_bar->addPermanentWidget(m_progress);
 
   m_api->setObjectName("apistats");
   m_api->setStyleSheet("QLabel{ padding-left: 0.1em; padding-right: 0.1em; }");

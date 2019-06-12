@@ -19,8 +19,9 @@ public:
 
 private:
   QStatusBar* m_bar;
-  QLabel* m_api;
+  QLabel* m_notifications;
   QProgressBar* m_progress;
+  QLabel* m_api;
 };
 
 #endif // MO_STATUSBAR_H
