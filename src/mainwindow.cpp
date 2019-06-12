@@ -243,7 +243,7 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
 
-  m_statusBar.reset(new StatusBar(statusBar()));
+  m_statusBar.reset(new StatusBar(statusBar(), ui->actionNotifications));
 
   updateProblemsButton();
 
@@ -898,6 +898,11 @@ void MainWindow::updateProblemsButton()
     if (auto* button=dynamic_cast<QAbstractButton*>(actionWidget)) {
       button->setIcon(final);
     }
+  }
+
+  // updating the status bar, may be null very early when MO is starting
+  if (m_statusBar) {
+    m_statusBar->setHasNotifications(numProblems > 0);
   }
 }
 

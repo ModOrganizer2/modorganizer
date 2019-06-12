@@ -2,16 +2,20 @@
 #include "nexusinterface.h"
 #include "settings.h"
 
-StatusBar::StatusBar(QStatusBar* bar) :
-  m_bar(bar), m_notifications(new QLabel), m_progress(new QProgressBar),
+StatusBar::StatusBar(QStatusBar* bar, QAction* notifications) :
+  m_bar(bar), m_progress(new QProgressBar), m_notifications(new QToolButton),
   m_api(new QLabel)
 {
-  m_bar->addPermanentWidget(m_notifications);
   m_bar->addPermanentWidget(m_progress);
+  m_bar->addPermanentWidget(m_notifications);
   m_bar->addPermanentWidget(m_api);
 
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
+  m_progress->setMaximumWidth(100);
+
+  m_notifications->setDefaultAction(notifications);
+  m_notifications->setAutoRaise(true);
 
   m_api->setObjectName("apistats");
   m_api->setStyleSheet("QLabel{ padding-left: 0.1em; padding-right: 0.1em; }");
@@ -29,6 +33,11 @@ void StatusBar::setProgress(int percent)
     m_progress->setVisible(true);
     m_progress->setValue(percent);
   }
+}
+
+void StatusBar::setHasNotifications(bool b)
+{
+  m_notifications->setVisible(b);
 }
 
 void StatusBar::updateAPI(const APIStats& stats, const APIUserAccount& user)
