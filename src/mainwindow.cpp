@@ -934,6 +934,8 @@ void MainWindow::updateProblemsButton()
     final = original;
   }
 
+  ui->actionNotifications->setEnabled(numProblems > 0);
+
   // setting the icon on the action (shown on the menu)
   ui->actionNotifications->setIcon(final);
 
