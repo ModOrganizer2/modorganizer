@@ -326,8 +326,8 @@ private:
   bool m_WasVisible;
 
   // this has to be remembered because by the time storeSettings() is called,
-  // the window is closed and the menubar is hidden
-  bool m_menuBarVisible;
+  // the window is closed and the all bars are hidden
+  bool m_menuBarVisible, m_statusBarVisible;
 
   std::unique_ptr<StatusBar> m_statusBar;
 
@@ -651,6 +651,7 @@ private slots: // ui slots
   void on_actionExit_triggered();
   void on_actionMainMenuToggle_triggered();
   void on_actionToolBarMainToggle_triggered();
+  void on_actionStatusBarToggle_triggered();
   void on_actionToolBarSmallIcons_triggered();
   void on_actionToolBarMediumIcons_triggered();
   void on_actionToolBarLargeIcons_triggered();
@@ -694,6 +695,9 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
+
+  void showMenuBar(bool b);
+  void showStatusBar(bool b);
 };
 
 

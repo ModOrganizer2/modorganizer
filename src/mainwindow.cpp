@@ -203,6 +203,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
   , m_menuBarVisible(true)
+  , m_statusBarVisible(true)
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
@@ -752,6 +753,7 @@ void MainWindow::toolbarMenu_aboutToShow()
 
   ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
+  ui->actionStatusBarToggle->setChecked(ui->statusBar->isVisible());
 
   ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
   ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
@@ -769,13 +771,17 @@ QMenu* MainWindow::createPopupMenu()
 
 void MainWindow::on_actionMainMenuToggle_triggered()
 {
-  ui->menuBar->setVisible(!ui->menuBar->isVisible());
-  m_menuBarVisible = ui->menuBar->isVisible();
+  showMenuBar(!ui->menuBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
 {
   ui->toolBar->setVisible(!ui->toolBar->isVisible());
+}
+
+void MainWindow::on_actionStatusBarToggle_triggered()
+{
+  showStatusBar(!ui->statusBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarSmallIcons_triggered()
@@ -820,6 +826,36 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
+}
+
+void MainWindow::showMenuBar(bool b)
+{
+  ui->menuBar->setVisible(b);
+  m_menuBarVisible = b;
+}
+
+void MainWindow::showStatusBar(bool b)
+{
+  ui->statusBar->setVisible(b);
+  m_statusBarVisible = b;
+
+  // the central widget typically has no bottom padding because the status bar
+  // is more than enough, but when it's hidden, the bottom widget (currently
+  // the log) touches the bottom border of the window, which looks ugly
+  //
+  // when hiding the statusbar, the central widget is given the same border
+  // margin as it has on the top (which is typically 6, as it's the default from
+  // the qt designer)
+
+  auto m = ui->centralWidget->layout()->contentsMargins();
+
+  if (b) {
+    m.setBottom(0);
+  } else {
+    m.setBottom(m.top());
+  }
+
+  ui->centralWidget->layout()->setContentsMargins(m);
 }
 
 void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
@@ -2096,8 +2132,11 @@ void MainWindow::readSettings()
   }
 
   if (settings.contains("menubar_visible")) {
-    m_menuBarVisible = settings.value("menubar_visible").toBool();
-    ui->menuBar->setVisible(m_menuBarVisible);
+    showMenuBar(settings.value("menubar_visible").toBool());
+  }
+
+  if (settings.contains("statusbar_visible")) {
+    showStatusBar(settings.value("statusbar_visible").toBool());
   }
 
   if (settings.contains("window_split")) {
@@ -2193,6 +2232,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("menubar_visible", m_menuBarVisible);
+    settings.setValue("statusbar_visible", m_statusBarVisible);
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
@@ -6989,8 +7029,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
     if (!ui->menuBar->isVisible()) {
-      ui->menuBar->setVisible(true);
-      m_menuBarVisible = true;
+      showMenuBar(true);
     }
   }
 

@@ -1397,6 +1397,7 @@ p, li { white-space: pre-wrap; }
      </property>
      <addaction name="actionMainMenuToggle"/>
      <addaction name="actionToolBarMainToggle"/>
+     <addaction name="actionStatusBarToggle"/>
      <addaction name="separator"/>
      <addaction name="actionToolBarSmallIcons"/>
      <addaction name="actionToolBarMediumIcons"/>
@@ -1730,6 +1731,14 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>&amp;Menu</string>
+   </property>
+  </action>
+  <action name="actionStatusBarToggle">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>St&amp;atus bar</string>
    </property>
   </action>
  </widget>
