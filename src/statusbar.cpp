@@ -48,27 +48,33 @@ void StatusBar::setNotifications(bool hasNotifications)
 
 void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
 {
-  m_api->setText(
-    QString("API: Q: %1 | D: %2 | H: %3")
-    .arg(stats.requestsQueued)
-    .arg(user.limits().remainingDailyRequests)
-    .arg(user.limits().remainingHourlyRequests));
-
+  QString text;
   QString textColor;
   QString backgroundColor;
 
   if (user.type() == APIUserAccountTypes::None) {
+    text = "API: not logged in";
+    textColor = "white";
     backgroundColor = "transparent";
-  } else if (user.remainingRequests() > 300) {
-    textColor = "white";
-    backgroundColor = "darkgreen";
-  } else if (user.remainingRequests() < 150) {
-    textColor = "white";
-    backgroundColor = "darkred";
   } else {
-    textColor = "black";
-    backgroundColor = "rgb(226, 192, 0)";  // yellow
+    text = QString("API: Queued: %1 | Daily: %2 | Hourly: %3")
+      .arg(stats.requestsQueued)
+      .arg(user.limits().remainingDailyRequests)
+      .arg(user.limits().remainingHourlyRequests);
+
+    if (user.remainingRequests() > 500) {
+      textColor = "white";
+      backgroundColor = "darkgreen";
+    } else if (user.remainingRequests() > 200) {
+      textColor = "black";
+      backgroundColor = "rgb(226, 192, 0)";  // yellow
+    } else {
+      textColor = "white";
+      backgroundColor = "darkred";
+    }
   }
+
+  m_api->setText(text);
 
   m_api->setStyleSheet(QString(R"(
     QLabel

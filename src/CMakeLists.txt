@@ -117,6 +117,7 @@ SET(organizer_SRCS
     forcedloaddialogwidget.cpp
 	filterwidget.cpp
 	statusbar.cpp
+	apiuseraccount.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -215,6 +216,7 @@ SET(organizer_HDRS
     forcedloaddialogwidget.h
 	filterwidget.h
 	statusbar.h
+	apiuseraccount.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -299,6 +301,7 @@ set(core
 	nxmaccessmanager
 	organizercore
 	organizerproxy
+	apiuseraccount
 )
 
 set(dialogs

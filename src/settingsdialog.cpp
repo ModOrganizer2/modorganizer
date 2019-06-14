@@ -511,6 +511,9 @@ bool SettingsDialog::clearKey()
   m_KeyCleared = true;
   const auto ret = m_settings->clearNexusApiKey();
   updateNexusButtons();
+
+  NexusInterface::instance(m_PluginContainer)->getAccessManager()->clearApiKey();
+
   return ret;
 }
 
@@ -522,8 +525,7 @@ void SettingsDialog::testApiKey()
     return;
   }
 
-  auto* am = NexusInterface::instance(m_PluginContainer)->getAccessManager();
-  am->apiCheck(key, true);
+  NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(key, true);
 }
 
 void SettingsDialog::updateNexusButtons()

@@ -225,8 +225,17 @@ MainWindow::MainWindow(QSettings &initSettings
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
   QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
+
   ui->setupUi(this);
-  updateWindowTitle({});
+
+  {
+    auto* ni = NexusInterface::instance(&m_PluginContainer);
+
+    updateWindowTitle(ni->getAPIUserAccount());
+
+    m_statusBar.reset(new StatusBar(statusBar(), ui));
+    m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+  }
 
   languageChange(m_OrganizerCore.settings().language());
 
@@ -243,8 +252,6 @@ MainWindow::MainWindow(QSettings &initSettings
           ui->logList, SLOT(scrollToBottom()));
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
-
-  m_statusBar.reset(new StatusBar(statusBar(), ui));
 
   updateProblemsButton();
 

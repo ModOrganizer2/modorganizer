@@ -49,71 +49,6 @@ void throttledWarning(const APIUserAccount& user)
 }
 
 
-APIUserAccount::APIUserAccount()
-  : m_type(APIUserAccountTypes::None)
-{
-}
-
-const QString& APIUserAccount::id() const
-{
-  return m_id;
-}
-
-const QString& APIUserAccount::name() const
-{
-  return m_name;
-}
-
-APIUserAccountTypes APIUserAccount::type() const
-{
-  return m_type;
-}
-
-const APILimits& APIUserAccount::limits() const
-{
-  return m_limits;
-}
-
-APIUserAccount& APIUserAccount::id(const QString& id)
-{
-  m_id = id;
-  return *this;
-}
-
-APIUserAccount& APIUserAccount::name(const QString& name)
-{
-  m_name = name;
-  return *this;
-}
-
-APIUserAccount& APIUserAccount::type(APIUserAccountTypes type)
-{
-  m_type = type;
-  return *this;
-}
-
-APIUserAccount& APIUserAccount::limits(const APILimits& limits)
-{
-  m_limits = limits;
-  return *this;
-}
-
-int APIUserAccount::remainingRequests() const
-{
-  return m_limits.remainingDailyRequests + m_limits.remainingHourlyRequests;
-}
-
-bool APIUserAccount::shouldThrottle() const
-{
-  return (remainingRequests() < ThrottleThreshold);
-}
-
-bool APIUserAccount::exhausted() const
-{
-  return (remainingRequests() <= 0);
-}
-
-
 NexusBridge::NexusBridge(PluginContainer *pluginContainer, const QString &subModule)
   : m_Interface(NexusInterface::instance(pluginContainer))
   , m_SubModule(subModule)
@@ -325,7 +260,7 @@ void NexusInterface::loginCompleted()
 void NexusInterface::setUserAccount(const APIUserAccount& user)
 {
   m_User = user;
-  emit requestsChanged(stats(), m_User);
+  emit requestsChanged(getAPIStats(), m_User);
 }
 
 void NexusInterface::interpretNexusFileName(const QString &fileName, QString &modName, int &modID, bool query)
@@ -884,7 +819,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
         qWarning("All API requests have been consumed and are now being denied.");
       }
 
-      emit requestsChanged(stats(), m_User);
+      emit requestsChanged(getAPIStats(), m_User);
       qWarning("Error: %s", reply->errorString().toUtf8().constData());
     } else {
       qWarning("request failed: %s", reply->errorString().toUtf8().constData());
@@ -960,7 +895,7 @@ void NexusInterface::requestFinished(std::list<NXMRequestInfo>::iterator iter)
         }
 
         m_User.limits(parseLimits(reply));
-        emit requestsChanged(stats(), m_User);
+        emit requestsChanged(getAPIStats(), m_User);
       } else {
         emit nxmRequestFailed(iter->m_GameName, iter->m_ModID, iter->m_FileID, iter->m_UserData, iter->m_ID, reply->error(), tr("invalid response"));
       }
@@ -1017,7 +952,12 @@ void NexusInterface::requestTimeout()
   }
 }
 
-APIStats NexusInterface::stats() const
+APIUserAccount NexusInterface::getAPIUserAccount() const
+{
+  return m_User;
+}
+
+APIStats NexusInterface::getAPIStats() const
 {
   APIStats stats;
   stats.requestsQueued = m_RequestQueue.size();

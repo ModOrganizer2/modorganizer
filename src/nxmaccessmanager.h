@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NXMACCESSMANAGER_H
 #define NXMACCESSMANAGER_H
 
+#include "apiuseraccount.h"
 #include <QNetworkAccessManager>
 #include <QTimer>
 #include <QNetworkReply>
@@ -27,8 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 
 namespace MOBase { class IPluginGame; }
-
-class APIUserAccount;
 
 /**
  * @brief access manager extended to handle nxm links
@@ -56,6 +55,7 @@ public:
   QString userAgent(const QString &subModule = QString()) const;
 
   QString apiKey() const;
+  void clearApiKey();
 
   void startValidationCheck();
 
@@ -94,7 +94,6 @@ protected:
       QIODevice *device);
 
 private:
-
   QTimer m_ValidateTimeout;
   QNetworkReply *m_ValidateReply;
   QProgressDialog *m_ProgressDialog { nullptr };
@@ -103,7 +102,6 @@ private:
 
   QString m_ApiKey;
 
-  bool m_ValidateAttempted;
   enum {
     VALIDATE_NOT_CHECKED,
     VALIDATE_CHECKING,
@@ -112,7 +110,6 @@ private:
     VALIDATE_REFUSED,
     VALIDATE_VALID
   } m_ValidateState = VALIDATE_NOT_CHECKED;
-
 };
 
 #endif // NXMACCESSMANAGER_H
