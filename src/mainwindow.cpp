@@ -727,6 +727,7 @@ void MainWindow::updatePinnedExecutables()
         iconForExecutable(iter->m_BinaryInfo.filePath()), iter->m_Title);
 
       exeAction->setObjectName(QString("custom__") + iter->m_Title);
+      exeAction->setStatusTip(iter->m_BinaryInfo.filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
