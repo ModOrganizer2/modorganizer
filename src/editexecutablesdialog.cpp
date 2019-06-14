@@ -46,11 +46,11 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
   ui->splitter->setStretchFactor(0, 0);
   ui->splitter->setStretchFactor(1, 1);
 
-  m_customOverwrites.load(m_organizerCore.currentProfile(), m_executablesList);
-  m_forcedLibraries.load(m_organizerCore.currentProfile(), m_executablesList);
+  loadCustomOverwrites();
+  loadForcedLibraries();
 
-  fillList();
   ui->mods->addItems(m_organizerCore.modList()->allMods());
+  fillList();
   setDirty(false);
 
   // some widgets need to do more than just save() and have their own handler
@@ -64,6 +64,31 @@ EditExecutablesDialog::EditExecutablesDialog(OrganizerCore& oc, QWidget* parent)
 }
 
 EditExecutablesDialog::~EditExecutablesDialog() = default;
+
+
+void EditExecutablesDialog::loadCustomOverwrites()
+{
+  const auto* p = m_organizerCore.currentProfile();
+
+  for (const auto& e : m_executablesList) {
+    const auto s = p->setting("custom_overwrites", e.title()).toString();
+
+    if (!s.isEmpty()) {
+      m_customOverwrites.set(e.title(), true, s);
+    }
+  }
+}
+
+void EditExecutablesDialog::loadForcedLibraries()
+{
+  const auto* p = m_organizerCore.currentProfile();
+
+  for (const auto& e : m_executablesList) {
+    if (p->forcedLibrariesEnabled(e.title())) {
+      m_forcedLibraries.set(e.title(), true, p->determineForcedLibraries(e.title()));
+    }
+  }
+}
 
 ExecutablesList EditExecutablesDialog::getExecutablesList() const
 {
@@ -88,12 +113,14 @@ ExecutablesList EditExecutablesDialog::getExecutablesList() const
   return newList;
 }
 
-const CustomOverwrites& EditExecutablesDialog::getCustomOverwrites() const
+const EditExecutablesDialog::CustomOverwrites&
+EditExecutablesDialog::getCustomOverwrites() const
 {
   return m_customOverwrites;
 }
 
-const ForcedLibraries& EditExecutablesDialog::getForcedLibraries() const
+const EditExecutablesDialog::ForcedLibraries&
+EditExecutablesDialog::getForcedLibraries() const
 {
   return m_forcedLibraries;
 }
@@ -111,16 +138,16 @@ void EditExecutablesDialog::commitChanges()
 
   // set the new custom overwrites and forced libraries
   for (const auto& e : newExecutables) {
-    if (auto info=m_customOverwrites.find(e.title())) {
-      if (info && info->enabled) {
-        profile->storeSetting("custom_overwrites", e.title(), info->modName);
+    if (auto modName=m_customOverwrites.find(e.title())) {
+      if (modName && modName->enabled) {
+        profile->storeSetting("custom_overwrites", e.title(), modName->value);
       }
     }
 
-    if (auto info=m_forcedLibraries.find(e.title())) {
-      if (info && info->enabled && !info->list.empty()) {
+    if (auto libraryList=m_forcedLibraries.find(e.title())) {
+      if (libraryList && libraryList->enabled && !libraryList->value.empty()) {
         profile->setForcedLibrariesEnabled(e.title(), true);
-        profile->storeForcedLibraries(e.title(), info->list);
+        profile->storeForcedLibraries(e.title(), libraryList->value);
       }
     }
   }
@@ -260,19 +287,19 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   {
     int modIndex = -1;
 
-    const auto info = m_customOverwrites.find(e.title());
+    const auto modName = m_customOverwrites.find(e.title());
 
-    if (info && !info->modName.isEmpty()) {
-      modIndex = ui->mods->findText(info->modName);
+    if (modName && !modName->value.isEmpty()) {
+      modIndex = ui->mods->findText(modName->value);
 
       if (modIndex == -1) {
         qWarning().nospace()
-          << "executable '" << e.title() << "' uses mod '" << info->modName << "' "
+          << "executable '" << e.title() << "' uses mod '" << modName->value << "' "
           << "as a custom overwrite, but that mod doesn't exist";
       }
     }
 
-    const bool hasCustomOverwrites = (info && info->enabled);
+    const bool hasCustomOverwrites = (modName && modName->enabled);
 
     ui->createFilesInMod->setChecked(hasCustomOverwrites);
     ui->mods->setEnabled(hasCustomOverwrites);
@@ -280,8 +307,8 @@ void EditExecutablesDialog::setEdits(const Executable& e)
   }
 
   {
-    const auto info = m_forcedLibraries.find(e.title());
-    const bool hasForcedLibraries = (info && info->enabled);
+    const auto libraryList = m_forcedLibraries.find(e.title());
+    const bool hasForcedLibraries = (libraryList && libraryList->enabled);
 
     ui->forceLoadLibraries->setChecked(hasForcedLibraries);
     ui->configureLibraries->setEnabled(hasForcedLibraries);
@@ -316,8 +343,7 @@ void EditExecutablesDialog::save()
 
   // custom overwrites
   if (ui->createFilesInMod->isChecked()) {
-    m_customOverwrites.setEnabled(e->title(), true);
-    m_customOverwrites.setMod(e->title(), ui->mods->currentText());
+    m_customOverwrites.set(e->title(), true, ui->mods->currentText());
   } else {
     m_customOverwrites.setEnabled(e->title(), false);
   }
@@ -626,12 +652,12 @@ void EditExecutablesDialog::on_configureLibraries_clicked()
 
   ForcedLoadDialog dialog(m_organizerCore.managedGame(), this);
 
-  if (auto info=m_forcedLibraries.find(e->title())) {
-    dialog.setValues(info->list);
+  if (auto libraryList=m_forcedLibraries.find(e->title())) {
+    dialog.setValues(libraryList->value);
   }
 
   if (dialog.exec() == QDialog::Accepted) {
-    m_forcedLibraries.setList(e->title(), dialog.values());
+    m_forcedLibraries.setValue(e->title(), dialog.values());
     save();
   }
 }
@@ -669,134 +695,4 @@ void EditExecutablesDialog::setJarBinary(const QString& binaryName)
   m_settingUI = false;
 
   save();
-}
-
-
-void CustomOverwrites::load(Profile* p, const ExecutablesList& exes)
-{
-  for (const auto& e : exes) {
-    const auto s = p->setting("custom_overwrites", e.title()).toString();
-
-    if (!s.isEmpty()) {
-      m_map[e.title()] = {true, s};
-    }
-  }
-}
-
-std::optional<CustomOverwrites::Info> CustomOverwrites::find(
-  const QString& title) const
-{
-  auto itor = m_map.find(title);
-  if (itor == m_map.end()) {
-    return {};
-  }
-
-  return itor->second;
-}
-
-void CustomOverwrites::setEnabled(const QString& title, bool b)
-{
-  auto itor = m_map.find(title);
-
-  if (itor == m_map.end()) {
-    m_map[title] = {b, {}};
-  } else {
-    itor->second.enabled = b;
-  }
-}
-
-void CustomOverwrites::setMod(const QString& title, const QString& mod)
-{
-  auto itor = m_map.find(title);
-
-  if (itor == m_map.end()) {
-    m_map[title] = {true, mod};
-  } else {
-    itor->second.modName = mod;
-  }
-}
-
-void CustomOverwrites::rename(const QString& oldTitle, const QString& newTitle)
-{
-  auto itor = m_map.find(oldTitle);
-  if (itor == m_map.end()) {
-    return;
-  }
-
-  // copy to new title, erase old
-  m_map[newTitle] = itor->second;
-  m_map.erase(itor);
-}
-
-void CustomOverwrites::remove(const QString& title)
-{
-  auto itor = m_map.find(title);
-
-  if (itor != m_map.end()) {
-    m_map.erase(itor);
-  }
-}
-
-
-void ForcedLibraries::load(Profile* p, const ExecutablesList& exes)
-{
-  for (const auto& e : exes) {
-    if (p->forcedLibrariesEnabled(e.title())) {
-      m_map[e.title()] = {true, p->determineForcedLibraries(e.title())};
-    }
-  }
-}
-
-std::optional<ForcedLibraries::Info> ForcedLibraries::find(
-  const QString& title) const
-{
-  auto itor = m_map.find(title);
-  if (itor == m_map.end()) {
-    return {};
-  }
-
-  return itor->second;
-}
-
-void ForcedLibraries::setEnabled(const QString& title, bool b)
-{
-  auto itor = m_map.find(title);
-
-  if (itor == m_map.end()) {
-    m_map[title] = {b, {}};
-  } else {
-    itor->second.enabled = b;
-  }
-}
-
-void ForcedLibraries::setList(const QString& title, const list_type& list)
-{
-  auto itor = m_map.find(title);
-
-  if (itor == m_map.end()) {
-    m_map[title] = {true, list};
-  } else {
-    itor->second.list = list;
-  }
-}
-
-void ForcedLibraries::rename(const QString& oldTitle, const QString& newTitle)
-{
-  auto itor = m_map.find(oldTitle);
-  if (itor == m_map.end()) {
-    return;
-  }
-
-  // copy to new title, erase old
-  m_map[newTitle] = itor->second;
-  m_map.erase(itor);
-}
-
-void ForcedLibraries::remove(const QString& title)
-{
-  auto itor = m_map.find(title);
-
-  if (itor != m_map.end()) {
-    m_map.erase(itor);
-  }
 }

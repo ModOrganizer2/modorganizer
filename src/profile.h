@@ -330,9 +330,9 @@ public:
 
   int getPriorityMinimum() const;
 
-  bool forcedLibrariesEnabled(const QString &executable);
+  bool forcedLibrariesEnabled(const QString &executable) const;
   void setForcedLibrariesEnabled(const QString &executable, bool enabled);
-  QList<MOBase::ExecutableForcedLoadSetting> determineForcedLibraries(const QString &executable);
+  QList<MOBase::ExecutableForcedLoadSetting> determineForcedLibraries(const QString &executable) const;
   void storeForcedLibraries(const QString &executable, const QList<MOBase::ExecutableForcedLoadSetting> &values);
   void removeForcedLibraries(const QString &executable);
 

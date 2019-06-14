@@ -37,53 +37,102 @@ class ModList;
 class OrganizerCore;
 
 /** helper class to manage custom overwrites within the edit executables
- *  dialog
+ *  dialog, stores a T and a bool in map indexed by a QString
  **/
-class CustomOverwrites
+template <class T>
+class ToggableMap
 {
 public:
-  struct Info
+  struct Value
   {
     bool enabled;
-    QString modName;
+    T value;
+
+    Value(bool b, T&& v)
+      : enabled(b), value(std::forward<T>(v))
+    {
+    }
   };
 
-  void load(Profile* p, const ExecutablesList& exes);
-  std::optional<Info> find(const QString& title) const;
-
-  void setEnabled(const QString& title, bool b);
-  void setMod(const QString& title, const QString& mod);
-  void rename(const QString& oldTitle, const QString& newTitle);
-  void remove(const QString& title);
-
-private:
-  std::map<QString, Info> m_map;
-};
-
-
-/** helper class to manage forced libraries within the edit executables dialog
- **/
-class ForcedLibraries
-{
-public:
-  using list_type = QList<MOBase::ExecutableForcedLoadSetting>;
-
-  struct Info
+  /**
+   * returns the Value associated with the given title, or empty
+   **/
+  std::optional<Value> find(const QString& title) const
   {
-    bool enabled;
-    list_type list;
-  };
+    auto itor = m_map.find(title);
+    if (itor == m_map.end()) {
+      return {};
+    }
 
-  void load(Profile* p, const ExecutablesList& exes);
-  std::optional<Info> find(const QString& title) const;
+    return itor->second;
+  }
 
-  void setEnabled(const QString& title, bool b);
-  void setList(const QString& title, const list_type& list);
-  void rename(const QString& oldTitle, const QString& newTitle);
-  void remove(const QString& title);
+  /**
+   * sets the given value, adds it if not found
+   **/
+  void set(QString title, bool b, T value)
+  {
+    m_map.insert_or_assign(std::move(title), Value(b, std::move(value)));
+  }
+
+  /**
+   * sets whether the given value is enabled, inserts it if not found
+   **/
+  void setEnabled(const QString& title, bool b)
+  {
+    auto itor = m_map.find(title);
+
+    if (itor == m_map.end()) {
+      m_map.emplace(title, Value(b, {}));
+    } else {
+      itor->second.enabled = b;
+    }
+  }
+
+  /**
+   * sets the given value, inserts it enabled if not found
+   **/
+  void setValue(const QString& title, T value)
+  {
+    auto itor = m_map.find(title);
+
+    if (itor == m_map.end()) {
+      m_map.emplace(title, Value(true, std::move(value)));
+    } else {
+      itor->second.value = std::move(value);
+    }
+  }
+
+  /**
+   * renames the given value, ignored if not found
+   **/
+  void rename(const QString& oldTitle, QString newTitle)
+  {
+    auto itor = m_map.find(oldTitle);
+    if (itor == m_map.end()) {
+      return;
+    }
+
+    // move to new title, erase old
+    m_map.emplace(std::move(newTitle), std::move(itor->second));
+    m_map.erase(itor);
+  }
+
+  /**
+   * removes the given value, ignored if not found
+   **/
+  void remove(const QString& title)
+  {
+    auto itor = m_map.find(title);
+    if (itor == m_map.end()) {
+      return;
+    }
+
+    m_map.erase(itor);
+  }
 
 private:
-  std::map<QString, Info> m_map;
+  std::map<QString, Value> m_map;
 };
 
 
@@ -95,10 +144,9 @@ class EditExecutablesDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
-  /**
-   * @param executablesList current list of executables
-   * @param parent parent widget
-   **/
+  using CustomOverwrites = ToggableMap<QString>;
+  using ForcedLibraries = ToggableMap<QList<MOBase::ExecutableForcedLoadSetting>>;
+
   explicit EditExecutablesDialog(OrganizerCore& oc, QWidget* parent=nullptr);
 
   ~EditExecutablesDialog();
@@ -130,12 +178,27 @@ private slots:
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
   OrganizerCore& m_organizerCore;
+
+  // copy of the original executables, used to clear the current settings when
+  // committing changes
   const ExecutablesList m_originalExecutables;
+
+  // current executable list
   ExecutablesList m_executablesList;
+
+  // custom overwrites set in the dialog
   CustomOverwrites m_customOverwrites;
+
+  // forced libraries set in the dialog
   ForcedLibraries m_forcedLibraries;
+
+  // true when the change events being triggered are in response to loading
+  // the executable's data into the UI, not from a user change
   bool m_settingUI;
 
+
+  void loadCustomOverwrites();
+  void loadForcedLibraries();
 
   QListWidgetItem* selectedItem();
   Executable* selectedExe();

@@ -102,9 +102,13 @@ public:
 
   /**
    * @brief initializes the list from the settings and the given plugin
-   */
+   **/
   void load(const MOBase::IPluginGame* game, QSettings& settings);
 
+  /**
+   * @brief re-adds all the executables from the plugin and renames existing
+   *        executables that are in the way
+   **/
   void resetFromPlugin(MOBase::IPluginGame const *game);
 
   /**
@@ -167,17 +171,27 @@ public:
    **/
   void remove(const QString &title);
 
+  /**
+   * returns a title that starts with the given prefix and does not clash with
+   * an existing executable, may fail
+   */
   std::optional<QString> makeNonConflictingTitle(const QString& prefix);
 
 private:
   enum SetFlags
   {
+    // executables having the same name as existing ones are ignored
     IgnoreExisting = 1,
+
+    // executables having the same name are merged
     MergeExisting,
+
+    // an existing executable with the same name is renamed
     MoveExisting
   };
 
   std::vector<Executable> m_Executables;
+
 
   /**
   * @brief add the executables preconfigured for this game
