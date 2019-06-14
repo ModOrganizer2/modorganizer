@@ -54,7 +54,7 @@ void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
 
   if (user.type() == APIUserAccountTypes::None) {
     text = "API: not logged in";
-    textColor = "white";
+    textColor = "initial";
     backgroundColor = "transparent";
   } else {
     text = QString("API: Queued: %1 | Daily: %2 | Hourly: %3")
