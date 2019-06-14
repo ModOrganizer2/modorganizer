@@ -23,6 +23,13 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
   m_notifications->set(false);
 
   m_api->setObjectName("apistats");
+  m_api->setToolTip(QObject::tr(
+    "This tracks the number of queued Nexus API requests, as well as the "
+    "remaining daily and hourly requests. The Nexus API limits you to a pool "
+    "of requests per day and requests per hour. It is dynamically updated "
+    "every time a request is completed. If you run out of requests, you will "
+    "be unable to queue downloads, check updates, parse mod info, or even log "
+    "in. Both pools must be consumed before this happens."));
 
   m_bar->clearMessage();
   setProgress(-1);

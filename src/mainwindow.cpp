@@ -227,13 +227,30 @@ MainWindow::MainWindow(QSettings &initSettings
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
 
   ui->setupUi(this);
+  m_statusBar.reset(new StatusBar(statusBar(), ui));
 
   {
     auto* ni = NexusInterface::instance(&m_PluginContainer);
 
+    // there are two ways to get here:
+    //  1) the user just started MO, and
+    //  2) the user has changed some setting that required a restart
+    //
+    // "restarting" MO doesn't actually re-execute the binary, it just basically
+    // executes most of main() again, so a bunch of things are actually not
+    // reset
+    //
+    // one of these things is the api status, which will have fired its events
+    // long before the execution gets here because stuff is still cached and no
+    // real request to nexus is actually done
+    //
+    // therefore, when the user starts MO normally, the user account and stats
+    // will be empty (which is fine) and populated later on when the api key
+    // check has finished
+    //
+    // in the rare case where the user restarts MO through the settings, this
+    // will correctly pick up the previous values
     updateWindowTitle(ni->getAPIUserAccount());
-
-    m_statusBar.reset(new StatusBar(statusBar(), ui));
     m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
   }
 
