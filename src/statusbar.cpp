@@ -23,7 +23,6 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
   m_notifications->set(false);
 
   m_api->setObjectName("apistats");
-  m_api->setStyleSheet("QLabel{ padding: 0.1em 0 0.1em 0; }");
 
   m_bar->clearMessage();
   setProgress(-1);
@@ -55,28 +54,36 @@ void StatusBar::setAPI(const APIStats& stats, const APIUserAccount& user)
     .arg(user.limits().remainingDailyRequests)
     .arg(user.limits().remainingHourlyRequests));
 
-  QColor textColor;
-  QColor backgroundColor;
+  QString textColor;
+  QString backgroundColor;
 
   if (user.type() == APIUserAccountTypes::None) {
-    backgroundColor = Qt::transparent;
+    backgroundColor = "transparent";
   } else if (user.remainingRequests() > 300) {
     textColor = "white";
-    backgroundColor = Qt::darkGreen;
+    backgroundColor = "darkgreen";
   } else if (user.remainingRequests() < 150) {
     textColor = "white";
-    backgroundColor = Qt::darkRed;
+    backgroundColor = "darkred";
   } else {
     textColor = "black";
-    backgroundColor = Qt::darkYellow;
+    backgroundColor = "rgb(226, 192, 0)";  // yellow
   }
 
-  QPalette palette = m_api->palette();
+  m_api->setStyleSheet(QString(R"(
+    QLabel
+    {
+      padding-left: 0.1em;
+      padding-right: 0.1em;
+      padding-top: 0;
+      padding-bottom: 0;
+      color: %1;
+      background-color: %2;
+    }
+    )")
+    .arg(textColor)
+    .arg(backgroundColor));
 
-  palette.setColor(QPalette::WindowText, textColor);
-  palette.setColor(QPalette::Background, backgroundColor);
-
-  m_api->setPalette(palette);
   m_api->setAutoFillBackground(true);
 }
 
