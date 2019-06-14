@@ -74,8 +74,6 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
     settings.setArrayIndex(i);
 
     Executable::Flags flags;
-    if (settings.value("custom", true).toBool())
-      flags |= Executable::CustomExecutable;
     if (settings.value("toolbar", false).toBool())
       flags |= Executable::ShowInToolbar;
     if (settings.value("ownicon", false).toBool())
@@ -92,7 +90,7 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 
   settings.endArray();
 
-  addFromPlugin(game);
+  addFromPlugin(game, IgnoreExisting);
 }
 
 void ExecutablesList::store(QSettings& settings)
@@ -106,29 +104,33 @@ void ExecutablesList::store(QSettings& settings)
     settings.setArrayIndex(count++);
 
     settings.setValue("title", item.title());
-    settings.setValue("custom", item.isCustom());
     settings.setValue("toolbar", item.isShownOnToolbar());
     settings.setValue("ownicon", item.usesOwnIcon());
-
-    if (item.isCustom()) {
-      settings.setValue("binary", item.binaryInfo().absoluteFilePath());
-      settings.setValue("arguments", item.arguments());
-      settings.setValue("workingDirectory", item.workingDirectory());
-      settings.setValue("steamAppID", item.steamAppID());
-    }
+    settings.setValue("binary", item.binaryInfo().absoluteFilePath());
+    settings.setValue("arguments", item.arguments());
+    settings.setValue("workingDirectory", item.workingDirectory());
+    settings.setValue("steamAppID", item.steamAppID());
   }
 
   settings.endArray();
 }
 
-void ExecutablesList::addFromPlugin(IPluginGame const *game)
+void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
+{
+  qDebug("resetting plugin executables");
+  addFromPlugin(game, MoveExisting);
+}
+
+void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
 {
   Q_ASSERT(game != nullptr);
 
   for (const ExecutableInfo &info : game->executables()) {
-    if (info.isValid()) {
-      setExecutable({info, Executable::UseApplicationIcon});
+    if (!info.isValid()) {
+      continue;
     }
+
+    setExecutable({info, Executable::UseApplicationIcon}, flags);
   }
 
   const QFileInfo eppBin(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe");
@@ -137,12 +139,14 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game)
     const auto args = QString("\"%1\"")
       .arg(QDir::toNativeSeparators(game->dataDirectory().absolutePath()));
 
-    setExecutable(Executable()
+    const auto exe = Executable()
       .title("Explore Virtual Folder")
       .binaryInfo(eppBin)
       .arguments(args)
       .workingDirectory(eppBin.absolutePath())
-      .flags(Executable::UseApplicationIcon));
+      .flags(Executable::UseApplicationIcon);
+
+    setExecutable(exe, flags);
   }
 }
 
@@ -188,27 +192,80 @@ bool ExecutablesList::titleExists(const QString &title) const
   return std::find_if(m_Executables.begin(), m_Executables.end(), test) != m_Executables.end();
 }
 
-void ExecutablesList::setExecutable(const Executable &executable)
+void ExecutablesList::setExecutable(const Executable &exe)
 {
-  auto itor = find(executable.title());
+  setExecutable(exe, MergeExisting);
+}
+
+void ExecutablesList::setExecutable(const Executable &exe, SetFlags flags)
+{
+  auto itor = find(exe.title());
+
+  if (itor != end()) {
+    if (flags == IgnoreExisting) {
+      return;
+    }
+
+    if (flags == MoveExisting) {
+      const auto newTitle = makeNonConflictingTitle(exe.title());
+      if (!newTitle) {
+        qCritical().nospace()
+          << "executable '" << exe.title() << "' was in the way but could "
+          << "not be renamed";
+
+        return;
+      }
+
+      qWarning().nospace()
+        << "executable '" << itor->title() << "' was in the way and was "
+        << "renamed to '" << *newTitle << "'";
+
+      itor->title(*newTitle);
+      itor = end();
+    }
+  }
 
   if (itor == m_Executables.end()) {
-    m_Executables.push_back(executable);
+    m_Executables.push_back(exe);
   } else {
-    itor->mergeFrom(executable);
+    itor->mergeFrom(exe);
   }
 }
 
 void ExecutablesList::remove(const QString &title)
 {
-  for (std::vector<Executable>::iterator iter = m_Executables.begin(); iter != m_Executables.end(); ++iter) {
-    if (iter->isCustom() && (iter->title() == title)) {
-      m_Executables.erase(iter);
-      break;
-    }
+  auto itor = find(title);
+  if (itor != m_Executables.end()) {
+    m_Executables.erase(itor);
   }
 }
 
+std::optional<QString> ExecutablesList::makeNonConflictingTitle(
+  const QString& prefix)
+{
+  const int max = 100;
+
+  QString title = prefix;
+
+  for (int i=1; i<max; ++i) {
+    if (!titleExists(title)) {
+      return title;
+    }
+
+    title = prefix + QString(" (%1)").arg(i);
+  }
+
+  qCritical().nospace()
+    << "ran out of executable titles for prefix '" << prefix << "'";
+
+  return {};
+}
+
+
+Executable::Executable(QString title)
+  : m_title(title)
+{
+}
 
 Executable::Executable(const MOBase::ExecutableInfo& info, Flags flags) :
   m_title(info.title()),
@@ -286,11 +343,6 @@ Executable& Executable::flags(Flags f)
   return *this;
 }
 
-bool Executable::isCustom() const
-{
-  return m_flags.testFlag(CustomExecutable);
-}
-
 bool Executable::isShownOnToolbar() const
 {
   return m_flags.testFlag(ShowInToolbar);
@@ -315,43 +367,13 @@ void Executable::mergeFrom(const Executable& other)
   // flags on plugin executables that the user is allowed to change
   const auto allow = ShowInToolbar;
 
+  // this happens after executables are loaded from settings and plugin
+  // executables are being added, or when users are modifying executables
 
-  if (!other.isCustom()) {
-    // this happens when loading plugin executables in addFromPlugin(), replace
-    // everything in case the plugin has changed
-
-    // remember the flags though
-    const auto flags = m_flags;
-
-    // overwrite everything
-    *this = other;
-
-    // set the user flags
-    m_flags |= (flags & allow);
-  }
-  else if (!isCustom()) {
-    // this happens when the user is trying to modify a plugin executable
-    m_flags |= (other.flags() & allow);
-  } else {
-    // this happens after executables are loaded from settings and plugin
-    // executables are being added, or when users are modifying executables
-
-    m_title = other.title();
-    m_arguments = other.arguments();
-    m_steamAppID = other.steamAppID();
-    m_workingDirectory = other.workingDirectory();
-
-    // don't overwrite a valid binary with an invalid one
-    if (other.binaryInfo().exists()) {
-      m_binaryInfo = other.binaryInfo();
-    }
-
-    if (!other.isCustom()) {
-      // overwriting a custom executable with a plugin, merge all the flags
-      m_flags |= other.flags();
-    } else {
-      // overwriting a custom with another custom, just replace the flags
-      m_flags = other.flags();
-    }
-  }
+  m_title = other.title();
+  m_binaryInfo = other.binaryInfo();
+  m_arguments = other.arguments();
+  m_steamAppID = other.steamAppID();
+  m_workingDirectory = other.workingDirectory();
+  m_flags = other.flags();
 }

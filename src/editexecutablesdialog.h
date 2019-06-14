@@ -110,6 +110,7 @@ public:
 private slots:
   void on_list_itemSelectionChanged();
 
+  void on_reset_clicked();
   void on_add_clicked();
   void on_remove_clicked();
   void on_up_clicked();
@@ -124,8 +125,7 @@ private slots:
   void on_browseWorkingDirectory_clicked();
   void on_configureLibraries_clicked();
 
-  void on_buttons_accepted();
-  void on_buttons_rejected();
+  void on_buttons_clicked(QAbstractButton* b);
 
 private:
   std::unique_ptr<Ui::EditExecutablesDialog> ui;
@@ -140,19 +140,20 @@ private:
   QListWidgetItem* selectedItem();
   Executable* selectedExe();
 
-  void fillExecutableList();
+  void fillList();
   QListWidgetItem* createListItem(const Executable& exe);
   void updateUI(const QListWidgetItem* item, const Executable* e);
   void clearEdits();
   void setEdits(const Executable& e);
   void setButtons(const QListWidgetItem* item, const Executable* e);
   void save();
+  void saveOrder();
   bool canMove(const QListWidgetItem* item, int direction);
   void move(QListWidgetItem* item, int direction);
   void setJarBinary(const QString& binaryName);
-  std::optional<QString> makeNonConflictingTitle(const QString& prefix);
   bool isTitleConflicting(const QString& s);
   void commitChanges();
+  void setDirty(bool b);
 };
 
 #endif // EDITEXECUTABLESDIALOG_H

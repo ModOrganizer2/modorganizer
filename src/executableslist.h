@@ -23,6 +23,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "executableinfo.h"
 
 #include <vector>
+#include <optional>
 
 #include <QFileInfo>
 #include <QMetaType>
@@ -37,14 +38,13 @@ class Executable
 public:
   enum Flag
   {
-    CustomExecutable = 0x01,
     ShowInToolbar = 0x02,
     UseApplicationIcon = 0x04
   };
 
   Q_DECLARE_FLAGS(Flags, Flag);
 
-  Executable() = default;
+  Executable(QString title={});
 
   /**
   * @brief Executable from plugin
@@ -65,7 +65,6 @@ public:
   Executable& workingDirectory(const QString& s);
   Executable& flags(Flags f);
 
-  bool isCustom() const;
   bool isShownOnToolbar() const;
   void setShownOnToolbar(bool state);
   bool usesOwnIcon() const;
@@ -105,6 +104,8 @@ public:
    * @brief initializes the list from the settings and the given plugin
    */
   void load(const MOBase::IPluginGame* game, QSettings& settings);
+
+  void resetFromPlugin(MOBase::IPluginGame const *game);
 
   /**
    * @brief writes the current list to the settings
@@ -166,13 +167,28 @@ public:
    **/
   void remove(const QString &title);
 
+  std::optional<QString> makeNonConflictingTitle(const QString& prefix);
+
 private:
+  enum SetFlags
+  {
+    IgnoreExisting = 1,
+    MergeExisting,
+    MoveExisting
+  };
+
   std::vector<Executable> m_Executables;
 
   /**
   * @brief add the executables preconfigured for this game
   **/
-  void addFromPlugin(MOBase::IPluginGame const *game);
+  void addFromPlugin(MOBase::IPluginGame const *game, SetFlags flags);
+
+  /**
+  * @brief add a new executable to the list
+  * @param executable
+  */
+  void setExecutable(const Executable &exe, SetFlags flags);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)

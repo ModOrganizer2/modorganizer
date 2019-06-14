@@ -168,6 +168,26 @@
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QToolButton" name="reset">
+              <property name="toolTip">
+               <string>Adds the executables provided by the game plugin and moves any existing executables out of the way</string>
+              </property>
+              <property name="statusTip">
+               <string>Adds the executables provided by the game plugin and moves any existing executables out of the way</string>
+              </property>
+              <property name="whatsThis">
+               <string>Adds the executables provided by the game plugin and moves any existing executables out of the way</string>
+              </property>
+              <property name="text">
+               <string>Reset</string>
+              </property>
+              <property name="icon">
+               <iconset resource="resources.qrc">
+                <normaloff>:/MO/gui/edit_clear</normaloff>:/MO/gui/edit_clear</iconset>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
           <item>
@@ -426,21 +446,6 @@ Right now the only case I know of where this needs to be overwritten is for the 
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="pluginProvidedLabel">
-            <property name="font">
-             <font>
-              <italic>true</italic>
-             </font>
-            </property>
-            <property name="text">
-             <string>This executable is provided by the game plugin</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
            <spacer name="verticalSpacer">
             <property name="orientation">
              <enum>Qt::Vertical</enum>
@@ -463,7 +468,7 @@ Right now the only case I know of where this needs to be overwritten is for the 
    <item>
     <widget class="QDialogButtonBox" name="buttons">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>

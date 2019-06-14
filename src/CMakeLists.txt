@@ -293,7 +293,6 @@ set(core
 	categories
 	shared/directoryentry
 	directoryrefresher
-	executableslist
 	installationmanager
 	instancemanager
 	loadmechanism
@@ -309,7 +308,6 @@ set(dialogs
 	activatemodsdialog
 	categoriesdialog
 	credentialsdialog
-	editexecutablesdialog
 	filedialogmemory
 	forcedloaddialog
 	forcedloaddialogwidget
@@ -331,6 +329,11 @@ set(downloads
 	downloadlistsortproxy
 	downloadlistwidget
 	downloadmanager
+)
+
+set(executables
+	executableslist
+	editexecutablesdialog
 )
 
 set(locking
@@ -412,8 +415,8 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads locking modinfo modlist plugins
-	previews profiles settings utilities widgets
+	application core browser dialogs downloads executables locking modinfo
+	modlist plugins previews profiles settings utilities widgets
 )
 
 foreach(filter in list ${src_filters})

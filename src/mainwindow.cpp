@@ -5513,8 +5513,7 @@ void MainWindow::addAsExecutable()
             .title(name)
             .binaryInfo(binaryInfo)
             .arguments(arguments)
-            .workingDirectory(targetInfo.absolutePath())
-            .flags(Executable::CustomExecutable));
+            .workingDirectory(targetInfo.absolutePath()));
 
           refreshExecutablesList();
         }
