@@ -118,6 +118,7 @@ SET(organizer_SRCS
 	filterwidget.cpp
 	statusbar.cpp
 	apiuseraccount.cpp
+	filerenamer.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -217,6 +218,7 @@ SET(organizer_HDRS
 	filterwidget.h
 	statusbar.h
 	apiuseraccount.h
+	filerenamer.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -402,6 +404,7 @@ set(utilities
 set(widgets
 	descriptionpage
 	genericicondelegate
+	filerenamer
 	filterwidget
 	icondelegate
 	lcdnumber
