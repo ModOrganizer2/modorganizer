@@ -19,8 +19,7 @@ private:
   QAction* m_wordWrap;
 
   void onTextModified(bool b);
-  void onSave();
-  void onWordWrap();
+  void onWordWrap(bool b);
 };
 
 
@@ -37,12 +36,14 @@ public:
   const QString& filename() const;
 
   void wordWrap(bool b);
+  void toggleWordWrap();
   bool wordWrap() const;
 
   bool dirty() const;
 
 signals:
   void modified(bool b);
+  void wordWrapChanged(bool b);
 
 private:
   QPlainTextEdit* m_edit;

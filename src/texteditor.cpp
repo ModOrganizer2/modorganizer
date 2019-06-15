@@ -10,6 +10,8 @@ TextEditor::TextEditor(QPlainTextEdit* edit)
   m_edit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   wordWrap(true);
 
+  emit modified(false);
+
   QObject::connect(
     m_edit->document(), &QTextDocument::modificationChanged,
     [&](bool b){ onModified(b); });
@@ -55,6 +57,13 @@ void TextEditor::wordWrap(bool b)
   } else {
     m_edit->setLineWrapMode(QPlainTextEdit::NoWrap);
   }
+
+  emit wordWrapChanged(b);
+}
+
+void TextEditor::toggleWordWrap()
+{
+  wordWrap(!wordWrap());
 }
 
 bool TextEditor::wordWrap() const
@@ -131,8 +140,10 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
   m_save(new QAction(QObject::tr("&Save"))),
   m_wordWrap(new QAction(QObject::tr("&Word wrap")))
 {
-  QObject::connect(m_save, &QAction::triggered, [&]{ onSave(); });
-  QObject::connect(m_wordWrap, &QAction::triggered, [&]{ onWordWrap(); });
+  QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
+
+  m_wordWrap->setCheckable(true);
+  QObject::connect(m_wordWrap, &QAction::triggered, [&]{ m_editor.toggleWordWrap(); });
 
   auto* layout = new QHBoxLayout(m_widget);
   layout->setContentsMargins(0, 0, 0, 0);
@@ -147,6 +158,7 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
   layout->addWidget(b);
 
   QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
+  QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b){ onWordWrap(b); });
 }
 
 QWidget* TextEditorToolbar::widget()
@@ -159,12 +171,7 @@ void TextEditorToolbar::onTextModified(bool b)
   m_save->setEnabled(b);
 }
 
-void TextEditorToolbar::onSave()
+void TextEditorToolbar::onWordWrap(bool b)
 {
-  m_editor.save();
-}
-
-void TextEditorToolbar::onWordWrap()
-{
-  m_editor.wordWrap(!m_editor.wordWrap());
+  m_wordWrap->setChecked(b);
 }
