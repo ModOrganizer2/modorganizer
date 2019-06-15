@@ -740,8 +740,8 @@ void MainWindow::updatePinnedExecutables()
       QAction *exeAction = new QAction(
         iconForExecutable(exe.binaryInfo().filePath()), exe.title());
 
-      exeAction->setObjectName(QString("custom__") + iter->m_Title);
-      exeAction->setStatusTip(iter->m_BinaryInfo.filePath());
+      exeAction->setObjectName(QString("custom__") + exe.title());
+      exeAction->setStatusTip(exe.binaryInfo().filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
