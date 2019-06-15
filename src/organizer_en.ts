@@ -96,7 +96,7 @@
     </message>
     <message>
         <location filename="aboutdialog.ui" line="340"/>
-        <source>Jax (Swedish)</source>
+        <source>Jax, Nubbie (Swedish)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -111,7 +111,7 @@
     </message>
     <message>
         <location filename="aboutdialog.ui" line="364"/>
-        <source>Other Supporters &amp;&amp; Contributors</source>
+        <source>Other Supporters &amp; Contributors</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1453,12 +1453,12 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
     <name>MOApplication</name>
     <message>
         <location filename="moapplication.cpp" line="119"/>
-        <source>an error occured: %1</source>
+        <source>an error occurred: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="moapplication.cpp" line="124"/>
-        <source>an error occured</source>
+        <source>an error occurred</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1555,8 +1555,8 @@ This is likely due to a corrupted or incompatible download or unrecognized archi
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different play throughs.&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept seperate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Create profiles here. Each profile contains its own list of active mods and esps. This way you can quickly switch between setups for different playthroughs.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Please note that right now your esp load order is not kept separate for different profiles.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3272,7 +3272,7 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
     </message>
     <message>
         <location filename="mainwindow.cpp" line="6565"/>
-        <source>Errors occured</source>
+        <source>Errors occurred</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3309,7 +3309,7 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
     </message>
     <message>
         <location filename="mainwindow.cpp" line="6668"/>
-        <source>Backup of modlist created</source>
+        <source>Backup of mod list created</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3508,7 +3508,7 @@ You will have to visit the mod page on the %1 Nexus site to change your mind.</s
     </message>
     <message>
         <location filename="modinfodialog.ui" line="139"/>
-        <source>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod wether the tweaks are really optional.</source>
+        <source>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod whether the tweaks are really optional.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3582,7 +3582,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
     </message>
     <message>
         <location filename="modinfodialog.ui" line="386"/>
-        <source>These are the mod files that are in the (virtual) data directory of your game and will thus be selecteable in the esp list in the main window.</source>
+        <source>These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3658,7 +3658,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;MS Shell Dlg 2&apos;; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Mod ID for this mod on Nexus. This is filled in automatically if you downloaded and installed the mod from inside MO. Otherwise you can enter it manually. To find the correct id, find the mod on nexus. The URL will look like this: &lt;a href=&quot; https://www.nexusmods.com/skyrimspecialedition/mods/6194&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://www.nexusmods.com/skyrimspecialedition/mods/6194&lt;/span&gt;&lt;/a&gt;. In this example, 6194 is the id you&apos;re looking for. Besides: The above is the link to Mod Organizer2 on Nexus. Why not go there now and endorse us?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Mod ID for this mod on Nexus. This is filled in automatically if you downloaded and installed the mod from inside MO. Otherwise you can enter it manually. To find the correct id, find the mod on nexus. The URL will look like this: &lt;a href=&quot; https://www.nexusmods.com/skyrimspecialedition/mods/6194&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://www.nexusmods.com/skyrimspecialedition/mods/6194&lt;/span&gt;&lt;/a&gt;. In this example, 6194 is the id you&apos;re looking for. Besides: The above is the link to Mod Organizer 2 on Nexus. Why not go there now and endorse us?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3717,7 +3717,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="modinfodialog.ui" line="867"/>
-        <source>Web page URL (only used if invalid NexusID) :</source>
+        <source>Web page URL (only used if invalid Nexus ID) :</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3917,13 +3917,13 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="modinfodialog.cpp" line="1271"/>
         <location filename="modinfodialog.cpp" line="1296"/>
-        <source>Are sure you want to delete &quot;%1&quot;?</source>
+        <source>Are you sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="modinfodialog.cpp" line="1277"/>
         <location filename="modinfodialog.cpp" line="1301"/>
-        <source>Are sure you want to delete the selected files?</source>
+        <source>Are you sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4519,7 +4519,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="organizercore.cpp" line="409"/>
-        <source>An error occured trying to update MO settings to %1: %2</source>
+        <source>An error occurred trying to update MO settings to %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4539,7 +4539,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="organizercore.cpp" line="436"/>
-        <source>An error occured trying to write back MO settings to %1: %2</source>
+        <source>An error occurred trying to write back MO settings to %1: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4619,7 +4619,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="organizercore.cpp" line="1361"/>
-        <source>MO was denied access to the Steam process.  This normally indicates that Steam is being run as administrator while MO is not.  This can cause issues launching the game.  It is recommended to not run Steam as administrator unless absolutely neccessary.
+        <source>MO was denied access to the Steam process.  This normally indicates that Steam is being run as administrator while MO is not.  This can cause issues launching the game.  It is recommended to not run Steam as administrator unless absolutely necessary.
 
 Restart MO as administrator?</source>
         <translation type="unfinished"></translation>
@@ -4802,13 +4802,13 @@ Continue?</source>
     <message>
         <location filename="overwriteinfodialog.cpp" line="164"/>
         <location filename="overwriteinfodialog.cpp" line="189"/>
-        <source>Are sure you want to delete &quot;%1&quot;?</source>
+        <source>Are you sure you want to delete &quot;%1&quot;?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="overwriteinfodialog.cpp" line="170"/>
         <location filename="overwriteinfodialog.cpp" line="194"/>
-        <source>Are sure you want to delete the selected files?</source>
+        <source>Are you sure you want to delete the selected files?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5528,7 +5528,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="instancemanager.cpp" line="105"/>
-        <source>Be Carefull! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.</source>
+        <source>Be Careful! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untouched.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5907,7 +5907,7 @@ If the folder was still in use, restart MO and try again.</source>
     <message>
         <location filename="spawn.cpp" line="153"/>
         <source>This process requires elevation to run.
-This is a potential security risk so I highly advice you to investigate if
+This is a potential security risk so I highly advise you to investigate if
 &quot;%1&quot;
 can be installed to work without elevation.
 
@@ -6377,7 +6377,7 @@ If you use pre-releases, never contact me directly by e-mail or via private mess
     </message>
     <message>
         <location filename="settingsdialog.ui" line="444"/>
-        <source>Important: All directories have to be writeable!</source>
+        <source>Important: All directories have to be writable!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6809,7 +6809,7 @@ programs you are intentionally running.</source>
         <location filename="settingsdialog.ui" line="1282"/>
         <source>
                                     Decides the amount of data printed to &quot;ModOrganizer.log&quot;.
-                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regluar use. On the &quot;Error&quot; level the log file usually remains empty.
+                                    &quot;Debug&quot; produces very useful information for finding problems. There is usually no noteworthy performance impact but the file may become rather large. If this is a problem you may prefer the &quot;Info&quot; level for regular use. On the &quot;Error&quot; level the log file usually remains empty.
                                 </source>
         <translation type="unfinished"></translation>
     </message>
@@ -7191,7 +7191,7 @@ On Windows XP:
     </message>
     <message>
         <location filename="tutorials/tutorial_conflictresolution_main.js" line="59"/>
-        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwrtten by another. You could as well disable it.</source>
+        <source>&lt;img src=&quot;qrc:///MO/gui/emblem_conflict_redundant&quot; /&gt; indicates that the mod is completely overwritten by another. You could as well disable it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7397,7 +7397,7 @@ There IS a notification now but you may want to hold off on clearing it until af
     </message>
     <message>
         <location filename="tutorials/tutorial_firststeps_main.js" line="139"/>
-        <source>A single mod may contain zero, one or multiple esps. Some or all may be optional. If in doubt, please consult the documentation of the indiviual mod. To do so, right-click the mod and select &quot;Information&quot;.</source>
+        <source>A single mod may contain zero, one or multiple esps. Some or all may be optional. If in doubt, please consult the documentation of the individual mod. To do so, right-click the mod and select &quot;Information&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7431,7 +7431,7 @@ It&apos;s important you always start the game from inside MO, otherwise the mods
     </message>
     <message>
         <location filename="tutorials/tutorial_firststeps_modinfo.js" line="19"/>
-        <source>We may re-visit this screen in later tutorials.</source>
+        <source>We may revisit this screen in later tutorials.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
