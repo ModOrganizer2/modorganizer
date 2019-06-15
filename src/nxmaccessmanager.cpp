@@ -18,8 +18,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "nxmaccessmanager.h"
-
 #include "iplugingame.h"
+#include "nexusinterface.h"
 #include "nxmurl.h"
 #include "report.h"
 #include "utility.h"
@@ -190,6 +190,7 @@ void NXMAccessManager::apiCheck(const QString &apiKey, bool force)
     emit validateSuccessful(false);
     return;
   }
+
   m_ApiKey = apiKey;
   startValidationCheck();
 }
@@ -218,6 +219,13 @@ QString NXMAccessManager::apiKey() const
   return m_ApiKey;
 }
 
+void NXMAccessManager::clearApiKey()
+{
+  m_ApiKey = "";
+  m_ValidateState = VALIDATE_NOT_VALID;
+
+  emit credentialsReceived(APIUserAccount());
+}
 
 void NXMAccessManager::validateTimeout()
 {
@@ -233,7 +241,6 @@ void NXMAccessManager::validateTimeout()
   if (m_ValidateReply != nullptr) {
     m_ValidateReply->deleteLater();
     m_ValidateReply = nullptr;
-    m_ValidateAttempted = false; // this usually means we might have success later
   }
 
   emit validateFailed(tr("There was a timeout during the request"));
@@ -280,20 +287,21 @@ void NXMAccessManager::validateFinished()
         QString name = credentialsData.value("name").toString();
         bool premium = credentialsData.value("is_premium").toBool();
 
-        std::tuple<int, int, int, int> limits(std::make_tuple(
-          m_ValidateReply->rawHeader("x-rl-daily-remaining").toInt(),
-          m_ValidateReply->rawHeader("x-rl-daily-limit").toInt(),
-          m_ValidateReply->rawHeader("x-rl-hourly-remaining").toInt(),
-          m_ValidateReply->rawHeader("x-rl-hourly-limit").toInt()
-        ));
+        const auto user = APIUserAccount()
+          .id(QString("%1").arg(id))
+          .name(name)
+          .type(premium ? APIUserAccountTypes::Premium : APIUserAccountTypes::Regular)
+          .limits(NexusInterface::parseLimits(m_ValidateReply));
 
-        emit credentialsReceived(name, id, premium, limits);
+
+        emit credentialsReceived(user);
 
         m_ValidateReply->deleteLater();
         m_ValidateReply = nullptr;
 
         m_ValidateState = VALIDATE_VALID;
         emit validateSuccessful(true);
+
       } else {
         m_ApiKey.clear();
         m_ValidateState = VALIDATE_NOT_VALID;

@@ -77,6 +77,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "nxmaccessmanager.h"
 #include "appconfig.h"
 #include "eventfilter.h"
+#include "statusbar.h"
 #include <utility.h>
 #include <dataarchives.h>
 #include <bsainvalidation.h>
@@ -202,6 +203,7 @@ MainWindow::MainWindow(QSettings &initSettings
   , ui(new Ui::MainWindow)
   , m_WasVisible(false)
   , m_menuBarVisible(true)
+  , m_statusBarVisible(true)
   , m_linksSeparator(nullptr)
   , m_Tutorial(this, "MainWindow")
   , m_OldProfileIndex(-1)
@@ -223,8 +225,34 @@ MainWindow::MainWindow(QSettings &initSettings
   QWebEngineProfile::defaultProfile()->setHttpCacheMaximumSize(52428800);
   QWebEngineProfile::defaultProfile()->setCachePath(m_OrganizerCore.settings().getCacheDirectory());
   QWebEngineProfile::defaultProfile()->setPersistentStoragePath(m_OrganizerCore.settings().getCacheDirectory());
+
   ui->setupUi(this);
-  updateWindowTitle(QString(), 0, false);
+  m_statusBar.reset(new StatusBar(statusBar(), ui));
+
+  {
+    auto* ni = NexusInterface::instance(&m_PluginContainer);
+
+    // there are two ways to get here:
+    //  1) the user just started MO, and
+    //  2) the user has changed some setting that required a restart
+    //
+    // "restarting" MO doesn't actually re-execute the binary, it just basically
+    // executes most of main() again, so a bunch of things are actually not
+    // reset
+    //
+    // one of these things is the api status, which will have fired its events
+    // long before the execution gets here because stuff is still cached and no
+    // real request to nexus is actually done
+    //
+    // therefore, when the user starts MO normally, the user account and stats
+    // will be empty (which is fine) and populated later on when the api key
+    // check has finished
+    //
+    // in the rare case where the user restarts MO through the settings, this
+    // will correctly pick up the previous values
+    updateWindowTitle(ni->getAPIUserAccount());
+    m_statusBar->setAPI(ni->getAPIStats(), ni->getAPIUserAccount());
+  }
 
   languageChange(m_OrganizerCore.settings().language());
 
@@ -241,14 +269,6 @@ MainWindow::MainWindow(QSettings &initSettings
           ui->logList, SLOT(scrollToBottom()));
   connect(ui->logList->model(), SIGNAL(dataChanged(QModelIndex,QModelIndex)),
           ui->logList, SLOT(scrollToBottom()));
-
-  m_RefreshProgress = new QProgressBar(statusBar());
-  m_RefreshProgress->setTextVisible(true);
-  m_RefreshProgress->setRange(0, 100);
-  m_RefreshProgress->setValue(0);
-  m_RefreshProgress->setVisible(false);
-  statusBar()->addWidget(m_RefreshProgress, 1000);
-  statusBar()->clearMessage();
 
   updateProblemsButton();
 
@@ -345,13 +365,6 @@ MainWindow::MainWindow(QSettings &initSettings
     ui->bossButton->setToolTip(tr("There is no supported sort mechanism for this game. You will probably have to use a third-party tool."));
   }
 
-  ui->apiRequests->setAutoFillBackground(true);
-  QPalette palette = ui->apiRequests->palette();
-  palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-  palette.setColor(ui->apiRequests->foregroundRole(), Qt::white);
-  ui->apiRequests->setPalette(palette);
-  ui->apiRequests->setVisible(!m_OrganizerCore.settings().hideAPICounter());
-
   connect(&m_PluginContainer, SIGNAL(diagnosisUpdate()), this, SLOT(updateProblemsButton()));
 
   connect(ui->savegameList, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(saveSelectionChanged(QListWidgetItem*)));
@@ -384,11 +397,24 @@ MainWindow::MainWindow(QSettings &initSettings
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(nxmDownloadURLsAvailable(QString,int,int,QVariant,QVariant,int)), this, SLOT(nxmDownloadURLs(QString,int,int,QVariant,QVariant,int)));
   connect(NexusInterface::instance(&pluginContainer), SIGNAL(needLogin()), &m_OrganizerCore, SLOT(nexusApi()));
   connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(validateFailed(QString)), this, SLOT(validationFailed(QString)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
-          this, SLOT(updateWindowTitle(const QString&, int, bool)));
-  connect(NexusInterface::instance(&pluginContainer)->getAccessManager(), SIGNAL(credentialsReceived(const QString&, int, bool, std::tuple<int, int, int, int>)),
-    NexusInterface::instance(&m_PluginContainer), SLOT(setRateMax(const QString&, int, bool, std::tuple<int, int, int, int>)));
-  connect(NexusInterface::instance(&pluginContainer), SIGNAL(requestsChanged(int, std::tuple<int, int, int, int>)), this, SLOT(updateAPICounter(int, std::tuple<int, int, int, int>)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    this,
+    SLOT(updateWindowTitle(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer)->getAccessManager(),
+    SIGNAL(credentialsReceived(const APIUserAccount&)),
+    NexusInterface::instance(&m_PluginContainer),
+    SLOT(setUserAccount(const APIUserAccount&)));
+
+  connect(
+    NexusInterface::instance(&pluginContainer),
+    SIGNAL(requestsChanged(const APIStats&, const APIUserAccount&)),
+    this,
+    SLOT(onRequestsChanged(const APIStats&, const APIUserAccount&)));
 
   connect(&TutorialManager::instance(), SIGNAL(windowTutorialFinished(QString)), this, SLOT(windowTutorialFinished(QString)));
   connect(ui->tabWidget, SIGNAL(currentChanged(int)), &TutorialManager::instance(), SIGNAL(tabChanged(int)));
@@ -553,17 +579,24 @@ MainWindow::~MainWindow()
 }
 
 
-void MainWindow::updateWindowTitle(const QString &accountName, int, bool premium)
+void MainWindow::updateWindowTitle(const APIUserAccount& user)
 {
   QString title = QString("%1 Mod Organizer v%2").arg(
         m_OrganizerCore.managedGame()->gameName(),
         m_OrganizerCore.getVersion().displayString(3));
 
-  if (!accountName.isEmpty()) {
-    title.append(QString(" (%1%2)").arg(accountName, premium ? "*" : ""));
+  if (!user.name().isEmpty()) {
+    const QString premium = (user.type() == APIUserAccountTypes::Premium ? "*" : "");
+    title.append(QString(" (%1%2)").arg(user.name(), premium));
   }
 
   this->setWindowTitle(title);
+}
+
+
+void MainWindow::onRequestsChanged(const APIStats& stats, const APIUserAccount& user)
+{
+  m_statusBar->setAPI(stats, user);
 }
 
 
@@ -711,6 +744,7 @@ void MainWindow::updatePinnedExecutables()
         iconForExecutable(iter->m_BinaryInfo.filePath()), iter->m_Title);
 
       exeAction->setObjectName(QString("custom__") + iter->m_Title);
+      exeAction->setStatusTip(iter->m_BinaryInfo.filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
@@ -744,6 +778,7 @@ void MainWindow::toolbarMenu_aboutToShow()
 
   ui->actionMainMenuToggle->setChecked(ui->menuBar->isVisible());
   ui->actionToolBarMainToggle->setChecked(ui->toolBar->isVisible());
+  ui->actionStatusBarToggle->setChecked(ui->statusBar->isVisible());
 
   ui->actionToolBarSmallIcons->setChecked(ui->toolBar->iconSize() == SmallToolbarSize);
   ui->actionToolBarMediumIcons->setChecked(ui->toolBar->iconSize() == MediumToolbarSize);
@@ -761,13 +796,17 @@ QMenu* MainWindow::createPopupMenu()
 
 void MainWindow::on_actionMainMenuToggle_triggered()
 {
-  ui->menuBar->setVisible(!ui->menuBar->isVisible());
-  m_menuBarVisible = ui->menuBar->isVisible();
+  showMenuBar(!ui->menuBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarMainToggle_triggered()
 {
   ui->toolBar->setVisible(!ui->toolBar->isVisible());
+}
+
+void MainWindow::on_actionStatusBarToggle_triggered()
+{
+  showStatusBar(!ui->statusBar->isVisible());
 }
 
 void MainWindow::on_actionToolBarSmallIcons_triggered()
@@ -812,6 +851,36 @@ void MainWindow::setToolbarButtonStyle(Qt::ToolButtonStyle s)
   for (auto* tb : findChildren<QToolBar*>()) {
     tb->setToolButtonStyle(s);
   }
+}
+
+void MainWindow::showMenuBar(bool b)
+{
+  ui->menuBar->setVisible(b);
+  m_menuBarVisible = b;
+}
+
+void MainWindow::showStatusBar(bool b)
+{
+  ui->statusBar->setVisible(b);
+  m_statusBarVisible = b;
+
+  // the central widget typically has no bottom padding because the status bar
+  // is more than enough, but when it's hidden, the bottom widget (currently
+  // the log) touches the bottom border of the window, which looks ugly
+  //
+  // when hiding the statusbar, the central widget is given the same border
+  // margin as it has on the top (which is typically 6, as it's the default from
+  // the qt designer)
+
+  auto m = ui->centralWidget->layout()->contentsMargins();
+
+  if (b) {
+    m.setBottom(0);
+  } else {
+    m.setBottom(m.top());
+  }
+
+  ui->centralWidget->layout()->setContentsMargins(m);
 }
 
 void MainWindow::on_centralWidget_customContextMenuRequested(const QPoint &pos)
@@ -882,6 +951,8 @@ void MainWindow::updateProblemsButton()
     final = original;
   }
 
+  ui->actionNotifications->setEnabled(numProblems > 0);
+
   // setting the icon on the action (shown on the menu)
   ui->actionNotifications->setIcon(final);
 
@@ -890,6 +961,11 @@ void MainWindow::updateProblemsButton()
     if (auto* button=dynamic_cast<QAbstractButton*>(actionWidget)) {
       button->setIcon(final);
     }
+  }
+
+  // updating the status bar, may be null very early when MO is starting
+  if (m_statusBar) {
+    m_statusBar->setNotifications(numProblems > 0);
   }
 }
 
@@ -2083,8 +2159,11 @@ void MainWindow::readSettings()
   }
 
   if (settings.contains("menubar_visible")) {
-    m_menuBarVisible = settings.value("menubar_visible").toBool();
-    ui->menuBar->setVisible(m_menuBarVisible);
+    showMenuBar(settings.value("menubar_visible").toBool());
+  }
+
+  if (settings.contains("statusbar_visible")) {
+    showStatusBar(settings.value("statusbar_visible").toBool());
   }
 
   if (settings.contains("window_split")) {
@@ -2180,6 +2259,7 @@ void MainWindow::storeSettings(QSettings &settings) {
     settings.setValue("toolbar_size", ui->toolBar->iconSize());
     settings.setValue("toolbar_button_style", static_cast<int>(ui->toolBar->toolButtonStyle()));
     settings.setValue("menubar_visible", m_menuBarVisible);
+    settings.setValue("statusbar_visible", m_statusBarVisible);
     settings.setValue("window_split", ui->splitter->saveState());
     settings.setValue("window_monitor", QApplication::desktop()->screenNumber(this));
     settings.setValue("log_split", ui->topLevelSplitter->saveState());
@@ -2534,15 +2614,8 @@ void MainWindow::setESPListSorting(int index)
 
 void MainWindow::refresher_progress(int percent)
 {
-  if (percent == 100) {
-    m_RefreshProgress->setVisible(false);
-    this->setEnabled(true);
-  } else if (!m_RefreshProgress->isVisible()) {
-    this->setEnabled(false);
-    m_RefreshProgress->setVisible(true);
-    m_RefreshProgress->setRange(0, 100);
-    m_RefreshProgress->setValue(percent);
-  }
+  setEnabled(percent == 100);
+  m_statusBar->setProgress(percent);
 }
 
 void MainWindow::directory_refreshed()
@@ -5279,8 +5352,7 @@ void MainWindow::on_actionSettings_triggered()
     activateProxy(settings.useProxy());
   }
 
-  ui->apiRequests->setVisible(!settings.hideAPICounter());
-
+  m_statusBar->checkSettings(m_OrganizerCore.settings());
   updateDownloadView();
 
   m_OrganizerCore.updateVFSParams(settings.logLevel(), settings.crashDumpsType(), settings.executablesBlacklist());
@@ -5588,13 +5660,9 @@ void MainWindow::openDataOriginExplorer_clicked()
 
 void MainWindow::updateAvailable()
 {
-  for (QAction *action : ui->toolBar->actions()) {
-    if (action->text() == tr("Update")) {
-      action->setEnabled(true);
-      action->setToolTip(tr("Update available"));
-      break;
-    }
-  }
+  ui->actionUpdate->setEnabled(true);
+  ui->actionUpdate->setToolTip(tr("Update available"));
+  m_statusBar->setUpdateAvailable(true);
 }
 
 
@@ -6075,26 +6143,6 @@ void MainWindow::nxmRequestFailed(QString gameName, int modID, int, QVariant, in
     qDebug(qUtf8Printable(tr("Mod ID %1 no longer seems to be available on Nexus.").arg(modID)));
   } else {
     MessageDialog::showMessage(tr("Request to Nexus failed: %1").arg(errorString), this);
-  }
-}
-
-
-void MainWindow::updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits)
-{
-  ui->apiRequests->setText(QString("API: Q: %1 | D: %2 | H: %3").arg(queueCount).arg(std::get<0>(limits)).arg(std::get<2>(limits)));
-  int requestsRemaining = std::get<0>(limits) + std::get<2>(limits);
-  if (requestsRemaining > 300) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkGreen);
-    ui->apiRequests->setPalette(palette);
-  } else if (requestsRemaining < 150) {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkRed);
-    ui->apiRequests->setPalette(palette);
-  } else {
-    QPalette palette = ui->apiRequests->palette();
-    palette.setColor(ui->apiRequests->backgroundRole(), Qt::darkYellow);
-    ui->apiRequests->setPalette(palette);
   }
 }
 
@@ -7008,8 +7056,7 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event)
   // if the menubar is hidden, pressing Alt will make it visible
   if (event->key() == Qt::Key_Alt) {
     if (!ui->menuBar->isVisible()) {
-      ui->menuBar->setVisible(true);
-      m_menuBarVisible = true;
+      showMenuBar(true);
     }
   }
 

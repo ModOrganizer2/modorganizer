@@ -37,6 +37,7 @@ struct Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;
+class StatusBar;
 #include "plugincontainer.h" //class PluginContainer;
 class PluginListSortProxy;
 namespace BSA { class Archive; }
@@ -75,7 +76,6 @@ class QListWidgetItem;
 class QMenu;
 class QModelIndex;
 class QPoint;
-class QProgressBar;
 class QProgressDialog;
 class QTranslator;
 class QTreeWidgetItem;
@@ -326,8 +326,10 @@ private:
   bool m_WasVisible;
 
   // this has to be remembered because by the time storeSettings() is called,
-  // the window is closed and the menubar is hidden
-  bool m_menuBarVisible;
+  // the window is closed and the all bars are hidden
+  bool m_menuBarVisible, m_statusBarVisible;
+
+  std::unique_ptr<StatusBar> m_statusBar;
 
   // last separator on the toolbar, used to add spacer for right-alignment and
   // as an insert point for executables
@@ -338,7 +340,6 @@ private:
   int m_OldProfileIndex;
 
   std::vector<QString> m_ModNameList; // the mod-list to go with the directory structure
-  QProgressBar *m_RefreshProgress;
   bool m_Refreshing;
 
   QStringList m_DefaultArchives;
@@ -415,8 +416,7 @@ private:
 
 private slots:
 
-  void updateWindowTitle(const QString &accountName, int, bool premium);
-
+  void updateWindowTitle(const APIUserAccount& user);
   void showMessage(const QString &message);
   void showError(const QString &message);
 
@@ -543,7 +543,7 @@ private slots:
   void nxmDownloadURLs(QString, int modID, int fileID, QVariant userData, QVariant resultData, int requestID);
   void nxmRequestFailed(QString gameName, int modID, int fileID, QVariant userData, int requestID, QNetworkReply::NetworkError error, const QString &errorString);
 
-  void updateAPICounter(int queueCount, std::tuple<int, int, int, int> limits);
+  void onRequestsChanged(const APIStats& stats, const APIUserAccount& user);
 
   void editCategories();
   void deselectFilters();
@@ -651,6 +651,7 @@ private slots: // ui slots
   void on_actionExit_triggered();
   void on_actionMainMenuToggle_triggered();
   void on_actionToolBarMainToggle_triggered();
+  void on_actionStatusBarToggle_triggered();
   void on_actionToolBarSmallIcons_triggered();
   void on_actionToolBarMediumIcons_triggered();
   void on_actionToolBarLargeIcons_triggered();
@@ -694,6 +695,9 @@ private slots: // ui slots
   void on_categoriesAndBtn_toggled(bool checked);
   void on_categoriesOrBtn_toggled(bool checked);
   void on_managedArchiveLabel_linkHovered(const QString &link);
+
+  void showMenuBar(bool b);
+  void showStatusBar(bool b);
 };
 
 

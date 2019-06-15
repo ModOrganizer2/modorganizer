@@ -20,7 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef NXMACCESSMANAGER_H
 #define NXMACCESSMANAGER_H
 
-
+#include "apiuseraccount.h"
 #include <QNetworkAccessManager>
 #include <QTimer>
 #include <QNetworkReply>
@@ -55,6 +55,7 @@ public:
   QString userAgent(const QString &subModule = QString()) const;
 
   QString apiKey() const;
+  void clearApiKey();
 
   void startValidationCheck();
 
@@ -78,7 +79,7 @@ signals:
 
   void validateFailed(const QString &message);
 
-  void credentialsReceived(const QString &userName, int userId, bool premium, std::tuple<int, int, int, int> limits);
+  void credentialsReceived(const APIUserAccount& user);
 
 private slots:
 
@@ -93,7 +94,6 @@ protected:
       QIODevice *device);
 
 private:
-
   QTimer m_ValidateTimeout;
   QNetworkReply *m_ValidateReply;
   QProgressDialog *m_ProgressDialog { nullptr };
@@ -102,7 +102,6 @@ private:
 
   QString m_ApiKey;
 
-  bool m_ValidateAttempted;
   enum {
     VALIDATE_NOT_CHECKED,
     VALIDATE_CHECKING,
@@ -111,7 +110,6 @@ private:
     VALIDATE_REFUSED,
     VALIDATE_VALID
   } m_ValidateState = VALIDATE_NOT_CHECKED;
-
 };
 
 #endif // NXMACCESSMANAGER_H

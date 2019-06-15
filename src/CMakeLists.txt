@@ -116,6 +116,8 @@ SET(organizer_SRCS
     forcedloaddialog.cpp
     forcedloaddialogwidget.cpp
 	filterwidget.cpp
+	statusbar.cpp
+	apiuseraccount.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -213,6 +215,8 @@ SET(organizer_HDRS
     forcedloaddialog.h
     forcedloaddialogwidget.h
 	filterwidget.h
+	statusbar.h
+	apiuseraccount.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -277,6 +281,7 @@ set(application
 	moshortcut
 	selfupdater
 	singleinstance
+	statusbar
 )
 
 set(browser
@@ -296,6 +301,7 @@ set(core
 	nxmaccessmanager
 	organizercore
 	organizerproxy
+	apiuseraccount
 )
 
 set(dialogs
