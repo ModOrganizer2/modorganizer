@@ -579,9 +579,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
-    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
-    ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
-    ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
   }
   initINITweaks();
 
@@ -1074,6 +1071,21 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
 
 void ModInfoDialog::refreshFiles()
 {
+  // clearing
+  ui->textFileList->clear();
+  ui->iniTweaksList->clear();
+  ui->iniFileList->clear();
+  ui->inactiveESPList->clear();
+  ui->activeESPList->clear();
+  ui->imageLabel->setPixmap({});
+
+  while (ui->thumbnailArea->count() > 0) {
+    auto* item = ui->thumbnailArea->takeAt(0);
+    delete item->widget();
+    delete item;
+  }
+
+
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
@@ -1124,6 +1136,10 @@ void ModInfoDialog::refreshFiles()
       }
     }
   }
+
+  ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
+  ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
+  ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
 }
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
@@ -1189,15 +1205,14 @@ void ModInfoDialog::openTab(int tab)
 
 void ModInfoDialog::thumbnailClicked(const QString &fileName)
 {
-  QLabel *imageLabel = findChild<QLabel*>("imageLabel");
-  imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+  ui->imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
   QImage image(fileName);
   if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-    image = image.scaledToWidth(imageLabel->geometry().width());
+    image = image.scaledToWidth(ui->imageLabel->geometry().width());
   } else {
-    image = image.scaledToHeight(imageLabel->geometry().height());
+    image = image.scaledToHeight(ui->imageLabel->geometry().height());
   }
-  imageLabel->setPixmap(QPixmap::fromImage(image));
+  ui->imageLabel->setPixmap(QPixmap::fromImage(image));
 }
 
 bool ModInfoDialog::allowNavigateFromTXT()
