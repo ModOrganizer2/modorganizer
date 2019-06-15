@@ -119,6 +119,7 @@ SET(organizer_SRCS
 	statusbar.cpp
 	apiuseraccount.cpp
 	filerenamer.cpp
+	texteditor.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -219,6 +220,7 @@ SET(organizer_HDRS
 	statusbar.h
 	apiuseraccount.h
 	filerenamer.h
+	texteditor.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -414,6 +416,7 @@ set(widgets
 	modidlineedit
 	noeditdelegate
 	qtgroupingproxy
+	texteditor
 	viewmarkingscrollbar
 )
 

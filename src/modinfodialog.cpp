@@ -36,6 +36,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "pluginlistsortproxy.h"
 #include "previewgenerator.h"
 #include "previewdialog.h"
+#include "texteditor.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -357,6 +358,17 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       m_Origin = nullptr;
     }
   }
+
+  m_textFileEditor.reset(new TextEditor(ui->textFileView));
+
+  connect(
+    m_textFileEditor.get(), &TextEditor::changed,
+    [&](bool b){ onTextFileChanged(b); });
+
+  ui->tabTextSplitter->setSizes({200, 1});
+  ui->tabTextSplitter->setStretchFactor(0, 0);
+  ui->tabTextSplitter->setStretchFactor(1, 1);
+  setTextFileWordWrap(true);
 
   // refresh everything but the conflict lists, which are done in exec() because
   // they depend on restoring the state to some widgets; this refresh has to be
@@ -1030,9 +1042,12 @@ void ModInfoDialog::thumbnailClicked(const QString &fileName)
 
 bool ModInfoDialog::allowNavigateFromTXT()
 {
-  if (ui->saveTXTButton->isEnabled()) {
-    int res = QMessageBox::question(this, tr("Save changes?"), tr("Save changes to \"%1\"?").arg(ui->textFileView->property("currentFile").toString()),
-                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+  if (m_textFileEditor->dirty()) {
+    const int res = QMessageBox::question(
+      this, tr("Save changes?"),
+      tr("Save changes to \"%1\"?").arg(m_textFileEditor->filename()),
+      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+
     if (res == QMessageBox::Cancel) {
       return false;
     } else if (res == QMessageBox::Yes) {
@@ -1041,7 +1056,6 @@ bool ModInfoDialog::allowNavigateFromTXT()
   }
   return true;
 }
-
 
 bool ModInfoDialog::allowNavigateFromINI()
 {
@@ -1057,14 +1071,14 @@ bool ModInfoDialog::allowNavigateFromINI()
   return true;
 }
 
-
-void ModInfoDialog::on_textFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+void ModInfoDialog::on_textFileList_currentItemChanged(
+  QListWidgetItem *current, QListWidgetItem *previous)
 {
-  QString fullPath = m_RootPath + "/" + current->text();
+  const QString fullPath = m_RootPath + "/" + current->text();
 
-  QVariant currentFile = ui->textFileView->property("currentFile");
-  if (currentFile.isValid() && (currentFile.toString() == fullPath)) {
-    // the new file is the same as the currently displayed file. May be the result of a cancelation
+  if (fullPath == m_textFileEditor->filename()) {
+    // the new file is the same as the currently displayed file. May be the
+    // result of a cancellation
     return;
   }
 
@@ -1075,16 +1089,11 @@ void ModInfoDialog::on_textFileList_currentItemChanged(QListWidgetItem *current,
   }
 }
 
-
 void ModInfoDialog::openTextFile(const QString &fileName)
 {
-  QString encoding;
-  ui->textFileView->setText(MOBase::readFileText(fileName, &encoding));
-  ui->textFileView->setProperty("currentFile", fileName);
-  ui->textFileView->setProperty("encoding", encoding);
-  ui->saveTXTButton->setEnabled(false);
+  m_textFileEditor->load(fileName);
+  ui->textFileSave->setEnabled(false);
 }
-
 
 void ModInfoDialog::openIniFile(const QString &fileName)
 {
@@ -1155,35 +1164,31 @@ void ModInfoDialog::on_iniTweaksList_currentItemChanged(QListWidgetItem *current
 
 }
 
-
 void ModInfoDialog::on_saveButton_clicked()
 {
   saveCurrentIniFile();
 }
 
-
-void ModInfoDialog::on_saveTXTButton_clicked()
+void ModInfoDialog::on_textFileSave_clicked()
 {
   saveCurrentTextFile();
 }
 
+void ModInfoDialog::on_textFileWordWrap_clicked()
+{
+  setTextFileWordWrap(!m_textFileEditor->wordWrap());
+}
+
+void ModInfoDialog::setTextFileWordWrap(bool b)
+{
+  m_textFileEditor->wordWrap(b);
+  ui->textFileWordWrap->setChecked(b);
+}
 
 void ModInfoDialog::saveCurrentTextFile()
 {
-  QVariant fileNameVar = ui->textFileView->property("currentFile");
-  QVariant encodingVar = ui->textFileView->property("encoding");
-  if (fileNameVar.isValid() && encodingVar.isValid()) {
-    QString fileName = fileNameVar.toString();
-    QFile txtFile(fileName);
-    txtFile.open(QIODevice::WriteOnly);
-    txtFile.resize(0);
-    QTextCodec *codec = QTextCodec::codecForName(encodingVar.toString().toUtf8());
-    QString data = ui->textFileView->toPlainText().replace("\n", "\r\n");
-    txtFile.write(codec->fromUnicode(data));
-  } else {
-    reportError("no file selected");
-  }
-  ui->saveTXTButton->setEnabled(false);
+  m_textFileEditor->save();
+  ui->textFileSave->setEnabled(false);
 }
 
 
@@ -1214,9 +1219,9 @@ void ModInfoDialog::on_iniFileView_textChanged()
 }
 
 
-void ModInfoDialog::on_textFileView_textChanged()
+void ModInfoDialog::onTextFileChanged(bool b)
 {
-  ui->saveTXTButton->setEnabled(true);
+  ui->textFileSave->setEnabled(b);
 }
 
 
