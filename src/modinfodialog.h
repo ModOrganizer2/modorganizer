@@ -220,15 +220,12 @@ private slots:
   void on_saveButton_clicked();
   void on_activateESP_clicked();
   void on_deactivateESP_clicked();
-  void on_textFileSave_clicked();
-  void on_textFileWordWrap_clicked();
   void on_visitNexusLabel_linkActivated(const QString &link);
   void on_modIDEdit_editingFinished();
   void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
   void on_customUrlLineEdit_editingFinished();
   void on_iniFileView_textChanged();
-  void onTextFileChanged(bool b);
   void on_tabWidget_currentChanged(int index);
   void on_primaryCategoryBox_currentIndexChanged(int index);
   void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
@@ -351,8 +348,6 @@ private:
 
   std::vector<QAction*> createGotoActions(
     const QList<QTreeWidgetItem*>& selection);
-
-  void setTextFileWordWrap(bool b);
 };
 
 #endif // MODINFODIALOG_H

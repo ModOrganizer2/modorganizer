@@ -361,14 +361,9 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   m_textFileEditor.reset(new TextEditor(ui->textFileView));
 
-  connect(
-    m_textFileEditor.get(), &TextEditor::changed,
-    [&](bool b){ onTextFileChanged(b); });
-
   ui->tabTextSplitter->setSizes({200, 1});
   ui->tabTextSplitter->setStretchFactor(0, 0);
   ui->tabTextSplitter->setStretchFactor(1, 1);
-  setTextFileWordWrap(true);
 
   // refresh everything but the conflict lists, which are done in exec() because
   // they depend on restoring the state to some widgets; this refresh has to be
@@ -1092,7 +1087,6 @@ void ModInfoDialog::on_textFileList_currentItemChanged(
 void ModInfoDialog::openTextFile(const QString &fileName)
 {
   m_textFileEditor->load(fileName);
-  ui->textFileSave->setEnabled(false);
 }
 
 void ModInfoDialog::openIniFile(const QString &fileName)
@@ -1169,26 +1163,9 @@ void ModInfoDialog::on_saveButton_clicked()
   saveCurrentIniFile();
 }
 
-void ModInfoDialog::on_textFileSave_clicked()
-{
-  saveCurrentTextFile();
-}
-
-void ModInfoDialog::on_textFileWordWrap_clicked()
-{
-  setTextFileWordWrap(!m_textFileEditor->wordWrap());
-}
-
-void ModInfoDialog::setTextFileWordWrap(bool b)
-{
-  m_textFileEditor->wordWrap(b);
-  ui->textFileWordWrap->setChecked(b);
-}
-
 void ModInfoDialog::saveCurrentTextFile()
 {
   m_textFileEditor->save();
-  ui->textFileSave->setEnabled(false);
 }
 
 
@@ -1211,19 +1188,11 @@ void ModInfoDialog::saveCurrentIniFile()
   ui->saveButton->setEnabled(false);
 }
 
-
 void ModInfoDialog::on_iniFileView_textChanged()
 {
   QPushButton* saveButton = findChild<QPushButton*>("saveButton");
   saveButton->setEnabled(true);
 }
-
-
-void ModInfoDialog::onTextFileChanged(bool b)
-{
-  ui->textFileSave->setEnabled(b);
-}
-
 
 void ModInfoDialog::on_activateESP_clicked()
 {

@@ -1,15 +1,18 @@
 #include "texteditor.h"
 #include "utility.h"
+#include <QSplitter>
 
 TextEditor::TextEditor(QPlainTextEdit* edit)
-  : m_edit(edit), m_dirty(false)
+  : m_edit(edit), m_toolbar(*this), m_dirty(false)
 {
+  setupToolbar();
+
   m_edit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   wordWrap(true);
 
   QObject::connect(
     m_edit->document(), &QTextDocument::modificationChanged,
-    [&](bool b){ onChanged(b); });
+    [&](bool b){ onModified(b); });
 }
 
 bool TextEditor::load(const QString& filename)
@@ -69,8 +72,99 @@ bool TextEditor::dirty() const
   return m_dirty;
 }
 
-void TextEditor::onChanged(bool b)
+void TextEditor::onModified(bool b)
 {
   dirty(b);
-  emit changed(b);
+  emit modified(b);
+}
+
+void TextEditor::setupToolbar()
+{
+  auto* widget = wrapEditWidget();
+  if (!widget) {
+    return;
+  }
+
+  auto* layout = new QVBoxLayout(widget);
+
+  // adding toolbar and edit
+  layout->addWidget(m_toolbar.widget());
+  layout->addWidget(m_edit);
+
+  // make the edit stretch
+  layout->setStretch(0, 0);
+  layout->setStretch(1, 1);
+
+  // visuals
+  layout->setContentsMargins(0, 0, 0, 0);
+  widget->show();
+}
+
+QWidget* TextEditor::wrapEditWidget()
+{
+  auto widget = std::make_unique<QWidget>();
+
+  // wrapping the QPlainTextEdit into a new widget so the toolbar can be
+  // displayed above it
+
+  if (auto* parentLayout=m_edit->parentWidget()->layout()) {
+    // the edit's parent has a regular layout, replace the edit by the new
+    // widget and delete the QLayoutItem that's returned as it's not needed
+    delete parentLayout->replaceWidget(m_edit, widget.get());
+  } else if (auto* splitter=qobject_cast<QSplitter*>(m_edit->parentWidget())) {
+    // the edit's parent is a QSplitter, which doesn't have a layout; replace
+    // the edit by using its index in the splitter
+    splitter->replaceWidget(splitter->indexOf(m_edit), widget.get());
+  } else {
+    // unknown parent
+    qCritical("TextEditor: cannot wrap edit widget to display a toolbar");
+    return nullptr;
+  }
+
+  return widget.release();
+}
+
+
+TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
+  m_editor(editor),
+  m_widget(new QWidget),
+  m_save(new QAction(QObject::tr("&Save"))),
+  m_wordWrap(new QAction(QObject::tr("&Word wrap")))
+{
+  QObject::connect(m_save, &QAction::triggered, [&]{ onSave(); });
+  QObject::connect(m_wordWrap, &QAction::triggered, [&]{ onWordWrap(); });
+
+  auto* layout = new QHBoxLayout(m_widget);
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setAlignment(Qt::AlignLeft);
+
+  auto* b = new QToolButton;
+  b->setDefaultAction(m_save);
+  layout->addWidget(b);
+
+  b = new QToolButton;
+  b->setDefaultAction(m_wordWrap);
+  layout->addWidget(b);
+
+  QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
+}
+
+QWidget* TextEditorToolbar::widget()
+{
+  return m_widget;
+}
+
+void TextEditorToolbar::onTextModified(bool b)
+{
+  m_save->setEnabled(b);
+}
+
+void TextEditorToolbar::onSave()
+{
+  m_editor.save();
+}
+
+void TextEditorToolbar::onWordWrap()
+{
+  m_editor.wordWrap(!m_editor.wordWrap());
 }
