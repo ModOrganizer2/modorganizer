@@ -69,6 +69,10 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
 
   m_Executables.clear();
 
+  // whether the executable list in the .ini is still using the old custom
+  // executables from 2.2.0, see upgradeFromCustom()
+  bool needsUpgrade = false;
+
   int numCustomExecutables = settings.beginReadArray("customExecutables");
   for (int i = 0; i < numCustomExecutables; ++i) {
     settings.setArrayIndex(i);
@@ -78,6 +82,11 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
       flags |= Executable::ShowInToolbar;
     if (settings.value("ownicon", false).toBool())
       flags |= Executable::UseApplicationIcon;
+
+    if (settings.contains("custom")) {
+      // the "custom" setting only exists in older versions
+      needsUpgrade = true;
+    }
 
     setExecutable(Executable()
       .title(settings.value("title").toString())
@@ -91,6 +100,9 @@ void ExecutablesList::load(const MOBase::IPluginGame* game, QSettings& settings)
   settings.endArray();
 
   addFromPlugin(game, IgnoreExisting);
+
+  if (needsUpgrade)
+    upgradeFromCustom(game);
 }
 
 void ExecutablesList::store(QSettings& settings)
@@ -115,22 +127,19 @@ void ExecutablesList::store(QSettings& settings)
   settings.endArray();
 }
 
-void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
-{
-  qDebug("resetting plugin executables");
-  addFromPlugin(game, MoveExisting);
-}
-
-void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
+std::vector<Executable> ExecutablesList::getPluginExecutables(
+  MOBase::IPluginGame const *game) const
 {
   Q_ASSERT(game != nullptr);
+
+  std::vector<Executable> v;
 
   for (const ExecutableInfo &info : game->executables()) {
     if (!info.isValid()) {
       continue;
     }
 
-    setExecutable({info, Executable::UseApplicationIcon}, flags);
+    v.push_back({info, Executable::UseApplicationIcon});
   }
 
   const QFileInfo eppBin(QCoreApplication::applicationDirPath() + "/explorer++/Explorer++.exe");
@@ -146,6 +155,28 @@ void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
       .workingDirectory(eppBin.absolutePath())
       .flags(Executable::UseApplicationIcon);
 
+    v.push_back(exe);
+  }
+
+  return v;
+}
+
+void ExecutablesList::resetFromPlugin(MOBase::IPluginGame const *game)
+{
+  qDebug("resetting plugin executables");
+
+  Q_ASSERT(game != nullptr);
+
+  for (const auto& exe : getPluginExecutables(game)) {
+    setExecutable(exe, MoveExisting);
+  }
+}
+
+void ExecutablesList::addFromPlugin(IPluginGame const *game, SetFlags flags)
+{
+  Q_ASSERT(game != nullptr);
+
+  for (const auto& exe : getPluginExecutables(game)) {
     setExecutable(exe, flags);
   }
 }
@@ -259,6 +290,46 @@ std::optional<QString> ExecutablesList::makeNonConflictingTitle(
     << "ran out of executable titles for prefix '" << prefix << "'";
 
   return {};
+}
+
+void ExecutablesList::upgradeFromCustom(MOBase::IPluginGame const *game)
+{
+  qDebug() << "upgrading executables list";
+
+  Q_ASSERT(game != nullptr);
+
+  // prior to 2.2.1, plugin executables were special in the sense that they
+  // did not store certain settings, like the binary info and working directory;
+  // those were filled in when MO started, but never saved
+  //
+  // this interferes with the new executables list, which is completely
+  // customizable, because plugin executables are only added to the list when
+  // they don't exist at all and are ignored otherwise, leaving some of the
+  // fields completely blank
+  //
+  // when the "custom" setting is found in the .ini file (see load()), it is
+  // assumed that the older scheme is still present; in that case, the plugin
+  // executables force their binary info and working directory into the existing
+  // executables one last time
+  //
+  // from that point on, plugin executables are ignored unless they're
+  // completely missing from the list, allowing users to customize them as they
+  // want
+
+  for (const auto& exe : getPluginExecutables(game)) {
+    auto itor = find(exe.title());
+    if (itor == end()){
+      continue;
+    }
+
+    if (!itor->binaryInfo().exists()) {
+      itor->binaryInfo(exe.binaryInfo());
+    }
+
+    if (itor->workingDirectory().isEmpty()) {
+      itor->workingDirectory(exe.workingDirectory());
+    }
+  }
 }
 
 

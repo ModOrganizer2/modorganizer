@@ -194,15 +194,26 @@ private:
 
 
   /**
-  * @brief add the executables preconfigured for this game
-  **/
+   * @brief add the executables preconfigured for this game
+   **/
   void addFromPlugin(MOBase::IPluginGame const *game, SetFlags flags);
 
   /**
-  * @brief add a new executable to the list
-  * @param executable
-  */
+   * @brief add a new executable to the list
+   * @param executable
+   */
   void setExecutable(const Executable &exe, SetFlags flags);
+
+  /**
+   * returns the executables provided by the game plugin
+   **/
+  std::vector<Executable> getPluginExecutables(
+    MOBase::IPluginGame const *game) const;
+
+  /**
+   * called when MO is still using the old custom executables from 2.2.0
+   **/
+  void upgradeFromCustom(const MOBase::IPluginGame* game);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Executable::Flags)
