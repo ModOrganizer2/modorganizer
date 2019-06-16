@@ -33,7 +33,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 //Note the commented headers here can be replaced with forward references,
 //when I get round to cleaning up main.cpp
-struct Executable;
+class Executable;
 class CategoryFactory;
 class LockedDialogBase;
 class OrganizerCore;

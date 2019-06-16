@@ -56,33 +56,51 @@ void FileDialogMemory::restore(QSettings &settings)
 }
 
 
-QString FileDialogMemory::getOpenFileName(const QString &dirID, QWidget *parent,
-                 const QString &caption, const QString &dir,
-                 const QString &filter, QString *selectedFilter,
-                 QFileDialog::Options options)
+QString FileDialogMemory::getOpenFileName(
+  const QString &dirID, QWidget *parent, const QString &caption,
+  const QString &dir, const QString &filter, QString *selectedFilter,
+  QFileDialog::Options options)
 {
-  std::pair<std::map<QString, QString>::iterator, bool> currentDir =
-      instance().m_Cache.insert(std::make_pair(dirID, dir));
+  QString currentDir = dir;
 
-  QString result = QFileDialog::getOpenFileName(parent, caption, currentDir.first->second,
-                                                filter, selectedFilter, options);
+  if (currentDir.isEmpty()) {
+    auto itor = instance().m_Cache.find(dirID);
+    if (itor != instance().m_Cache.end()) {
+      currentDir = itor->first;
+    }
+  }
+
+  QString result = QFileDialog::getOpenFileName(
+    parent, caption, currentDir, filter, selectedFilter, options);
+
   if (!result.isNull()) {
     instance().m_Cache[dirID] = QFileInfo(result).path();
   }
+
   return result;
 }
 
 
-QString FileDialogMemory::getExistingDirectory(const QString &dirID, QWidget *parent,
-                 const QString &caption, const QString &dir, QFileDialog::Options options)
+QString FileDialogMemory::getExistingDirectory(
+  const QString &dirID, QWidget *parent, const QString &caption,
+  const QString &dir, QFileDialog::Options options)
 {
-  std::pair<std::map<QString, QString>::iterator, bool> currentDir =
-      instance().m_Cache.insert(std::make_pair(dirID, dir));
+  QString currentDir = dir;
 
-  QString result = QFileDialog::getExistingDirectory(parent, caption, currentDir.first->second, options);
+  if (currentDir.isEmpty()) {
+    auto itor = instance().m_Cache.find(dirID);
+    if (itor != instance().m_Cache.end()) {
+      currentDir = itor->first;
+    }
+  }
+
+  QString result = QFileDialog::getExistingDirectory(
+    parent, caption, currentDir, options);
+
   if (!result.isNull()) {
     instance().m_Cache[dirID] = QFileInfo(result).path();
   }
+
   return result;
 }
 

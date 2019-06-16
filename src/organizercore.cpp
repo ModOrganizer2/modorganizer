@@ -365,34 +365,17 @@ QString OrganizerCore::commitSettings(const QString &iniFile)
 QSettings::Status OrganizerCore::storeSettings(const QString &fileName)
 {
   QSettings settings(fileName, QSettings::IniFormat);
+
   if (m_UserInterface != nullptr) {
     m_UserInterface->storeSettings(settings);
   }
+
   if (m_CurrentProfile != nullptr) {
     settings.setValue("selected_profile",
                       m_CurrentProfile->name().toUtf8().constData());
   }
 
-  settings.remove("customExecutables");
-  settings.beginWriteArray("customExecutables");
-  std::vector<Executable>::const_iterator current, end;
-  m_ExecutablesList.getExecutables(current, end);
-  int count = 0;
-  for (; current != end; ++current) {
-    const Executable &item = *current;
-    settings.setArrayIndex(count++);
-    settings.setValue("title", item.m_Title);
-    settings.setValue("custom", item.isCustom());
-    settings.setValue("toolbar", item.isShownOnToolbar());
-    settings.setValue("ownicon", item.usesOwnIcon());
-    if (item.isCustom()) {
-      settings.setValue("binary", item.m_BinaryInfo.absoluteFilePath());
-      settings.setValue("arguments", item.m_Arguments);
-      settings.setValue("workingDirectory", item.m_WorkingDirectory);
-      settings.setValue("steamAppID", item.m_SteamAppID);
-    }
-  }
-  settings.endArray();
+  m_ExecutablesList.store(settings);
 
   FileDialogMemory::save(settings);
 
@@ -508,30 +491,7 @@ void OrganizerCore::updateExecutablesList(QSettings &settings)
     return;
   }
 
-  m_ExecutablesList.init(managedGame());
-
-  qDebug("setting up configured executables");
-
-  int numCustomExecutables = settings.beginReadArray("customExecutables");
-  for (int i = 0; i < numCustomExecutables; ++i) {
-    settings.setArrayIndex(i);
-
-    Executable::Flags flags;
-    if (settings.value("custom", true).toBool())
-      flags |= Executable::CustomExecutable;
-    if (settings.value("toolbar", false).toBool())
-      flags |= Executable::ShowInToolbar;
-    if (settings.value("ownicon", false).toBool())
-      flags |= Executable::UseApplicationIcon;
-
-    m_ExecutablesList.addExecutable(
-        settings.value("title").toString(), settings.value("binary").toString(),
-        settings.value("arguments").toString(),
-        settings.value("workingDirectory", "").toString(),
-        settings.value("steamAppID", "").toString(), flags);
-  }
-
-  settings.endArray();
+  m_ExecutablesList.load(managedGame(), settings);
 
   // TODO this has nothing to do with executables list move to an appropriate
   // function!
@@ -1222,6 +1182,34 @@ QStringList OrganizerCore::modsSortedByProfilePriority() const
   return res;
 }
 
+QString OrganizerCore::findJavaInstallation(const QString& jarFile)
+{
+  if (!jarFile.isEmpty()) {
+    // try to find java automatically based on the given jar file
+    std::wstring jarFileW = jarFile.toStdWString();
+
+    WCHAR buffer[MAX_PATH];
+    if (::FindExecutableW(jarFileW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
+      DWORD binaryType = 0UL;
+      if (!::GetBinaryTypeW(buffer, &binaryType)) {
+        qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
+      } else if (binaryType == SCS_32BIT_BINARY || binaryType == SCS_64BIT_BINARY) {
+        return QString::fromWCharArray(buffer);
+      }
+    }
+  }
+
+  // second attempt: look to the registry
+  QSettings reg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
+  if (reg.contains("CurrentVersion")) {
+    QString currentVersion = reg.value("CurrentVersion").toString();
+    return reg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
+  }
+
+  // not found
+  return {};
+}
+
 bool OrganizerCore::getFileExecutionContext(
   QWidget* parent, const QFileInfo &targetInfo,
   QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type)
@@ -1239,44 +1227,22 @@ bool OrganizerCore::getFileExecutionContext(
     type = FileExecutionTypes::Executable;
     return true;
   } else if (extension.compare("jar", Qt::CaseInsensitive) == 0) {
-    // types that need to be injected into
-    std::wstring targetPathW = targetInfo.absoluteFilePath().toStdWString();
-    QString binaryPath;
+    auto java = findJavaInstallation(targetInfo.absoluteFilePath());
 
-    { // try to find java automatically
-      WCHAR buffer[MAX_PATH];
-      if (::FindExecutableW(targetPathW.c_str(), nullptr, buffer) > (HINSTANCE)32) {
-        DWORD binaryType = 0UL;
-        if (!::GetBinaryTypeW(buffer, &binaryType)) {
-          qDebug("failed to determine binary type of \"%ls\": %lu", buffer, ::GetLastError());
-        } else if (binaryType == SCS_32BIT_BINARY) {
-          binaryPath = QString::fromWCharArray(buffer);
-        }
-      }
+    if (java.isEmpty()) {
+      java = QFileDialog::getOpenFileName(
+        parent, QObject::tr("Select binary"),
+        QString(), QObject::tr("Binary") + " (*.exe)");
     }
-    if (binaryPath.isEmpty() && (extension == "jar")) {
-      // second attempt: look to the registry
-      QSettings javaReg("HKEY_LOCAL_MACHINE\\Software\\JavaSoft\\Java Runtime Environment", QSettings::NativeFormat);
-      if (javaReg.contains("CurrentVersion")) {
-        QString currentVersion = javaReg.value("CurrentVersion").toString();
-        binaryPath = javaReg.value(QString("%1/JavaHome").arg(currentVersion)).toString().append("\\bin\\javaw.exe");
-      }
-    }
-    if (binaryPath.isEmpty()) {
-      binaryPath = QFileDialog::getOpenFileName(
-        parent, QObject::tr("Select binary"), QString(), QObject::tr("Binary") + " (*.exe)");
-    }
-    if (binaryPath.isEmpty()) {
+
+    if (java.isEmpty()) {
       return false;
     }
-    binaryInfo = QFileInfo(binaryPath);
-    if (extension == "jar") {
-      arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    } else {
-      arguments = QString("\"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
-    }
 
+    binaryInfo = QFileInfo(java);
+    arguments = QString("-jar \"%1\"").arg(QDir::toNativeSeparators(targetInfo.absoluteFilePath()));
     type = FileExecutionTypes::Executable;
+
     return true;
   } else {
     type = FileExecutionTypes::Other;
@@ -1735,19 +1701,20 @@ HANDLE OrganizerCore::runShortcut(const MOShortcut& shortcut)
       .arg(shortcut.instance(),shortcut.executable())
       .toLocal8Bit().constData());
 
-  Executable& exe = m_ExecutablesList.find(shortcut.executable());
+  const Executable& exe = m_ExecutablesList.get(shortcut.executable());
+
   auto forcedLibaries = m_CurrentProfile->determineForcedLibraries(shortcut.executable());
   if (!m_CurrentProfile->forcedLibrariesEnabled(shortcut.executable())) {
     forcedLibaries.clear();
   }
 
   return spawnBinaryDirect(
-    exe.m_BinaryInfo, exe.m_Arguments,
+    exe.binaryInfo(), exe.arguments(),
     m_CurrentProfile->name(),
-    exe.m_WorkingDirectory.length() != 0
-    ? exe.m_WorkingDirectory
-    : exe.m_BinaryInfo.absolutePath(),
-    exe.m_SteamAppID,
+    exe.workingDirectory().length() != 0
+    ? exe.workingDirectory()
+    : exe.binaryInfo().absolutePath(),
+    exe.steamAppID(),
     "",
     forcedLibaries);
 }
@@ -1786,13 +1753,13 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
       currentDirectory = binary.absolutePath();
     }
     try {
-      const Executable &exe = m_ExecutablesList.findByBinary(binary);
-      steamAppID = exe.m_SteamAppID;
+      const Executable &exe = m_ExecutablesList.getByBinary(binary);
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
     } catch (const std::runtime_error &) {
       // nop
@@ -1800,20 +1767,20 @@ HANDLE OrganizerCore::startApplication(const QString &executable,
   } else {
     // only a file name, search executables list
     try {
-      const Executable &exe = m_ExecutablesList.find(executable);
-      steamAppID = exe.m_SteamAppID;
+      const Executable &exe = m_ExecutablesList.get(executable);
+      steamAppID = exe.steamAppID();
       customOverwrite
-          = m_CurrentProfile->setting("custom_overwrites", exe.m_Title)
+          = m_CurrentProfile->setting("custom_overwrites", exe.title())
                 .toString();
-      if (m_CurrentProfile->forcedLibrariesEnabled(exe.m_Title)) {
-        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.m_Title);
+      if (m_CurrentProfile->forcedLibrariesEnabled(exe.title())) {
+        forcedLibraries = m_CurrentProfile->determineForcedLibraries(exe.title());
       }
       if (arguments == "") {
-        arguments = exe.m_Arguments;
+        arguments = exe.arguments();
       }
-      binary = exe.m_BinaryInfo;
+      binary = exe.binaryInfo();
       if (cwd.length() == 0) {
-        currentDirectory = exe.m_WorkingDirectory;
+        currentDirectory = exe.workingDirectory();
       }
     } catch (const std::runtime_error &) {
       qWarning("\"%s\" not set up as executable",

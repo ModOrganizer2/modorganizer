@@ -733,18 +733,15 @@ void MainWindow::updatePinnedExecutables()
 
   bool hasLinks = false;
 
-  std::vector<Executable>::iterator begin, end;
-  m_OrganizerCore.executablesList()->getExecutables(begin, end);
-
-  for (auto iter = begin; iter != end; ++iter) {
-    if (iter->isShownOnToolbar()) {
+  for (const auto& exe : *m_OrganizerCore.executablesList()) {
+    if (exe.isShownOnToolbar()) {
       hasLinks = true;
 
       QAction *exeAction = new QAction(
-        iconForExecutable(iter->m_BinaryInfo.filePath()), iter->m_Title);
+        iconForExecutable(exe.binaryInfo().filePath()), exe.title());
 
-      exeAction->setObjectName(QString("custom__") + iter->m_Title);
-      exeAction->setStatusTip(iter->m_BinaryInfo.filePath());
+      exeAction->setObjectName(QString("custom__") + exe.title());
+      exeAction->setStatusTip(exe.binaryInfo().filePath());
 
       if (!connect(exeAction, SIGNAL(triggered()), this, SLOT(startExeAction()))) {
         qDebug("failed to connect trigger?");
@@ -1504,24 +1501,42 @@ void MainWindow::registerModPage(IPluginModPage *modPage)
 void MainWindow::startExeAction()
 {
   QAction *action = qobject_cast<QAction*>(sender());
-  if (action != nullptr) {
-    const Executable &selectedExecutable(m_OrganizerCore.executablesList()->find(action->text()));
-    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
-    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
-    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
-      forcedLibraries.clear();
-    }
-    m_OrganizerCore.spawnBinary(
-        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
-        selectedExecutable.m_WorkingDirectory.length() != 0
-            ? selectedExecutable.m_WorkingDirectory
-            : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID,
-        customOverwrite,
-        forcedLibraries);
-  } else {
+
+  if (action == nullptr) {
     qCritical("not an action?");
+    return;
   }
+
+  const auto& list = *m_OrganizerCore.executablesList();
+
+  const auto title = action->text();
+  auto itor = list.find(title);
+
+  if (itor == list.end()) {
+    qWarning().nospace()
+      << "startExeAction(): executable '" << title << "' not found";
+
+    return;
+  }
+
+  const Executable& exe = *itor;
+  auto& profile = *m_OrganizerCore.currentProfile();
+
+  QString customOverwrite = profile.setting("custom_overwrites", exe.title()).toString();
+  auto forcedLibraries = profile.determineForcedLibraries(exe.title());
+
+  if (!profile.forcedLibrariesEnabled(exe.title())) {
+    forcedLibraries.clear();
+  }
+
+  m_OrganizerCore.spawnBinary(
+      exe.binaryInfo(), exe.arguments(),
+      exe.workingDirectory().length() != 0
+          ? exe.workingDirectory()
+          : exe.binaryInfo().absolutePath(),
+      exe.steamAppID(),
+      customOverwrite,
+      forcedLibraries);
 }
 
 
@@ -1789,12 +1804,12 @@ void MainWindow::refreshExecutablesList()
 
   QAbstractItemModel *model = executablesList->model();
 
-  std::vector<Executable>::const_iterator current, end;
-  m_OrganizerCore.executablesList()->getExecutables(current, end);
-  for(int i = 0; current != end; ++current, ++i) {
-    QIcon icon = iconForExecutable(current->m_BinaryInfo.filePath());
-    executablesList->addItem(icon, current->m_Title);
+  int i = 0;
+  for (const auto& exe : *m_OrganizerCore.executablesList()) {
+    QIcon icon = iconForExecutable(exe.binaryInfo().filePath());
+    executablesList->addItem(icon, exe.title());
     model->setData(model->index(i, 0), QSize(0, executablesList->iconSize().height() + 4), Qt::SizeHintRole);
+    ++i;
   }
 
   setExecutableIndex(1);
@@ -2359,17 +2374,17 @@ void MainWindow::on_startButton_clicked() {
   ui->startButton->setEnabled(false);
   try {
     const Executable &selectedExecutable(getSelectedExecutable());
-    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.m_Title).toString();
-    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.m_Title);
-    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.m_Title)) {
+    QString customOverwrite = m_OrganizerCore.currentProfile()->setting("custom_overwrites", selectedExecutable.title()).toString();
+    auto forcedLibraries = m_OrganizerCore.currentProfile()->determineForcedLibraries(selectedExecutable.title());
+    if (!m_OrganizerCore.currentProfile()->forcedLibrariesEnabled(selectedExecutable.title())) {
       forcedLibraries.clear();
     }
     m_OrganizerCore.spawnBinary(
-        selectedExecutable.m_BinaryInfo, selectedExecutable.m_Arguments,
-        selectedExecutable.m_WorkingDirectory.length() != 0
-            ? selectedExecutable.m_WorkingDirectory
-            : selectedExecutable.m_BinaryInfo.absolutePath(),
-        selectedExecutable.m_SteamAppID,
+        selectedExecutable.binaryInfo(), selectedExecutable.arguments(),
+        selectedExecutable.workingDirectory().length() != 0
+            ? selectedExecutable.workingDirectory()
+            : selectedExecutable.binaryInfo().absolutePath(),
+        selectedExecutable.steamAppID(),
         customOverwrite,
         forcedLibraries);
   } catch (...) {
@@ -2464,22 +2479,24 @@ static HRESULT CreateShortcut(LPCWSTR targetFileName, LPCWSTR arguments,
 bool MainWindow::modifyExecutablesDialog()
 {
   bool result = false;
+
   try {
-    EditExecutablesDialog dialog(*m_OrganizerCore.executablesList(),
-                                 *m_OrganizerCore.modList(),
-                                 m_OrganizerCore.currentProfile(),
-                                 m_OrganizerCore.managedGame());
+    const auto oldExecutables = *m_OrganizerCore.executablesList();
+
+    EditExecutablesDialog dialog(m_OrganizerCore, this);
+
     QSettings &settings = m_OrganizerCore.settings().directInterface();
     QString key = QString("geometry/%1").arg(dialog.objectName());
+
     if (settings.contains(key)) {
       dialog.restoreGeometry(settings.value(key).toByteArray());
     }
-    if (dialog.exec() == QDialog::Accepted) {
-      m_OrganizerCore.setExecutablesList(dialog.getExecutablesList());
-      result = true;
-    }
+
+    result = (dialog.exec() == QDialog::Accepted);
+
     settings.setValue(key, dialog.saveGeometry());
     refreshExecutablesList();
+    updatePinnedExecutables();
   } catch (const std::exception &e) {
     reportError(e.what());
   }
@@ -5204,7 +5221,7 @@ void MainWindow::on_savegameList_customContextMenuRequested(const QPoint &pos)
 void MainWindow::linkToolbar()
 {
   Executable &exe(getSelectedExecutable());
-  exe.showOnToolbar(!exe.isShownOnToolbar());
+  exe.setShownOnToolbar(!exe.isShownOnToolbar());
   ui->linkButton->menu()->actions().at(static_cast<int>(ShortcutType::Toolbar))->setIcon(exe.isShownOnToolbar() ? QIcon(":/MO/gui/remove") : QIcon(":/MO/gui/link"));
   updatePinnedExecutables();
 }
@@ -5212,7 +5229,7 @@ void MainWindow::linkToolbar()
 namespace {
 QString getLinkfile(const QString &dir, const Executable &exec)
 {
-  return QDir::fromNativeSeparators(dir) + "/" + exec.m_Title + ".lnk";
+  return QDir::fromNativeSeparators(dir) + "/" + exec.title() + ".lnk";
 }
 
 QString getDesktopLinkfile(const Executable &exec)
@@ -5241,12 +5258,12 @@ void MainWindow::addWindowsLink(const ShortcutType mapping)
   } else {
     QFileInfo const exeInfo(qApp->applicationFilePath());
     // create link
-    QString executable = QDir::toNativeSeparators(selectedExecutable.m_BinaryInfo.absoluteFilePath());
+    QString executable = QDir::toNativeSeparators(selectedExecutable.binaryInfo().absoluteFilePath());
 
     std::wstring targetFile       = ToWString(exeInfo.absoluteFilePath());
     std::wstring parameter        = ToWString(
-      QString("\"moshortcut://%1:%2\"").arg(InstanceManager::instance().currentInstance(),selectedExecutable.m_Title));
-    std::wstring description      = ToWString(QString("Run %1 with ModOrganizer").arg(selectedExecutable.m_Title));
+      QString("\"moshortcut://%1:%2\"").arg(InstanceManager::instance().currentInstance(),selectedExecutable.title()));
+    std::wstring description      = ToWString(QString("Run %1 with ModOrganizer").arg(selectedExecutable.title()));
     std::wstring iconFile         = ToWString(executable);
     std::wstring currentDirectory = ToWString(QDir::toNativeSeparators(qApp->applicationDirPath()));
 
@@ -5492,12 +5509,12 @@ void MainWindow::addAsExecutable()
 
         if (!name.isEmpty()) {
           //Note: If this already exists, you'll lose custom settings
-          m_OrganizerCore.executablesList()->addExecutable(name,
-                                                           binaryInfo.absoluteFilePath(),
-                                                           arguments,
-                                                           targetInfo.absolutePath(),
-                                                           QString(),
-                                                           Executable::CustomExecutable);
+          m_OrganizerCore.executablesList()->setExecutable(Executable()
+            .title(name)
+            .binaryInfo(binaryInfo)
+            .arguments(arguments)
+            .workingDirectory(targetInfo.absolutePath()));
+
           refreshExecutablesList();
         }
 
@@ -6389,13 +6406,18 @@ void MainWindow::unlockESPIndex()
 
 void MainWindow::removeFromToolbar()
 {
-  try {
-    Executable &exe = m_OrganizerCore.executablesList()->find(m_ContextAction->text());
-    exe.showOnToolbar(false);
-  } catch (const std::runtime_error&) {
-    qDebug("executable doesn't exist any more");
+  const auto& title = m_ContextAction->text();
+  auto& list = *m_OrganizerCore.executablesList();
+
+  auto itor = list.find(title);
+  if (itor == list.end()) {
+    qWarning().nospace()
+      << "removeFromToolbar(): executable '" << title << "' not found";
+
+    return;
   }
 
+  itor->setShownOnToolbar(false);
   updatePinnedExecutables();
 }
 
@@ -6520,14 +6542,14 @@ void MainWindow::on_groupCombo_currentIndexChanged(int index)
 
 const Executable &MainWindow::getSelectedExecutable() const
 {
-  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->find(name);
+  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->get(name);
 }
 
 Executable &MainWindow::getSelectedExecutable()
 {
-  QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
-  return m_OrganizerCore.executablesList()->find(name);
+  const QString name = ui->executablesListBox->itemText(ui->executablesListBox->currentIndex());
+  return m_OrganizerCore.executablesList()->get(name);
 }
 
 void MainWindow::on_linkButton_pressed()

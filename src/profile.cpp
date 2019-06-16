@@ -982,7 +982,7 @@ int Profile::getPriorityMinimum() const
   return m_ModIndexByPriority.begin()->first;
 }
 
-bool Profile::forcedLibrariesEnabled(const QString &executable)
+bool Profile::forcedLibrariesEnabled(const QString &executable) const
 {
   return setting("forced_libraries", executable + "/enabled", false).toBool();
 }
@@ -992,7 +992,7 @@ void Profile::setForcedLibrariesEnabled(const QString &executable, bool enabled)
   storeSetting("forced_libraries", executable + "/enabled", enabled);
 }
 
-QList<ExecutableForcedLoadSetting> Profile::determineForcedLibraries(const QString &executable)
+QList<ExecutableForcedLoadSetting> Profile::determineForcedLibraries(const QString &executable) const
 {
   QList<ExecutableForcedLoadSetting> results;
 

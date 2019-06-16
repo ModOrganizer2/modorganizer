@@ -147,6 +147,8 @@ public:
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
 
+  static QString findJavaInstallation(const QString& jarFile={});
+
   static bool getFileExecutionContext(
     QWidget* parent,  const QFileInfo &targetInfo,
     QFileInfo &binaryInfo, QString &arguments, FileExecutionTypes& type);
