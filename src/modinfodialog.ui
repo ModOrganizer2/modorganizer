@@ -46,14 +46,7 @@
            <string>A list of text-files in the mod directory like readmes. </string>
           </property>
          </widget>
-         <widget class="QPlainTextEdit" name="textFileView">
-          <property name="toolTip">
-           <string/>
-          </property>
-          <property name="whatsThis">
-           <string/>
-          </property>
-         </widget>
+         <widget class="TextEditor" name="textFileView"/>
         </widget>
        </item>
       </layout>
@@ -1216,6 +1209,11 @@ p, li { white-space: pre-wrap; }
    <class>ModIDLineEdit</class>
    <extends>QLineEdit</extends>
    <header>modidlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TextEditor</class>
+   <extends>QPlainTextEdit</extends>
+   <header>texteditor.h</header>
   </customwidget>
  </customwidgets>
  <resources>

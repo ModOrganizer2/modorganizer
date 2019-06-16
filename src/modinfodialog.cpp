@@ -359,7 +359,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
-  m_textFileEditor.reset(new TextEditor(ui->textFileView));
+  ui->textFileView->setupToolbar();
 
   ui->tabTextSplitter->setSizes({200, 1});
   ui->tabTextSplitter->setStretchFactor(0, 0);
@@ -1037,10 +1037,10 @@ void ModInfoDialog::thumbnailClicked(const QString &fileName)
 
 bool ModInfoDialog::allowNavigateFromTXT()
 {
-  if (m_textFileEditor->dirty()) {
+  if (ui->textFileView->dirty()) {
     const int res = QMessageBox::question(
       this, tr("Save changes?"),
-      tr("Save changes to \"%1\"?").arg(m_textFileEditor->filename()),
+      tr("Save changes to \"%1\"?").arg(ui->textFileView->filename()),
       QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
     if (res == QMessageBox::Cancel) {
@@ -1071,7 +1071,7 @@ void ModInfoDialog::on_textFileList_currentItemChanged(
 {
   const QString fullPath = m_RootPath + "/" + current->text();
 
-  if (fullPath == m_textFileEditor->filename()) {
+  if (fullPath == ui->textFileView->filename()) {
     // the new file is the same as the currently displayed file. May be the
     // result of a cancellation
     return;
@@ -1086,7 +1086,7 @@ void ModInfoDialog::on_textFileList_currentItemChanged(
 
 void ModInfoDialog::openTextFile(const QString &fileName)
 {
-  m_textFileEditor->load(fileName);
+  ui->textFileView->load(fileName);
 }
 
 void ModInfoDialog::openIniFile(const QString &fileName)
@@ -1165,7 +1165,7 @@ void ModInfoDialog::on_saveButton_clicked()
 
 void ModInfoDialog::saveCurrentTextFile()
 {
-  m_textFileEditor->save();
+  ui->textFileView->save();
 }
 
 

@@ -2,26 +2,27 @@
 #include "utility.h"
 #include <QSplitter>
 
-TextEditor::TextEditor(QPlainTextEdit* edit)
-  : m_edit(edit), m_toolbar(*this), m_dirty(false)
+TextEditor::TextEditor(QWidget* parent) :
+  QPlainTextEdit(parent),
+  m_toolbar(*this), m_lineNumbers(nullptr), m_dirty(false)
 {
-  setupToolbar();
-
-  m_edit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+  setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   wordWrap(true);
+
+  m_lineNumbers = new TextEditorLineNumbers(*this);
 
   emit modified(false);
 
   QObject::connect(
-    m_edit->document(), &QTextDocument::modificationChanged,
+    document(), &QTextDocument::modificationChanged,
     [&](bool b){ onModified(b); });
 }
 
 bool TextEditor::load(const QString& filename)
 {
   m_filename = filename;
-  m_edit->setPlainText(MOBase::readFileText(filename, &m_encoding));
-  m_edit->document()->setModified(false);
+  setPlainText(MOBase::readFileText(filename, &m_encoding));
+  document()->setModified(false);
 
   return true;
 }
@@ -37,10 +38,10 @@ bool TextEditor::save()
   file.resize(0);
 
   QTextCodec* codec = QTextCodec::codecForName(m_encoding.toUtf8());
-  QString data = m_edit->toPlainText().replace("\n", "\r\n");
+  QString data = toPlainText().replace("\n", "\r\n");
 
   file.write(codec->fromUnicode(data));
-  m_edit->document()->setModified(false);
+  document()->setModified(false);
 
   return true;
 }
@@ -53,9 +54,9 @@ const QString& TextEditor::filename() const
 void TextEditor::wordWrap(bool b)
 {
   if (b) {
-    m_edit->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+    setLineWrapMode(QPlainTextEdit::WidgetWidth);
   } else {
-    m_edit->setLineWrapMode(QPlainTextEdit::NoWrap);
+    setLineWrapMode(QPlainTextEdit::NoWrap);
   }
 
   emit wordWrapChanged(b);
@@ -68,7 +69,7 @@ void TextEditor::toggleWordWrap()
 
 bool TextEditor::wordWrap() const
 {
-  return (m_edit->lineWrapMode() == QPlainTextEdit::WidgetWidth);
+  return (lineWrapMode() == QPlainTextEdit::WidgetWidth);
 }
 
 void TextEditor::dirty(bool b)
@@ -98,7 +99,7 @@ void TextEditor::setupToolbar()
 
   // adding toolbar and edit
   layout->addWidget(m_toolbar.widget());
-  layout->addWidget(m_edit);
+  layout->addWidget(this);
 
   // make the edit stretch
   layout->setStretch(0, 0);
@@ -116,21 +117,130 @@ QWidget* TextEditor::wrapEditWidget()
   // wrapping the QPlainTextEdit into a new widget so the toolbar can be
   // displayed above it
 
-  if (auto* parentLayout=m_edit->parentWidget()->layout()) {
+  if (auto* parentLayout=parentWidget()->layout()) {
     // the edit's parent has a regular layout, replace the edit by the new
     // widget and delete the QLayoutItem that's returned as it's not needed
-    delete parentLayout->replaceWidget(m_edit, widget.get());
-  } else if (auto* splitter=qobject_cast<QSplitter*>(m_edit->parentWidget())) {
+    delete parentLayout->replaceWidget(this, widget.get());
+
+  } else if (auto* splitter=qobject_cast<QSplitter*>(parentWidget())) {
     // the edit's parent is a QSplitter, which doesn't have a layout; replace
     // the edit by using its index in the splitter
-    splitter->replaceWidget(splitter->indexOf(m_edit), widget.get());
+    auto index = splitter->indexOf(this);
+
+    if (index == -1) {
+      qCritical(
+        "TextEditor: cannot wrap edit widget to display a toolbar, "
+        "parent is a splitter, but widget isn't in it");
+
+      return nullptr;
+    }
+
+    splitter->replaceWidget(index, widget.get());
+
   } else {
     // unknown parent
-    qCritical("TextEditor: cannot wrap edit widget to display a toolbar");
+    qCritical(
+      "TextEditor: cannot wrap edit widget to display a toolbar, "
+      "no parent or parent has no layout");
+
     return nullptr;
   }
 
   return widget.release();
+}
+
+void TextEditor::resizeEvent(QResizeEvent* e)
+{
+  QPlainTextEdit::resizeEvent(e);
+
+  QRect cr = contentsRect();
+  m_lineNumbers->setGeometry(QRect(cr.left(), cr.top(), m_lineNumbers->areaWidth(), cr.height()));
+}
+
+void TextEditor::paintLineNumbers(QPaintEvent* e)
+{
+  QPainter painter(m_lineNumbers);
+  painter.fillRect(e->rect(), Qt::lightGray);
+
+  QTextBlock block = firstVisibleBlock();
+  int blockNumber = block.blockNumber();
+  int top = (int) blockBoundingGeometry(block).translated(contentOffset()).top();
+  int bottom = top + (int) blockBoundingRect(block).height();
+
+  while (block.isValid() && top <= e->rect().bottom()) {
+    if (block.isVisible() && bottom >= e->rect().top()) {
+      QString number = QString::number(blockNumber + 1);
+      painter.setPen(Qt::black);
+
+      painter.drawText(
+        0, top, m_lineNumbers->width(), fontMetrics().height(),
+        Qt::AlignRight, number);
+    }
+
+    block = block.next();
+    top = bottom;
+    bottom = top + (int) blockBoundingRect(block).height();
+    ++blockNumber;
+  }
+}
+
+
+TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
+  : QWidget(&editor), m_editor(editor)
+{
+  setFont(editor.font());
+
+  connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&]{ updateAreaWidth(); });
+  connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy){ updateArea(rect, dy); });
+  //connect(e, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
+
+  updateAreaWidth();
+  //highlightCurrentLine();
+}
+
+QSize TextEditorLineNumbers::sizeHint() const
+{
+  return QSize(areaWidth(), 0);
+}
+
+void TextEditorLineNumbers::paintEvent(QPaintEvent* e)
+{
+  m_editor.paintLineNumbers(e);
+}
+
+int TextEditorLineNumbers::areaWidth() const
+{
+  int digits = 1;
+  int max = qMax(1, m_editor.blockCount());
+
+  while (max >= 10) {
+    max /= 10;
+    ++digits;
+  }
+
+  digits = std::max(3, digits);
+
+  int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+
+  return space;
+}
+
+void TextEditorLineNumbers::updateAreaWidth()
+{
+  m_editor.setViewportMargins(areaWidth(), 0, 0, 0);
+}
+
+void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
+{
+  if (dy) {
+    scroll(0, dy);
+  } else {
+    update(0, rect.y(), width(), rect.height());
+  }
+
+  if (rect.contains(m_editor.viewport()->rect())) {
+    updateAreaWidth();
+  }
 }
 
 

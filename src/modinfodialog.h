@@ -304,7 +304,6 @@ private:
 
   ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
   FilterWidget m_advancedConflictFilter;
-  std::unique_ptr<TextEditor> m_textFileEditor;
 
 
   void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);

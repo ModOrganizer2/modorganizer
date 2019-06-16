@@ -23,12 +23,33 @@ private:
 };
 
 
-class TextEditor : public QObject
+class TextEditorLineNumbers : public QWidget
+{
+public:
+  TextEditorLineNumbers(TextEditor& editor);
+  QSize sizeHint() const override;
+  int areaWidth() const;
+
+protected:
+  void paintEvent(QPaintEvent *event) override;
+
+private:
+  TextEditor& m_editor;
+
+  void updateAreaWidth();
+  void updateArea(const QRect &rect, int dy);
+};
+
+
+class TextEditor : public QPlainTextEdit
 {
   Q_OBJECT
+  friend class TextEditorLineNumbers;
 
 public:
-  TextEditor(QPlainTextEdit* edit);
+  TextEditor(QWidget* parent=nullptr);
+
+  void setupToolbar();
 
   bool load(const QString& filename);
   bool save();
@@ -45,9 +66,12 @@ signals:
   void modified(bool b);
   void wordWrapChanged(bool b);
 
+protected:
+  void resizeEvent(QResizeEvent* e) override;
+
 private:
-  QPlainTextEdit* m_edit;
   TextEditorToolbar m_toolbar;
+  TextEditorLineNumbers* m_lineNumbers;
   QString m_filename;
   QString m_encoding;
   bool m_dirty;
@@ -55,8 +79,9 @@ private:
   void onModified(bool b);
   void dirty(bool b);
 
-  void setupToolbar();
   QWidget* wrapEditWidget();
+
+  void paintLineNumbers(QPaintEvent* e);
 };
 
 #endif // MO_TEXTEDITOR_H
