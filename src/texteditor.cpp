@@ -7,17 +7,53 @@ TextEditor::TextEditor(QWidget* parent) :
   m_toolbar(*this), m_lineNumbers(nullptr), m_highlighter(nullptr),
   m_dirty(false)
 {
-  setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
-  wordWrap(true);
-
   m_lineNumbers = new TextEditorLineNumbers(*this);
   m_highlighter = new TextEditorHighlighter(document());
 
+  setDefaultStyle();
+  wordWrap(true);
+
   emit modified(false);
 
-  QObject::connect(
+  connect(
     document(), &QTextDocument::modificationChanged,
     [&](bool b){ onModified(b); });
+
+  connect(
+    this, &QPlainTextEdit::cursorPositionChanged,
+    [&]{ highlightCurrentLine(); });
+}
+
+void TextEditor::setDefaultStyle()
+{
+  const auto font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+
+  setFont(font);
+  m_lineNumbers->setFont(font);
+
+  QColor textColor(Qt::black);
+  QColor altTextColor(Qt::darkGray);
+  QColor backgroundColor(Qt::white);
+
+  {
+    auto w = std::make_unique<QWidget>();
+
+    if (auto* s=style()) {
+      s->polish(w.get());
+    }
+
+    textColor = w->palette().color(QPalette::WindowText);
+    altTextColor = w->palette().color(QPalette::Disabled, QPalette::WindowText);
+    backgroundColor = w->palette().color(QPalette::Window);
+  }
+
+  setTextColor(textColor);
+  m_lineNumbers->setTextColor(altTextColor);
+
+  setBackgroundColor(backgroundColor);
+  m_lineNumbers->setBackgroundColor(backgroundColor);
+
+  setHighlightBackgroundColor(backgroundColor);
 }
 
 bool TextEditor::load(const QString& filename)
@@ -84,35 +120,13 @@ bool TextEditor::dirty() const
   return m_dirty;
 }
 
-QString TextEditor::textColor() const
+QColor TextEditor::backgroundColor() const
 {
-  return m_highlighter->textColor().name(QColor::HexArgb);
+  return m_highlighter->backgroundColor();
 }
 
-void TextEditor::setTextColor(const QString& s)
+void TextEditor::setBackgroundColor(const QColor& c)
 {
-  const QColor c(s);
-  if (!c.isValid()) {
-    qWarning() << "TextEditor: invalid text color '" << s << "'";
-    return;
-  }
-
-  m_highlighter->setTextColor(c);
-}
-
-QString TextEditor::backgroundColor() const
-{
-  return m_highlighter->backgroundColor().name(QColor::HexArgb);
-}
-
-void TextEditor::setBackgroundColor(const QString& s)
-{
-  const QColor c(s);
-  if (!c.isValid()) {
-    qWarning() << "TextEditor: invalid backgorund color '" << s << "'";
-    return;
-  }
-
   if (m_highlighter->backgroundColor() == c) {
     return;
   }
@@ -124,6 +138,27 @@ void TextEditor::setBackgroundColor(const QString& s)
     .arg(c.greenF() * 255)
     .arg(c.blueF() * 255)
     .arg(c.alphaF()));
+}
+
+QColor TextEditor::textColor() const
+{
+  return m_highlighter->textColor();
+}
+
+void TextEditor::setTextColor(const QColor& c)
+{
+  m_highlighter->setTextColor(c);
+}
+
+QColor TextEditor::highlightBackgroundColor() const
+{
+  return m_highlightBackground;
+}
+
+void TextEditor::setHighlightBackgroundColor(const QColor& c)
+{
+  m_highlightBackground = c;
+  update();
 }
 
 void TextEditor::onModified(bool b)
@@ -201,10 +236,12 @@ void TextEditor::resizeEvent(QResizeEvent* e)
   m_lineNumbers->setGeometry(QRect(cr.left(), cr.top(), m_lineNumbers->areaWidth(), cr.height()));
 }
 
-void TextEditor::paintLineNumbers(QPaintEvent* e)
+void TextEditor::paintLineNumbers(QPaintEvent* e, const QColor& textColor)
 {
+  QStyleOption opt;
+  opt.init(m_lineNumbers);
+
   QPainter painter(m_lineNumbers);
-  painter.fillRect(e->rect(), Qt::lightGray);
 
   QTextBlock block = firstVisibleBlock();
   int blockNumber = block.blockNumber();
@@ -214,10 +251,10 @@ void TextEditor::paintLineNumbers(QPaintEvent* e)
   while (block.isValid() && top <= e->rect().bottom()) {
     if (block.isVisible() && bottom >= e->rect().top()) {
       QString number = QString::number(blockNumber + 1);
-      painter.setPen(Qt::black);
+      painter.setPen(textColor);
 
       painter.drawText(
-        0, top, m_lineNumbers->width(), fontMetrics().height(),
+        0, top, m_lineNumbers->width() - 3, fontMetrics().height(),
         Qt::AlignRight, number);
     }
 
@@ -228,6 +265,25 @@ void TextEditor::paintLineNumbers(QPaintEvent* e)
   }
 }
 
+void TextEditor::highlightCurrentLine()
+{
+  QList<QTextEdit::ExtraSelection> extraSelections;
+
+  if (!isReadOnly()) {
+    QTextEdit::ExtraSelection selection;
+
+    QColor lineColor = QColor(Qt::yellow).lighter(160);
+
+    selection.format.setBackground(m_highlightBackground);
+    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    selection.cursor = textCursor();
+    selection.cursor.clearSelection();
+    extraSelections.append(selection);
+  }
+
+  setExtraSelections(extraSelections);
+}
+
 
 TextEditorHighlighter::TextEditorHighlighter(QTextDocument* doc) :
   QSyntaxHighlighter(doc),
@@ -236,7 +292,7 @@ TextEditorHighlighter::TextEditorHighlighter(QTextDocument* doc) :
 {
 }
 
-QColor TextEditorHighlighter::backgroundColor()
+QColor TextEditorHighlighter::backgroundColor() const
 {
   return m_background;
 }
@@ -247,7 +303,7 @@ void TextEditorHighlighter::setBackgroundColor(const QColor& c)
   changed();
 }
 
-QColor TextEditorHighlighter::textColor()
+QColor TextEditorHighlighter::textColor() const
 {
   return m_text;
 }
@@ -274,26 +330,19 @@ void TextEditorHighlighter::changed()
 
 
 TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
-  : QWidget(&editor), m_editor(editor)
+  : QFrame(&editor), m_editor(editor)
 {
   setFont(editor.font());
 
   connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&]{ updateAreaWidth(); });
   connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy){ updateArea(rect, dy); });
-  connect(&m_editor, &QPlainTextEdit::cursorPositionChanged, [&]{ highlightCurrentLine(); });
 
   updateAreaWidth();
-  highlightCurrentLine();
 }
 
 QSize TextEditorLineNumbers::sizeHint() const
 {
   return QSize(areaWidth(), 0);
-}
-
-void TextEditorLineNumbers::paintEvent(QPaintEvent* e)
-{
-  m_editor.paintLineNumbers(e);
 }
 
 int TextEditorLineNumbers::areaWidth() const
@@ -308,9 +357,40 @@ int TextEditorLineNumbers::areaWidth() const
 
   digits = std::max(3, digits);
 
-  int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
+  int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits + 3;
 
   return space;
+}
+
+QColor TextEditorLineNumbers::textColor() const
+{
+  return m_text;
+}
+
+void TextEditorLineNumbers::setTextColor(const QColor& c)
+{
+  m_text = c;
+  m_editor.update();
+}
+
+QColor TextEditorLineNumbers::backgroundColor() const
+{
+  return m_background;
+}
+
+void TextEditorLineNumbers::setBackgroundColor(const QColor& c)
+{
+  m_background = c;
+  m_editor.update();
+}
+
+void TextEditorLineNumbers::paintEvent(QPaintEvent* e)
+{
+  QPainter painter(this);
+  painter.fillRect(e->rect(), m_background);
+
+  QFrame::paintEvent(e);
+  m_editor.paintLineNumbers(e, m_text);
 }
 
 void TextEditorLineNumbers::updateAreaWidth()
@@ -329,25 +409,6 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
   if (rect.contains(m_editor.viewport()->rect())) {
     updateAreaWidth();
   }
-}
-
-void TextEditorLineNumbers::highlightCurrentLine()
-{
-  QList<QTextEdit::ExtraSelection> extraSelections;
-
-  if (!m_editor.isReadOnly()) {
-    QTextEdit::ExtraSelection selection;
-
-    QColor lineColor = QColor(Qt::yellow).lighter(160);
-
-    selection.format.setBackground(lineColor);
-    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-    selection.cursor = m_editor.textCursor();
-    selection.cursor.clearSelection();
-    extraSelections.append(selection);
-  }
-
-  m_editor.setExtraSelections(extraSelections);
 }
 
 
