@@ -120,6 +120,7 @@ SET(organizer_SRCS
 	apiuseraccount.cpp
 	filerenamer.cpp
 	texteditor.cpp
+	expanderwidget.cpp
 
     shared/windows_error.cpp
     shared/error_report.cpp
@@ -221,6 +222,7 @@ SET(organizer_HDRS
 	apiuseraccount.h
 	filerenamer.h
 	texteditor.h
+	expanderwidget.h
 
     shared/windows_error.h
     shared/error_report.h
@@ -405,6 +407,7 @@ set(utilities
 
 set(widgets
 	descriptionpage
+	expanderwidget
 	genericicondelegate
 	filerenamer
 	filterwidget
