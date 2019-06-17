@@ -4,12 +4,14 @@
 
 TextEditor::TextEditor(QWidget* parent) :
   QPlainTextEdit(parent),
-  m_toolbar(*this), m_lineNumbers(nullptr), m_dirty(false)
+  m_toolbar(*this), m_lineNumbers(nullptr), m_highlighter(nullptr),
+  m_dirty(false)
 {
   setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
   wordWrap(true);
 
   m_lineNumbers = new TextEditorLineNumbers(*this);
+  m_highlighter = new TextEditorHighlighter(document());
 
   emit modified(false);
 
@@ -80,6 +82,48 @@ void TextEditor::dirty(bool b)
 bool TextEditor::dirty() const
 {
   return m_dirty;
+}
+
+QString TextEditor::textColor() const
+{
+  return m_highlighter->textColor().name(QColor::HexArgb);
+}
+
+void TextEditor::setTextColor(const QString& s)
+{
+  const QColor c(s);
+  if (!c.isValid()) {
+    qWarning() << "TextEditor: invalid text color '" << s << "'";
+    return;
+  }
+
+  m_highlighter->setTextColor(c);
+}
+
+QString TextEditor::backgroundColor() const
+{
+  return m_highlighter->backgroundColor().name(QColor::HexArgb);
+}
+
+void TextEditor::setBackgroundColor(const QString& s)
+{
+  const QColor c(s);
+  if (!c.isValid()) {
+    qWarning() << "TextEditor: invalid backgorund color '" << s << "'";
+    return;
+  }
+
+  if (m_highlighter->backgroundColor() == c) {
+    return;
+  }
+
+  m_highlighter->setBackgroundColor(c);
+
+  setStyleSheet(QString("QPlainTextEdit{ background-color: rgba(%1, %2, %3, %4); }")
+    .arg(c.redF() * 255)
+    .arg(c.greenF() * 255)
+    .arg(c.blueF() * 255)
+    .arg(c.alphaF()));
 }
 
 void TextEditor::onModified(bool b)
@@ -185,6 +229,50 @@ void TextEditor::paintLineNumbers(QPaintEvent* e)
 }
 
 
+TextEditorHighlighter::TextEditorHighlighter(QTextDocument* doc) :
+  QSyntaxHighlighter(doc),
+  m_background(QColor("transparent")),
+  m_text(QColor("black"))
+{
+}
+
+QColor TextEditorHighlighter::backgroundColor()
+{
+  return m_background;
+}
+
+void TextEditorHighlighter::setBackgroundColor(const QColor& c)
+{
+  m_background = c;
+  changed();
+}
+
+QColor TextEditorHighlighter::textColor()
+{
+  return m_text;
+}
+
+void TextEditorHighlighter::setTextColor(const QColor& c)
+{
+  m_text = c;
+  changed();
+}
+
+void TextEditorHighlighter::highlightBlock(const QString& s)
+{
+  QTextCharFormat f;
+  f.setBackground(m_background);
+  f.setForeground(m_text);
+
+  setFormat(0, s.size(), f);
+}
+
+void TextEditorHighlighter::changed()
+{
+  rehighlight();
+}
+
+
 TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
   : QWidget(&editor), m_editor(editor)
 {
@@ -192,10 +280,10 @@ TextEditorLineNumbers::TextEditorLineNumbers(TextEditor& editor)
 
   connect(&m_editor, &QPlainTextEdit::blockCountChanged, [&]{ updateAreaWidth(); });
   connect(&m_editor, &QPlainTextEdit::updateRequest, [&](auto&& rect, int dy){ updateArea(rect, dy); });
-  //connect(e, SIGNAL(cursorPositionChanged()), this, SLOT(highlightCurrentLine()));
+  connect(&m_editor, &QPlainTextEdit::cursorPositionChanged, [&]{ highlightCurrentLine(); });
 
   updateAreaWidth();
-  //highlightCurrentLine();
+  highlightCurrentLine();
 }
 
 QSize TextEditorLineNumbers::sizeHint() const
@@ -211,7 +299,7 @@ void TextEditorLineNumbers::paintEvent(QPaintEvent* e)
 int TextEditorLineNumbers::areaWidth() const
 {
   int digits = 1;
-  int max = qMax(1, m_editor.blockCount());
+  int max = std::max(1, m_editor.blockCount());
 
   while (max >= 10) {
     max /= 10;
@@ -241,6 +329,25 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
   if (rect.contains(m_editor.viewport()->rect())) {
     updateAreaWidth();
   }
+}
+
+void TextEditorLineNumbers::highlightCurrentLine()
+{
+  QList<QTextEdit::ExtraSelection> extraSelections;
+
+  if (!m_editor.isReadOnly()) {
+    QTextEdit::ExtraSelection selection;
+
+    QColor lineColor = QColor(Qt::yellow).lighter(160);
+
+    selection.format.setBackground(lineColor);
+    selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+    selection.cursor = m_editor.textCursor();
+    selection.cursor.clearSelection();
+    extraSelections.append(selection);
+  }
+
+  m_editor.setExtraSelections(extraSelections);
 }
 
 
