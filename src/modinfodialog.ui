@@ -38,15 +38,58 @@
          <property name="childrenCollapsible">
           <bool>false</bool>
          </property>
-         <widget class="QListWidget" name="textFileList">
-          <property name="toolTip">
-           <string>A list of text-files in the mod directory.</string>
-          </property>
-          <property name="whatsThis">
-           <string>A list of text-files in the mod directory like readmes. </string>
-          </property>
+         <widget class="QWidget" name="widget_6" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_16">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Text Files</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="textFileList">
+             <property name="toolTip">
+              <string>A list of text-files in the mod directory.</string>
+             </property>
+             <property name="whatsThis">
+              <string>A list of text-files in the mod directory like readmes. </string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </widget>
-         <widget class="TextEditor" name="textFileView"/>
+         <widget class="QWidget" name="widget_7" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_17">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="TextEditor" name="textFileView"/>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -55,113 +98,79 @@
       <attribute name="title">
        <string>INI-Files</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <layout class="QVBoxLayout" name="verticalLayout_9">
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0,0,0">
-         <property name="spacing">
-          <number>6</number>
+        <widget class="QSplitter" name="splitter">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeConstraint">
-          <enum>QLayout::SetMinimumSize</enum>
-         </property>
-         <item>
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Ini Files</string>
+         <widget class="QWidget" name="">
+          <layout class="QVBoxLayout" name="verticalLayout_5" stretch="0,0">
+           <property name="spacing">
+            <number>6</number>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="iniFileList">
-           <property name="maximumSize">
-            <size>
-             <width>228</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>This is a list of .ini files in the mod.</string>
-           </property>
-           <property name="whatsThis">
-            <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_5">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Ini Tweaks *This feature is non-functional*</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QListWidget" name="iniTweaksList">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>228</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="contextMenuPolicy">
-            <enum>Qt::CustomContextMenu</enum>
-           </property>
-           <property name="toolTip">
-            <string>This is a list of ini tweaks (ini modifications that can be toggled).</string>
-           </property>
-           <property name="whatsThis">
-            <string>This is a list of ini tweaks. Ini Tweaks are (usually small) fragments of ini files that are applied over existing settings in skyrim.ini/skyrimprefs.ini. Each tweak can be toggled individually. You should check the description of the mod whether the tweaks are really optional.</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0">
-         <item>
-          <widget class="QTextBrowser" name="iniFileView">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string/>
-           </property>
-           <property name="undoRedoEnabled">
-            <bool>true</bool>
-           </property>
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="saveButton">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="toolTip">
-            <string>Save changes to the file.</string>
-           </property>
-           <property name="whatsThis">
-            <string>Save changes to the file. This overwrites the original. There is no automatic backup!</string>
-           </property>
-           <property name="text">
-            <string>Save</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+           <item>
+            <widget class="QLabel" name="label_6">
+             <property name="text">
+              <string>Ini Files</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListWidget" name="iniFileList">
+             <property name="toolTip">
+              <string>This is a list of .ini files in the mod.</string>
+             </property>
+             <property name="whatsThis">
+              <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="">
+          <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0">
+           <item>
+            <widget class="QTextBrowser" name="iniFileView">
+             <property name="toolTip">
+              <string/>
+             </property>
+             <property name="whatsThis">
+              <string/>
+             </property>
+             <property name="undoRedoEnabled">
+              <bool>true</bool>
+             </property>
+             <property name="readOnly">
+              <bool>false</bool>
+             </property>
+             <property name="acceptRichText">
+              <bool>false</bool>
+             </property>
+             <property name="openLinks">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="saveButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="toolTip">
+              <string>Save changes to the file.</string>
+             </property>
+             <property name="whatsThis">
+              <string>Save changes to the file. This overwrites the original. There is no automatic backup!</string>
+             </property>
+             <property name="text">
+              <string>Save</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>

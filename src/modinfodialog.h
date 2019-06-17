@@ -153,7 +153,6 @@ public slots:
 private:
 
   void initFiletree(ModInfo::Ptr modInfo);
-  void initINITweaks();
 
   void refreshLists();
 
@@ -166,7 +165,6 @@ private:
   QString getFileCategory(int categoryID);
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
-  void saveIniTweaks();
   void saveCategories(QTreeWidgetItem *currentNode);
   void saveCurrentIniFile();
   void openIniFile(const QString &fileName);
@@ -208,7 +206,6 @@ private slots:
   void on_primaryCategoryBox_currentIndexChanged(int index);
   void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
   void on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
-  void on_iniTweaksList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
@@ -225,9 +222,6 @@ private slots:
 
   void on_prevButton_clicked();
 
-  void on_iniTweaksList_customContextMenuRequested(const QPoint &pos);
-
-  void createTweak();
 private:
   using FileEntry = MOShared::FileEntry;
 

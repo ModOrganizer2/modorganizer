@@ -359,7 +359,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
   }
-  initINITweaks();
 
   ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
@@ -421,7 +420,6 @@ ModInfoDialog::~ModInfoDialog()
   else
     m_ModInfo->setNotes(ui->notesEdit->toHtml());
   saveCategories(ui->categoriesTree->invisibleRootItem());
-  saveIniTweaks(); // ini tweaks are written to the ini file directly. This is the only information not managed by ModInfo
   delete ui->descriptionView->page();
   delete ui->descriptionView;
   delete ui;
@@ -434,19 +432,6 @@ int ModInfoDialog::exec()
   // no need to refresh the other stuff, that was done in the constructor
   refreshConflictLists(true, true);
   return TutorableDialog::exec();
-}
-
-void ModInfoDialog::initINITweaks()
-{
-  int numTweaks = m_Settings->beginReadArray("INI Tweaks");
-  for (int i = 0; i < numTweaks; ++i) {
-    m_Settings->setArrayIndex(i);
-    QList<QListWidgetItem*> items = ui->iniTweaksList->findItems(m_Settings->value("name").toString(), Qt::MatchFixedString);
-    if (items.size() != 0) {
-      items.at(0)->setCheckState(Qt::Checked);
-    }
-  }
-  m_Settings->endArray();
 }
 
 void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
@@ -855,7 +840,6 @@ void ModInfoDialog::refreshFiles()
     tab->clear();
   }
 
-  ui->iniTweaksList->clear();
   ui->iniFileList->clear();
   ui->inactiveESPList->clear();
   ui->activeESPList->clear();
@@ -882,15 +866,7 @@ void ModInfoDialog::refreshFiles()
       if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
         !fileName.endsWith("meta.ini")) {
         QString namePart = fileName.mid(m_RootPath.length() + 1);
-        if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive)) {
-          QListWidgetItem *newItem = new QListWidgetItem(namePart.mid(11), ui->iniTweaksList);
-          newItem->setData(Qt::UserRole, namePart);
-          newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
-          newItem->setCheckState(Qt::Unchecked);
-          ui->iniTweaksList->addItem(newItem);
-        } else {
-          ui->iniFileList->addItem(namePart);
-        }
+        ui->iniFileList->addItem(namePart);
       } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
         fileName.endsWith(".esm", Qt::CaseInsensitive) ||
         fileName.endsWith(".esl", Qt::CaseInsensitive)) {
@@ -1038,23 +1014,6 @@ void ModInfoDialog::openIniFile(const QString &fileName)
   ui->saveButton->setEnabled(false);
 }
 
-
-void ModInfoDialog::saveIniTweaks()
-{
-  m_Settings->remove("INI Tweaks");
-  m_Settings->beginWriteArray("INI Tweaks");
-
-  int countEnabled = 0;
-  for (int i = 0; i < ui->iniTweaksList->count(); ++i) {
-    if (ui->iniTweaksList->item(i)->checkState() == Qt::Checked) {
-      m_Settings->setArrayIndex(countEnabled++);
-      m_Settings->setValue("name", ui->iniTweaksList->item(i)->text());
-    }
-  }
-  m_Settings->endArray();
-}
-
-
 void ModInfoDialog::on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
   QString fullPath = m_RootPath + "/" + current->text();
@@ -1070,25 +1029,6 @@ void ModInfoDialog::on_iniFileList_currentItemChanged(QListWidgetItem *current, 
   } else {
     ui->iniFileList->setCurrentItem(previous, QItemSelectionModel::Current);
   }
-}
-
-
-void ModInfoDialog::on_iniTweaksList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
-{
-  QString fullPath = m_RootPath + "/" + current->data(Qt::UserRole).toString();
-
-  QVariant currentFile = ui->iniFileView->property("currentFile");
-  if (currentFile.isValid() && (currentFile.toString() == fullPath)) {
-    // the new file is the same as the currently displayed file. May be the result of a cancelation
-    return;
-  }
-
-  if (allowNavigateFromINI()) {
-    openIniFile(fullPath);
-  } else {
-    ui->iniFileList->setCurrentItem(previous, QItemSelectionModel::Current);
-  }
-
 }
 
 void ModInfoDialog::on_saveButton_clicked()
@@ -2128,32 +2068,4 @@ void ModInfoDialog::on_prevButton_clicked()
 
     emit modOpenPrev(tab);
     this->accept();
-}
-
-
-void ModInfoDialog::createTweak()
-{
-  QString name = QInputDialog::getText(this, tr("Name"), tr("Please enter a name"));
-  if (name.isNull()) {
-    return;
-  } else if (!fixDirectoryName(name)) {
-    QMessageBox::critical(this, tr("Error"), tr("Invalid name. Must be a valid file name"));
-    return;
-  } else if (ui->iniTweaksList->findItems(name, Qt::MatchFixedString).count() != 0) {
-    QMessageBox::critical(this, tr("Error"), tr("A tweak by that name exists"));
-    return;
-  }
-
-  QListWidgetItem *newTweak = new QListWidgetItem(name + ".ini");
-  newTweak->setData(Qt::UserRole, "INI Tweaks/" + name + ".ini");
-  newTweak->setFlags(newTweak->flags() | Qt::ItemIsUserCheckable);
-  newTweak->setCheckState(Qt::Unchecked);
-  ui->iniTweaksList->addItem(newTweak);
-}
-
-void ModInfoDialog::on_iniTweaksList_customContextMenuRequested(const QPoint &pos)
-{
-  QMenu menu;
-  menu.addAction(tr("Create Tweak"), this, SLOT(createTweak()));
-  menu.exec(ui->iniTweaksList->mapToGlobal(pos));
 }
