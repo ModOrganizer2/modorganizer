@@ -3,19 +3,29 @@
 
 #include "modinfodialog.h"
 
-class ThumbnailButton : public QPushButton
+class ScalableImage : public QWidget
 {
   Q_OBJECT;
 
 public:
-  ThumbnailButton(const QString& fullPath, QImage image);
+  ScalableImage(QImage image={});
+
+  void setImage(QImage image);
   const QImage& image() const;
 
+  bool hasHeightForWidth() const;
+  int heightForWidth(int w) const;
+
 signals:
-    void open(const QImage& image);
+    void clicked(const QImage& image);
+
+protected:
+  void paintEvent(QPaintEvent* e) override;
+  void mousePressEvent(QMouseEvent* e) override;
 
 private:
-  const QImage m_original;
+  QImage m_original, m_scaled;
+  int m_border;
 };
 
 
@@ -29,9 +39,10 @@ public:
 
 private:
   Ui::ModInfoDialog* ui;
+  ScalableImage* m_image;
 
   void add(const QString& fullPath);
-  void onOpen(const QImage& image);
+  void onClicked(const QImage& image);
 };
 
 #endif // MODINFODIALOGIMAGES_H
