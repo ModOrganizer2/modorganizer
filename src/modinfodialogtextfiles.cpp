@@ -38,6 +38,7 @@ TextFilesTab::TextFilesTab(Ui::ModInfoDialog* ui)
 void TextFilesTab::clear()
 {
   ui->textFileList->clear();
+  select(nullptr);
 }
 
 bool TextFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
@@ -87,5 +88,15 @@ void TextFilesTab::onSelection(
     return;
   }
 
-  ui->textFileView->load(item->fullPath());
+  select(item);
+}
+
+void TextFilesTab::select(TextFileItem* item)
+{
+  if (item) {
+    ui->textFileView->setEnabled(true);
+    ui->textFileView->load(item->fullPath());
+  } else {
+    ui->textFileView->setEnabled(false);
+  }
 }

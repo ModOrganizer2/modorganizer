@@ -3,6 +3,8 @@
 
 #include "modinfodialog.h"
 
+class TextFileItem;
+
 class TextFilesTab : public ModInfoDialogTab
 {
 public:
@@ -16,6 +18,7 @@ private:
   Ui::ModInfoDialog* ui;
 
   void onSelection(QListWidgetItem* current, QListWidgetItem* previous);
+  void select(TextFileItem* item);
 };
 
 #endif // MODINFODIALOGTEXTFILES_H
