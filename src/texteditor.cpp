@@ -4,9 +4,10 @@
 
 TextEditor::TextEditor(QWidget* parent) :
   QPlainTextEdit(parent),
-  m_toolbar(*this), m_lineNumbers(nullptr), m_highlighter(nullptr),
+  m_toolbar(nullptr), m_lineNumbers(nullptr), m_highlighter(nullptr),
   m_dirty(false)
 {
+  m_toolbar = new TextEditorToolbar(*this);
   m_lineNumbers = new TextEditorLineNumbers(*this);
   m_highlighter = new TextEditorHighlighter(document());
 
@@ -177,7 +178,7 @@ void TextEditor::setupToolbar()
   auto* layout = new QVBoxLayout(widget);
 
   // adding toolbar and edit
-  layout->addWidget(m_toolbar.widget());
+  layout->addWidget(m_toolbar);
   layout->addWidget(this);
 
   // make the edit stretch
@@ -414,16 +415,15 @@ void TextEditorLineNumbers::updateArea(const QRect &rect, int dy)
 
 TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
   m_editor(editor),
-  m_widget(new QWidget),
-  m_save(new QAction(QObject::tr("&Save"))),
-  m_wordWrap(new QAction(QObject::tr("&Word wrap")))
+  m_save(new QAction(QIcon(":/MO/gui/save"), QObject::tr("&Save"))),
+  m_wordWrap(new QAction(QIcon(":/MO/gui/word-wrap"), QObject::tr("&Word wrap")))
 {
   QObject::connect(m_save, &QAction::triggered, [&]{ m_editor.save(); });
 
   m_wordWrap->setCheckable(true);
   QObject::connect(m_wordWrap, &QAction::triggered, [&]{ m_editor.toggleWordWrap(); });
 
-  auto* layout = new QHBoxLayout(m_widget);
+  auto* layout = new QHBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);
   layout->setAlignment(Qt::AlignLeft);
 
@@ -437,11 +437,6 @@ TextEditorToolbar::TextEditorToolbar(TextEditor& editor) :
 
   QObject::connect(&m_editor, &TextEditor::modified, [&](bool b){ onTextModified(b); });
   QObject::connect(&m_editor, &TextEditor::wordWrapChanged, [&](bool b){ onWordWrap(b); });
-}
-
-QWidget* TextEditorToolbar::widget()
-{
-  return m_widget;
 }
 
 void TextEditorToolbar::onTextModified(bool b)

@@ -5,18 +5,15 @@
 
 class TextEditor;
 
-class TextEditorToolbar : public QObject
+class TextEditorToolbar : public QFrame
 {
   Q_OBJECT;
 
 public:
   TextEditorToolbar(TextEditor& editor);
 
-  QWidget* widget();
-
 private:
   TextEditor& m_editor;
-  QWidget* m_widget;
   QAction* m_save;
   QAction* m_wordWrap;
 
@@ -122,7 +119,7 @@ protected:
   void resizeEvent(QResizeEvent* e) override;
 
 private:
-  TextEditorToolbar m_toolbar;
+  TextEditorToolbar* m_toolbar;
   TextEditorLineNumbers* m_lineNumbers;
   TextEditorHighlighter* m_highlighter;
   QColor m_highlightBackground;
