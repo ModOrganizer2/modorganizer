@@ -53,8 +53,6 @@ class QTreeView;
 class CategoryFactory;
 class TextEditor;
 
-class TextFilesTab;
-
 
 class ModInfoDialogTab
 {
@@ -166,9 +164,6 @@ private:
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
   void saveCategories(QTreeWidgetItem *currentNode);
-  void saveCurrentIniFile();
-  void openIniFile(const QString &fileName);
-  bool allowNavigateFromINI();
   FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
   FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
   void addCheckedCategories(QTreeWidgetItem *tree);
@@ -193,7 +188,6 @@ private slots:
 
   void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
-  void on_saveButton_clicked();
   void on_activateESP_clicked();
   void on_deactivateESP_clicked();
   void on_visitNexusLabel_linkActivated(const QString &link);
@@ -201,11 +195,9 @@ private slots:
   void on_sourceGameEdit_currentIndexChanged(int);
   void on_versionEdit_editingFinished();
   void on_customUrlLineEdit_editingFinished();
-  void on_iniFileView_textChanged();
   void on_tabWidget_currentChanged(int index);
   void on_primaryCategoryBox_currentIndexChanged(int index);
   void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
-  void on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
   void on_overwriteTree_customContextMenuRequested(const QPoint &pos);

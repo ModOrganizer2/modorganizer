@@ -67,6 +67,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
   std::vector<std::unique_ptr<ModInfoDialogTab>> v;
 
   v.push_back(std::make_unique<TextFilesTab>(ui));
+  v.push_back(std::make_unique<IniFilesTab>(ui));
 
   return v;
 }
@@ -840,7 +841,6 @@ void ModInfoDialog::refreshFiles()
     tab->clear();
   }
 
-  ui->iniFileList->clear();
   ui->inactiveESPList->clear();
   ui->activeESPList->clear();
   ui->imageLabel->setPixmap({});
@@ -863,11 +863,7 @@ void ModInfoDialog::refreshFiles()
         }
       }
 
-      if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
-        !fileName.endsWith("meta.ini")) {
-        QString namePart = fileName.mid(m_RootPath.length() + 1);
-        ui->iniFileList->addItem(namePart);
-      } else if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
+      if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
         fileName.endsWith(".esm", Qt::CaseInsensitive) ||
         fileName.endsWith(".esl", Qt::CaseInsensitive)) {
         QString relativePath = fileName.mid(m_RootPath.length() + 1);
@@ -944,10 +940,6 @@ void ModInfoDialog::on_closeButton_clicked()
     }
   }
 
-  if (!allowNavigateFromINI()) {
-    return;
-  }
-
   close();
 }
 
@@ -982,84 +974,6 @@ void ModInfoDialog::thumbnailClicked(const QString &fileName)
     image = image.scaledToHeight(ui->imageLabel->geometry().height());
   }
   ui->imageLabel->setPixmap(QPixmap::fromImage(image));
-}
-
-bool ModInfoDialog::allowNavigateFromINI()
-{
-  if (ui->saveButton->isEnabled()) {
-    int res = QMessageBox::question(this, tr("Save changes?"), tr("Save changes to \"%1\"?").arg(ui->iniFileView->property("currentFile").toString()),
-                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-    if (res == QMessageBox::Cancel) {
-      return false;
-    } else if (res == QMessageBox::Yes) {
-      saveCurrentIniFile();
-    }
-  }
-  return true;
-}
-
-void ModInfoDialog::openIniFile(const QString &fileName)
-{
-  QFile iniFile(fileName);
-  iniFile.open(QIODevice::ReadOnly);
-  QByteArray buffer = iniFile.readAll();
-
-  QTextCodec *codec = QTextCodec::codecForUtfText(buffer, QTextCodec::codecForName("utf-8"));
-  QTextEdit *iniFileView = findChild<QTextEdit*>("iniFileView");
-  iniFileView->setText(codec->toUnicode(buffer));
-  iniFileView->setProperty("currentFile", fileName);
-  iniFileView->setProperty("encoding", codec->name());
-  iniFile.close();
-
-  ui->saveButton->setEnabled(false);
-}
-
-void ModInfoDialog::on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
-{
-  QString fullPath = m_RootPath + "/" + current->text();
-
-  QVariant currentFile = ui->iniFileView->property("currentFile");
-  if (currentFile.isValid() && (currentFile.toString() == fullPath)) {
-    // the new file is the same as the currently displayed file. May be the result of a cancelation
-    return;
-  }
-
-  if (allowNavigateFromINI()) {
-    openIniFile(fullPath);
-  } else {
-    ui->iniFileList->setCurrentItem(previous, QItemSelectionModel::Current);
-  }
-}
-
-void ModInfoDialog::on_saveButton_clicked()
-{
-  saveCurrentIniFile();
-}
-
-
-void ModInfoDialog::saveCurrentIniFile()
-{
-  QVariant fileNameVar = ui->iniFileView->property("currentFile");
-  QVariant encodingVar = ui->iniFileView->property("encoding");
-  if (fileNameVar.isValid() && !fileNameVar.toString().isEmpty()) {
-    QString fileName = fileNameVar.toString();
-    QDir().mkpath(QFileInfo(fileName).absolutePath());
-    QFile txtFile(fileName);
-    txtFile.open(QIODevice::WriteOnly);
-    txtFile.resize(0);
-    QTextCodec *codec = QTextCodec::codecForName(encodingVar.toString().toUtf8());
-    QString data = ui->iniFileView->toPlainText().replace("\n", "\r\n");
-    txtFile.write(codec->fromUnicode(data));
-  } else {
-    reportError("no file selected");
-  }
-  ui->saveButton->setEnabled(false);
-}
-
-void ModInfoDialog::on_iniFileView_textChanged()
-{
-  QPushButton* saveButton = findChild<QPushButton*>("saveButton");
-  saveButton->setEnabled(true);
 }
 
 void ModInfoDialog::on_activateESP_clicked()

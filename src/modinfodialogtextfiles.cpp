@@ -2,10 +2,10 @@
 #include "ui_modinfodialog.h"
 #include <QMessageBox>
 
-class TextFileItem : public QListWidgetItem
+class FileListItem : public QListWidgetItem
 {
 public:
-  TextFileItem(const QString& rootPath, QString fullPath)
+  FileListItem(const QString& rootPath, QString fullPath)
     : m_fullPath(std::move(fullPath))
   {
     setText(m_fullPath.mid(rootPath.length() + 1));
@@ -21,46 +21,36 @@ private:
 };
 
 
-TextFilesTab::TextFilesTab(Ui::ModInfoDialog* ui)
-  : ui(ui)
+GenericFilesTab::GenericFilesTab(QListWidget* list, QSplitter* sp, TextEditor* e)
+  : m_list(list), m_editor(e)
 {
-  ui->textFileView->setupToolbar();
+  m_editor->setupToolbar();
 
-  ui->tabTextSplitter->setSizes({200, 1});
-  ui->tabTextSplitter->setStretchFactor(0, 0);
-  ui->tabTextSplitter->setStretchFactor(1, 1);
+  sp->setSizes({200, 1});
+  sp->setStretchFactor(0, 0);
+  sp->setStretchFactor(1, 1);
 
   QObject::connect(
-    ui->textFileList, &QListWidget::currentItemChanged,
+    m_list, &QListWidget::currentItemChanged,
     [&](auto* current, auto* previous){ onSelection(current, previous); });
 }
 
-void TextFilesTab::clear()
+void GenericFilesTab::clear()
 {
-  ui->textFileList->clear();
+  m_list->clear();
   select(nullptr);
 }
 
-bool TextFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
+bool GenericFilesTab::canClose()
 {
-  if (fullPath.endsWith(".txt", Qt::CaseInsensitive)) {
-    ui->textFileList->addItem(new TextFileItem(rootPath, fullPath));
-    return true;
-  }
-
-  return false;
-}
-
-bool TextFilesTab::canClose()
-{
-  if (!ui->textFileView->dirty()) {
+  if (!m_editor->dirty()) {
     return true;
   }
 
   const int res = QMessageBox::question(
-    ui->tabText,
+    m_list,
     QObject::tr("Save changes?"),
-    QObject::tr("Save changes to \"%1\"?").arg(ui->textFileView->filename()),
+    QObject::tr("Save changes to \"%1\"?").arg(m_editor->filename()),
     QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 
   if (res == QMessageBox::Cancel) {
@@ -68,35 +58,94 @@ bool TextFilesTab::canClose()
   }
 
   if (res == QMessageBox::Yes) {
-      ui->textFileView->save();
+    m_editor->save();
   }
 
   return true;
 }
 
-void TextFilesTab::onSelection(
+bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
+{
+  static constexpr const char* extensions[] = {
+    ".txt"
+  };
+
+  for (const auto* e : extensions) {
+    if (wantsFile(rootPath, fullPath)) {
+      m_list->addItem(new FileListItem(rootPath, fullPath));
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void GenericFilesTab::onSelection(
   QListWidgetItem* current, QListWidgetItem* previous)
 {
-  auto* item = dynamic_cast<TextFileItem*>(current);
+  auto* item = dynamic_cast<FileListItem*>(current);
   if (!item) {
-    qCritical("TextFilesTab: item is not a TextFileItem");
+    qCritical("TextFilesTab: item is not a FileListItem");
     return;
   }
 
   if (!canClose()) {
-    ui->textFileList->setCurrentItem(previous, QItemSelectionModel::Current);
+    m_list->setCurrentItem(previous, QItemSelectionModel::Current);
     return;
   }
 
   select(item);
 }
 
-void TextFilesTab::select(TextFileItem* item)
+void GenericFilesTab::select(FileListItem* item)
 {
   if (item) {
-    ui->textFileView->setEnabled(true);
-    ui->textFileView->load(item->fullPath());
+    m_editor->setEnabled(true);
+    m_editor->load(item->fullPath());
   } else {
-    ui->textFileView->setEnabled(false);
+    m_editor->setEnabled(false);
   }
+}
+
+
+TextFilesTab::TextFilesTab(Ui::ModInfoDialog* ui)
+  : GenericFilesTab(ui->textFileList, ui->tabTextSplitter, ui->textFileEditor)
+{
+}
+
+bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
+{
+  static constexpr const char* extensions[] = {
+    ".txt"
+  };
+
+  for (const auto* e : extensions) {
+    if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+IniFilesTab::IniFilesTab(Ui::ModInfoDialog* ui)
+  : GenericFilesTab(ui->iniFileList, ui->tabIniSplitter, ui->iniFileEditor)
+{
+}
+
+bool IniFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) const
+{
+  static constexpr const char* extensions[] = {
+    ".ini", ".cfg"
+  };
+
+  for (const auto* e : extensions) {
+    if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
+      if (!fullPath.endsWith("meta.ini")) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
