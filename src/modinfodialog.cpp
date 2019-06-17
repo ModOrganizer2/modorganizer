@@ -38,6 +38,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "previewdialog.h"
 #include "texteditor.h"
 
+#include "modinfodialogtextfiles.h"
+
 #include <QDir>
 #include <QDirIterator>
 #include <QPushButton>
@@ -57,6 +59,18 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace MOBase;
 using namespace MOShared;
+
+
+std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
+  Ui::ModInfoDialog* ui)
+{
+  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
+
+  v.push_back(std::make_unique<TextFilesTab>(ui));
+
+  return v;
+}
+
 
 
 class ModFileListWidget : public QListWidgetItem {
@@ -254,6 +268,9 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
+
+  m_tabs = ModInfoDialogTab::createTabs(ui);
+
   this->setWindowTitle(modInfo->name());
   this->setWindowModality(Qt::WindowModal);
 
@@ -305,12 +322,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     }
   }
 
-  ui->textFileView->setupToolbar();
-
-  ui->tabTextSplitter->setSizes({200, 1});
-  ui->tabTextSplitter->setStretchFactor(0, 0);
-  ui->tabTextSplitter->setStretchFactor(1, 1);
-
   // refresh everything but the conflict lists, which are done in exec() because
   // they depend on restoring the state to some widgets; this refresh has to be
   // done here because some of the checks below depend on the ui to decide which
@@ -333,15 +344,17 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   }
   else if (unmanaged)
   {
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
     ui->tabWidget->setTabEnabled(TAB_ESPS, false);
-    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
   } else {
+    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, true);
+
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
@@ -838,7 +851,10 @@ QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
 void ModInfoDialog::refreshFiles()
 {
   // clearing
-  ui->textFileList->clear();
+  for (auto& tab : m_tabs) {
+    tab->clear();
+  }
+
   ui->iniTweaksList->clear();
   ui->iniFileList->clear();
   ui->inactiveESPList->clear();
@@ -857,9 +873,13 @@ void ModInfoDialog::refreshFiles()
     while (dirIterator.hasNext()) {
       QString fileName = dirIterator.next();
 
-      if (fileName.endsWith(".txt", Qt::CaseInsensitive)) {
-        ui->textFileList->addItem(fileName.mid(m_RootPath.length() + 1));
-      } else if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
+      for (auto& tab : m_tabs) {
+        if (tab->feedFile(m_RootPath, fileName)) {
+          break;
+        }
+      }
+
+      if ((fileName.endsWith(".ini", Qt::CaseInsensitive) || fileName.endsWith(".cfg", Qt::CaseInsensitive)) &&
         !fileName.endsWith("meta.ini")) {
         QString namePart = fileName.mid(m_RootPath.length() + 1);
         if (namePart.startsWith("INI Tweaks", Qt::CaseInsensitive)) {
@@ -903,7 +923,6 @@ void ModInfoDialog::refreshFiles()
     }
   }
 
-  ui->tabWidget->setTabEnabled(TAB_TEXTFILES, ui->textFileList->count() != 0);
   ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
   ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
 }
@@ -943,9 +962,17 @@ void ModInfoDialog::saveCategories(QTreeWidgetItem *currentNode)
 
 void ModInfoDialog::on_closeButton_clicked()
 {
-  if (allowNavigateFromTXT() && allowNavigateFromINI()) {
-    this->close();
+  for (auto& tab : m_tabs) {
+    if (!tab->canClose()) {
+      return;
+    }
   }
+
+  if (!allowNavigateFromINI()) {
+    return;
+  }
+
+  close();
 }
 
 
@@ -981,23 +1008,6 @@ void ModInfoDialog::thumbnailClicked(const QString &fileName)
   ui->imageLabel->setPixmap(QPixmap::fromImage(image));
 }
 
-bool ModInfoDialog::allowNavigateFromTXT()
-{
-  if (ui->textFileView->dirty()) {
-    const int res = QMessageBox::question(
-      this, tr("Save changes?"),
-      tr("Save changes to \"%1\"?").arg(ui->textFileView->filename()),
-      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-
-    if (res == QMessageBox::Cancel) {
-      return false;
-    } else if (res == QMessageBox::Yes) {
-      saveCurrentTextFile();
-    }
-  }
-  return true;
-}
-
 bool ModInfoDialog::allowNavigateFromINI()
 {
   if (ui->saveButton->isEnabled()) {
@@ -1010,29 +1020,6 @@ bool ModInfoDialog::allowNavigateFromINI()
     }
   }
   return true;
-}
-
-void ModInfoDialog::on_textFileList_currentItemChanged(
-  QListWidgetItem *current, QListWidgetItem *previous)
-{
-  const QString fullPath = m_RootPath + "/" + current->text();
-
-  if (fullPath == ui->textFileView->filename()) {
-    // the new file is the same as the currently displayed file. May be the
-    // result of a cancellation
-    return;
-  }
-
-  if (allowNavigateFromTXT()) {
-    openTextFile(fullPath);
-  } else {
-    ui->textFileList->setCurrentItem(previous, QItemSelectionModel::Current);
-  }
-}
-
-void ModInfoDialog::openTextFile(const QString &fileName)
-{
-  ui->textFileView->load(fileName);
 }
 
 void ModInfoDialog::openIniFile(const QString &fileName)
@@ -1107,11 +1094,6 @@ void ModInfoDialog::on_iniTweaksList_currentItemChanged(QListWidgetItem *current
 void ModInfoDialog::on_saveButton_clicked()
 {
   saveCurrentIniFile();
-}
-
-void ModInfoDialog::saveCurrentTextFile()
-{
-  ui->textFileView->save();
 }
 
 

@@ -53,9 +53,30 @@ class QTreeView;
 class CategoryFactory;
 class TextEditor;
 
+class TextFilesTab;
+
+
+class ModInfoDialogTab
+{
+public:
+  static std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs(
+    Ui::ModInfoDialog* ui);
+
+  ModInfoDialogTab() = default;
+  ModInfoDialogTab(const ModInfoDialogTab&) = delete;
+  ModInfoDialogTab& operator=(const ModInfoDialogTab&) = delete;
+  ModInfoDialogTab(ModInfoDialogTab&&) = default;
+  ModInfoDialogTab& operator=(ModInfoDialogTab&&) = default;
+  virtual ~ModInfoDialogTab() = default;
+
+  virtual void clear() = 0;
+  virtual bool feedFile(const QString& rootPath, const QString& filename) = 0;
+  virtual bool canClose() = 0;
+};
+
 
 /**
- * this is a larger dialog used to visualise information abount the mod.
+ * this is a larger dialog used to visualise information about the mod.
  * @todo this would probably a good place for a plugin-system
  **/
 class ModInfoDialog : public MOBase::TutorableDialog
@@ -147,11 +168,8 @@ private:
   void deleteFile(const QModelIndex &index);
   void saveIniTweaks();
   void saveCategories(QTreeWidgetItem *currentNode);
-  void saveCurrentTextFile();
   void saveCurrentIniFile();
-  void openTextFile(const QString &fileName);
   void openIniFile(const QString &fileName);
-  bool allowNavigateFromTXT();
   bool allowNavigateFromINI();
   FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
   FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
@@ -189,7 +207,6 @@ private slots:
   void on_tabWidget_currentChanged(int index);
   void on_primaryCategoryBox_currentIndexChanged(int index);
   void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
-  void on_textFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_iniFileList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_iniTweaksList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
   void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
@@ -233,6 +250,8 @@ private:
   Ui::ModInfoDialog *ui;
 
   ModInfo::Ptr m_ModInfo;
+
+  std::vector<std::unique_ptr<ModInfoDialogTab>> m_tabs;
 
   QSignalMapper m_ThumbnailMapper;
   QString m_RootPath;
