@@ -60,8 +60,18 @@ void TextEditor::setDefaultStyle()
 bool TextEditor::load(const QString& filename)
 {
   m_filename = filename;
-  setPlainText(MOBase::readFileText(filename, &m_encoding));
+  clear();
+
+  const QString s = MOBase::readFileText(filename, &m_encoding);
+
+  setPlainText(s);
   document()->setModified(false);
+
+  if (s.isEmpty()) {
+    // the modificationChanged even is not fired by the setModified() call
+    // above when the text being set is empty
+    onModified(false);
+  }
 
   return true;
 }

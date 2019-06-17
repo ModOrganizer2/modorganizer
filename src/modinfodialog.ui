@@ -154,7 +154,7 @@
        <item>
         <widget class="QLabel" name="imageLabel">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -183,7 +183,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QScrollArea" name="scrollArea">
+        <widget class="QScrollArea" name="imageScrollArea">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -193,7 +193,7 @@
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
-         <widget class="QWidget" name="scrollAreaWidgetContents">
+         <widget class="QWidget" name="imageScrollAreaContent">
           <property name="geometry">
            <rect>
             <x>0</x>
@@ -225,7 +225,7 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QHBoxLayout" name="thumbnailArea">
+            <layout class="QHBoxLayout" name="imageThumbnails">
              <property name="spacing">
               <number>0</number>
              </property>

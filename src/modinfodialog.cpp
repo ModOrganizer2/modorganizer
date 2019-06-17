@@ -39,6 +39,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "texteditor.h"
 
 #include "modinfodialogtextfiles.h"
+#include "modinfodialogimages.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -68,8 +69,14 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
 
   v.push_back(std::make_unique<TextFilesTab>(ui));
   v.push_back(std::make_unique<IniFilesTab>(ui));
+  v.push_back(std::make_unique<ImagesTab>(ui));
 
   return v;
+}
+
+bool ModInfoDialogTab::canClose()
+{
+  return true;
 }
 
 
@@ -262,7 +269,7 @@ public:
 
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
-  m_ThumbnailMapper(this), m_RequestStarted(false),
+  m_RequestStarted(false),
   m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_PreviewAction(nullptr),
   m_RenameAction(nullptr), m_DeleteAction(nullptr), m_HideAction(nullptr),
   m_UnhideAction(nullptr), m_Directory(directory), m_Origin(nullptr),
@@ -307,8 +314,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   ui->descriptionView->setPage(new DescriptionPage());
 
-  connect(&m_ThumbnailMapper, SIGNAL(mapped(const QString&)), this, SIGNAL(thumbnailClickedSignal(const QString&)));
-  connect(this, SIGNAL(thumbnailClickedSignal(const QString&)), this, SLOT(thumbnailClicked(const QString&)));
   connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
   connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   //TODO: No easy way to delegate links
@@ -347,14 +352,16 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
     ui->tabWidget->setTabEnabled(TAB_ESPS, false);
-    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
   } else {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, true);
+    ui->tabWidget->setTabEnabled(TAB_INIFILES, true);
+    ui->tabWidget->setTabEnabled(TAB_IMAGES, true);
 
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
@@ -843,13 +850,6 @@ void ModInfoDialog::refreshFiles()
 
   ui->inactiveESPList->clear();
   ui->activeESPList->clear();
-  ui->imageLabel->setPixmap({});
-
-  while (ui->thumbnailArea->count() > 0) {
-    auto* item = ui->thumbnailArea->takeAt(0);
-    delete item->widget();
-    delete item;
-  }
 
 
   if (m_RootPath.length() > 0) {
@@ -875,27 +875,10 @@ void ModInfoDialog::refreshFiles()
         } else {
           ui->activeESPList->addItem(relativePath);
         }
-      } else if ((fileName.endsWith(".png", Qt::CaseInsensitive)) ||
-        (fileName.endsWith(".jpg", Qt::CaseInsensitive))) {
-        QImage image = QImage(fileName);
-        if (!image.isNull()) {
-          if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-            image = image.scaledToWidth(128);
-          } else {
-            image = image.scaledToHeight(96);
-          }
-
-          QPushButton *thumbnailButton = new QPushButton(QPixmap::fromImage(image), "");
-          thumbnailButton->setIconSize(QSize(image.width(), image.height()));
-          connect(thumbnailButton, SIGNAL(clicked()), &m_ThumbnailMapper, SLOT(map()));
-          m_ThumbnailMapper.setMapping(thumbnailButton, fileName);
-          ui->thumbnailArea->addWidget(thumbnailButton);
-        }
       }
     }
   }
 
-  ui->tabWidget->setTabEnabled(TAB_IMAGES, ui->thumbnailArea->count() != 0);
   ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
 }
 
@@ -962,18 +945,6 @@ void ModInfoDialog::openTab(int tab)
   if (tabWidget->isTabEnabled(tab)) {
     tabWidget->setCurrentIndex(tab);
   }
-}
-
-void ModInfoDialog::thumbnailClicked(const QString &fileName)
-{
-  ui->imageLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-  QImage image(fileName);
-  if (static_cast<float>(image.width()) / static_cast<float>(image.height()) > 1.34) {
-    image = image.scaledToWidth(ui->imageLabel->geometry().width());
-  } else {
-    image = image.scaledToHeight(ui->imageLabel->geometry().height());
-  }
-  ui->imageLabel->setPixmap(QPixmap::fromImage(image));
 }
 
 void ModInfoDialog::on_activateESP_clicked()

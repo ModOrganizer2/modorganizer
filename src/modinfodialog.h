@@ -69,7 +69,7 @@ public:
 
   virtual void clear() = 0;
   virtual bool feedFile(const QString& rootPath, const QString& filename) = 0;
-  virtual bool canClose() = 0;
+  virtual bool canClose();
 };
 
 
@@ -135,7 +135,6 @@ public:
 
 signals:
 
-  void thumbnailClickedSignal(const QString &filename);
   void linkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
@@ -172,7 +171,6 @@ private:
   int tabIndex(const QString &tabId);
 
 private slots:
-  void thumbnailClicked(const QString &fileName);
   void linkClicked(const QUrl &url);
   void linkClicked(QString url);
 
@@ -239,7 +237,6 @@ private:
 
   std::vector<std::unique_ptr<ModInfoDialogTab>> m_tabs;
 
-  QSignalMapper m_ThumbnailMapper;
   QString m_RootPath;
 
   OrganizerCore *m_OrganizerCore;
