@@ -54,6 +54,7 @@ SET(organizer_SRCS
     modlist.cpp
     modidlineedit.cpp
     modinfodialog.cpp
+	modinfodialogesps.cpp
 	modinfodialogimages.cpp
 	modinfodialogtextfiles.cpp
     modinfo.cpp
@@ -156,6 +157,7 @@ SET(organizer_HDRS
     modlist.h
     modidlineedit.h
     modinfodialog.h
+	modinfodialogesps.h
 	modinfodialogimages.h
 	modinfodialogtextfiles.h
     modinfo.h
@@ -356,6 +358,7 @@ set(modinfo
 	modinfo
 	modinfobackup
 	modinfodialog
+	modinfodialogesps
 	modinfodialogimages
 	modinfodialogtextfiles
 	modinfoforeign

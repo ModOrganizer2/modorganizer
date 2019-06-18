@@ -40,6 +40,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfodialogtextfiles.h"
 #include "modinfodialogimages.h"
+#include "modinfodialogesps.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -70,6 +71,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
   v.push_back(std::make_unique<TextFilesTab>(ui));
   v.push_back(std::make_unique<IniFilesTab>(ui));
   v.push_back(std::make_unique<ImagesTab>(ui));
+  v.push_back(std::make_unique<ESPsTab>(ui));
 
   return v;
 }
@@ -353,15 +355,16 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
-    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
   } else {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, true);
     ui->tabWidget->setTabEnabled(TAB_INIFILES, true);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, true);
+    ui->tabWidget->setTabEnabled(TAB_ESPS, true);
 
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
@@ -848,10 +851,6 @@ void ModInfoDialog::refreshFiles()
     tab->clear();
   }
 
-  ui->inactiveESPList->clear();
-  ui->activeESPList->clear();
-
-
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
@@ -862,24 +861,8 @@ void ModInfoDialog::refreshFiles()
           break;
         }
       }
-
-      if (fileName.endsWith(".esp", Qt::CaseInsensitive) ||
-        fileName.endsWith(".esm", Qt::CaseInsensitive) ||
-        fileName.endsWith(".esl", Qt::CaseInsensitive)) {
-        QString relativePath = fileName.mid(m_RootPath.length() + 1);
-        if (relativePath.contains('/')) {
-          QFileInfo fileInfo(fileName);
-          QListWidgetItem *newItem = new QListWidgetItem(fileInfo.fileName());
-          newItem->setData(Qt::UserRole, relativePath);
-          ui->inactiveESPList->addItem(newItem);
-        } else {
-          ui->activeESPList->addItem(relativePath);
-        }
-      }
     }
   }
-
-  ui->tabWidget->setTabEnabled(TAB_ESPS, (ui->inactiveESPList->count() != 0) || (ui->activeESPList->count() != 0));
 }
 
 void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
@@ -944,79 +927,6 @@ void ModInfoDialog::openTab(int tab)
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
   if (tabWidget->isTabEnabled(tab)) {
     tabWidget->setCurrentIndex(tab);
-  }
-}
-
-void ModInfoDialog::on_activateESP_clicked()
-{
-  QListWidget *activeESPList = findChild<QListWidget*>("activeESPList");
-  QListWidget *inactiveESPList = findChild<QListWidget*>("inactiveESPList");
-
-  int selectedRow = inactiveESPList->currentRow();
-  if (selectedRow < 0) {
-    return;
-  }
-
-  QListWidgetItem *selectedItem = inactiveESPList->takeItem(selectedRow);
-
-  QDir root(m_RootPath);
-  bool renamed = false;
-
-  while (root.exists(selectedItem->text())) {
-    bool okClicked = false;
-    QString newName = QInputDialog::getText(this, tr("File Exists"), tr("A file with that name exists, please enter a new one"), QLineEdit::Normal, selectedItem->text(), &okClicked);
-    if (!okClicked) {
-      inactiveESPList->insertItem(selectedRow, selectedItem);
-      return;
-    } else if (newName.size() > 0) {
-      selectedItem->setText(newName);
-      renamed = true;
-    }
-  }
-
-  if (root.rename(selectedItem->data(Qt::UserRole).toString(), selectedItem->text())) {
-    activeESPList->addItem(selectedItem);
-    if (renamed) {
-      selectedItem->setData(Qt::UserRole, QVariant());
-    }
-  } else {
-    inactiveESPList->insertItem(selectedRow, selectedItem);
-    reportError(tr("failed to move file"));
-  }
-}
-
-
-void ModInfoDialog::on_deactivateESP_clicked()
-{
-  QListWidget *activeESPList = findChild<QListWidget*>("activeESPList");
-  QListWidget *inactiveESPList = findChild<QListWidget*>("inactiveESPList");
-
-  int selectedRow = activeESPList->currentRow();
-  if (selectedRow < 0) {
-    return;
-  }
-
-  QDir root(m_RootPath);
-
-  QListWidgetItem *selectedItem = activeESPList->takeItem(selectedRow);
-
-  // if we moved the file from optional to active in this session, we move the file back to
-  // where it came from. Otherwise, it is moved to the new folder "optional"
-  if (selectedItem->data(Qt::UserRole).isNull()) {
-    selectedItem->setData(Qt::UserRole, QString("optional/") + selectedItem->text());
-    if (!root.exists("optional")) {
-      if (!root.mkdir("optional")) {
-        reportError(tr("failed to create directory \"optional\""));
-        activeESPList->insertItem(selectedRow, selectedItem);
-        return;
-      }
-    }
-  }
-
-  if (root.rename(selectedItem->text(), selectedItem->data(Qt::UserRole).toString())) {
-    inactiveESPList->addItem(selectedItem);
-  } else {
-    activeESPList->insertItem(selectedRow, selectedItem);
   }
 }
 

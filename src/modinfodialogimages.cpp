@@ -52,8 +52,6 @@ void ScalableImage::paintEvent(QPaintEvent* e)
     static_cast<int>(std::round(m_original.height() * ratio)));
 
   if (m_scaled.isNull() || m_scaled.size() != scaledSize) {
-    qDebug() << "scaled to " << scaledSize;
-
     m_scaled = m_original.scaled(
       scaledSize.width(), scaledSize.height(),
       Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
