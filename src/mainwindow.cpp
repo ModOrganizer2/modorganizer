@@ -1519,6 +1519,7 @@ void MainWindow::startExeAction()
     return;
   }
 
+  action->setEnabled(false);
   const Executable& exe = *itor;
   auto& profile = *m_OrganizerCore.currentProfile();
 
@@ -1537,6 +1538,8 @@ void MainWindow::startExeAction()
       exe.steamAppID(),
       customOverwrite,
       forcedLibraries);
+  action->setEnabled(true);
+
 }
 
 
