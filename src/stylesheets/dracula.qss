@@ -418,6 +418,8 @@ DownloadListWidget::item:selected {
     padding: 0px;
 }
 
+QStatusBar::item {border: None;}
+
 QProgressBar
 {
   border: 2px solid grey;

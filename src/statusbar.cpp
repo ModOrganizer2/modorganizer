@@ -9,15 +9,26 @@ StatusBar::StatusBar(QStatusBar* bar, Ui::MainWindow* ui) :
   m_update(new StatusBarAction(ui->actionUpdate)),
   m_api(new QLabel)
 {
+  QWidget* spacer1 = new QWidget;
+  spacer1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  spacer1->setHidden(true);
+  spacer1->setVisible(true);
+  m_bar->addPermanentWidget(spacer1, 0);
   m_bar->addPermanentWidget(m_progress);
+  QWidget* spacer2 = new QWidget;
+  spacer2->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  spacer2->setHidden(true);
+  spacer2->setVisible(true);
+  m_bar->addPermanentWidget(spacer2,0);
   m_bar->addPermanentWidget(m_notifications);
   m_bar->addPermanentWidget(m_update);
   m_bar->addPermanentWidget(m_api);
+  
 
   m_progress->setTextVisible(true);
   m_progress->setRange(0, 100);
-  m_progress->setMaximumWidth(150);
-  m_progress->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+  m_progress->setMaximumWidth(300);
+  m_progress->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
   m_update->set(false);
   m_notifications->set(false);

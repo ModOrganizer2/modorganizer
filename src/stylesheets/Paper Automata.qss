@@ -681,6 +681,8 @@ QToolTip {
 	border: 2px solid #CDC8B0;
 }
 
+QStatusBar::item {border: None;}
+
 /* Progress Bars (Downloads) */
 
 QProgressBar {

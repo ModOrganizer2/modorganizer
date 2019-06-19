@@ -6164,12 +6164,12 @@ You will be asked if you want to allow helper.exe to make changes to the system.
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="statusbar.cpp" line="26"/>
+        <location filename="statusbar.cpp" line="37"/>
         <source>This tracks the number of queued Nexus API requests, as well as the remaining daily and hourly requests. The Nexus API limits you to a pool of requests per day and requests per hour. It is dynamically updated every time a request is completed. If you run out of requests, you will be unable to queue downloads, check updates, parse mod info, or even log in. Both pools must be consumed before this happens.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="statusbar.cpp" line="45"/>
+        <location filename="statusbar.cpp" line="56"/>
         <source>Loading...</source>
         <translation type="unfinished"></translation>
     </message>

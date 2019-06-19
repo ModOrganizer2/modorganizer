@@ -591,6 +591,8 @@ SaveGameInfoWidget {
   border-width: 1px;
   padding: 2px; }
 
+  QStatusBar::item {border: None;}
+
 /* Progress Bars (Downloads) #QProgressBar */
 QProgressBar {
   background-color: #E6E6E6;

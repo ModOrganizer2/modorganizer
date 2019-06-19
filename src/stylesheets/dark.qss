@@ -252,6 +252,8 @@ QMenuBar::item:selected {
   border-color: #3EA0CA;
 }
 
+QStatusBar::item {border: None;}
+
 QProgressBar
 {
   border: 2px solid grey;

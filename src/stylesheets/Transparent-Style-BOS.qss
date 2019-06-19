@@ -673,6 +673,9 @@ QAbstractSpinBox::down-arrow{
      border-width:1px;
      border-style:solid;
 }
+
+QStatusBar::item {border: None;}
+
 /* Font size */
  QLabel,QMenu,QPushButton,QAbstractSpinBox,QGroupBox,QCheckBox,QRadioButton{
      color: #cccccc;

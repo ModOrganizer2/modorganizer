@@ -644,6 +644,9 @@ QAbstractSpinBox::down-arrow{
      border-width:1px;
      border-style:solid;
 }
+
+QStatusBar::item {border: None;}
+
 /* **************************** */
 /* Handles Web, Nexus info tab */
 /* **************************** */

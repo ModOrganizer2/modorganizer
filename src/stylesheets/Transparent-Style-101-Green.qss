@@ -461,6 +461,9 @@
      background-color:#121212;
      color:#C0C0C0;
 }
+
+QStatusBar::item {border: None;}
+
 /* **************************** */
 /* Handles Web, Nexus info tab */
 /* **************************** */
