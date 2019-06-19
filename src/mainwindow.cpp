@@ -4717,6 +4717,7 @@ void MainWindow::exportModListCSV()
 	mod_Name->setChecked(true);
   QCheckBox *mod_Note = new QCheckBox(tr("Notes_column"));
 	QCheckBox *mod_Status = new QCheckBox(tr("Mod_Status"));
+  mod_Status->setChecked(true);
 	QCheckBox *primary_Category = new QCheckBox(tr("Primary_Category"));
 	QCheckBox *nexus_ID = new QCheckBox(tr("Nexus_ID"));
 	QCheckBox *mod_Nexus_URL = new QCheckBox(tr("Mod_Nexus_URL"));
@@ -4764,10 +4765,10 @@ void MainWindow::exportModListCSV()
 			std::vector<std::pair<QString, CSVBuilder::EFieldType> > fields;
 			if (mod_Priority->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Priority"), CSVBuilder::TYPE_STRING));
+      if (mod_Status->isChecked())
+        fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
 			if (mod_Name->isChecked())
 				fields.push_back(std::make_pair(QString("#Mod_Name"), CSVBuilder::TYPE_STRING));
-			if (mod_Status->isChecked())
-				fields.push_back(std::make_pair(QString("#Mod_Status"), CSVBuilder::TYPE_STRING));
       if (mod_Note->isChecked())
         fields.push_back(std::make_pair(QString("#Note"), CSVBuilder::TYPE_STRING));
 			if (primary_Category->isChecked())
@@ -4787,9 +4788,10 @@ void MainWindow::exportModListCSV()
 
 			builder.writeHeader();
 
-			for (unsigned int i = 0; i < numMods; ++i) {
-				ModInfo::Ptr info = ModInfo::getByIndex(i);
-				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(i);
+      auto indexesByPriority = m_OrganizerCore.currentProfile()->getAllIndexesByPriority();
+      for (auto& iter : indexesByPriority) {        
+				ModInfo::Ptr info = ModInfo::getByIndex(iter.second);
+				bool enabled = m_OrganizerCore.currentProfile()->modEnabled(iter.second);
 				if ((selectedRowID == 1) && !enabled) {
 					continue;
 				}
@@ -4800,11 +4802,11 @@ void MainWindow::exportModListCSV()
 				if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) == flags.end()) &&
 					(std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) == flags.end())) {
 					if (mod_Priority->isChecked())
-						builder.setRowField("#Mod_Priority", QString("%1").arg(m_OrganizerCore.currentProfile()->getModPriority(i), 4, 10, QChar('0')));
+						builder.setRowField("#Mod_Priority", QString("%1").arg(iter.first, 4, 10, QChar('0')));
+          if (mod_Status->isChecked())
+            builder.setRowField("#Mod_Status", (enabled) ? "+" : "-");
 					if (mod_Name->isChecked())
 						builder.setRowField("#Mod_Name", info->name());
-					if (mod_Status->isChecked())
-						builder.setRowField("#Mod_Status", (enabled)? "Enabled" : "Disabled");
           if (mod_Note->isChecked())
             builder.setRowField("#Note", QString("%1").arg(info->comments().remove(',')));
 					if (primary_Category->isChecked())
