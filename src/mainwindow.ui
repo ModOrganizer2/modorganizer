@@ -1358,7 +1358,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionChange_Game"/>
     <addaction name="actionInstallMod"/>
-    <addaction name="actionAdd_Profile"/>
+    <addaction name="actionNexus"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -1366,9 +1366,9 @@ p, li { white-space: pre-wrap; }
     <property name="title">
      <string>&amp;Tools</string>
     </property>
-    <addaction name="actionNexus"/>
-    <addaction name="separator"/>
+    <addaction name="actionAdd_Profile"/>
     <addaction name="actionModify_Executables"/>
+    <addaction name="separator"/>
     <addaction name="actionTool"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
@@ -1379,13 +1379,8 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="actionHelp"/>
     <addaction name="actionUpdate"/>
+    <addaction name="separator"/>
     <addaction name="actionEndorseMO"/>
-   </widget>
-   <widget class="QMenu" name="menuEdit">
-    <property name="title">
-     <string>&amp;Edit</string>
-    </property>
-    <addaction name="actionCopy_Log_to_Clipboard"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -1408,6 +1403,7 @@ p, li { white-space: pre-wrap; }
      <addaction name="actionToolBarIconsAndText"/>
     </widget>
     <addaction name="menuToolbars"/>
+    <addaction name="separator"/>
     <addaction name="actionNotifications"/>
    </widget>
    <widget class="QMenu" name="menuRun">
@@ -1416,7 +1412,6 @@ p, li { white-space: pre-wrap; }
     </property>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuTools"/>
    <addaction name="menuRun"/>
@@ -1491,7 +1486,7 @@ p, li { white-space: pre-wrap; }
      <normaloff>:/MO/gui/plugins</normaloff>:/MO/gui/plugins</iconset>
    </property>
    <property name="text">
-    <string>&amp;Tools</string>
+    <string>&amp;Tool Plugins</string>
    </property>
    <property name="iconText">
     <string>&amp;Tools</string>
