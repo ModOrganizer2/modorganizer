@@ -70,7 +70,29 @@ public:
   virtual void clear() = 0;
   virtual bool feedFile(const QString& rootPath, const QString& filename) = 0;
   virtual bool canClose();
+  virtual void saveState(Settings& s);
+  virtual void restoreState(const Settings& s);
 };
+
+
+class ElideLeftDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
+  {
+    QStyledItemDelegate::initStyleOption(o, i);
+    o->textElideMode = Qt::ElideLeft;
+  }
+};
+
+
+bool canPreviewFile(PluginContainer* pluginContainer, bool isArchive, const QString& filename);
+bool canOpenFile(bool isArchive, const QString& filename);
+bool canHideFile(bool isArchive, const QString& filename);
+bool canUnhideFile(bool isArchive, const QString& filename);
 
 
 /**
@@ -262,36 +284,13 @@ private:
 
   std::map<int, int> m_RealTabPos;
 
-  ExpanderWidget m_overwriteExpander, m_overwrittenExpander, m_nonconflictExpander;
-  FilterWidget m_advancedConflictFilter;
 
 
   void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);
   void refreshFiles();
 
-  QTreeWidgetItem* createOverwriteItem(
-    FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
-
-  QTreeWidgetItem* createNoConflictItem(
-    FileEntry::Index index, bool archive,
-    const QString& fileName, const QString& relativeName);
-
-  QTreeWidgetItem* createOverwrittenItem(
-    FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName);
-
-  QTreeWidgetItem* createAdvancedConflictItem(
-    FileEntry::Index index, int fileOrigin, bool archive,
-    const QString& fileName, const QString& relativeName,
-    const MOShared::FileEntry::AlternativesVector& alternatives);
-
   void restoreTabState(const QByteArray &state);
-  void restoreConflictsState(const QByteArray &state);
-
   QByteArray saveTabState() const;
-  QByteArray saveConflictsState() const;
 
   void changeFiletreeVisibility(bool visible);
 

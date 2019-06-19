@@ -241,7 +241,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="inactiveESPList1">
+            <widget class="QListWidget" name="inactiveESPList">
              <property name="toolTip">
               <string>List of esps, esms, and esls that can not be loaded by the game.</string>
              </property>
@@ -285,7 +285,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               </spacer>
              </item>
              <item>
-              <widget class="QToolButton" name="activateESP1">
+              <widget class="QToolButton" name="activateESP">
                <property name="toolTip">
                 <string>Move a file to the data directory.</string>
                </property>
@@ -308,7 +308,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
               </widget>
              </item>
              <item>
-              <widget class="QToolButton" name="deactivateESP1">
+              <widget class="QToolButton" name="deactivateESP">
                <property name="toolTip">
                 <string>Make the selected mod in the lower list unavailable.</string>
                </property>
@@ -368,7 +368,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                </widget>
               </item>
               <item>
-               <widget class="QListWidget" name="activeESPList1">
+               <widget class="QListWidget" name="activeESPList">
                 <property name="toolTip">
                  <string>ESPs in the data directory and thus visible to the game.</string>
                 </property>
@@ -386,23 +386,23 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabConflicts">
+     <widget class="QWidget" name="tabConflicts1">
       <attribute name="title">
        <string>Conflicts</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0">
        <item>
-        <widget class="QTabWidget" name="tabConflictsTabs">
+        <widget class="QTabWidget" name="tabConflictsTabs1">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab1">
           <attribute name="title">
            <string>General</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_12">
            <item>
-            <widget class="QWidget" name="widget" native="true">
+            <widget class="QWidget" name="widget1" native="true">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -423,11 +423,11 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                <number>0</number>
               </property>
               <item>
-               <layout class="QVBoxLayout" name="overwriteRoot">
+               <layout class="QVBoxLayout" name="overwriteRoot1">
                 <item>
-                 <layout class="QHBoxLayout" name="overwriteHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="overwriteHeader1" stretch="1,0">
                   <item>
-                   <widget class="QToolButton" name="overwriteExpander">
+                   <widget class="QToolButton" name="overwriteExpander1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
@@ -444,7 +444,7 @@ text-align: left;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="overwriteCount">
+                   <widget class="QLCDNumber" name="overwriteCount1">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -461,7 +461,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwriteTree">
+               <widget class="QTreeWidget" name="overwriteTree1">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -502,11 +502,11 @@ text-align: left;</string>
                </widget>
               </item>
               <item>
-               <layout class="QVBoxLayout" name="overwrittenRoot">
+               <layout class="QVBoxLayout" name="overwrittenRoot1">
                 <item>
-                 <layout class="QHBoxLayout" name="overwrittenHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="overwrittenHeader1" stretch="1,0">
                   <item>
-                   <widget class="QToolButton" name="overwrittenExpander">
+                   <widget class="QToolButton" name="overwrittenExpander1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
@@ -523,7 +523,7 @@ text-align: left;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="overwrittenCount">
+                   <widget class="QLCDNumber" name="overwrittenCount1">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -537,7 +537,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwrittenTree">
+               <widget class="QTreeWidget" name="overwrittenTree1">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -578,11 +578,11 @@ text-align: left;</string>
                </widget>
               </item>
               <item>
-               <layout class="QVBoxLayout" name="noConflictRoot">
+               <layout class="QVBoxLayout" name="noConflictRoot1">
                 <item>
-                 <layout class="QHBoxLayout" name="noConflictHeader" stretch="1,0">
+                 <layout class="QHBoxLayout" name="noConflictHeader1" stretch="1,0">
                   <item>
-                   <widget class="QToolButton" name="noConflictExpander">
+                   <widget class="QToolButton" name="noConflictExpander1">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                       <horstretch>0</horstretch>
@@ -599,7 +599,7 @@ text-align: left;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLCDNumber" name="noConflictCount">
+                   <widget class="QLCDNumber" name="noConflictCount1">
                     <property name="frameShadow">
                      <enum>QFrame::Sunken</enum>
                     </property>
@@ -613,7 +613,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="noConflictTree">
+               <widget class="QTreeWidget" name="noConflictTree1">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -696,7 +696,7 @@ text-align: left;</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QTreeWidget" name="conflictsAdvancedList">
+                  <widget class="QTreeWidget" name="conflictsAdvancedList1">
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
@@ -751,7 +751,7 @@ text-align: left;</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QCheckBox" name="conflictsAdvancedShowNoConflict">
+                  <widget class="QCheckBox" name="conflictsAdvancedShowNoConflict1">
                    <property name="toolTip">
                     <string>Whether files that have no conflicts should be visible in the list</string>
                    </property>
@@ -764,7 +764,7 @@ text-align: left;</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="conflictsAdvancedShowAll">
+                  <widget class="QRadioButton" name="conflictsAdvancedShowAll1">
                    <property name="toolTip">
                     <string>Shows all mods overwriting or being overwritten by this mod</string>
                    </property>
@@ -777,7 +777,7 @@ text-align: left;</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QRadioButton" name="conflictsAdvancedShowNearest">
+                  <widget class="QRadioButton" name="conflictsAdvancedShowNearest1">
                    <property name="toolTip">
                     <string>Shows only the nearest conflicting mods, in order of priority</string>
                    </property>
@@ -802,7 +802,7 @@ text-align: left;</string>
                      <number>0</number>
                     </property>
                     <item>
-                     <widget class="QLineEdit" name="conflictsAdvancedFilter">
+                     <widget class="QLineEdit" name="conflictsAdvancedFilter1">
                       <property name="placeholderText">
                        <string>Filter</string>
                       </property>

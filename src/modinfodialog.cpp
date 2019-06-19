@@ -41,6 +41,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogtextfiles.h"
 #include "modinfodialogimages.h"
 #include "modinfodialogesps.h"
+#include "modinfodialogconflicts.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -72,6 +73,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
   v.push_back(std::make_unique<IniFilesTab>(ui));
   v.push_back(std::make_unique<ImagesTab>(ui));
   v.push_back(std::make_unique<ESPsTab>(ui));
+  v.push_back(std::make_unique<ConflictsTab>(ui));
 
   return v;
 }
@@ -81,6 +83,15 @@ bool ModInfoDialogTab::canClose()
   return true;
 }
 
+void ModInfoDialogTab::saveState(Settings&)
+{
+  // no-op
+}
+
+void ModInfoDialogTab::restoreState(const Settings& s)
+{
+  // no-op
+}
 
 
 class ModFileListWidget : public QListWidgetItem {
@@ -101,20 +112,6 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
 // if there are more than 50 selected items in the conflict tree or filetree,
 // don't bother checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
-
-
-class ElideLeftDelegate : public QStyledItemDelegate
-{
-public:
-  using QStyledItemDelegate::QStyledItemDelegate;
-
-protected:
-  void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const
-  {
-    QStyledItemDelegate::initStyleOption(option, index);
-    option->textElideMode = Qt::ElideLeft;
-  }
-};
 
 
 bool canPreviewFile(
@@ -163,110 +160,6 @@ bool canUnhideFile(bool isArchive, const QString& filename)
 
   return true;
 }
-
-
-int naturalCompare(const QString& a, const QString& b)
-{
-  static QCollator c = []{
-    QCollator c;
-    c.setNumericMode(true);
-    c.setCaseSensitivity(Qt::CaseInsensitive);
-    return c;
-  }();
-
-  return c.compare(a, b);
-}
-
-
-class ConflictItem : public QTreeWidgetItem
-{
-public:
-  static const int FILENAME_USERROLE = Qt::UserRole + 1;
-  static const int ALT_ORIGIN_USERROLE = Qt::UserRole + 2;
-  static const int ARCHIVE_USERROLE = Qt::UserRole + 3;
-  static const int INDEX_USERROLE = Qt::UserRole + 4;
-  static const int HAS_ALTS_USERROLE = Qt::UserRole + 5;
-
-  ConflictItem(
-    QStringList columns, FileEntry::Index index,  const QString& fileName,
-    bool hasAltOrigins, const QString& altOrigin,  bool archive)
-      : QTreeWidgetItem(columns)
-  {
-    setData(0, FILENAME_USERROLE, fileName);
-    setData(0, ALT_ORIGIN_USERROLE, altOrigin);
-    setData(0, ARCHIVE_USERROLE, archive);
-    setData(0, INDEX_USERROLE, index);
-    setData(0, HAS_ALTS_USERROLE, hasAltOrigins);
-
-    if (archive) {
-      QFont f = font(0);
-      f.setItalic(true);
-
-      for (int i=0; i<columnCount(); ++i) {
-        setFont(i, f);
-      }
-    }
-  }
-
-  QString fileName() const
-  {
-    return data(0, FILENAME_USERROLE).toString();
-  }
-
-  QString altOrigin() const
-  {
-    return data(0, ALT_ORIGIN_USERROLE).toString();
-  }
-
-  bool hasAlts() const
-  {
-    return data(0, HAS_ALTS_USERROLE).toBool();
-  }
-
-  bool isArchive() const
-  {
-    return data(0, ARCHIVE_USERROLE).toBool();
-  }
-
-  FileEntry::Index fileIndex() const
-  {
-    static_assert(std::is_same_v<FileEntry::Index, unsigned int>);
-    return data(0, INDEX_USERROLE).toUInt();
-  }
-
-  bool canHide() const
-  {
-    return canHideFile(isArchive(), fileName());
-  }
-
-  bool canUnhide() const
-  {
-    return canUnhideFile(isArchive(), fileName());
-  }
-
-  bool canOpen() const
-  {
-    return canOpenFile(isArchive(), fileName());
-  }
-
-  bool canPreview(PluginContainer* pluginContainer) const
-  {
-    return canPreviewFile(pluginContainer, isArchive(), fileName());
-  }
-
-  bool operator<(const QTreeWidgetItem& other) const
-  {
-    const int column = treeWidget()->sortColumn();
-
-    if (column >= columnCount() || column >= other.columnCount()) {
-      // shouldn't happen
-      qWarning().nospace() << "ConflictItem::operator<() mistmatch in column count";
-      return false;
-    }
-
-    return (naturalCompare(text(column), other.text(column)) < 0);
-  }
-};
 
 
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
@@ -356,6 +249,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
     ui->tabWidget->setTabEnabled(TAB_ESPS, false);
+    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
@@ -365,13 +259,13 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_INIFILES, true);
     ui->tabWidget->setTabEnabled(TAB_IMAGES, true);
     ui->tabWidget->setTabEnabled(TAB_ESPS, true);
+    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
 
     initFiletree(modInfo);
     addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
     refreshPrimaryCategoriesBox();
   }
 
-  ui->tabWidget->setTabEnabled(TAB_CONFLICTS, m_Origin != nullptr);
 
 
   ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
@@ -389,36 +283,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
     activateNexusTab();
   }
-
-  m_overwriteExpander.set(ui->overwriteExpander, ui->overwriteTree, true);
-  m_overwrittenExpander.set(ui->overwrittenExpander, ui->overwrittenTree, true);
-  m_nonconflictExpander.set(ui->noConflictExpander, ui->noConflictTree);
-
-
-  m_advancedConflictFilter.set(ui->conflictsAdvancedFilter);
-  m_advancedConflictFilter.changed = [&]{ refreshConflictLists(false, true); };
-
-  // left-elide the overwrites column so that the nearest are visible
-  ui->conflictsAdvancedList->setItemDelegateForColumn(
-    0, new ElideLeftDelegate(ui->conflictsAdvancedList));
-
-  // left-elide the file column to see filenames
-  ui->conflictsAdvancedList->setItemDelegateForColumn(
-    1, new ElideLeftDelegate(ui->conflictsAdvancedList));
-
-  // don't elide the overwritten by column so that the nearest are visible
-
-  connect(ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked, [&] {
-    refreshConflictLists(false, true);
-  });
-
-  connect(ui->conflictsAdvancedShowAll, &QRadioButton::clicked, [&] {
-    refreshConflictLists(false, true);
-    });
-
-  connect(ui->conflictsAdvancedShowNearest, &QRadioButton::clicked, [&] {
-    refreshConflictLists(false, true);
-  });
 }
 
 
@@ -488,41 +352,19 @@ int ModInfoDialog::tabIndex(const QString &tabId)
 void ModInfoDialog::saveState(Settings& s) const
 {
   s.directInterface().setValue("mod_info_tabs", saveTabState());
-  s.directInterface().setValue("mod_info_conflicts", saveConflictsState());
 
-  s.directInterface().setValue(
-    "mod_info_conflicts_overwrite",
-    ui->overwriteTree->header()->saveState());
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_noconflict",
-    ui->noConflictTree->header()->saveState());
-
-  s.directInterface().setValue(
-    "mod_info_conflicts_overwritten",
-    ui->overwrittenTree->header()->saveState());
-
-  s.directInterface().setValue(
-    "mod_info_advanced_conflicts",
-    ui->conflictsAdvancedList->header()->saveState());
+  for (const auto& tab : m_tabs) {
+    tab->saveState(s);
+  }
 }
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
   restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
-  restoreConflictsState(s.directInterface().value("mod_info_conflicts").toByteArray());
 
-  ui->overwriteTree->header()->restoreState(
-    s.directInterface().value("mod_info_conflicts_overwrite").toByteArray());
-
-  ui->noConflictTree->header()->restoreState(
-    s.directInterface().value("mod_info_conflicts_noconflict").toByteArray());
-
-  ui->overwrittenTree->header()->restoreState(
-    s.directInterface().value("mod_info_conflicts_overwritten").toByteArray());
-
-  ui->conflictsAdvancedList->header()->restoreState(
-    s.directInterface().value("mod_info_advanced_conflicts").toByteArray());
+  for (const auto& tab : m_tabs) {
+    tab->restoreState(s);
+  }
 }
 
 void ModInfoDialog::restoreTabState(const QByteArray &state)
@@ -556,37 +398,6 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   ui->tabWidget->blockSignals(false);
 }
 
-void ModInfoDialog::restoreConflictsState(const QByteArray &state)
-{
-  QDataStream stream(state);
-
-  bool overwriteExpanded = false;
-  bool overwrittenExpanded = false;
-  bool noConflictExpanded = false;
-
-  stream >> overwriteExpanded >> overwrittenExpanded >> noConflictExpanded;
-
-  if (stream.status() == QDataStream::Ok) {
-    m_overwriteExpander.toggle(overwriteExpanded);
-    m_overwrittenExpander.toggle(overwrittenExpanded);
-    m_nonconflictExpander.toggle(noConflictExpanded);
-  }
-
-  int index = 0;
-  bool noConflictChecked = false;
-  bool showAllChecked = false;
-  bool showNearestChecked = false;
-
-  stream >> index >> noConflictChecked >> showAllChecked >> showNearestChecked;
-
-  if (stream.status() == QDataStream::Ok) {
-    ui->tabConflictsTabs->setCurrentIndex(index);
-    ui->conflictsAdvancedShowNoConflict->setChecked(noConflictChecked);
-    ui->conflictsAdvancedShowAll->setChecked(showAllChecked);
-    ui->conflictsAdvancedShowNearest->setChecked(showNearestChecked);
-  }
-}
-
 QByteArray ModInfoDialog::saveTabState() const
 {
   QByteArray result;
@@ -599,249 +410,10 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
-QByteArray ModInfoDialog::saveConflictsState() const
-{
-  QByteArray result;
-  QDataStream stream(&result, QIODevice::WriteOnly);
-
-  stream
-    << m_overwriteExpander.opened()
-    << m_overwrittenExpander.opened()
-    << m_nonconflictExpander.opened()
-    << ui->tabConflictsTabs->currentIndex()
-    << ui->conflictsAdvancedShowNoConflict->isChecked()
-    << ui->conflictsAdvancedShowAll->isChecked()
-    << ui->conflictsAdvancedShowNearest->isChecked();
-
-  return result;
-}
-
 void ModInfoDialog::refreshLists()
 {
   refreshConflictLists(true, true);
   refreshFiles();
-}
-
-void ModInfoDialog::refreshConflictLists(
-  bool refreshGeneral, bool refreshAdvanced)
-{
-  int numNonConflicting = 0;
-  int numOverwrite = 0;
-  int numOverwritten = 0;
-
-  if (refreshGeneral) {
-    ui->overwriteTree->clear();
-    ui->overwrittenTree->clear();
-    ui->noConflictTree->clear();
-  }
-
-  if (refreshAdvanced) {
-    ui->conflictsAdvancedList->clear();
-  }
-
-  if (m_Origin != nullptr) {
-    std::vector<FileEntry::Ptr> files = m_Origin->getFiles();
-
-    for (const auto& file : m_Origin->getFiles()) {
-      const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
-      const QString fileName = relativeName.mid(0).prepend(m_RootPath);
-
-      bool archive = false;
-      const int fileOrigin = file->getOrigin(archive);
-      const auto& alternatives = file->getAlternatives();
-
-      if (refreshGeneral) {
-        if (fileOrigin == m_Origin->getID()) {
-          if (!alternatives.empty()) {
-            ui->overwriteTree->addTopLevelItem(createOverwriteItem(
-              file->getIndex(), archive, fileName, relativeName, alternatives));
-
-            ++numOverwrite;
-          } else {
-            // otherwise, put the file in the noconflict tree
-            ui->noConflictTree->addTopLevelItem(createNoConflictItem(
-              file->getIndex(), archive, fileName, relativeName));
-
-            ++numNonConflicting;
-          }
-        } else {
-          ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
-            file->getIndex(), fileOrigin, archive, fileName, relativeName));
-
-          ++numOverwritten;
-        }
-      }
-
-      if (refreshAdvanced) {
-        auto* advancedItem = createAdvancedConflictItem(
-          file->getIndex(), fileOrigin, archive,
-          fileName, relativeName, alternatives);
-
-        if (advancedItem) {
-          ui->conflictsAdvancedList->addTopLevelItem(advancedItem);
-        }
-      }
-    }
-  }
-
-  if (refreshGeneral) {
-    ui->overwriteCount->display(numOverwrite);
-    ui->overwrittenCount->display(numOverwritten);
-    ui->noConflictCount->display(numNonConflicting);
-  }
-}
-
-QTreeWidgetItem* ModInfoDialog::createOverwriteItem(
-  FileEntry::Index index, bool archive,
-  const QString& fileName, const QString& relativeName,
-  const FileEntry::AlternativesVector& alternatives)
-{
-  QString altString;
-
-  for (const auto& alt : alternatives) {
-    if (!altString.isEmpty()) {
-      altString += ", ";
-    }
-
-    altString += ToQString(m_Directory->getOriginByID(alt.first).getName());
-  }
-
-  QStringList fields(relativeName);
-  fields.append(altString);
-
-  const auto origin = ToQString(m_Directory->getOriginByID(alternatives.back().first).getName());
-
-  return new ConflictItem(fields, index, fileName, true, origin, archive);
-}
-
-QTreeWidgetItem* ModInfoDialog::createNoConflictItem(
-  FileEntry::Index index, bool archive,
-  const QString& fileName, const QString& relativeName)
-{
-  return new ConflictItem({relativeName}, index, fileName, false, "", archive);
-}
-
-QTreeWidgetItem* ModInfoDialog::createOverwrittenItem(
-  FileEntry::Index index, int fileOrigin, bool archive,
-  const QString& fileName, const QString& relativeName)
-{
-  const FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
-
-  QStringList fields(relativeName);
-  fields.append(ToQString(realOrigin.getName()));
-
-  return new ConflictItem(
-    fields, index, fileName, true, ToQString(realOrigin.getName()), archive);
-}
-
-QTreeWidgetItem* ModInfoDialog::createAdvancedConflictItem(
-  FileEntry::Index index,int fileOrigin, bool archive,
-  const QString& fileName, const QString& relativeName,
-  const MOShared::FileEntry::AlternativesVector& alternatives)
-{
-  QString before, after;
-
-  if (!alternatives.empty()) {
-    int beforePrio = 0;
-    int afterPrio = std::numeric_limits<int>::max();
-
-    for (const auto& alt : alternatives)
-    {
-      const auto altOrigin = m_Directory->getOriginByID(alt.first);
-
-      if (ui->conflictsAdvancedShowAll->isChecked()) {
-        // fills 'before' and 'after' with all the alternatives that come
-        // before and after this mod in terms of priority
-
-        if (altOrigin.getPriority() < m_Origin->getPriority()) {
-          // add all the mods having a lower priority than this one
-          if (!before.isEmpty()) {
-            before += ", ";
-          }
-
-          before += ToQString(altOrigin.getName());
-        } else if (altOrigin.getPriority() > m_Origin->getPriority()) {
-          // add all the mods having a higher priority than this one
-          if (!after.isEmpty()) {
-            after += ", ";
-          }
-
-          after += ToQString(altOrigin.getName());
-        }
-      } else {
-        // keep track of the nearest mods that come before and after this one
-        // in terms of priority
-
-        if (altOrigin.getPriority() < m_Origin->getPriority()) {
-          // the alternative has a lower priority than this mod
-
-          if (altOrigin.getPriority() > beforePrio) {
-            // the alternative has a higher priority and therefore is closer
-            // to this mod, use it
-            before = ToQString(altOrigin.getName());
-            beforePrio = altOrigin.getPriority();
-          }
-        }
-
-        if (altOrigin.getPriority() > m_Origin->getPriority()) {
-          // the alternative has a higher priority than this mod
-
-          if (altOrigin.getPriority() < afterPrio) {
-            // the alternative has a lower priority and there is closer
-            // to this mod, use it
-            after = ToQString(altOrigin.getName());
-            afterPrio = altOrigin.getPriority();
-          }
-        }
-      }
-    }
-
-    // the primary origin is never in the list of alternatives, so it has to
-    // be handled separately
-    //
-    // if 'after' is not empty, it means at least one alternative with a higher
-    // priority than this mod was found; if the user only wants to see the
-    // nearest mods, it's not worth checking for the primary origin because it
-    // will always have a higher priority than the alternatives (or it wouldn't
-    // be the primary)
-    if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
-      FilesOrigin &realOrigin = m_Directory->getOriginByID(fileOrigin);
-
-      // if no mods overwrite this file, the primary origin is the same as this
-      // mod, so ignore that
-      if (realOrigin.getID() != m_Origin->getID()) {
-        if (!after.isEmpty()) {
-          after += ", ";
-        }
-
-        after += ToQString(realOrigin.getName());
-      }
-    }
-  }
-
-  bool hasAlts = !before.isEmpty() || !after.isEmpty();
-
-  if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
-    // if both before and after are empty, it means this file has no conflicts
-    // at all, only display it if the user wants it
-    if (!hasAlts) {
-      return nullptr;
-    }
-  }
-
-  bool matched = m_advancedConflictFilter.matches([&](auto&& what) {
-    return
-      before.contains(what, Qt::CaseInsensitive) ||
-      relativeName.contains(what, Qt::CaseInsensitive) ||
-      after.contains(what, Qt::CaseInsensitive);
-  });
-
-  if (!matched) {
-     return nullptr;
-  }
-
-  return new ConflictItem(
-    {before, relativeName, after}, index, fileName, hasAlts, "", archive);
 }
 
 void ModInfoDialog::refreshFiles()
@@ -1475,24 +1047,10 @@ void ModInfoDialog::refreshPrimaryCategoriesBox()
   }
 }
 
-
 void ModInfoDialog::on_primaryCategoryBox_currentIndexChanged(int index)
 {
   if (index != -1) {
     m_ModInfo->setPrimaryCategory(ui->primaryCategoryBox->itemData(index).toInt());
-  }
-}
-
-
-void ModInfoDialog::on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int)
-{
-  if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-    const auto origin = ci->altOrigin();
-
-    if (!origin.isEmpty()) {
-      close();
-      emit modOpen(origin, TAB_CONFLICTS);
-    }
   }
 }
 
