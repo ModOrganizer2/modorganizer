@@ -158,7 +158,7 @@ bool ConflictsTab::feedFile(const QString&, const QString&)
 void ConflictsTab::saveState(Settings& s)
 {
   s.directInterface().setValue(
-    "mod_info_conflicts_tab", ui->tabConflictsTabs1->currentIndex());
+    "mod_info_conflicts_tab", ui->tabConflictsTabs->currentIndex());
 
   m_general.saveState(s);
   m_advanced.saveState(s);
@@ -166,7 +166,7 @@ void ConflictsTab::saveState(Settings& s)
 
 void ConflictsTab::restoreState(const Settings& s)
 {
-  ui->tabConflictsTabs1->setCurrentIndex(
+  ui->tabConflictsTabs->setCurrentIndex(
     s.directInterface().value("mod_info_conflicts_tab", 0).toInt());
 
   m_general.restoreState(s);
@@ -475,40 +475,40 @@ GeneralConflictsTab::GeneralConflictsTab(
   ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc)
     : m_tab(tab), ui(ui), m_core(oc), m_origin(nullptr)
 {
-  m_expanders.overwrite.set(ui->overwriteExpander1, ui->overwriteTree1, true);
-  m_expanders.overwritten.set(ui->overwrittenExpander1, ui->overwrittenTree1, true);
-  m_expanders.nonconflict.set(ui->noConflictExpander1, ui->noConflictTree1);
+  m_expanders.overwrite.set(ui->overwriteExpander, ui->overwriteTree, true);
+  m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
+  m_expanders.nonconflict.set(ui->noConflictExpander, ui->noConflictTree);
 
   QObject::connect(
-    ui->overwriteTree1, &QTreeWidget::itemDoubleClicked,
+    ui->overwriteTree, &QTreeWidget::itemDoubleClicked,
     [&](auto* item, int col){ onOverwriteActivated(item, col); });
 
   QObject::connect(
-    ui->overwrittenTree1, &QTreeWidget::itemDoubleClicked,
+    ui->overwrittenTree, &QTreeWidget::itemDoubleClicked,
     [&](auto* item, int col){ onOverwrittenActivated(item, col); });
 
   QObject::connect(
-    ui->overwriteTree1, &QTreeWidget::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwriteTree1); });
+    ui->overwriteTree, &QTreeWidget::customContextMenuRequested,
+    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwriteTree); });
 
   QObject::connect(
-    ui->overwrittenTree1, &QTreeWidget::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwrittenTree1); });
+    ui->overwrittenTree, &QTreeWidget::customContextMenuRequested,
+    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwrittenTree); });
 
   QObject::connect(
-    ui->noConflictTree1, &QTreeWidget::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->noConflictTree1); });
+    ui->noConflictTree, &QTreeWidget::customContextMenuRequested,
+    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->noConflictTree); });
 }
 
 void GeneralConflictsTab::clear()
 {
-  ui->overwriteTree1->clear();
-  ui->overwrittenTree1->clear();
-  ui->noConflictTree1->clear();
+  ui->overwriteTree->clear();
+  ui->overwrittenTree->clear();
+  ui->noConflictTree->clear();
 
-  ui->overwriteCount1->display(0);
-  ui->overwrittenCount1->display(0);
-  ui->noConflictCount1->display(0);
+  ui->overwriteCount->display(0);
+  ui->overwrittenCount->display(0);
+  ui->noConflictCount->display(0);
 }
 
 void GeneralConflictsTab::saveState(Settings& s)
@@ -526,15 +526,15 @@ void GeneralConflictsTab::saveState(Settings& s)
 
   s.directInterface().setValue(
     "mod_info_conflicts_general_overwrite",
-    ui->overwriteTree1->header()->saveState());
+    ui->overwriteTree->header()->saveState());
 
   s.directInterface().setValue(
     "mod_info_conflicts_general_noconflict",
-    ui->noConflictTree1->header()->saveState());
+    ui->noConflictTree->header()->saveState());
 
   s.directInterface().setValue(
     "mod_info_conflicts_general_overwritten",
-    ui->overwrittenTree1->header()->saveState());
+    ui->overwrittenTree->header()->saveState());
 }
 
 void GeneralConflictsTab::restoreState(const Settings& s)
@@ -554,13 +554,13 @@ void GeneralConflictsTab::restoreState(const Settings& s)
     m_expanders.nonconflict.toggle(noConflictExpanded);
   }
 
-  ui->overwriteTree1->header()->restoreState(s.directInterface()
+  ui->overwriteTree->header()->restoreState(s.directInterface()
     .value("mod_info_conflicts_general_overwrite").toByteArray());
 
-  ui->noConflictTree1->header()->restoreState(s.directInterface()
+  ui->noConflictTree->header()->restoreState(s.directInterface()
     .value("mod_info_conflicts_general_noconflict").toByteArray());
 
-  ui->overwrittenTree1->header()->restoreState(s.directInterface()
+  ui->overwrittenTree->header()->restoreState(s.directInterface()
     .value("mod_info_conflicts_general_overwritten").toByteArray());
 }
 
@@ -591,19 +591,19 @@ void GeneralConflictsTab::update()
 
       if (fileOrigin == m_origin->getID()) {
         if (!alternatives.empty()) {
-          ui->overwriteTree1->addTopLevelItem(createOverwriteItem(
+          ui->overwriteTree->addTopLevelItem(createOverwriteItem(
             file->getIndex(), archive, fileName, relativeName, alternatives));
 
           ++numOverwrite;
         } else {
           // otherwise, put the file in the noconflict tree
-          ui->noConflictTree1->addTopLevelItem(createNoConflictItem(
+          ui->noConflictTree->addTopLevelItem(createNoConflictItem(
             file->getIndex(), archive, fileName, relativeName));
 
           ++numNonConflicting;
         }
       } else {
-        ui->overwrittenTree1->addTopLevelItem(createOverwrittenItem(
+        ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive, fileName, relativeName));
 
         ++numOverwritten;
@@ -611,9 +611,9 @@ void GeneralConflictsTab::update()
     }
   }
 
-  ui->overwriteCount1->display(numOverwrite);
-  ui->overwrittenCount1->display(numOverwritten);
-  ui->noConflictCount1->display(numNonConflicting);
+  ui->overwriteCount->display(numOverwrite);
+  ui->overwrittenCount->display(numOverwritten);
+  ui->noConflictCount->display(numNonConflicting);
 }
 
 QTreeWidgetItem* GeneralConflictsTab::createOverwriteItem(
@@ -691,53 +691,53 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     : m_tab(tab), ui(ui), m_core(oc), m_origin(nullptr)
 {
   // left-elide the overwrites column so that the nearest are visible
-  ui->conflictsAdvancedList1->setItemDelegateForColumn(
-    0, new ElideLeftDelegate(ui->conflictsAdvancedList1));
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    0, new ElideLeftDelegate(ui->conflictsAdvancedList));
 
   // left-elide the file column to see filenames
-  ui->conflictsAdvancedList1->setItemDelegateForColumn(
-    1, new ElideLeftDelegate(ui->conflictsAdvancedList1));
+  ui->conflictsAdvancedList->setItemDelegateForColumn(
+    1, new ElideLeftDelegate(ui->conflictsAdvancedList));
 
   // don't elide the overwritten by column so that the nearest are visible
 
   QObject::connect(
-    ui->conflictsAdvancedShowNoConflict1, &QCheckBox::clicked,
+    ui->conflictsAdvancedShowNoConflict, &QCheckBox::clicked,
     [&]{ update(); });
 
   QObject::connect(
-    ui->conflictsAdvancedShowAll1, &QRadioButton::clicked,
+    ui->conflictsAdvancedShowAll, &QRadioButton::clicked,
     [&]{ update(); });
 
   QObject::connect(
-    ui->conflictsAdvancedShowNearest1, &QRadioButton::clicked,
+    ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
     [&]{ update(); });
 
   QObject::connect(
-    ui->conflictsAdvancedList1, &QTreeWidget::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList1); });
+    ui->conflictsAdvancedList, &QTreeWidget::customContextMenuRequested,
+    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
 
-  m_filter.set(ui->conflictsAdvancedFilter1);
+  m_filter.set(ui->conflictsAdvancedFilter);
   m_filter.changed = [&]{ update(); };
 }
 
 void AdvancedConflictsTab::clear()
 {
-  ui->conflictsAdvancedList1->clear();
+  ui->conflictsAdvancedList->clear();
 }
 
 void AdvancedConflictsTab::saveState(Settings& s)
 {
   s.directInterface().setValue(
     "mod_info_conflicts_advanced_list",
-    ui->conflictsAdvancedList1->header()->saveState());
+    ui->conflictsAdvancedList->header()->saveState());
 
   QByteArray result;
   QDataStream stream(&result, QIODevice::WriteOnly);
 
   stream
-    << ui->conflictsAdvancedShowNoConflict1->isChecked()
-    << ui->conflictsAdvancedShowAll1->isChecked()
-    << ui->conflictsAdvancedShowNearest1->isChecked();
+    << ui->conflictsAdvancedShowNoConflict->isChecked()
+    << ui->conflictsAdvancedShowAll->isChecked()
+    << ui->conflictsAdvancedShowNearest->isChecked();
 
   s.directInterface().setValue(
     "mod_info_conflicts_advanced_options", result);
@@ -745,7 +745,7 @@ void AdvancedConflictsTab::saveState(Settings& s)
 
 void AdvancedConflictsTab::restoreState(const Settings& s)
 {
-  ui->conflictsAdvancedList1->header()->restoreState(
+  ui->conflictsAdvancedList->header()->restoreState(
     s.directInterface().value("mod_info_conflicts_advanced_list").toByteArray());
 
   QDataStream stream(s.directInterface()
@@ -758,9 +758,9 @@ void AdvancedConflictsTab::restoreState(const Settings& s)
   stream >> noConflictChecked >> showAllChecked >> showNearestChecked;
 
   if (stream.status() == QDataStream::Ok) {
-    ui->conflictsAdvancedShowNoConflict1->setChecked(noConflictChecked);
-    ui->conflictsAdvancedShowAll1->setChecked(showAllChecked);
-    ui->conflictsAdvancedShowNearest1->setChecked(showNearestChecked);
+    ui->conflictsAdvancedShowNoConflict->setChecked(noConflictChecked);
+    ui->conflictsAdvancedShowAll->setChecked(showAllChecked);
+    ui->conflictsAdvancedShowNearest->setChecked(showNearestChecked);
   }
 }
 
@@ -790,7 +790,7 @@ void AdvancedConflictsTab::update()
         fileName, relativeName, alternatives);
 
       if (advancedItem) {
-        ui->conflictsAdvancedList1->addTopLevelItem(advancedItem);
+        ui->conflictsAdvancedList->addTopLevelItem(advancedItem);
       }
     }
   }
@@ -813,7 +813,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
     {
       const auto altOrigin = ds.getOriginByID(alt.first);
 
-      if (ui->conflictsAdvancedShowAll1->isChecked()) {
+      if (ui->conflictsAdvancedShowAll->isChecked()) {
         // fills 'before' and 'after' with all the alternatives that come
         // before and after this mod in terms of priority
 
@@ -868,7 +868,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
     // nearest mods, it's not worth checking for the primary origin because it
     // will always have a higher priority than the alternatives (or it wouldn't
     // be the primary)
-    if (after.isEmpty() || ui->conflictsAdvancedShowAll1->isChecked()) {
+    if (after.isEmpty() || ui->conflictsAdvancedShowAll->isChecked()) {
       FilesOrigin &realOrigin = ds.getOriginByID(fileOrigin);
 
       // if no mods overwrite this file, the primary origin is the same as this
@@ -885,7 +885,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
 
   bool hasAlts = !before.isEmpty() || !after.isEmpty();
 
-  if (!ui->conflictsAdvancedShowNoConflict1->isChecked()) {
+  if (!ui->conflictsAdvancedShowNoConflict->isChecked()) {
     // if both before and after are empty, it means this file has no conflicts
     // at all, only display it if the user wants it
     if (!hasAlts) {
