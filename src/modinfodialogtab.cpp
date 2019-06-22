@@ -1,5 +1,11 @@
 #include "modinfodialogtab.h"
 
+bool ModInfoDialogTab::feedFile(const QString&, const QString&)
+{
+  // no-op
+  return false;
+}
+
 bool ModInfoDialogTab::canClose()
 {
   return true;

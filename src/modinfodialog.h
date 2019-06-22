@@ -157,8 +157,6 @@ private:
 
   void refreshLists();
 
-  void addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel);
-
   void updateVersionColor();
 
   void refreshNexusData(int modID);
@@ -166,9 +164,6 @@ private:
   QString getFileCategory(int categoryID);
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
-  void saveCategories(QTreeWidgetItem *currentNode);
-  void addCheckedCategories(QTreeWidgetItem *tree);
-  void refreshPrimaryCategoriesBox();
 
   int tabIndex(const QString &tabId);
 
@@ -194,8 +189,6 @@ private slots:
   void on_versionEdit_editingFinished();
   void on_customUrlLineEdit_editingFinished();
   void on_tabWidget_currentChanged(int index);
-  void on_primaryCategoryBox_currentIndexChanged(int index);
-  void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();

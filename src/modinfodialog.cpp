@@ -42,6 +42,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogimages.h"
 #include "modinfodialogesps.h"
 #include "modinfodialogconflicts.h"
+#include "modinfodialogcategories.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -223,9 +224,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
     ui->tabWidget->setTabEnabled(TAB_ESPS, false);
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, false);
-    //ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
-    addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
-    refreshPrimaryCategoriesBox();
+    ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
     //ui->tabWidget->setTabEnabled(TAB_NOTES, false);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
@@ -249,11 +248,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
 
     initFiletree(modInfo);
-    addCategories(CategoryFactory::instance(), modInfo->getCategories(), ui->categoriesTree->invisibleRootItem(), 0);
-    refreshPrimaryCategoriesBox();
   }
-
-
 
   ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
   ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
@@ -279,12 +274,13 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 ModInfoDialog::~ModInfoDialog()
 {
   m_ModInfo->setComments(ui->commentsEdit->text());
+
   //Avoid saving html stump if notes field is empty.
   if (ui->notesEdit->toPlainText().isEmpty())
     m_ModInfo->setNotes(ui->notesEdit->toPlainText());
   else
     m_ModInfo->setNotes(ui->notesEdit->toHtml());
-  saveCategories(ui->categoriesTree->invisibleRootItem());
+
   delete ui->descriptionView->page();
   delete ui->descriptionView;
   delete ui;
@@ -301,6 +297,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
   v.push_back(std::make_unique<ESPsTab>(this, ui));
   v.push_back(std::make_unique<ConflictsTab>(
     this, ui, *m_OrganizerCore, *m_PluginContainer));
+  v.push_back(std::make_unique<CategoriesTab>(this, ui));
 
   return v;
 }
@@ -434,38 +431,6 @@ void ModInfoDialog::refreshFiles()
         }
       }
     }
-  }
-}
-
-void ModInfoDialog::addCategories(const CategoryFactory &factory, const std::set<int> &enabledCategories, QTreeWidgetItem *root, int rootLevel)
-{
-  for (int i = 0; i < static_cast<int>(factory.numCategories()); ++i) {
-    if (factory.getParentID(i) != rootLevel) {
-      continue;
-    }
-    int categoryID = factory.getCategoryID(i);
-    QTreeWidgetItem *newItem
-        = new QTreeWidgetItem(QStringList(factory.getCategoryName(i)));
-    newItem->setFlags(newItem->flags() | Qt::ItemIsUserCheckable);
-    newItem->setCheckState(0, enabledCategories.find(categoryID)
-                                      != enabledCategories.end()
-                                  ? Qt::Checked
-                                  : Qt::Unchecked);
-    newItem->setData(0, Qt::UserRole, categoryID);
-    if (factory.hasChildren(i)) {
-      addCategories(factory, enabledCategories, newItem, categoryID);
-    }
-    root->addChild(newItem);
-  }
-}
-
-
-void ModInfoDialog::saveCategories(QTreeWidgetItem *currentNode)
-{
-  for (int i = 0; i < currentNode->childCount(); ++i) {
-    QTreeWidgetItem *childNode = currentNode->child(i);
-    m_ModInfo->setCategory(childNode->data(0, Qt::UserRole).toInt(), childNode->checkState(0));
-    saveCategories(childNode);
   }
 }
 
@@ -1010,49 +975,6 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
   menu.exec(ui->fileTree->viewport()->mapToGlobal(pos));
 }
 
-
-void ModInfoDialog::on_categoriesTree_itemChanged(QTreeWidgetItem *item, int)
-{
-  QTreeWidgetItem *parent = item->parent();
-  while ((parent != nullptr) && ((parent->flags() & Qt::ItemIsUserCheckable) != 0) && (parent->checkState(0) == Qt::Unchecked)) {
-    parent->setCheckState(0, Qt::Checked);
-    parent = parent->parent();
-  }
-  refreshPrimaryCategoriesBox();
-}
-
-
-void ModInfoDialog::addCheckedCategories(QTreeWidgetItem *tree)
-{
-  for (int i = 0; i < tree->childCount(); ++i) {
-    QTreeWidgetItem *child = tree->child(i);
-    if (child->checkState(0) == Qt::Checked) {
-      ui->primaryCategoryBox->addItem(child->text(0), child->data(0, Qt::UserRole));
-      addCheckedCategories(child);
-    }
-  }
-}
-
-
-void ModInfoDialog::refreshPrimaryCategoriesBox()
-{
-  ui->primaryCategoryBox->clear();
-  int primaryCategory = m_ModInfo->getPrimaryCategory();
-  addCheckedCategories(ui->categoriesTree->invisibleRootItem());
-  for (int i = 0; i < ui->primaryCategoryBox->count(); ++i) {
-    if (ui->primaryCategoryBox->itemData(i).toInt() == primaryCategory) {
-      ui->primaryCategoryBox->setCurrentIndex(i);
-      break;
-    }
-  }
-}
-
-void ModInfoDialog::on_primaryCategoryBox_currentIndexChanged(int index)
-{
-  if (index != -1) {
-    m_ModInfo->setPrimaryCategory(ui->primaryCategoryBox->itemData(index).toInt());
-  }
-}
 
 void ModInfoDialog::on_refreshButton_clicked()
 {

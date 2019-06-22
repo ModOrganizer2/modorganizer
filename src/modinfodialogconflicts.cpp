@@ -151,11 +151,6 @@ void ConflictsTab::clear()
   m_advanced.clear();
 }
 
-bool ConflictsTab::feedFile(const QString&, const QString&)
-{
-  return false;
-}
-
 void ConflictsTab::saveState(Settings& s)
 {
   s.directInterface().setValue(

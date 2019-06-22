@@ -22,7 +22,7 @@ public:
   virtual ~ModInfoDialogTab() = default;
 
   virtual void clear() = 0;
-  virtual bool feedFile(const QString& rootPath, const QString& filename) = 0;
+  virtual bool feedFile(const QString& rootPath, const QString& filename);
   virtual bool canClose();
   virtual void saveState(Settings& s);
   virtual void restoreState(const Settings& s);

@@ -4,7 +4,6 @@
 
 using MOBase::reportError;
 
-
 class ESP
 {
 public:

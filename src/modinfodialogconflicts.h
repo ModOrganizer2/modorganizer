@@ -108,7 +108,6 @@ public:
   void update() override;
 
   void clear() override;
-  bool feedFile(const QString& rootPath, const QString& filename) override;
   void saveState(Settings& s) override;
   void restoreState(const Settings& s) override;
 
