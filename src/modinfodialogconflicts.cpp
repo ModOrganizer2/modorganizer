@@ -1,5 +1,6 @@
 #include "modinfodialogconflicts.h"
 #include "ui_modinfodialog.h"
+#include "modinfodialog.h"
 #include "utility.h"
 
 using namespace MOShared;

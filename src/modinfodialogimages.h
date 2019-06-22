@@ -1,7 +1,7 @@
 #ifndef MODINFODIALOGIMAGES_H
 #define MODINFODIALOGIMAGES_H
 
-#include "modinfodialog.h"
+#include "modinfodialogtab.h"
 
 class ScalableImage : public QWidget
 {

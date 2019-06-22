@@ -43,7 +43,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <set>
 #include <directoryentry.h>
 
-
 namespace Ui {
     class ModInfoDialog;
 }
@@ -52,37 +51,7 @@ class QFileSystemModel;
 class QTreeView;
 class CategoryFactory;
 class TextEditor;
-
-
-class ModInfoDialogTab : public QObject
-{
-  Q_OBJECT;
-
-public:
-  ModInfoDialogTab() = default;
-  ModInfoDialogTab(const ModInfoDialogTab&) = delete;
-  ModInfoDialogTab& operator=(const ModInfoDialogTab&) = delete;
-  ModInfoDialogTab(ModInfoDialogTab&&) = default;
-  ModInfoDialogTab& operator=(ModInfoDialogTab&&) = default;
-  virtual ~ModInfoDialogTab() = default;
-
-  virtual void clear() = 0;
-  virtual bool feedFile(const QString& rootPath, const QString& filename) = 0;
-  virtual bool canClose();
-  virtual void saveState(Settings& s);
-  virtual void restoreState(const Settings& s);
-
-  virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
-  virtual void update();
-
-signals:
-  void originModified(int originID);
-  void modOpen(QString name);
-
-protected:
-  void emitOriginModified(int originID);
-  void emitModOpen(QString name);
-};
+class ModInfoDialogTab;
 
 
 class ElideLeftDelegate : public QStyledItemDelegate

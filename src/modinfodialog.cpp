@@ -66,42 +66,6 @@ using namespace MOShared;
 const int max_scan_for_context_menu = 50;
 
 
-bool ModInfoDialogTab::canClose()
-{
-  return true;
-}
-
-void ModInfoDialogTab::saveState(Settings&)
-{
-  // no-op
-}
-
-void ModInfoDialogTab::restoreState(const Settings& s)
-{
-  // no-op
-}
-
-void ModInfoDialogTab::setMod(ModInfo::Ptr, MOShared::FilesOrigin*)
-{
-  // no-op
-}
-
-void ModInfoDialogTab::update()
-{
-  // no-op
-}
-
-void ModInfoDialogTab::emitOriginModified(int originID)
-{
-  emit originModified(originID);
-}
-
-void ModInfoDialogTab::emitModOpen(QString name)
-{
-  emit modOpen(name);
-}
-
-
 class ModFileListWidget : public QListWidgetItem {
   friend bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS);
 public:

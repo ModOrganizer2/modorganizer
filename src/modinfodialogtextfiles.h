@@ -1,7 +1,7 @@
 #ifndef MODINFODIALOGTEXTFILES_H
 #define MODINFODIALOGTEXTFILES_H
 
-#include "modinfodialog.h"
+#include "modinfodialogtab.h"
 #include <QSplitter>
 #include <QListWidget>
 

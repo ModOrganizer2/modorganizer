@@ -1,10 +1,13 @@
 #ifndef MODINFODIALOGCONFLICTS_H
 #define MODINFODIALOGCONFLICTS_H
 
-#include "modinfodialog.h"
+#include "modinfodialogtab.h"
 #include "expanderwidget.h"
+#include "filterwidget.h"
+#include "directoryentry.h"
 
 class ConflictsTab;
+class OrganizerCore;
 
 class GeneralConflictsTab : public QObject
 {

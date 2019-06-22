@@ -1,7 +1,7 @@
 #ifndef MODINFODIALOGESPS_H
 #define MODINFODIALOGESPS_H
 
-#include "modinfodialog.h"
+#include "modinfodialogtab.h"
 
 class ESPItem;
 
