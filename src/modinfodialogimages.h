@@ -31,8 +31,10 @@ private:
 
 class ImagesTab : public ModInfoDialogTab
 {
+  Q_OBJECT;
+
 public:
-  ImagesTab(Ui::ModInfoDialog* ui);
+  ImagesTab(QWidget* parent, Ui::ModInfoDialog* ui);
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;

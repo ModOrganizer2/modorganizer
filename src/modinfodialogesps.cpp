@@ -123,20 +123,20 @@ private:
 };
 
 
-ESPsTab::ESPsTab(Ui::ModInfoDialog* ui)
-  : ui(ui)
+ESPsTab::ESPsTab(QWidget* parent, Ui::ModInfoDialog* ui)
+  : m_parent(parent), ui(ui)
 {
   QObject::connect(
-    ui->activateESP1, &QToolButton::clicked, [&]{ onActivate(); });
+    ui->activateESP, &QToolButton::clicked, [&]{ onActivate(); });
 
   QObject::connect(
-    ui->deactivateESP1, &QToolButton::clicked, [&]{ onDeactivate(); });
+    ui->deactivateESP, &QToolButton::clicked, [&]{ onDeactivate(); });
 }
 
 void ESPsTab::clear()
 {
-  ui->inactiveESPList1->clear();
-  ui->activeESPList1->clear();
+  ui->inactiveESPList->clear();
+  ui->activeESPList->clear();
 }
 
 bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
@@ -152,9 +152,9 @@ bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
       auto* item = new ESPItem({rootPath, relativePath});
 
       if (item->esp().isActive()) {
-        ui->activeESPList1->addItem(item);
+        ui->activeESPList->addItem(item);
       } else {
-        ui->inactiveESPList1->addItem(item);
+        ui->inactiveESPList->addItem(item);
       }
 
       return true;
@@ -188,7 +188,7 @@ void ESPsTab::onActivate()
     bool okClicked = false;
 
     newName = QInputDialog::getText(
-      ui->tabESPs,
+      m_parent,
       QObject::tr("File Exists"),
       QObject::tr("A file with that name exists, please enter a new one"),
       QLineEdit::Normal, file.fileName(), &okClicked);
@@ -203,8 +203,8 @@ void ESPsTab::onActivate()
   }
 
   if (esp.activate(newName)) {
-    ui->inactiveESPList1->takeItem(ui->inactiveESPList1->row(item));
-    ui->activeESPList1->addItem(item);
+    ui->inactiveESPList->takeItem(ui->inactiveESPList->row(item));
+    ui->activeESPList->addItem(item);
     item->setESP(esp);
   } else {
     reportError(QObject::tr("Failed to move file"));
@@ -246,8 +246,8 @@ void ESPsTab::onDeactivate()
   }
 
   if (esp.deactivate(newName)) {
-    ui->activeESPList1->takeItem(ui->activeESPList1->row(item));
-    ui->inactiveESPList1->addItem(item);
+    ui->activeESPList->takeItem(ui->activeESPList->row(item));
+    ui->inactiveESPList->addItem(item);
     item->setESP(esp);
   } else {
     reportError(QObject::tr("Failed to move file"));
@@ -256,7 +256,7 @@ void ESPsTab::onDeactivate()
 
 ESPItem* ESPsTab::selectedInactive()
 {
-  auto* item = ui->inactiveESPList1->currentItem();
+  auto* item = ui->inactiveESPList->currentItem();
   if (!item) {
     return nullptr;
   }
@@ -272,7 +272,7 @@ ESPItem* ESPsTab::selectedInactive()
 
 ESPItem* ESPsTab::selectedActive()
 {
-  auto* item = ui->activeESPList1->currentItem();
+  auto* item = ui->activeESPList->currentItem();
   if (!item) {
     return nullptr;
   }

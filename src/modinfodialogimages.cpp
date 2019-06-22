@@ -80,7 +80,7 @@ void ScalableImage::mousePressEvent(QMouseEvent* e)
 }
 
 
-ImagesTab::ImagesTab(Ui::ModInfoDialog* ui)
+ImagesTab::ImagesTab(QWidget*, Ui::ModInfoDialog* ui)
   : ui(ui), m_image(new ScalableImage)
 {
   ui->imagesImage->layout()->addWidget(m_image);

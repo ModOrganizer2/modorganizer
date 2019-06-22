@@ -54,12 +54,11 @@ class CategoryFactory;
 class TextEditor;
 
 
-class ModInfoDialogTab
+class ModInfoDialogTab : public QObject
 {
-public:
-  static std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs(
-    Ui::ModInfoDialog* ui);
+  Q_OBJECT;
 
+public:
   ModInfoDialogTab() = default;
   ModInfoDialogTab(const ModInfoDialogTab&) = delete;
   ModInfoDialogTab& operator=(const ModInfoDialogTab&) = delete;
@@ -72,6 +71,17 @@ public:
   virtual bool canClose();
   virtual void saveState(Settings& s);
   virtual void restoreState(const Settings& s);
+
+  virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
+  virtual void update();
+
+signals:
+  void originModified(int originID);
+  void modOpen(QString name);
+
+protected:
+  void emitOriginModified(int originID);
+  void emitModOpen(QString name);
 };
 
 
@@ -89,10 +99,13 @@ protected:
 };
 
 
-bool canPreviewFile(PluginContainer* pluginContainer, bool isArchive, const QString& filename);
+bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);
 bool canHideFile(bool isArchive, const QString& filename);
 bool canUnhideFile(bool isArchive, const QString& filename);
+
+FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
+FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
 
 
 /**
@@ -185,8 +198,6 @@ private:
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
   void saveCategories(QTreeWidgetItem *currentNode);
-  FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
-  FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
   void addCheckedCategories(QTreeWidgetItem *tree);
   void refreshPrimaryCategoriesBox();
 
@@ -216,12 +227,6 @@ private slots:
   void on_tabWidget_currentChanged(int index);
   void on_primaryCategoryBox_currentIndexChanged(int index);
   void on_categoriesTree_itemChanged(QTreeWidgetItem *item, int column);
-  void on_overwriteTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int column);
-  void on_overwriteTree_customContextMenuRequested(const QPoint &pos);
-  void on_overwrittenTree_customContextMenuRequested(const QPoint &pos);
-  void on_noConflictTree_customContextMenuRequested(const QPoint &pos);
-  void on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
   void on_refreshButton_clicked();
@@ -234,22 +239,6 @@ private slots:
 
 private:
   using FileEntry = MOShared::FileEntry;
-
-  struct ConflictActions
-  {
-    QAction* hide;
-    QAction* unhide;
-    QAction* open;
-    QAction* preview;
-    QMenu* gotoMenu;
-    std::vector<QAction*> gotoActions;
-
-    ConflictActions() :
-      hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr),
-      gotoMenu(nullptr)
-    {
-    }
-  };
 
   Ui::ModInfoDialog *ui;
 
@@ -285,27 +274,14 @@ private:
   std::map<int, int> m_RealTabPos;
 
 
+  std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs();
 
-  void refreshConflictLists(bool refreshGeneral, bool refreshAdvanced);
   void refreshFiles();
 
   void restoreTabState(const QByteArray &state);
   QByteArray saveTabState() const;
 
   void changeFiletreeVisibility(bool visible);
-
-  void openConflictItems(const QList<QTreeWidgetItem*>& items);
-  void previewConflictItems(const QList<QTreeWidgetItem*>& items);
-  void changeConflictItemsVisibility(
-    const QList<QTreeWidgetItem*>& items, bool visible);
-
-  void showConflictMenu(const QPoint &pos, QTreeWidget* tree);
-
-  ConflictActions createConflictMenuActions(
-    const QList<QTreeWidgetItem*>& selection);
-
-  std::vector<QAction*> createGotoActions(
-    const QList<QTreeWidgetItem*>& selection);
 };
 
 #endif // MODINFODIALOG_H

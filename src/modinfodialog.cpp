@@ -63,20 +63,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 using namespace MOBase;
 using namespace MOShared;
 
+const int max_scan_for_context_menu = 50;
 
-std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialogTab::createTabs(
-  Ui::ModInfoDialog* ui)
-{
-  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
-
-  v.push_back(std::make_unique<TextFilesTab>(ui));
-  v.push_back(std::make_unique<IniFilesTab>(ui));
-  v.push_back(std::make_unique<ImagesTab>(ui));
-  v.push_back(std::make_unique<ESPsTab>(ui));
-  v.push_back(std::make_unique<ConflictsTab>(ui));
-
-  return v;
-}
 
 bool ModInfoDialogTab::canClose()
 {
@@ -91,6 +79,26 @@ void ModInfoDialogTab::saveState(Settings&)
 void ModInfoDialogTab::restoreState(const Settings& s)
 {
   // no-op
+}
+
+void ModInfoDialogTab::setMod(ModInfo::Ptr, MOShared::FilesOrigin*)
+{
+  // no-op
+}
+
+void ModInfoDialogTab::update()
+{
+  // no-op
+}
+
+void ModInfoDialogTab::emitOriginModified(int originID)
+{
+  emit originModified(originID);
+}
+
+void ModInfoDialogTab::emitModOpen(QString name)
+{
+  emit modOpen(name);
 }
 
 
@@ -109,20 +117,16 @@ static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS
   return LHS.m_SortValue < RHS.m_SortValue;
 }
 
-// if there are more than 50 selected items in the conflict tree or filetree,
-// don't bother checking whether menu items apply to them, just show all of them
-const int max_scan_for_context_menu = 50;
-
 
 bool canPreviewFile(
-  PluginContainer* pluginContainer, bool isArchive, const QString& filename)
+  PluginContainer& pluginContainer, bool isArchive, const QString& filename)
 {
   if (isArchive) {
     return false;
   }
 
   const auto ext = QFileInfo(filename).suffix();
-  return pluginContainer->previewGenerator().previewSupported(ext);
+  return pluginContainer.previewGenerator().previewSupported(ext);
 }
 
 bool canOpenFile(bool isArchive, const QString&)
@@ -161,6 +165,18 @@ bool canUnhideFile(bool isArchive, const QString& filename)
   return true;
 }
 
+FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName)
+{
+  const QString newName = oldName + ModInfo::s_HiddenExt;
+  return renamer.rename(oldName, newName);
+}
+
+FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName)
+{
+  QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
+  return renamer.rename(oldName, newName);
+}
+
 
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
@@ -172,7 +188,20 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 {
   ui->setupUi(this);
 
-  m_tabs = ModInfoDialogTab::createTabs(ui);
+  m_tabs = createTabs();
+
+  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+    connect(
+      m_tabs[i].get(), &ModInfoDialogTab::originModified,
+      [&](int originID){ emit originModified(originID); });
+
+    connect(
+      m_tabs[i].get(), &ModInfoDialogTab::modOpen,
+      [&](const QString& name){
+        close();
+        emit modOpen(name, static_cast<int>(i));
+      });
+  }
 
   this->setWindowTitle(modInfo->name());
   this->setWindowModality(Qt::WindowModal);
@@ -222,12 +251,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       m_Origin = nullptr;
     }
   }
-
-  // refresh everything but the conflict lists, which are done in exec() because
-  // they depend on restoring the state to some widgets; this refresh has to be
-  // done here because some of the checks below depend on the ui to decide which
-  // tabs to enable
-  refreshFiles();
 
   if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
   {
@@ -283,8 +306,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
   if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
     activateNexusTab();
   }
-}
 
+  for (auto& tab : m_tabs) {
+    tab->setMod(m_ModInfo, m_Origin);
+  }
+}
 
 ModInfoDialog::~ModInfoDialog()
 {
@@ -301,11 +327,23 @@ ModInfoDialog::~ModInfoDialog()
   delete m_Settings;
 }
 
+std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
+{
+  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
+
+  v.push_back(std::make_unique<TextFilesTab>(this, ui));
+  v.push_back(std::make_unique<IniFilesTab>(this, ui));
+  v.push_back(std::make_unique<ImagesTab>(this, ui));
+  v.push_back(std::make_unique<ESPsTab>(this, ui));
+  v.push_back(std::make_unique<ConflictsTab>(
+    this, ui, *m_OrganizerCore, *m_PluginContainer));
+
+  return v;
+}
 
 int ModInfoDialog::exec()
 {
-  // no need to refresh the other stuff, that was done in the constructor
-  refreshConflictLists(true, true);
+  refreshLists();
   return TutorableDialog::exec();
 }
 
@@ -412,17 +450,15 @@ QByteArray ModInfoDialog::saveTabState() const
 
 void ModInfoDialog::refreshLists()
 {
-  refreshConflictLists(true, true);
+  for (auto& tab : m_tabs) {
+    tab->update();
+  }
+
   refreshFiles();
 }
 
 void ModInfoDialog::refreshFiles()
 {
-  // clearing
-  for (auto& tab : m_tabs) {
-    tab->clear();
-  }
-
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
@@ -936,7 +972,7 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
 
       const QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
 
-      if (!canPreviewFile(m_PluginContainer, false, fileName)) {
+      if (!canPreviewFile(*m_PluginContainer, false, fileName)) {
         enablePreview = false;
       }
 
@@ -1051,342 +1087,6 @@ void ModInfoDialog::on_primaryCategoryBox_currentIndexChanged(int index)
 {
   if (index != -1) {
     m_ModInfo->setPrimaryCategory(ui->primaryCategoryBox->itemData(index).toInt());
-  }
-}
-
-FileRenamer::RenameResults ModInfoDialog::hideFile(FileRenamer& renamer, const QString &oldName)
-{
-  const QString newName = oldName + ModInfo::s_HiddenExt;
-  return renamer.rename(oldName, newName);
-}
-
-FileRenamer::RenameResults ModInfoDialog::unhideFile(FileRenamer& renamer, const QString &oldName)
-{
-  QString newName = oldName.left(oldName.length() - ModInfo::s_HiddenExt.length());
-  return renamer.rename(oldName, newName);
-}
-
-void ModInfoDialog::changeConflictItemsVisibility(
-  const QList<QTreeWidgetItem*>& items, bool visible)
-{
-  bool changed = false;
-  bool stop = false;
-
-  qDebug().nospace()
-    << (visible ? "unhiding" : "hiding") << " "
-    << items.size() << " conflict files";
-
-  QFlags<FileRenamer::RenameFlags> flags =
-    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
-
-  if (items.size() > 1) {
-    flags |= FileRenamer::MULTIPLE;
-  }
-
-  FileRenamer renamer(this, flags);
-
-  for (const auto* item : items) {
-    if (stop) {
-      break;
-    }
-
-    const auto* ci = dynamic_cast<const ConflictItem*>(item);
-    if (!ci) {
-      continue;
-    }
-
-    auto result = FileRenamer::RESULT_CANCEL;
-
-    if (visible) {
-      if (!ci->canUnhide()) {
-        qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
-        continue;
-      }
-      result = unhideFile(renamer, ci->fileName());
-
-    } else {
-      if (!ci->canHide()) {
-        qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
-        continue;
-      }
-      result = hideFile(renamer, ci->fileName());
-    }
-
-    switch (result) {
-      case FileRenamer::RESULT_OK: {
-        // will trigger a refresh at the end
-        changed = true;
-        break;
-      }
-
-      case FileRenamer::RESULT_SKIP: {
-        // nop
-        break;
-      }
-
-      case FileRenamer::RESULT_CANCEL: {
-        // stop right now, but make sure to refresh if needed
-        stop = true;
-        break;
-      }
-    }
-  }
-
-  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " conflict files done";
-
-  if (changed) {
-    qDebug().nospace() << "triggering refresh";
-    if (m_Origin) {
-      emit originModified(m_Origin->getID());
-    }
-    refreshLists();
-  }
-}
-
-void ModInfoDialog::openConflictItems(const QList<QTreeWidgetItem*>& items)
-{
-  // the menu item is only shown for a single selection, but handle all of them
-  // in case this changes
-  for (auto* item : items) {
-    if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      m_OrganizerCore->executeFileVirtualized(this, ci->fileName());
-    }
-  }
-}
-
-void ModInfoDialog::previewConflictItems(const QList<QTreeWidgetItem*>& items)
-{
-  // the menu item is only shown for a single selection, but handle all of them
-  // in case this changes
-  for (auto* item : items) {
-    if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      m_OrganizerCore->previewFileWithAlternatives(this, ci->fileName());
-    }
-  }
-}
-
-void ModInfoDialog::on_overwriteTree_customContextMenuRequested(const QPoint &pos)
-{
-  showConflictMenu(pos, ui->overwriteTree);
-}
-
-void ModInfoDialog::on_overwrittenTree_customContextMenuRequested(const QPoint &pos)
-{
-  showConflictMenu(pos, ui->overwrittenTree);
-}
-
-void ModInfoDialog::on_noConflictTree_customContextMenuRequested(const QPoint &pos)
-{
-  showConflictMenu(pos, ui->noConflictTree);
-}
-
-void ModInfoDialog::on_conflictsAdvancedList_customContextMenuRequested(const QPoint &pos)
-{
-  showConflictMenu(pos, ui->conflictsAdvancedList);
-}
-
-void ModInfoDialog::showConflictMenu(const QPoint &pos, QTreeWidget* tree)
-{
-  auto actions = createConflictMenuActions(tree->selectedItems());
-
-  QMenu menu;
-
-  // open
-  if (actions.open) {
-    connect(actions.open, &QAction::triggered, [&]{
-      openConflictItems(tree->selectedItems());
-    });
-
-    menu.addAction(actions.open);
-  }
-
-  // preview
-  if (actions.preview) {
-    connect(actions.preview, &QAction::triggered, [&]{
-      previewConflictItems(tree->selectedItems());
-    });
-
-    menu.addAction(actions.preview);
-  }
-
-  // hide
-  if (actions.hide) {
-    connect(actions.hide, &QAction::triggered, [&]{
-      changeConflictItemsVisibility(tree->selectedItems(), false);
-    });
-
-    menu.addAction(actions.hide);
-  }
-
-  // unhide
-  if (actions.unhide) {
-    connect(actions.unhide, &QAction::triggered, [&]{
-      changeConflictItemsVisibility(tree->selectedItems(), true);
-    });
-
-    menu.addAction(actions.unhide);
-  }
-
-  // goto
-  if (actions.gotoMenu) {
-    menu.addMenu(actions.gotoMenu);
-
-    for (auto* a : actions.gotoActions) {
-      connect(a, &QAction::triggered, [&, name=a->text()]{
-        close();
-        emit modOpen(name, TAB_CONFLICTS);
-      });
-
-      actions.gotoMenu->addAction(a);
-    }
-  }
-
-  if (!menu.isEmpty()) {
-    menu.exec(tree->viewport()->mapToGlobal(pos));
-  }
-}
-
-ModInfoDialog::ConflictActions ModInfoDialog::createConflictMenuActions(
-  const QList<QTreeWidgetItem*>& selection)
-{
-  if (selection.empty()) {
-    return {};
-  }
-
-  bool enableHide = true;
-  bool enableUnhide = true;
-  bool enableOpen = true;
-  bool enablePreview = true;
-  bool enableGoto = true;
-
-  if (selection.size() == 1) {
-    // this is a single selection
-    const auto* ci = dynamic_cast<const ConflictItem*>(selection[0]);
-    if (!ci) {
-      return {};
-    }
-
-    enableHide = ci->canHide();
-    enableUnhide = ci->canUnhide();
-    enableOpen = ci->canOpen();
-    enablePreview = ci->canPreview(m_PluginContainer);
-    enableGoto = ci->hasAlts();
-  }
-  else {
-    // this is a multiple selection, don't show open/preview so users don't open
-    // a thousand files
-    enableOpen = false;
-    enablePreview = false;
-
-    // don't bother with this on multiple selection, at least for now
-    enableGoto = false;
-
-    if (selection.size() < max_scan_for_context_menu) {
-      // if the number of selected items is low, checking them to accurately
-      // show the menu items is worth it
-      enableHide = false;
-      enableUnhide = false;
-
-      for (const auto* item : selection) {
-        if (const auto* ci=dynamic_cast<const ConflictItem*>(item)) {
-          if (ci->canHide()) {
-            enableHide = true;
-          }
-
-          if (ci->canUnhide()) {
-            enableUnhide = true;
-          }
-
-          if (enableHide && enableUnhide && enableGoto) {
-            // found all, no need to check more
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  ConflictActions actions;
-
-  actions.hide = new QAction(tr("Hide"), this);
-  actions.hide->setEnabled(enableHide);
-
-  // note that it is possible for hidden files to appear if they override other
-  // hidden files from another mod
-  actions.unhide = new QAction(tr("Unhide"), this);
-  actions.unhide->setEnabled(enableUnhide);
-
-  actions.open = new QAction(tr("Open/Execute"), this);
-  actions.open->setEnabled(enableOpen);
-
-  actions.preview = new QAction(tr("Preview"), this);
-  actions.preview->setEnabled(enablePreview);
-
-  actions.gotoMenu = new QMenu(tr("Go to..."), this);
-  actions.gotoMenu->setEnabled(enableGoto);
-
-  if (enableGoto) {
-    actions.gotoActions = createGotoActions(selection);
-  }
-
-  return actions;
-}
-
-std::vector<QAction*> ModInfoDialog::createGotoActions(const QList<QTreeWidgetItem*>& selection)
-{
-  if (!m_Origin || selection.size() != 1) {
-    return {};
-  }
-
-  const auto* item = dynamic_cast<const ConflictItem*>(selection[0]);
-  if (!item) {
-    return {};
-  }
-
-  auto file = m_Origin->findFile(item->fileIndex());
-  if (!file) {
-    return {};
-  }
-
-
-  std::vector<QString> mods;
-
-  // add all alternatives
-  for (const auto& alt : file->getAlternatives()) {
-    const auto& o = m_Directory->getOriginByID(alt.first);
-    if (o.getID() != m_Origin->getID()) {
-      mods.push_back(ToQString(o.getName()));
-    }
-  }
-
-  // add the real origin if different from this mod
-  const FilesOrigin& realOrigin = m_Directory->getOriginByID(file->getOrigin());
-  if (realOrigin.getID() != m_Origin->getID()) {
-    mods.push_back(ToQString(realOrigin.getName()));
-  }
-
-  std::sort(mods.begin(), mods.end(), [](const auto& a, const auto& b) {
-    return (QString::localeAwareCompare(a, b) < 0);
-  });
-
-  std::vector<QAction*> actions;
-
-  for (const auto& name : mods) {
-    actions.push_back(new QAction(name, this));
-  }
-
-  return actions;
-}
-
-void ModInfoDialog::on_overwrittenTree_itemDoubleClicked(QTreeWidgetItem *item, int)
-{
-  if (const auto* ci=dynamic_cast<ConflictItem*>(item)) {
-    const auto origin = ci->altOrigin();
-
-    if (!origin.isEmpty()) {
-      close();
-      emit modOpen(origin, TAB_CONFLICTS);
-    }
   }
 }
 

@@ -10,16 +10,21 @@ class TextEditor;
 
 class GenericFilesTab : public ModInfoDialogTab
 {
-public:
-  GenericFilesTab(QListWidget* list, QSplitter* splitter, TextEditor* editor);
+  Q_OBJECT;
 
+public:
   void clear() override;
   bool canClose() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
 
 protected:
+  QWidget* m_parent;
   QListWidget* m_list;
   TextEditor* m_editor;
+
+  GenericFilesTab(
+    QWidget* parent,
+    QListWidget* list, QSplitter* splitter, TextEditor* editor);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
 
@@ -32,7 +37,7 @@ private:
 class TextFilesTab : public GenericFilesTab
 {
 public:
-  TextFilesTab(Ui::ModInfoDialog* ui);
+  TextFilesTab(QWidget* parent, Ui::ModInfoDialog* ui);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;
@@ -42,7 +47,7 @@ protected:
 class IniFilesTab : public GenericFilesTab
 {
 public:
-  IniFilesTab(Ui::ModInfoDialog* ui);
+  IniFilesTab(QWidget* parent, Ui::ModInfoDialog* ui);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;

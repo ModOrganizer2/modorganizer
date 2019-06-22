@@ -21,8 +21,9 @@ private:
 };
 
 
-GenericFilesTab::GenericFilesTab(QListWidget* list, QSplitter* sp, TextEditor* e)
-  : m_list(list), m_editor(e)
+GenericFilesTab::GenericFilesTab(
+  QWidget* parent, QListWidget* list, QSplitter* sp, TextEditor* e)
+    : m_parent(parent), m_list(list), m_editor(e)
 {
   m_editor->setupToolbar();
 
@@ -48,7 +49,7 @@ bool GenericFilesTab::canClose()
   }
 
   const int res = QMessageBox::question(
-    m_list,
+    m_parent,
     QObject::tr("Save changes?"),
     QObject::tr("Save changes to \"%1\"?").arg(m_editor->filename()),
     QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
@@ -108,8 +109,9 @@ void GenericFilesTab::select(FileListItem* item)
 }
 
 
-TextFilesTab::TextFilesTab(Ui::ModInfoDialog* ui)
-  : GenericFilesTab(ui->textFileList, ui->tabTextSplitter, ui->textFileEditor)
+TextFilesTab::TextFilesTab(QWidget* parent, Ui::ModInfoDialog* ui)
+  : GenericFilesTab(
+    parent, ui->textFileList, ui->tabTextSplitter, ui->textFileEditor)
 {
 }
 
@@ -128,8 +130,9 @@ bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) c
   return false;
 }
 
-IniFilesTab::IniFilesTab(Ui::ModInfoDialog* ui)
-  : GenericFilesTab(ui->iniFileList, ui->tabIniSplitter, ui->iniFileEditor)
+IniFilesTab::IniFilesTab(QWidget* parent, Ui::ModInfoDialog* ui)
+  : GenericFilesTab(
+      parent, ui->iniFileList, ui->tabIniSplitter, ui->iniFileEditor)
 {
 }
 
