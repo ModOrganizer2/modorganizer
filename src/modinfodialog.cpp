@@ -43,6 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogconflicts.h"
 #include "modinfodialogcategories.h"
 #include "modinfodialognexus.h"
+#include "modinfodialogfiletree.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -193,7 +194,7 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, false);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
-    //ui->tabWidget->setTabEnabled(TAB_NOTES, false);
+    ui->tabWidget->setTabEnabled(TAB_NOTES, true);
     ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
   }
   else if (unmanaged)
@@ -205,8 +206,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
-    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
     ui->tabWidget->setTabEnabled(TAB_NOTES, false);
+    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
   } else {
     ui->tabWidget->setTabEnabled(TAB_TEXTFILES, true);
     ui->tabWidget->setTabEnabled(TAB_INIFILES, true);
@@ -215,8 +216,8 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
     ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
     ui->tabWidget->setTabEnabled(TAB_NEXUS, true);
-
-    initFiletree(modInfo);
+    ui->tabWidget->setTabEnabled(TAB_NOTES, true);
+    ui->tabWidget->setTabEnabled(TAB_FILETREE, true);
   }
 
   // activate first enabled tab
@@ -252,7 +253,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
 {
   return createTabsImpl<
     TextFilesTab, IniFilesTab, ImagesTab, ESPsTab,
-    ConflictsTab, CategoriesTab, NexusTab, NotesTab>(
+    ConflictsTab, CategoriesTab, NexusTab, NotesTab, FileTreeTab>(
       *m_OrganizerCore, *m_PluginContainer, this, ui);
 }
 
@@ -261,35 +262,6 @@ int ModInfoDialog::exec()
   refreshLists();
   return TutorableDialog::exec();
 }
-
-void ModInfoDialog::initFiletree(ModInfo::Ptr modInfo)
-{
-  ui->fileTree = findChild<QTreeView*>("fileTree");
-
-  m_FileSystemModel = new QFileSystemModel(this);
-  m_FileSystemModel->setReadOnly(false);
-  m_FileSystemModel->setRootPath(m_RootPath);
-  ui->fileTree->setModel(m_FileSystemModel);
-  ui->fileTree->setRootIndex(m_FileSystemModel->index(m_RootPath));
-  ui->fileTree->setColumnWidth(0, 300);
-
-  m_NewFolderAction = new QAction(tr("&New Folder"), ui->fileTree);
-  m_OpenAction = new QAction(tr("&Open"), ui->fileTree);
-  m_PreviewAction = new QAction(tr("&Preview"), ui->fileTree);
-  m_RenameAction = new QAction(tr("&Rename"), ui->fileTree);
-  m_DeleteAction = new QAction(tr("&Delete"), ui->fileTree);
-  m_HideAction = new QAction(tr("&Hide"), ui->fileTree);
-  m_UnhideAction = new QAction(tr("&Unhide"), ui->fileTree);
-
-  connect(m_NewFolderAction, SIGNAL(triggered()), this, SLOT(createDirectoryTriggered()));
-  connect(m_OpenAction, SIGNAL(triggered()), this, SLOT(openTriggered()));
-  connect(m_PreviewAction, SIGNAL(triggered()), this, SLOT(previewTriggered()));
-  connect(m_RenameAction, SIGNAL(triggered()), this, SLOT(renameTriggered()));
-  connect(m_DeleteAction, SIGNAL(triggered()), this, SLOT(deleteTriggered()));
-  connect(m_HideAction, SIGNAL(triggered()), this, SLOT(hideTriggered()));
-  connect(m_UnhideAction, SIGNAL(triggered()), this, SLOT(unhideTriggered()));
-}
-
 
 int ModInfoDialog::tabIndex(const QString &tabId)
 {
@@ -300,7 +272,6 @@ int ModInfoDialog::tabIndex(const QString &tabId)
   }
   return -1;
 }
-
 
 void ModInfoDialog::saveState(Settings& s) const
 {
@@ -340,6 +311,7 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
       m_RealTabPos[newPos] = newPos;
     }
   }
+
   // then actually move the tabs
   QTabBar *tabBar = ui->tabWidget->findChild<QTabBar*>("qt_tabwidget_tabbar"); // magic name = bad
   ui->tabWidget->blockSignals(true);
@@ -407,375 +379,8 @@ void ModInfoDialog::openTab(int tab)
   }
 }
 
-QString ModInfoDialog::getFileCategory(int categoryID)
-{
-  switch (categoryID) {
-    case 1: return tr("Main");
-    case 2: return tr("Update");
-    case 3: return tr("Optional");
-    case 4: return tr("Old");
-    case 5: return tr("Miscellaneous");
-    case 6: return tr("Deleted");
-    default: return tr("Unknown");
-  }
-}
-
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-}
-
-bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
-{
-  for (int childRow = 0; childRow < m_FileSystemModel->rowCount(index); ++childRow) {
-    QModelIndex childIndex = m_FileSystemModel->index(childRow, 0, index);
-    if (m_FileSystemModel->isDir(childIndex)) {
-      if (!recursiveDelete(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
-        return false;
-      }
-    } else {
-      if (!m_FileSystemModel->remove(childIndex)) {
-        qCritical("failed to delete %s", m_FileSystemModel->fileName(childIndex).toUtf8().constData());
-        return false;
-      }
-    }
-  }
-  if (!m_FileSystemModel->remove(index)) {
-    qCritical("failed to delete %s", m_FileSystemModel->fileName(index).toUtf8().constData());
-    return false;
-  }
-  return true;
-}
-
-
-void ModInfoDialog::on_openInExplorerButton_clicked()
-{
-  shell::ExploreFile(m_ModInfo->absolutePath());
-}
-
-void ModInfoDialog::deleteFile(const QModelIndex &index)
-{
-  bool res = m_FileSystemModel->isDir(index) ? recursiveDelete(index)
-                                             : m_FileSystemModel->remove(index);
-  if (!res) {
-    QString fileName = m_FileSystemModel->fileName(index);
-    reportError(tr("Failed to delete %1").arg(fileName));
-  }
-}
-
-void ModInfoDialog::delete_activated()
-{
-	if (ui->fileTree->hasFocus()) {
-		QItemSelectionModel *selection = ui->fileTree->selectionModel();
-
-		if (selection->hasSelection() && selection->selectedRows().count() >= 1) {
-
-			if (selection->selectedRows().count() == 0) {
-				return;
-			}
-			else if (selection->selectedRows().count() == 1) {
-				QString fileName = m_FileSystemModel->fileName(selection->selectedRows().at(0));
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-					return;
-				}
-			}
-			else {
-				if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
-					QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-					return;
-				}
-			}
-
-			foreach(QModelIndex index, selection->selectedRows()) {
-				deleteFile(index);
-			}
-		}
-	}
-}
-
-void ModInfoDialog::deleteTriggered()
-{
-  if (m_FileSelection.count() == 0) {
-    return;
-  } else if (m_FileSelection.count() == 1) {
-    QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete \"%1\"?").arg(fileName),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-      return;
-    }
-  } else {
-    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected files?"),
-                              QMessageBox::Yes | QMessageBox::No) != QMessageBox::Yes) {
-      return;
-    }
-  }
-
-  foreach(QModelIndex index, m_FileSelection) {
-    deleteFile(index);
-  }
-}
-
-
-void ModInfoDialog::renameTriggered()
-{
-  QModelIndex selection = m_FileSelection.at(0);
-  QModelIndex index = selection.sibling(selection.row(), 0);
-  if (!index.isValid() || m_FileSystemModel->isReadOnly()) {
-      return;
-  }
-
-  ui->fileTree->edit(index);
-}
-
-
-void ModInfoDialog::hideTriggered()
-{
-  changeFiletreeVisibility(false);
-}
-
-
-void ModInfoDialog::unhideTriggered()
-{
-  changeFiletreeVisibility(true);
-}
-
-void ModInfoDialog::changeFiletreeVisibility(bool visible)
-{
-  bool changed = false;
-  bool stop = false;
-
-  qDebug().nospace()
-    << (visible ? "unhiding" : "hiding") << " "
-    << m_FileSelection.size() << " filetree files";
-
-  QFlags<FileRenamer::RenameFlags> flags =
-    (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
-
-  if (m_FileSelection.size() > 1) {
-    flags |= FileRenamer::MULTIPLE;
-  }
-
-  FileRenamer renamer(this, flags);
-
-  for (const auto& index : m_FileSelection) {
-    if (stop) {
-      break;
-    }
-
-    const QString path = m_FileSystemModel->filePath(index);
-    auto result = FileRenamer::RESULT_CANCEL;
-
-    if (visible) {
-      if (!canUnhideFile(false, path)) {
-        qDebug().nospace() << "cannot unhide " << path << ", skipping";
-        continue;
-      }
-      result = unhideFile(renamer, path);
-    } else {
-      if (!canHideFile(false, path)) {
-        qDebug().nospace() << "cannot hide " << path << ", skipping";
-        continue;
-      }
-      result = hideFile(renamer, path);
-    }
-
-    switch (result) {
-      case FileRenamer::RESULT_OK: {
-        // will trigger a refresh at the end
-        changed = true;
-        break;
-      }
-
-      case FileRenamer::RESULT_SKIP: {
-        // nop
-        break;
-      }
-
-      case FileRenamer::RESULT_CANCEL: {
-        // stop right now, but make sure to refresh if needed
-        stop = true;
-        break;
-      }
-    }
-  }
-
-  qDebug().nospace() << (visible ? "unhiding" : "hiding") << " filetree files done";
-
-  if (changed) {
-    qDebug().nospace() << "triggering refresh";
-    if (m_Origin) {
-      emit originModified(m_Origin->getID());
-    }
-    refreshLists();
-  }
-}
-
-
-void ModInfoDialog::openTriggered()
-{
-  if (m_FileSelection.size() == 1) {
-    const auto index = m_FileSelection.at(0);
-    if (!index.isValid()) {
-      return;
-    }
-
-    QString fileName = m_FileSystemModel->filePath(index);
-    shell::OpenFile(fileName);
-  }
-}
-
-void ModInfoDialog::previewTriggered()
-{
-  if (m_FileSelection.size() == 1) {
-    const auto index = m_FileSelection.at(0);
-    if (!index.isValid()) {
-      return;
-    }
-
-    QString fileName = m_FileSystemModel->filePath(index);
-    m_OrganizerCore->previewFile(this, m_ModInfo->name(), fileName);
-  }
-}
-
-void ModInfoDialog::createDirectoryTriggered()
-{
-  QModelIndex selection = m_FileSelection.at(0);
-
-  QModelIndex index = m_FileSystemModel->isDir(selection) ? selection
-                                                          : selection.parent();
-  index = index.sibling(index.row(), 0);
-
-  QString name = tr("New Folder");
-  QString path = m_FileSystemModel->filePath(index).append("/");
-
-  QModelIndex existingIndex = m_FileSystemModel->index(path + name);
-  int suffix = 1;
-  while (existingIndex.isValid()) {
-    name = tr("New Folder") + QString::number(suffix++);
-    existingIndex = m_FileSystemModel->index(path + name);
-  }
-
-  QModelIndex newIndex = m_FileSystemModel->mkdir(index, name);
-  if (!newIndex.isValid()) {
-    reportError(tr("Failed to create \"%1\"").arg(name));
-    return;
-  }
-
-  ui->fileTree->setCurrentIndex(newIndex);
-  ui->fileTree->edit(newIndex);
-}
-
-
-void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
-{
-  QItemSelectionModel *selectionModel = ui->fileTree->selectionModel();
-  m_FileSelection = selectionModel->selectedRows(0);
-
-  QMenu menu(ui->fileTree);
-
-  menu.addAction(m_NewFolderAction);
-
-  if (selectionModel->hasSelection()) {
-    bool enableOpen = true;
-    bool enablePreview = true;
-    bool enableRename = true;
-    bool enableDelete = true;
-    bool enableHide = true;
-    bool enableUnhide = true;
-
-    if (m_FileSelection.size() == 1) {
-      // single selection
-
-      // only enable open action if a file is selected
-      bool hasFiles = false;
-
-      foreach(QModelIndex idx, m_FileSelection) {
-        if (m_FileSystemModel->fileInfo(idx).isFile()) {
-          hasFiles = true;
-          break;
-        }
-      }
-
-      if (!hasFiles) {
-        enableOpen = false;
-        enablePreview = false;
-      }
-
-      const QString fileName = m_FileSystemModel->fileName(m_FileSelection.at(0));
-
-      if (!canPreviewFile(*m_PluginContainer, false, fileName)) {
-        enablePreview = false;
-      }
-
-      if (!canHideFile(false, fileName)) {
-        enableHide = false;
-      }
-
-      if (!canUnhideFile(false, fileName)) {
-        enableUnhide = false;
-      }
-    } else {
-      // this is a multiple selection, don't show open action so users don't open
-      // a thousand files
-      enableOpen = false;
-      enablePreview = false;
-      enableRename = false;
-
-      if (m_FileSelection.size() < max_scan_for_context_menu) {
-        // if the number of selected items is low, checking them to accurately
-        // show the menu items is worth it
-        enableHide = false;
-        enableUnhide = false;
-
-        for (const auto& index : m_FileSelection) {
-          const QString fileName = m_FileSystemModel->fileName(index);
-
-          if (canHideFile(false, fileName)) {
-            enableHide = true;
-          }
-
-          if (canUnhideFile(false, fileName)) {
-            enableUnhide = true;
-          }
-
-          if (enableHide && enableUnhide) {
-            // found both, no need to check more
-            break;
-          }
-        }
-      }
-    }
-
-    if (enableOpen) {
-      menu.addAction(m_OpenAction);
-    }
-
-    if (enablePreview) {
-      menu.addAction(m_PreviewAction);
-    }
-
-    if (enableRename) {
-      menu.addAction(m_RenameAction);
-    }
-
-    if (enableDelete) {
-      menu.addAction(m_DeleteAction);
-    }
-
-    if (enableHide) {
-      menu.addAction(m_HideAction);
-    }
-
-    if (enableUnhide) {
-      menu.addAction(m_UnhideAction);
-    }
-  } else {
-    m_FileSelection.clear();
-    m_FileSelection.append(m_FileSystemModel->index(m_FileSystemModel->rootPath(), 0));
-  }
-
-  menu.exec(ui->fileTree->viewport()->mapToGlobal(pos));
 }
 
 void ModInfoDialog::on_nextButton_clicked()

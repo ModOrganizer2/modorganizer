@@ -57,6 +57,7 @@ SET(organizer_SRCS
 	modinfodialogcategories.cpp
 	modinfodialogconflicts.cpp
 	modinfodialogesps.cpp
+	modinfodialogfiletree.cpp
 	modinfodialogimages.cpp
 	modinfodialognexus.cpp
 	modinfodialogtab.cpp
@@ -164,6 +165,7 @@ SET(organizer_HDRS
 	modinfodialogcategories.h
 	modinfodialogconflicts.h
 	modinfodialogesps.h
+	modinfodialogfiletree.h
 	modinfodialogimages.h
 	modinfodialognexus.h
 	modinfodialogtab.h
@@ -364,14 +366,6 @@ set(locking
 set(modinfo
 	modinfo
 	modinfobackup
-	modinfodialog
-	modinfodialogcategories
-	modinfodialogconflicts
-	modinfodialogesps
-	modinfodialogimages
-	modinfodialognexus
-	modinfodialogtab
-	modinfodialogtextfiles
 	modinfoforeign
 	modinfooverwrite
 	modinforegular
@@ -379,6 +373,17 @@ set(modinfo
 	modinfowithconflictinfo
 )
 
+set(modinfo\\dialog
+	modinfodialog
+	modinfodialogcategories
+	modinfodialogconflicts
+	modinfodialogesps
+	modinfodialogfiletree
+	modinfodialogimages
+	modinfodialognexus
+	modinfodialogtab
+	modinfodialogtextfiles
+)
 set(modlist
 	modlist
 	modlistsortproxy
@@ -443,7 +448,7 @@ set(widgets
 )
 
 set(src_filters
-	application core browser dialogs downloads executables locking modinfo
+	application core browser dialogs downloads executables locking modinfo modinfo\\dialog
 	modlist plugins previews profiles settings utilities widgets
 )
 

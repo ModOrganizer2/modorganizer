@@ -115,18 +115,12 @@ public:
 private:
   struct Actions
   {
-    QAction* hide;
-    QAction* unhide;
-    QAction* open;
-    QAction* preview;
-    QMenu* gotoMenu;
+    QAction* hide = nullptr;
+    QAction* unhide = nullptr;
+    QAction* open = nullptr;
+    QAction* preview = nullptr;
+    QMenu* gotoMenu = nullptr;
     std::vector<QAction*> gotoActions;
-
-    Actions() :
-      hide(nullptr), unhide(nullptr), open(nullptr), preview(nullptr),
-      gotoMenu(nullptr)
-    {
-    }
   };
 
   GeneralConflictsTab m_general;

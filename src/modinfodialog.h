@@ -54,19 +54,6 @@ class TextEditor;
 class ModInfoDialogTab;
 
 
-class ElideLeftDelegate : public QStyledItemDelegate
-{
-public:
-  using QStyledItemDelegate::QStyledItemDelegate;
-
-protected:
-  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
-  {
-    QStyledItemDelegate::initStyleOption(o, i);
-    o->textElideMode = Qt::ElideLeft;
-  }
-};
-
 
 bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);
@@ -145,12 +132,6 @@ signals:
   void originModified(int originID);
 
 private:
-
-  void initFiletree(ModInfo::Ptr modInfo);
-
-  void refreshLists();
-
-  QString getFileCategory(int categoryID);
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
 
@@ -189,17 +170,9 @@ private:
   OrganizerCore *m_OrganizerCore;
   PluginContainer *m_PluginContainer;
 
-  QFileSystemModel *m_FileSystemModel;
   QTreeView *m_FileTree;
   QModelIndexList m_FileSelection;
 
-  QAction *m_NewFolderAction;
-  QAction *m_OpenAction;
-  QAction *m_PreviewAction;
-  QAction *m_RenameAction;
-  QAction *m_DeleteAction;
-  QAction *m_HideAction;
-  QAction *m_UnhideAction;
 
   const MOShared::DirectoryEntry *m_Directory;
   MOShared::FilesOrigin *m_Origin;
@@ -209,6 +182,7 @@ private:
 
   std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs();
 
+  void refreshLists();
   void refreshFiles();
 
   void restoreTabState(const QByteArray &state);

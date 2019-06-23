@@ -24,6 +24,20 @@ int naturalCompare(const QString& a, const QString& b)
 }
 
 
+class ElideLeftDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+
+protected:
+  void initStyleOption(QStyleOptionViewItem* o, const QModelIndex& i) const
+  {
+    QStyledItemDelegate::initStyleOption(o, i);
+    o->textElideMode = Qt::ElideLeft;
+  }
+};
+
+
 class ConflictItem : public QTreeWidgetItem
 {
 public:
