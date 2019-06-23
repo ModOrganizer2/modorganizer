@@ -20,7 +20,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>8</number>
+      <number>0</number>
      </property>
      <property name="movable">
       <bool>true</bool>
@@ -1147,6 +1147,9 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="selectionMode">
           <enum>QAbstractItemView::ExtendedSelection</enum>
+         </property>
+         <property name="uniformRowHeights">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

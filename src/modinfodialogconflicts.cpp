@@ -2,6 +2,8 @@
 #include "ui_modinfodialog.h"
 #include "modinfodialog.h"
 #include "utility.h"
+#include "settings.h"
+#include "organizercore.h"
 
 using namespace MOShared;
 using namespace MOBase;
@@ -131,8 +133,8 @@ public:
 
 ConflictsTab::ConflictsTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui) :
-    ModInfoDialogTab(oc, plugin, parent, ui),
+  QWidget* parent, Ui::ModInfoDialog* ui, int index) :
+    ModInfoDialogTab(oc, plugin, parent, ui, index),
     m_general(this, ui, oc), m_advanced(this, ui, oc)
 {
   connect(
@@ -172,6 +174,11 @@ void ConflictsTab::restoreState(const Settings& s)
 
   m_general.restoreState(s);
   m_advanced.restoreState(s);
+}
+
+bool ConflictsTab::canHandleUnmanaged() const
+{
+  return true;
 }
 
 void ConflictsTab::changeItemsVisibility(

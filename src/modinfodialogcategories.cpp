@@ -5,8 +5,8 @@
 
 CategoriesTab::CategoriesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui)
-    : ModInfoDialogTab(oc, plugin, parent, ui)
+  QWidget* parent, Ui::ModInfoDialog* ui, int index)
+    : ModInfoDialogTab(oc, plugin, parent, ui, index)
 {
   connect(
     ui->categories, &QTreeWidget::itemChanged,
@@ -33,6 +33,11 @@ void CategoriesTab::update()
     ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
+}
+
+bool CategoriesTab::canHandleSeparators() const
+{
+  return true;
 }
 
 void CategoriesTab::add(

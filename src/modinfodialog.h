@@ -23,36 +23,15 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfo.h"
 #include "tutorabledialog.h"
-#include "plugincontainer.h"
-#include "organizercore.h"
-#include "filterwidget.h"
 #include "filerenamer.h"
-#include "expanderwidget.h"
 
-#include <QDialog>
-#include <QSignalMapper>
-#include <QSettings>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QModelIndex>
-#include <QAction>
-#include <QPlainTextEdit>
-#include <QListWidgetItem>
-#include <QTreeWidgetItem>
-#include <QTextCodec>
-#include <set>
-#include <directoryentry.h>
+namespace Ui { class ModInfoDialog; }
+namespace MOShared { class FilesOrigin; }
 
-namespace Ui {
-    class ModInfoDialog;
-}
-
-class QFileSystemModel;
-class QTreeView;
-class CategoryFactory;
-class TextEditor;
+class PluginContainer;
+class OrganizerCore;
+class Settings;
 class ModInfoDialogTab;
-
 
 
 bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
@@ -131,9 +110,6 @@ signals:
   void modOpenPrev(int tab=-1);
   void originModified(int originID);
 
-private:
-  int tabIndex(const QString &tabId);
-
 private slots:
   void on_closeButton_clicked();
   void on_tabWidget_currentChanged(int index);
@@ -141,8 +117,6 @@ private slots:
   void on_prevButton_clicked();
 
 private:
-  using FileEntry = MOShared::FileEntry;
-
   Ui::ModInfoDialog *ui;
   ModInfo::Ptr m_ModInfo;
   std::vector<std::unique_ptr<ModInfoDialogTab>> m_tabs;
@@ -157,6 +131,14 @@ private:
   void restoreTabState(const QByteArray &state);
   QByteArray saveTabState() const;
   void onDeleteShortcut();
+  int tabIndex(const QString &tabId);
+
+  template <class T>
+  std::unique_ptr<ModInfoDialogTab> createTab(int index)
+  {
+    return std::make_unique<T>(
+      *m_OrganizerCore, *m_PluginContainer, this, ui, index);
+  }
 };
 
 #endif // MODINFODIALOG_H

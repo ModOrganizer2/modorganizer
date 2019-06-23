@@ -5,8 +5,9 @@
 
 ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui)
-    : ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent), m_origin(nullptr)
+  QWidget* parent, Ui::ModInfoDialog* ui, int index) :
+    ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent),
+    m_origin(nullptr), m_tabIndex(index)
 {
 }
 
@@ -42,6 +43,16 @@ bool ModInfoDialogTab::deleteRequested()
   return false;
 }
 
+bool ModInfoDialogTab::canHandleSeparators() const
+{
+  return false;
+}
+
+bool ModInfoDialogTab::canHandleUnmanaged() const
+{
+  return false;
+}
+
 void ModInfoDialogTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
 {
   m_mod = mod;
@@ -56,6 +67,11 @@ ModInfo::Ptr ModInfoDialogTab::mod() const
 MOShared::FilesOrigin* ModInfoDialogTab::origin() const
 {
   return m_origin;
+}
+
+int ModInfoDialogTab::tabIndex() const
+{
+  return m_tabIndex;
 }
 
 OrganizerCore& ModInfoDialogTab::core()
@@ -88,8 +104,8 @@ void ModInfoDialogTab::emitModOpen(QString name)
 
 NotesTab::NotesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui)
-   : ModInfoDialogTab(oc, plugin, parent, ui)
+  QWidget* parent, Ui::ModInfoDialog* ui, int index)
+   : ModInfoDialogTab(oc, plugin, parent, ui, index)
 {
   connect(ui->commentsEdit, &QLineEdit::editingFinished, [&]{ onComments(); });
   connect(ui->notesEdit, &HTMLEditor::editingFinished, [&]{ onNotes(); });
@@ -105,6 +121,11 @@ void NotesTab::update()
 {
   ui->commentsEdit->setText(mod()->comments());
   ui->notesEdit->setText(mod()->notes());
+}
+
+bool NotesTab::canHandleSeparators() const
+{
+  return true;
 }
 
 void NotesTab::onComments()

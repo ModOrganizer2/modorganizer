@@ -9,8 +9,8 @@
 
 NexusTab::NexusTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui)
-    : ModInfoDialogTab(oc, plugin, parent, ui), m_requestStarted(false)
+  QWidget* parent, Ui::ModInfoDialog* ui, int index)
+    : ModInfoDialogTab(oc, plugin, parent, ui, index), m_requestStarted(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().endorsementIntegration());

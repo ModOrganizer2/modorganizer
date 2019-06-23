@@ -1,106 +1,108 @@
 <RCC>
-    <qresource prefix="/MO/gui">
-        <file>resources/help-browser.png</file>
-        <file alias="add">resources/list-add.png</file>
-        <file>resources/document-save.png</file>
-        <file>resources/edit-find-replace.png</file>
-        <file>resources/go-jump.png</file>
-        <file>resources/media-playback-start.png</file>
-        <file alias="remove">resources/process-stop.png</file>
-        <file>resources/system-search.png</file>
-        <file>resources/view-refresh.png</file>
-        <file alias="installer">resources/system-installer.png</file>
-        <file>resources/start-here.png</file>
-        <file>resources/list-remove.png</file>
-        <file>resources/document-properties.png</file>
-        <file>resources/go-up.png</file>
-        <file>resources/go-down.png</file>
-        <file>resources/switch-instance-icon.png</file>
-        <file alias="profiles">resources/contact-new.png</file>
-        <file alias="settings">resources/preferences-system.png</file>
-        <file alias="executable">resources/application-x-executable.png</file>
-        <file alias="information">resources/dialog-information.png</file>
-        <file alias="locked">resources/emblem-readonly.png</file>
-        <file alias="next">resources/go-next_16.png</file>
-        <file alias="previous">resources/go-previous_16.png</file>
-        <file alias="refresh">resources/view-refresh_16.png</file>
-        <file alias="update_available">resources/software-update-available.png</file>
-        <file alias="important">resources/emblem-important.png</file>
-        <file alias="check">resources/check.png</file>
-        <file alias="warning">resources/dialog-warning.png</file>
-        <file alias="emblem_backup">resources/symbol-backup.png</file>
-        <file alias="icon_tools">resources/applications-accessories.png</file>
-        <file alias="problem">resources/emblem-unreadable.png</file>
-        <file>resources/internet-web-browser.png</file>
-        <file alias="update">resources/system-software-update.png</file>
-        <file alias="help">resources/help-browser_32.png</file>
-        <file>resources/system-installer.png</file>
-        <file alias="icon_executable">resources/function.png</file>
-        <file alias="plugins">resources/plugins.png</file>
-        <file alias="edit_clear">resources/edit-clear.png</file>
-        <file alias="link">resources/dynamic-blue-right.png</file>
-        <file alias="icon_favorite">resources/icon-favorite.png</file>
-        <file alias="emblem_notendorsed">resources/emblem-favorite.png</file>
-        <file alias="emblem_conflict">resources/error.png</file>
-        <file alias="run">resources/show.png</file>
-        <file alias="splash">splash.png</file>
-        <file alias="emblem_conflict_mixed">resources/conflict-mixed.png</file>
-        <file alias="emblem_conflict_overwrite">resources/conflict-overwrite.png</file>
-        <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
-        <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
-        <file alias="archive_loose_conflict_mixed">resources/conflict-mixed-blue.png</file>
-        <file alias="archive_loose_conflict_overwrite">resources/conflict-overwrite-blue.png</file>
-        <file alias="archive_loose_conflict_overwritten">resources/red-archive-conflict-loser.png</file>
-        <file alias="emblem_notes">resources/accessories-text-editor.png</file>
-        <file alias="version_date">resources/x-office-calendar.png</file>
-        <file alias="warning_16">resources/dialog-warning_16.png</file>
-        <file alias="attachment">resources/mail-attachment.png</file>
-        <file alias="backup">resources/document-save_32.png</file>
-        <file alias="restore">resources/edit-undo.png</file>
-        <file alias="sort">resources/arrange-boxes.png</file>
-        <file alias="badge_1">resources/badge_1.png</file>
-        <file alias="badge_2">resources/badge_2.png</file>
-        <file alias="badge_3">resources/badge_3.png</file>
-        <file alias="badge_4">resources/badge_4.png</file>
-        <file alias="badge_5">resources/badge_5.png</file>
-        <file alias="badge_6">resources/badge_6.png</file>
-        <file alias="badge_7">resources/badge_7.png</file>
-        <file alias="badge_8">resources/badge_8.png</file>
-        <file alias="badge_9">resources/badge_9.png</file>
-        <file alias="badge_more">resources/badge_more.png</file>
-        <file alias="active">resources/status_active.png</file>
-        <file alias="awaiting">resources/status_awaiting.png</file>
-        <file alias="inactive">resources/status_inactive.png</file>
-        <file alias="app_icon">resources/mo_icon.png</file>
-        <file alias="package">resources/package.png</file>
-        <file alias="instance_switch">resources/switch-instance-icon.png</file>
-        <file alias="open_folder">resources/open-Folder-Icon.png</file>
-        <file alias="multiply_red">resources/multiply-red.png</file>
-        <file alias="archive_conflict_loser">resources/archive-conflict-loser.png</file>
-        <file alias="archive_conflict_mixed">resources/archive-conflict-mixed.png</file>
-        <file alias="archive_conflict_neutral">resources/archive-conflict-neutral.png</file>
-        <file alias="archive_conflict_winner">resources/archive-conflict-winner.png</file>
-        <file alias="alternate_game_alt">resources/game-warning.png</file>
-        <file alias="alternate_game">resources/game-warning-16.png</file>
-        <file alias="tracked">resources/tracked.png</file>
-    </qresource>
-    <qresource prefix="/MO/gui/content">
-        <file alias="plugin">resources/contents/jigsaw-piece.png</file>
-        <file alias="skyproc">resources/contents/hand-of-god.png</file>
-        <file alias="texture">resources/contents/empty-chessboard.png</file>
-        <file alias="music">resources/contents/double-quaver.png</file>
-        <file alias="sound">resources/contents/lyre.png</file>
-        <file alias="interface">resources/contents/usable.png</file>
-        <file alias="skse">resources/contents/checkbox-tree.png</file>
-        <file alias="script">resources/contents/tinker.png</file>
-        <file alias="mesh">resources/contents/breastplate.png</file>
-        <file alias="string">resources/contents/conversation.png</file>
-        <file alias="bsa">resources/contents/locked-chest.png</file>
-        <file alias="menu">resources/contents/config.png</file>
-        <file alias="inifile">resources/contents/feather-and-scroll.png</file>
-        <file alias="modgroup">resources/contents/xedit.png</file>
-    </qresource>
-    <qresource prefix="/qt/etc">
-        <file>qt.conf</file>
-    </qresource>
+  <qresource prefix="/MO/gui">
+    <file alias="save">resources/save.svg</file>
+    <file alias="word-wrap">resources/word-wrap.svg</file>
+    <file>resources/help-browser.png</file>
+    <file alias="add">resources/list-add.png</file>
+    <file>resources/document-save.png</file>
+    <file>resources/edit-find-replace.png</file>
+    <file>resources/go-jump.png</file>
+    <file>resources/media-playback-start.png</file>
+    <file alias="remove">resources/process-stop.png</file>
+    <file>resources/system-search.png</file>
+    <file>resources/view-refresh.png</file>
+    <file alias="installer">resources/system-installer.png</file>
+    <file>resources/start-here.png</file>
+    <file>resources/list-remove.png</file>
+    <file>resources/document-properties.png</file>
+    <file>resources/go-up.png</file>
+    <file>resources/go-down.png</file>
+    <file>resources/switch-instance-icon.png</file>
+    <file alias="profiles">resources/contact-new.png</file>
+    <file alias="settings">resources/preferences-system.png</file>
+    <file alias="executable">resources/application-x-executable.png</file>
+    <file alias="information">resources/dialog-information.png</file>
+    <file alias="locked">resources/emblem-readonly.png</file>
+    <file alias="next">resources/go-next_16.png</file>
+    <file alias="previous">resources/go-previous_16.png</file>
+    <file alias="refresh">resources/view-refresh_16.png</file>
+    <file alias="update_available">resources/software-update-available.png</file>
+    <file alias="important">resources/emblem-important.png</file>
+    <file alias="check">resources/check.png</file>
+    <file alias="warning">resources/dialog-warning.png</file>
+    <file alias="emblem_backup">resources/symbol-backup.png</file>
+    <file alias="icon_tools">resources/applications-accessories.png</file>
+    <file alias="problem">resources/emblem-unreadable.png</file>
+    <file>resources/internet-web-browser.png</file>
+    <file alias="update">resources/system-software-update.png</file>
+    <file alias="help">resources/help-browser_32.png</file>
+    <file>resources/system-installer.png</file>
+    <file alias="icon_executable">resources/function.png</file>
+    <file alias="plugins">resources/plugins.png</file>
+    <file alias="edit_clear">resources/edit-clear.png</file>
+    <file alias="link">resources/dynamic-blue-right.png</file>
+    <file alias="icon_favorite">resources/icon-favorite.png</file>
+    <file alias="emblem_notendorsed">resources/emblem-favorite.png</file>
+    <file alias="emblem_conflict">resources/error.png</file>
+    <file alias="run">resources/show.png</file>
+    <file alias="splash">splash.png</file>
+    <file alias="emblem_conflict_mixed">resources/conflict-mixed.png</file>
+    <file alias="emblem_conflict_overwrite">resources/conflict-overwrite.png</file>
+    <file alias="emblem_conflict_overwritten">resources/conflict-overwritten.png</file>
+    <file alias="emblem_conflict_redundant">resources/conflict-redundant.png</file>
+    <file alias="archive_loose_conflict_mixed">resources/conflict-mixed-blue.png</file>
+    <file alias="archive_loose_conflict_overwrite">resources/conflict-overwrite-blue.png</file>
+    <file alias="archive_loose_conflict_overwritten">resources/red-archive-conflict-loser.png</file>
+    <file alias="emblem_notes">resources/accessories-text-editor.png</file>
+    <file alias="version_date">resources/x-office-calendar.png</file>
+    <file alias="warning_16">resources/dialog-warning_16.png</file>
+    <file alias="attachment">resources/mail-attachment.png</file>
+    <file alias="backup">resources/document-save_32.png</file>
+    <file alias="restore">resources/edit-undo.png</file>
+    <file alias="sort">resources/arrange-boxes.png</file>
+    <file alias="badge_1">resources/badge_1.png</file>
+    <file alias="badge_2">resources/badge_2.png</file>
+    <file alias="badge_3">resources/badge_3.png</file>
+    <file alias="badge_4">resources/badge_4.png</file>
+    <file alias="badge_5">resources/badge_5.png</file>
+    <file alias="badge_6">resources/badge_6.png</file>
+    <file alias="badge_7">resources/badge_7.png</file>
+    <file alias="badge_8">resources/badge_8.png</file>
+    <file alias="badge_9">resources/badge_9.png</file>
+    <file alias="badge_more">resources/badge_more.png</file>
+    <file alias="active">resources/status_active.png</file>
+    <file alias="awaiting">resources/status_awaiting.png</file>
+    <file alias="inactive">resources/status_inactive.png</file>
+    <file alias="app_icon">resources/mo_icon.png</file>
+    <file alias="package">resources/package.png</file>
+    <file alias="instance_switch">resources/switch-instance-icon.png</file>
+    <file alias="open_folder">resources/open-Folder-Icon.png</file>
+    <file alias="multiply_red">resources/multiply-red.png</file>
+    <file alias="archive_conflict_loser">resources/archive-conflict-loser.png</file>
+    <file alias="archive_conflict_mixed">resources/archive-conflict-mixed.png</file>
+    <file alias="archive_conflict_neutral">resources/archive-conflict-neutral.png</file>
+    <file alias="archive_conflict_winner">resources/archive-conflict-winner.png</file>
+    <file alias="alternate_game_alt">resources/game-warning.png</file>
+    <file alias="alternate_game">resources/game-warning-16.png</file>
+    <file alias="tracked">resources/tracked.png</file>
+  </qresource>
+  <qresource prefix="/MO/gui/content">
+    <file alias="plugin">resources/contents/jigsaw-piece.png</file>
+    <file alias="skyproc">resources/contents/hand-of-god.png</file>
+    <file alias="texture">resources/contents/empty-chessboard.png</file>
+    <file alias="music">resources/contents/double-quaver.png</file>
+    <file alias="sound">resources/contents/lyre.png</file>
+    <file alias="interface">resources/contents/usable.png</file>
+    <file alias="skse">resources/contents/checkbox-tree.png</file>
+    <file alias="script">resources/contents/tinker.png</file>
+    <file alias="mesh">resources/contents/breastplate.png</file>
+    <file alias="string">resources/contents/conversation.png</file>
+    <file alias="bsa">resources/contents/locked-chest.png</file>
+    <file alias="menu">resources/contents/config.png</file>
+    <file alias="inifile">resources/contents/feather-and-scroll.png</file>
+    <file alias="modgroup">resources/contents/xedit.png</file>
+  </qresource>
+  <qresource prefix="/qt/etc">
+    <file>qt.conf</file>
+  </qresource>
 </RCC>

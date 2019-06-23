@@ -5,6 +5,7 @@
 #include "expanderwidget.h"
 #include "filterwidget.h"
 #include "directoryentry.h"
+#include <QTreeWidget>
 
 class ConflictsTab;
 class OrganizerCore;
@@ -96,13 +97,14 @@ class ConflictsTab : public ModInfoDialogTab
 public:
   ConflictsTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   void update() override;
 
   void clear() override;
   void saveState(Settings& s) override;
   void restoreState(const Settings& s) override;
+  bool canHandleUnmanaged() const override;
 
   void openItems(const QList<QTreeWidgetItem*>& items);
   void previewItems(const QList<QTreeWidgetItem*>& items);

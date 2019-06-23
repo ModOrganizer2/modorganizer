@@ -36,7 +36,7 @@ class ImagesTab : public ModInfoDialogTab
 public:
   ImagesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;

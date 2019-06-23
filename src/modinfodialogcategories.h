@@ -7,10 +7,11 @@ class CategoriesTab : public ModInfoDialogTab
 public:
   CategoriesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   void clear() override;
   void update() override;
+  bool canHandleSeparators() const override;
 
 private:
   void add(

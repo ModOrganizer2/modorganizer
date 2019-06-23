@@ -19,24 +19,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
-#include "mainwindow.h"
-
-#include "modidlineedit.h"
-#include "iplugingame.h"
-#include "nexusinterface.h"
-#include "report.h"
-#include "utility.h"
-#include "messagedialog.h"
-#include "bbcode.h"
-#include "questionboxmemory.h"
-#include "settings.h"
-#include "categories.h"
+#include "plugincontainer.h"
 #include "organizercore.h"
-#include "pluginlistsortproxy.h"
-#include "previewgenerator.h"
-#include "previewdialog.h"
-#include "texteditor.h"
-
 #include "modinfodialogtextfiles.h"
 #include "modinfodialogimages.h"
 #include "modinfodialogesps.h"
@@ -44,23 +28,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogcategories.h"
 #include "modinfodialognexus.h"
 #include "modinfodialogfiletree.h"
-
-#include <QDir>
-#include <QDirIterator>
-#include <QPushButton>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QMenu>
-#include <QFileSystemModel>
-#include <QInputDialog>
-#include <QPointer>
-#include <QFileDialog>
-#include <QShortcut>
-
-#include <Shlwapi.h>
-
-#include <sstream>
-
 
 using namespace MOBase;
 using namespace MOShared;
@@ -144,13 +111,32 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 }
 
 
-ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
-  : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
-   m_Origin(nullptr), m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
+ModInfoDialog::ModInfoDialog(
+  ModInfo::Ptr modInfo, bool unmanaged, OrganizerCore *organizerCore,
+  PluginContainer *pluginContainer, QWidget *parent) :
+    TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog),
+    m_ModInfo(modInfo), m_RootPath(modInfo->absolutePath()),
+    m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer),
+    m_Origin(nullptr)
 {
   ui->setupUi(this);
 
+  auto* ds = m_OrganizerCore->directoryStructure();
+  if (ds->originExists(ToWString(m_ModInfo->name()))) {
+    m_Origin = &ds->getOriginByName(ToWString(m_ModInfo->name()));
+    if (m_Origin->isDisabled()) {
+      m_Origin = nullptr;
+    }
+  }
+
+  this->setWindowTitle(m_ModInfo->name());
+  this->setWindowModality(Qt::WindowModal);
+
+  auto* sc = new QShortcut(QKeySequence::Delete, this);
+  connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
+
   m_tabs = createTabs();
+  bool tabSelected = false;
 
   for (std::size_t i=0; i<m_tabs.size(); ++i) {
     connect(
@@ -163,64 +149,20 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, bool unmanaged, OrganizerCore
         close();
         emit modOpen(name, static_cast<int>(i));
       });
-  }
 
-  this->setWindowTitle(modInfo->name());
-  this->setWindowModality(Qt::WindowModal);
+    bool enabled = true;
 
-  m_RootPath = modInfo->absolutePath();
-
-  auto* sc = new QShortcut(QKeySequence::Delete, this);
-  connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
-
-  auto* ds = m_OrganizerCore->directoryStructure();
-  if (ds->originExists(ToWString(modInfo->name()))) {
-    m_Origin = &ds->getOriginByName(ToWString(modInfo->name()));
-    if (m_Origin->isDisabled()) {
-      m_Origin = nullptr;
+    if (unmanaged) {
+      enabled = m_tabs[i]->canHandleUnmanaged();
+    } else if (m_ModInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      enabled = m_tabs[i]->canHandleSeparators();
     }
-  }
 
-  if (modInfo->hasFlag(ModInfo::FLAG_SEPARATOR))
-  {
-    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
-    ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
-    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
-    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
-    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, false);
-    ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
-    ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
-    ui->tabWidget->setTabEnabled(TAB_NOTES, true);
-    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
-  }
-  else if (unmanaged)
-  {
-    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, false);
-    ui->tabWidget->setTabEnabled(TAB_INIFILES, false);
-    ui->tabWidget->setTabEnabled(TAB_IMAGES, false);
-    ui->tabWidget->setTabEnabled(TAB_ESPS, false);
-    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
-    ui->tabWidget->setTabEnabled(TAB_CATEGORIES, false);
-    ui->tabWidget->setTabEnabled(TAB_NEXUS, false);
-    ui->tabWidget->setTabEnabled(TAB_NOTES, false);
-    ui->tabWidget->setTabEnabled(TAB_FILETREE, false);
-  } else {
-    ui->tabWidget->setTabEnabled(TAB_TEXTFILES, true);
-    ui->tabWidget->setTabEnabled(TAB_INIFILES, true);
-    ui->tabWidget->setTabEnabled(TAB_IMAGES, true);
-    ui->tabWidget->setTabEnabled(TAB_ESPS, true);
-    ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
-    ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
-    ui->tabWidget->setTabEnabled(TAB_NEXUS, true);
-    ui->tabWidget->setTabEnabled(TAB_NOTES, true);
-    ui->tabWidget->setTabEnabled(TAB_FILETREE, true);
-  }
+    ui->tabWidget->setTabEnabled(static_cast<int>(i), enabled);
 
-  // activate first enabled tab
-  for (int i = 0; i < ui->tabWidget->count(); ++i) {
-    if (ui->tabWidget->isTabEnabled(i)) {
-      ui->tabWidget->setCurrentIndex(i);
-      break;
+    if (!tabSelected && enabled) {
+      ui->tabWidget->setCurrentIndex(static_cast<int>(i));
+      tabSelected = true;
     }
   }
 
@@ -234,39 +176,27 @@ ModInfoDialog::~ModInfoDialog()
   delete ui;
 }
 
-template <class... Ts>
-std::vector<std::unique_ptr<ModInfoDialogTab>> createTabsImpl(
-  OrganizerCore& oc, PluginContainer& plugin,
-  ModInfoDialog* self, Ui::ModInfoDialog* ui)
-{
-  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
-  (v.push_back(std::make_unique<Ts>(oc, plugin, self, ui)), ...);
-
-  return v;
-}
-
 std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
 {
-  return createTabsImpl<
-    TextFilesTab, IniFilesTab, ImagesTab, ESPsTab,
-    ConflictsTab, CategoriesTab, NexusTab, NotesTab, FileTreeTab>(
-      *m_OrganizerCore, *m_PluginContainer, this, ui);
+  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
+
+  v.push_back(createTab<TextFilesTab>(TAB_TEXTFILES));
+  v.push_back(createTab<IniFilesTab>(TAB_INIFILES));
+  v.push_back(createTab<ImagesTab>(TAB_IMAGES));
+  v.push_back(createTab<ESPsTab>(TAB_ESPS));
+  v.push_back(createTab<ConflictsTab>(TAB_CONFLICTS));
+  v.push_back(createTab<CategoriesTab>(TAB_CATEGORIES));
+  v.push_back(createTab<NexusTab>(TAB_NEXUS));
+  v.push_back(createTab<NotesTab>(TAB_NOTES));
+  v.push_back(createTab<FileTreeTab>(TAB_FILETREE));
+
+  return v;
 }
 
 int ModInfoDialog::exec()
 {
   refreshLists();
   return TutorableDialog::exec();
-}
-
-int ModInfoDialog::tabIndex(const QString &tabId)
-{
-  for (int i = 0; i < ui->tabWidget->count(); ++i) {
-    if (ui->tabWidget->widget(i)->objectName() == tabId) {
-      return i;
-    }
-  }
-  return -1;
 }
 
 void ModInfoDialog::saveState(Settings& s) const
@@ -309,7 +239,7 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
   }
 
   // then actually move the tabs
-  QTabBar *tabBar = ui->tabWidget->findChild<QTabBar*>("qt_tabwidget_tabbar"); // magic name = bad
+  QTabBar *tabBar = ui->tabWidget->tabBar();
   ui->tabWidget->blockSignals(true);
   for (int newPos = 0; newPos < count; ++newPos) {
     QString tabId = tabIds.at(newPos);
@@ -329,6 +259,16 @@ QByteArray ModInfoDialog::saveTabState() const
   }
 
   return result;
+}
+
+int ModInfoDialog::tabIndex(const QString& tabId)
+{
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    if (ui->tabWidget->widget(i)->objectName() == tabId) {
+      return i;
+    }
+  }
+  return -1;
 }
 
 void ModInfoDialog::onDeleteShortcut()
@@ -373,9 +313,8 @@ void ModInfoDialog::on_closeButton_clicked()
 
 void ModInfoDialog::openTab(int tab)
 {
-  QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
-  if (tabWidget->isTabEnabled(tab)) {
-    tabWidget->setCurrentIndex(tab);
+  if (ui->tabWidget->isTabEnabled(tab)) {
+    ui->tabWidget->setCurrentIndex(tab);
   }
 }
 

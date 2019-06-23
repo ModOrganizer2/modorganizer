@@ -29,10 +29,15 @@ public:
   virtual void restoreState(const Settings& s);
   virtual bool deleteRequested();
 
+  virtual bool canHandleSeparators() const;
+  virtual bool canHandleUnmanaged() const;
+
   virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
 
   ModInfo::Ptr mod() const;
   MOShared::FilesOrigin* origin() const;
+
+  int tabIndex() const;
 
 signals:
   void originModified(int originID);
@@ -43,7 +48,7 @@ protected:
 
   ModInfoDialogTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   OrganizerCore& core();
   PluginContainer& plugin();
@@ -59,6 +64,7 @@ private:
   QWidget* m_parent;
   ModInfo::Ptr m_mod;
   MOShared::FilesOrigin* m_origin;
+  int m_tabIndex;
 };
 
 
@@ -67,10 +73,11 @@ class NotesTab : public ModInfoDialogTab
 public:
   NotesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   void clear() override;
   void update() override;
+  bool canHandleSeparators() const override;
 
 private:
   void onComments();

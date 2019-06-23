@@ -35,7 +35,7 @@ class NexusTab : public ModInfoDialogTab
 public:
   NexusTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui);
+    QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   ~NexusTab();
 
