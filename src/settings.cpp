@@ -81,6 +81,38 @@ private:
   int m_SortRole;
 };
 
+
+QString formatSystemMessage(DWORD id)
+{
+  wchar_t* message = nullptr;
+
+  const auto ret = FormatMessageW(
+    FORMAT_MESSAGE_ALLOCATE_BUFFER |
+    FORMAT_MESSAGE_FROM_SYSTEM |
+    FORMAT_MESSAGE_IGNORE_INSERTS,
+    NULL,
+    id,
+    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+    reinterpret_cast<LPWSTR>(&message),
+    0, NULL);
+
+  QString s;
+  const QString idString = QString("0x%1").arg(id, 0, 16);
+
+  if (ret == 0 || !message) {
+    s = idString;
+  } else {
+    s = QString("%1 (%2)")
+      .arg(QString::fromStdWString(message).trimmed())
+      .arg(idString);
+  }
+
+  LocalFree(message);
+
+  return s;
+}
+
+
 Settings *Settings::s_Instance = nullptr;
 
 
@@ -217,12 +249,11 @@ QString Settings::deObfuscate(const QString key)
     result = QString::fromWCharArray(charData, creds->CredentialBlobSize / sizeof(wchar_t));
     CredFree(creds);
   } else {
-    if (GetLastError() != ERROR_NOT_FOUND) {
-      wchar_t buffer[256];
-      FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-      qCritical() << "Retrieving encrypted data failed:" << buffer;
+    const auto e = GetLastError();
+    if (e != ERROR_NOT_FOUND) {
+      qCritical().nospace()
+        << "Retrieving encrypted data failed: "
+        << formatSystemMessage(e);
     }
   }
   delete[] keyData;
@@ -366,13 +397,8 @@ bool Settings::getNexusApiKey(QString &apiKey) const
 bool Settings::setNexusApiKey(const QString& apiKey)
 {
   if (!obfuscate("APIKEY", apiKey)) {
-    wchar_t buffer[256];
-
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-
-    qCritical() << "Storing API key failed:" << buffer;
+    const auto e = GetLastError();
+    qCritical().nospace() << "Storing API key failed: " << formatSystemMessage(e);
     return false;
   }
 
@@ -487,11 +513,10 @@ void Settings::setSteamLogin(QString username, QString password)
     m_Settings.setValue("Settings/steam_username", username);
   }
   if (!obfuscate("steam_password", password)) {
-    wchar_t buffer[256];
-    FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-      buffer, (sizeof(buffer) / sizeof(wchar_t)), NULL);
-    qCritical() << "Storing or deleting password failed:" << buffer;
+    const auto e = GetLastError();
+    qCritical().nospace()
+      << "Storing or deleting password failed: "
+      << formatSystemMessage(e);
   }
 }
 
