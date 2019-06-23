@@ -122,8 +122,10 @@ private:
 };
 
 
-ESPsTab::ESPsTab(QWidget* parent, Ui::ModInfoDialog* ui)
-  : m_parent(parent), ui(ui)
+ESPsTab::ESPsTab(
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui)
+    : ModInfoDialogTab(oc, plugin, parent, ui)
 {
   QObject::connect(
     ui->activateESP, &QToolButton::clicked, [&]{ onActivate(); });
@@ -187,7 +189,7 @@ void ESPsTab::onActivate()
     bool okClicked = false;
 
     newName = QInputDialog::getText(
-      m_parent,
+      parentWidget(),
       QObject::tr("File Exists"),
       QObject::tr("A file with that name exists, please enter a new one"),
       QLineEdit::Normal, file.fileName(), &okClicked);

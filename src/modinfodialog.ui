@@ -829,7 +829,7 @@ text-align: left;</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
-        <widget class="QTreeWidget" name="categoriesTree">
+        <widget class="QTreeWidget" name="categories">
          <property name="animated">
           <bool>true</bool>
          </property>
@@ -853,13 +853,13 @@ text-align: left;</string>
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="primaryCategoryBox"/>
+          <widget class="QComboBox" name="primaryCategories"/>
          </item>
         </layout>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabNexus">
+     <widget class="QWidget" name="tabNexus1">
       <attribute name="icon">
        <iconset resource="resources.qrc">
         <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
@@ -871,6 +871,60 @@ text-align: left;</string>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_6">
          <item>
+          <widget class="QToolButton" name="refresh">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Refresh</string>
+           </property>
+           <property name="whatsThis">
+            <string>Refresh all information from Nexus.</string>
+           </property>
+           <property name="text">
+            <string>Refresh</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/MO/gui/refresh</normaloff>:/MO/gui/refresh</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="openInBrowser">
+           <property name="text">
+            <string>Open in Browser</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="endorse">
+           <property name="text">
+            <string>Endorse</string>
+           </property>
+           <property name="icon">
+            <iconset resource="resources.qrc">
+             <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="label_3">
            <property name="text">
             <string>Mod ID</string>
@@ -878,7 +932,7 @@ text-align: left;</string>
           </widget>
          </item>
          <item>
-          <widget class="ModIDLineEdit" name="modIDEdit">
+          <widget class="ModIDLineEdit" name="modID">
            <property name="toolTip">
             <string>Mod ID for this mod on Nexus.</string>
            </property>
@@ -892,22 +946,6 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_4">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType">
-            <enum>QSizePolicy::Fixed</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>10</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
           <widget class="QLabel" name="label_10">
            <property name="text">
             <string>Source Game</string>
@@ -915,7 +953,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="sourceGameEdit">
+          <widget class="QComboBox" name="sourceGame">
            <property name="toolTip">
             <string>Source game for this mod.</string>
            </property>
@@ -925,20 +963,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <spacer name="horizontalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="versionLabel">
+          <widget class="QLabel" name="versionLabel1">
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -952,7 +977,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="versionEdit">
+          <widget class="QLineEdit" name="version">
            <property name="maximumSize">
             <size>
              <width>150</width>
@@ -967,102 +992,61 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="0,1">
-         <item>
-          <widget class="QPushButton" name="refreshButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Refresh</string>
-           </property>
-           <property name="whatsThis">
-            <string>Refresh all information from Nexus.</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/refresh</normaloff>:/MO/gui/refresh</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>Description</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QWebEngineView" name="descriptionView">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
+        <widget class="QFrame" name="frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
          </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>200</height>
-          </size>
+         <property name="frameShadow">
+          <enum>QFrame::Sunken</enum>
          </property>
-         <property name="url">
-          <url>
-           <string>about:blank</string>
-          </url>
-         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_24">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QWebEngineView" name="browser">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>200</height>
+             </size>
+            </property>
+            <property name="url">
+             <url>
+              <string>about:blank</string>
+             </url>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_7">
-         <item>
-          <widget class="QLabel" name="visitNexusLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>1</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="openExternalLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="endorseBtn">
-           <property name="text">
-            <string>Endorse</string>
-           </property>
-           <property name="icon">
-            <iconset resource="resources.qrc">
-             <normaloff>:/MO/gui/icon_favorite</normaloff>:/MO/gui/icon_favorite</iconset>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_14">
          <item>
           <widget class="QLabel" name="label_11">
            <property name="text">
-            <string>Web page URL (only used if invalid Nexus ID) :</string>
+            <string>URL</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="customUrlLineEdit"/>
+          <widget class="QLineEdit" name="url"/>
          </item>
         </layout>
        </item>

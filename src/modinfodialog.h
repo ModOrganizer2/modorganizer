@@ -138,18 +138,11 @@ public:
   void restoreState(const Settings& s);
 
 signals:
-
-  void linkActivated(const QString &link);
   void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
   void modOpenNext(int tab=-1);
   void modOpenPrev(int tab=-1);
   void originModified(int originID);
-  void endorseMod(ModInfo::Ptr nexusID);
-
-public slots:
-
-  void modDetailsUpdated(bool success);
 
 private:
 
@@ -157,10 +150,6 @@ private:
 
   void refreshLists();
 
-  void updateVersionColor();
-
-  void refreshNexusData(int modID);
-  void activateNexusTab();
   QString getFileCategory(int categoryID);
   bool recursiveDelete(const QModelIndex &index);
   void deleteFile(const QModelIndex &index);
@@ -168,9 +157,6 @@ private:
   int tabIndex(const QString &tabId);
 
 private slots:
-  void linkClicked(const QUrl &url);
-  void linkClicked(QString url);
-
   void delete_activated();
 
   void createDirectoryTriggered();
@@ -183,20 +169,10 @@ private slots:
 
   void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
-  void on_visitNexusLabel_linkActivated(const QString &link);
-  void on_modIDEdit_editingFinished();
-  void on_sourceGameEdit_currentIndexChanged(int);
-  void on_versionEdit_editingFinished();
-  void on_customUrlLineEdit_editingFinished();
   void on_tabWidget_currentChanged(int index);
   void on_fileTree_customContextMenuRequested(const QPoint &pos);
 
-  void on_refreshButton_clicked();
-
-  void on_endorseBtn_clicked();
-
   void on_nextButton_clicked();
-
   void on_prevButton_clicked();
 
 private:
@@ -216,11 +192,6 @@ private:
   QFileSystemModel *m_FileSystemModel;
   QTreeView *m_FileTree;
   QModelIndexList m_FileSelection;
-
-  QSettings *m_Settings;
-
-  std::set<int> m_RequestIDs;
-  bool m_RequestStarted;
 
   QAction *m_NewFolderAction;
   QAction *m_OpenAction;

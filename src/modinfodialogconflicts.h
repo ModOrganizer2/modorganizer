@@ -21,7 +21,6 @@ public:
   void saveState(Settings& s);
   void restoreState(const Settings& s);
 
-  void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
   void update();
 
 signals:
@@ -36,8 +35,6 @@ private:
   ConflictsTab* m_tab;
   Ui::ModInfoDialog* ui;
   OrganizerCore& m_core;
-  ModInfo::Ptr m_mod;
-  MOShared::FilesOrigin* m_origin;
   Expanders m_expanders;
 
   QTreeWidgetItem* createOverwriteItem(
@@ -74,7 +71,6 @@ public:
   void saveState(Settings& s);
   void restoreState(const Settings& s);
 
-  void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
   void update();
 
 signals:
@@ -84,8 +80,6 @@ private:
   ConflictsTab* m_tab;
   Ui::ModInfoDialog* ui;
   OrganizerCore& m_core;
-  ModInfo::Ptr m_mod;
-  MOShared::FilesOrigin* m_origin;
   FilterWidget m_filter;
 
   QTreeWidgetItem* createItem(
@@ -101,10 +95,9 @@ class ConflictsTab : public ModInfoDialogTab
 
 public:
   ConflictsTab(
-    QWidget* parent, Ui::ModInfoDialog* ui,
-    OrganizerCore& oc, PluginContainer& plugin);
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
 
-  void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin) override;
   void update() override;
 
   void clear() override;
@@ -136,12 +129,6 @@ private:
     }
   };
 
-  QWidget* m_parent;
-  Ui::ModInfoDialog* ui;
-  OrganizerCore& m_core;
-  PluginContainer& m_plugin;
-  ModInfo::Ptr m_mod;
-  MOShared::FilesOrigin* m_origin;
   GeneralConflictsTab m_general;
   AdvancedConflictsTab m_advanced;
 

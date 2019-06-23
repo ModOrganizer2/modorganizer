@@ -58,6 +58,7 @@ SET(organizer_SRCS
 	modinfodialogconflicts.cpp
 	modinfodialogesps.cpp
 	modinfodialogimages.cpp
+	modinfodialognexus.cpp
 	modinfodialogtab.cpp
 	modinfodialogtextfiles.cpp
     modinfo.cpp
@@ -164,6 +165,7 @@ SET(organizer_HDRS
 	modinfodialogconflicts.h
 	modinfodialogesps.h
 	modinfodialogimages.h
+	modinfodialognexus.h
 	modinfodialogtab.h
 	modinfodialogtextfiles.h
     modinfo.h
@@ -223,7 +225,6 @@ SET(organizer_HDRS
     instancemanager.h
     usvfsconnector.h
     eventfilter.h
-    descriptionpage.h
     moshortcut.h
     listdialog.h
     lcdnumber.h
@@ -368,6 +369,7 @@ set(modinfo
 	modinfodialogconflicts
 	modinfodialogesps
 	modinfodialogimages
+	modinfodialognexus
 	modinfodialogtab
 	modinfodialogtextfiles
 	modinfoforeign
@@ -424,7 +426,6 @@ set(utilities
 )
 
 set(widgets
-	descriptionpage
 	expanderwidget
 	genericicondelegate
 	filerenamer

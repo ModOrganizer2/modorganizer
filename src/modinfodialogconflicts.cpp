@@ -116,10 +116,10 @@ public:
 
 
 ConflictsTab::ConflictsTab(
-  QWidget* parent, Ui::ModInfoDialog* ui,
-  OrganizerCore& oc, PluginContainer& plugin) :
-    m_parent(parent), ui(ui), m_core(oc), m_plugin(plugin),
-    m_origin(nullptr), m_general(this, ui, oc), m_advanced(this, ui, oc)
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui) :
+    ModInfoDialogTab(oc, plugin, parent, ui),
+    m_general(this, ui, oc), m_advanced(this, ui, oc)
 {
   connect(
     &m_general, &GeneralConflictsTab::modOpen,
@@ -128,15 +128,6 @@ ConflictsTab::ConflictsTab(
   connect(
     &m_advanced, &AdvancedConflictsTab::modOpen,
     [&](const QString& name){ emitModOpen(name); });
-}
-
-void ConflictsTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
-{
-  m_mod = mod;
-  m_origin = origin;
-
-  m_general.setMod(mod, origin);
-  m_advanced.setMod(mod, origin);
 }
 
 void ConflictsTab::update()
@@ -186,7 +177,7 @@ void ConflictsTab::changeItemsVisibility(
     flags |= FileRenamer::MULTIPLE;
   }
 
-  FileRenamer renamer(m_parent, flags);
+  FileRenamer renamer(parentWidget(), flags);
 
   for (const auto* item : items) {
     if (stop) {
@@ -242,8 +233,8 @@ void ConflictsTab::changeItemsVisibility(
   if (changed) {
     qDebug().nospace() << "triggering refresh";
 
-    if (m_origin) {
-      emit originModified(m_origin->getID());
+    if (origin()) {
+      emit originModified(origin()->getID());
     }
 
     update();
@@ -256,7 +247,7 @@ void ConflictsTab::openItems(const QList<QTreeWidgetItem*>& items)
   // in case this changes
   for (auto* item : items) {
     if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      m_core.executeFileVirtualized(m_parent, ci->fileName());
+      core().executeFileVirtualized(parentWidget(), ci->fileName());
     }
   }
 }
@@ -267,7 +258,7 @@ void ConflictsTab::previewItems(const QList<QTreeWidgetItem*>& items)
   // in case this changes
   for (auto* item : items) {
     if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      m_core.previewFileWithAlternatives(m_parent, ci->fileName());
+      core().previewFileWithAlternatives(parentWidget(), ci->fileName());
     }
   }
 }
@@ -355,7 +346,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
     enableHide = ci->canHide();
     enableUnhide = ci->canUnhide();
     enableOpen = ci->canOpen();
-    enablePreview = ci->canPreview(m_plugin);
+    enablePreview = ci->canPreview(plugin());
     enableGoto = ci->hasAlts();
   }
   else {
@@ -394,21 +385,21 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
 
   Actions actions;
 
-  actions.hide = new QAction(tr("Hide"), m_parent);
+  actions.hide = new QAction(tr("Hide"), parentWidget());
   actions.hide->setEnabled(enableHide);
 
   // note that it is possible for hidden files to appear if they override other
   // hidden files from another mod
-  actions.unhide = new QAction(tr("Unhide"), m_parent);
+  actions.unhide = new QAction(tr("Unhide"), parentWidget());
   actions.unhide->setEnabled(enableUnhide);
 
-  actions.open = new QAction(tr("Open/Execute"), m_parent);
+  actions.open = new QAction(tr("Open/Execute"), parentWidget());
   actions.open->setEnabled(enableOpen);
 
-  actions.preview = new QAction(tr("Preview"), m_parent);
+  actions.preview = new QAction(tr("Preview"), parentWidget());
   actions.preview->setEnabled(enablePreview);
 
-  actions.gotoMenu = new QMenu(tr("Go to..."), m_parent);
+  actions.gotoMenu = new QMenu(tr("Go to..."), parentWidget());
   actions.gotoMenu->setEnabled(enableGoto);
 
   if (enableGoto) {
@@ -421,7 +412,7 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
 std::vector<QAction*> ConflictsTab::createGotoActions(
   const QList<QTreeWidgetItem*>& selection)
 {
-  if (!m_origin || selection.size() != 1) {
+  if (!origin() || selection.size() != 1) {
     return {};
   }
 
@@ -430,26 +421,26 @@ std::vector<QAction*> ConflictsTab::createGotoActions(
     return {};
   }
 
-  auto file = m_origin->findFile(item->fileIndex());
+  auto file = origin()->findFile(item->fileIndex());
   if (!file) {
     return {};
   }
 
 
   std::vector<QString> mods;
-  const auto& ds = *m_core.directoryStructure();
+  const auto& ds = *core().directoryStructure();
 
   // add all alternatives
   for (const auto& alt : file->getAlternatives()) {
     const auto& o = ds.getOriginByID(alt.first);
-    if (o.getID() != m_origin->getID()) {
+    if (o.getID() != origin()->getID()) {
       mods.push_back(ToQString(o.getName()));
     }
   }
 
   // add the real origin if different from this mod
   const FilesOrigin& realOrigin = ds.getOriginByID(file->getOrigin());
-  if (realOrigin.getID() != m_origin->getID()) {
+  if (realOrigin.getID() != origin()->getID()) {
     mods.push_back(ToQString(realOrigin.getName()));
   }
 
@@ -460,7 +451,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(
   std::vector<QAction*> actions;
 
   for (const auto& name : mods) {
-    actions.push_back(new QAction(name, m_parent));
+    actions.push_back(new QAction(name, parentWidget()));
   }
 
   return actions;
@@ -469,7 +460,7 @@ std::vector<QAction*> ConflictsTab::createGotoActions(
 
 GeneralConflictsTab::GeneralConflictsTab(
   ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc)
-    : m_tab(tab), ui(ui), m_core(oc), m_origin(nullptr)
+    : m_tab(tab), ui(ui), m_core(oc)
 {
   m_expanders.overwrite.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
@@ -560,12 +551,6 @@ void GeneralConflictsTab::restoreState(const Settings& s)
     .value("mod_info_conflicts_general_overwritten").toByteArray());
 }
 
-void GeneralConflictsTab::setMod(ModInfo::Ptr mod, FilesOrigin* origin)
-{
-  m_mod = mod;
-  m_origin = origin;
-}
-
 void GeneralConflictsTab::update()
 {
   clear();
@@ -574,10 +559,10 @@ void GeneralConflictsTab::update()
   int numOverwrite = 0;
   int numOverwritten = 0;
 
-  if (m_origin != nullptr) {
-    const auto rootPath = m_mod->absolutePath();
+  if (m_tab->origin() != nullptr) {
+    const auto rootPath = m_tab->mod()->absolutePath();
 
-    for (const auto& file : m_origin->getFiles()) {
+    for (const auto& file : m_tab->origin()->getFiles()) {
       const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       const QString fileName = relativeName.mid(0).prepend(rootPath);
 
@@ -585,7 +570,7 @@ void GeneralConflictsTab::update()
       const int fileOrigin = file->getOrigin(archive);
       const auto& alternatives = file->getAlternatives();
 
-      if (fileOrigin == m_origin->getID()) {
+      if (fileOrigin == m_tab->origin()->getID()) {
         if (!alternatives.empty()) {
           ui->overwriteTree->addTopLevelItem(createOverwriteItem(
             file->getIndex(), archive, fileName, relativeName, alternatives));
@@ -684,7 +669,7 @@ void GeneralConflictsTab::onOverwrittenActivated(QTreeWidgetItem *item, int)
 
 AdvancedConflictsTab::AdvancedConflictsTab(
   ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc)
-    : m_tab(tab), ui(ui), m_core(oc), m_origin(nullptr)
+    : m_tab(tab), ui(ui), m_core(oc)
 {
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
@@ -760,20 +745,14 @@ void AdvancedConflictsTab::restoreState(const Settings& s)
   }
 }
 
-void AdvancedConflictsTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
-{
-  m_mod = mod;
-  m_origin = origin;
-}
-
 void AdvancedConflictsTab::update()
 {
   clear();
 
-  if (m_origin != nullptr) {
-    const auto rootPath = m_mod->absolutePath();
+  if (m_tab->origin() != nullptr) {
+    const auto rootPath = m_tab->mod()->absolutePath();
 
-    for (const auto& file : m_origin->getFiles()) {
+    for (const auto& file : m_tab->origin()->getFiles()) {
       const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       const QString fileName = relativeName.mid(0).prepend(rootPath);
 
@@ -813,14 +792,14 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
         // fills 'before' and 'after' with all the alternatives that come
         // before and after this mod in terms of priority
 
-        if (altOrigin.getPriority() < m_origin->getPriority()) {
+        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
           // add all the mods having a lower priority than this one
           if (!before.isEmpty()) {
             before += ", ";
           }
 
           before += ToQString(altOrigin.getName());
-        } else if (altOrigin.getPriority() > m_origin->getPriority()) {
+        } else if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
           // add all the mods having a higher priority than this one
           if (!after.isEmpty()) {
             after += ", ";
@@ -832,7 +811,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
         // keep track of the nearest mods that come before and after this one
         // in terms of priority
 
-        if (altOrigin.getPriority() < m_origin->getPriority()) {
+        if (altOrigin.getPriority() < m_tab->origin()->getPriority()) {
           // the alternative has a lower priority than this mod
 
           if (altOrigin.getPriority() > beforePrio) {
@@ -843,7 +822,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
           }
         }
 
-        if (altOrigin.getPriority() > m_origin->getPriority()) {
+        if (altOrigin.getPriority() > m_tab->origin()->getPriority()) {
           // the alternative has a higher priority than this mod
 
           if (altOrigin.getPriority() < afterPrio) {
@@ -869,7 +848,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
 
       // if no mods overwrite this file, the primary origin is the same as this
       // mod, so ignore that
-      if (realOrigin.getID() != m_origin->getID()) {
+      if (realOrigin.getID() != m_tab->origin()->getID()) {
         if (!after.isEmpty()) {
           after += ", ";
         }

@@ -18,12 +18,12 @@ public:
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
 
 protected:
-  QWidget* m_parent;
   QListWidget* m_list;
   TextEditor* m_editor;
 
   GenericFilesTab(
-    QWidget* parent,
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui,
     QListWidget* list, QSplitter* splitter, TextEditor* editor);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
@@ -37,7 +37,9 @@ private:
 class TextFilesTab : public GenericFilesTab
 {
 public:
-  TextFilesTab(QWidget* parent, Ui::ModInfoDialog* ui);
+  TextFilesTab(
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;
@@ -47,7 +49,9 @@ protected:
 class IniFilesTab : public GenericFilesTab
 {
 public:
-  IniFilesTab(QWidget* parent, Ui::ModInfoDialog* ui);
+  IniFilesTab(
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;

@@ -34,13 +34,14 @@ class ImagesTab : public ModInfoDialogTab
   Q_OBJECT;
 
 public:
-  ImagesTab(QWidget* parent, Ui::ModInfoDialog* ui);
+  ImagesTab(
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
 
   void clear() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
 
 private:
-  Ui::ModInfoDialog* ui;
   ScalableImage* m_image;
 
   void add(const QString& fullPath);

@@ -43,6 +43,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "modinfodialogesps.h"
 #include "modinfodialogconflicts.h"
 #include "modinfodialogcategories.h"
+#include "modinfodialognexus.h"
 
 #include <QDir>
 #include <QDirIterator>
@@ -145,7 +146,6 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 
 ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
-  m_RequestStarted(false),
   m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_PreviewAction(nullptr),
   m_RenameAction(nullptr), m_DeleteAction(nullptr), m_HideAction(nullptr),
   m_UnhideAction(nullptr), m_Directory(directory), m_Origin(nullptr),
@@ -173,38 +173,9 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   m_RootPath = modInfo->absolutePath();
 
-  QString metaFileName = m_RootPath.mid(0).append("/meta.ini");
-  m_Settings = new QSettings(metaFileName, QSettings::IniFormat);
-
-  QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
-  ui->modIDEdit->setValidator(new QIntValidator(modIDEdit));
-  ui->modIDEdit->setText(QString("%1").arg(modInfo->getNexusID()));
-
-  connect(ui->modIDEdit, SIGNAL(linkClicked(QString)), this, SLOT(linkClicked(QString)));
-
-  QString gameName = modInfo->getGameName();
-  ui->sourceGameEdit->addItem(organizerCore->managedGame()->gameName(), organizerCore->managedGame()->gameShortName());
-  if (organizerCore->managedGame()->validShortNames().size() == 0) {
-    ui->sourceGameEdit->setDisabled(true);
-  } else {
-    for (auto game : pluginContainer->plugins<IPluginGame>()) {
-      for (QString gameName : organizerCore->managedGame()->validShortNames()) {
-        if (game->gameShortName().compare(gameName, Qt::CaseInsensitive) == 0) {
-          ui->sourceGameEdit->addItem(game->gameName(), game->gameShortName());
-          break;
-        }
-      }
-    }
-  }
-  ui->sourceGameEdit->setCurrentIndex(ui->sourceGameEdit->findData(gameName));
-
   ui->commentsEdit->setText(modInfo->comments());
   ui->notesEdit->setText(modInfo->notes());
 
-  ui->descriptionView->setPage(new DescriptionPage());
-
-  connect(m_ModInfo.data(), SIGNAL(modDetailsUpdated(bool)), this, SLOT(modDetailsUpdated(bool)));
-  connect(ui->descriptionView->page(), SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
   //TODO: No easy way to delegate links
   //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
 
@@ -246,13 +217,11 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
     ui->tabWidget->setTabEnabled(TAB_IMAGES, true);
     ui->tabWidget->setTabEnabled(TAB_ESPS, true);
     ui->tabWidget->setTabEnabled(TAB_CONFLICTS, true);
+    ui->tabWidget->setTabEnabled(TAB_CATEGORIES, true);
+    ui->tabWidget->setTabEnabled(TAB_NEXUS, true);
 
     initFiletree(modInfo);
   }
-
-  ui->endorseBtn->setVisible(Settings::instance().endorsementIntegration());
-  ui->endorseBtn->setEnabled((m_ModInfo->endorsedState() == ModInfo::ENDORSED_FALSE) ||
-                             (m_ModInfo->endorsedState() == ModInfo::ENDORSED_NEVER));
 
   // activate first enabled tab
   for (int i = 0; i < ui->tabWidget->count(); ++i) {
@@ -260,10 +229,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
       ui->tabWidget->setCurrentIndex(i);
       break;
     }
-  }
-
-  if (ui->tabWidget->currentIndex() == TAB_NEXUS) {
-    activateNexusTab();
   }
 
   for (auto& tab : m_tabs) {
@@ -281,25 +246,26 @@ ModInfoDialog::~ModInfoDialog()
   else
     m_ModInfo->setNotes(ui->notesEdit->toHtml());
 
-  delete ui->descriptionView->page();
-  delete ui->descriptionView;
   delete ui;
-  delete m_Settings;
+}
+
+template <class... Ts>
+std::vector<std::unique_ptr<ModInfoDialogTab>> createTabsImpl(
+  OrganizerCore& oc, PluginContainer& plugin,
+  ModInfoDialog* self, Ui::ModInfoDialog* ui)
+{
+  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
+  (v.push_back(std::make_unique<Ts>(oc, plugin, self, ui)), ...);
+
+  return v;
 }
 
 std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
 {
-  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
-
-  v.push_back(std::make_unique<TextFilesTab>(this, ui));
-  v.push_back(std::make_unique<IniFilesTab>(this, ui));
-  v.push_back(std::make_unique<ImagesTab>(this, ui));
-  v.push_back(std::make_unique<ESPsTab>(this, ui));
-  v.push_back(std::make_unique<ConflictsTab>(
-    this, ui, *m_OrganizerCore, *m_PluginContainer));
-  v.push_back(std::make_unique<CategoriesTab>(this, ui));
-
-  return v;
+  return createTabsImpl<
+    TextFilesTab, IniFilesTab, ImagesTab, ESPsTab,
+    ConflictsTab, CategoriesTab, NexusTab>(
+      *m_OrganizerCore, *m_PluginContainer, this, ui);
 }
 
 int ModInfoDialog::exec()
@@ -434,7 +400,6 @@ void ModInfoDialog::refreshFiles()
   }
 }
 
-
 void ModInfoDialog::on_closeButton_clicked()
 {
   for (auto& tab : m_tabs) {
@@ -446,19 +411,6 @@ void ModInfoDialog::on_closeButton_clicked()
   close();
 }
 
-
-
-QString ModInfoDialog::getModVersion() const
-{
-  return m_Settings->value("version", "").toString();
-}
-
-
-const int ModInfoDialog::getModID() const
-{
-  return m_Settings->value("modid", 0).toInt();
-}
-
 void ModInfoDialog::openTab(int tab)
 {
   QTabWidget *tabWidget = findChild<QTabWidget*>("tabWidget");
@@ -466,40 +418,6 @@ void ModInfoDialog::openTab(int tab)
     tabWidget->setCurrentIndex(tab);
   }
 }
-
-void ModInfoDialog::on_visitNexusLabel_linkActivated(const QString &link)
-{
-  emit linkActivated(link);
-}
-
-void ModInfoDialog::linkClicked(const QUrl &url)
-{
-  //Ideally we'd ask the mod for the game and the web service then pass the game
-  //and URL to the web service
-  if (NexusInterface::instance(m_PluginContainer)->isURLGameRelated(url)) {
-    emit linkActivated(url.toString());
-  } else {
-    shell::OpenLink(url);
-  }
-}
-
-void ModInfoDialog::linkClicked(QString url)
-{
-  emit linkActivated(url);
-}
-
-
-void ModInfoDialog::refreshNexusData(int modID)
-{
-  if ((!m_RequestStarted) && (modID > 0)) {
-    m_RequestStarted = true;
-
-    m_ModInfo->updateNXMInfo();
-
-    MessageDialog::showMessage(tr("Info requested, please wait"), this);
-  }
-}
-
 
 QString ModInfoDialog::getFileCategory(int categoryID)
 {
@@ -514,111 +432,8 @@ QString ModInfoDialog::getFileCategory(int categoryID)
   }
 }
 
-
-void ModInfoDialog::updateVersionColor()
-{
-//  QPalette versionColor;
-  if (m_ModInfo->getVersion() != m_ModInfo->getNewestVersion()) {
-    ui->versionEdit->setStyleSheet("color: red");
-//    versionColor.setColor(QPalette::Text, Qt::red);
-    ui->versionEdit->setToolTip(tr("Current Version: %1").arg(m_ModInfo->getNewestVersion().canonicalString()));
-  } else {
-    ui->versionEdit->setStyleSheet("color: green");
-//    versionColor.setColor(QPalette::Text, Qt::green);
-    ui->versionEdit->setToolTip(tr("No update available"));
-  }
-//  ui->versionEdit->setPalette(versionColor);
-}
-
-
-void ModInfoDialog::modDetailsUpdated(bool success)
-{
-  QString nexusDescription = m_ModInfo->getNexusDescription();
-  QString descriptionAsHTML = "<html>"
-    "<head><style class=\"nexus-description\">body {font-style: sans-serif; background: #707070; } a { color: #5EA2E5; }</style></head>"
-    "<body>%1</body>"
-    "</html>";
-
-  if (!nexusDescription.isEmpty()) {
-    descriptionAsHTML = descriptionAsHTML.arg(BBCode::convertToHTML(nexusDescription));
-  } else {
-    descriptionAsHTML = descriptionAsHTML.arg(tr("<div style=\"text-align: center;\"><h1>Uh oh!</h1><p>Sorry, there is no description available for this mod. :(</p></div>"));
-  }
-
-  ui->descriptionView->page()->setHtml(descriptionAsHTML);
-
-  updateVersionColor();
-}
-
-
-void ModInfoDialog::activateNexusTab()
-{
-  QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
-  int modID = modIDEdit->text().toInt();
-  if (modID > 0) {
-    QString nexusLink = NexusInterface::instance(m_PluginContainer)->getModURL(modID, m_ModInfo->getGameName());
-    QLabel *visitNexusLabel = findChild<QLabel*>("visitNexusLabel");
-    visitNexusLabel->setText(tr("<a href=\"%1\">Visit on Nexus</a>").arg(nexusLink));
-    visitNexusLabel->setToolTip(nexusLink);
-    m_ModInfo->setURL(nexusLink);
-
-    if (m_ModInfo->getNexusDescription().isEmpty() || QDateTime::currentDateTimeUtc() >= m_ModInfo->getLastNexusQuery().addDays(1)) {
-      refreshNexusData(modID);
-    } else {
-      modDetailsUpdated(true);
-    }
-  } else
-    modDetailsUpdated(true);
-  QLineEdit *versionEdit = findChild<QLineEdit*>("versionEdit");
-  QString currentVersion = m_Settings->value("version", "???").toString();
-  versionEdit->setText(currentVersion);
-  ui->customUrlLineEdit->setText(m_ModInfo->getURL());
-}
-
-
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
 {
-  if (index == TAB_NEXUS || m_RealTabPos[index] == TAB_NEXUS) {
-    activateNexusTab();
-  }
-}
-
-
-void ModInfoDialog::on_modIDEdit_editingFinished()
-{
-  int oldID = m_Settings->value("modid", 0).toInt();
-  int modID = ui->modIDEdit->text().toInt();
-  if (oldID != modID){
-    m_ModInfo->setNexusID(modID);
-
-    ui->descriptionView->page()->setHtml("");
-    if (modID != 0) {
-      m_RequestStarted = false;
-      refreshNexusData(modID);
-    }
-  }
-}
-
-void ModInfoDialog::on_sourceGameEdit_currentIndexChanged(int)
-{
-  for (auto game : m_PluginContainer->plugins<IPluginGame>()) {
-    if (game->gameName() == ui->sourceGameEdit->currentText()) {
-      m_ModInfo->setGameName(game->gameShortName());
-      return;
-    }
-  }
-}
-
-void ModInfoDialog::on_versionEdit_editingFinished()
-{
-  VersionInfo version(ui->versionEdit->text());
-  m_ModInfo->setVersion(version);
-  updateVersionColor();
-}
-
-void ModInfoDialog::on_customUrlLineEdit_editingFinished()
-{
-  m_ModInfo->setURL(ui->customUrlLineEdit->text());
 }
 
 bool ModInfoDialog::recursiveDelete(const QModelIndex &index)
@@ -973,22 +788,6 @@ void ModInfoDialog::on_fileTree_customContextMenuRequested(const QPoint &pos)
   }
 
   menu.exec(ui->fileTree->viewport()->mapToGlobal(pos));
-}
-
-
-void ModInfoDialog::on_refreshButton_clicked()
-{
-  if (m_ModInfo->getNexusID() > 0) {
-    QLineEdit *modIDEdit = findChild<QLineEdit*>("modIDEdit");
-    int modID = modIDEdit->text().toInt();
-    refreshNexusData(modID);
-  } else
-    qInfo("Mod has no valid Nexus ID, info can't be updated.");
-}
-
-void ModInfoDialog::on_endorseBtn_clicked()
-{
-  emit endorseMod(m_ModInfo);
 }
 
 void ModInfoDialog::on_nextButton_clicked()

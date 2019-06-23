@@ -118,7 +118,7 @@ void ModInfoRegular::readMeta()
       m_EndorsedState = metaFile.value("endorsed", false).toBool() ? ENDORSED_TRUE : ENDORSED_FALSE;
     }
   }
-  
+
   QString categoriesString = metaFile.value("category", "").toString();
 
   QStringList categories = categoriesString.split(',', QString::SkipEmptyParts);
@@ -291,15 +291,27 @@ void ModInfoRegular::nxmRequestFailed(QString, int, int, QVariant userData, QNet
 
 bool ModInfoRegular::updateNXMInfo()
 {
-  QDateTime time = QDateTime::currentDateTimeUtc();
-  QDateTime target = m_LastNexusQuery.addDays(1);
-  if (m_NexusID > 0 && time >= target) {
+  if (needsDescriptionUpdate()) {
     m_NexusBridge.requestDescription(m_GameName, m_NexusID, QVariant());
     return true;
   }
+
   return false;
 }
 
+bool ModInfoRegular::needsDescriptionUpdate() const
+{
+  if (m_NexusID > 0) {
+    QDateTime time = QDateTime::currentDateTimeUtc();
+    QDateTime target = m_LastNexusQuery.addDays(1);
+
+    if (time >= target) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 void ModInfoRegular::setCategory(int categoryID, bool active)
 {

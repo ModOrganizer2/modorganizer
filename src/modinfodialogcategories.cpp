@@ -3,28 +3,25 @@
 #include "categories.h"
 #include "modinfo.h"
 
-CategoriesTab::CategoriesTab(QWidget*, Ui::ModInfoDialog* ui)
-  : ui(ui)
+CategoriesTab::CategoriesTab(
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui)
+    : ModInfoDialogTab(oc, plugin, parent, ui)
 {
   connect(
-    ui->categoriesTree, &QTreeWidget::itemChanged,
+    ui->categories, &QTreeWidget::itemChanged,
     [&](auto* item, int col){ onCategoryChanged(item, col); });
 
   connect(
-    ui->primaryCategoryBox,
+    ui->primaryCategories,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
     [&](int index){ onPrimaryChanged(index); });
 }
 
-void CategoriesTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
-{
-  m_mod = mod;
-}
-
 void CategoriesTab::clear()
 {
-  ui->categoriesTree->clear();
-  ui->primaryCategoryBox->clear();
+  ui->categories->clear();
+  ui->primaryCategories->clear();
 }
 
 void CategoriesTab::update()
@@ -32,8 +29,8 @@ void CategoriesTab::update()
   clear();
 
   add(
-    CategoryFactory::instance(), m_mod->getCategories(),
-    ui->categoriesTree->invisibleRootItem(), 0);
+    CategoryFactory::instance(), mod()->getCategories(),
+    ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
 }
@@ -71,15 +68,15 @@ void CategoriesTab::add(
 
 void CategoriesTab::updatePrimary()
 {
-  ui->primaryCategoryBox->clear();
+  ui->primaryCategories->clear();
 
-  int primaryCategory = m_mod->getPrimaryCategory();
+  int primaryCategory = mod()->getPrimaryCategory();
 
-  addChecked(ui->categoriesTree->invisibleRootItem());
+  addChecked(ui->categories->invisibleRootItem());
 
-  for (int i = 0; i < ui->primaryCategoryBox->count(); ++i) {
-    if (ui->primaryCategoryBox->itemData(i).toInt() == primaryCategory) {
-      ui->primaryCategoryBox->setCurrentIndex(i);
+  for (int i = 0; i < ui->primaryCategories->count(); ++i) {
+    if (ui->primaryCategories->itemData(i).toInt() == primaryCategory) {
+      ui->primaryCategories->setCurrentIndex(i);
       break;
     }
   }
@@ -90,7 +87,7 @@ void CategoriesTab::addChecked(QTreeWidgetItem* tree)
   for (int i = 0; i < tree->childCount(); ++i) {
     QTreeWidgetItem *child = tree->child(i);
     if (child->checkState(0) == Qt::Checked) {
-      ui->primaryCategoryBox->addItem(child->text(0), child->data(0, Qt::UserRole));
+      ui->primaryCategories->addItem(child->text(0), child->data(0, Qt::UserRole));
       addChecked(child);
     }
   }
@@ -101,7 +98,7 @@ void CategoriesTab::save(QTreeWidgetItem* currentNode)
   for (int i = 0; i < currentNode->childCount(); ++i) {
     QTreeWidgetItem *childNode = currentNode->child(i);
 
-    m_mod->setCategory(
+    mod()->setCategory(
       childNode->data(0, Qt::UserRole).toInt(), childNode->checkState(0));
 
     save(childNode);
@@ -118,12 +115,12 @@ void CategoriesTab::onCategoryChanged(QTreeWidgetItem* item, int)
   }
 
   updatePrimary();
-  save(ui->categoriesTree->invisibleRootItem());
+  save(ui->categories->invisibleRootItem());
 }
 
 void CategoriesTab::onPrimaryChanged(int index)
 {
   if (index != -1) {
-    m_mod->setPrimaryCategory(ui->primaryCategoryBox->itemData(index).toInt());
+    mod()->setPrimaryCategory(ui->primaryCategories->itemData(index).toInt());
   }
 }

@@ -3073,66 +3073,34 @@ void MainWindow::backupMod_clicked()
 
 void MainWindow::resumeDownload(int downloadIndex)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, downloadIndex] {
     m_OrganizerCore.downloadManager()->resumeDownload(downloadIndex);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([this, downloadIndex] () {
-        this->resumeDownload(downloadIndex);
-      });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to resume a download"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this, mod] {
     mod->endorse(true);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  });
 }
 
 
 void MainWindow::endorse_clicked()
 {
   QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
-      }
     }
-    else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Endorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->endorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(true);
     }
-  }
-  else {
-    endorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+  });
 }
 
 void MainWindow::dontendorse_clicked()
@@ -3151,114 +3119,53 @@ void MainWindow::dontendorse_clicked()
 
 void MainWindow::unendorseMod(ModInfo::Ptr mod)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->endorse(false);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(mod); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod] {
+    mod->endorse(false);
+  });
 }
 
 
 void MainWindow::unendorse_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    if (selection->hasSelection() && selection->selectedRows().count() > 1) {
       MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-      for (QModelIndex idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        MessageDialog::showMessage(tr("Unendorsing multiple mods will take a while. Please wait..."), this);
-        for (QModelIndex idx : selection->selectedRows()) {
-          ModInfo::Ptr modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->unendorseMod(modInfo); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to endorse"), this);
-        return;
-      }
     }
-  }
-  else {
-    unendorseMod(ModInfo::getByIndex(m_ContextRow));
-  }
+
+    for (QModelIndex idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->endorse(false);
+    }
+  });
 }
 
 
 void MainWindow::trackMod(ModInfo::Ptr mod, bool doTrack)
 {
-  if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-    ModInfo::getByIndex(m_ContextRow)->track(doTrack);
-  } else {
-    QString apiKey;
-    if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-      m_OrganizerCore.doAfterLogin([&]() { this->trackMod(mod, doTrack); });
-      NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-    } else {
-      MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-    }
-  }
+  m_OrganizerCore.loggedInAction(this, [mod, doTrack] {
+    mod->track(doTrack);
+  });
 }
 
 
 void MainWindow::track_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, true); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(true);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), true);
-  }
+  });
 }
 
 void MainWindow::untrack_clicked()
 {
-  QItemSelectionModel *selection = ui->modList->selectionModel();
-  if (selection->hasSelection() && selection->selectedRows().count() > 1) {
-    if (NexusInterface::instance(&m_PluginContainer)->getAccessManager()->validated()) {
-      for (auto idx : selection->selectedRows()) {
-        ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
-      }
-    } else {
-      QString apiKey;
-      if (m_OrganizerCore.settings().getNexusApiKey(apiKey)) {
-        for (auto idx : selection->selectedRows()) {
-          auto modInfo = ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt());
-          m_OrganizerCore.doAfterLogin([&]() { this->trackMod(modInfo, false); });
-        }
-        NexusInterface::instance(&m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
-      } else {
-        MessageDialog::showMessage(tr("You need to be logged in with Nexus to track"), this);
-      }
+  m_OrganizerCore.loggedInAction(this, [this] {
+    QItemSelectionModel *selection = ui->modList->selectionModel();
+    for (auto idx : selection->selectedRows()) {
+      ModInfo::getByIndex(idx.data(Qt::UserRole + 1).toInt())->track(false);
     }
-  } else {
-    trackMod(ModInfo::getByIndex(m_ContextRow), false);
-  }
+  });
 }
 
 void MainWindow::validationFailed(const QString &error)
@@ -3316,13 +3223,11 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   } else {
     modInfo->saveMeta();
     ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
-    connect(&dialog, SIGNAL(linkActivated(QString)), this, SLOT(linkClicked(QString)));
     connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
-    connect(&dialog, SIGNAL(endorseMod(ModInfo::Ptr)), this, SLOT(endorseMod(ModInfo::Ptr)));
 
 	//Open the tab first if we want to use the standard indexes of the tabs.
 	if (tab != -1) {

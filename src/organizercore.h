@@ -146,6 +146,7 @@ public:
   void updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::Ptr> modInfos);
 
   void doAfterLogin(const std::function<void()> &function) { m_PostLoginTasks.append(function); }
+  void loggedInAction(QWidget* parent, std::function<void ()> f);
 
   static QString findJavaInstallation(const QString& jarFile={});
 

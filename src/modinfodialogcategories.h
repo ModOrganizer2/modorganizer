@@ -5,16 +5,14 @@ class CategoryFactory;
 class CategoriesTab : public ModInfoDialogTab
 {
 public:
-  CategoriesTab(QWidget* parent, Ui::ModInfoDialog* ui);
+  CategoriesTab(
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
 
   void clear() override;
-  void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin) override;
   void update() override;
 
 private:
-  Ui::ModInfoDialog* ui;
-  ModInfo::Ptr m_mod;
-
   void add(
     const CategoryFactory& factory, const std::set<int>& enabledCategories,
     QTreeWidgetItem* root, int rootLevel);

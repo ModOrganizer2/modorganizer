@@ -80,8 +80,10 @@ void ScalableImage::mousePressEvent(QMouseEvent* e)
 }
 
 
-ImagesTab::ImagesTab(QWidget*, Ui::ModInfoDialog* ui)
-  : ui(ui), m_image(new ScalableImage)
+ImagesTab::ImagesTab(
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui)
+    : ModInfoDialogTab(oc, plugin, parent, ui), m_image(new ScalableImage)
 {
   ui->imagesImage->layout()->addWidget(m_image);
   ui->imagesThumbnails->setLayout(new QVBoxLayout);

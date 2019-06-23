@@ -2204,6 +2204,21 @@ void OrganizerCore::updateModsInDirectoryStructure(QMap<unsigned int, ModInfo::P
   }
 }
 
+void OrganizerCore::loggedInAction(QWidget* parent, std::function<void ()> f)
+{
+  if (NexusInterface::instance(m_PluginContainer)->getAccessManager()->validated()) {
+    f();
+  } else {
+    QString apiKey;
+    if (settings().getNexusApiKey(apiKey)) {
+      doAfterLogin([f]{ f(); });
+      NexusInterface::instance(m_PluginContainer)->getAccessManager()->apiCheck(apiKey);
+    } else {
+      MessageDialog::showMessage(tr("You need to be logged in with Nexus"), parent);
+    }
+  }
+}
+
 void OrganizerCore::requestDownload(const QUrl &url, QNetworkReply *reply)
 {
   if (m_PluginContainer != nullptr) {

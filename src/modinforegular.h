@@ -464,6 +464,7 @@ private:
   mutable std::vector<ModInfo::EContent> m_CachedContent;
   mutable QTime m_LastContentCheck;
 
+  bool needsDescriptionUpdate() const;
 };
 
 
