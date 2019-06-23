@@ -458,3 +458,13 @@ void TextEditorToolbar::onWordWrap(bool b)
 {
   m_wordWrap->setChecked(b);
 }
+
+
+void HTMLEditor::focusOutEvent(QFocusEvent* e)
+{
+  if (document() && document()->isModified()) {
+    emit editingFinished();
+  }
+
+  QTextEdit::focusInEvent(e);
+}

@@ -248,8 +248,6 @@ void NexusTab::refreshData(int modID)
   } else {
     onModChanged();
   }
-
-  //MessageDialog::showMessage(tr("Info requested, please wait"), this);
 }
 
 bool NexusTab::tryRefreshData(int modID)

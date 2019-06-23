@@ -1,4 +1,6 @@
 #include "modinfodialogtab.h"
+#include "ui_modinfodialog.h"
+#include "texteditor.h"
 
 ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
@@ -72,4 +74,41 @@ void ModInfoDialogTab::emitOriginModified(int originID)
 void ModInfoDialogTab::emitModOpen(QString name)
 {
   emit modOpen(name);
+}
+
+
+NotesTab::NotesTab(
+  OrganizerCore& oc, PluginContainer& plugin,
+  QWidget* parent, Ui::ModInfoDialog* ui)
+   : ModInfoDialogTab(oc, plugin, parent, ui)
+{
+  connect(ui->commentsEdit, &QLineEdit::editingFinished, [&]{ onComments(); });
+  connect(ui->notesEdit, &HTMLEditor::editingFinished, [&]{ onNotes(); });
+}
+
+void NotesTab::clear()
+{
+  ui->commentsEdit->clear();
+  ui->notesEdit->clear();
+}
+
+void NotesTab::update()
+{
+  ui->commentsEdit->setText(mod()->comments());
+  ui->notesEdit->setText(mod()->notes());
+}
+
+void NotesTab::onComments()
+{
+  mod()->setComments(ui->commentsEdit->text());
+}
+
+void NotesTab::onNotes()
+{
+  // Avoid saving html stub if notes field is empty.
+  if (ui->notesEdit->toPlainText().isEmpty()) {
+    mod()->setNotes({});
+  } else {
+    mod()->setNotes(ui->notesEdit->toHtml());
+  }
 }

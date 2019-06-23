@@ -60,4 +60,20 @@ private:
   MOShared::FilesOrigin* m_origin;
 };
 
+
+class NotesTab : public ModInfoDialogTab
+{
+public:
+  NotesTab(
+    OrganizerCore& oc, PluginContainer& plugin,
+    QWidget* parent, Ui::ModInfoDialog* ui);
+
+  void clear() override;
+  void update() override;
+
+private:
+  void onComments();
+  void onNotes();
+};
+
 #endif // MODINFODIALOGTAB_H

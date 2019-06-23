@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>790</width>
+    <width>735</width>
     <height>534</height>
    </rect>
   </property>
@@ -20,7 +20,7 @@
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>7</number>
      </property>
      <property name="movable">
       <bool>true</bool>
@@ -180,7 +180,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>741</width>
+                <width>686</width>
                 <height>436</height>
                </rect>
               </property>
@@ -859,7 +859,7 @@ text-align: left;</string>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabNexus1">
+     <widget class="QWidget" name="tabNexus">
       <attribute name="icon">
        <iconset resource="resources.qrc">
         <normaloff>:/MO/gui/resources/internet-web-browser.png</normaloff>:/MO/gui/resources/internet-web-browser.png</iconset>
@@ -963,7 +963,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="versionLabel1">
+          <widget class="QLabel" name="versionLabel">
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -1071,7 +1071,7 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="QTextEdit" name="notesEdit">
+        <widget class="HTMLEditor" name="notesEdit">
          <property name="toolTip">
           <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
          </property>
@@ -1208,6 +1208,11 @@ p, li { white-space: pre-wrap; }
   <customwidget>
    <class>TextEditor</class>
    <extends>QPlainTextEdit</extends>
+   <header>texteditor.h</header>
+  </customwidget>
+  <customwidget>
+   <class>HTMLEditor</class>
+   <extends>QTextEdit</extends>
    <header>texteditor.h</header>
   </customwidget>
  </customwidgets>

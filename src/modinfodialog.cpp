@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "modinfodialog.h"
 #include "ui_modinfodialog.h"
-#include "descriptionpage.h"
 #include "mainwindow.h"
 
 #include "modidlineedit.h"
@@ -173,9 +172,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   m_RootPath = modInfo->absolutePath();
 
-  ui->commentsEdit->setText(modInfo->comments());
-  ui->notesEdit->setText(modInfo->notes());
-
   //TODO: No easy way to delegate links
   //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
 
@@ -238,14 +234,6 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
 ModInfoDialog::~ModInfoDialog()
 {
-  m_ModInfo->setComments(ui->commentsEdit->text());
-
-  //Avoid saving html stump if notes field is empty.
-  if (ui->notesEdit->toPlainText().isEmpty())
-    m_ModInfo->setNotes(ui->notesEdit->toPlainText());
-  else
-    m_ModInfo->setNotes(ui->notesEdit->toHtml());
-
   delete ui;
 }
 
@@ -264,7 +252,7 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
 {
   return createTabsImpl<
     TextFilesTab, IniFilesTab, ImagesTab, ESPsTab,
-    ConflictsTab, CategoriesTab, NexusTab>(
+    ConflictsTab, CategoriesTab, NexusTab, NotesTab>(
       *m_OrganizerCore, *m_PluginContainer, this, ui);
 }
 

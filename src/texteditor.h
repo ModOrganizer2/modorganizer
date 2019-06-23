@@ -137,4 +137,21 @@ private:
   void paintLineNumbers(QPaintEvent* e, const QColor& textColor);
 };
 
+
+class HTMLEditor : public QTextEdit
+{
+  Q_OBJECT;
+
+public:
+  using QTextEdit::QTextEdit;
+
+signals:
+  void editingFinished();
+
+protected:
+  void focusOutEvent(QFocusEvent* e);
+
+private:
+};
+
 #endif // MO_TEXTEDITOR_H
