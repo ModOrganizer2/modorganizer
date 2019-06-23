@@ -56,7 +56,7 @@ function getTutorialSteps() {
             waitForClick()
         },
         function() {
-            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwrtten by another. You could as well disable it.");
+            tutorial.text = qsTr("<img src=\"qrc:///MO/gui/emblem_conflict_redundant\" /> indicates that the mod is completely overwritten by another. You could as well disable it.");
             waitForClick()
         },
         function() {

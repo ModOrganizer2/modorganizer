@@ -102,7 +102,7 @@ QString InstanceManager::manageInstances(const QStringList &instanceList) const
 	SelectionDialog selection(
 		QString("<h3>%1</h3><br>%2")
 		.arg(QObject::tr("Choose Instance to Delete"))
-		.arg(QObject::tr("Be Carefull! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.")),
+		.arg(QObject::tr("Be Careful! Deleting an Instance will remove all your files for that Instance (mods, downloads, profiles, configuration, ...). Custom paths outside of the instance folder for downloads, mods, etc. will be left untoched.")),
 		nullptr);
 	for (const QString &instance : instanceList)
 	{
