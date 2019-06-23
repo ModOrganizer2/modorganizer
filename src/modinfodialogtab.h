@@ -27,6 +27,7 @@ public:
   virtual bool canClose();
   virtual void saveState(Settings& s);
   virtual void restoreState(const Settings& s);
+  virtual bool deleteRequested();
 
   virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
 
@@ -49,7 +50,7 @@ protected:
 
   QWidget* parentWidget();
 
-  void emitOriginModified(int originID);
+  void emitOriginModified();
   void emitModOpen(QString name);
 
 private:

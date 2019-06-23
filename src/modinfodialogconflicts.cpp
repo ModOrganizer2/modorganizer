@@ -6,8 +6,8 @@
 using namespace MOShared;
 using namespace MOBase;
 
-// if there are more than 50 selected items in the conflict tree or filetree,
-// don't bother checking whether menu items apply to them, just show all of them
+// if there are more than 50 selected items in the conflict tree, don't bother
+// checking whether menu items apply to them, just show all of them
 const int max_scan_for_context_menu = 50;
 
 
@@ -248,7 +248,7 @@ void ConflictsTab::changeItemsVisibility(
     qDebug().nospace() << "triggering refresh";
 
     if (origin()) {
-      emit originModified(origin()->getID());
+      emitOriginModified();
     }
 
     update();

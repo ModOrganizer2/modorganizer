@@ -1,12 +1,18 @@
 #include "modinfodialogtab.h"
 #include "ui_modinfodialog.h"
 #include "texteditor.h"
+#include "directoryentry.h"
 
 ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui)
     : ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent), m_origin(nullptr)
 {
+}
+
+void ModInfoDialogTab::update()
+{
+  // no-op
 }
 
 bool ModInfoDialogTab::feedFile(const QString&, const QString&)
@@ -30,9 +36,10 @@ void ModInfoDialogTab::restoreState(const Settings& s)
   // no-op
 }
 
-void ModInfoDialogTab::update()
+bool ModInfoDialogTab::deleteRequested()
 {
   // no-op
+  return false;
 }
 
 void ModInfoDialogTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
@@ -66,9 +73,11 @@ QWidget* ModInfoDialogTab::parentWidget()
   return m_parent;
 }
 
-void ModInfoDialogTab::emitOriginModified(int originID)
+void ModInfoDialogTab::emitOriginModified()
 {
-  emit originModified(originID);
+  if (m_origin) {
+    emit originModified(m_origin->getID());
+  }
 }
 
 void ModInfoDialogTab::emitModOpen(QString name)

@@ -73,7 +73,6 @@ class ModInfoDialog : public MOBase::TutorableDialog
     Q_OBJECT
 
 public:
-
   enum ETabs {
     TAB_TEXTFILES,
     TAB_INIFILES,
@@ -87,14 +86,16 @@ public:
   };
 
 public:
-
  /**
   * @brief constructor
   *
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
-  explicit ModInfoDialog(ModInfo::Ptr modInfo, const MOShared::DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent = 0);
+  explicit ModInfoDialog(
+    ModInfo::Ptr modInfo,
+    bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer,
+    QWidget *parent = 0);
 
   ~ModInfoDialog();
 
@@ -125,34 +126,17 @@ public:
   void restoreState(const Settings& s);
 
 signals:
-  void downloadRequest(const QString &link);
   void modOpen(const QString &modName, int tab);
   void modOpenNext(int tab=-1);
   void modOpenPrev(int tab=-1);
   void originModified(int originID);
 
 private:
-  bool recursiveDelete(const QModelIndex &index);
-  void deleteFile(const QModelIndex &index);
-
   int tabIndex(const QString &tabId);
 
 private slots:
-  void delete_activated();
-
-  void createDirectoryTriggered();
-  void openTriggered();
-  void previewTriggered();
-  void renameTriggered();
-  void deleteTriggered();
-  void hideTriggered();
-  void unhideTriggered();
-
-  void on_openInExplorerButton_clicked();
   void on_closeButton_clicked();
   void on_tabWidget_currentChanged(int index);
-  void on_fileTree_customContextMenuRequested(const QPoint &pos);
-
   void on_nextButton_clicked();
   void on_prevButton_clicked();
 
@@ -160,35 +144,19 @@ private:
   using FileEntry = MOShared::FileEntry;
 
   Ui::ModInfoDialog *ui;
-
   ModInfo::Ptr m_ModInfo;
-
   std::vector<std::unique_ptr<ModInfoDialogTab>> m_tabs;
-
   QString m_RootPath;
-
   OrganizerCore *m_OrganizerCore;
   PluginContainer *m_PluginContainer;
-
-  QTreeView *m_FileTree;
-  QModelIndexList m_FileSelection;
-
-
-  const MOShared::DirectoryEntry *m_Directory;
   MOShared::FilesOrigin *m_Origin;
-
   std::map<int, int> m_RealTabPos;
 
-
   std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs();
-
   void refreshLists();
-  void refreshFiles();
-
   void restoreTabState(const QByteArray &state);
   QByteArray saveTabState() const;
-
-  void changeFiletreeVisibility(bool visible);
+  void onDeleteShortcut();
 };
 
 #endif // MODINFODIALOG_H

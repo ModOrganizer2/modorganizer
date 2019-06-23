@@ -3222,34 +3222,37 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     }
   } else {
     modInfo->saveMeta();
-    ModInfoDialog dialog(modInfo, m_OrganizerCore.directoryStructure(), modInfo->hasFlag(ModInfo::FLAG_FOREIGN), &m_OrganizerCore, &m_PluginContainer, this);
-    connect(&dialog, SIGNAL(downloadRequest(QString)), &m_OrganizerCore, SLOT(downloadRequestedNXM(QString)));
+
+    ModInfoDialog dialog(
+      modInfo, modInfo->hasFlag(ModInfo::FLAG_FOREIGN),
+      &m_OrganizerCore, &m_PluginContainer, this);
+
     connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
 
-	//Open the tab first if we want to use the standard indexes of the tabs.
-	if (tab != -1) {
-		dialog.openTab(tab);
-	}
+	  //Open the tab first if we want to use the standard indexes of the tabs.
+	  if (tab != -1) {
+		  dialog.openTab(tab);
+	  }
 
-  dialog.restoreState(m_OrganizerCore.settings());
-  QSettings &settings = m_OrganizerCore.settings().directInterface();
-  QString key = QString("geometry/%1").arg(dialog.objectName());
-  if (settings.contains(key)) {
-    dialog.restoreGeometry(settings.value(key).toByteArray());
-  }
+    dialog.restoreState(m_OrganizerCore.settings());
+    QSettings &settings = m_OrganizerCore.settings().directInterface();
+    QString key = QString("geometry/%1").arg(dialog.objectName());
+    if (settings.contains(key)) {
+      dialog.restoreGeometry(settings.value(key).toByteArray());
+    }
 
-	//If no tab was specified use the first tab from the left based on the user order.
-	if (tab == -1) {
-		for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
-			if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
-				dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
-				break;
-			}
-		}
-	}
+	  //If no tab was specified use the first tab from the left based on the user order.
+	  if (tab == -1) {
+		  for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
+			  if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
+				  dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
+				  break;
+			  }
+		  }
+	  }
 
     dialog.exec();
     dialog.saveState(m_OrganizerCore.settings());

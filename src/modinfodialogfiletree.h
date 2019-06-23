@@ -12,6 +12,7 @@ public:
 
   void clear() override;
   void update() override;
+  bool deleteRequested() override;
 
 private:
   struct Actions
@@ -28,12 +29,20 @@ private:
   QFileSystemModel* m_fs;
   Actions m_actions;
 
-  QModelIndex singleSelection() const;
   void onCreateDirectory();
   void onOpen();
   void onPreview();
   void onRename();
   void onDelete();
+  void onHide();
+  void onUnhide();
+  void onOpenInExplorer();
+  void onContextMenu(const QPoint &pos);
+
+  QModelIndex singleSelection() const;
+  bool deleteFile(const QModelIndex& index);
+  bool deleteFileRecursive(const QModelIndex& index);
+  void changeVisibility(bool visible);
 };
 
 #endif // MODINFODIALOGFILETREE_H

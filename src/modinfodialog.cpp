@@ -144,12 +144,9 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 }
 
 
-ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directory, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
+ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer, QWidget *parent)
   : TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog), m_ModInfo(modInfo),
-  m_NewFolderAction(nullptr), m_OpenAction(nullptr), m_PreviewAction(nullptr),
-  m_RenameAction(nullptr), m_DeleteAction(nullptr), m_HideAction(nullptr),
-  m_UnhideAction(nullptr), m_Directory(directory), m_Origin(nullptr),
-  m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
+   m_Origin(nullptr), m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer)
 {
   ui->setupUi(this);
 
@@ -173,13 +170,12 @@ ModInfoDialog::ModInfoDialog(ModInfo::Ptr modInfo, const DirectoryEntry *directo
 
   m_RootPath = modInfo->absolutePath();
 
-  //TODO: No easy way to delegate links
-  //ui->descriptionView->page()->acceptNavigationRequest(QWebEnginePage::DelegateAllLinks);
+  auto* sc = new QShortcut(QKeySequence::Delete, this);
+  connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
 
-  new QShortcut(QKeySequence::Delete, this, SLOT(delete_activated()));
-
-  if (directory->originExists(ToWString(modInfo->name()))) {
-    m_Origin = &directory->getOriginByName(ToWString(modInfo->name()));
+  auto* ds = m_OrganizerCore->directoryStructure();
+  if (ds->originExists(ToWString(modInfo->name()))) {
+    m_Origin = &ds->getOriginByName(ToWString(modInfo->name()));
     if (m_Origin->isDisabled()) {
       m_Origin = nullptr;
     }
@@ -335,17 +331,21 @@ QByteArray ModInfoDialog::saveTabState() const
   return result;
 }
 
+void ModInfoDialog::onDeleteShortcut()
+{
+  for (auto& t : m_tabs) {
+    if (t->deleteRequested()) {
+      break;
+    }
+  }
+}
+
 void ModInfoDialog::refreshLists()
 {
   for (auto& tab : m_tabs) {
     tab->update();
   }
 
-  refreshFiles();
-}
-
-void ModInfoDialog::refreshFiles()
-{
   if (m_RootPath.length() > 0) {
     QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
     while (dirIterator.hasNext()) {
