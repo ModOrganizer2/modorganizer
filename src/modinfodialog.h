@@ -32,7 +32,7 @@ class PluginContainer;
 class OrganizerCore;
 class Settings;
 class ModInfoDialogTab;
-
+class MainWindow;
 
 bool canPreviewFile(PluginContainer& pluginContainer, bool isArchive, const QString& filename);
 bool canOpenFile(bool isArchive, const QString& filename);
@@ -71,10 +71,7 @@ public:
   * @param modInfo info structure about the mod to display
   * @param parent parend widget
   **/
-  explicit ModInfoDialog(
-    ModInfo::Ptr modInfo,
-    bool unmanaged, OrganizerCore *organizerCore, PluginContainer *pluginContainer,
-    QWidget *parent = 0);
+  ModInfoDialog(MainWindow* mw, OrganizerCore* core, PluginContainer* plugin);
 
   ~ModInfoDialog();
 
@@ -92,12 +89,9 @@ public:
    **/
   const int getModID() const;
 
-  /**
-   * @brief open the specified tab in the dialog if it's enabled
-   *
-   * @param tab the tab to activate
-   **/
-  void openTab(int tab);
+  void setMod(ModInfo::Ptr mod);
+  void setMod(const QString& name);
+  void setTab(int index);
 
   int exec() override;
 
@@ -105,9 +99,6 @@ public:
   void restoreState(const Settings& s);
 
 signals:
-  void modOpen(const QString &modName, int tab);
-  void modOpenNext(int tab=-1);
-  void modOpenPrev(int tab=-1);
   void originModified(int originID);
 
 private slots:
@@ -117,27 +108,42 @@ private slots:
   void on_prevButton_clicked();
 
 private:
-  Ui::ModInfoDialog *ui;
-  ModInfo::Ptr m_ModInfo;
-  std::vector<std::unique_ptr<ModInfoDialogTab>> m_tabs;
-  QString m_RootPath;
-  OrganizerCore *m_OrganizerCore;
-  PluginContainer *m_PluginContainer;
-  MOShared::FilesOrigin *m_Origin;
-  std::map<int, int> m_RealTabPos;
+  struct TabInfo
+  {
+    std::unique_ptr<ModInfoDialogTab> tab;
+    int realPos;
+    QWidget* widget;
+    QString caption;
+    QIcon icon;
 
-  std::vector<std::unique_ptr<ModInfoDialogTab>> createTabs();
-  void refreshLists();
+    TabInfo(std::unique_ptr<ModInfoDialogTab> tab);
+  };
+
+  std::unique_ptr<Ui::ModInfoDialog> ui;
+  MainWindow* m_mainWindow;
+  ModInfo::Ptr m_mod;
+  OrganizerCore* m_core;
+  PluginContainer* m_plugin;
+  std::vector<TabInfo> m_tabs;
+  int m_initialTab;
+
+  std::vector<TabInfo> createTabs();
   void restoreTabState(const QByteArray &state);
   QByteArray saveTabState() const;
+  void update();
   void onDeleteShortcut();
   int tabIndex(const QString &tabId);
+  MOShared::FilesOrigin* getOrigin();
+  void setTabsVisibility();
+  void updateTabs();
+  void feedFiles();
+  void setTabsColors();
+  void switchToTab(std::size_t index);
 
   template <class T>
   std::unique_ptr<ModInfoDialogTab> createTab(int index)
   {
-    return std::make_unique<T>(
-      *m_OrganizerCore, *m_PluginContainer, this, ui, index);
+    return std::make_unique<T>(*m_core, *m_plugin, this, ui.get(), index);
   }
 };
 

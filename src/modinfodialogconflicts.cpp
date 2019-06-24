@@ -148,7 +148,7 @@ ConflictsTab::ConflictsTab(
 
 void ConflictsTab::update()
 {
-  m_general.update();
+  setHasData(m_general.update());
   m_advanced.update();
 }
 
@@ -156,6 +156,7 @@ void ConflictsTab::clear()
 {
   m_general.clear();
   m_advanced.clear();
+  setHasData(false);
 }
 
 void ConflictsTab::saveState(Settings& s)
@@ -572,7 +573,7 @@ void GeneralConflictsTab::restoreState(const Settings& s)
     .value("mod_info_conflicts_general_overwritten").toByteArray());
 }
 
-void GeneralConflictsTab::update()
+bool GeneralConflictsTab::update()
 {
   clear();
 
@@ -616,6 +617,8 @@ void GeneralConflictsTab::update()
   ui->overwriteCount->display(numOverwrite);
   ui->overwrittenCount->display(numOverwritten);
   ui->noConflictCount->display(numNonConflicting);
+
+  return (numOverwrite > 0 || numOverwritten > 0);
 }
 
 QTreeWidgetItem* GeneralConflictsTab::createOverwriteItem(

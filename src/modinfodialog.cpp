@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "ui_modinfodialog.h"
 #include "plugincontainer.h"
 #include "organizercore.h"
+#include "mainwindow.h"
 #include "modinfodialogtextfiles.h"
 #include "modinfodialogimages.h"
 #include "modinfodialogesps.h"
@@ -33,23 +34,6 @@ using namespace MOBase;
 using namespace MOShared;
 
 const int max_scan_for_context_menu = 50;
-
-
-class ModFileListWidget : public QListWidgetItem {
-  friend bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS);
-public:
-  ModFileListWidget(const QString &text, int sortValue, QListWidget *parent = 0)
-    : QListWidgetItem(text, parent, QListWidgetItem::UserType + 1), m_SortValue(sortValue) {}
-private:
-  int m_SortValue;
-};
-
-
-static bool operator<(const ModFileListWidget &LHS, const ModFileListWidget &RHS)
-{
-  return LHS.m_SortValue < RHS.m_SortValue;
-}
-
 
 bool canPreviewFile(
   PluginContainer& pluginContainer, bool isArchive, const QString& filename)
@@ -111,74 +95,54 @@ FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldNa
 }
 
 
+ModInfoDialog::TabInfo::TabInfo(std::unique_ptr<ModInfoDialogTab> tab)
+  : tab(std::move(tab)), realPos(-1), widget(nullptr)
+{
+}
+
 ModInfoDialog::ModInfoDialog(
-  ModInfo::Ptr modInfo, bool unmanaged, OrganizerCore *organizerCore,
-  PluginContainer *pluginContainer, QWidget *parent) :
-    TutorableDialog("ModInfoDialog", parent), ui(new Ui::ModInfoDialog),
-    m_ModInfo(modInfo), m_RootPath(modInfo->absolutePath()),
-    m_OrganizerCore(organizerCore), m_PluginContainer(pluginContainer),
-    m_Origin(nullptr)
+  MainWindow* mw, OrganizerCore* core, PluginContainer* plugin) :
+    TutorableDialog("ModInfoDialog", mw),
+    ui(new Ui::ModInfoDialog), m_mainWindow(mw),
+    m_core(core), m_plugin(plugin), m_initialTab(-1)
 {
   ui->setupUi(this);
-
-  auto* ds = m_OrganizerCore->directoryStructure();
-  if (ds->originExists(ToWString(m_ModInfo->name()))) {
-    m_Origin = &ds->getOriginByName(ToWString(m_ModInfo->name()));
-    if (m_Origin->isDisabled()) {
-      m_Origin = nullptr;
-    }
-  }
-
-  this->setWindowTitle(m_ModInfo->name());
-  this->setWindowModality(Qt::WindowModal);
 
   auto* sc = new QShortcut(QKeySequence::Delete, this);
   connect(sc, &QShortcut::activated, [&]{ onDeleteShortcut(); });
 
   m_tabs = createTabs();
-  bool tabSelected = false;
 
-  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+  for (int i=0; i<ui->tabWidget->count(); ++i) {
+    if (static_cast<std::size_t>(i) >= m_tabs.size()) {
+      qCritical() << "mod info dialog has more tabs than expected";
+      break;
+    }
+
+    auto& tabInfo = m_tabs[static_cast<std::size_t>(i)];
+    tabInfo.widget = ui->tabWidget->widget(i);
+    tabInfo.caption = ui->tabWidget->tabText(i);
+    tabInfo.icon = ui->tabWidget->tabIcon(i);
+    tabInfo.realPos = i;
+
     connect(
-      m_tabs[i].get(), &ModInfoDialogTab::originModified,
+      tabInfo.tab.get(), &ModInfoDialogTab::originModified,
       [&](int originID){ emit originModified(originID); });
 
     connect(
-      m_tabs[i].get(), &ModInfoDialogTab::modOpen,
+      tabInfo.tab.get(), &ModInfoDialogTab::modOpen,
       [&](const QString& name){
-        close();
-        emit modOpen(name, static_cast<int>(i));
+        setMod(name);
+        update();
       });
-
-    bool enabled = true;
-
-    if (unmanaged) {
-      enabled = m_tabs[i]->canHandleUnmanaged();
-    } else if (m_ModInfo->hasFlag(ModInfo::FLAG_SEPARATOR)) {
-      enabled = m_tabs[i]->canHandleSeparators();
-    }
-
-    ui->tabWidget->setTabEnabled(static_cast<int>(i), enabled);
-
-    if (!tabSelected && enabled) {
-      ui->tabWidget->setCurrentIndex(static_cast<int>(i));
-      tabSelected = true;
-    }
-  }
-
-  for (auto& tab : m_tabs) {
-    tab->setMod(m_ModInfo, m_Origin);
   }
 }
 
-ModInfoDialog::~ModInfoDialog()
-{
-  delete ui;
-}
+ModInfoDialog::~ModInfoDialog() = default;
 
-std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
+std::vector<ModInfoDialog::TabInfo> ModInfoDialog::createTabs()
 {
-  std::vector<std::unique_ptr<ModInfoDialogTab>> v;
+  std::vector<TabInfo> v;
 
   v.push_back(createTab<TextFilesTab>(TAB_TEXTFILES));
   v.push_back(createTab<IniFilesTab>(TAB_INIFILES));
@@ -195,31 +159,206 @@ std::vector<std::unique_ptr<ModInfoDialogTab>> ModInfoDialog::createTabs()
 
 int ModInfoDialog::exec()
 {
-  refreshLists();
+  update();
   return TutorableDialog::exec();
+}
+
+void ModInfoDialog::setMod(ModInfo::Ptr mod)
+{
+  m_mod = mod;
+}
+
+void ModInfoDialog::setMod(const QString& name)
+{
+  unsigned int index = ModInfo::getIndex(name);
+  if (index == UINT_MAX) {
+    qCritical() << "failed to resolve mod name " << name;
+    return;
+  }
+
+  auto mod = ModInfo::getByIndex(index);
+  if (!mod) {
+    qCritical() << "mod by index " << index << " is null";
+    return;
+  }
+
+  setMod(mod);
+}
+
+void ModInfoDialog::setTab(int index)
+{
+  if (!isVisible()) {
+    m_initialTab = index;
+    return;
+  }
+
+  switchToTab(index);
+}
+
+void ModInfoDialog::update()
+{
+  setWindowTitle(m_mod->name());
+  setTabsVisibility();
+  updateTabs();
+  feedFiles();
+  setTabsColors();
+
+  if (m_initialTab >= 0) {
+    switchToTab(m_initialTab);
+    m_initialTab = -1;
+  }
+}
+
+void ModInfoDialog::setTabsVisibility()
+{
+  std::vector<bool> visibility(m_tabs.size());
+  bool changed = false;
+
+  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+    const auto& tabInfo = m_tabs[i];
+
+    bool visible = true;
+
+    if (m_mod->hasFlag(ModInfo::FLAG_FOREIGN)) {
+      visible = tabInfo.tab->canHandleUnmanaged();
+    } else if (m_mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      visible = tabInfo.tab->canHandleSeparators();
+    }
+
+    const auto currentlyVisible = (ui->tabWidget->indexOf(tabInfo.widget) != -1);
+
+    if (visible != currentlyVisible) {
+      changed = true;
+    }
+
+    visibility[i] = visible;
+  }
+
+  if (!changed) {
+    return;
+  }
+
+  // remember selection
+  const int sel = ui->tabWidget->currentIndex();
+
+  // remove all tabs
+  ui->tabWidget->clear();
+
+  // add visible tabs
+  for (std::size_t i=0; i<visibility.size(); ++i) {
+    if (visibility[i]) {
+      ui->tabWidget->addTab(m_tabs[i].widget, m_tabs[i].icon, m_tabs[i].caption);
+
+      if (static_cast<int>(i) == sel) {
+        ui->tabWidget->setCurrentIndex(static_cast<int>(i));
+      }
+    }
+  }
+}
+
+void ModInfoDialog::updateTabs()
+{
+  auto* origin = getOrigin();
+
+  for (auto& tabInfo : m_tabs) {
+    tabInfo.tab->setMod(m_mod, origin);
+    tabInfo.tab->clear();
+    tabInfo.tab->update();
+  }
+}
+
+void ModInfoDialog::feedFiles()
+{
+  const auto rootPath = m_mod->absolutePath();
+
+  if (rootPath.length() > 0) {
+    QDirIterator dirIterator(rootPath, QDir::Files, QDirIterator::Subdirectories);
+    while (dirIterator.hasNext()) {
+      QString fileName = dirIterator.next();
+
+      for (auto& tabInfo : m_tabs) {
+        if (tabInfo.tab->feedFile(rootPath, fileName)) {
+          break;
+        }
+      }
+    }
+  }
+}
+
+void ModInfoDialog::setTabsColors()
+{
+  for (const auto& tabInfo : m_tabs) {
+    const auto c = tabInfo.tab->hasData() ?
+      QColor::Invalid :
+      ui->tabWidget->palette().color(QPalette::Disabled, QPalette::WindowText);
+
+    ui->tabWidget->tabBar()->setTabTextColor(tabInfo.realPos, c);
+  }
+}
+
+void ModInfoDialog::switchToTab(std::size_t index)
+{
+  if (index >= m_tabs.size()) {
+    qCritical() << "tab index " << index << "out of range";
+    return;
+  }
+
+  if (ui->tabWidget->indexOf(m_tabs[index].widget) == -1) {
+    qCritical() << "can't switch to tab " << index << ", not available";
+    return;
+  }
+
+  ui->tabWidget->setCurrentIndex(m_tabs[index].realPos);
+}
+
+MOShared::FilesOrigin* ModInfoDialog::getOrigin()
+{
+  MOShared::FilesOrigin* origin = nullptr;
+
+  auto* ds = m_core->directoryStructure();
+  if (ds->originExists(ToWString(m_mod->name()))) {
+    auto* origin = &ds->getOriginByName(ToWString(m_mod->name()));
+    if (!origin->isDisabled()) {
+      return origin;
+    }
+  }
+
+  return nullptr;
 }
 
 void ModInfoDialog::saveState(Settings& s) const
 {
-  s.directInterface().setValue("mod_info_tabs", saveTabState());
+  //s.directInterface().setValue("mod_info_tabs", saveTabState());
 
-  for (const auto& tab : m_tabs) {
-    tab->saveState(s);
+  for (const auto& tabInfo : m_tabs) {
+    tabInfo.tab->saveState(s);
   }
 }
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
-  restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
+  //restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
 
-  for (const auto& tab : m_tabs) {
-    tab->restoreState(s);
+  for (const auto& tabInfo : m_tabs) {
+    tabInfo.tab->restoreState(s);
   }
+}
+
+QByteArray ModInfoDialog::saveTabState() const
+{
+  QByteArray result;
+  /*QDataStream stream(&result, QIODevice::WriteOnly);
+  stream << ui->tabWidget->count();
+  for (int i = 0; i < ui->tabWidget->count(); ++i) {
+    stream << ui->tabWidget->widget(i)->objectName();
+  }*/
+
+  return result;
 }
 
 void ModInfoDialog::restoreTabState(const QByteArray &state)
 {
-  QDataStream stream(state);
+  /*QDataStream stream(state);
   int count = 0;
   stream >> count;
 
@@ -232,9 +371,9 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
     tabIds.append(tabId);
     int oldPos = tabIndex(tabId);
     if (oldPos != -1) {
-      m_RealTabPos[newPos] = oldPos;
+      m_realTabPos[newPos] = oldPos;
     } else {
-      m_RealTabPos[newPos] = newPos;
+      m_realTabPos[newPos] = newPos;
     }
   }
 
@@ -246,19 +385,7 @@ void ModInfoDialog::restoreTabState(const QByteArray &state)
     int oldPos = tabIndex(tabId);
     tabBar->moveTab(oldPos, newPos);
   }
-  ui->tabWidget->blockSignals(false);
-}
-
-QByteArray ModInfoDialog::saveTabState() const
-{
-  QByteArray result;
-  QDataStream stream(&result, QIODevice::WriteOnly);
-  stream << ui->tabWidget->count();
-  for (int i = 0; i < ui->tabWidget->count(); ++i) {
-    stream << ui->tabWidget->widget(i)->objectName();
-  }
-
-  return result;
+  ui->tabWidget->blockSignals(false);*/
 }
 
 int ModInfoDialog::tabIndex(const QString& tabId)
@@ -273,49 +400,22 @@ int ModInfoDialog::tabIndex(const QString& tabId)
 
 void ModInfoDialog::onDeleteShortcut()
 {
-  for (auto& t : m_tabs) {
-    if (t->deleteRequested()) {
+  for (auto& tabInfo : m_tabs) {
+    if (tabInfo.tab->deleteRequested()) {
       break;
-    }
-  }
-}
-
-void ModInfoDialog::refreshLists()
-{
-  for (auto& tab : m_tabs) {
-    tab->update();
-  }
-
-  if (m_RootPath.length() > 0) {
-    QDirIterator dirIterator(m_RootPath, QDir::Files, QDirIterator::Subdirectories);
-    while (dirIterator.hasNext()) {
-      QString fileName = dirIterator.next();
-
-      for (auto& tab : m_tabs) {
-        if (tab->feedFile(m_RootPath, fileName)) {
-          break;
-        }
-      }
     }
   }
 }
 
 void ModInfoDialog::on_closeButton_clicked()
 {
-  for (auto& tab : m_tabs) {
-    if (!tab->canClose()) {
+  for (auto& tabInfo : m_tabs) {
+    if (!tabInfo.tab->canClose()) {
       return;
     }
   }
 
   close();
-}
-
-void ModInfoDialog::openTab(int tab)
-{
-  if (ui->tabWidget->isTabEnabled(tab)) {
-    ui->tabWidget->setCurrentIndex(tab);
-  }
 }
 
 void ModInfoDialog::on_tabWidget_currentChanged(int index)
@@ -324,18 +424,22 @@ void ModInfoDialog::on_tabWidget_currentChanged(int index)
 
 void ModInfoDialog::on_nextButton_clicked()
 {
-	int currentTab = ui->tabWidget->currentIndex();
-	int tab = m_RealTabPos[currentTab];
+  auto mod = m_mainWindow->nextModInList();
+  if (mod == m_mod) {
+    return;
+  }
 
-    emit modOpenNext(tab);
-    this->accept();
+  setMod(mod);
+  update();
 }
 
 void ModInfoDialog::on_prevButton_clicked()
 {
-	int currentTab = ui->tabWidget->currentIndex();
-	int tab = m_RealTabPos[currentTab];
+  auto mod = m_mainWindow->previousModInList();
+  if (mod == m_mod) {
+    return;
+  }
 
-    emit modOpenPrev(tab);
-    this->accept();
+  setMod(mod);
+  update();
 }

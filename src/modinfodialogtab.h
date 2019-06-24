@@ -38,6 +38,7 @@ public:
   MOShared::FilesOrigin* origin() const;
 
   int tabIndex() const;
+  bool hasData() const;
 
 signals:
   void originModified(int originID);
@@ -57,6 +58,7 @@ protected:
 
   void emitOriginModified();
   void emitModOpen(QString name);
+  void setHasData(bool b);
 
 private:
   OrganizerCore& m_core;
@@ -65,6 +67,7 @@ private:
   ModInfo::Ptr m_mod;
   MOShared::FilesOrigin* m_origin;
   int m_tabIndex;
+  bool m_hasData;
 };
 
 

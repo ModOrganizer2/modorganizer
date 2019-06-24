@@ -48,6 +48,7 @@ void NexusTab::clear()
   ui->version->clear();
   ui->browser->setPage(new NexusTabWebpage(ui->browser));
   ui->url->clear();
+  setHasData(false);
 }
 
 void NexusTab::update()
@@ -88,6 +89,7 @@ void NexusTab::update()
     (mod()->endorsedState() == ModInfo::ENDORSED_NEVER));
 
   updateWebpage();
+  setHasData(mod()->getNexusID() >= 0);
 }
 
 void NexusTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)

@@ -22,6 +22,7 @@ void CategoriesTab::clear()
 {
   ui->categories->clear();
   ui->primaryCategories->clear();
+  setHasData(false);
 }
 
 void CategoriesTab::update()
@@ -33,6 +34,7 @@ void CategoriesTab::update()
     ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
+  setHasData(ui->primaryCategories->count() > 0);
 }
 
 bool CategoriesTab::canHandleSeparators() const

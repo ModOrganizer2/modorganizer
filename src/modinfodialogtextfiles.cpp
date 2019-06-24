@@ -42,6 +42,7 @@ void GenericFilesTab::clear()
 {
   m_list->clear();
   select(nullptr);
+  setHasData(false);
 }
 
 bool GenericFilesTab::canClose()
@@ -76,6 +77,7 @@ bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
   for (const auto* e : extensions) {
     if (wantsFile(rootPath, fullPath)) {
       m_list->addItem(new FileListItem(rootPath, fullPath));
+      setHasData(true);
       return true;
     }
   }

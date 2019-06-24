@@ -160,6 +160,9 @@ public:
 
   virtual MOBase::DelayedFileWriterBase &archivesWriter() override { return m_ArchiveListWriter; }
 
+  ModInfo::Ptr nextModInList();
+  ModInfo::Ptr previousModInList();
+
 public slots:
 
   void displayColumnSelection(const QPoint &pos);
@@ -549,8 +552,6 @@ private slots:
   void deselectFilters();
 
   void displayModInformation(const QString &modName, int tab);
-  void modOpenNext(int tab=-1);
-  void modOpenPrev(int tab=-1);
 
   void modRenamed(const QString &oldName, const QString &newName);
   void modRemoved(const QString &fileName);

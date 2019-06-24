@@ -49,7 +49,9 @@ FileTreeTab::FileTreeTab(
 void FileTreeTab::clear()
 {
   m_fs->setRootPath({});
-  //ui->filetree->
+
+  // always has data; even if the mod is empty, it still has a meta.ini
+  setHasData(true);
 }
 
 void FileTreeTab::update()

@@ -44,7 +44,7 @@ public:
 private:
   ScalableImage* m_image;
 
-  void add(const QString& fullPath);
+  bool add(const QString& fullPath);
   void onClicked(const QImage& image);
 };
 

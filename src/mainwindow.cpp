@@ -3223,18 +3223,14 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
   } else {
     modInfo->saveMeta();
 
-    ModInfoDialog dialog(
-      modInfo, modInfo->hasFlag(ModInfo::FLAG_FOREIGN),
-      &m_OrganizerCore, &m_PluginContainer, this);
-
-    connect(&dialog, SIGNAL(modOpen(QString, int)), this, SLOT(displayModInformation(QString, int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenNext(int)), this, SLOT(modOpenNext(int)), Qt::QueuedConnection);
-    connect(&dialog, SIGNAL(modOpenPrev(int)), this, SLOT(modOpenPrev(int)), Qt::QueuedConnection);
+    ModInfoDialog dialog(this, &m_OrganizerCore, &m_PluginContainer);
     connect(&dialog, SIGNAL(originModified(int)), this, SLOT(originModified(int)));
+
+    dialog.setMod(modInfo);
 
 	  //Open the tab first if we want to use the standard indexes of the tabs.
 	  if (tab != -1) {
-		  dialog.openTab(tab);
+		  dialog.setTab(tab);
 	  }
 
     dialog.restoreState(m_OrganizerCore.settings());
@@ -3243,16 +3239,6 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
     if (settings.contains(key)) {
       dialog.restoreGeometry(settings.value(key).toByteArray());
     }
-
-	  //If no tab was specified use the first tab from the left based on the user order.
-	  if (tab == -1) {
-		  for (int i = 0; i < dialog.findChild<QTabWidget*>("tabWidget")->count(); ++i) {
-			  if (dialog.findChild<QTabWidget*>("tabWidget")->isTabEnabled(i)) {
-				  dialog.findChild<QTabWidget*>("tabWidget")->setCurrentIndex(i);
-				  break;
-			  }
-		  }
-	  }
 
     dialog.exec();
     dialog.saveState(m_OrganizerCore.settings());
@@ -3296,43 +3282,71 @@ void MainWindow::setWindowEnabled(bool enabled)
 }
 
 
-void MainWindow::modOpenNext(int tab)
+ModInfo::Ptr MainWindow::nextModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
+  auto index = start;
+
+  for (;;) {
+    index = m_ModListSortProxy->index((index.row() + 1) % m_ModListSortProxy->rowCount(), 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
     // skip overwrite and backups and separators
-    modOpenNext(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
+
+  return {};
 }
 
-void MainWindow::modOpenPrev(int tab)
+ModInfo::Ptr MainWindow::previousModInList()
 {
-  QModelIndex index = m_ModListSortProxy->mapFromSource(m_OrganizerCore.modList()->index(m_ContextRow, 0));
-  int row = index.row() - 1;
-  if (row == -1) {
-    row = m_ModListSortProxy->rowCount() - 1;
+  const QModelIndex start = m_ModListSortProxy->mapFromSource(
+    m_OrganizerCore.modList()->index(m_ContextRow, 0));
+
+  auto index = start;
+
+  for (;;) {
+    int row = index.row() - 1;
+    if (row == -1) {
+      row = m_ModListSortProxy->rowCount() - 1;
+    }
+
+    index = m_ModListSortProxy->index(row, 0);
+    m_ContextRow = m_ModListSortProxy->mapToSource(index).row();
+
+    if (index == start || !index.isValid()) {
+      // wrapped around, give up
+      break;
+    }
+
+    // skip overwrite and backups and separators
+    ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
+
+    if (mod->hasFlag(ModInfo::FLAG_OVERWRITE) ||
+        mod->hasFlag(ModInfo::FLAG_BACKUP) ||
+        mod->hasFlag(ModInfo::FLAG_SEPARATOR)) {
+      continue;
+    }
+
+    return mod;
   }
 
-  m_ContextRow = m_ModListSortProxy->mapToSource(m_ModListSortProxy->index(row, 0)).row();
-  ModInfo::Ptr mod = ModInfo::getByIndex(m_ContextRow);
-  std::vector<ModInfo::EFlag> flags = mod->getFlags();
-  if ((std::find(flags.begin(), flags.end(), ModInfo::FLAG_OVERWRITE) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_BACKUP) != flags.end()) ||
-      (std::find(flags.begin(), flags.end(), ModInfo::FLAG_SEPARATOR) != flags.end())) {
-    // skip overwrite and backups and separators
-    modOpenPrev(tab);
-  } else {
-    displayModInformation(m_ContextRow,tab);
-  }
+  return {};
 }
 
 void MainWindow::displayModInformation(const QString &modName, int tab)

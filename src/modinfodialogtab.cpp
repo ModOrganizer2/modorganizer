@@ -7,7 +7,7 @@ ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui, int index) :
     ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent),
-    m_origin(nullptr), m_tabIndex(index)
+    m_origin(nullptr), m_tabIndex(index), m_hasData(false)
 {
 }
 
@@ -74,6 +74,11 @@ int ModInfoDialogTab::tabIndex() const
   return m_tabIndex;
 }
 
+bool ModInfoDialogTab::hasData() const
+{
+  return m_hasData;
+}
+
 OrganizerCore& ModInfoDialogTab::core()
 {
   return m_core;
@@ -101,6 +106,11 @@ void ModInfoDialogTab::emitModOpen(QString name)
   emit modOpen(name);
 }
 
+void ModInfoDialogTab::setHasData(bool b)
+{
+  m_hasData = b;
+}
+
 
 NotesTab::NotesTab(
   OrganizerCore& oc, PluginContainer& plugin,
@@ -115,12 +125,18 @@ void NotesTab::clear()
 {
   ui->commentsEdit->clear();
   ui->notesEdit->clear();
+  setHasData(false);
 }
 
 void NotesTab::update()
 {
-  ui->commentsEdit->setText(mod()->comments());
-  ui->notesEdit->setText(mod()->notes());
+  const auto comments = mod()->comments();
+  const auto notes = mod()->notes();
+
+  ui->commentsEdit->setText(comments);
+  ui->notesEdit->setText(notes);
+
+  setHasData(!comments.isEmpty() || !notes.isEmpty());
 }
 
 bool NotesTab::canHandleSeparators() const

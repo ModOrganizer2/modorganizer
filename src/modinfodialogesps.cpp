@@ -138,6 +138,7 @@ void ESPsTab::clear()
 {
   ui->inactiveESPList->clear();
   ui->activeESPList->clear();
+  setHasData(false);
 }
 
 bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
@@ -158,6 +159,7 @@ bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
         ui->inactiveESPList->addItem(item);
       }
 
+      setHasData(true);
       return true;
     }
   }

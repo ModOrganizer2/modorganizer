@@ -105,6 +105,7 @@ void ImagesTab::clear()
   }
 
   static_cast<QVBoxLayout*>(ui->imagesThumbnails->layout())->addStretch(1);
+  setHasData(false);
 }
 
 bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
@@ -115,7 +116,10 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
 
   for (const auto* e : extensions) {
     if (fullPath.endsWith(e, Qt::CaseInsensitive)) {
-      add(fullPath);
+      if (add(fullPath)) {
+        setHasData(true);
+      }
+
       return true;
     }
   }
@@ -123,13 +127,13 @@ bool ImagesTab::feedFile(const QString& rootPath, const QString& fullPath)
   return false;
 }
 
-void ImagesTab::add(const QString& fullPath)
+bool ImagesTab::add(const QString& fullPath)
 {
   QImage image = QImage(fullPath);
 
   if (image.isNull()) {
     qWarning() << "ImagesTab: '" << fullPath << "' is not a valid image";
-    return;
+    return false;
   }
 
   auto* thumbnail = new ScalableImage(std::move(image));
@@ -140,6 +144,8 @@ void ImagesTab::add(const QString& fullPath)
 
   static_cast<QVBoxLayout*>(ui->imagesThumbnails->layout())->insertWidget(
     ui->imagesThumbnails->layout()->count() - 1, thumbnail);
+
+  return true;
 }
 
 void ImagesTab::onClicked(const QImage& original)

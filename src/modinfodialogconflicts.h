@@ -22,7 +22,7 @@ public:
   void saveState(Settings& s);
   void restoreState(const Settings& s);
 
-  void update();
+  bool update();
 
 signals:
   void modOpen(QString name);
@@ -100,7 +100,6 @@ public:
     QWidget* parent, Ui::ModInfoDialog* ui, int index);
 
   void update() override;
-
   void clear() override;
   void saveState(Settings& s) override;
   void restoreState(const Settings& s) override;
