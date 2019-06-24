@@ -37,7 +37,7 @@ public:
   ModInfo::Ptr mod() const;
   MOShared::FilesOrigin* origin() const;
 
-  int tabIndex() const;
+  int tabID() const;
   bool hasData() const;
 
 signals:
@@ -49,7 +49,7 @@ protected:
 
   ModInfoDialogTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+    QWidget* parent, Ui::ModInfoDialog* ui, int id);
 
   OrganizerCore& core();
   PluginContainer& plugin();
@@ -66,7 +66,7 @@ private:
   QWidget* m_parent;
   ModInfo::Ptr m_mod;
   MOShared::FilesOrigin* m_origin;
-  int m_tabIndex;
+  int m_tabID;
   bool m_hasData;
 };
 

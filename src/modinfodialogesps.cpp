@@ -124,8 +124,8 @@ private:
 
 ESPsTab::ESPsTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index)
-    : ModInfoDialogTab(oc, plugin, parent, ui, index)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id)
+    : ModInfoDialogTab(oc, plugin, parent, ui, id)
 {
   QObject::connect(
     ui->activateESP, &QToolButton::clicked, [&]{ onActivate(); });

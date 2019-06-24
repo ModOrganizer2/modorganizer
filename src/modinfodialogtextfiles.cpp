@@ -23,9 +23,9 @@ private:
 
 GenericFilesTab::GenericFilesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index,
+  QWidget* parent, Ui::ModInfoDialog* ui, int id,
   QListWidget* list, QSplitter* sp, TextEditor* e)
-    : ModInfoDialogTab(oc, plugin, parent, ui, index), m_list(list), m_editor(e)
+    : ModInfoDialogTab(oc, plugin, parent, ui, id), m_list(list), m_editor(e)
 {
   m_editor->setupToolbar();
 
@@ -115,9 +115,9 @@ void GenericFilesTab::select(FileListItem* item)
 
 TextFilesTab::TextFilesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id)
     : GenericFilesTab(
-        oc, plugin, parent, ui, index,
+        oc, plugin, parent, ui, id,
         ui->textFileList, ui->tabTextSplitter, ui->textFileEditor)
 {
 }
@@ -139,9 +139,9 @@ bool TextFilesTab::wantsFile(const QString& rootPath, const QString& fullPath) c
 
 IniFilesTab::IniFilesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id)
     : GenericFilesTab(
-        oc, plugin, parent, ui, index,
+        oc, plugin, parent, ui, id,
         ui->iniFileList, ui->tabIniSplitter, ui->iniFileEditor)
 {
 }

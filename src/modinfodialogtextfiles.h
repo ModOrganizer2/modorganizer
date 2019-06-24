@@ -23,7 +23,7 @@ protected:
 
   GenericFilesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index,
+    QWidget* parent, Ui::ModInfoDialog* ui, int id,
     QListWidget* list, QSplitter* splitter, TextEditor* editor);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
@@ -39,7 +39,7 @@ class TextFilesTab : public GenericFilesTab
 public:
   TextFilesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+    QWidget* parent, Ui::ModInfoDialog* ui, int id);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;
@@ -51,7 +51,7 @@ class IniFilesTab : public GenericFilesTab
 public:
   IniFilesTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+    QWidget* parent, Ui::ModInfoDialog* ui, int id);
 
 protected:
   bool wantsFile(const QString& rootPath, const QString& fullPath) const override;

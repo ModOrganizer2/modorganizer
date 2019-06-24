@@ -133,8 +133,8 @@ public:
 
 ConflictsTab::ConflictsTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index) :
-    ModInfoDialogTab(oc, plugin, parent, ui, index),
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_general(this, ui, oc), m_advanced(this, ui, oc)
 {
   connect(

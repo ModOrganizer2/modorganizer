@@ -97,7 +97,7 @@ class ConflictsTab : public ModInfoDialogTab
 public:
   ConflictsTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+    QWidget* parent, Ui::ModInfoDialog* ui, int id);
 
   void update() override;
   void clear() override;

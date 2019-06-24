@@ -8,7 +8,7 @@ class FileTreeTab : public ModInfoDialogTab
 public:
   FileTreeTab(
     OrganizerCore& oc, PluginContainer& plugin,
-    QWidget* parent, Ui::ModInfoDialog* ui, int index);
+    QWidget* parent, Ui::ModInfoDialog* ui, int id);
 
   void clear() override;
   void update() override;

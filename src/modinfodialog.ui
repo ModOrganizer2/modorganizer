@@ -1088,7 +1088,7 @@ p, li { white-space: pre-wrap; }
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabFiles1">
+     <widget class="QWidget" name="tabFiles">
       <attribute name="title">
        <string>Filetree</string>
       </attribute>

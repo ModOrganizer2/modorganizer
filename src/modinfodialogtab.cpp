@@ -5,9 +5,9 @@
 
 ModInfoDialogTab::ModInfoDialogTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index) :
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
     ui(ui), m_core(oc), m_plugin(plugin), m_parent(parent),
-    m_origin(nullptr), m_tabIndex(index), m_hasData(false)
+    m_origin(nullptr), m_tabID(id), m_hasData(false)
 {
 }
 
@@ -69,9 +69,9 @@ MOShared::FilesOrigin* ModInfoDialogTab::origin() const
   return m_origin;
 }
 
-int ModInfoDialogTab::tabIndex() const
+int ModInfoDialogTab::tabID() const
 {
-  return m_tabIndex;
+  return m_tabID;
 }
 
 bool ModInfoDialogTab::hasData() const

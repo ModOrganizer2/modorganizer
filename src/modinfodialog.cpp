@@ -104,7 +104,7 @@ ModInfoDialog::ModInfoDialog(
   MainWindow* mw, OrganizerCore* core, PluginContainer* plugin) :
     TutorableDialog("ModInfoDialog", mw),
     ui(new Ui::ModInfoDialog), m_mainWindow(mw),
-    m_core(core), m_plugin(plugin), m_initialTab(-1)
+    m_core(core), m_plugin(plugin), m_initialTab(ETabs(-1))
 {
   ui->setupUi(this);
 
@@ -123,7 +123,6 @@ ModInfoDialog::ModInfoDialog(
     tabInfo.widget = ui->tabWidget->widget(i);
     tabInfo.caption = ui->tabWidget->tabText(i);
     tabInfo.icon = ui->tabWidget->tabIcon(i);
-    tabInfo.realPos = i;
 
     connect(
       tabInfo.tab.get(), &ModInfoDialogTab::originModified,
@@ -159,7 +158,16 @@ std::vector<ModInfoDialog::TabInfo> ModInfoDialog::createTabs()
 
 int ModInfoDialog::exec()
 {
-  update();
+  const auto selectFirst = (m_initialTab == -1);
+
+  update(true);
+
+  if (selectFirst) {
+    if (ui->tabWidget->count() > 0) {
+      ui->tabWidget->setCurrentIndex(0);
+    }
+  }
+
   return TutorableDialog::exec();
 }
 
@@ -185,33 +193,34 @@ void ModInfoDialog::setMod(const QString& name)
   setMod(mod);
 }
 
-void ModInfoDialog::setTab(int index)
+void ModInfoDialog::setTab(ETabs id)
 {
   if (!isVisible()) {
-    m_initialTab = index;
+    m_initialTab = id;
     return;
   }
 
-  switchToTab(index);
+  switchToTab(id);
 }
 
-void ModInfoDialog::update()
+void ModInfoDialog::update(bool firstTime)
 {
   setWindowTitle(m_mod->name());
-  setTabsVisibility();
+  setTabsVisibility(firstTime);
   updateTabs();
   feedFiles();
   setTabsColors();
 
   if (m_initialTab >= 0) {
     switchToTab(m_initialTab);
-    m_initialTab = -1;
+    m_initialTab = ETabs(-1);
   }
 }
 
-void ModInfoDialog::setTabsVisibility()
+void ModInfoDialog::setTabsVisibility(bool firstTime)
 {
   std::vector<bool> visibility(m_tabs.size());
+
   bool changed = false;
 
   for (std::size_t i=0; i<m_tabs.size(); ++i) {
@@ -234,26 +243,22 @@ void ModInfoDialog::setTabsVisibility()
     visibility[i] = visible;
   }
 
-  if (!changed) {
+  if (!firstTime && !changed) {
     return;
   }
 
   // remember selection
-  const int sel = ui->tabWidget->currentIndex();
+  const int selIndex = ui->tabWidget->currentIndex();
+  ETabs sel = ETabs(-1);
 
-  // remove all tabs
-  ui->tabWidget->clear();
-
-  // add visible tabs
-  for (std::size_t i=0; i<visibility.size(); ++i) {
-    if (visibility[i]) {
-      ui->tabWidget->addTab(m_tabs[i].widget, m_tabs[i].icon, m_tabs[i].caption);
-
-      if (static_cast<int>(i) == sel) {
-        ui->tabWidget->setCurrentIndex(static_cast<int>(i));
-      }
+  for (const auto& tabInfo : m_tabs) {
+    if (tabInfo.realPos == selIndex) {
+      sel = ETabs(tabInfo.tab->tabID());
+      break;
     }
   }
+
+  reAddTabs(visibility, sel);
 }
 
 void ModInfoDialog::updateTabs()
@@ -296,19 +301,16 @@ void ModInfoDialog::setTabsColors()
   }
 }
 
-void ModInfoDialog::switchToTab(std::size_t index)
+void ModInfoDialog::switchToTab(ETabs id)
 {
-  if (index >= m_tabs.size()) {
-    qCritical() << "tab index " << index << "out of range";
-    return;
+  for (const auto& tabInfo : m_tabs) {
+    if (tabInfo.tab->tabID() == id) {
+      ui->tabWidget->setCurrentIndex(tabInfo.realPos);
+      return;
+    }
   }
 
-  if (ui->tabWidget->indexOf(m_tabs[index].widget) == -1) {
-    qCritical() << "can't switch to tab " << index << ", not available";
-    return;
-  }
-
-  ui->tabWidget->setCurrentIndex(m_tabs[index].realPos);
+  qDebug() << "can't switch to tab " << id << ", not available";
 }
 
 MOShared::FilesOrigin* ModInfoDialog::getOrigin()
@@ -328,7 +330,10 @@ MOShared::FilesOrigin* ModInfoDialog::getOrigin()
 
 void ModInfoDialog::saveState(Settings& s) const
 {
-  //s.directInterface().setValue("mod_info_tabs", saveTabState());
+  const auto tabState = saveTabState();
+  if (!tabState.isEmpty()) {
+    s.directInterface().setValue("mod_info_tabs", tabState);
+  }
 
   for (const auto& tabInfo : m_tabs) {
     tabInfo.tab->saveState(s);
@@ -337,55 +342,120 @@ void ModInfoDialog::saveState(Settings& s) const
 
 void ModInfoDialog::restoreState(const Settings& s)
 {
-  //restoreTabState(s.directInterface().value("mod_info_tabs").toByteArray());
-
   for (const auto& tabInfo : m_tabs) {
     tabInfo.tab->restoreState(s);
   }
 }
 
-QByteArray ModInfoDialog::saveTabState() const
+QString ModInfoDialog::saveTabState() const
 {
-  QByteArray result;
-  /*QDataStream stream(&result, QIODevice::WriteOnly);
-  stream << ui->tabWidget->count();
-  for (int i = 0; i < ui->tabWidget->count(); ++i) {
-    stream << ui->tabWidget->widget(i)->objectName();
-  }*/
+  if (static_cast<int>(m_tabs.size()) != ui->tabWidget->count()) {
+    // only save tab state when all tabs are visible
+    return {};
+  }
 
-  return result;
+  QString result;
+  QTextStream stream(&result);
+
+  for (int i=0; i<ui->tabWidget->count(); ++i) {
+    stream << ui->tabWidget->widget(i)->objectName() << " ";
+  }
+
+  return result.trimmed();
 }
 
-void ModInfoDialog::restoreTabState(const QByteArray &state)
+std::vector<QString> ModInfoDialog::getOrderedTabNames() const
 {
-  /*QDataStream stream(state);
-  int count = 0;
-  stream >> count;
+  const auto value = Settings::instance()
+    .directInterface().value("mod_info_tabs");
 
-  QStringList tabIds;
+  std::vector<QString> v;
 
-  // first, only determine the new mapping
-  for (int newPos = 0; newPos < count; ++newPos) {
-    QString tabId;
-    stream >> tabId;
-    tabIds.append(tabId);
-    int oldPos = tabIndex(tabId);
-    if (oldPos != -1) {
-      m_realTabPos[newPos] = oldPos;
-    } else {
-      m_realTabPos[newPos] = newPos;
+  if (value.type() == QVariant::ByteArray) {
+    // old byte array
+    QDataStream stream(value.toByteArray());
+
+    int count = 0;
+    stream >> count;
+
+    for (int i=0; i<count; ++i) {
+      QString s;
+      stream >> s;
+      v.emplace_back(std::move(s));
+    }
+  } else {
+    // string list
+    QString string = value.toString();
+    QTextStream stream(&string);
+
+    while (!stream.atEnd()) {
+      QString s;
+      stream >> s;
+      v.emplace_back(std::move(s));
     }
   }
 
-  // then actually move the tabs
-  QTabBar *tabBar = ui->tabWidget->tabBar();
-  ui->tabWidget->blockSignals(true);
-  for (int newPos = 0; newPos < count; ++newPos) {
-    QString tabId = tabIds.at(newPos);
-    int oldPos = tabIndex(tabId);
-    tabBar->moveTab(oldPos, newPos);
+  return v;
+}
+
+void ModInfoDialog::reAddTabs(const std::vector<bool>& visibility, ETabs sel)
+{
+  Q_ASSERT(visibility.size() == m_tabs.size());
+
+  // ordered tab names from settings
+  const auto orderedNames = getOrderedTabNames();
+
+  bool canSort = true;
+
+  // gathering visible tabs
+  std::vector<TabInfo*> visibleTabs;
+  for (std::size_t i=0; i<m_tabs.size(); ++i) {
+    if (visibility[i]) {
+      visibleTabs.push_back(&m_tabs[i]);
+
+      if (canSort) {
+        const auto objectName = m_tabs[i].widget->objectName();
+        auto itor = std::find(orderedNames.begin(), orderedNames.end(), objectName);
+        if (itor == orderedNames.end()) {
+          qCritical() << "can't sort tabs, '" << objectName << "' not found";
+          canSort = false;
+        }
+      }
+    }
   }
-  ui->tabWidget->blockSignals(false);*/
+
+  // sorting tabs
+  if (canSort) {
+    std::sort(visibleTabs.begin(), visibleTabs.end(), [&](auto&& a, auto&& b){
+      auto aItor = std::find(orderedNames.begin(), orderedNames.end(), a->widget->objectName());
+      auto bItor = std::find(orderedNames.begin(), orderedNames.end(), b->widget->objectName());
+
+      // this was checked above
+      Q_ASSERT(aItor != orderedNames.end() && bItor != orderedNames.end());
+
+      return (aItor < bItor);
+    });
+  }
+
+
+  ui->tabWidget->clear();
+
+  // reset real positions
+  for (auto& tabInfo : m_tabs) {
+    tabInfo.realPos = -1;
+  }
+
+  // add visible tabs
+  for (std::size_t i=0; i<visibleTabs.size(); ++i) {
+    auto& tabInfo = *visibleTabs[i];
+
+    tabInfo.realPos = static_cast<int>(i);
+    ui->tabWidget->addTab(tabInfo.widget, tabInfo.icon, tabInfo.caption);
+
+    if (tabInfo.tab->tabID() == sel) {
+      ui->tabWidget->setCurrentIndex(static_cast<int>(i));
+    }
+  }
 }
 
 int ModInfoDialog::tabIndex(const QString& tabId)

@@ -15,8 +15,8 @@ const int max_scan_for_context_menu = 50;
 
 FileTreeTab::FileTreeTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index)
-    : ModInfoDialogTab(oc, plugin, parent, ui, index), m_fs(nullptr)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id)
+    : ModInfoDialogTab(oc, plugin, parent, ui, id), m_fs(nullptr)
 {
   m_fs = new QFileSystemModel(this);
   m_fs->setReadOnly(false);

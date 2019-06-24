@@ -64,7 +64,6 @@ public:
     TAB_FILETREE
   };
 
-public:
  /**
   * @brief constructor
   *
@@ -91,7 +90,7 @@ public:
 
   void setMod(ModInfo::Ptr mod);
   void setMod(const QString& name);
-  void setTab(int index);
+  void setTab(ETabs id);
 
   int exec() override;
 
@@ -125,20 +124,22 @@ private:
   OrganizerCore* m_core;
   PluginContainer* m_plugin;
   std::vector<TabInfo> m_tabs;
-  int m_initialTab;
+  ETabs m_initialTab;
 
   std::vector<TabInfo> createTabs();
-  void restoreTabState(const QByteArray &state);
-  QByteArray saveTabState() const;
-  void update();
+  void restoreTabState(const QString& state);
+  QString saveTabState() const;
+  void update(bool firstTime=false);
   void onDeleteShortcut();
   int tabIndex(const QString &tabId);
   MOShared::FilesOrigin* getOrigin();
-  void setTabsVisibility();
+  void setTabsVisibility(bool firstTime);
   void updateTabs();
   void feedFiles();
   void setTabsColors();
-  void switchToTab(std::size_t index);
+  void switchToTab(ETabs id);
+  void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
+  std::vector<QString> getOrderedTabNames() const;
 
   template <class T>
   std::unique_ptr<ModInfoDialogTab> createTab(int index)

@@ -82,8 +82,8 @@ void ScalableImage::mousePressEvent(QMouseEvent* e)
 
 ImagesTab::ImagesTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int index) :
-    ModInfoDialogTab(oc, plugin, parent, ui, index),
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id),
     m_image(new ScalableImage)
 {
   ui->imagesImage->layout()->addWidget(m_image);

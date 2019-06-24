@@ -3230,7 +3230,7 @@ void MainWindow::displayModInformation(ModInfo::Ptr modInfo, unsigned int index,
 
 	  //Open the tab first if we want to use the standard indexes of the tabs.
 	  if (tab != -1) {
-		  dialog.setTab(tab);
+		  dialog.setTab(ModInfoDialog::ETabs(tab));
 	  }
 
     dialog.restoreState(m_OrganizerCore.settings());
