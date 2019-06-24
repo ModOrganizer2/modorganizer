@@ -481,8 +481,8 @@ std::vector<QAction*> ConflictsTab::createGotoActions(
 
 
 GeneralConflictsTab::GeneralConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc)
-    : m_tab(tab), ui(ui), m_core(oc)
+  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc)
+    : m_tab(tab), ui(pui), m_core(oc)
 {
   m_expanders.overwrite.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
@@ -692,8 +692,8 @@ void GeneralConflictsTab::onOverwrittenActivated(QTreeWidgetItem *item, int)
 
 
 AdvancedConflictsTab::AdvancedConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* ui, OrganizerCore& oc)
-    : m_tab(tab), ui(ui), m_core(oc)
+  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc)
+    : m_tab(tab), ui(pui), m_core(oc)
 {
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
