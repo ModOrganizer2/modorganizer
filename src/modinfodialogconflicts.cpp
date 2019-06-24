@@ -10,7 +10,7 @@ using namespace MOBase;
 
 // if there are more than 50 selected items in the conflict tree, don't bother
 // checking whether menu items apply to them, just show all of them
-const int max_scan_for_context_menu = 50;
+const std::size_t max_small_selection = 50;
 
 
 class ElideLeftDelegate : public QStyledItemDelegate
@@ -27,60 +27,62 @@ protected:
 };
 
 
-class ConflictItem : public QTreeWidgetItem
+class ConflictItem
 {
 public:
-  static const int FILENAME_USERROLE = Qt::UserRole + 1;
-  static const int ALT_ORIGIN_USERROLE = Qt::UserRole + 2;
-  static const int ARCHIVE_USERROLE = Qt::UserRole + 3;
-  static const int INDEX_USERROLE = Qt::UserRole + 4;
-  static const int HAS_ALTS_USERROLE = Qt::UserRole + 5;
-
   ConflictItem(
-    QStringList columns, FileEntry::Index index,  const QString& fileName,
-    bool hasAltOrigins, const QString& altOrigin,  bool archive)
-    : QTreeWidgetItem(columns)
+    QString before, QString relativeName, QString after,
+    FileEntry::Index index,  QString fileName,
+    bool hasAltOrigins, QString altOrigin,  bool archive) :
+      m_before(std::move(before)),
+      m_relativeName(std::move(relativeName)),
+      m_after(std::move(after)),
+      m_index(index),
+      m_fileName(std::move(fileName)),
+      m_hasAltOrigins(hasAltOrigins),
+      m_altOrigin(std::move(altOrigin)),
+      m_isArchive(archive)
   {
-    setData(0, FILENAME_USERROLE, fileName);
-    setData(0, ALT_ORIGIN_USERROLE, altOrigin);
-    setData(0, ARCHIVE_USERROLE, archive);
-    setData(0, INDEX_USERROLE, index);
-    setData(0, HAS_ALTS_USERROLE, hasAltOrigins);
-
-    if (archive) {
-      QFont f = font(0);
-      f.setItalic(true);
-
-      for (int i=0; i<columnCount(); ++i) {
-        setFont(i, f);
-      }
-    }
   }
 
-  QString fileName() const
+  const QString& before() const
   {
-    return data(0, FILENAME_USERROLE).toString();
+    return m_before;
   }
 
-  QString altOrigin() const
+  const QString& relativeName() const
   {
-    return data(0, ALT_ORIGIN_USERROLE).toString();
+    return m_relativeName;
+  }
+
+  const QString& after() const
+  {
+    return m_after;
+  }
+
+  const QString& fileName() const
+  {
+    return m_fileName;
+  }
+
+  const QString& altOrigin() const
+  {
+    return m_altOrigin;
   }
 
   bool hasAlts() const
   {
-    return data(0, HAS_ALTS_USERROLE).toBool();
+    return m_hasAltOrigins;
   }
 
   bool isArchive() const
   {
-    return data(0, ARCHIVE_USERROLE).toBool();
+    return m_isArchive;
   }
 
   FileEntry::Index fileIndex() const
   {
-    static_assert(std::is_same_v<FileEntry::Index, unsigned int>);
-    return data(0, INDEX_USERROLE).toUInt();
+    return m_index;
   }
 
   bool canHide() const
@@ -103,19 +105,274 @@ public:
     return canPreviewFile(pluginContainer, isArchive(), fileName());
   }
 
-  bool operator<(const QTreeWidgetItem& other) const
-  {
-    const int column = treeWidget()->sortColumn();
+private:
+  QString m_before;
+  QString m_relativeName;
+  QString m_after;
+  FileEntry::Index m_index;
+  QString m_fileName;
+  bool m_hasAltOrigins;
+  QString m_altOrigin;
+  bool m_isArchive;
+};
 
-    if (column >= columnCount() || column >= other.columnCount()) {
-      // shouldn't happen
-      qWarning().nospace() << "ConflictItem::operator<() mistmatch in column count";
-      return false;
+
+class ConflictListModel : public QAbstractItemModel
+{
+public:
+  struct Column
+  {
+    QString caption;
+    const QString& (ConflictItem::*getText)() const;
+  };
+
+  ConflictListModel(QTreeView* tree, std::vector<Column> columns)
+    : m_tree(tree), m_columns(std::move(columns))
+  {
+    m_tree->setModel(this);
+  }
+
+  void clear()
+  {
+    m_items.clear();
+  }
+
+  void reserve(std::size_t s)
+  {
+    m_items.reserve(s);
+  }
+
+  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
+  {
+    return createIndex(row, col);
+  }
+
+  QModelIndex parent(const QModelIndex&) const override
+  {
+    return {};
+  }
+
+  int rowCount(const QModelIndex& parent={}) const override
+  {
+    if (parent.isValid()) {
+      return 0;
     }
 
-    return (naturalCompare(text(column), other.text(column)) < 0);
+    return static_cast<int>(m_items.size());
+  }
+
+  int columnCount(const QModelIndex& ={}) const override
+  {
+    return static_cast<int>(m_columns.size());
+  }
+
+  QVariant data(const QModelIndex& index, int role) const override
+  {
+    if (role == Qt::DisplayRole || role == Qt::FontRole) {
+      const auto row = index.row();
+      if (row < 0) {
+        return {};
+      }
+
+      const auto i = static_cast<std::size_t>(row);
+      if (i >= m_items.size()) {
+        return {};
+      }
+
+      const auto col = index.column();
+      if (col < 0) {
+        return {};
+      }
+
+      const auto c = static_cast<std::size_t>(col);
+      if (c >= m_columns.size()) {
+        return {};
+      }
+
+      const auto& item = m_items[i];
+
+      if (role == Qt::DisplayRole) {
+        return (item.*m_columns[c].getText)();
+      } else if (role == Qt::FontRole) {
+        if (item.isArchive()) {
+          QFont f = m_tree->font();
+          f.setItalic(true);
+          return f;
+        }
+      }
+    }
+
+    return {};
+  }
+
+  QVariant headerData(int col, Qt::Orientation, int role) const
+  {
+    if (role == Qt::DisplayRole) {
+      if (col < 0) {
+        return {};
+      }
+
+      const auto i = static_cast<std::size_t>(col);
+      if (i >= m_columns.size()) {
+        return {};
+      }
+
+      return m_columns[i].caption;
+    }
+
+    return {};
+  }
+
+  void sort(int colIndex, Qt::SortOrder order=Qt::AscendingOrder)
+  {
+    if (colIndex < 0) {
+      return;
+    }
+
+    const auto c = static_cast<std::size_t>(colIndex);
+    if (c >= m_columns.size()) {
+      return;
+    }
+
+    const auto& col = m_columns[c];
+
+    // avoids branching on sort order while sorting
+    auto sortAsc = [&](const auto& a, const auto& b) {
+      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) < 0);
+    };
+
+    auto sortDesc = [&](const auto& a, const auto& b) {
+      return (naturalCompare((a.*col.getText)(), (b.*col.getText)()) > 0);
+    };
+
+    if (order == Qt::AscendingOrder) {
+      std::sort(m_items.begin(), m_items.end(), sortAsc);
+    } else {
+      std::sort(m_items.begin(), m_items.end(), sortDesc);
+    }
+
+    emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
+  }
+
+  void add(ConflictItem item)
+  {
+    m_items.emplace_back(std::move(item));
+  }
+
+  void finished()
+  {
+    beginResetModel();
+    endResetModel();
+  }
+
+  const ConflictItem* getItem(std::size_t row) const
+  {
+    if (row >= m_items.size()) {
+      return nullptr;
+    }
+
+    return &m_items[row];
+  }
+
+private:
+  QTreeView* m_tree;
+  std::vector<Column> m_columns;
+  std::vector<ConflictItem> m_items;
+};
+
+
+class OverwriteConflictListModel : public ConflictListModel
+{
+public:
+  OverwriteConflictListModel(QTreeView* tree)
+    : ConflictListModel(tree, {
+        {tr("File"), &ConflictItem::relativeName},
+        {tr("Overwritten Mods"), &ConflictItem::before}
+      })
+  {
   }
 };
+
+
+class OverwrittenConflictListModel : public ConflictListModel
+{
+public:
+  OverwrittenConflictListModel(QTreeView* tree)
+    : ConflictListModel(tree, {
+        {tr("File"), &ConflictItem::relativeName},
+        {tr("Providing Mod"), &ConflictItem::after}
+      })
+  {
+  }
+};
+
+
+class NoConflictListModel : public ConflictListModel
+{
+public:
+  NoConflictListModel(QTreeView* tree)
+    : ConflictListModel(tree, {
+        {tr("File"), &ConflictItem::relativeName}
+      })
+  {
+  }
+};
+
+
+class AdvancedConflictListModel : public ConflictListModel
+{
+public:
+  AdvancedConflictListModel(QTreeView* tree)
+    : ConflictListModel(tree, {
+        {tr("Overwrites"), &ConflictItem::before},
+        {tr("File"), &ConflictItem::relativeName},
+        {tr("Overwritten By"), &ConflictItem::after}
+      })
+  {
+  }
+};
+
+
+std::size_t smallSelectionSize(const QTreeView* tree)
+{
+  const std::size_t too_many = std::numeric_limits<std::size_t>::max();
+
+  std::size_t n = 0;
+  const auto* sel = tree->selectionModel();
+
+  for (const auto& range : sel->selection()) {
+    n += range.height();
+
+    if (n >= max_small_selection) {
+      return too_many;
+    }
+  }
+
+  return n;
+}
+
+template <class F>
+void for_each_in_selection(QTreeView* tree, F&& f)
+{
+  const auto* sel = tree->selectionModel();
+  const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+
+  if (!model) {
+    qCritical() << "tree doesn't have a ConflictListModel";
+    return;
+  }
+
+  for (const auto& range : sel->selection()) {
+    // ranges are inclusive
+    for (int row=range.top(); row<=range.bottom(); ++row) {
+      if (auto* item=model->getItem(static_cast<std::size_t>(row))) {
+        if (!f(item)) {
+          return;
+        }
+      }
+    }
+  }
+}
 
 
 ConflictsTab::ConflictsTab(
@@ -169,52 +426,55 @@ bool ConflictsTab::canHandleUnmanaged() const
   return true;
 }
 
-void ConflictsTab::changeItemsVisibility(
-  const QList<QTreeWidgetItem*>& items, bool visible)
+void ConflictsTab::changeItemsVisibility(QTreeView* tree, bool visible)
 {
   bool changed = false;
   bool stop = false;
 
-  qDebug().nospace()
+  const auto n = smallSelectionSize(tree);
+
+  qDebug().nospace().noquote()
     << (visible ? "unhiding" : "hiding") << " "
-    << items.size() << " conflict files";
+    << (n > max_small_selection ? "a lot of" : QString("%1").arg(n))
+    << " conflict files";
 
   QFlags<FileRenamer::RenameFlags> flags =
     (visible ? FileRenamer::UNHIDE : FileRenamer::HIDE);
 
-  if (items.size() > 1) {
+  if (n > 1) {
     flags |= FileRenamer::MULTIPLE;
   }
 
   FileRenamer renamer(parentWidget(), flags);
 
-  for (const auto* item : items) {
-    if (stop) {
-      break;
-    }
+  auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+  if (!model) {
+    qCritical() << "list doesn't have a ConflictListModel";
+    return;
+  }
 
-    const auto* ci = dynamic_cast<const ConflictItem*>(item);
-    if (!ci) {
-      continue;
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    if (stop) {
+      return false;
     }
 
     auto result = FileRenamer::RESULT_CANCEL;
 
     if (visible) {
-      if (!ci->canUnhide()) {
-        qDebug().nospace() << "cannot unhide " << item->text(0) << ", skipping";
-        continue;
+      if (!item->canUnhide()) {
+        qDebug().nospace() << "cannot unhide " << item->relativeName() << ", skipping";
+        return true;
       }
 
-      result = unhideFile(renamer, ci->fileName());
+      result = unhideFile(renamer, item->fileName());
 
     } else {
-      if (!ci->canHide()) {
-        qDebug().nospace() << "cannot hide " << item->text(0) << ", skipping";
-        continue;
+      if (!item->canHide()) {
+        qDebug().nospace() << "cannot hide " << item->relativeName() << ", skipping";
+        return true;
       }
 
-      result = hideFile(renamer, ci->fileName());
+      result = hideFile(renamer, item->fileName());
     }
 
     switch (result) {
@@ -235,7 +495,9 @@ void ConflictsTab::changeItemsVisibility(
         break;
       }
     }
-  }
+
+    return true;
+  });
 
   qDebug().nospace() << (visible ? "unhiding" : "hiding") << " conflict files done";
 
@@ -250,38 +512,36 @@ void ConflictsTab::changeItemsVisibility(
   }
 }
 
-void ConflictsTab::openItems(const QList<QTreeWidgetItem*>& items)
+void ConflictsTab::openItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for (auto* item : items) {
-    if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      core().executeFileVirtualized(parentWidget(), ci->fileName());
-    }
-  }
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    core().executeFileVirtualized(parentWidget(), item->fileName());
+    return true;
+  });
 }
 
-void ConflictsTab::previewItems(const QList<QTreeWidgetItem*>& items)
+void ConflictsTab::previewItems(QTreeView* tree)
 {
   // the menu item is only shown for a single selection, but handle all of them
   // in case this changes
-  for (auto* item : items) {
-    if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-      core().previewFileWithAlternatives(parentWidget(), ci->fileName());
-    }
-  }
+  for_each_in_selection(tree, [&](const ConflictItem* item) {
+    core().previewFileWithAlternatives(parentWidget(), item->fileName());
+    return true;
+  });
 }
 
-void ConflictsTab::showContextMenu(const QPoint &pos, QTreeWidget* tree)
+void ConflictsTab::showContextMenu(const QPoint &pos, QTreeView* tree)
 {
-  auto actions = createMenuActions(tree->selectedItems());
+  auto actions = createMenuActions(tree);
 
   QMenu menu;
 
   // open
   if (actions.open) {
     connect(actions.open, &QAction::triggered, [&]{
-      openItems(tree->selectedItems());
+      openItems(tree);
     });
 
     menu.addAction(actions.open);
@@ -290,7 +550,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeWidget* tree)
   // preview
   if (actions.preview) {
     connect(actions.preview, &QAction::triggered, [&]{
-      previewItems(tree->selectedItems());
+      previewItems(tree);
     });
 
     menu.addAction(actions.preview);
@@ -299,7 +559,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeWidget* tree)
   // hide
   if (actions.hide) {
     connect(actions.hide, &QAction::triggered, [&]{
-      changeItemsVisibility(tree->selectedItems(), false);
+      changeItemsVisibility(tree, false);
     });
 
     menu.addAction(actions.hide);
@@ -308,7 +568,7 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeWidget* tree)
   // unhide
   if (actions.unhide) {
     connect(actions.unhide, &QAction::triggered, [&]{
-      changeItemsVisibility(tree->selectedItems(), true);
+      changeItemsVisibility(tree, true);
     });
 
     menu.addAction(actions.unhide);
@@ -332,10 +592,9 @@ void ConflictsTab::showContextMenu(const QPoint &pos, QTreeWidget* tree)
   }
 }
 
-ConflictsTab::Actions ConflictsTab::createMenuActions(
-  const QList<QTreeWidgetItem*>& selection)
+ConflictsTab::Actions ConflictsTab::createMenuActions(QTreeView* tree)
 {
-  if (selection.empty()) {
+  if (tree->selectionModel()->selection().isEmpty()) {
     return {};
   }
 
@@ -345,18 +604,28 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
   bool enablePreview = true;
   bool enableGoto = true;
 
-  if (selection.size() == 1) {
+  const auto n = smallSelectionSize(tree);
+
+  const auto* model = dynamic_cast<ConflictListModel*>(tree->model());
+  if (!model) {
+    qCritical() << "tree doesn't have a ConflictListModel";
+    return {};
+  }
+
+  if (n == 1) {
     // this is a single selection
-    const auto* ci = dynamic_cast<const ConflictItem*>(selection[0]);
-    if (!ci) {
+    const auto* item = model->getItem(static_cast<std::size_t>(
+      tree->selectionModel()->selectedRows()[0].row()));
+
+    if (!item) {
       return {};
     }
 
-    enableHide = ci->canHide();
-    enableUnhide = ci->canUnhide();
-    enableOpen = ci->canOpen();
-    enablePreview = ci->canPreview(plugin());
-    enableGoto = ci->hasAlts();
+    enableHide = item->canHide();
+    enableUnhide = item->canUnhide();
+    enableOpen = item->canOpen();
+    enablePreview = item->canPreview(plugin());
+    enableGoto = item->hasAlts();
   }
   else {
     // this is a multiple selection, don't show open/preview so users don't open
@@ -367,28 +636,28 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
     // don't bother with this on multiple selection, at least for now
     enableGoto = false;
 
-    if (selection.size() < max_scan_for_context_menu) {
+    if (n <= max_small_selection) {
       // if the number of selected items is low, checking them to accurately
       // show the menu items is worth it
       enableHide = false;
       enableUnhide = false;
 
-      for (const auto* item : selection) {
-        if (const auto* ci=dynamic_cast<const ConflictItem*>(item)) {
-          if (ci->canHide()) {
-            enableHide = true;
-          }
-
-          if (ci->canUnhide()) {
-            enableUnhide = true;
-          }
-
-          if (enableHide && enableUnhide && enableGoto) {
-            // found all, no need to check more
-            break;
-          }
+      for_each_in_selection(tree, [&](const ConflictItem* item) {
+        if (item->canHide()) {
+          enableHide = true;
         }
-      }
+
+        if (item->canUnhide()) {
+          enableUnhide = true;
+        }
+
+        if (enableHide && enableUnhide && enableGoto) {
+          // found all, no need to check more
+          return false;
+        }
+
+        return true;
+      });
     }
   }
 
@@ -411,22 +680,19 @@ ConflictsTab::Actions ConflictsTab::createMenuActions(
   actions.gotoMenu = new QMenu(tr("Go to..."), parentWidget());
   actions.gotoMenu->setEnabled(enableGoto);
 
-  if (enableGoto) {
-    actions.gotoActions = createGotoActions(selection);
+  if (enableGoto && n == 1) {
+    const auto* item = model->getItem(static_cast<std::size_t>(
+      tree->selectionModel()->selectedRows()[0].row()));
+
+    actions.gotoActions = createGotoActions(item);
   }
 
   return actions;
 }
 
-std::vector<QAction*> ConflictsTab::createGotoActions(
-  const QList<QTreeWidgetItem*>& selection)
+std::vector<QAction*> ConflictsTab::createGotoActions(const ConflictItem* item)
 {
-  if (!origin() || selection.size() != 1) {
-    return {};
-  }
-
-  const auto* item = dynamic_cast<const ConflictItem*>(selection[0]);
-  if (!item) {
+  if (!origin()) {
     return {};
   }
 
@@ -468,39 +734,42 @@ std::vector<QAction*> ConflictsTab::createGotoActions(
 
 
 GeneralConflictsTab::GeneralConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc)
-    : m_tab(tab), ui(pui), m_core(oc)
+  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc) :
+    m_tab(tab), ui(pui), m_core(oc),
+    m_overwriteModel(new OverwriteConflictListModel(ui->overwriteTree)),
+    m_overwrittenModel(new OverwrittenConflictListModel(ui->overwrittenTree)),
+    m_noConflictModel(new NoConflictListModel(ui->noConflictTree))
 {
   m_expanders.overwrite.set(ui->overwriteExpander, ui->overwriteTree, true);
   m_expanders.overwritten.set(ui->overwrittenExpander, ui->overwrittenTree, true);
   m_expanders.nonconflict.set(ui->noConflictExpander, ui->noConflictTree);
 
   QObject::connect(
-    ui->overwriteTree, &QTreeWidget::itemDoubleClicked,
-    [&](auto* item, int col){ onOverwriteActivated(item, col); });
+    ui->overwriteTree, &QTreeView::doubleClicked,
+    [&](auto&& item){ onOverwriteActivated(item); });
 
   QObject::connect(
-    ui->overwrittenTree, &QTreeWidget::itemDoubleClicked,
-    [&](auto* item, int col){ onOverwrittenActivated(item, col); });
+    ui->overwrittenTree, &QTreeView::doubleClicked,
+    [&](auto&& item){ onOverwrittenActivated(item); });
 
   QObject::connect(
-    ui->overwriteTree, &QTreeWidget::customContextMenuRequested,
+    ui->overwriteTree, &QTreeView::customContextMenuRequested,
     [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwriteTree); });
 
   QObject::connect(
-    ui->overwrittenTree, &QTreeWidget::customContextMenuRequested,
+    ui->overwrittenTree, &QTreeView::customContextMenuRequested,
     [&](const QPoint& p){ m_tab->showContextMenu(p, ui->overwrittenTree); });
 
   QObject::connect(
-    ui->noConflictTree, &QTreeWidget::customContextMenuRequested,
+    ui->noConflictTree, &QTreeView::customContextMenuRequested,
     [&](const QPoint& p){ m_tab->showContextMenu(p, ui->noConflictTree); });
 }
 
 void GeneralConflictsTab::clear()
 {
-  ui->overwriteTree->clear();
-  ui->overwrittenTree->clear();
-  ui->noConflictTree->clear();
+  m_overwriteModel->clear();
+  m_overwrittenModel->clear();
+  m_noConflictModel->clear();
 
   ui->overwriteCount->display(0);
   ui->overwrittenCount->display(0);
@@ -568,10 +837,6 @@ bool GeneralConflictsTab::update()
   int numOverwrite = 0;
   int numOverwritten = 0;
 
-  QList<QTreeWidgetItem*> overwriteItems;
-  QList<QTreeWidgetItem*> overwrittenItems;
-  QList<QTreeWidgetItem*> noConflictItems;
-
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod()->absolutePath();
 
@@ -585,19 +850,19 @@ bool GeneralConflictsTab::update()
 
       if (fileOrigin == m_tab->origin()->getID()) {
         if (!alternatives.empty()) {
-          overwriteItems.append(createOverwriteItem(
-            file->getIndex(), archive, fileName, relativeName, alternatives));
+          m_overwriteModel->add(createOverwriteItem(
+              file->getIndex(), archive, fileName, relativeName, alternatives));
 
           ++numOverwrite;
         } else {
           // otherwise, put the file in the noconflict tree
-          noConflictItems.append(createNoConflictItem(
+            m_noConflictModel->add(createNoConflictItem(
             file->getIndex(), archive, fileName, relativeName));
 
           ++numNonConflicting;
         }
       } else {
-        overwrittenItems.append(createOverwrittenItem(
+        m_overwrittenModel->add(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive, fileName, relativeName));
 
         ++numOverwritten;
@@ -605,9 +870,9 @@ bool GeneralConflictsTab::update()
     }
   }
 
-  ui->overwriteTree->addTopLevelItems(overwriteItems);
-  ui->overwrittenTree->addTopLevelItems(overwrittenItems);
-  ui->noConflictTree->addTopLevelItems(noConflictItems);
+  m_overwriteModel->finished();
+  m_overwrittenModel->finished();
+  m_noConflictModel->finished();
 
   ui->overwriteCount->display(numOverwrite);
   ui->overwrittenCount->display(numOverwritten);
@@ -616,7 +881,7 @@ bool GeneralConflictsTab::update()
   return (numOverwrite > 0 || numOverwritten > 0);
 }
 
-QTreeWidgetItem* GeneralConflictsTab::createOverwriteItem(
+ConflictItem GeneralConflictsTab::createOverwriteItem(
   FileEntry::Index index, bool archive,
   const QString& fileName, const QString& relativeName,
   const FileEntry::AlternativesVector& alternatives)
@@ -638,17 +903,17 @@ QTreeWidgetItem* GeneralConflictsTab::createOverwriteItem(
 
   const auto origin = ToQString(ds.getOriginByID(alternatives.back().first).getName());
 
-  return new ConflictItem(fields, index, fileName, true, origin, archive);
+  return {altString, relativeName, "", index, fileName, true, origin, archive};
 }
 
-QTreeWidgetItem* GeneralConflictsTab::createNoConflictItem(
+ConflictItem GeneralConflictsTab::createNoConflictItem(
   FileEntry::Index index, bool archive,
   const QString& fileName, const QString& relativeName)
 {
-  return new ConflictItem({relativeName}, index, fileName, false, "", archive);
+  return {"", relativeName, "", index, fileName, false, "", archive};
 }
 
-QTreeWidgetItem* GeneralConflictsTab::createOverwrittenItem(
+ConflictItem GeneralConflictsTab::createOverwrittenItem(
   FileEntry::Index index, int fileOrigin, bool archive,
   const QString& fileName, const QString& relativeName)
 {
@@ -659,193 +924,53 @@ QTreeWidgetItem* GeneralConflictsTab::createOverwrittenItem(
   QStringList fields(relativeName);
   fields.append(ToQString(realOrigin.getName()));
 
-  return new ConflictItem(
-    fields, index, fileName, true, ToQString(realOrigin.getName()), archive);
+  return {
+    "", relativeName, ToQString(realOrigin.getName()),
+    index, fileName, true, ToQString(realOrigin.getName()), archive};
 }
 
-void GeneralConflictsTab::onOverwriteActivated(QTreeWidgetItem *item, int)
+void GeneralConflictsTab::onOverwriteActivated(const QModelIndex& index)
 {
-  if (auto* ci=dynamic_cast<ConflictItem*>(item)) {
-    const auto origin = ci->altOrigin();
-
-    if (!origin.isEmpty()) {
-      emit modOpen(origin);
-    }
+  auto* model = dynamic_cast<ConflictListModel*>(ui->overwriteTree->model());
+  if (!model) {
+    return;
   }
-}
 
-void GeneralConflictsTab::onOverwrittenActivated(QTreeWidgetItem *item, int)
-{
-  if (const auto* ci=dynamic_cast<ConflictItem*>(item)) {
-    const auto origin = ci->altOrigin();
+  auto* item = model->getItem(static_cast<std::size_t>(index.row()));
+  if (!item) {
+    return;
+  }
 
-    if (!origin.isEmpty()) {
-      emit modOpen(origin);
-    }
+  const auto origin = item->altOrigin();
+  if (!origin.isEmpty()) {
+    emit modOpen(origin);
   }
 }
 
-
-class AdvancedListModel : public QAbstractItemModel
+void GeneralConflictsTab::onOverwrittenActivated(const QModelIndex& index)
 {
-public:
-  struct Item
-  {
-    QString before, relativeName, after;
-    FileEntry::Index index;
-    QString fileName;
-    bool hasAltOrigins;
-    QString altOrigin;
-    bool archive;
-  };
-
-  void clear()
-  {
-    m_items.clear();
+  auto* model = dynamic_cast<ConflictListModel*>(ui->overwrittenTree->model());
+  if (!model) {
+    return;
   }
 
-  void reserve(std::size_t s)
-  {
-    m_items.reserve(s);
+  auto* item = model->getItem(static_cast<std::size_t>(index.row()));
+  if (!item) {
+    return;
   }
 
-  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
-  {
-    return createIndex(row, col);
+  const auto origin = item->altOrigin();
+  if (!origin.isEmpty()) {
+    emit modOpen(origin);
   }
-
-  QModelIndex parent(const QModelIndex&) const override
-  {
-    return {};
-  }
-
-  int rowCount(const QModelIndex& parent={}) const override
-  {
-    if (parent.isValid()) {
-      return 0;
-    }
-
-    return static_cast<int>(m_items.size());
-  }
-
-  int columnCount(const QModelIndex& ={}) const override
-  {
-    return 3;
-  }
-
-  QVariant data(const QModelIndex& index, int role) const override
-  {
-    if (role == Qt::DisplayRole) {
-      const auto row = index.row();
-      if (row < 0) {
-        return {};
-      }
-
-      const auto i = static_cast<std::size_t>(row);
-      if (i >= m_items.size()) {
-        return {};
-      }
-
-      const auto& item = m_items[i];
-
-      if (index.column() == 0) {
-        return item.before;
-      } else if (index.column() == 1) {
-        return item.relativeName;
-      } else if (index.column() == 2) {
-        return item.after;
-      }
-    }
-
-    return {};
-  }
-
-  QVariant headerData(int col, Qt::Orientation, int role) const
-  {
-    if (role == Qt::DisplayRole) {
-      if (col == 0) {
-        return tr("Overwrites");
-      } else if (col == 1) {
-        return tr("File");
-      } else if (col == 2) {
-        return tr("Overwritten by");
-      }
-    }
-
-    return {};
-  }
-
-  void sort(int col, Qt::SortOrder order=Qt::AscendingOrder)
-  {
-    // avoids branching on column/sort order while sorting
-    auto sortBeforeAsc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.before, b.before) < 0);
-    };
-
-    auto sortBeforeDesc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.before, b.before) > 0);
-    };
-
-    auto sortFileAsc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.relativeName, b.relativeName) < 0);
-    };
-
-    auto sortFileDesc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.relativeName, b.relativeName) > 0);
-    };
-
-    auto sortAfterAsc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.after, b.after) < 0);
-    };
-
-    auto sortAfterDesc = [](const auto& a, const auto& b) {
-      return (naturalCompare(a.after, b.after) > 0);
-    };
-
-    if (col == 0) {
-      if (order == Qt::AscendingOrder) {
-        std::sort(m_items.begin(), m_items.end(), sortBeforeAsc);
-      } else {
-        std::sort(m_items.begin(), m_items.end(), sortBeforeDesc);
-      }
-    } else if (col == 1) {
-      if (order == Qt::AscendingOrder) {
-        std::sort(m_items.begin(), m_items.end(), sortFileAsc);
-      } else {
-        std::sort(m_items.begin(), m_items.end(), sortFileDesc);
-      }
-    } else if (col == 2) {
-      if (order == Qt::AscendingOrder) {
-        std::sort(m_items.begin(), m_items.end(), sortAfterAsc);
-      } else {
-        std::sort(m_items.begin(), m_items.end(), sortAfterDesc);
-      }
-    }
-
-    emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
-  }
-
-  void add(Item item)
-  {
-    m_items.emplace_back(std::move(item));
-  }
-
-  void finished()
-  {
-    emit dataChanged(index(0, 0), index(0, rowCount()));
-  }
-
-private:
-  std::vector<Item> m_items;
-};
+}
 
 
 AdvancedConflictsTab::AdvancedConflictsTab(
-  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc)
-    : m_tab(tab), ui(pui), m_core(oc), m_model(new AdvancedListModel)
+  ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc) :
+    m_tab(tab), ui(pui), m_core(oc),
+    m_model(new AdvancedConflictListModel(ui->conflictsAdvancedList))
 {
-  ui->conflictsAdvancedList->setModel(m_model);
-
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
     0, new ElideLeftDelegate(ui->conflictsAdvancedList));
@@ -868,9 +993,9 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
     [&]{ update(); });
 
-  //QObject::connect(
-  //  ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
-  //  [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
+  QObject::connect(
+    ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
+    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
 
   m_filter.set(ui->conflictsAdvancedFilter);
   m_filter.changed = [&]{ update(); };
@@ -938,16 +1063,20 @@ void AdvancedConflictsTab::update()
       const int fileOrigin = file->getOrigin(archive);
       const auto& alternatives = file->getAlternatives();
 
-      addItem(
+      auto item = createItem(
         file->getIndex(), fileOrigin, archive,
         fileName, relativeName, alternatives);
+
+      if (item) {
+        m_model->add(std::move(*item));
+      }
     }
 
     m_model->finished();
   }
 }
 
-void AdvancedConflictsTab::addItem(
+std::optional<ConflictItem> AdvancedConflictsTab::createItem(
   FileEntry::Index index, int fileOrigin, bool archive,
   const QString& fileName, const QString& relativeName,
   const MOShared::FileEntry::AlternativesVector& alternatives)
@@ -1040,7 +1169,7 @@ void AdvancedConflictsTab::addItem(
     // if both before and after are empty, it means this file has no conflicts
     // at all, only display it if the user wants it
     if (!hasAlts) {
-      return;
+      return {};
     }
   }
 
@@ -1052,9 +1181,8 @@ void AdvancedConflictsTab::addItem(
     });
 
   if (!matched) {
-    return;
+    return {};
   }
 
-  m_model->add(
-    {before, relativeName, after, index, fileName, hasAlts, "", archive});
+  return ConflictItem{before, relativeName, after, index, fileName, hasAlts, "", archive};
 }

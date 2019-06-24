@@ -406,7 +406,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
        <item>
         <widget class="QTabWidget" name="tabConflictsTabs">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -421,7 +421,7 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                <height>100</height>
               </size>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1,0,1,0,1,0">
+             <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,0,0,0,0,0,0">
               <property name="leftMargin">
                <number>0</number>
               </property>
@@ -473,7 +473,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwriteTree">
+               <widget class="QTreeView" name="overwriteTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -489,25 +489,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="columnCount">
-                 <number>2</number>
-                </property>
-                <attribute name="headerMinimumSectionSize">
-                 <number>200</number>
-                </attribute>
-                <attribute name="headerDefaultSectionSize">
-                 <number>365</number>
-                </attribute>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Overwritten Mods</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>
@@ -546,7 +527,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="overwrittenTree">
+               <widget class="QTreeView" name="overwrittenTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -562,25 +543,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="columnCount">
-                 <number>2</number>
-                </property>
-                <attribute name="headerMinimumSectionSize">
-                 <number>200</number>
-                </attribute>
-                <attribute name="headerDefaultSectionSize">
-                 <number>365</number>
-                </attribute>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
-                <column>
-                 <property name="text">
-                  <string>Providing Mod</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>
@@ -619,7 +581,7 @@ text-align: left;</string>
                </layout>
               </item>
               <item>
-               <widget class="QTreeWidget" name="noConflictTree">
+               <widget class="QTreeView" name="noConflictTree">
                 <property name="contextMenuPolicy">
                  <enum>Qt::CustomContextMenu</enum>
                 </property>
@@ -635,14 +597,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="columnCount">
-                 <number>1</number>
-                </property>
-                <column>
-                 <property name="text">
-                  <string>File</string>
-                 </property>
-                </column>
                </widget>
               </item>
               <item>

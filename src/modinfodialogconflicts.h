@@ -6,10 +6,12 @@
 #include "filterwidget.h"
 #include "directoryentry.h"
 #include <QTreeWidget>
+#include <optional>
 
 class ConflictsTab;
 class OrganizerCore;
 class ConflictItem;
+class ConflictListModel;
 
 class GeneralConflictsTab : public QObject
 {
@@ -39,29 +41,31 @@ private:
   OrganizerCore& m_core;
   Expanders m_expanders;
 
-  QTreeWidgetItem* createOverwriteItem(
+  ConflictListModel* m_overwriteModel;
+  ConflictListModel* m_overwrittenModel;
+  ConflictListModel* m_noConflictModel;
+
+  ConflictItem createOverwriteItem(
     MOShared::FileEntry::Index index, bool archive,
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
 
-  QTreeWidgetItem* createNoConflictItem(
+  ConflictItem createNoConflictItem(
     MOShared::FileEntry::Index index, bool archive,
     const QString& fileName, const QString& relativeName);
 
-  QTreeWidgetItem* createOverwrittenItem(
+  ConflictItem createOverwrittenItem(
     MOShared::FileEntry::Index index, int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName);
 
-  void onOverwriteActivated(QTreeWidgetItem* item, int);
-  void onOverwrittenActivated(QTreeWidgetItem *item, int);
+  void onOverwriteActivated(const QModelIndex& index);
+  void onOverwrittenActivated(const QModelIndex& index);
 
   void onOverwriteTreeContext(const QPoint &pos);
   void onOverwrittenTreeContext(const QPoint &pos);
   void onNoConflictTreeContext(const QPoint &pos);
 };
 
-
-class AdvancedListModel;
 
 class AdvancedConflictsTab : public QObject
 {
@@ -85,9 +89,9 @@ private:
   Ui::ModInfoDialog* ui;
   OrganizerCore& m_core;
   FilterWidget m_filter;
-  AdvancedListModel* m_model;
+  ConflictListModel* m_model;
 
-  void addItem(
+  std::optional<ConflictItem> createItem(
     MOShared::FileEntry::Index index, int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);
@@ -109,13 +113,12 @@ public:
   void restoreState(const Settings& s) override;
   bool canHandleUnmanaged() const override;
 
-  void openItems(const QList<QTreeWidgetItem*>& items);
-  void previewItems(const QList<QTreeWidgetItem*>& items);
+  void openItems(QTreeView* tree);
+  void previewItems(QTreeView* tree);
 
-  void changeItemsVisibility(
-    const QList<QTreeWidgetItem*>& items, bool visible);
+  void changeItemsVisibility(QTreeView* tree, bool visible);
 
-  void showContextMenu(const QPoint &pos, QTreeWidget* tree);
+  void showContextMenu(const QPoint &pos, QTreeView* tree);
 
 private:
   struct Actions
@@ -131,10 +134,8 @@ private:
   GeneralConflictsTab m_general;
   AdvancedConflictsTab m_advanced;
 
-  Actions createMenuActions(const QList<QTreeWidgetItem*>& selection);
-
-  std::vector<QAction*> createGotoActions(
-    const QList<QTreeWidgetItem*>& selection);
+  Actions createMenuActions(QTreeView* tree);
+  std::vector<QAction*> createGotoActions(const ConflictItem* item);
 };
 
 #endif // MODINFODIALOGCONFLICTS_H
