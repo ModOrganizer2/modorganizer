@@ -9,6 +9,7 @@
 
 class ConflictsTab;
 class OrganizerCore;
+class ConflictItem;
 
 class GeneralConflictsTab : public QObject
 {
@@ -60,6 +61,8 @@ private:
 };
 
 
+class AdvancedListModel;
+
 class AdvancedConflictsTab : public QObject
 {
   Q_OBJECT;
@@ -82,8 +85,9 @@ private:
   Ui::ModInfoDialog* ui;
   OrganizerCore& m_core;
   FilterWidget m_filter;
+  AdvancedListModel* m_model;
 
-  QTreeWidgetItem* createItem(
+  void addItem(
     MOShared::FileEntry::Index index, int fileOrigin, bool archive,
     const QString& fileName, const QString& relativeName,
     const MOShared::FileEntry::AlternativesVector& alternatives);

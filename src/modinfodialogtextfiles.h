@@ -3,9 +3,10 @@
 
 #include "modinfodialogtab.h"
 #include <QSplitter>
-#include <QListWidget>
+#include <QListView>
 
 class FileListItem;
+class FileListModel;
 class TextEditor;
 
 class GenericFilesTab : public ModInfoDialogTab
@@ -16,21 +17,23 @@ public:
   void clear() override;
   bool canClose() override;
   bool feedFile(const QString& rootPath, const QString& fullPath) override;
+  void update() override;
 
 protected:
-  QListWidget* m_list;
+  QListView* m_list;
   TextEditor* m_editor;
+  FileListModel* m_model;
 
   GenericFilesTab(
     OrganizerCore& oc, PluginContainer& plugin,
     QWidget* parent, Ui::ModInfoDialog* ui, int id,
-    QListWidget* list, QSplitter* splitter, TextEditor* editor);
+    QListView* list, QSplitter* splitter, TextEditor* editor);
 
   virtual bool wantsFile(const QString& rootPath, const QString& fullPath) const = 0;
 
 private:
-  void onSelection(QListWidgetItem* current, QListWidgetItem* previous);
-  void select(FileListItem* item);
+  void onSelection(const QModelIndex& current, const QModelIndex& previous);
+  void select(const QModelIndex& index);
 };
 
 

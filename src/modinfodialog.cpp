@@ -35,6 +35,19 @@ using namespace MOShared;
 
 const int max_scan_for_context_menu = 50;
 
+
+int naturalCompare(const QString& a, const QString& b)
+{
+  static QCollator c = []{
+    QCollator c;
+    c.setNumericMode(true);
+    c.setCaseSensitivity(Qt::CaseInsensitive);
+    return c;
+  }();
+
+  return c.compare(a, b);
+}
+
 bool canPreviewFile(
   PluginContainer& pluginContainer, bool isArchive, const QString& filename)
 {
@@ -283,10 +296,15 @@ void ModInfoDialog::updateTabs(bool becauseOriginChanged)
 
     tabInfo.tab->setMod(m_mod, origin);
     tabInfo.tab->clear();
+  }
+
+
+  feedFiles(becauseOriginChanged);
+
+  for (auto& tabInfo : m_tabs) {
     tabInfo.tab->update();
   }
 
-  feedFiles(becauseOriginChanged);
   setTabsColors();
 }
 

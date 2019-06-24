@@ -13,19 +13,6 @@ using namespace MOBase;
 const int max_scan_for_context_menu = 50;
 
 
-int naturalCompare(const QString& a, const QString& b)
-{
-  static QCollator c = []{
-    QCollator c;
-    c.setNumericMode(true);
-    c.setCaseSensitivity(Qt::CaseInsensitive);
-    return c;
-  }();
-
-  return c.compare(a, b);
-}
-
-
 class ElideLeftDelegate : public QStyledItemDelegate
 {
 public:
@@ -581,6 +568,10 @@ bool GeneralConflictsTab::update()
   int numOverwrite = 0;
   int numOverwritten = 0;
 
+  QList<QTreeWidgetItem*> overwriteItems;
+  QList<QTreeWidgetItem*> overwrittenItems;
+  QList<QTreeWidgetItem*> noConflictItems;
+
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod()->absolutePath();
 
@@ -594,25 +585,29 @@ bool GeneralConflictsTab::update()
 
       if (fileOrigin == m_tab->origin()->getID()) {
         if (!alternatives.empty()) {
-          ui->overwriteTree->addTopLevelItem(createOverwriteItem(
+          overwriteItems.append(createOverwriteItem(
             file->getIndex(), archive, fileName, relativeName, alternatives));
 
           ++numOverwrite;
         } else {
           // otherwise, put the file in the noconflict tree
-          ui->noConflictTree->addTopLevelItem(createNoConflictItem(
+          noConflictItems.append(createNoConflictItem(
             file->getIndex(), archive, fileName, relativeName));
 
           ++numNonConflicting;
         }
       } else {
-        ui->overwrittenTree->addTopLevelItem(createOverwrittenItem(
+        overwrittenItems.append(createOverwrittenItem(
           file->getIndex(), fileOrigin, archive, fileName, relativeName));
 
         ++numOverwritten;
       }
     }
   }
+
+  ui->overwriteTree->addTopLevelItems(overwriteItems);
+  ui->overwrittenTree->addTopLevelItems(overwrittenItems);
+  ui->noConflictTree->addTopLevelItems(noConflictItems);
 
   ui->overwriteCount->display(numOverwrite);
   ui->overwrittenCount->display(numOverwritten);
@@ -691,10 +686,166 @@ void GeneralConflictsTab::onOverwrittenActivated(QTreeWidgetItem *item, int)
 }
 
 
+class AdvancedListModel : public QAbstractItemModel
+{
+public:
+  struct Item
+  {
+    QString before, relativeName, after;
+    FileEntry::Index index;
+    QString fileName;
+    bool hasAltOrigins;
+    QString altOrigin;
+    bool archive;
+  };
+
+  void clear()
+  {
+    m_items.clear();
+  }
+
+  void reserve(std::size_t s)
+  {
+    m_items.reserve(s);
+  }
+
+  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
+  {
+    return createIndex(row, col);
+  }
+
+  QModelIndex parent(const QModelIndex&) const override
+  {
+    return {};
+  }
+
+  int rowCount(const QModelIndex& parent={}) const override
+  {
+    if (parent.isValid()) {
+      return 0;
+    }
+
+    return static_cast<int>(m_items.size());
+  }
+
+  int columnCount(const QModelIndex& ={}) const override
+  {
+    return 3;
+  }
+
+  QVariant data(const QModelIndex& index, int role) const override
+  {
+    if (role == Qt::DisplayRole) {
+      const auto row = index.row();
+      if (row < 0) {
+        return {};
+      }
+
+      const auto i = static_cast<std::size_t>(row);
+      if (i >= m_items.size()) {
+        return {};
+      }
+
+      const auto& item = m_items[i];
+
+      if (index.column() == 0) {
+        return item.before;
+      } else if (index.column() == 1) {
+        return item.relativeName;
+      } else if (index.column() == 2) {
+        return item.after;
+      }
+    }
+
+    return {};
+  }
+
+  QVariant headerData(int col, Qt::Orientation, int role) const
+  {
+    if (role == Qt::DisplayRole) {
+      if (col == 0) {
+        return tr("Overwrites");
+      } else if (col == 1) {
+        return tr("File");
+      } else if (col == 2) {
+        return tr("Overwritten by");
+      }
+    }
+
+    return {};
+  }
+
+  void sort(int col, Qt::SortOrder order=Qt::AscendingOrder)
+  {
+    // avoids branching on column/sort order while sorting
+    auto sortBeforeAsc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.before, b.before) < 0);
+    };
+
+    auto sortBeforeDesc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.before, b.before) > 0);
+    };
+
+    auto sortFileAsc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.relativeName, b.relativeName) < 0);
+    };
+
+    auto sortFileDesc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.relativeName, b.relativeName) > 0);
+    };
+
+    auto sortAfterAsc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.after, b.after) < 0);
+    };
+
+    auto sortAfterDesc = [](const auto& a, const auto& b) {
+      return (naturalCompare(a.after, b.after) > 0);
+    };
+
+    if (col == 0) {
+      if (order == Qt::AscendingOrder) {
+        std::sort(m_items.begin(), m_items.end(), sortBeforeAsc);
+      } else {
+        std::sort(m_items.begin(), m_items.end(), sortBeforeDesc);
+      }
+    } else if (col == 1) {
+      if (order == Qt::AscendingOrder) {
+        std::sort(m_items.begin(), m_items.end(), sortFileAsc);
+      } else {
+        std::sort(m_items.begin(), m_items.end(), sortFileDesc);
+      }
+    } else if (col == 2) {
+      if (order == Qt::AscendingOrder) {
+        std::sort(m_items.begin(), m_items.end(), sortAfterAsc);
+      } else {
+        std::sort(m_items.begin(), m_items.end(), sortAfterDesc);
+      }
+    }
+
+    emit layoutChanged({}, QAbstractItemModel::VerticalSortHint);
+  }
+
+  void add(Item item)
+  {
+    m_items.emplace_back(std::move(item));
+  }
+
+  void finished()
+  {
+    emit dataChanged(index(0, 0), index(0, rowCount()));
+  }
+
+private:
+  std::vector<Item> m_items;
+};
+
+
 AdvancedConflictsTab::AdvancedConflictsTab(
   ConflictsTab* tab, Ui::ModInfoDialog* pui, OrganizerCore& oc)
-    : m_tab(tab), ui(pui), m_core(oc)
+    : m_tab(tab), ui(pui), m_core(oc), m_model(new AdvancedListModel)
 {
+  ui->conflictsAdvancedList->setModel(m_model);
+
   // left-elide the overwrites column so that the nearest are visible
   ui->conflictsAdvancedList->setItemDelegateForColumn(
     0, new ElideLeftDelegate(ui->conflictsAdvancedList));
@@ -717,9 +868,9 @@ AdvancedConflictsTab::AdvancedConflictsTab(
     ui->conflictsAdvancedShowNearest, &QRadioButton::clicked,
     [&]{ update(); });
 
-  QObject::connect(
-    ui->conflictsAdvancedList, &QTreeWidget::customContextMenuRequested,
-    [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
+  //QObject::connect(
+  //  ui->conflictsAdvancedList, &QTreeView::customContextMenuRequested,
+  //  [&](const QPoint& p){ m_tab->showContextMenu(p, ui->conflictsAdvancedList); });
 
   m_filter.set(ui->conflictsAdvancedFilter);
   m_filter.changed = [&]{ update(); };
@@ -727,7 +878,7 @@ AdvancedConflictsTab::AdvancedConflictsTab(
 
 void AdvancedConflictsTab::clear()
 {
-  ui->conflictsAdvancedList->clear();
+  m_model->clear();
 }
 
 void AdvancedConflictsTab::saveState(Settings& s)
@@ -776,7 +927,10 @@ void AdvancedConflictsTab::update()
   if (m_tab->origin() != nullptr) {
     const auto rootPath = m_tab->mod()->absolutePath();
 
-    for (const auto& file : m_tab->origin()->getFiles()) {
+    const auto& files = m_tab->origin()->getFiles();
+    m_model->reserve(files.size());
+
+    for (const auto& file : files) {
       const QString relativeName = QDir::fromNativeSeparators(ToQString(file->getRelativePath()));
       const QString fileName = relativeName.mid(0).prepend(rootPath);
 
@@ -784,18 +938,16 @@ void AdvancedConflictsTab::update()
       const int fileOrigin = file->getOrigin(archive);
       const auto& alternatives = file->getAlternatives();
 
-      auto* advancedItem = createItem(
+      addItem(
         file->getIndex(), fileOrigin, archive,
         fileName, relativeName, alternatives);
-
-      if (advancedItem) {
-        ui->conflictsAdvancedList->addTopLevelItem(advancedItem);
-      }
     }
+
+    m_model->finished();
   }
 }
 
-QTreeWidgetItem* AdvancedConflictsTab::createItem(
+void AdvancedConflictsTab::addItem(
   FileEntry::Index index, int fileOrigin, bool archive,
   const QString& fileName, const QString& relativeName,
   const MOShared::FileEntry::AlternativesVector& alternatives)
@@ -888,7 +1040,7 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
     // if both before and after are empty, it means this file has no conflicts
     // at all, only display it if the user wants it
     if (!hasAlts) {
-      return nullptr;
+      return;
     }
   }
 
@@ -900,9 +1052,9 @@ QTreeWidgetItem* AdvancedConflictsTab::createItem(
     });
 
   if (!matched) {
-    return nullptr;
+    return;
   }
 
-  return new ConflictItem(
-    {before, relativeName, after}, index, fileName, hasAlts, "", archive);
+  m_model->add(
+    {before, relativeName, after, index, fileName, hasAlts, "", archive});
 }

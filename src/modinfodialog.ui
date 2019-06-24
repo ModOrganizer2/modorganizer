@@ -60,12 +60,15 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="textFileList">
+            <widget class="QListView" name="textFileList">
              <property name="toolTip">
               <string>A list of text-files in the mod directory.</string>
              </property>
              <property name="whatsThis">
               <string>A list of text-files in the mod directory like readmes. </string>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -117,12 +120,15 @@
             </widget>
            </item>
            <item>
-            <widget class="QListWidget" name="iniFileList">
+            <widget class="QListView" name="iniFileList">
              <property name="toolTip">
               <string>This is a list of .ini files in the mod.</string>
              </property>
              <property name="whatsThis">
               <string>This is a list of .ini files in the mod. These are usually used to configure the behaviour of mods if there are configurable parameters.</string>
+             </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
              </property>
             </widget>
            </item>
@@ -251,6 +257,9 @@ They usually contain optional functionality, see the readme.
 
 Most mods do not have optional esps, so chances are good you are looking at an empty list.</string>
              </property>
+             <property name="uniformItemSizes">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
           </layout>
@@ -375,6 +384,9 @@ Most mods do not have optional esps, so chances are good you are looking at an e
                 <property name="whatsThis">
                  <string>These are the mod files that are in the (virtual) data directory of your game and will thus be selectable in the esp list in the main window.</string>
                 </property>
+                <property name="uniformItemSizes">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
              </layout>
@@ -477,9 +489,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="animated">
-                 <bool>true</bool>
-                </property>
                 <property name="columnCount">
                  <number>2</number>
                 </property>
@@ -551,9 +560,6 @@ text-align: left;</string>
                  <bool>true</bool>
                 </property>
                 <property name="sortingEnabled">
-                 <bool>true</bool>
-                </property>
-                <property name="animated">
                  <bool>true</bool>
                 </property>
                 <property name="columnCount">
@@ -629,9 +635,6 @@ text-align: left;</string>
                 <property name="sortingEnabled">
                  <bool>true</bool>
                 </property>
-                <property name="animated">
-                 <bool>true</bool>
-                </property>
                 <property name="columnCount">
                  <number>1</number>
                 </property>
@@ -696,7 +699,7 @@ text-align: left;</string>
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QTreeWidget" name="conflictsAdvancedList">
+                  <widget class="QTreeView" name="conflictsAdvancedList">
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
@@ -709,27 +712,6 @@ text-align: left;</string>
                    <property name="sortingEnabled">
                     <bool>true</bool>
                    </property>
-                   <property name="columnCount">
-                    <number>3</number>
-                   </property>
-                   <attribute name="headerDefaultSectionSize">
-                    <number>243</number>
-                   </attribute>
-                   <column>
-                    <property name="text">
-                     <string>Overwrites</string>
-                    </property>
-                   </column>
-                   <column>
-                    <property name="text">
-                     <string>File</string>
-                    </property>
-                   </column>
-                   <column>
-                    <property name="text">
-                     <string>Overwritten by</string>
-                    </property>
-                   </column>
                   </widget>
                  </item>
                 </layout>

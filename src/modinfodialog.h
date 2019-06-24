@@ -42,6 +42,8 @@ bool canUnhideFile(bool isArchive, const QString& filename);
 FileRenamer::RenameResults hideFile(FileRenamer& renamer, const QString &oldName);
 FileRenamer::RenameResults unhideFile(FileRenamer& renamer, const QString &oldName);
 
+int naturalCompare(const QString& a, const QString& b);
+
 
 /**
  * this is a larger dialog used to visualise information about the mod.

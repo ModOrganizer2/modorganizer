@@ -1,32 +1,109 @@
 #include "modinfodialogtextfiles.h"
 #include "ui_modinfodialog.h"
+#include "modinfodialog.h"
 #include <QMessageBox>
 
-class FileListItem : public QListWidgetItem
+class FileListModel : public QAbstractItemModel
 {
 public:
-  FileListItem(const QString& rootPath, QString fullPath)
-    : m_fullPath(std::move(fullPath))
+  void clear()
   {
-    setText(m_fullPath.mid(rootPath.length() + 1));
+    m_files.clear();
   }
 
-  const QString& fullPath() const
+  QModelIndex index(int row, int col, const QModelIndex& ={}) const override
   {
-    return m_fullPath;
+    return createIndex(row, col);
+  }
+
+  QModelIndex parent(const QModelIndex&) const override
+  {
+    return {};
+  }
+
+  int rowCount(const QModelIndex& ={}) const override
+  {
+    return static_cast<int>(m_files.size());
+  }
+
+  int columnCount(const QModelIndex& ={}) const override
+  {
+    return 1;
+  }
+
+  QVariant data(const QModelIndex& index, int role) const override
+  {
+    if (role == Qt::DisplayRole) {
+      const auto row = index.row();
+      if (row < 0) {
+        return {};
+      }
+
+      const auto i = static_cast<std::size_t>(row);
+      if (i >= m_files.size()) {
+        return {};
+      }
+
+      return m_files[i].text;
+    }
+
+    return {};
+  }
+
+  void add(const QString& rootPath, QString fullPath)
+  {
+    QString text = fullPath.mid(rootPath.length() + 1);
+    m_files.emplace_back(std::move(fullPath), std::move(text));
+  }
+
+  void finished()
+  {
+    std::sort(m_files.begin(), m_files.end(), [](const auto& a, const auto& b) {
+      return (naturalCompare(a.text, b.text) < 0);
+    });
+
+    emit dataChanged(index(0, 0), index(0, rowCount()));
+  }
+
+  QString fullPath(const QModelIndex& index) const
+  {
+    const auto row = index.row();
+    if (row < 0) {
+      return {};
+    }
+
+    const auto i = static_cast<std::size_t>(row);
+    if (i >= m_files.size()) {
+      return {};
+    }
+
+    return m_files[i].fullPath;
   }
 
 private:
-  QString m_fullPath;
+  struct File
+  {
+    QString fullPath;
+    QString text;
+
+    File(QString fp, QString t)
+      : fullPath(std::move(fp)), text(std::move(t))
+    {
+    }
+  };
+
+  std::deque<File> m_files;
 };
 
 
 GenericFilesTab::GenericFilesTab(
   OrganizerCore& oc, PluginContainer& plugin,
   QWidget* parent, Ui::ModInfoDialog* ui, int id,
-  QListWidget* list, QSplitter* sp, TextEditor* e)
-    : ModInfoDialogTab(oc, plugin, parent, ui, id), m_list(list), m_editor(e)
+  QListView* list, QSplitter* sp, TextEditor* e) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id),
+    m_list(list), m_editor(e), m_model(new FileListModel)
 {
+  m_list->setModel(m_model);
   m_editor->setupToolbar();
 
   sp->setSizes({200, 1});
@@ -34,14 +111,14 @@ GenericFilesTab::GenericFilesTab(
   sp->setStretchFactor(1, 1);
 
   QObject::connect(
-    m_list, &QListWidget::currentItemChanged,
-    [&](auto* current, auto* previous){ onSelection(current, previous); });
+    m_list->selectionModel(), &QItemSelectionModel::currentRowChanged,
+    [&](auto current, auto previous){ onSelection(current, previous); });
 }
 
 void GenericFilesTab::clear()
 {
-  m_list->clear();
-  select(nullptr);
+  m_model->clear();
+  select({});
   setHasData(false);
 }
 
@@ -76,7 +153,7 @@ bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
 
   for (const auto* e : extensions) {
     if (wantsFile(rootPath, fullPath)) {
-      m_list->addItem(new FileListItem(rootPath, fullPath));
+      m_model->add(rootPath, fullPath);
       setHasData(true);
       return true;
     }
@@ -85,31 +162,31 @@ bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
   return false;
 }
 
-void GenericFilesTab::onSelection(
-  QListWidgetItem* current, QListWidgetItem* previous)
+void GenericFilesTab::update()
 {
-  auto* item = dynamic_cast<FileListItem*>(current);
-  if (!item) {
-    qCritical("TextFilesTab: item is not a FileListItem");
-    return;
-  }
-
-  if (!canClose()) {
-    m_list->setCurrentItem(previous, QItemSelectionModel::Current);
-    return;
-  }
-
-  select(item);
+  m_model->finished();
 }
 
-void GenericFilesTab::select(FileListItem* item)
+void GenericFilesTab::onSelection(
+  const QModelIndex& current, const QModelIndex& previous)
 {
-  if (item) {
-    m_editor->setEnabled(true);
-    m_editor->load(item->fullPath());
-  } else {
-    m_editor->setEnabled(false);
+  if (!canClose()) {
+    m_list->selectionModel()->select(previous, QItemSelectionModel::Current);
+    return;
   }
+
+  select(current);
+}
+
+void GenericFilesTab::select(const QModelIndex& index)
+{
+  if (!index.isValid()) {
+    m_editor->setEnabled(false);
+    return;
+  }
+
+  m_editor->setEnabled(true);
+  m_editor->load(m_model->fullPath(index));
 }
 
 
