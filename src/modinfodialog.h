@@ -116,6 +116,7 @@ private:
     QIcon icon;
 
     TabInfo(std::unique_ptr<ModInfoDialogTab> tab);
+    bool isVisible() const;
   };
 
   std::unique_ptr<Ui::ModInfoDialog> ui;
@@ -131,15 +132,15 @@ private:
   QString saveTabState() const;
   void update(bool firstTime=false);
   void onDeleteShortcut();
-  int tabIndex(const QString &tabId);
   MOShared::FilesOrigin* getOrigin();
   void setTabsVisibility(bool firstTime);
-  void updateTabs();
-  void feedFiles();
+  void updateTabs(bool becauseOriginChanged=false);
+  void feedFiles(bool becauseOriginChanged);
   void setTabsColors();
   void switchToTab(ETabs id);
   void reAddTabs(const std::vector<bool>& visibility, ETabs sel);
   std::vector<QString> getOrderedTabNames() const;
+  void onOriginModified(std::size_t tabIndex, int originID);
 
   template <class T>
   std::unique_ptr<ModInfoDialogTab> createTab(int index)

@@ -12,6 +12,7 @@ public:
   void clear() override;
   void update() override;
   bool canHandleSeparators() const override;
+  bool usesOriginFiles() const override;
 
 private:
   void add(

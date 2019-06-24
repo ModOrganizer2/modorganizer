@@ -27,10 +27,12 @@ public:
   virtual bool canClose();
   virtual void saveState(Settings& s);
   virtual void restoreState(const Settings& s);
+
   virtual bool deleteRequested();
 
   virtual bool canHandleSeparators() const;
   virtual bool canHandleUnmanaged() const;
+  virtual bool usesOriginFiles() const;
 
   virtual void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin);
 
@@ -81,6 +83,7 @@ public:
   void clear() override;
   void update() override;
   bool canHandleSeparators() const override;
+  bool usesOriginFiles() const override;
 
 private:
   void onComments();

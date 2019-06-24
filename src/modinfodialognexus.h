@@ -42,6 +42,7 @@ public:
   void clear() override;
   void update() override;
   void setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin) override;
+  bool usesOriginFiles() const override;
 
 private:
   QMetaObject::Connection m_modConnection;

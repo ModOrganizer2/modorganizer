@@ -102,6 +102,11 @@ void NexusTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
     mod.data(), &ModInfo::modDetailsUpdated, [&]{ onModChanged(); });
 }
 
+bool NexusTab::usesOriginFiles() const
+{
+  return false;
+}
+
 void NexusTab::updateVersionColor()
 {
   if (mod()->getVersion() != mod()->getNewestVersion()) {

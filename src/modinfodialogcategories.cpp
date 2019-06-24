@@ -42,6 +42,11 @@ bool CategoriesTab::canHandleSeparators() const
   return true;
 }
 
+bool CategoriesTab::usesOriginFiles() const
+{
+  return false;
+}
+
 void CategoriesTab::add(
   const CategoryFactory &factory, const std::set<int>& enabledCategories,
   QTreeWidgetItem* root, int rootLevel)

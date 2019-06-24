@@ -53,6 +53,11 @@ bool ModInfoDialogTab::canHandleUnmanaged() const
   return false;
 }
 
+bool ModInfoDialogTab::usesOriginFiles() const
+{
+  return true;
+}
+
 void ModInfoDialogTab::setMod(ModInfo::Ptr mod, MOShared::FilesOrigin* origin)
 {
   m_mod = mod;
@@ -157,4 +162,9 @@ void NotesTab::onNotes()
   } else {
     mod()->setNotes(ui->notesEdit->toHtml());
   }
+}
+
+bool NotesTab::usesOriginFiles() const
+{
+  return false;
 }
