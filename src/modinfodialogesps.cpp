@@ -260,7 +260,6 @@ bool ESPsTab::feedFile(const QString& rootPath, const QString& fullPath)
         m_inactiveModel->add(std::move(esp));
       }
 
-      setHasData(true);
       return true;
     }
   }
@@ -272,6 +271,8 @@ void ESPsTab::update()
 {
   m_inactiveModel->finished();
   m_activeModel->finished();
+
+  setHasData(m_inactiveModel->rowCount() > 0 || m_activeModel->rowCount() > 0);
 }
 
 void ESPsTab::onActivate()

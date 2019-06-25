@@ -141,6 +141,7 @@ private:
   PluginContainer* m_plugin;
   std::vector<TabInfo> m_tabs;
   ETabs m_initialTab;
+  bool m_arrangingTabs;
 
   std::vector<TabInfo> createTabs();
   TabInfo* currentTab();

@@ -131,7 +131,10 @@ void ModInfoDialogTab::emitModOpen(QString name)
 
 void ModInfoDialogTab::setHasData(bool b)
 {
-  m_hasData = b;
+  if (m_hasData != b) {
+    m_hasData = b;
+    emit hasDataChanged();
+  }
 }
 
 
@@ -140,14 +143,14 @@ NotesTab::NotesTab(
   QWidget* parent, Ui::ModInfoDialog* ui, int index)
    : ModInfoDialogTab(oc, plugin, parent, ui, index)
 {
-  connect(ui->commentsEdit, &QLineEdit::editingFinished, [&]{ onComments(); });
-  connect(ui->notesEdit, &HTMLEditor::editingFinished, [&]{ onNotes(); });
+  connect(ui->comments, &QLineEdit::editingFinished, [&]{ onComments(); });
+  connect(ui->notes, &HTMLEditor::editingFinished, [&]{ onNotes(); });
 }
 
 void NotesTab::clear()
 {
-  ui->commentsEdit->clear();
-  ui->notesEdit->clear();
+  ui->comments->clear();
+  ui->notes->clear();
   setHasData(false);
 }
 
@@ -156,10 +159,9 @@ void NotesTab::update()
   const auto comments = mod()->comments();
   const auto notes = mod()->notes();
 
-  ui->commentsEdit->setText(comments);
-  ui->notesEdit->setText(notes);
-
-  setHasData(!comments.isEmpty() || !notes.isEmpty());
+  ui->comments->setText(comments);
+  ui->notes->setText(notes);
+  checkHasData();
 }
 
 bool NotesTab::canHandleSeparators() const
@@ -169,20 +171,30 @@ bool NotesTab::canHandleSeparators() const
 
 void NotesTab::onComments()
 {
-  mod()->setComments(ui->commentsEdit->text());
+  mod()->setComments(ui->comments->text());
+  checkHasData();
 }
 
 void NotesTab::onNotes()
 {
   // Avoid saving html stub if notes field is empty.
-  if (ui->notesEdit->toPlainText().isEmpty()) {
+  if (ui->notes->toPlainText().isEmpty()) {
     mod()->setNotes({});
   } else {
-    mod()->setNotes(ui->notesEdit->toHtml());
+    mod()->setNotes(ui->notes->toHtml());
   }
+
+  checkHasData();
 }
 
 bool NotesTab::usesOriginFiles() const
 {
   return false;
+}
+
+void NotesTab::checkHasData()
+{
+  setHasData(
+    !ui->comments->text().isEmpty() ||
+    !ui->notes->toPlainText().isEmpty());
 }

@@ -810,9 +810,6 @@ text-align: left;</string>
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
         <widget class="QTreeWidget" name="categories">
-         <property name="animated">
-          <bool>true</bool>
-         </property>
          <attribute name="headerVisible">
           <bool>false</bool>
          </attribute>
@@ -1038,7 +1035,7 @@ p, li { white-space: pre-wrap; }
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_10">
        <item>
-        <widget class="QLineEdit" name="commentsEdit">
+        <widget class="QLineEdit" name="comments">
          <property name="toolTip">
           <string>Enter comments about the mod here.  These are displayed in the notes column of the mod list.</string>
          </property>
@@ -1051,7 +1048,7 @@ p, li { white-space: pre-wrap; }
         </widget>
        </item>
        <item>
-        <widget class="HTMLEditor" name="notesEdit">
+        <widget class="HTMLEditor" name="notes">
          <property name="toolTip">
           <string>Enter notes about the mod here.  These can be viewed in the mod list by hovering over the notes column or the flags column.</string>
          </property>

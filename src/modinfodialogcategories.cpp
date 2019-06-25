@@ -34,7 +34,6 @@ void CategoriesTab::update()
     ui->categories->invisibleRootItem(), 0);
 
   updatePrimary();
-  setHasData(ui->primaryCategories->count() > 0);
 }
 
 bool CategoriesTab::canHandleSeparators() const
@@ -92,6 +91,8 @@ void CategoriesTab::updatePrimary()
       break;
     }
   }
+
+  setHasData(ui->primaryCategories->count() > 0);
 }
 
 void CategoriesTab::addChecked(QTreeWidgetItem* tree)

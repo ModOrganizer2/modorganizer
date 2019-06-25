@@ -158,7 +158,6 @@ bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
   for (const auto* e : extensions) {
     if (wantsFile(rootPath, fullPath)) {
       m_model->add(rootPath, fullPath);
-      setHasData(true);
       return true;
     }
   }
@@ -169,6 +168,7 @@ bool GenericFilesTab::feedFile(const QString& rootPath, const QString& fullPath)
 void GenericFilesTab::update()
 {
   m_model->finished();
+  setHasData(m_model->rowCount() > 0);
 }
 
 void GenericFilesTab::onSelection(

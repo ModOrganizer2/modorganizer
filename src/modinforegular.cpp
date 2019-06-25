@@ -194,10 +194,14 @@ void ModInfoRegular::saveMeta()
       if (metaFile.status() == QSettings::NoError) {
         m_MetaInfoChanged = false;
       } else {
-        reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
+        qCritical()
+          << QString("failed to write %1/meta.ini: error %2")
+            .arg(absolutePath()).arg(metaFile.status());
       }
     } else {
-      reportError(tr("failed to write %1/meta.ini: error %2").arg(absolutePath()).arg(metaFile.status()));
+      qCritical()
+        << QString("failed to write %1/meta.ini: error %2")
+          .arg(absolutePath()).arg(metaFile.status());
     }
   }
 }

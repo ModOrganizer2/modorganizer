@@ -124,7 +124,8 @@ ModInfoDialog::ModInfoDialog(
   MainWindow* mw, OrganizerCore* core, PluginContainer* plugin) :
     TutorableDialog("ModInfoDialog", mw),
     ui(new Ui::ModInfoDialog), m_mainWindow(mw),
-    m_core(core), m_plugin(plugin), m_initialTab(ETabs(-1))
+    m_core(core), m_plugin(plugin), m_initialTab(ETabs(-1)),
+    m_arrangingTabs(false)
 {
   ui->setupUi(this);
 
@@ -156,6 +157,10 @@ ModInfoDialog::ModInfoDialog(
         setMod(name);
         update();
       });
+
+    connect(
+      tabInfo.tab.get(), &ModInfoDialogTab::hasDataChanged,
+      [&]{ setTabsColors(); });
   }
 
   connect(ui->tabWidget, &QTabWidget::currentChanged, [&]{ onTabChanged(); });
@@ -269,6 +274,8 @@ void ModInfoDialog::update(bool firstTime)
 
 void ModInfoDialog::setTabsVisibility(bool firstTime)
 {
+  QScopedValueRollback arrangingTabs(m_arrangingTabs, true);
+
   std::vector<bool> visibility(m_tabs.size());
 
   bool changed = false;
@@ -374,7 +381,7 @@ void ModInfoDialog::setTabsColors()
   for (const auto& tabInfo : m_tabs) {
     const auto c = tabInfo.tab->hasData() ?
       QColor::Invalid :
-      ui->tabWidget->palette().color(QPalette::Disabled, QPalette::WindowText);
+      m_mainWindow->palette().color(QPalette::Disabled, QPalette::WindowText);
 
     ui->tabWidget->tabBar()->setTabTextColor(tabInfo.realPos, c);
   }
@@ -564,6 +571,13 @@ void ModInfoDialog::on_closeButton_clicked()
 
 void ModInfoDialog::onTabChanged()
 {
+  if (m_arrangingTabs) {
+    // this can be fired while re-arranging tabs, which happens before mods
+    // are given to tabs, and might trigger first activation, which breaks all
+    // sorts of things
+    return;
+  }
+
   if (auto* tabInfo=currentTab()) {
     tabInfo->tab->activated();
   }

@@ -49,6 +49,7 @@ public:
 signals:
   void originModified(int originID);
   void modOpen(QString name);
+  void hasDataChanged();
 
 protected:
   Ui::ModInfoDialog* ui;
@@ -93,6 +94,7 @@ public:
 private:
   void onComments();
   void onNotes();
+  void checkHasData();
 };
 
 #endif // MODINFODIALOGTAB_H
