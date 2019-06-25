@@ -7,10 +7,16 @@
 #include <versioninfo.h>
 #include <utility.h>
 
+bool isValidModID(int id)
+{
+  return (id > 0);
+}
+
 NexusTab::NexusTab(
   OrganizerCore& oc, PluginContainer& plugin,
-  QWidget* parent, Ui::ModInfoDialog* ui, int id)
-    : ModInfoDialogTab(oc, plugin, parent, ui, id), m_requestStarted(false)
+  QWidget* parent, Ui::ModInfoDialog* ui, int id) :
+    ModInfoDialogTab(oc, plugin, parent, ui, id), m_requestStarted(false),
+    m_loading(false)
 {
   ui->modID->setValidator(new QIntValidator(ui->modID));
   ui->endorse->setVisible(core().settings().endorsementIntegration());
@@ -53,6 +59,8 @@ void NexusTab::clear()
 
 void NexusTab::update()
 {
+  QScopedValueRollback loading(m_loading, true);
+
   clear();
 
   ui->modID->setText(QString("%1").arg(mod()->getNexusID()));
@@ -123,7 +131,7 @@ void NexusTab::updateWebpage()
 {
   const int modID = mod()->getNexusID();
 
-  if (modID > 0) {
+  if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
       ->getModURL(modID, mod()->getGameName());
 
@@ -147,16 +155,19 @@ void NexusTab::onModChanged()
   QString descriptionAsHTML = R"(
 <html>
   <head>
-    <style class=\"nexus-description\">
+    <style class="nexus-description">
     body
     {
-      font-style: sans-serif;
-      background: #707070;
+      font-family: sans-serif;
+      font-size: 14px;
+      background: #404040;
+      color: #f1f1f1;
     }
 
     a
     {
-      color: #5EA2E5;
+      color: #8197ec;
+      text-decoration: none;
     }
     </style>
   </head>
@@ -181,6 +192,10 @@ void NexusTab::onModChanged()
 
 void NexusTab::onModIDChanged()
 {
+  if (m_loading) {
+    return;
+  }
+
   const int oldID = mod()->getNexusID();
   const int newID = ui->modID->text().toInt();
 
@@ -190,7 +205,7 @@ void NexusTab::onModIDChanged()
 
     ui->browser->page()->setHtml("");
 
-    if (newID != 0) {
+    if (isValidModID(newID)) {
       refreshData(newID);
     }
   }
@@ -198,6 +213,10 @@ void NexusTab::onModIDChanged()
 
 void NexusTab::onSourceGameChanged()
 {
+  if (m_loading) {
+    return;
+  }
+
   for (auto game : plugin().plugins<MOBase::IPluginGame>()) {
     if (game->gameName() == ui->sourceGame->currentText()) {
       mod()->setGameName(game->gameShortName());
@@ -210,6 +229,10 @@ void NexusTab::onSourceGameChanged()
 
 void NexusTab::onVersionChanged()
 {
+  if (m_loading) {
+    return;
+  }
+
   MOBase::VersionInfo version(ui->version->text());
   mod()->setVersion(version);
   updateVersionColor();
@@ -217,6 +240,10 @@ void NexusTab::onVersionChanged()
 
 void NexusTab::onUrlChanged()
 {
+  if (m_loading) {
+    return;
+  }
+
   mod()->setURL(ui->url->text());
   mod()->setLastNexusQuery(QDateTime::fromSecsSinceEpoch(0));
 }
@@ -225,7 +252,7 @@ void NexusTab::onOpenLink()
 {
   const int modID = mod()->getNexusID();
 
-  if (modID > 0) {
+  if (isValidModID(modID)) {
     const QString nexusLink = NexusInterface::instance(&plugin())
      ->getModURL(modID, mod()->getGameName());
 
@@ -237,7 +264,7 @@ void NexusTab::onRefreshBrowser()
 {
   const auto modID = mod()->getNexusID();
 
-  if (modID > 0) {
+  if (isValidModID(modID)) {
     refreshData(modID);
   } else
     qInfo("Mod has no valid Nexus ID, info can't be updated.");
@@ -259,18 +286,15 @@ void NexusTab::refreshData(int modID)
 
 bool NexusTab::tryRefreshData(int modID)
 {
-  if (modID <= 0) {
-    qDebug() << "NexusTab: can't refresh, no mod id";
+  if (!isValidModID(modID)) {
     return false;
   }
 
   if (m_requestStarted) {
-    qDebug() << "NexusTab: a refresh request is already running";
     return false;
   }
 
   if (!mod()->updateNXMInfo()) {
-    qDebug() << "NexusTab: nexus description does not need an update";
     return false;
   }
 

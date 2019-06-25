@@ -47,6 +47,7 @@ public:
 private:
   QMetaObject::Connection m_modConnection;
   bool m_requestStarted;
+  bool m_loading;
 
   void cleanup();
   void updateVersionColor();

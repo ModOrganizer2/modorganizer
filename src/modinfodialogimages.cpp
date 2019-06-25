@@ -282,14 +282,14 @@ bool ImagesTab::needsReload(const File& file, const QSize& imageSize) const
 
 void ImagesTab::reload(File& file, const QSize& scaledSize)
 {
-  file.original = {};
-  file.thumbnail = {};
   file.failed = false;
 
-  if (!file.original.load(file.path)) {
-    qCritical() << "failed to load image from " << file.path;
-    file.failed = true;
-    return;
+  if (file.original.isNull()) {
+    if (!file.original.load(file.path)) {
+      qCritical() << "failed to load image from " << file.path;
+      file.failed = true;
+      return;
+    }
   }
 
   file.thumbnail = file.original.scaled(

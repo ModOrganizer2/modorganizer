@@ -174,7 +174,7 @@ private:
                                          "<a href=\"\\1\">\\1</a>");
     m_TagMap["url="]    = std::make_pair(QRegExp("\\[url=([^\\]]*)\\](.*)\\[/url\\]"),
                                          "<a href=\"\\1\">\\2</a>");
-    m_TagMap["img"] = std::make_pair(QRegExp("\\[img\\](.*)\\[/img\\]"),
+    m_TagMap["img"] = std::make_pair(QRegExp("\\[img(?:\\s*width=\\d+\\s*,?\\s*height=\\d+)?\\](.*)\\[/img\\]"),
                                      "<img src=\"\\1\">");
     m_TagMap["img="] = std::make_pair(QRegExp("\\[img=([^\\]]*)\\](.*)\\[/img\\]"),
                                       "<img src=\"\\2\" alt=\"\\1\">");
