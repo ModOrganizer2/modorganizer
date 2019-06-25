@@ -314,6 +314,20 @@ void ImagesTab::thumbnailsMouseEvent(QMouseEvent* e)
   select(fileAtPos(e->pos()));
 }
 
+void ImagesTab::showTooltip(QHelpEvent* e)
+{
+  const auto* f = fileAtPos(e->pos());
+  if (!f) {
+    QToolTip::hideText();
+    e->ignore();
+    return;
+  }
+
+  QToolTip::showText(
+    e->globalPos(), QDir::toNativeSeparators(f->path),
+    ui->imagesThumbnails);
+}
+
 void ImagesTab::onExplore()
 {
   if (!m_selection) {
@@ -410,6 +424,16 @@ void ImagesThumbnails::mousePressEvent(QMouseEvent* e)
   if (m_tab) {
     m_tab->thumbnailsMouseEvent(e);
   }
+}
+
+bool ImagesThumbnails::event(QEvent* e)
+{
+  if (e->type() == QEvent::ToolTip) {
+    m_tab->showTooltip(static_cast<QHelpEvent*>(e));
+    return true;
+  }
+
+  return QWidget::event(e);
 }
 
 

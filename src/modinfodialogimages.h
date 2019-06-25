@@ -34,6 +34,7 @@ public:
 protected:
   void paintEvent(QPaintEvent* e) override;
   void mousePressEvent(QMouseEvent* e) override;
+  bool event(QEvent* e) override;
 
 private:
   ImagesTab* m_tab = nullptr;
@@ -118,6 +119,7 @@ private:
   void scrollAreaResized(const QSize& s);
   void paintThumbnails(QPaintEvent* e);
   void thumbnailsMouseEvent(QMouseEvent* e);
+  void showTooltip(QHelpEvent* e);
   void onExplore();
   void onFilterChanged();
 
